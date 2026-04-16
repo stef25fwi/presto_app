@@ -21,16 +21,6 @@ Filter publicListingsFilter() {
       Filter('status', isEqualTo: 'active'),
       Filter('visibility', isEqualTo: 'public'),
     ),
-<<<<<<< HEAD
-    // Compat legacy: visibility map { isPublic: true }
-    Filter.and(
-      Filter('status', isEqualTo: 'active'),
-      Filter('visibility.isPublic', isEqualTo: true),
-    ),
-    // Variantes historiques / legacy publication
-    Filter('status', isEqualTo: 'published'),
-    Filter('isPublished', isEqualTo: true),
-=======
     // Variantes legacy couvertes par isPublicListingData() dans firestore.rules
     Filter('status', isEqualTo: 'published'),
     Filter('isPublished', isEqualTo: true),
@@ -38,21 +28,15 @@ Filter publicListingsFilter() {
     // propres à la collection `offers` (legacy). Ils ne sont pas utilisés
     // dans `listings` et causaient des refus de query pour les anonymes
     // car non couverts par isPublicListingData() dans les règles Firestore.
->>>>>>> a27533e69a2b52347b0ea26c33cf5923f5ef0879
   );
 }
 
 Filter publicOffersFilter() {
   return Filter.or(
-    Filter.and(
-      Filter('status', isEqualTo: 'active'),
-      Filter('visibility', isEqualTo: 'public'),
-    ),
-    Filter.and(
-      Filter('status', isEqualTo: 'active'),
-      Filter('visibility.isPublic', isEqualTo: true),
-    ),
+    Filter('visibility.isPublic', isEqualTo: true),
+    Filter('status', isEqualTo: 'active'),
     Filter('status', isEqualTo: 'published'),
+    Filter('isActive', isEqualTo: true),
     Filter('isPublished', isEqualTo: true),
   );
 }

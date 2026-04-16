@@ -62,21 +62,13 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
-    function isPublicVisibility(data) {
-      return data.visibility == 'public'
-        || ((data.visibility is map) && data.visibility.isPublic == true);
-    }
-
     function isPublicListingData(data) {
       return (
-        data.status == 'active'
+        (data.status == 'active' && data.visibility == 'public')
         || data.status == 'published'
         || data.isPublished == true
         || data.isActive == true
-<<<<<<< HEAD
-=======
         || (data.visibility is map && data.visibility.get('isPublic', false) == true)
->>>>>>> a27533e69a2b52347b0ea26c33cf5923f5ef0879
       );
     }
 
@@ -99,18 +91,11 @@ service cloud.firestore {
 
     function isPublicOffer() {
       // Toute annonce publiée est visible publiquement
-<<<<<<< HEAD
-      return resource.data.status == 'active'
-        || resource.data.status == 'published'
-        || resource.data.isPublished == true
-        || resource.data.isActive == true;
-=======
       return (resource.data.status == 'active' && resource.data.visibility == 'public')
         || (resource.data.status == 'published')
         || (resource.data.isPublished == true)
         || (resource.data.isActive == true)
         || (resource.data.visibility is map && resource.data.visibility.get('isPublic', false) == true);
->>>>>>> a27533e69a2b52347b0ea26c33cf5923f5ef0879
     }
 
     // ⛔ [REFUSÉ] Rate limits — server-only (Functions)
