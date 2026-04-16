@@ -76,11 +76,6 @@ service cloud.firestore {
       return isSignedIn() && data.ownerId == uid();
     }
 
-    function isChatParticipant(data) {
-      return isSignedIn()
-        && ((data.participants is list) && data.participants.hasAny([uid()]));
-    }
-
     function isOwnerByField(data) {
       return isSignedIn() && (
         (data.userId is string && data.userId == uid()) ||
