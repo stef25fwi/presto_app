@@ -155,6 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final result = await _auth.getRedirectResult();
       if (result.user != null) {
         final isNewUser = result.additionalUserInfo?.isNewUser ?? false;
+        bool bootstrapOk = true;
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: result.user!,
@@ -162,10 +163,15 @@ class _ProfilePageState extends State<ProfilePage> {
             isNewUserHint: isNewUser,
           );
         } catch (e) {
+          bootstrapOk = false;
           debugPrint('[AuthBootstrap] google redirect failed: $e');
         }
         if (!mounted) return;
-        showSuccessSnackBar(context, "Connecté avec Google");
+        if (bootstrapOk) {
+          showSuccessSnackBar(context, "Connecté avec Google");
+        } else {
+          showSuccessSnackBar(context, "Connecté, profil en cours de création…");
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;

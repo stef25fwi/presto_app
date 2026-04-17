@@ -16,15 +16,21 @@ class UserProfileBootstrapService {
     final email = user.email?.trim().toLowerCase() ?? '';
     final displayName = user.displayName?.trim() ?? '';
 
+    // Reload to get fresh emailVerified state.
+    try {
+      await user.reload();
+    } catch (_) {
+      // Best effort — offline or token expired.
+    }
+    final freshUser = FirebaseAuth.instance.currentUser ?? user;
+
     final commonData = <String, dynamic>{
-      'uid': user.uid,
+      'uid': freshUser.uid,
       'updatedAt': FieldValue.serverTimestamp(),
       'lastLoginAt': FieldValue.serverTimestamp(),
       'lastAuthMethod': authMethod,
       if (email.isNotEmpty) 'email': email,
-      'emailVerified': user.emailVerified,
-      'email_verified': user.emailVerified,
-      'isEmailVerified': user.emailVerified,
+      'emailVerified': freshUser.emailVerified,
       if (displayName.isNotEmpty) 'displayName': displayName,
       if (displayName.isNotEmpty) 'pseudo': displayName,
     };
@@ -38,20 +44,28 @@ class UserProfileBootstrapService {
             .timeout(const Duration(seconds: 6));
         shouldCreateWithDefaults = !existing.exists;
       } catch (error) {
-        debugPrint('[AuthBootstrap] Unable to check users/${user.uid}: $error');
+        debugPrint('[AuthBootstrap] Unable to check users/${freshUser.uid}: $error');
       }
     }
 
-    final payload = <String, dynamic>{
-      ...commonData,
-      if (shouldCreateWithDefaults) 'createdAt': FieldValue.serverTimestamp(),
-      if (shouldCreateWithDefaults) 'accountType': 'Particulier',
-      if (shouldCreateWithDefaults) 'favoriteCategories': <String>[],
-      if (shouldCreateWithDefaults) 'selectedFavoriteCategories': <String>[],
-      if (shouldCreateWithDefaults) 'selectedFavoriteSubcategories': <String>[],
-      if (shouldCreateWithDefaults) 'profileCompleteness': 0.0,
-    };
-
-    await userRef.set(payload, SetOptions(merge: true));
+    if (shouldCreateWithDefaults) {
+      // New user — atomic set with all defaults.
+      await userRef.set(<String, dynamic>{
+        ...commonData,
+        'createdAt': FieldValue.serverTimestamp(),
+        'accountType': 'Particulier',
+        'favoriteCategories': <String>[],
+        'selectedFavoriteCategories': <String>[],
+        'selectedFavoriteSubcategories': <String>[],
+        'profileCompleteness': 0.0,
+      });
+    } else {
+      // Existing user — update only known fields, remove stale aliases.
+      await userRef.update(<String, dynamic>{
+        ...commonData,
+        'email_verified': FieldValue.delete(),
+        'isEmailVerified': FieldValue.delete(),
+      });
+    }
   }
 }

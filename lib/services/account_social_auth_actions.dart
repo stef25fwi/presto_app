@@ -22,6 +22,7 @@ class AccountSocialAuthActions {
     required AccountTrackLoginCallback trackLogin,
   }) async {
     try {
+      bool isNewUser = false;
       googleAuthService.logAttempt(
         'signInWithGoogle',
         details: kIsWeb ? 'Mode Web' : 'Mode Mobile',
@@ -37,7 +38,8 @@ class AccountSocialAuthActions {
 
         try {
           googleAuthService.logAttempt('Popup');
-          await auth.signInWithPopup(googleProvider);
+          final popupResult = await auth.signInWithPopup(googleProvider);
+          isNewUser = popupResult.additionalUserInfo?.isNewUser ?? false;
           googleAuthService.logSuccess('Popup', auth.currentUser?.email);
         } catch (popupError) {
           googleAuthService.logError('Popup', popupError);
@@ -78,28 +80,26 @@ class AccountSocialAuthActions {
         provider.addScope('profile');
 
         googleAuthService.logAttempt('signInWithProvider');
-        await auth.signInWithProvider(provider);
+        final providerResult = await auth.signInWithProvider(provider);
+        isNewUser = providerResult.additionalUserInfo?.isNewUser ?? false;
         googleAuthService.logSuccess('Provider', auth.currentUser?.email);
       }
 
       final user = auth.currentUser;
+      bool bootstrapFailed = false;
       if (user != null) {
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: user,
             authMethod: 'google',
+            isNewUserHint: isNewUser,
           );
         } catch (bootstrapError) {
+          bootstrapFailed = true;
           googleAuthService.logError('AuthBootstrap', bootstrapError);
         }
         try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
-          final isNew =
-              !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
-          await trackLogin(authMethod: 'google', isNewUser: isNew);
+          await trackLogin(authMethod: 'google', isNewUser: isNewUser);
         } catch (trackingError) {
           googleAuthService.logError('Tracking', trackingError);
         }
@@ -107,7 +107,11 @@ class AccountSocialAuthActions {
 
       if (!context.mounted) return;
       googleAuthService.logSuccess('signInWithGoogle', user?.email);
-      showSuccessSnackBar(context, '✓ Connecté avec Google');
+      if (bootstrapFailed) {
+        showSuccessSnackBar(context, 'Connecté, profil en cours de création…');
+      } else {
+        showSuccessSnackBar(context, '✓ Connecté avec Google');
+      }
     } on FirebaseAuthException catch (e, st) {
       debugPrint(
         '❌ FirebaseAuthException: code=${e.code} message=${e.message}',

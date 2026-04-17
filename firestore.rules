@@ -12,13 +12,16 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return hasClaimRole('admin')
-        || hasClaimRole('superadmin')
+      // Claims are trusted only when the token was issued recently (< 1 h).
+      return ((hasClaimRole('admin') || hasClaimRole('superadmin'))
+          && request.auth.token.auth_time > (request.time - duration.value(1, 'h')))
         || hasUserDocRole('admin')
         || hasUserDocRole('superadmin')
         || (isSignedIn()
           && exists(/databases/$(database)/documents/admins/$(uid()))
-          && (get(/databases/$(database)/documents/admins/$(uid())).data.enabled != false));
+          && (get(/databases/$(database)/documents/admins/$(uid())).data.enabled != false)
+          && (!('expiresAt' in get(/databases/$(database)/documents/admins/$(uid())).data)
+              || get(/databases/$(database)/documents/admins/$(uid())).data.expiresAt > request.time));
     }
 
     function hasClaimRole(role) {
