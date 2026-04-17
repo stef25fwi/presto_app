@@ -87,26 +87,29 @@ class AccountSocialAuthActions {
 
       final user = auth.currentUser;
       bool bootstrapFailed = false;
-      if (user != null) {
-        try {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: user,
-            authMethod: 'google',
-            isNewUserHint: isNewUser,
-          );
-        } catch (bootstrapError) {
-          bootstrapFailed = true;
-          googleAuthService.logError('AuthBootstrap', bootstrapError);
-        }
-        try {
-          await trackLogin(authMethod: 'google', isNewUser: isNewUser);
-        } catch (trackingError) {
-          googleAuthService.logError('Tracking', trackingError);
-        }
+      if (user == null) {
+        if (!context.mounted) return;
+        showErrorSnackBar(context, 'Connexion Google incomplete. Reessayez.');
+        return;
+      }
+      try {
+        await UserProfileBootstrapService.ensureUserDocument(
+          user: user,
+          authMethod: 'google',
+          isNewUserHint: isNewUser,
+        );
+      } catch (bootstrapError) {
+        bootstrapFailed = true;
+        googleAuthService.logError('AuthBootstrap', bootstrapError);
+      }
+      try {
+        await trackLogin(authMethod: 'google', isNewUser: isNewUser);
+      } catch (trackingError) {
+        googleAuthService.logError('Tracking', trackingError);
       }
 
       if (!context.mounted) return;
-      googleAuthService.logSuccess('signInWithGoogle', user?.email);
+      googleAuthService.logSuccess('signInWithGoogle', user.email);
       if (bootstrapFailed) {
         showSuccessSnackBar(context, 'Connecté, profil en cours de création…');
       } else {
@@ -186,6 +189,7 @@ class AccountSocialAuthActions {
         '[Apple Sign-In] Utilisateur connecté: ${userCredential.user?.uid}',
       );
 
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
       if (userCredential.additionalUserInfo?.isNewUser == true) {
         final fullName = appleCredential.givenName != null ||
                 appleCredential.familyName != null
@@ -208,26 +212,27 @@ class AccountSocialAuthActions {
       }
 
       final user = auth.currentUser;
+      bool bootstrapFailed = false;
       if (user != null) {
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: user,
             authMethod: 'apple',
-            isNewUserHint: userCredential.additionalUserInfo?.isNewUser ?? false,
+            isNewUserHint: isNewUser,
           );
         } catch (bootstrapError) {
+          bootstrapFailed = true;
           debugPrint('[Apple Sign-In] Auth bootstrap error: $bootstrapError');
         }
       }
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user?.uid)
-          .get();
-      final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
-      await trackLogin(authMethod: 'apple', isNewUser: isNew);
+      await trackLogin(authMethod: 'apple', isNewUser: isNewUser);
 
       if (!context.mounted) return;
-      showSuccessSnackBar(context, 'Connecté avec Apple ✓');
+      if (bootstrapFailed) {
+        showSuccessSnackBar(context, 'Connecte, profil en cours de creation…');
+      } else {
+        showSuccessSnackBar(context, 'Connecte avec Apple ✓');
+      }
     } on SignInWithAppleAuthorizationException catch (e) {
       if (!context.mounted) return;
       debugPrint(

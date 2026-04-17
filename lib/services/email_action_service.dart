@@ -28,16 +28,29 @@ class EmailActionService {
       return false;
     }
 
-    await FirebaseFirestore.instance
+    final userRef = FirebaseFirestore.instance
         .collection('users')
-        .doc(refreshedUser.uid)
-        .set({
+        .doc(refreshedUser.uid);
+
+    final payload = <String, dynamic>{
       'email': email,
       'emailVerified': true,
-      'email_verified': true,
-      'isEmailVerified': true,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+      'email_verified': FieldValue.delete(),
+      'isEmailVerified': FieldValue.delete(),
+    };
+
+    try {
+      await userRef.update(payload);
+    } on FirebaseException catch (error) {
+      if (error.code != 'not-found') {
+        rethrow;
+      }
+      await userRef.set(<String, dynamic>{
+        'uid': refreshedUser.uid,
+        ...payload,
+      });
+    }
 
     return true;
   }

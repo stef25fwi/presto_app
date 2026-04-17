@@ -2,15 +2,19 @@
 
 import 'dart:async';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
 import 'app/presto_overlay_theme.dart';
 import 'pages/pro_profile_page.dart';
+import 'services/account_social_auth_actions.dart';
 import 'services/city_search.dart';
 import 'services/email_action_service.dart';
+import 'services/firebase_functions_region.dart';
+import 'services/google_auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/user_profile_bootstrap_service.dart';
 import 'services/app_route_parser.dart';
@@ -38,6 +42,8 @@ class _ProfilePageState extends State<ProfilePage> {
   AuthMode _authMode = AuthMode.login;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
   StreamSubscription<User?>? _authSub;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
   bool _isLoading = false;
@@ -144,51 +150,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     });
 
-    // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
-    if (kIsWeb) {
-      _checkGoogleRedirectResult();
-    }
-  }
-
-  Future<void> _checkGoogleRedirectResult() async {
-    try {
-      final result = await _auth.getRedirectResult();
-      if (result.user != null) {
-        final isNewUser = result.additionalUserInfo?.isNewUser ?? false;
-        bool bootstrapOk = true;
-        try {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: result.user!,
-            authMethod: 'google',
-            isNewUserHint: isNewUser,
-          );
-        } catch (e) {
-          bootstrapOk = false;
-          debugPrint('[AuthBootstrap] google redirect failed: $e');
-        }
-        if (!mounted) return;
-        if (bootstrapOk) {
-          showSuccessSnackBar(context, "Connecté avec Google");
-        } else {
-          showSuccessSnackBar(context, "Connecté, profil en cours de création…");
-        }
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String msg = "Erreur Google";
-      if (e.code == 'unauthorized-domain') {
-        msg =
-            "Domaine non autorisé. Ajoutez ce domaine dans Firebase Console → Authentication → Authorized domains.";
-      } else if (e.code == 'operation-not-allowed') {
-        msg =
-            "Google Sign-In non activé. Activez-le dans Firebase Console → Authentication → Sign-in method.";
-      } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
-        msg = "Erreur Google : ${e.message ?? e.code}";
-        showErrorSnackBar(context, msg);
-      }
-    } catch (e) {
-      debugPrint('[Google Redirect] Error checking result: $e');
-    }
   }
 
   @override
@@ -591,98 +552,63 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _trackLogin({
+    String? authMethod,
+    bool isNewUser = false,
+  }) async {
+    try {
+      final callable = _functions.httpsCallable(
+        'trackUserLogin',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
+      );
+      await callable.call<dynamic>({
+        'authMethod': authMethod,
+        'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
+        'deviceType': kIsWeb ? 'web' : defaultTargetPlatform.name,
+        'isNewUser': isNewUser,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (error) {
+      debugPrint('[ProfilePage][Tracking] Error: $error');
+    }
+  }
+
+  String _friendlyEmailAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'invalid-email':
+        return 'Adresse e-mail invalide.';
+      case 'user-disabled':
+        return 'Ce compte a ete desactive.';
+      case 'user-not-found':
+        return 'Aucun compte trouve avec cet e-mail.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'E-mail ou mot de passe incorrect.';
+      case 'email-already-in-use':
+        return 'Un compte existe deja avec cet e-mail.';
+      case 'weak-password':
+        return 'Mot de passe trop faible (minimum 6 caracteres).';
+      case 'too-many-requests':
+        return 'Trop de tentatives. Reessayez dans quelques minutes.';
+      case 'network-request-failed':
+        return 'Erreur reseau. Verifiez la connexion internet.';
+      case 'operation-not-allowed':
+        return 'Connexion e-mail non activee dans Firebase Authentication.';
+      default:
+        return error.message ?? 'Erreur d\'authentification.';
+    }
+  }
+
   Future<void> _onGoogleSignIn() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
-      UserCredential? credential;
-      final provider = GoogleAuthProvider()
-        ..setCustomParameters({'prompt': 'select_account'});
-      provider.addScope('email');
-      provider.addScope('profile');
-
-      if (kIsWeb) {
-        try {
-          credential = await _auth.signInWithPopup(provider);
-          if (!mounted) return;
-          showSuccessSnackBar(context, 'Connecté avec Google');
-        } catch (popupError) {
-          // Si l'utilisateur a simplement fermé la popup, on ne fait rien.
-          final isCancellation = popupError is FirebaseAuthException &&
-              (popupError.code == 'popup-closed-by-user' ||
-                  popupError.code == 'cancelled-popup-request' ||
-                  popupError.code == 'cancelled');
-          if (isCancellation) {
-            return;
-          }
-
-          // Fallback redirect uniquement sur popup bloquée ou erreur interne OAuth.
-          final isPopupBlockedOrInternalOAuth =
-              popupError is FirebaseAuthException &&
-                  (popupError.code == 'popup-blocked' ||
-                      popupError.code == 'internal-error');
-          if (isPopupBlockedOrInternalOAuth) {
-            debugPrint("POPUP BLOCKED -> Fallback to redirect: $popupError");
-            await _auth.signInWithRedirect(provider);
-            // Le navigateur va rediriger, on ne continue pas l'exécution.
-            return;
-          }
-
-          // Autre erreur : afficher le message et ne pas rediriger.
-          debugPrint("GOOGLE POPUP ERROR: $popupError");
-          if (!mounted) return;
-          if (popupError is FirebaseAuthException) {
-            final msg = popupError.message ?? popupError.code;
-            showErrorSnackBar(context, 'Connexion Google échouée : $msg');
-          } else {
-            showErrorSnackBar(context, 'Connexion Google échouée. Réessaye.');
-          }
-          return;
-        }
-      } else {
-        credential = await _auth.signInWithProvider(provider);
-        if (!mounted) return;
-        showSuccessSnackBar(context, 'Connecté avec Google');
-      }
-
-      final socialCredential = credential;
-      final signedInUser = socialCredential.user ?? _auth.currentUser;
-      if (signedInUser != null) {
-        final isNewUser =
-            socialCredential.additionalUserInfo?.isNewUser ?? false;
-        try {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: signedInUser,
-            authMethod: 'google',
-            isNewUserHint: isNewUser,
-          );
-        } catch (e) {
-          debugPrint('[AuthBootstrap] google sign-in failed: $e');
-        }
-      }
-    } on FirebaseAuthException catch (e) {
-      debugPrint("GOOGLE AUTH FAIL -> code=${e.code} message=${e.message}");
-      if (!mounted) return;
-      String msg = "Erreur Google";
-      if (e.code == 'popup-closed-by-user') {
-        msg = "Connexion annulée";
-      } else if (e.code == 'unauthorized-domain') {
-        msg = "Domaine non autorisé dans Firebase Console";
-      } else if (e.code == 'operation-not-allowed') {
-        msg = "Connexion Google non activée dans Firebase Authentication";
-      } else if (e.code == 'network-request-failed') {
-        msg = "Erreur réseau. Vérifie la connexion internet puis réessaie.";
-      } else if (e.code == 'account-exists-with-different-credential') {
-        msg =
-            "Un compte existe déjà avec cet email via une autre méthode de connexion.";
-      } else {
-        msg = "Erreur : ${e.message ?? e.code}";
-      }
-      showErrorSnackBar(context, msg);
-    } catch (e) {
-      debugPrint("GOOGLE AUTH FAIL -> $e");
-      if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur lors de la connexion : $e');
+      await AccountSocialAuthActions.signInWithGoogle(
+        context: context,
+        auth: _auth,
+        googleAuthService: _googleAuthService,
+        trackLogin: _trackLogin,
+      );
     } finally {
       final currentUser = _auth.currentUser;
       if (currentUser != null) {
@@ -698,51 +624,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onAppleSignIn() async {
     if (_isLoading) return;
-    if (!_isAppleSignInSupported) {
-      showErrorSnackBar(context, 'Connexion Apple disponible sur iOS/macOS.');
-      return;
-    }
-
     setState(() => _isLoading = true);
     try {
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
+      await AccountSocialAuthActions.signInWithApple(
+        context: context,
+        auth: _auth,
+        trackLogin: _trackLogin,
       );
-
-      if (appleCredential.identityToken == null) {
-        throw Exception('Identité Apple non reçue');
-      }
-
-      final oauthCredential = OAuthProvider('apple.com').credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      final credential = await _auth.signInWithCredential(oauthCredential);
-      final signedInUser = credential.user ?? _auth.currentUser;
-      if (signedInUser != null) {
-        final isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
-        try {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: signedInUser,
-            authMethod: 'apple',
-            isNewUserHint: isNewUser,
-          );
-        } catch (e) {
-          debugPrint('[AuthBootstrap] apple sign-in failed: $e');
-        }
-      }
-      if (!mounted) return;
-      showSuccessSnackBar(context, 'Connecté avec Apple');
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e.message ?? 'Erreur Apple: ${e.code}');
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur Apple: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -754,39 +642,73 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _isLoading = true);
     try {
-      final email = _emailCtrl.text.trim();
+      final email = _emailCtrl.text.trim().toLowerCase();
       final password = _passwordCtrl.text;
+      bool bootstrapFailed = false;
 
       if (_authMode == AuthMode.login) {
         final credential = await _auth.signInWithEmailAndPassword(
-            email: email, password: password);
+          email: email,
+          password: password,
+        );
         if (credential.user != null) {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: credential.user!,
-            authMethod: 'email',
-          );
+          try {
+            await UserProfileBootstrapService.ensureUserDocument(
+              user: credential.user!,
+              authMethod: 'email',
+            );
+          } catch (error) {
+            bootstrapFailed = true;
+            debugPrint('[AuthBootstrap] email login failed: $error');
+          }
+          try {
+            await EmailActionService.syncCurrentUserEmailVerificationState();
+          } catch (_) {
+            // Best effort.
+          }
+          await _trackLogin(authMethod: 'email', isNewUser: false);
         }
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Connexion réussie');
+        showSuccessSnackBar(
+          context,
+          bootstrapFailed
+              ? 'Connexion reussie, profil en cours de synchronisation…'
+              : 'Connexion reussie',
+        );
       } else {
         final credential = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
         if (credential.user != null) {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: credential.user!,
-            authMethod: 'email',
-            isNewUserHint: true,
-          );
-          await EmailActionService.requestEmailVerificationEmail();
+          try {
+            await UserProfileBootstrapService.ensureUserDocument(
+              user: credential.user!,
+              authMethod: 'email',
+              isNewUserHint: true,
+            );
+          } catch (error) {
+            bootstrapFailed = true;
+            debugPrint('[AuthBootstrap] email signup failed: $error');
+          }
+          try {
+            await EmailActionService.requestEmailVerificationEmail();
+          } catch (error) {
+            debugPrint('[EmailVerification] request failed: $error');
+          }
+          await _trackLogin(authMethod: 'email', isNewUser: true);
         }
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Compte créé. Vérifiez votre e-mail.');
+        showSuccessSnackBar(
+          context,
+          bootstrapFailed
+              ? 'Compte cree. Profil en cours de synchronisation, verifiez votre e-mail.'
+              : 'Compte cree. Verifiez votre e-mail.',
+        );
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, e.message ?? 'Erreur: ${e.code}');
+      showErrorSnackBar(context, _friendlyEmailAuthError(e));
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur: $e');
@@ -891,7 +813,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'favorites': {'enabled': _notifFavorites},
           'support': {'enabled': _notifSystem},
         },
-        'updated_at': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
       if (!mounted) return;
@@ -1280,7 +1202,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _onForgotPassword() async {
     if (_isLoading) return;
 
-    final email = _emailCtrl.text.trim();
+    final email = _emailCtrl.text.trim().toLowerCase();
     if (email.isEmpty) {
       showErrorSnackBar(context,
           'Saisis ton e-mail pour recevoir un lien de réinitialisation.');
