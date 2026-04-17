@@ -130,18 +130,20 @@ class _ProfilePageState extends State<ProfilePage> {
         _emailCtrl.text = email;
       }
       if (user != null) {
-        try {
-          await UserProfileBootstrapService.ensureUserDocument(
-            user: user,
-            authMethod: 'session_restore',
-          );
-        } catch (e) {
-          debugPrint('[AuthBootstrap] session restore failed: $e');
-        }
-        try {
-          await EmailActionService.syncCurrentUserEmailVerificationState();
-        } catch (_) {
-          // Best effort
+        if (_activeProfileUid != user.uid) {
+          try {
+            await UserProfileBootstrapService.ensureUserDocument(
+              user: user,
+              authMethod: 'session_restore',
+            );
+          } catch (e) {
+            debugPrint('[AuthBootstrap] session restore failed: $e');
+          }
+          try {
+            await EmailActionService.syncCurrentUserEmailVerificationState();
+          } catch (_) {
+            // Best effort
+          }
         }
         _bindProfile(user);
         _loadNotificationPreferences(user.uid);
