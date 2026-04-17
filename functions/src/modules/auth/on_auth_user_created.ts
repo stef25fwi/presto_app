@@ -13,18 +13,15 @@ export const onAuthUserCreated = functionsV1
   .auth.user()
   .onCreate(async (user) => {
     const uid = user.uid;
-    await admin
-      .firestore()
-      .collection("users")
-      .doc(uid)
-      .set(
-        {
-          uid,
-          email: user.email || null,
-          displayName: user.displayName || null,
-          photoURL: user.photoURL || null,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true },
-      );
+    const docRef = admin.firestore().collection("users").doc(uid);
+    const snap = await docRef.get();
+    if (!snap.exists) {
+      await docRef.set({
+        uid,
+        email: user.email || null,
+        displayName: user.displayName || null,
+        photoURL: user.photoURL || null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
   });

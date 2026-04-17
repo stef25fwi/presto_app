@@ -87,32 +87,34 @@ class AdminAccessResolver {
       } catch (error) {
         debugPrint('[AdminResolver] auth reload skipped: $error');
       }
-      user = _auth.currentUser ?? user;
     }
+    // Freeze the user reference — do not re-read _auth.currentUser after
+    // this point to avoid TOCTOU race.
+    final resolvedUser = _auth.currentUser ?? user;
 
     state = _step(
       state.copyWith(
         isAuthenticated: true,
-        uid: user.uid,
-        email: user.email,
+        uid: resolvedUser.uid,
+        email: resolvedUser.email,
       ),
-      '[AdminResolver] auth user loaded uid=${user.uid} email=${user.email ?? ''}',
+      '[AdminResolver] auth user loaded uid=${resolvedUser.uid} email=${resolvedUser.email ?? ''}',
       stage: 'auth-user-loaded',
     );
     _diag(
-      'auth user resolved uid=${user.uid} email=${user.email ?? ''} '
+      'auth user resolved uid=${resolvedUser.uid} email=${resolvedUser.email ?? ''} '
       'userNull=${_auth.currentUser == null}',
     );
 
     IdTokenResult? tokenResult;
     try {
-      final forcedToken = await user.getIdToken(true);
+      final forcedToken = await resolvedUser.getIdToken(true);
       _diag(
         'token getIdToken(true)=ok len=${(forcedToken ?? '').length} '
         'preview=${_tokenPreview(forcedToken)}',
       );
 
-      tokenResult = await user.getIdTokenResult(forceRefresh);
+      tokenResult = await resolvedUser.getIdTokenResult(forceRefresh);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
       final tokenRoles = _rolesFromValue(claims['roles']);
       final tokenPrimaryRole = _normalizedText(claims['primaryRole']);
@@ -145,9 +147,9 @@ class AdminAccessResolver {
       );
     }
 
-    _diag('firestore profilePath=users/${user.uid} adminPath=admins/${user.uid}');
+    _diag('firestore profilePath=users/${resolvedUser.uid} adminPath=admins/${resolvedUser.uid}');
 
-    final userSnap = await _getDocumentWithFallback('users', user.uid);
+    final userSnap = await _getDocumentWithFallback('users', resolvedUser.uid);
     final profileData = userSnap?.data();
     final profileRoles = _rolesFromValue(profileData?['roles']);
     final profilePrimaryRole = _normalizedText(profileData?['primaryRole']);
@@ -191,10 +193,10 @@ class AdminAccessResolver {
         '[AdminResolver] mismatch token/profile detected',
         stage: 'profile-token-mismatch',
       );
-      await syncUserRoleFromClaimsIfNeeded(user, tokenResult, state: state);
+      await syncUserRoleFromClaimsIfNeeded(resolvedUser, tokenResult, state: state);
     }
 
-    state = await _verifyServerAccess(user, state);
+    state = await _verifyServerAccess(resolvedUser, state);
     return _finalize(state);
   }
 
@@ -219,7 +221,35 @@ class AdminAccessResolver {
       return;
     }
 
-    debugPrint('[AdminResolver] sync requested for uid=${user.uid} but client role sync is disabled');
+    // Actually verify with the server before syncing.
+    debugPrint('[AdminResolver] sync: verifying admin status with server for uid=${user.uid}');
+    try {
+      final callable = _functions.httpsCallable(
+        _adminAccessCallableName,
+        options: HttpsCallableOptions(timeout: _serverTimeout),
+      );
+      final response = await callable.call<dynamic>({});
+      final data = response.data is Map
+          ? Map<String, dynamic>.from(response.data as Map)
+          : <String, dynamic>{};
+      final serverIsAdmin = data['isAdmin'] == true;
+
+      if (serverIsAdmin) {
+        // Server confirms admin — sync to profile doc.
+        await _firestore.collection('users').doc(user.uid).update(<String, dynamic>{
+          'roles': tokenRoles,
+          'primaryRole': tokenPrimaryRole ?? 'user',
+          'admin': true,
+          'lastRoleSyncAt': FieldValue.serverTimestamp(),
+        });
+        debugPrint('[AdminResolver] sync: profile updated with admin roles');
+      } else {
+        // Server says not admin — stale token claim.
+        debugPrint('[AdminResolver] sync: server denies admin, skipping profile sync');
+      }
+    } catch (error) {
+      debugPrint('[AdminResolver] sync: server verification failed: $error');
+    }
   }
 
   Future<AdminAccessState> _verifyServerAccess(
@@ -511,13 +541,26 @@ class AdminAccessResolver {
       sources.add('server');
     }
 
-    final effectiveIsAdmin = sources.isNotEmpty;
+    var effectiveIsAdmin = sources.isNotEmpty;
+    final sourceOfTruth = effectiveIsAdmin ? sources.join('+') : 'none';
+
+    // Fix #13: prevent incoherent state where effectiveIsAdmin is true but
+    // no source actually confirmed it.
+    if (effectiveIsAdmin && sourceOfTruth == 'none') {
+      effectiveIsAdmin = false;
+    }
+
+    // If the server check succeeded, server is the authority.
+    if (state.serverCheckSucceeded) {
+      effectiveIsAdmin = state.serverIsAdmin == true;
+    }
+
     final finalized = _step(
       state.copyWith(
         effectiveIsAdmin: effectiveIsAdmin,
-        sourceOfTruth: effectiveIsAdmin ? sources.join('+') : 'none',
+        sourceOfTruth: effectiveIsAdmin ? sourceOfTruth : 'none',
       ),
-      '[AdminResolver] effectiveIsAdmin=$effectiveIsAdmin source=${effectiveIsAdmin ? sources.join('+') : 'none'}',
+      '[AdminResolver] effectiveIsAdmin=$effectiveIsAdmin source=${effectiveIsAdmin ? sourceOfTruth : 'none'}',
       stage: 'finished',
     );
     debugPrint('[AdminResolver] finished');
