@@ -518,38 +518,18 @@ class _HomePageState extends State<HomePage>
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
-    // Query primaire : offres avec status='published', triées par date.
-    // Fonctionne pour les utilisateurs connectés ET non connectés grâce aux
-    // Firestore rules qui autorisent la lecture de toute offre publique.
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection(kListingsCollection)
-          .where('status', isEqualTo: 'active')
-          .where('visibility', isEqualTo: 'public')
-          .orderBy('createdAt', descending: true)
-          .limit(8)
-          .get();
-
-      if (snapshot.docs.length >= 8) return snapshot.docs;
-
-      // Compléter avec les annonces legacy (collection offers).
-      // Pas d'orderBy sur la query offers : Filter.or(5 branches) sans index
-      // composites complets → erreur silencieuse. Tri client-side après merge.
-      final fallback = await loadLegacyPublicOffersBackfill(
-        query: FirebaseFirestore.instance
-            .collection(kOffersCollection)
-            .where(publicOffersFilter())
-            .limit(24),
-        source: 'home_latest_offers_legacy_backfill',
+      final listings = await loadMergedPublicOfferQueryVariants(
+        queries: buildPublicListingsQueryVariants(limit: 24),
+        source: 'home_latest_offers_listings',
       );
-
-      final seen = snapshot.docs.map((d) => d.id).toSet();
-      final merged = [...snapshot.docs];
-      for (final doc in fallback) {
-        if (seen.contains(doc.id)) continue;
-        merged.add(doc);
-      }
-      // Tri côté client par createdAt décroissant, prendre les 8 plus récents
+      final legacy = await loadMergedPublicOfferQueryVariants(
+        queries: buildPublicOffersQueryVariants(limit: 24),
+        source: 'home_latest_offers_legacy',
+      );
+      final merged = mergeOfferDocsById(listings, legacy)
+          .where((doc) => isPublishedOfferData(doc.data()))
+          .toList();
       merged.sort((a, b) {
         final aTs = a.data()['createdAt'];
         final bTs = b.data()['createdAt'];
@@ -557,58 +537,19 @@ class _HomePageState extends State<HomePage>
         final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
         return bMs.compareTo(aMs);
       });
-      return merged.take(8).toList();
+      return merged.take(8).toList(growable: false);
     } catch (error, stackTrace) {
-      // Si l'index n'est pas encore prêt, fallback sur la query publique
-      // avec filtre côté client additionnel.
       logPublicOffersReadErrorWithAppCheck(
-        'home_latest_offers_primary',
+        'home_latest_offers',
         error,
         stackTrace,
       );
-      debugPrint('[LatestOffers] Primary query failed, falling back: $error');
-      try {
-        final listings = await _recentOffersQuery().get();
-        final legacy = await loadLegacyPublicOffersBackfill(
-          query: _legacyRecentOffersQuery(),
-          source: 'home_latest_offers_fallback_legacy_backfill',
-        );
-        final merged = mergeOfferDocsById(listings.docs, legacy);
-        merged.sort((a, b) {
-          final aTs = a.data()['createdAt'];
-          final bTs = b.data()['createdAt'];
-          final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-          final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-          return bMs.compareTo(aMs);
-        });
-        return merged
-            .where((doc) => isPublishedOfferData(doc.data()))
-            .take(8)
-            .toList(growable: false);
-      } catch (fallbackError, fallbackStackTrace) {
-        logPublicOffersReadErrorWithAppCheck(
-          'home_latest_offers_fallback',
-          fallbackError,
-          fallbackStackTrace,
-        );
-        throw PublicOffersReadException(
-          mergePublicOffersReadIssuesWithAppCheck(
-            source: 'home_latest_offers',
-            primary: diagnosePublicOffersReadIssueWithAppCheck(
-              fallbackError,
-              source: 'home_latest_offers_fallback',
-            ),
-            secondary: diagnosePublicOffersReadIssueWithAppCheck(
-              error,
-              source: 'home_latest_offers_primary',
-            ),
-          ),
-          secondaryIssue: diagnosePublicOffersReadIssueWithAppCheck(
-            error,
-            source: 'home_latest_offers_primary',
-          ),
-        );
-      }
+      throw PublicOffersReadException(
+        diagnosePublicOffersReadIssueWithAppCheck(
+          error,
+          source: 'home_latest_offers',
+        ),
+      );
     }
   }
 
