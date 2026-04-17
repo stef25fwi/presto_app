@@ -799,26 +799,39 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _watchCombinedOffers() {
+    final limit = _hasActiveClientFilters ? _maxLimit : _pageLimit;
+
+    final listingsStream = watchMergedPublicOfferQueryVariants(
+      queries: buildPublicListingsQueryVariants(limit: limit),
+      source: 'consult_listings_stream',
+    );
+
+    final legacyStream = watchMergedPublicOfferQueryVariants(
+      queries: buildPublicOffersQueryVariants(limit: limit),
+      source: 'consult_legacy_stream',
+    );
+
     return Stream.multi((controller) {
-      QuerySnapshot<Map<String, dynamic>>? listingsSnapshot;
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> legacyOffersDocs =
+      var listingsDocs =
           const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      var legacyDocs =
+          const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      bool listingsReady = false;
+      bool legacyReady = false;
       Object? listingsError;
-      StackTrace? listingsErrorStackTrace;
-      bool legacyBackfillLoaded = !kEnableLegacyPublicOffersBackfill;
+      StackTrace? listingsStackTrace;
+      Object? legacyError;
+      StackTrace? legacyStackTrace;
       bool controllerClosed = false;
 
-      void emitMergedOrError() {
+      void emitMerged() {
         if (controllerClosed) return;
+        if (!listingsReady || !legacyReady) return;
 
-        final listingsDocs = listingsSnapshot?.docs ??
-            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-
-        if (listingsError != null && listingsDocs.isEmpty && legacyBackfillLoaded) {
-          if (legacyOffersDocs.isNotEmpty) {
-            controller.add(legacyOffersDocs);
-            return;
-          }
+        final merged = mergeOfferDocsById(listingsDocs, legacyDocs);
+        if (merged.isNotEmpty) {
+          controller.add(merged);
+        } else if (listingsError != null) {
           controller.addError(
             PublicOffersReadException(
               diagnosePublicOffersReadIssueWithAppCheck(
@@ -826,58 +839,59 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 source: 'consult_listings_stream',
               ),
             ),
-            listingsErrorStackTrace ?? StackTrace.current,
+            listingsStackTrace ?? StackTrace.current,
           );
-          return;
+        } else if (legacyError != null) {
+          controller.addError(
+            PublicOffersReadException(
+              diagnosePublicOffersReadIssueWithAppCheck(
+                legacyError!,
+                source: 'consult_legacy_stream',
+              ),
+            ),
+            legacyStackTrace ?? StackTrace.current,
+          );
+        } else {
+          controller.add(const []);
         }
-
-        if (listingsSnapshot == null && !legacyBackfillLoaded) {
-          return;
-        }
-
-        controller.add(
-          mergeOfferDocsById(
-            listingsDocs,
-            legacyOffersDocs,
-          ),
-        );
       }
 
-      final listingsSub = _buildOffersQuery().snapshots().listen(
-        (snapshot) {
+      final listingsSub = listingsStream.listen(
+        (docs) {
+          listingsDocs = docs;
           listingsError = null;
-          listingsErrorStackTrace = null;
-          listingsSnapshot = snapshot;
-          emitMergedOrError();
+          listingsStackTrace = null;
+          listingsReady = true;
+          emitMerged();
         },
-        onError: (error, stackTrace) {
-          listingsSnapshot = null;
+        onError: (Object error, StackTrace stackTrace) {
           listingsError = error;
-          listingsErrorStackTrace = stackTrace;
-          logPublicOffersReadErrorWithAppCheck(
-            'consult_listings_stream',
-            error,
-            stackTrace,
-          );
-          emitMergedOrError();
+          listingsStackTrace = stackTrace;
+          listingsReady = true;
+          emitMerged();
         },
       );
 
-      unawaited(
-        loadLegacyPublicOffersBackfill(
-          query: _buildLegacyOffersQuery(),
-          source: 'consult_legacy_backfill',
-        ).then((docs) {
-          if (controllerClosed) return;
-          legacyOffersDocs = docs;
-          legacyBackfillLoaded = true;
-          emitMergedOrError();
-        }),
+      final legacySub = legacyStream.listen(
+        (docs) {
+          legacyDocs = docs;
+          legacyError = null;
+          legacyStackTrace = null;
+          legacyReady = true;
+          emitMerged();
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          legacyError = error;
+          legacyStackTrace = stackTrace;
+          legacyReady = true;
+          emitMerged();
+        },
       );
 
       controller.onCancel = () async {
         controllerClosed = true;
         await listingsSub.cancel();
+        await legacySub.cancel();
       };
     });
   }

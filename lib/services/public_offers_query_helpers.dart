@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
@@ -144,4 +146,145 @@ Widget buildPublicOffersDebugCardWithAppCheck(
     source: source,
     appCheckState: publicOffersAppCheckStateLabel(),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Robust multi-variant query helpers (no OR filters)
+// ---------------------------------------------------------------------------
+
+/// Builds simple single-field queries against [kListingsCollection].
+List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
+  FirebaseFirestore? firestore,
+  int limit = 200,
+}) {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final col = fs.collection(kListingsCollection);
+  return <Query<Map<String, dynamic>>>[
+    col.where('status', isEqualTo: 'active').limit(limit),
+    col.where('status', isEqualTo: 'published').limit(limit),
+    col.where('isPublished', isEqualTo: true).limit(limit),
+    col.where('isActive', isEqualTo: true).limit(limit),
+    col.where('visibility', isEqualTo: 'public').limit(limit),
+  ];
+}
+
+/// Builds simple single-field queries against [kOffersCollection].
+List<Query<Map<String, dynamic>>> buildPublicOffersQueryVariants({
+  FirebaseFirestore? firestore,
+  int limit = 200,
+}) {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final col = fs.collection(kOffersCollection);
+  return <Query<Map<String, dynamic>>>[
+    col.where('visibility.isPublic', isEqualTo: true).limit(limit),
+    col.where('status', isEqualTo: 'active').limit(limit),
+    col.where('status', isEqualTo: 'published').limit(limit),
+    col.where('isActive', isEqualTo: true).limit(limit),
+    col.where('isPublished', isEqualTo: true).limit(limit),
+  ];
+}
+
+/// Executes every [queries] variant, merges results by document ID and returns
+/// the deduplicated list. Individual query failures are logged but do not abort
+/// the whole operation — only when *all* queries fail is the first error
+/// rethrown.
+Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+    loadMergedPublicOfferQueryVariants({
+  required List<Query<Map<String, dynamic>>> queries,
+  required String source,
+}) async {
+  final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+  Object? firstError;
+  StackTrace? firstStackTrace;
+
+  for (var i = 0; i < queries.length; i++) {
+    try {
+      final snapshot = await queries[i].get();
+      for (final doc in snapshot.docs) {
+        byId.putIfAbsent(doc.id, () => doc);
+      }
+      if (kDebugMode) {
+        debugPrint(
+          '[PUBLIC_OFFERS][$source#$i] docs=${snapshot.docs.length}',
+        );
+      }
+    } catch (error, stackTrace) {
+      firstError ??= error;
+      firstStackTrace ??= stackTrace;
+      logPublicOffersReadErrorWithAppCheck('$source#$i', error, stackTrace);
+    }
+  }
+
+  if (byId.isEmpty && firstError != null) {
+    Error.throwWithStackTrace(firstError, firstStackTrace!);
+  }
+
+  return byId.values.toList(growable: false);
+}
+
+/// Watches every [queries] variant via `snapshots()`, merges results by
+/// document ID and emits deduplicated lists. Individual stream errors are
+/// logged; the merged error is only forwarded when *all* variants are empty.
+Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+    watchMergedPublicOfferQueryVariants({
+  required List<Query<Map<String, dynamic>>> queries,
+  required String source,
+}) {
+  return Stream.multi((controller) {
+    final latestDocs =
+        List<List<QueryDocumentSnapshot<Map<String, dynamic>>>>.filled(
+      queries.length,
+      const [],
+    );
+    final subscriptions = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+    Object? lastError;
+    StackTrace? lastStackTrace;
+
+    void _emit() {
+      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+      for (final docs in latestDocs) {
+        for (final doc in docs) {
+          byId.putIfAbsent(doc.id, () => doc);
+        }
+      }
+      if (byId.isEmpty && lastError != null) {
+        controller.addError(lastError!, lastStackTrace);
+      } else {
+        controller.add(byId.values.toList(growable: false));
+      }
+    }
+
+    for (var i = 0; i < queries.length; i++) {
+      final index = i;
+      subscriptions.add(
+        queries[i].snapshots().listen(
+          (snapshot) {
+            latestDocs[index] = snapshot.docs;
+            if (kDebugMode) {
+              debugPrint(
+                '[PUBLIC_OFFERS][$source#$index] stream docs=${snapshot.docs.length}',
+              );
+            }
+            _emit();
+          },
+          onError: (Object error, StackTrace stackTrace) {
+            lastError = error;
+            lastStackTrace = stackTrace;
+            logPublicOffersReadErrorWithAppCheck(
+              '$source#$index',
+              error,
+              stackTrace,
+            );
+            _emit();
+          },
+        ),
+      );
+    }
+
+    controller.onCancel = () {
+      for (final sub in subscriptions) {
+        sub.cancel();
+      }
+    };
+  });
 }
