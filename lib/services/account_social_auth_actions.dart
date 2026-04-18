@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -40,15 +41,44 @@ class AccountSocialAuthActions {
           final popupResult = await auth.signInWithPopup(googleProvider);
           isNewUser = popupResult.additionalUserInfo?.isNewUser ?? false;
           googleAuthService.logSuccess('Popup', auth.currentUser?.email);
+
+          // Cas Safari/COOP: signInWithPopup peut retourner un UserCredential
+          // sans user à cause des restrictions Cross-Origin-Opener-Policy,
+          // alors que la session Firebase est bien établie côté backend. On
+          // attend explicitement un événement authStateChanges avant de
+          // conclure à un échec.
+          if (popupResult.user == null && auth.currentUser == null) {
+            try {
+              await auth
+                  .authStateChanges()
+                  .firstWhere((u) => u != null)
+                  .timeout(const Duration(seconds: 3));
+            } on TimeoutException {
+              googleAuthService.logError(
+                'Popup',
+                'UserCredential vide et aucun authStateChanges en 3s',
+              );
+            }
+          }
         } catch (popupError) {
           googleAuthService.logError('Popup', popupError);
+
+          // Annulation volontaire utilisateur: pas de fallback redirect,
+          // juste un message neutre. Évite de relancer un flux complet
+          // avec rechargement de page après que l'utilisateur a fermé le
+          // popup.
+          if (googleAuthService.isUserCancelled(popupError)) {
+            if (!context.mounted) return;
+            showErrorSnackBar(context, 'Connexion annulée.');
+            return;
+          }
 
           if (googleAuthService.shouldFallbackToRedirect(popupError)) {
             try {
               googleAuthService.logFallback(
                 'Popup',
                 'Redirect',
-                reason: 'Popup bloqué ou erreur interne',
+                reason: 'Popup bloqué par le navigateur',
               );
               await auth.signInWithRedirect(googleProvider);
               return;

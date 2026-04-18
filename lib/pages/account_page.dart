@@ -27,7 +27,9 @@ import '../widgets/account_profile_sections.dart';
 import '../main.dart' show
     PrestoMonitoring,
     prestoOverlayStyleFor,
-    adminAudioRuntimeStore;
+    adminAudioRuntimeStore,
+    pendingRedirectAuthResult,
+    pendingRedirectAuthError;
 import 'user_offers_section.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
@@ -858,9 +860,24 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _checkFederatedRedirectResult() async {
     try {
-      final result = await _auth.getRedirectResult();
-      if (result.user != null) {
-        final isNew = result.additionalUserInfo?.isNewUser ?? false;
+      // Récupère d'abord le résultat capturé tôt dans main.dart pour éviter
+      // la course contre la consommation interne du SDK Firebase. Si rien
+      // n'a été capturé (cas d'un mount tardif après refresh manuel), on
+      // retombe sur l'API live.
+      UserCredential? result = pendingRedirectAuthResult;
+      if (result == null && pendingRedirectAuthError == null) {
+        result = await _auth.getRedirectResult();
+      } else if (pendingRedirectAuthError != null && result == null) {
+        // Propager l'erreur capturée tôt comme si on venait de l'avoir.
+        final captured = pendingRedirectAuthError;
+        if (captured is FirebaseAuthException) {
+          throw captured;
+        }
+        throw captured ?? StateError('OAuth redirect failed');
+      }
+
+      if (result?.user != null) {
+        final isNew = result!.additionalUserInfo?.isNewUser ?? false;
         final providerId = result.additionalUserInfo?.providerId ??
             result.user!.providerData.firstOrNull?.providerId ??
             '';
