@@ -1104,52 +1104,78 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Sur Web, vérifier d'abord le redirect Google Sign-In
-    if (kIsWeb) {
-      _checkGoogleRedirectAndNavigate();
-    } else {
-      _scheduleNavigation(const Duration(milliseconds: 3500));
+    _scheduleNavigation(_initialSplashDuration());
+  }
+
+  Duration _initialSplashDuration() {
+    if (!kIsWeb) {
+      return const Duration(milliseconds: 3500);
     }
+
+    final webPath = _normalizedWebPath();
+    final hasDeepLink = parseAppDeepLink(Uri.base.toString()) != null;
+    if (webPath == '/account' || webPath == '/publish' || hasDeepLink) {
+      return const Duration(milliseconds: 1200);
+    }
+
+    return const Duration(milliseconds: 3500);
+  }
+
+  String _normalizedWebPath() {
+    final rawPath = Uri.base.path.trim();
+    if (rawPath.isEmpty) {
+      return '/';
+    }
+    return rawPath.endsWith('/') && rawPath.length > 1
+        ? rawPath.substring(0, rawPath.length - 1)
+        : rawPath;
+  }
+
+  Widget _destinationForCurrentLocation() {
+    if (!kIsWeb) {
+      return const HomePage();
+    }
+
+    final webPath = _normalizedWebPath();
+    if (webPath == '/account') {
+      return const AccountPage();
+    }
+    if (webPath == '/publish') {
+      return const PublishOfferPage();
+    }
+
+    final target = parseAppDeepLink(Uri.base.toString());
+    if (target != null) {
+      if (target.offerId != null) {
+        return OfferDeepLinkPage(
+          offerId: target.offerId!,
+          preferMarketplace: target.preferMarketplace,
+        );
+      }
+
+      if (target.routeName == AppDeepLinkTarget.messagesRouteName ||
+          target.routeName == AppDeepLinkTarget.messagesV2RouteName) {
+        return MessagesPageV2(
+          initialConversationId: target.conversationId,
+          initialDraftText: target.initialDraftText,
+        );
+      }
+
+      return HomePage(
+        initialIndex: 3,
+        initialMessagesConversationId: target.conversationId,
+        initialMessagesDraftText: target.initialDraftText,
+      );
+    }
+
+    return const HomePage();
   }
 
   void _scheduleNavigation(Duration duration) {
     _navTimer?.cancel();
     _navTimer = Timer(duration, () {
-      _navigateTo(const HomePage());
+      _navigateTo(_destinationForCurrentLocation());
     });
-  }
-
-  /// Vérifie si l'utilisateur revient d'un redirect Google Sign-In (Web uniquement)
-  Future<void> _checkGoogleRedirectAndNavigate() async {
-    debugPrint('🔍 [SPLASH] Checking for Google redirect result...');
-    try {
-      final result = await FirebaseAuth.instance.getRedirectResult();
-      if (result.user != null) {
-        if (kDebugMode) {
-          debugPrint('✅ [SPLASH] User authenticated via redirect!');
-          debugPrint('✅ [SPLASH] Email: ${result.user?.email}');
-          debugPrint('✅ [SPLASH] UID: ${result.user?.uid}');
-        }
-        // Attendre un peu pour montrer le splash, puis naviguer vers HomePage
-        _scheduleNavigation(const Duration(milliseconds: 1500));
-      } else {
-        if (kDebugMode) debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
-        // Pas de redirect, navigation normale après splash
-        _scheduleNavigation(const Duration(milliseconds: 3500));
-      }
-    } on FirebaseAuthException catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
-        debugPrint('❌ [SPLASH] Code: ${e.code}');
-        debugPrint('❌ [SPLASH] Message: ${e.message}');
-      }
-      // Erreur d'auth, mais on continue quand même vers HomePage
-      _scheduleNavigation(const Duration(milliseconds: 3500));
-    } catch (e) {
-      if (kDebugMode) debugPrint('❌ [SPLASH] Unexpected error: $e');
-      // Erreur inattendue, navigation normale
-      _scheduleNavigation(const Duration(milliseconds: 3500));
-    }
   }
 
   void _navigateTo(Widget page) {
