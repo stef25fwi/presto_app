@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -145,6 +149,60 @@ class AccountSocialAuthActions {
     }
   }
 
+  static Future<void> signInWithFacebook({
+    required BuildContext context,
+    required FirebaseAuth auth,
+    required AccountTrackLoginCallback trackLogin,
+  }) async {
+    final provider = FacebookAuthProvider()
+      ..setCustomParameters(<String, String>{
+        'display': 'popup',
+      })
+      ..addScope('email')
+      ..addScope('public_profile');
+
+    try {
+      bool isNewUser = false;
+
+      if (kIsWeb) {
+        try {
+          final popupResult = await auth.signInWithPopup(provider);
+          isNewUser = popupResult.additionalUserInfo?.isNewUser ?? false;
+        } catch (popupError) {
+          if (_shouldFallbackToRedirect(popupError)) {
+            await auth.signInWithRedirect(provider);
+            return;
+          }
+          if (!context.mounted) return;
+          showErrorSnackBar(context, _facebookErrorMessage(popupError));
+          return;
+        }
+      } else {
+        final providerResult = await auth.signInWithProvider(provider);
+        isNewUser = providerResult.additionalUserInfo?.isNewUser ?? false;
+      }
+
+      if (!context.mounted) return;
+      await _finalizeSocialSignIn(
+        context: context,
+        auth: auth,
+        authMethod: 'facebook',
+        providerLabel: 'Facebook',
+        isNewUser: isNewUser,
+        trackLogin: trackLogin,
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!context.mounted) return;
+      showErrorSnackBar(context, _facebookErrorMessage(error));
+    } catch (error) {
+      if (!context.mounted) return;
+      showErrorSnackBar(
+        context,
+        'Erreur lors de la connexion Facebook. Reessayez.',
+      );
+    }
+  }
+
   static Future<void> signInWithApple({
     required BuildContext context,
     required FirebaseAuth auth,
@@ -163,12 +221,15 @@ class AccountSocialAuthActions {
 
     try {
       debugPrint('[Apple Sign-In] Démarrage de l\'authentification Apple...');
+      final rawNonce = _generateNonce();
+      final hashedNonce = _sha256OfString(rawNonce);
 
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        nonce: hashedNonce,
       );
 
       debugPrint(
@@ -182,6 +243,7 @@ class AccountSocialAuthActions {
       final oauthCredential = OAuthProvider('apple.com').credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
+        rawNonce: rawNonce,
       );
 
       final userCredential = await auth.signInWithCredential(oauthCredential);
@@ -305,5 +367,95 @@ class AccountSocialAuthActions {
       debugPrint('[Apple Sign-In] Unexpected error: $e');
       showErrorSnackBar(context, 'Erreur inattendue : $e');
     }
+  }
+
+  static Future<void> _finalizeSocialSignIn({
+    required BuildContext context,
+    required FirebaseAuth auth,
+    required String authMethod,
+    required String providerLabel,
+    required bool isNewUser,
+    required AccountTrackLoginCallback trackLogin,
+  }) async {
+    final user = auth.currentUser;
+    bool bootstrapFailed = false;
+
+    if (user == null) {
+      if (!context.mounted) return;
+      showErrorSnackBar(
+        context,
+        'Connexion $providerLabel incomplete. Reessayez.',
+      );
+      return;
+    }
+
+    try {
+      await UserProfileBootstrapService.ensureUserDocument(
+        user: user,
+        authMethod: authMethod,
+        isNewUserHint: isNewUser,
+      );
+    } catch (bootstrapError) {
+      bootstrapFailed = true;
+      debugPrint('[$providerLabel Sign-In] Auth bootstrap error: $bootstrapError');
+    }
+
+    try {
+      await trackLogin(authMethod: authMethod, isNewUser: isNewUser);
+    } catch (trackingError) {
+      debugPrint('[$providerLabel Sign-In] Tracking error: $trackingError');
+    }
+
+    if (!context.mounted) return;
+    if (bootstrapFailed) {
+      showSuccessSnackBar(context, 'Connecté, profil en cours de création…');
+    } else {
+      showSuccessSnackBar(context, '✓ Connecté avec $providerLabel');
+    }
+  }
+
+  static bool _shouldFallbackToRedirect(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('popup') ||
+        message.contains('blocked') ||
+        message.contains('cross-origin') ||
+        message.contains('internal-error');
+  }
+
+  static String _facebookErrorMessage(Object error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'account-exists-with-different-credential':
+          return 'Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.';
+        case 'popup-blocked':
+          return 'Pop-up Facebook bloquée. Autorise les pop-ups puis réessaie.';
+        case 'popup-closed-by-user':
+        case 'cancelled-popup-request':
+        case 'cancelled':
+          return '';
+        case 'operation-not-allowed':
+          return 'Connexion Facebook non activée dans Firebase Authentication.';
+        case 'invalid-credential':
+          return 'Identifiants Facebook invalides. Réessaie.';
+        case 'network-request-failed':
+          return 'Erreur réseau. Vérifie la connexion internet.';
+      }
+      return error.message ?? 'Erreur de connexion Facebook.';
+    }
+    return 'Erreur de connexion Facebook. Reessayez.';
+  }
+
+  static String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List<String>.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
+  }
+
+  static String _sha256OfString(String input) {
+    final bytes = utf8.encode(input);
+    return sha256.convert(bytes).toString();
   }
 }

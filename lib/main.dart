@@ -48,6 +48,31 @@ const String kOfferDeleteReasonFoundProvider =
 const String kOfferDeleteReasonFoundOnIliPresto =
     'J’ai trouvé quelqu’un sur iliprestō';
 const Duration kOfferJobDoneOverlayDuration = Duration(hours: 10);
+const double kMarketplaceOutlineWidth = 1.2;
+const String kAppVersion = String.fromEnvironment(
+  'APP_VERSION',
+  defaultValue: 'dev',
+);
+const String kAppBuildNumber = String.fromEnvironment(
+  'APP_BUILD_NUMBER',
+  defaultValue: '0',
+);
+const String kAppBuildSha = String.fromEnvironment(
+  'APP_BUILD_SHA',
+  defaultValue: 'local',
+);
+const String kAppBuildBranch = String.fromEnvironment(
+  'APP_BUILD_BRANCH',
+  defaultValue: '',
+);
+const String kAppBuildTag = String.fromEnvironment(
+  'APP_BUILD_TAG',
+  defaultValue: '',
+);
+const String kAppBuildTimeUtc = String.fromEnvironment(
+  'APP_BUILD_TIME_UTC',
+  defaultValue: '',
+);
 
 String _normalizeOfferDeletionReason(String input) {
   return input
@@ -88,62 +113,12 @@ DateTime? _offerJobDoneVisibleUntil(Map<String, dynamic> data) {
   );
 }
 
-bool _isOfferArchivedLike(Map<String, dynamic> data) {
-  final status = (data['status'] ?? '').toString().trim().toLowerCase();
-  if (status == 'archived' ||
-      status == 'archivé' ||
-      status == 'deleted' ||
-      status == 'removed' ||
-      status == 'sold') {
-    return true;
-  }
-
-  return data['archivedAt'] != null || data['deletedAt'] != null;
-}
-
-bool _isOfferJobDoneOverlayVisible(Map<String, dynamic> data) {
-  final visibleUntil = _offerJobDoneVisibleUntil(data);
-  if (visibleUntil == null || !visibleUntil.isAfter(DateTime.now())) {
-    return false;
-  }
-
-  final visibleFlag = data['jobDoneOverlayVisible'];
-  if (visibleFlag is bool && !visibleFlag) {
-    return false;
-  }
-
-  final reason =
-      (data['deletedReason'] ?? data['archiveReason'] ?? '').toString().trim();
-  return visibleFlag == true || _isOfferJobDoneDeletionReason(reason);
-}
-
-
-
-const double kMarketplaceOutlineWidth = 2.0;
-
-const String kAppBuildSha =
-    String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
-const String kAppVersion =
-    String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
-const String kAppBuildNumber =
-    String.fromEnvironment('APP_BUILD_NUMBER', defaultValue: '1');
-const String kAppRepository =
-    String.fromEnvironment('APP_REPOSITORY', defaultValue: '');
-const String kAppBuildBranch =
-    String.fromEnvironment('APP_BUILD_BRANCH', defaultValue: '');
-const String kAppBuildTimeUtc =
-    String.fromEnvironment('APP_BUILD_TIME', defaultValue: '');
-const String kAppBuildTag =
-    String.fromEnvironment('APP_BUILD_TAG', defaultValue: '');
-
 class PrestoMonitoring extends ChangeNotifier {
-  static final PrestoMonitoring I = PrestoMonitoring._();
-
   PrestoMonitoring._();
 
+  static final PrestoMonitoring I = PrestoMonitoring._();
+
   bool enabled = true;
-  bool verboseLogs = false;
-  bool monitorOffersStream = true;
   bool monitorOffersFetchOnce = true;
   bool monitorMessagesFetchOnce = true;
   bool monitorFunctionsCalls = true;
@@ -154,124 +129,42 @@ class PrestoMonitoring extends ChangeNotifier {
   int offersQueryBuildCount = 0;
   int offersSnapshotsCount = 0;
   int offersFetchOnceCount = 0;
+  int lastOffersFetchMs = 0;
+  int lastOffersFetchDocs = 0;
   int messagesFetchOnceCount = 0;
+  int lastMessagesFetchMs = 0;
+  int lastMessagesFetchDocs = 0;
   int functionsCallsCount = 0;
-  int errorsCount = 0;
-
+  int lastFunctionsCallMs = 0;
   int otherStreamsEvents = 0;
   final Map<String, int> otherStreamEventCounts = <String, int>{};
   final Map<String, int> otherStreamLastDocs = <String, int>{};
-  String? lastOtherStreamKey;
+  String lastOtherStreamKey = '';
   int lastOtherStreamDocs = 0;
+  String lastErrorKey = '';
+  String lastErrorMessage = '';
 
-  int lastOffersSnapshotDocs = 0;
-  int lastOffersFetchDocs = 0;
-  int lastMessagesFetchDocs = 0;
-  int lastOffersFetchMs = 0;
-  int lastMessagesFetchMs = 0;
-  int lastFunctionsCallMs = 0;
-  String? lastOffersQuerySignature;
-  String? lastError;
-
-  String get sessionDurationLabel {
-    final d = DateTime.now().difference(sessionStart);
-    if (d.inSeconds < 60) return '${d.inSeconds}s';
-    if (d.inMinutes < 60) return '${d.inMinutes}m ${d.inSeconds % 60}s';
-    return '${d.inHours}h ${d.inMinutes % 60}m';
-  }
-
-  void _maybeLog(String msg) {
-    if (!verboseLogs || !kDebugMode) return;
-    debugPrint('[MONITOR] $msg');
-  }
-
-  void setEnabled(bool v) {
-    enabled = v;
-    notifyListeners();
-  }
-
-  void setVerbose(bool v) {
-    verboseLogs = v;
-    notifyListeners();
-  }
-
-  void setMonitorOffersStream(bool v) {
-    monitorOffersStream = v;
-    notifyListeners();
-  }
-
-  void setMonitorOffersFetchOnce(bool v) {
-    monitorOffersFetchOnce = v;
-    notifyListeners();
-  }
-
-  void setMonitorMessagesFetchOnce(bool v) {
-    monitorMessagesFetchOnce = v;
-    notifyListeners();
-  }
-
-  void setMonitorFunctionsCalls(bool v) {
-    monitorFunctionsCalls = v;
-    notifyListeners();
-  }
-
-  void setMonitorOtherStreams(bool v) {
-    monitorOtherStreams = v;
-    notifyListeners();
-  }
-
-  void reset() {
-    sessionStart = DateTime.now();
-    offersQueryBuildCount = 0;
-    offersSnapshotsCount = 0;
-    offersFetchOnceCount = 0;
-    messagesFetchOnceCount = 0;
-    functionsCallsCount = 0;
-    errorsCount = 0;
-    lastOffersSnapshotDocs = 0;
-    lastOffersFetchDocs = 0;
-    lastMessagesFetchDocs = 0;
-    lastOffersFetchMs = 0;
-    lastMessagesFetchMs = 0;
-    lastFunctionsCallMs = 0;
-    lastOffersQuerySignature = null;
-    lastError = null;
-    otherStreamsEvents = 0;
-    otherStreamEventCounts.clear();
-    otherStreamLastDocs.clear();
-    lastOtherStreamKey = null;
-    lastOtherStreamDocs = 0;
-    notifyListeners();
-  }
-
-  void trackError(String scope, Object e) {
-    if (!enabled) return;
-    errorsCount++;
-    lastError = '$scope: ${e.toString()}';
-    _maybeLog('ERROR $lastError');
-    notifyListeners();
+  void _maybeLog(String message) {
+    if (!enabled || !kDebugMode) return;
+    debugPrint('[PrestoMonitoring] $message');
   }
 
   void trackOffersQueryBuild({String? signature}) {
-    if (!enabled || !monitorOffersStream) return;
+    if (!enabled) return;
     offersQueryBuildCount++;
-    if (signature != null && signature.trim().isNotEmpty) {
-      lastOffersQuerySignature = signature;
-    }
-    _maybeLog('offers.query.build count=$offersQueryBuildCount');
+    _maybeLog('offers.queryBuild signature=${signature ?? '-'}');
     notifyListeners();
   }
 
   void trackOffersSnapshot(int docsCount) {
-    if (!enabled || !monitorOffersStream) return;
+    if (!enabled) return;
     offersSnapshotsCount++;
-    lastOffersSnapshotDocs = docsCount;
-    _maybeLog('offers.snapshot docs=$docsCount count=$offersSnapshotsCount');
+    lastOffersFetchDocs = docsCount;
+    _maybeLog('offers.snapshot docs=$docsCount');
     notifyListeners();
   }
 
   void trackOffersFetchOnce({required int ms, required int docsCount}) {
-    if (!enabled || !monitorOffersFetchOnce) return;
     offersFetchOnceCount++;
     lastOffersFetchMs = ms;
     lastOffersFetchDocs = docsCount;
@@ -304,6 +197,14 @@ class PrestoMonitoring extends ChangeNotifier {
     lastOtherStreamKey = key;
     lastOtherStreamDocs = docsCount;
     _maybeLog('stream.other key=$key docs=$docsCount');
+    notifyListeners();
+  }
+
+  void trackError(String key, Object error) {
+    if (!enabled) return;
+    lastErrorKey = key;
+    lastErrorMessage = error.toString();
+    _maybeLog('error key=$key error=$error');
     notifyListeners();
   }
 }

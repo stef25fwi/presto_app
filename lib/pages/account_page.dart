@@ -16,8 +16,6 @@ import '../features/account/signed_out_account_fallback.dart';
 import '../models/admin_access_state.dart';
 import 'admin_space_page.dart';
 import '../services/admin_access_resolver.dart';
-import '../services/account_social_auth_actions.dart';
-import '../services/google_auth_service.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
@@ -47,7 +45,6 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
-  final GoogleAuthService _googleAuthService = GoogleAuthService();
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
   final FirebaseFunctions _functions = prestoFirebaseFunctions;
@@ -671,9 +668,9 @@ class _AccountPageState extends State<AccountPage> {
       unawaited(_handleProfileAuthStateChanged(user));
     });
 
-    // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
+    // Sur Web, vérifie si l'utilisateur revient d'un redirect OAuth fédéré.
     if (kIsWeb) {
-      _checkGoogleRedirectResult();
+      _checkFederatedRedirectResult();
     }
   }
 
@@ -859,38 +856,49 @@ class _AccountPageState extends State<AccountPage> {
     _profilePhoneController.text = trimmed;
   }
 
-  Future<void> _checkGoogleRedirectResult() async {
+  Future<void> _checkFederatedRedirectResult() async {
     try {
       final result = await _auth.getRedirectResult();
       if (result.user != null) {
         final isNew = result.additionalUserInfo?.isNewUser ?? false;
-        // Créer/mettre à jour le document Firestore de l'utilisateur
-        // (manquant avant : les nouveaux utilisateurs via redirect n'avaient pas de document).
+        final providerId = result.additionalUserInfo?.providerId ??
+            result.user!.providerData.firstOrNull?.providerId ??
+            '';
+        final authMethod = switch (providerId) {
+          'facebook.com' => 'facebook',
+          'google.com' => 'google',
+          _ => 'social',
+        };
+        final providerLabel = switch (providerId) {
+          'facebook.com' => 'Facebook',
+          'google.com' => 'Google',
+          _ => 'externe',
+        };
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: result.user!,
-            authMethod: 'google',
+            authMethod: authMethod,
             isNewUserHint: isNew,
           );
         } catch (bootstrapError) {
-          debugPrint('[Google Redirect] Bootstrap error: $bootstrapError');
+          debugPrint('[OAuth Redirect] Bootstrap error: $bootstrapError');
         }
-        await _trackLogin(authMethod: 'google', isNewUser: isNew);
+        await _trackLogin(authMethod: authMethod, isNewUser: isNew);
         if (!mounted) return;
-        showSuccessSnackBar(context, "Connecté avec Google");
+        showSuccessSnackBar(context, 'Connecté avec $providerLabel');
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      String msg = "Erreur Google";
+      String msg = 'Erreur de connexion externe';
       var shouldShow = true;
       if (e.code == 'unauthorized-domain') {
         msg =
             "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
       } else if (e.code == 'operation-not-allowed') {
         msg =
-            "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
+            'Fournisseur externe non activé. Vérifie Firebase Authentication → Sign-in method.';
       } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
-        msg = "Erreur Google : ${e.message ?? e.code}";
+        msg = 'Erreur externe : ${e.message ?? e.code}';
       } else {
         shouldShow = false;
       }
@@ -899,15 +907,12 @@ class _AccountPageState extends State<AccountPage> {
         showErrorSnackBar(context, msg);
       }
     } catch (e) {
-      debugPrint('[Google Redirect] Error checking result: $e');
+      debugPrint('[OAuth Redirect] Error checking result: $e');
     }
   }
 
   @override
   void dispose() {
-    // _emailController.dispose(); // Maintenant géré par PrestoPremiumAuthPage
-    // _passwordController.dispose();
-    // _passwordConfirmController.dispose();
     _profileAuthSub?.cancel();
     _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
     _profileCityController.removeListener(_handleProfileCompletenessChanged);
@@ -918,8 +923,6 @@ class _AccountPageState extends State<AccountPage> {
     _scrollController.dispose();
     super.dispose();
   }
-
-  // Ancienne méthode - maintenant gérée par PrestoPremiumAuthPage
 
   Future<void> _loadUserProfile(User user, {int attempt = 0}) async {
     final previousPseudo = _profilePseudoController.text.trim();
@@ -1603,23 +1606,6 @@ class _AccountPageState extends State<AccountPage> {
     await _saveProfile(user, showSuccess: false);
   }
 
-  Future<void> _signInWithGoogle() async {
-    await AccountSocialAuthActions.signInWithGoogle(
-      context: context,
-      auth: _auth,
-      googleAuthService: _googleAuthService,
-      trackLogin: _trackLogin,
-    );
-  }
-
-  Future<void> _signInWithApple() async {
-    await AccountSocialAuthActions.signInWithApple(
-      context: context,
-      auth: _auth,
-      trackLogin: _trackLogin,
-    );
-  }
-
   Future<void> _signOut() async {
     if (_isSigningOut) return;
 
@@ -1645,8 +1631,6 @@ class _AccountPageState extends State<AccountPage> {
       }
     }
   }
-
-  // Ancienne méthode _buildProfile supprimée - remplacée par PrestoPremiumAuthPage pour l'auth
 
   Widget _buildAccountSectionCard({
     required IconData icon,
@@ -2489,21 +2473,6 @@ class _AccountPageState extends State<AccountPage> {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
           return const SignedOutAccountFallback(source: 'account-route');
-          /*
-          return PrestoPremiumAuthPage(
-            onGoogle: () async => await _signInWithGoogle(),
-            onApple: () async => await _signInWithApple(),
-            onEmailLogin: (email, password) async {
-              await _auth.signInWithEmailAndPassword(
-                email: email,
-                password: password,
-              );
-            },
-            onResetPassword: (email) async {
-              await _auth.sendPasswordResetEmail(email: email);
-            },
-          );
-          */
         } else {
           return _buildProfile(user);
         }
