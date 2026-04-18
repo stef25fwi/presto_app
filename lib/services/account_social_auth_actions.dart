@@ -33,12 +33,7 @@ class AccountSocialAuthActions {
       );
 
       if (kIsWeb) {
-        final googleProvider = GoogleAuthProvider();
-        googleProvider.setCustomParameters({
-          'prompt': 'select_account',
-        });
-        googleProvider.addScope('email');
-        googleProvider.addScope('profile');
+        final googleProvider = _buildGoogleProvider(forceAccountSelection: true);
 
         try {
           googleAuthService.logAttempt('Popup');
@@ -78,10 +73,7 @@ class AccountSocialAuthActions {
           return;
         }
       } else {
-        final provider = GoogleAuthProvider()
-          ..setCustomParameters({'prompt': 'select_account'});
-        provider.addScope('email');
-        provider.addScope('profile');
+        final provider = _buildGoogleProvider(forceAccountSelection: true);
 
         googleAuthService.logAttempt('signInWithProvider');
         final providerResult = await auth.signInWithProvider(provider);
@@ -457,5 +449,26 @@ class AccountSocialAuthActions {
   static String _sha256OfString(String input) {
     final bytes = utf8.encode(input);
     return sha256.convert(bytes).toString();
+  }
+
+  static GoogleAuthProvider _buildGoogleProvider({
+    bool forceAccountSelection = false,
+  }) {
+    final provider = GoogleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('profile');
+
+    final customParameters = <String, String>{
+      'prompt': forceAccountSelection ? 'select_account consent' : 'select_account',
+    };
+
+    if (forceAccountSelection) {
+      customParameters['authuser'] = '-1';
+      customParameters['login_hint'] = '';
+      customParameters['include_granted_scopes'] = 'false';
+    }
+
+    provider.setCustomParameters(customParameters);
+    return provider;
   }
 }
