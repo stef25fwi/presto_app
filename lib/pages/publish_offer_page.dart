@@ -1326,6 +1326,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Urgent';
       case '24h':
         return 'Dans la journée';
+      case 'demain':
+        return 'Demain';
+      case '48h':
+        return 'Sous 48h';
       case '7j':
         return 'Cette semaine';
       case 'flexible':
@@ -1477,9 +1481,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .toString()
         .trim()
         .toLowerCase();
-    final wantsNegotiation = rawBudgetType == 'a_negocier' ||
-        rawBudgetType == 'à négocier' ||
-        rawBudgetType == 'negotiable';
+    final wantsNegotiation = rawBudgetType == 'negotiable' ||
+        rawBudgetType == 'a_negocier' ||
+        rawBudgetType == 'à négocier';
 
     setState(() {
       if (!_titleEditedByUser && title.isNotEmpty) {
@@ -1491,6 +1495,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!_categoryEditedByUser && category != null && category.isNotEmpty) {
         _category = category;
         _selectedSubCategory = null;
+        // Apply AI-detected sub-category if valid for the resolved category
+        final rawSub = (draft['sous_categorie'] ?? '').toString().trim();
+        if (rawSub.isNotEmpty) {
+          final available = kCategorySubcategories[category] ?? const <String>[];
+          if (available.contains(rawSub)) {
+            _selectedSubCategory = rawSub;
+          }
+        }
       }
       if (!_delayEditedByUser && missionDelay != null) {
         _missionDelay = missionDelay;
