@@ -38,6 +38,13 @@ export 'pages/publish_offer_page.dart' show PublishOfferPage;
 final AdminAudioRuntimeStore adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
 
+/// Résultat de `FirebaseAuth.getRedirectResult()` capturé une seule fois au
+/// démarrage (web). Permet aux pages compte/profil de récupérer le retour
+/// d'un sign-in fédéré (Google/Facebook/Apple) sans courir la course
+/// contre la consommation interne du SDK Firebase.
+UserCredential? pendingRedirectAuthResult;
+Object? pendingRedirectAuthError;
+
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
 
@@ -728,8 +735,37 @@ Future<void> main() async {
       final auth = FirebaseAuth.instance;
       if (kDebugMode) {
         DebugAuth.installAuthStateLogs();
-        unawaited(DebugAuth.debugRedirectResultAtStartup());
       }
+
+      if (kIsWeb) {
+        // Garantit la persistance LOCAL pour survivre au signInWithRedirect
+        // (sinon Safari/Brave retombent en SESSION et perdent l'état au
+        // retour OAuth).
+        try {
+          await auth.setPersistence(Persistence.LOCAL);
+        } catch (e) {
+          if (kDebugMode) debugPrint('[Auth] setPersistence failed: $e');
+        }
+
+        // Capture UNE SEULE FOIS le résultat d'un éventuel
+        // signInWithRedirect précédent. Doit être appelé tôt pour ne pas
+        // courir la course contre AccountPage qui appelle aussi
+        // getRedirectResult dans son initState.
+        try {
+          pendingRedirectAuthResult = await auth.getRedirectResult();
+          if (kDebugMode) {
+            debugPrint(
+              '[Auth] getRedirectResult: user='
+              '${pendingRedirectAuthResult?.user?.uid} '
+              'provider=${pendingRedirectAuthResult?.credential?.providerId}',
+            );
+          }
+        } catch (e) {
+          pendingRedirectAuthError = e;
+          if (kDebugMode) debugPrint('[Auth] getRedirectResult error: $e');
+        }
+      }
+
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
         if (kDebugMode) debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');

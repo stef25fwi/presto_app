@@ -108,13 +108,53 @@ class GoogleAuthService {
     return false;
   }
 
-  /// Heuristique pour fallback popup → redirect
+  /// Heuristique pour fallback popup → redirect.
+  ///
+  /// Ne déclenche le fallback QUE pour les vrais blocages browser (popup
+  /// refusée par le navigateur, COOP/COEP). Les annulations volontaires
+  /// utilisateur (`popup-closed-by-user`, `cancelled-popup-request`) ne
+  /// doivent PAS déclencher un redirect, sinon on relance un flux complet
+  /// avec rechargement de page alors que l'utilisateur a juste fermé le
+  /// popup.
   bool shouldFallbackToRedirect(dynamic error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'popup-blocked':
+        case 'popup-blocked-by-browser':
+          return true;
+        case 'popup-closed-by-user':
+        case 'cancelled-popup-request':
+        case 'cancelled':
+        case 'user-cancelled':
+          return false;
+        default:
+          break;
+      }
+    }
     final msg = error.toString().toLowerCase();
-    return msg.contains('popup') ||
-        msg.contains('blocked') ||
-        msg.contains('internal-error') ||
+    if (msg.contains('closed-by-user') ||
+        msg.contains('cancelled-popup-request') ||
+        msg.contains('cancelled')) {
+      return false;
+    }
+    return msg.contains('popup-blocked') ||
+        msg.contains('cross-origin-opener-policy') ||
         msg.contains('cross-origin');
+  }
+
+  /// Vrai si l'erreur correspond à une annulation volontaire de l'utilisateur
+  /// (popup fermée, demande annulée). On peut alors afficher un message
+  /// neutre sans relancer de redirect.
+  bool isUserCancelled(dynamic error) {
+    if (error is FirebaseAuthException) {
+      return error.code == 'popup-closed-by-user' ||
+          error.code == 'cancelled-popup-request' ||
+          error.code == 'cancelled' ||
+          error.code == 'user-cancelled';
+    }
+    final msg = error.toString().toLowerCase();
+    return msg.contains('closed-by-user') ||
+        msg.contains('cancelled-popup-request');
   }
 
   /// Log détaillé pour débugage
