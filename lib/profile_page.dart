@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -629,6 +630,20 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoading = true);
     try {
       await AccountSocialAuthActions.signInWithApple(
+        context: context,
+        auth: _auth,
+        trackLogin: _trackLogin,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _onFacebookSignIn() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await AccountSocialAuthActions.signInWithFacebook(
         context: context,
         auth: _auth,
         trackLogin: _trackLogin,
@@ -1472,6 +1487,13 @@ class _ProfilePageState extends State<ProfilePage> {
           onTap: () async => _onGoogleSignIn(),
           colorScheme: colorScheme,
           forceWhiteBackground: true,
+        ),
+        const SizedBox(height: 8),
+        _buildSocialButton(
+          icon: const FaIcon(FontAwesomeIcons.facebookF, size: 18),
+          label: 'Continuer avec Facebook',
+          onTap: () async => _onFacebookSignIn(),
+          colorScheme: colorScheme,
         ),
         if (_isAppleSignInSupported) ...[
           const SizedBox(height: 8),
