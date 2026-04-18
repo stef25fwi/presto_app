@@ -62,6 +62,7 @@ class AiDraftService {
         'suggestions_titres': _toStringList(data['suggestions_titres'] ?? []),
         'description_courte': (data['description_courte'] ?? '').toString(),
         'categorie': (data['categorie'] ?? '').toString(),
+        'sous_categorie': (data['sous_categorie'] ?? '').toString(),
         'ville': (data['ville'] ?? '').toString(),
         'secteur': (data['secteur'] ?? '').toString(),
         'budget': _toBudgetMap(data['budget']),
