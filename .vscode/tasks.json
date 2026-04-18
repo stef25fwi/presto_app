@@ -135,6 +135,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Stash And Pull Rebase",
+      "type": "shell",
+      "command": "git stash && git pull --rebase origin main && git stash pop",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Pull Rebase",
+      "type": "shell",
+      "command": "git pull --rebase origin main",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Push Main",
       "type": "shell",
       "command": "git push origin main",
