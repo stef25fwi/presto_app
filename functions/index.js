@@ -358,36 +358,37 @@ Règles de production :
 Règles d'extraction :
 - Ville : reprends la ville mentionnée dans l'entrée. Si elle n'apparaît pas clairement mais qu'une ville de contexte est fournie, tu peux reprendre cette ville de contexte.
 - Secteur : renseigne un quartier, secteur ou zone seulement si explicitement présent.
-- Budget : renseigne uniquement si un montant ou un tarif est clairement exprimé. Si l'utilisateur dit que c'est "à discuter", "à négocier" ou équivalent, laisse type/min/max à null.
+- Budget : si l'utilisateur mentionne un montant → type "fixe" ou "horaire" avec les valeurs. Si l'utilisateur dit "à négocier", "à discuter", "prix libre" ou équivalent → type "negotiable", min/max à null. Sinon → type null, min/max null.
 - Urgence : utilise uniquement une des valeurs autorisées si l'urgence est clairement exprimée.
 - Si une information n'est pas dite mot pour mot ou déduite de façon certaine de la transcription, ne l'ajoute pas dans la description ni dans les détails.
 
-Catégorie : choisis uniquement parmi cette liste si c'est suffisamment clair, sinon null.
-- Jardinage
-- Bricolage / Travaux
-- Aide à domicile
-- Restauration / Extra
-- Événementiel / DJ
-- Garde d'enfants
-- Cours & soutien
-- Peinture
-- Main-d'œuvre
-- Autre
+Catégorie et sous-catégorie : choisis uniquement parmi cette liste si c'est suffisamment clair, sinon null.
+- Jardinage → sous-cats: Tonte de pelouse, Taille de haies, Débroussaillage, Désherbage / nettoyage massif, Élagage léger, Création de massifs / plantations, Arrosage / entretien régulier, Évacuation des végétaux, Entretien jardin location, Entretien potager
+- Bricolage / Travaux → sous-cats: Montage de meubles, Pose de luminaires, Pose de tringles / étagères, Réparation électroménager, Petits travaux électricité, Petits travaux plomberie, Pose de cloison / placo, Pose de carrelage / faïence, Réparation portail / clôture, Installation TV / support mural
+- Aide à domicile → sous-cats: Ménage régulier, Ménage ponctuel / grand nettoyage, Repassage, Aide aux courses, Préparation des repas, Accompagnement personnes âgées, Aide administrative / papiers, Gardiennage maison (absence), Nettoyage après déménagement, Organisation / rangement
+- Restauration / Extra → sous-cats: Service en salle, Bar / Barman, Plonge / Vaisselle, Aide cuisine / Commis, Chef de partie / Cuisinier, Snack / Fast-food, Food truck / Événementiel, Petit-déjeuner / Brunch, Service banquet / Mariage, Traiteur à domicile
+- Événementiel / DJ → sous-cats: DJ soirée privée, DJ mariage, DJ anniversaire, Location sono / lumières, Animateur micro / MC, Photographe événement, Vidéaste événement, Serveur / barman événementiel, Décoration de salle, Organisation complète événement
+- Garde d'enfants → sous-cats: Baby-sitting soirée, Sortie d'école / crèche, Garde périscolaire, Garde week-end, Garde vacances scolaires, Garde occasionnelle urgence, Garde à domicile temps plein, Garde partagée, Accompagnement activités, Aide aux devoirs légère
+- Cours & soutien → sous-cats: Aide aux devoirs primaire, Soutien collège, Soutien lycée, Maths / Physique, Français / Langues, Anglais, Espagnol, Initiation informatique, Cours de musique, Coaching sport / fitness, Préparation examens / concours
+- Peinture → sous-cats: Peinture chambre / salon, Peinture façade, Peinture grille / portail, Préparation murs (enduit, ponçage), Rafraîchissement appartement, Peinture boiseries, Peinture plafond, Peinture escalier / cage, Peinture décorative, Rénovation locative express
+- Main-d'œuvre → sous-cats: Aide déménagement, Chargement / déchargement, Port de charges lourdes, Manutention chantier, Montage / démontage stands, Manutention événementielle, Distribution flyers / échantillons, Inventaire magasin, Aide livraison, Aide débarras / encombrants
+- Autre → sous-cats: Informatique / dépannage, Réseaux sociaux / contenu, Nettoyage véhicule, Aide administrative / comptable, Coaching perso / pro, Traduction, Promenade animaux / pet-sitting, Couture / retouches, Assistance shooting photo
 
 FORMAT JSON OBLIGATOIRE :
 {
   "titre": string,
   "suggestions_titres": [string, string],
   "categorie": string|null,
+  "sous_categorie": string|null,
   "ville": string|null,
   "secteur": string|null,
   "budget": {
-    "type": "fixe"|"horaire"|null,
+    "type": "fixe"|"horaire"|"negotiable"|null,
     "min": number|null,
     "max": number|null,
     "devise": "EUR"
   },
-  "urgence": "immediat"|"24h"|"7j"|"flexible"|null,
+  "urgence": "immediat"|"24h"|"demain"|"48h"|"7j"|"flexible"|null,
   "description_courte": string,
   "details": [string],
   "competences_requises": [string],
@@ -417,7 +418,7 @@ Retourne uniquement le JSON demandé.`;
       { role: 'user', content: userPrompt }
     ],
     temperature: 0.2,
-    max_tokens: 500
+    max_tokens: 600
   });
 
   const aiResponse = completion.choices?.[0]?.message?.content?.trim();
@@ -475,6 +476,7 @@ Retourne uniquement le JSON demandé.`;
     suggestions_titres: draft.suggestions_titres || [],
     description_courte: draft.description_courte || draft.description || '',
     categorie: draft.categorie || category || null,
+    sous_categorie: draft.sous_categorie || null,
     ville: finalCity,
     secteur: draft.secteur || null,
     budget: draft.budget || { type: null, min: null, max: null, devise: 'EUR' },
