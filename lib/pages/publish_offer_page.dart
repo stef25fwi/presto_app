@@ -2697,7 +2697,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           level: PublishAiTraceLevel.error,
         );
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Permission micro requise');
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Microphone non autorisé'),
+            content: const Text(
+              'Pour utiliser la dictée IA, autorise l\'accès au microphone dans les paramètres de ton téléphone :\nParamètres → Applications → Presto → Microphone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
         return;
       }
     } catch (e) {
@@ -2728,6 +2742,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_isListening) return;
     if (_isAnalyzing) return;
     _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
+
+    final appCheckReady = await _ensureAppCheckReady(
+      flow: kIsWeb ? 'webMic.stop' : 'mobileMic.stop',
+    );
+    if (!appCheckReady) {
+      if (kIsWeb) {
+        unawaited(_webRec.stopToBlob().catchError((_) {}));
+      } else {
+        unawaited(_recorder.stop().catchError((_) {}));
+      }
+      if (mounted) setState(() => _isListening = false);
+      return;
+    }
 
     if (kIsWeb) {
       if (!mounted) return;
