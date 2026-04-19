@@ -2748,9 +2748,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     if (!appCheckReady) {
       if (kIsWeb) {
-        unawaited(_webRec.stopToBlob().catchError((_) {}));
+        unawaited(() async {
+          try {
+            await _webRec.stopToBlob();
+          } catch (_) {}
+        }());
       } else {
-        unawaited(_recorder.stop().catchError((_) {}));
+        unawaited(() async {
+          try {
+            await _recorder.stop();
+          } catch (_) {}
+        }());
       }
       if (mounted) setState(() => _isListening = false);
       return;
