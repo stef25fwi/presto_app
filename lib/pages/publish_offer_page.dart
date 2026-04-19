@@ -168,7 +168,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (kIsWeb) {
         debugPrint('[AppCheck] retry activation for $flow');
         await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaEnterpriseProvider(kAppCheckWebRecaptchaSiteKey),
+          webProvider:
+              ReCaptchaEnterpriseProvider(kAppCheckWebRecaptchaSiteKey),
         );
       } else {
         await FirebaseAppCheck.instance.activate(
@@ -311,7 +312,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     return {
       'text': transcript,
-      'draft': hasCombinedDraft ? Map<String, dynamic>.from(out['draft'] as Map) : null,
+      'draft': hasCombinedDraft
+          ? Map<String, dynamic>.from(out['draft'] as Map)
+          : null,
     };
   }
 
@@ -1498,7 +1501,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         // Apply AI-detected sub-category if valid for the resolved category
         final rawSub = (draft['sous_categorie'] ?? '').toString().trim();
         if (rawSub.isNotEmpty) {
-          final available = kCategorySubcategories[category] ?? const <String>[];
+          final available =
+              kCategorySubcategories[category] ?? const <String>[];
           if (available.contains(rawSub)) {
             _selectedSubCategory = rawSub;
           }
@@ -3714,7 +3718,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             onBackToConsult: () {
               appNavigatorKey.currentState?.pushReplacement(
                 MaterialPageRoute(
-                  builder: (_) => const HomePage(initialIndex: 1),
+                  builder: (_) => const HomePage(initialIndex: 4),
                 ),
               );
             },
@@ -4304,7 +4308,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 }
-
 
 class _FieldPendingDots extends StatelessWidget {
   const _FieldPendingDots();
