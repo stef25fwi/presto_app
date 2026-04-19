@@ -121,6 +121,9 @@ class GoogleAuthService {
       switch (error.code) {
         case 'popup-blocked':
         case 'popup-blocked-by-browser':
+        // internal-error déclenché par COOP/COEP (GitHub Pages, certains Safari)
+        // quand le popup ne peut pas communiquer avec l'opener.
+        case 'internal-error':
           return true;
         case 'popup-closed-by-user':
         case 'cancelled-popup-request':
@@ -139,7 +142,8 @@ class GoogleAuthService {
     }
     return msg.contains('popup-blocked') ||
         msg.contains('cross-origin-opener-policy') ||
-        msg.contains('cross-origin');
+        msg.contains('cross-origin') ||
+        msg.contains('internal-error');
   }
 
   /// Vrai si l'erreur correspond à une annulation volontaire de l'utilisateur
