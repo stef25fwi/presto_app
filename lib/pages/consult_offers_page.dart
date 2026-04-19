@@ -3326,7 +3326,10 @@ class _UserOfferMiniCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withOpacity(0.06)),
+            border: Border.all(
+              color: Colors.black.withOpacity(0.1),
+              width: 1.4,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
