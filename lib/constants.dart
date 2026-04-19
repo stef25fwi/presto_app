@@ -10,12 +10,26 @@ const TextStyle kPrestoAppBarTitleStyle = TextStyle(
   fontWeight: FontWeight.w700,
   height: 1.1,
   letterSpacing: 0.1,
+  shadows: [
+    Shadow(
+      color: Color(0x40000000),
+      blurRadius: 6,
+      offset: Offset(0, 1.5),
+    ),
+  ],
 );
 
 const TextStyle kPrestoSectionTitleStyle = TextStyle(
   fontSize: 18,
   fontWeight: FontWeight.w700,
   height: 1.2,
+  shadows: [
+    Shadow(
+      color: Color(0x33000000),
+      blurRadius: 5,
+      offset: Offset(0, 1.25),
+    ),
+  ],
 );
 
 const TextStyle kPrestoCardTitleStyle = TextStyle(

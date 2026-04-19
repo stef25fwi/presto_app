@@ -36,8 +36,7 @@ import 'publish_offer_page.dart';
 import '../main.dart' show
     PrestoMonitoring,
     prestoOverlayStyleFor,
-    buildOfferDetailsOffer,
-    kMarketplaceOutlineWidth;
+  buildOfferDetailsOffer;
 
 class _HomeCategoryShortcut {
   final IconData icon;
@@ -165,8 +164,6 @@ class _HomePageState extends State<HomePage>
   ];
   int _sloganIndex = 0;
   Timer? _sloganTimer;
-
-  /// Mots-clés statiques
   final List<String> _baseSearchKeywords = const [
     "jardinage",
     "jardinage aujourd’hui",
@@ -675,6 +672,10 @@ class _HomePageState extends State<HomePage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: kPrestoBlue,
+          width: 1.8,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -878,6 +879,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildSmartSearchBar() {
+    const searchBarBorderWidth = 1.8;
     TextEditingController? searchController;
     FocusNode? searchFocusNode;
 
@@ -948,21 +950,21 @@ class _HomePageState extends State<HomePage>
                 borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(
                   color: kPrestoBlue,
-                  width: kMarketplaceOutlineWidth,
+                  width: searchBarBorderWidth,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(
                   color: kPrestoBlue,
-                  width: kMarketplaceOutlineWidth,
+                  width: searchBarBorderWidth,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(
                   color: kPrestoBlue,
-                  width: kMarketplaceOutlineWidth,
+                  width: searchBarBorderWidth,
                 ),
               ),
             ),
@@ -2280,96 +2282,75 @@ class _AutoScrollingOffersCarouselState
     final location = (data['location'] ?? 'Lieu non précisé') as String;
     final displayTitle = _displayOfferTitle(title, location);
     final whenLabel = _labelWhenFromTitle(title);
-    const cornerAccentSize = 42.0;
 
     return GestureDetector(
       onTap: () => widget.onOfferTap?.call(doc),
-      child: Stack(
-        children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            child: IgnorePointer(
-              child: Container(
-                width: cornerAccentSize,
-                height: cornerAccentSize,
-                decoration: const BoxDecoration(
-                  color: kPrestoBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                  ),
-                ),
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0x551A73E8),
+            width: 1.1,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.flash_on_outlined,
+                color: kPrestoOrange,
+                size: 20,
               ),
             ),
-          ),
-          Container(
-            width: 280,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0x551A73E8),
-                width: 1.1,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    "$location — $whenLabel",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: Colors.black38,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.flash_on_outlined,
-                    color: kPrestoOrange,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        "$location — $whenLabel",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.chevron_right,
-                  size: 18,
-                  color: Colors.black38,
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
