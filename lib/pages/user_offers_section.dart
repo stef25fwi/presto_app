@@ -1738,16 +1738,17 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final details = _offerStatusDetails(data);
     final pendingPhotoNotice = _offerPendingPhotoNotice(data);
     final mediaIsProcessing = _offerMediaStillProcessing(data);
+    final tileBorder = Border.all(
+      color: Colors.black.withOpacity(0.1),
+      width: 1.4,
+    );
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFFDFDFD),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.black.withOpacity(0.1),
-          width: 1.4,
-        ),
+        border: tileBorder,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
