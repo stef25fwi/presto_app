@@ -36,6 +36,27 @@ class AccountSocialAuthActions {
       if (kIsWeb) {
         final googleProvider = _buildGoogleProvider(forceAccountSelection: true);
 
+        // GitHub Pages sert avec Cross-Origin-Opener-Policy: same-origin ce
+        // qui empêche le popup de communiquer avec l'opener → internal-error
+        // systématique. On passe directement en redirect flow.
+        final bool onGitHubPages = Uri.base.host.endsWith('.github.io');
+        if (onGitHubPages) {
+          googleAuthService.logFallback(
+            'Popup',
+            'Redirect',
+            reason: 'GitHub Pages COOP headers — redirect direct',
+          );
+          try {
+            await auth.signInWithRedirect(googleProvider);
+          } catch (redirectError) {
+            googleAuthService.logError('Redirect/GitHubPages', redirectError);
+            if (!context.mounted) return;
+            final msg = googleAuthService.getErrorMessage(redirectError);
+            if (msg.isNotEmpty) showErrorSnackBar(context, msg);
+          }
+          return;
+        }
+
         try {
           googleAuthService.logAttempt('Popup');
           final popupResult = await auth.signInWithPopup(googleProvider);
