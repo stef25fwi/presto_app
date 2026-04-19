@@ -606,8 +606,14 @@ class _HomePageState extends State<HomePage>
           children: [
             LayoutBuilder(
               builder: (context, constraints) {
+                const dotsWidth = 34.0;
+                const dotsGap = 8.0;
+                final maxScrollWidth = math.max(
+                  0.0,
+                  constraints.maxWidth - dotsWidth - dotsGap,
+                );
                 final viewportWidth = math.min(
-                  constraints.maxWidth,
+                  maxScrollWidth,
                   (chipWidth * visibleCategoryCount) +
                       (chipGap * (visibleCategoryCount - 1)) +
                       horizontalPadding,
@@ -615,90 +621,84 @@ class _HomePageState extends State<HomePage>
 
                 return Align(
                   alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: viewportWidth,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Row(
-                        children: [
-                          for (var index = 0;
-                              index < compactCategories.length;
-                              index++) ...[
-                            if (index > 0) const SizedBox(width: chipGap),
-                            HomeCategoryChip(
-                              icon: compactCategories[index].icon,
-                              label: compactCategories[index].label,
-                              iconScale: _categoryScaleForIndex(
-                                index,
-                                count: compactCategories.length,
-                              ),
-                              onTap: () => _goToCategoryOffers(
-                                compactCategories[index].targetCategory,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 6),
-            IgnorePointer(
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: const Color(0x661A73E8),
-                          borderRadius: BorderRadius.circular(999),
+                      SizedBox(
+                        width: viewportWidth,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Row(
+                            children: [
+                              for (var index = 0;
+                                  index < compactCategories.length;
+                                  index++) ...[
+                                if (index > 0) const SizedBox(width: chipGap),
+                                HomeCategoryChip(
+                                  icon: compactCategories[index].icon,
+                                  label: compactCategories[index].label,
+                                  iconScale: _categoryScaleForIndex(
+                                    index,
+                                    count: compactCategories.length,
+                                  ),
+                                  onTap: () => _goToCategoryOffers(
+                                    compactCategories[index].targetCategory,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A73E8),
-                          borderRadius: BorderRadius.circular(999),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x331A73E8),
-                              blurRadius: 8,
-                              offset: Offset(0, 1),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: const Color(0x661A73E8),
-                          borderRadius: BorderRadius.circular(999),
+                      const SizedBox(width: dotsGap),
+                      IgnorePointer(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 28),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: const Color(0x661A73E8),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1A73E8),
+                                  borderRadius: BorderRadius.circular(999),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x331A73E8),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: const Color(0x661A73E8),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Faites glisser horizontalement',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0x8A1A2C42),
-                      letterSpacing: 0.15,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         );
