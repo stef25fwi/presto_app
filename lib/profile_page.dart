@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'app/presto_overlay_theme.dart';
+import 'main.dart' show pendingRedirectAuthResult, pendingRedirectAuthError;
 import 'pages/pro_profile_page.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/city_search.dart';
@@ -125,6 +126,9 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _registerProfileFieldListeners();
+    if (kIsWeb) {
+      _checkFederatedRedirectResult();
+    }
     _authSub = _auth.authStateChanges().listen((user) async {
       final email = user?.email;
       if (email != null && email.isNotEmpty && _emailCtrl.text != email) {
@@ -166,6 +170,62 @@ class _ProfilePageState extends State<ProfilePage> {
     _cpCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkFederatedRedirectResult() async {
+    try {
+      UserCredential? result = pendingRedirectAuthResult;
+      if (result == null && pendingRedirectAuthError == null) {
+        result = await _auth.getRedirectResult();
+      } else if (pendingRedirectAuthError != null && result == null) {
+        final captured = pendingRedirectAuthError;
+        if (captured is FirebaseAuthException) throw captured;
+        throw captured ?? StateError('OAuth redirect failed');
+      }
+
+      if (result?.user != null) {
+        final isNew = result!.additionalUserInfo?.isNewUser ?? false;
+        final providerId = result.additionalUserInfo?.providerId ??
+            result.user!.providerData.firstOrNull?.providerId ??
+            '';
+        final authMethod = switch (providerId) {
+          'facebook.com' => 'facebook',
+          'google.com' => 'google',
+          _ => 'social',
+        };
+        final providerLabel = switch (providerId) {
+          'facebook.com' => 'Facebook',
+          'google.com' => 'Google',
+          _ => 'externe',
+        };
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: result.user!,
+            authMethod: authMethod,
+            isNewUserHint: isNew,
+          );
+        } catch (e) {
+          debugPrint('[ProfilePage/OAuthRedirect] Bootstrap error: $e');
+        }
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Connecté avec $providerLabel');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
+        String msg;
+        if (e.code == 'unauthorized-domain') {
+          msg = 'Domaine non autorisé dans Firebase Authentication.';
+        } else if (e.code == 'operation-not-allowed') {
+          msg = 'Fournisseur externe non activé dans Firebase Authentication.';
+        } else {
+          msg = 'Erreur connexion externe : ${e.message ?? e.code}';
+        }
+        showErrorSnackBar(context, msg);
+      }
+    } catch (e) {
+      debugPrint('[ProfilePage/OAuthRedirect] Error: $e');
+    }
   }
 
   void _registerProfileFieldListeners() {
