@@ -1365,7 +1365,7 @@ class _HomePageState extends State<HomePage>
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          resizeToAvoidBottomInset: true,
+          resizeToAvoidBottomInset: false,
           extendBody: false,
           backgroundColor: Colors.white,
           body: IndexedStack(
