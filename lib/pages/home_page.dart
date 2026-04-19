@@ -672,10 +672,6 @@ class _HomePageState extends State<HomePage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: kPrestoBlue,
-          width: 1.8,
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -16,7 +16,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_core.dart';
 import '../constants.dart';
 import '../features/offers/public_offers_read_diagnostics.dart';
-import '../main.dart' show CardShell, PrestoMonitoring, prestoOverlayStyleFor, inferRegionFromPostalCode, kMarketplaceOutlineWidth, buildOfferDetailsOffer;
+import '../main.dart'
+    show
+        CardShell,
+        PrestoMonitoring,
+        prestoOverlayStyleFor,
+        inferRegionFromPostalCode,
+        kMarketplaceOutlineWidth,
+        buildOfferDetailsOffer;
 import 'home_page.dart' show UnreadInboxBell;
 import 'account_page.dart';
 import '../pages/offers/offer_details_page.dart';
@@ -221,7 +228,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   String? _lastOffersQuerySignature;
 
   // Cache du stream pour éviter de le recréer à chaque setState non pertinent.
-  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>? _cachedOffersStream;
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
+      _cachedOffersStream;
   String? _cachedOffersStreamKey;
 
   String _buildOffersQuerySignature({
@@ -782,7 +790,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _selectedSubCategory ?? '',
       _activeSearchQuery ?? '',
       _pageLimit.toString(),
-      if (_advancedFilters) ...[ _budgetMinCtrl.text, _budgetMaxCtrl.text ],
+      if (_advancedFilters) ...[_budgetMinCtrl.text, _budgetMaxCtrl.text],
     ].join('|');
   }
 
@@ -812,10 +820,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
 
     return Stream.multi((controller) {
-      var listingsDocs =
-          const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      var legacyDocs =
-          const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      var listingsDocs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      var legacyDocs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       bool listingsReady = false;
       bool legacyReady = false;
       Object? listingsError;
@@ -1549,7 +1555,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // part pouvant diverger pendant les phases de chargement / pagination.
     final int displayedResultCount = _lastResultCount;
     final String offersLabel =
-      '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''}';
+        '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''} affichée${displayedResultCount > 1 ? 's' : ''}';
 
     return Container(
       color: Colors.white,
@@ -2679,14 +2685,12 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
-
   @override
   Widget build(BuildContext context) {
     // Keep a visible urgent contour but disable continuous blink,
     // which caused perceived flicker on the listings page.
-    final pulse = (widget.data.isUrgent && !widget.data.showJobDoneOverlay)
-        ? 0.42
-        : 0.0;
+    final pulse =
+        (widget.data.isUrgent && !widget.data.showJobDoneOverlay) ? 0.42 : 0.0;
     return _buildTileFrame(pulse: pulse);
   }
 
@@ -3422,4 +3426,3 @@ String formatAgeSince(Timestamp? ts) {
   final d = diff.inDays;
   return "il y a $d j";
 }
-

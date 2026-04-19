@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:presto_app/app/presto_overlay_theme.dart';
 import 'package:presto_app/constants.dart';
+import 'package:presto_app/pages/account_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:presto_app/data/marketplace/favorite_repository.dart';
 import 'package:presto_app/data/marketplace/report_repository.dart';
@@ -327,12 +328,154 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     return digits;
   }
 
+  Future<User?> _resolveSignedInUser() async {
+    final auth = FirebaseAuth.instance;
+    final currentUser = auth.currentUser;
+    if (currentUser != null) {
+      return currentUser;
+    }
+
+    try {
+      return await auth
+          .authStateChanges()
+          .firstWhere((candidate) => candidate != null)
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<User?> _ensureSignedInForOfferAction(
+    BuildContext context, {
+    required String area,
+    required String offerId,
+    required String title,
+    required String description,
+  }) async {
+    final user = await _resolveSignedInUser();
+    if (user != null) {
+      return user;
+    }
+    if (!context.mounted) return null;
+
+    final overlayTheme = context.prestoOverlayTheme;
+    final startInSignup = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        final bottom = MediaQuery.of(sheetContext).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Text(
+                title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _headerOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(sheetContext).pop(false),
+                child: const Text('Je me connecte'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade400),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(sheetContext).pop(true),
+                child: const Text('Je crée mon compte'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(sheetContext).pop(null),
+                child: const Text('Plus tard'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (startInSignup == null || !context.mounted) {
+      logRuntimeAction(
+        area: area,
+        action: 'auth-handoff-cancelled',
+        details: <String, Object?>{
+          'offerId': offerId,
+        },
+      );
+      return null;
+    }
+
+    logRuntimeAction(
+      area: area,
+      action: 'auth-handoff-opened',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'startInSignup': startInSignup,
+      },
+    );
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AccountPage(startInSignup: startInSignup),
+      ),
+    );
+
+    if (!context.mounted) {
+      return null;
+    }
+
+    final resolvedUser = await _resolveSignedInUser();
+    logRuntimeAction(
+      area: area,
+      action:
+          resolvedUser == null ? 'auth-handoff-failed' : 'auth-handoff-success',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'userId': resolvedUser?.uid,
+      },
+    );
+    return resolvedUser;
+  }
+
   Future<void> _openInternalMessaging(
     BuildContext context,
     _OfferUiData data,
   ) async {
-    final authUser = FirebaseAuth.instance.currentUser;
-    final me = authUser?.uid.isNotEmpty == true ? authUser!.uid : currentUserId;
+    User? authUser = FirebaseAuth.instance.currentUser;
+    var me = authUser?.uid.isNotEmpty == true ? authUser!.uid : currentUserId;
 
     logRuntimeAction(
       area: 'messaging',
@@ -352,11 +495,17 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'offerId': data.offerId,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Connectez-vous pour envoyer un message.")),
+      final signedInUser = await _ensureSignedInForOfferAction(
+        context,
+        area: 'messaging',
+        offerId: data.offerId,
+        title: 'Connectez-vous pour contacter l’annonceur',
+        description:
+            'Connectez-vous ou créez votre compte pour ouvrir la messagerie et reprendre cet échange.',
       );
-      return;
+      if (signedInUser == null) return;
+      authUser = signedInUser;
+      me = signedInUser.uid;
     }
 
     if (data.advertiserId.isEmpty) {
@@ -718,8 +867,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     _OfferUiData data,
     bool isFavorite,
   ) async {
-    final authUser = FirebaseAuth.instance.currentUser;
-    final uid = authUser?.uid.trim() ?? '';
+    var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
 
     logRuntimeAction(
       area: 'favorites',
@@ -740,12 +888,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'offerId': data.offerId,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Connectez-vous pour enregistrer vos favoris.'),
-        ),
+      final signedInUser = await _ensureSignedInForOfferAction(
+        context,
+        area: 'favorites',
+        offerId: data.offerId,
+        title: 'Connectez-vous pour enregistrer cette annonce',
+        description:
+            'Vos favoris seront synchronisés avec votre compte pour retrouver cette annonce plus tard.',
       );
-      return;
+      if (signedInUser == null) return;
+      uid = signedInUser.uid.trim();
     }
 
     final offerId = data.offerId.trim();
@@ -849,8 +1001,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   }
 
   Future<void> _showReportSheet(BuildContext context, _OfferUiData data) async {
-    final authUser = FirebaseAuth.instance.currentUser;
-    final uid = authUser?.uid.trim() ?? '';
+    var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
 
     logRuntimeAction(
       area: 'offers',
@@ -870,12 +1021,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'offerId': data.offerId,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Connectez-vous pour signaler cette annonce.'),
-        ),
+      final signedInUser = await _ensureSignedInForOfferAction(
+        context,
+        area: 'offers',
+        offerId: data.offerId,
+        title: 'Connectez-vous pour signaler cette annonce',
+        description:
+            'Votre signalement sera associé à votre compte pour que nous puissions le traiter correctement.',
       );
-      return;
+      if (signedInUser == null) return;
+      uid = signedInUser.uid.trim();
     }
 
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {

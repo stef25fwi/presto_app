@@ -152,7 +152,6 @@ class _ProfilePageState extends State<ProfilePage> {
         _unbindProfile();
       }
     });
-
   }
 
   @override
@@ -2464,12 +2463,6 @@ class _ProfilePageState extends State<ProfilePage> {
         _buildProfileCard(
           child: Column(
             children: [
-              _buildProfileActionTile(
-                icon: Icons.chat_bubble_outline,
-                title: 'Ouvrir mes messages',
-                onTap: _onOpenMessagesTapped,
-              ),
-              const Divider(height: 0),
               _buildProfileActionTile(
                 icon: Icons.forum_outlined,
                 title: 'Ouvrir mes messages',
