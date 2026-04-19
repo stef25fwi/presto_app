@@ -56,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: _webAppId,
     messagingSenderId: _messagingSenderId,
     projectId: _projectId,
+    authDomain: _authDomain,
     storageBucket: _storageBucket,
   );
 
@@ -65,6 +66,7 @@ class DefaultFirebaseOptions {
     appId: _webAppId,
     messagingSenderId: _messagingSenderId,
     projectId: _projectId,
+    authDomain: _authDomain,
     storageBucket: _storageBucket,
     iosBundleId: _appleBundleId,
   );
@@ -74,6 +76,7 @@ class DefaultFirebaseOptions {
     appId: _webAppId,
     messagingSenderId: _messagingSenderId,
     projectId: _projectId,
+    authDomain: _authDomain,
     storageBucket: _storageBucket,
     iosBundleId: _appleBundleId,
   );

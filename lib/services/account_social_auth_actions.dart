@@ -34,7 +34,7 @@ class AccountSocialAuthActions {
       );
 
       if (kIsWeb) {
-        final googleProvider = _buildGoogleProvider(forceAccountSelection: true);
+        final googleProvider = _buildGoogleProvider();
 
         // GitHub Pages sert avec Cross-Origin-Opener-Policy: same-origin ce
         // qui empêche le popup de communiquer avec l'opener → internal-error
@@ -124,7 +124,7 @@ class AccountSocialAuthActions {
           return;
         }
       } else {
-        final provider = _buildGoogleProvider(forceAccountSelection: true);
+        final provider = _buildGoogleProvider();
 
         googleAuthService.logAttempt('signInWithProvider');
         final providerResult = await auth.signInWithProvider(provider);
@@ -502,24 +502,13 @@ class AccountSocialAuthActions {
     return sha256.convert(bytes).toString();
   }
 
-  static GoogleAuthProvider _buildGoogleProvider({
-    bool forceAccountSelection = false,
-  }) {
+  static GoogleAuthProvider _buildGoogleProvider() {
     final provider = GoogleAuthProvider();
     provider.addScope('email');
     provider.addScope('profile');
-
-    final customParameters = <String, String>{
-      'prompt': forceAccountSelection ? 'select_account consent' : 'select_account',
-    };
-
-    if (forceAccountSelection) {
-      customParameters['authuser'] = '-1';
-      customParameters['login_hint'] = '';
-      customParameters['include_granted_scopes'] = 'false';
-    }
-
-    provider.setCustomParameters(customParameters);
+    provider.setCustomParameters(<String, String>{
+      'prompt': 'select_account',
+    });
     return provider;
   }
 }
