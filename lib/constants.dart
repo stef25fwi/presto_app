@@ -12,9 +12,9 @@ const TextStyle kPrestoAppBarTitleStyle = TextStyle(
   letterSpacing: 0.1,
   shadows: [
     Shadow(
-      color: Color(0x40000000),
-      blurRadius: 6,
-      offset: Offset(0, 1.5),
+      color: Color(0x36000000),
+      blurRadius: 5,
+      offset: Offset(0, 1.25),
     ),
   ],
 );
@@ -25,9 +25,9 @@ const TextStyle kPrestoSectionTitleStyle = TextStyle(
   height: 1.2,
   shadows: [
     Shadow(
-      color: Color(0x33000000),
-      blurRadius: 5,
-      offset: Offset(0, 1.25),
+      color: Color(0x26000000),
+      blurRadius: 4,
+      offset: Offset(0, 1),
     ),
   ],
 );
