@@ -1544,11 +1544,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final activeFilterChips = _buildActiveFilterChipItems();
     final activeFiltersCount = activeFilterChips.length;
 
-    final int displayedResultCount =
-        _resolvedVisibleOffersCount ?? _lastResultCount;
-    final String offersLabel = _resolvedVisibleOffersCount == null
-        ? 'Chargement du total...'
-        : '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''}';
+    // Le libellé près de l'icône filtre doit refléter exactement le nombre
+    // d'annonces actuellement rendues dans la liste, pas un total résolu à
+    // part pouvant diverger pendant les phases de chargement / pagination.
+    final int displayedResultCount = _lastResultCount;
+    final String offersLabel =
+      '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''}';
 
     return Container(
       color: Colors.white,
@@ -2694,6 +2695,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
     const innerUrgentInset = 3.0;
     const innerUrgentWidth = 4.0;
     const cornerAccentSize = 54.0;
+    const offerCardBorderWidth = 1.8;
 
     final showUrgentContour = widget.data.isUrgent;
     final blink = pulse.clamp(0.0, 1.0);
@@ -2732,7 +2734,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                   borderRadius: BorderRadius.circular(outerRadius),
                   border: Border.all(
                     color: _ConsultOffersPageState._offersCardBorder,
-                    width: kMarketplaceOutlineWidth,
+                    width: offerCardBorderWidth,
                   ),
                   boxShadow: [
                     const BoxShadow(
