@@ -1,6 +1,7 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,10 +34,8 @@ import 'account_page.dart';
 import 'consult_offers_page.dart';
 import 'publish_offer_page.dart';
 
-import '../main.dart' show
-    PrestoMonitoring,
-    prestoOverlayStyleFor,
-  buildOfferDetailsOffer;
+import '../main.dart'
+    show PrestoMonitoring, prestoOverlayStyleFor, buildOfferDetailsOffer;
 
 class _HomeCategoryShortcut {
   final IconData icon;
@@ -49,7 +48,6 @@ class _HomeCategoryShortcut {
     required this.targetCategory,
   });
 }
-
 
 /// HOME ////////////////////////////////////////////////////////////////////
 
@@ -560,7 +558,8 @@ class _HomePageState extends State<HomePage>
         _latestOffersError = null;
       });
     } catch (error, stackTrace) {
-      logPublicOffersReadErrorWithAppCheck('home_latest_offers', error, stackTrace);
+      logPublicOffersReadErrorWithAppCheck(
+          'home_latest_offers', error, stackTrace);
       final diagnosedError = error is PublicOffersReadException
           ? error
           : PublicOffersReadException(
@@ -595,65 +594,107 @@ class _HomePageState extends State<HomePage>
           ),
         )
         .toList(growable: false);
+    const visibleCategoryCount = 4;
+    const chipWidth = 74.0;
+    const chipGap = 6.0;
+    const horizontalPadding = 12.0;
 
     return AnimatedBuilder(
       animation: _categoryController,
       builder: (context, child) {
         return Column(
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Row(
-                children: [
-                  for (var index = 0;
-                      index < compactCategories.length;
-                      index++) ...[
-                    if (index > 0) const SizedBox(width: 6),
-                    HomeCategoryChip(
-                      icon: compactCategories[index].icon,
-                      label: compactCategories[index].label,
-                      iconScale: _categoryScaleForIndex(
-                        index,
-                        count: compactCategories.length,
-                      ),
-                      onTap: () => _goToCategoryOffers(
-                        compactCategories[index].targetCategory,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final viewportWidth = math.min(
+                  constraints.maxWidth,
+                  (chipWidth * visibleCategoryCount) +
+                      (chipGap * (visibleCategoryCount - 1)) +
+                      horizontalPadding,
+                );
+
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: viewportWidth,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Row(
+                        children: [
+                          for (var index = 0;
+                              index < compactCategories.length;
+                              index++) ...[
+                            if (index > 0) const SizedBox(width: chipGap),
+                            HomeCategoryChip(
+                              icon: compactCategories[index].icon,
+                              label: compactCategories[index].label,
+                              iconScale: _categoryScaleForIndex(
+                                index,
+                                count: compactCategories.length,
+                              ),
+                              onTap: () => _goToCategoryOffers(
+                                compactCategories[index].targetCategory,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                  ],
-                ],
-              ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 6),
             IgnorePointer(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
                 children: [
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0x401A73E8),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0x661A73E8),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A73E8),
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x331A73E8),
+                              blurRadius: 8,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0x661A73E8),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: const Color(0xAA1A73E8),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0x401A73E8),
-                      borderRadius: BorderRadius.circular(999),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Faites glisser horizontalement',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0x8A1A2C42),
+                      letterSpacing: 0.15,
                     ),
                   ),
                 ],
@@ -725,7 +766,8 @@ class _HomePageState extends State<HomePage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    friendlyPublicOffersReadErrorWithAppCheck(_latestOffersError!),
+                    friendlyPublicOffersReadErrorWithAppCheck(
+                        _latestOffersError!),
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.black54,
@@ -1910,6 +1952,7 @@ class _PulseWaveLayerState extends State<_PulseWaveLayer>
     );
   }
 }
+
 class UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
@@ -2160,7 +2203,6 @@ class OfferDeepLinkPage extends StatelessWidget {
     );
   }
 }
-
 
 // ============================================================================
 // CARROUSEL AUTO-DÉFILANT POUR LES DERNIÈRES OFFRES (ligne unique)
