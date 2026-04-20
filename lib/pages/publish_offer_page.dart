@@ -228,7 +228,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
 
     if (mounted && showBlockingMessage) {
-      showSuccessSnackBar(
+      showErrorSnackBar(
         context,
         'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
       );
@@ -737,7 +737,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _logMicroIaDebug('AUTH', 'user=null code=${error.code} stage=$stage');
       _logMicroIaDebug('TOKEN', 'fetched=no stage=$stage');
       if (showUserMessage && mounted) {
-        showSuccessSnackBar(context, error.message);
+        showErrorSnackBar(context, error.message);
       }
       return null;
     } catch (error) {
@@ -749,7 +749,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       _logMicroIaDebug('AUTH', 'unexpected_error stage=$stage err=$message');
       if (showUserMessage && mounted) {
-        showSuccessSnackBar(context, message);
+        showErrorSnackBar(context, message);
       }
       return null;
     }
@@ -2608,6 +2608,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _startMic() async {
     if (_isListening) return;
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) {
+      _appendPublishAiTrace(
+        'auth',
+        'Connexion requise avant démarrage micro',
+        level: PublishAiTraceLevel.warning,
+      );
+      return;
+    }
     if (_adminAudioRuntimeAccessState == 0) {
       unawaited(_refreshAdminAudioRuntimeAccess());
     }
@@ -2676,6 +2685,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // Préparer l'enregistreur haute qualité (WAV)
     try {
+      _recordingPath = null;
       final secureContext = await _requirePublishAiSecureContext(
         stage: 'mobileMic.start',
         forceRefreshToken: true,
@@ -2720,11 +2730,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       debugPrint('Recorder start error: $e');
+      _recordingPath = null;
       _appendPublishAiTrace(
         'start_mic',
         _formatMicroIaRuntimeError(e),
         level: PublishAiTraceLevel.error,
       );
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Micro indisponible: ${_formatMicroIaRuntimeError(e)}',
+        );
+      }
+      return;
     }
 
     setState(() {
@@ -2758,6 +2776,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           } catch (_) {}
         }());
       } else {
+        _recordingPath = null;
         unawaited(() async {
           try {
             await _recorder.stop();
@@ -2857,6 +2876,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (recordedPath == null) {
         recordedPath = _recordingPath;
       }
+      _recordingPath = null;
       _appendPublishAiTrace(
         'mobile_audio',
         recordedPath == null
@@ -2868,6 +2888,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     } catch (e) {
       debugPrint('Recorder stop error: $e');
+      _recordingPath = null;
       _appendPublishAiTrace(
         'mobile_audio',
         _formatMicroIaRuntimeError(e),
@@ -3067,6 +3088,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final input = _descriptionController.text.trim();
     if (input.isEmpty) {
       showSuccessSnackBar(context, "Veuillez d'abord saisir une description");
+      return;
+    }
+
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) {
+      _appendPublishAiTrace(
+        'auth',
+        'Connexion requise avant analyse IA textuelle',
+        level: PublishAiTraceLevel.warning,
+      );
       return;
     }
 
