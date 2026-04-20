@@ -66,14 +66,9 @@ service cloud.firestore {
     }
 
     function isPublicListingData(data) {
-      // Each branch maps 1-to-1 to a query variant so Firestore can statically
-      // validate list queries for unauthenticated users.
+      // Canonical public marketplace listing shape.
       return data.status == 'active'
-        || data.status == 'published'
-        || data.isPublished == true
-        || data.isActive == true
-        || data.visibility == 'public'
-        || (data.visibility is map && data.visibility.get('isPublic', false) == true);
+        && data.visibility == 'public';
     }
 
     function isListingOwner(data) {
