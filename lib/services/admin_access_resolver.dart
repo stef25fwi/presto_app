@@ -197,6 +197,58 @@ class AdminAccessResolver {
     }
 
     state = await _verifyServerAccess(resolvedUser, state);
+
+    // Stale-claims mitigation: the callable trusts the decoded ID token. If
+    // admin roles were just granted (custom claims, users doc) but the local
+    // token is still the pre-grant one, the server can legitimately answer
+    // isAdmin=false while local evidence says admin. Force a hard token
+    // refresh and retry once; if it still fails, surface a dedicated code so
+    // the UI can prompt a reconnect instead of silently hiding the tile.
+    if (state.serverCheckSucceeded &&
+        state.serverIsAdmin == false &&
+        (state.tokenHasAdmin || state.profileHasAdmin)) {
+      _diag(
+        'stale-claims suspected tokenHasAdmin=${state.tokenHasAdmin} '
+        'profileHasAdmin=${state.profileHasAdmin} — forcing token refresh and retrying',
+      );
+      try {
+        await resolvedUser.getIdToken(true);
+        final refreshed = await resolvedUser.getIdTokenResult(true);
+        final claims = refreshed.claims ?? const <String, dynamic>{};
+        final refreshedRoles = _rolesFromValue(claims['roles']);
+        final refreshedPrimaryRole = _normalizedText(claims['primaryRole']);
+        final refreshedTokenHasAdmin = _hasAdminAccess(
+          claims,
+          roles: refreshedRoles,
+          primaryRole: refreshedPrimaryRole,
+        );
+        state = _step(
+          state.copyWith(
+            tokenLoaded: true,
+            tokenHasAdmin: refreshedTokenHasAdmin,
+            tokenRoles: refreshedRoles,
+            tokenPrimaryRole: refreshedPrimaryRole,
+          ),
+          '[AdminResolver] token hard-refreshed for stale-claims retry tokenHasAdmin=$refreshedTokenHasAdmin',
+          stage: 'stale-claims-token-refresh',
+        );
+        state = await _verifyServerAccess(resolvedUser, state);
+        if (state.serverCheckSucceeded && state.serverIsAdmin == false) {
+          state = _step(
+            state.copyWith(
+              serverErrorCode: 'stale-claims',
+              serverErrorMessage:
+                  "Tes droits admin ont été mis à jour. Reconnecte-toi pour activer l'accès.",
+            ),
+            '[AdminResolver] stale-claims persists after token refresh',
+            stage: 'stale-claims',
+          );
+        }
+      } catch (error) {
+        _diag('stale-claims retry failed error=$error');
+      }
+    }
+
     return _finalize(state);
   }
 
