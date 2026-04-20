@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../config/app_check_state.dart';
+
 /// Service centralisé pour Google Sign-In avec gestion d'erreurs améliorée
 class GoogleAuthService {
   // final _auth = FirebaseAuth.instance; // Unused for now
@@ -21,11 +23,39 @@ class GoogleAuthService {
     return "Erreur inattendue. Réessaye.";
   }
 
+  /// Vrai si le code + message indiquent un blocage par App Check enforcement.
+  /// Firebase Auth renvoie 'internal-error' avec des messages serveur spécifiques
+  /// (INVALID_APP_CREDENTIAL, REQUEST_BLOCKED) quand App Check est en mode enforced.
+  bool _isLikelyAppCheckEnforcement(String code, String? message) {
+    if (code != 'internal-error') return false;
+    final msg = (message ?? '').toLowerCase();
+    if (msg.contains('invalid_app_credential') ||
+        msg.contains('app_credential') ||
+        msg.contains('app check') ||
+        msg.contains('appcheck') ||
+        msg.contains('request_blocked')) {
+      return true;
+    }
+    // Heuristique: si App Check a échoué à l'activation ET qu'on reçoit
+    // internal-error, App Check est très probablement la cause.
+    return appCheckActivationAttempted && !appCheckActivationSucceeded;
+  }
+
+  /// Version publique utilisée dans shouldFallbackToRedirect.
+  bool isLikelyAppCheckEnforcement(dynamic error) {
+    if (error is! FirebaseAuthException) return false;
+    return _isLikelyAppCheckEnforcement(error.code, error.message);
+  }
+
   /// Messages FirebaseAuthException
   String _getFirebaseErrorMessage(String code, String? message) {
     switch (code) {
       // Erreurs OAuth2
       case 'internal-error':
+        if (_isLikelyAppCheckEnforcement(code, message)) {
+          return "🔒 Vérification de sécurité incomplète. "
+              "Réessaie dans quelques secondes ou essaie un autre navigateur.";
+        }
         return "❌ Erreur interne Firebase. "
             "Vérifie: Firebase Console → Authentication → Google → Configuration OAuth2";
       case 'auth-error':
@@ -117,6 +147,10 @@ class GoogleAuthService {
   /// avec rechargement de page alors que l'utilisateur a juste fermé le
   /// popup.
   bool shouldFallbackToRedirect(dynamic error) {
+    // App Check enforcement produit aussi internal-error — le redirect
+    // échouerait de la même façon. Ne pas boucler.
+    if (isLikelyAppCheckEnforcement(error)) return false;
+
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'popup-blocked':

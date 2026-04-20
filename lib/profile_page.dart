@@ -173,14 +173,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _checkFederatedRedirectResult() async {
+    // Consommer les globals UNE SEULE FOIS et les nullifier immédiatement
+    // pour éviter le double traitement si AccountPage est aussi monté.
+    final savedResult = pendingRedirectAuthResult;
+    final savedError = pendingRedirectAuthError;
+    pendingRedirectAuthResult = null;
+    pendingRedirectAuthError = null;
+
     try {
-      UserCredential? result = pendingRedirectAuthResult;
-      if (result == null && pendingRedirectAuthError == null) {
+      UserCredential? result = savedResult;
+      if (result == null && savedError == null) {
         result = await _auth.getRedirectResult();
-      } else if (pendingRedirectAuthError != null && result == null) {
-        final captured = pendingRedirectAuthError;
-        if (captured is FirebaseAuthException) throw captured;
-        throw captured ?? StateError('OAuth redirect failed');
+      } else if (savedError != null && result == null) {
+        if (savedError is FirebaseAuthException) throw savedError;
+        throw savedError;
       }
 
       if (result?.user != null) {
@@ -207,6 +213,9 @@ class _ProfilePageState extends State<ProfilePage> {
         } catch (e) {
           debugPrint('[ProfilePage/OAuthRedirect] Bootstrap error: $e');
         }
+        try {
+          await _trackLogin(authMethod: authMethod, isNewUser: isNew);
+        } catch (_) {}
         if (!mounted) return;
         showSuccessSnackBar(context, 'Connecté avec $providerLabel');
       }
