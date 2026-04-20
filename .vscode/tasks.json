@@ -255,6 +255,24 @@
       "problemMatcher": []
     },
     {
+      "label": "Listings: Migrate Offers -> Listings Dry Run",
+      "type": "shell",
+      "command": "npm --prefix functions run marketplace:migrate:offers-to-listings:dry-run -- --limit=100",
+      "problemMatcher": []
+    },
+    {
+      "label": "Listings: Migrate Offers -> Listings Apply",
+      "type": "shell",
+      "command": "npm --prefix functions run marketplace:migrate:offers-to-listings -- --limit=100",
+      "problemMatcher": []
+    },
+    {
+      "label": "Listings: Test Public Firestore Rules",
+      "type": "shell",
+      "command": "npm --prefix functions run test:firestore:public-listings",
+      "problemMatcher": []
+    },
+    {
       "label": "Listings: Create Test Listing With Photo",
       "type": "shell",
       "command": "node tools/create_test_listing_with_photo.cjs --image=jobfait.webp",

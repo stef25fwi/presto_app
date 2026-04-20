@@ -13,6 +13,7 @@ enum PublicListingsBrowseFilterField {
   none,
   categoryId,
   cityId,
+  cityCategoryKey,
 }
 
 /// Backfill legacy temporaire en lecture seule pour les annonces publiques.
@@ -27,11 +28,14 @@ PublicListingsBrowseFilterField pickPublicListingsBrowseFilterField({
   String? cityId,
 }) {
   final normalizedCityId = cityId?.trim() ?? '';
+  final normalizedCategoryId = categoryId?.trim() ?? '';
+  if (normalizedCityId.isNotEmpty && normalizedCategoryId.isNotEmpty) {
+    return PublicListingsBrowseFilterField.cityCategoryKey;
+  }
   if (normalizedCityId.isNotEmpty) {
     return PublicListingsBrowseFilterField.cityId;
   }
 
-  final normalizedCategoryId = categoryId?.trim() ?? '';
   if (normalizedCategoryId.isNotEmpty) {
     return PublicListingsBrowseFilterField.categoryId;
   }
@@ -318,6 +322,12 @@ List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
     categoryId: categoryId,
     cityId: cityId,
   )) {
+    case PublicListingsBrowseFilterField.cityCategoryKey:
+      query = query.where(
+        'cityCategoryKey',
+        isEqualTo: '${cityId!.trim()}_${categoryId!.trim()}',
+      );
+      break;
     case PublicListingsBrowseFilterField.cityId:
       query = query.where('cityId', isEqualTo: cityId!.trim());
       break;

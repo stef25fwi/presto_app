@@ -11,6 +11,9 @@
     "build:watch": "tsc --watch",
     "marketplace:seed": "node scripts/seed_marketplace_bootstrap.mjs",
     "marketplace:seed:dry-run": "node scripts/seed_marketplace_bootstrap.mjs --dry-run",
+    "marketplace:migrate:offers-to-listings:dry-run": "node scripts/migrate_offers_to_listings.mjs --dry-run",
+    "marketplace:migrate:offers-to-listings": "node scripts/migrate_offers_to_listings.mjs",
+    "test:firestore:public-listings": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_public_listings_rules.mjs\"",
     "test": "npm run build && node --test $(find lib -name '*.test.js' -print)",
     "email:audit:new-events": "node scripts/audit_new_email_events.mjs",
     "brevo:webhook:smoke": "node scripts/brevo_webhook_smoke_test.mjs",
@@ -37,7 +40,9 @@
     "sharp": "^0.33.5"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@types/node": "^20.19.39",
+    "firebase": "^11.10.0",
     "typescript": "^5.4.5"
   }
 }
