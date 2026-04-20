@@ -44,19 +44,9 @@ PublicListingsBrowseFilterField pickPublicListingsBrowseFilterField({
 }
 
 Filter publicListingsFilter() {
-  return Filter.or(
-    // Format marketplace nominal
-    Filter.and(
-      Filter('status', isEqualTo: 'active'),
-      Filter('visibility', isEqualTo: 'public'),
-    ),
-    // Variantes legacy couvertes par isPublicListingData() dans firestore.rules
-    Filter('status', isEqualTo: 'published'),
-    Filter('isPublished', isEqualTo: true),
-    // Note: isActive==true et visibility.isPublic==true sont des formats
-    // propres à la collection `offers` (legacy). Ils ne sont pas utilisés
-    // dans `listings` et causaient des refus de query pour les anonymes
-    // car non couverts par isPublicListingData() dans les règles Firestore.
+  return Filter.and(
+    Filter('status', isEqualTo: 'active'),
+    Filter('visibility', isEqualTo: 'public'),
   );
 }
 
@@ -179,13 +169,10 @@ Widget buildPublicOffersDebugCardWithAppCheck(
 // Robust multi-variant query helpers (no OR filters)
 // ---------------------------------------------------------------------------
 
-/// Builds compound and single-field queries against [kListingsCollection].
+/// Builds canonical public-listing queries against [kListingsCollection].
 ///
-/// Each query is guaranteed to satisfy the Firestore security rule
-/// `isPublicListingData()` for unauthenticated users. Simple `status ==
-/// 'active'` or `visibility == 'public'` alone cannot be statically verified
-/// by Firestore rules for list operations, so they are replaced with compound
-/// queries or nested-field variants that map 1-to-1 to a rule branch.
+/// The current marketplace contract is `status == 'active' && visibility ==
+/// 'public'` for every listing exposed anonymously.
 List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
   FirebaseFirestore? firestore,
   int limit = 200,
@@ -193,15 +180,10 @@ List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kListingsCollection);
   return <Query<Map<String, dynamic>>>[
-    // Chaque variant correspond à une branche autonome de isPublicListingData()
-    // dans firestore.rules — Firestore peut donc les valider statiquement pour
-    // les utilisateurs non authentifiés.
-    col.where('status', isEqualTo: 'active').limit(limit),
-    col.where('status', isEqualTo: 'published').limit(limit),
-    col.where('isPublished', isEqualTo: true).limit(limit),
-    col.where('isActive', isEqualTo: true).limit(limit),
-    col.where('visibility', isEqualTo: 'public').limit(limit),
-    col.where('visibility.isPublic', isEqualTo: true).limit(limit),
+    col
+        .where('status', isEqualTo: 'active')
+        .where('visibility', isEqualTo: 'public')
+        .limit(limit),
   ];
 }
 
@@ -219,26 +201,7 @@ List<Query<Map<String, dynamic>>> buildLatestPublicListingsQueryVariants({
   return <Query<Map<String, dynamic>>>[
     col
         .where('status', isEqualTo: 'active')
-        .orderBy('createdAt', descending: true)
-        .limit(limit),
-    col
-        .where('status', isEqualTo: 'published')
-        .orderBy('createdAt', descending: true)
-        .limit(limit),
-    col
-        .where('isPublished', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .limit(limit),
-    col
-        .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .limit(limit),
-    col
         .where('visibility', isEqualTo: 'public')
-        .orderBy('createdAt', descending: true)
-        .limit(limit),
-    col
-        .where('visibility.isPublic', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .limit(limit),
   ];

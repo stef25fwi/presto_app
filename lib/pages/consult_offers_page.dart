@@ -1018,21 +1018,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   bool _matchesOfferFilters(Map<String, dynamic> data) {
     if (!_offerIsActive(data)) return false;
 
-    final selectedCategory =
-        (_filterCategory != null && _filterCategory!.isNotEmpty)
-            ? _filterCategory
-            : ((_selectedCategory != null &&
-                    _selectedCategory != 'Toutes catégories')
-                ? _selectedCategory
-                : null);
-    if (selectedCategory != null && selectedCategory.isNotEmpty) {
-      final offerCategory = _offerCategoryLabel(data);
-      if (_normalizeForCategoryMatch(offerCategory) !=
-          _normalizeForCategoryMatch(selectedCategory)) {
-        return false;
-      }
-    }
-
     if (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty) {
       final offerSubCategory =
           ((data['subCategory'] ?? data['subcategory']) ?? '')
@@ -1055,18 +1040,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             : _selectedRegionCode;
     if (regionFilter != null && regionFilter.isNotEmpty) {
       if (_offerRegionCode(data) != regionFilter) {
-        return false;
-      }
-    }
-
-    final cityFilter = _filterCityName?.trim();
-    if (cityFilter != null && cityFilter.isNotEmpty) {
-      if (_normalizeText(_offerCityLabel(data)) != _normalizeText(cityFilter)) {
-        return false;
-      }
-      final filterPostalCode = _filterPostalCodeController.text.trim();
-      if (filterPostalCode.isNotEmpty &&
-          _offerPostalCode(data) != filterPostalCode) {
         return false;
       }
     }

@@ -45,6 +45,13 @@ async function seedDocs(testEnv) {
         title: 'Annonce privee',
         createdAt: new Date('2026-04-20T09:00:00Z'),
       }),
+      setDoc(doc(db, 'listings', 'listing_sold_public'), {
+        status: 'sold',
+        visibility: 'public',
+        isActive: true,
+        title: 'Annonce vendue non publique',
+        createdAt: new Date('2026-04-20T08:00:00Z'),
+      }),
       setDoc(doc(db, 'offers', 'offer_public'), {
         status: 'active',
         title: 'Offre legacy publique',
@@ -74,6 +81,7 @@ async function main() {
 
     await assertSucceeds(getDoc(doc(anonDb, 'listings', 'listing_public')));
     await assertFails(getDoc(doc(anonDb, 'listings', 'listing_private')));
+    await assertFails(getDoc(doc(anonDb, 'listings', 'listing_sold_public')));
     await assertSucceeds(
       getDocs(
         query(
@@ -91,6 +99,15 @@ async function main() {
           where('status', '==', 'active'),
           where('visibility', '==', 'public'),
           where('cityCategoryKey', '==', '97139_les-abymes_bricolage-travaux'),
+          orderBy('createdAt', 'desc'),
+        ),
+      ),
+    );
+    await assertFails(
+      getDocs(
+        query(
+          collection(anonDb, 'listings'),
+          where('visibility', '==', 'public'),
           orderBy('createdAt', 'desc'),
         ),
       ),
