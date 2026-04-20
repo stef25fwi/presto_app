@@ -614,8 +614,17 @@ class _ProfilePageState extends State<ProfilePage> {
         final locale = (prefsData?['locale'] ?? 'fr').toString();
         if (locale == 'en') {
           _language = 'Anglais';
-        } else if (_language == 'Anglais') {
+        } else if (locale == 'cr') {
+          _language = 'Créole';
+        } else {
           _language = 'Français';
+        }
+
+        final savedTheme = (prefsData?['theme'] as String?) ?? '';
+        if (savedTheme == 'Sombre' ||
+            savedTheme == 'Clair' ||
+            savedTheme == 'Système') {
+          _theme = savedTheme;
         }
       });
     } catch (_) {
@@ -872,7 +881,11 @@ class _ProfilePageState extends State<ProfilePage> {
           .doc(user.uid)
           .set({
         'user_id': user.uid,
-        'locale': _language == 'Anglais' ? 'en' : 'fr',
+        'locale': _language == 'Anglais'
+            ? 'en'
+            : _language == 'Créole'
+                ? 'cr'
+                : 'fr',
         'timezone': _timezone,
         'quiet_hours': {
           'enabled': _quietHoursEnabled,
@@ -1956,16 +1969,33 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: user.emailVerified
+                            ? Colors.white.withOpacity(0.22)
+                            : Colors.orange.withOpacity(0.35),
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Text(
-                        'Compte non verifie',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            user.emailVerified
+                                ? Icons.verified_rounded
+                                : Icons.warning_amber_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            user.emailVerified
+                                ? 'Compte vérifié'
+                                : 'E-mail non vérifié',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
