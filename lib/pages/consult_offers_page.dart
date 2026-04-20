@@ -298,6 +298,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   bool _showFilters = false; // Panneau de filtres rétracté au départ
   int _lastResultCount = 0;
+  int? _totalPublishedCount;
+  bool _isLoadingPublishedCount = false;
   String _headerTitle = 'Je consulte les offres';
   static const int _autoApplyFiltersThreshold = 3;
 
@@ -521,6 +523,66 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     final initialStreamKey = _buildOffersStreamKey();
     unawaited(_primeOffersWarmCache(initialStreamKey));
+    if (!_hasActiveClientFilters) {
+      unawaited(_refreshPublishedOffersCount(force: true));
+    }
+  }
+
+  Future<void> _refreshPublishedOffersCount({
+    bool force = false,
+  }) async {
+    if (!force && _hasActiveClientFilters) {
+      return;
+    }
+    if (_isLoadingPublishedCount) {
+      return;
+    }
+    if (!force && _totalPublishedCount != null) {
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingPublishedCount = true;
+      });
+    } else {
+      _isLoadingPublishedCount = true;
+    }
+
+    try {
+      final aggregate = await FirebaseFirestore.instance
+          .collection(kListingsCollection)
+          .where('status', isEqualTo: 'active')
+          .where('visibility', isEqualTo: 'public')
+          .count()
+          .get();
+
+      if (!mounted) {
+        _totalPublishedCount = aggregate.count;
+        return;
+      }
+
+      setState(() {
+        _totalPublishedCount = aggregate.count;
+      });
+    } catch (error) {
+      debugPrint('[ConsultOffers] published count failed: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingPublishedCount = false;
+        });
+      } else {
+        _isLoadingPublishedCount = false;
+      }
+    }
+  }
+
+  void _refreshPublishedOffersCountIfNeeded() {
+    if (_hasActiveClientFilters) {
+      return;
+    }
+    unawaited(_refreshPublishedOffersCount(force: true));
   }
 
   void _monitorConnectivity() {
@@ -1274,6 +1336,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
     });
+
+    _refreshPublishedOffersCountIfNeeded();
   }
 
   void _trackManualFilterCriterion(
@@ -1361,6 +1425,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     FocusScope.of(context).unfocus();
 
     // 4) ✅ Pas de scroll forcé: on conserve la position courante
+    _refreshPublishedOffersCountIfNeeded();
   }
 
   void _mutateActiveFilters(VoidCallback mutation) {
@@ -1373,6 +1438,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _lastPaginationRequestAt = null;
       _headerTitle = _resolveConsultOffersTitle();
     });
+
+    _refreshPublishedOffersCountIfNeeded();
   }
 
   Widget _buildRemovableFilterChip({
@@ -1583,12 +1650,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final activeFilterChips = _buildActiveFilterChipItems();
     final activeFiltersCount = activeFilterChips.length;
 
-    // Le libellé près de l'icône filtre doit refléter exactement le nombre
-    // d'annonces actuellement rendues dans la liste, pas un total résolu à
-    // part pouvant diverger pendant les phases de chargement / pagination.
+    final bool hasActiveFilters = _hasActiveClientFilters;
     final int displayedResultCount = _lastResultCount;
-    final String offersLabel =
-        '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''} affichée${displayedResultCount > 1 ? 's' : ''}';
+    final int publishedCount = _totalPublishedCount ?? displayedResultCount;
+    final String offersLabel;
+
+    if (!hasActiveFilters &&
+        _isLoadingPublishedCount &&
+        _totalPublishedCount == null) {
+      offersLabel = 'Chargement des annonces publiées...';
+    } else if (hasActiveFilters) {
+      offersLabel =
+          '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''} trouvée${displayedResultCount > 1 ? 's' : ''}';
+    } else {
+      offersLabel =
+          '$publishedCount annonce${publishedCount > 1 ? 's' : ''} publiée${publishedCount > 1 ? 's' : ''}';
+    }
 
     return Container(
       color: Colors.white,
