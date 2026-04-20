@@ -516,11 +516,11 @@ class _HomePageState extends State<HomePage>
     try {
       final results = await Future.wait([
         loadMergedPublicOfferQueryVariants(
-          queries: buildPublicListingsQueryVariants(limit: 24),
+          queries: buildLatestPublicListingsQueryVariants(limit: 24),
           source: 'home_latest_offers_listings',
         ),
         loadMergedPublicOfferQueryVariants(
-          queries: buildPublicOffersQueryVariants(limit: 24),
+          queries: buildLatestPublicOffersQueryVariants(limit: 24),
           source: 'home_latest_offers_legacy',
         ),
       ]);

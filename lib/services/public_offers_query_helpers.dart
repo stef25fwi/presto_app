@@ -178,6 +178,45 @@ List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
   ];
 }
 
+/// Builds the same public-listing variants, but ordered by newest creation date.
+///
+/// This is required for screens that explicitly claim to show the latest
+/// listings. Sorting client-side after a plain limit() only reorders a partial
+/// sample and can miss newer documents that were never fetched.
+List<Query<Map<String, dynamic>>> buildLatestPublicListingsQueryVariants({
+  FirebaseFirestore? firestore,
+  int limit = 200,
+}) {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final col = fs.collection(kListingsCollection);
+  return <Query<Map<String, dynamic>>>[
+    col
+        .where('status', isEqualTo: 'active')
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('status', isEqualTo: 'published')
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('isPublished', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('visibility', isEqualTo: 'public')
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('visibility.isPublic', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+  ];
+}
+
 /// Builds queries against [kOffersCollection] that satisfy `isPublicOffer()`
 /// for unauthenticated users. `status == 'active'` alone is rejected by
 /// Firestore list-query rules (branch 1 also requires visibility == 'public').
@@ -196,6 +235,41 @@ List<Query<Map<String, dynamic>>> buildPublicOffersQueryVariants({
     col.where('isPublished', isEqualTo: true).limit(limit),
     col.where('visibility', isEqualTo: 'public').limit(limit),
     col.where('visibility.isPublic', isEqualTo: true).limit(limit),
+  ];
+}
+
+/// Builds the same public-offer variants, but ordered by newest creation date.
+List<Query<Map<String, dynamic>>> buildLatestPublicOffersQueryVariants({
+  FirebaseFirestore? firestore,
+  int limit = 200,
+}) {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final col = fs.collection(kOffersCollection);
+  return <Query<Map<String, dynamic>>>[
+    col
+        .where('status', isEqualTo: 'active')
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('status', isEqualTo: 'published')
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('isPublished', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('visibility', isEqualTo: 'public')
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
+    col
+        .where('visibility.isPublic', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .limit(limit),
   ];
 }
 
