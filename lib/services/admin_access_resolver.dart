@@ -691,11 +691,16 @@ class AdminAccessResolver {
   }
 
   List<String> _rolesFromValue(dynamic value) {
-    if (value is! Iterable) {
+    final Iterable<dynamic> rawValues;
+    if (value is String) {
+      rawValues = value.split(RegExp(r'[,\s]+'));
+    } else if (value is Iterable) {
+      rawValues = value;
+    } else {
       return const <String>[];
     }
 
-    return value
+    return rawValues
         .map((entry) => entry.toString().trim().toLowerCase())
         .where((entry) => entry.isNotEmpty)
         .toList(growable: false);

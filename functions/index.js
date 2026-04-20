@@ -912,11 +912,17 @@ function evaluateQuality({ text, googleConfidence, audioInfo }) {
 }
 
 function normalizeRoleValues(rawRoles) {
-  return Array.isArray(rawRoles)
+  const values = Array.isArray(rawRoles)
     ? rawRoles
-        .map((role) => String(role || '').trim().toLowerCase())
-        .filter(Boolean)
-    : [];
+    : typeof rawRoles === 'string'
+      ? rawRoles.split(/[\s,]+/)
+      : rawRoles instanceof Set
+        ? Array.from(rawRoles)
+        : [];
+
+  return values
+    .map((role) => String(role || '').trim().toLowerCase())
+    .filter(Boolean);
 }
 
 function hasAdminRoleData(data) {
