@@ -231,12 +231,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
       _cachedOffersStream;
   String? _cachedOffersStreamKey;
-    final Map<String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+  final Map<String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _offersWarmCache =
       <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
-    final Set<String> _offersWarmLoadsInFlight = <String>{};
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> _lastResolvedOfferDocs =
-      const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  final Set<String> _offersWarmLoadsInFlight = <String>{};
 
   String _buildOffersQuerySignature({
     required bool hasCategory,
@@ -840,14 +838,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           ? results[1]
           : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final merged = mergeOfferDocsById(listings, legacy);
+      final displayedCount = _buildDisplayedOfferDocs(merged).length;
 
       _offersWarmCache[key] = merged;
-      if (merged.isNotEmpty) {
-        _lastResolvedOfferDocs = merged;
-      }
 
       if (mounted && _buildOffersStreamKey() == key) {
-        setState(() {});
+        setState(() {
+          _lastResultCount = displayedCount;
+        });
       }
     } catch (_) {
       // Le stream live reste la source de vérité ; l'amorçage est opportuniste.
@@ -863,11 +861,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_cachedOffersStream == null || _cachedOffersStreamKey != key) {
       unawaited(_primeOffersWarmCache(key));
       _cachedOffersStream = _watchCombinedOffers().map((docs) {
+        final displayedCount = _buildDisplayedOfferDocs(docs).length;
         _offersWarmCache[key] = docs;
-        if (docs.isNotEmpty) {
-          _lastResolvedOfferDocs = docs;
+        if (mounted && _cachedOffersStreamKey == key &&
+            _lastResultCount != displayedCount) {
+          setState(() {
+            _lastResultCount = displayedCount;
+          });
         }
-        PrestoMonitoring.I.trackOffersSnapshot(docs.length);
+        PrestoMonitoring.I.trackOffersSnapshot(displayedCount);
         return docs;
       });
       _cachedOffersStreamKey = key;
@@ -1089,6 +1091,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return budgetValueFromDynamic(
       data['budgetValue'] ?? data['budget'] ?? data['price'],
     );
+  }
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _buildDisplayedOfferDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> rawDocs,
+  ) {
+    final docs = rawDocs
+        .where((d) => _matchesOfferFilters(d.data()))
+        .toList(growable: false)
+      ..sort((a, b) {
+        final aTs = a.data()['createdAt'];
+        final bTs = b.data()['createdAt'];
+        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+        return bMs.compareTo(aMs);
+      });
+    return docs;
   }
 
   bool _matchesOfferFilters(Map<String, dynamic> data) {
@@ -1704,8 +1722,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Widget build(BuildContext context) {
     final baseTitle = _headerTitle;
     final currentOffersStreamKey = _buildOffersStreamKey();
-    final initialOfferDocs = _offersWarmCache[currentOffersStreamKey] ??
-        (_lastResolvedOfferDocs.isNotEmpty ? _lastResolvedOfferDocs : null);
+    final initialOfferDocs = _offersWarmCache[currentOffersStreamKey];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
@@ -1824,30 +1841,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       final rawDocs = snapshot.data ?? const [];
                       _lastSnapshotRawCount = rawDocs.length;
 
-                      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                          rawDocs
-                              .where((d) => _matchesOfferFilters(d.data()))
-                              .toList();
+                      final docs = _buildDisplayedOfferDocs(rawDocs);
 
                       _scheduleJobDoneOverlayRefresh(rawDocs);
-
-                      docs.sort((a, b) {
-                        final aTs = a.data()['createdAt'];
-                        final bTs = b.data()['createdAt'];
-                        final aMs =
-                            aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-                        final bMs =
-                            bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-                        return bMs.compareTo(aMs);
-                      });
-
-                      // Nombre après filtrage
-                      final int resultCount = docs.length;
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted && _lastResultCount != resultCount) {
-                          setState(() => _lastResultCount = resultCount);
-                        }
-                      });
 
                       if (docs.isEmpty) {
                         return Column(
