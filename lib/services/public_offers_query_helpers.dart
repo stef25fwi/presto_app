@@ -166,15 +166,14 @@ List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kListingsCollection);
   return <Query<Map<String, dynamic>>>[
-    // Branch 1: nominal marketplace format — both fields required by rule
-    col.where('status', isEqualTo: 'active').where('visibility', isEqualTo: 'public').limit(limit),
-    // Branch 2
+    // Chaque variant correspond à une branche autonome de isPublicListingData()
+    // dans firestore.rules — Firestore peut donc les valider statiquement pour
+    // les utilisateurs non authentifiés.
+    col.where('status', isEqualTo: 'active').limit(limit),
     col.where('status', isEqualTo: 'published').limit(limit),
-    // Branch 3
     col.where('isPublished', isEqualTo: true).limit(limit),
-    // Branch 4
     col.where('isActive', isEqualTo: true).limit(limit),
-    // Branch 5: visibility stored as nested object {isPublic: true}
+    col.where('visibility', isEqualTo: 'public').limit(limit),
     col.where('visibility.isPublic', isEqualTo: true).limit(limit),
   ];
 }
@@ -191,14 +190,12 @@ List<Query<Map<String, dynamic>>> buildPublicOffersQueryVariants({
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kOffersCollection);
   return <Query<Map<String, dynamic>>>[
-    // Branch 5: visibility as nested object {isPublic: true}
-    col.where('visibility.isPublic', isEqualTo: true).limit(limit),
-    // Branch 2
+    col.where('status', isEqualTo: 'active').limit(limit),
     col.where('status', isEqualTo: 'published').limit(limit),
-    // Branch 4
     col.where('isActive', isEqualTo: true).limit(limit),
-    // Branch 3
     col.where('isPublished', isEqualTo: true).limit(limit),
+    col.where('visibility', isEqualTo: 'public').limit(limit),
+    col.where('visibility.isPublic', isEqualTo: true).limit(limit),
   ];
 }
 
