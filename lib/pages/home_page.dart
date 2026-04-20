@@ -514,18 +514,25 @@ class _HomePageState extends State<HomePage>
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
     try {
-      final results = await Future.wait([
+      final loaders = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
         loadMergedPublicOfferQueryVariants(
           queries: buildLatestPublicListingsQueryVariants(limit: 24),
           source: 'home_latest_offers_listings',
         ),
-        loadMergedPublicOfferQueryVariants(
-          queries: buildLatestPublicOffersQueryVariants(limit: 24),
-          source: 'home_latest_offers_legacy',
-        ),
-      ]);
+      ];
+      if (kEnableLegacyPublicOffersBackfill) {
+        loaders.add(
+          loadMergedPublicOfferQueryVariants(
+            queries: buildLatestPublicOffersQueryVariants(limit: 24),
+            source: 'home_latest_offers_legacy',
+          ),
+        );
+      }
+      final results = await Future.wait(loaders);
       final listings = results[0];
-      final legacy = results[1];
+      final legacy = results.length > 1
+          ? results[1]
+          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final merged = mergeOfferDocsById(listings, legacy)
           .where((doc) => isPublishedOfferData(doc.data()))
           .toList();
