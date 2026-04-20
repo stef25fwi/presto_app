@@ -1728,17 +1728,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return phoneWithoutCode.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
-  BoxDecoration _offerTileDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFFFDFDFD),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: Colors.black.withOpacity(0.1),
-        width: 1.4,
-      ),
-    );
-  }
-
   Widget _buildOfferTile(_ManagedOfferItem item) {
     final data = item.data;
     final statusColor = _statusColor(item.section);
@@ -1752,7 +1741,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: _offerTileDecoration(),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFDFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.black.withOpacity(0.1),
+          width: 1.4,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
