@@ -859,21 +859,26 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _checkFederatedRedirectResult() async {
+    final savedResult = pendingRedirectAuthResult;
+    final savedError = pendingRedirectAuthError;
+    pendingRedirectAuthResult = null;
+    pendingRedirectAuthError = null;
+
     try {
       // Récupère d'abord le résultat capturé tôt dans main.dart pour éviter
       // la course contre la consommation interne du SDK Firebase. Si rien
       // n'a été capturé (cas d'un mount tardif après refresh manuel), on
       // retombe sur l'API live.
-      UserCredential? result = pendingRedirectAuthResult;
-      if (result == null && pendingRedirectAuthError == null) {
+      UserCredential? result = savedResult;
+      if (result == null && savedError == null) {
         result = await _auth.getRedirectResult();
-      } else if (pendingRedirectAuthError != null && result == null) {
+      } else if (savedError != null && result == null) {
         // Propager l'erreur capturée tôt comme si on venait de l'avoir.
-        final captured = pendingRedirectAuthError;
+        final captured = savedError;
         if (captured is FirebaseAuthException) {
           throw captured;
         }
-        throw captured ?? StateError('OAuth redirect failed');
+        throw captured;
       }
 
       if (result?.user != null) {
@@ -2509,6 +2514,26 @@ class _AccountPageState extends State<AccountPage> {
       stream: _auth.idTokenChanges(),
       builder: (context, snapshot) {
         final user = snapshot.data;
+        if (user == null && snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 12),
+                  Text(
+                    'Restauration de la session…',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
