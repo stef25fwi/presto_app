@@ -2062,7 +2062,9 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAdminSpaceEntry(User user) {
     if (_adminAccessFuture == null || _adminAccessFutureUid != user.uid) {
-      _refreshAdminAccessForUser(user.uid);
+      // Force a hard ID-token refresh on the first load so freshly-granted
+      // admin claims are picked up without requiring a manual sign-out.
+      _refreshAdminAccessForUser(user.uid, forceRefresh: true);
     }
 
     return FutureBuilder<AdminAccessState>(
@@ -2122,6 +2124,27 @@ class _AccountPageState extends State<AccountPage> {
         }
 
         if (!accessState.effectiveIsAdmin) {
+          // Stale-claims: the server denied admin but local token/profile
+          // evidence says otherwise — the user was likely granted admin
+          // while already signed in. Surface the fallback card with a
+          // reconnect hint instead of silently hiding the tile.
+          if (accessState.serverErrorCode == 'stale-claims' &&
+              accessState.hasLocalAdminEvidence) {
+            final fallbackCard = _buildAdminLocalFallbackCard(
+              user: user,
+              state: accessState,
+              detail:
+                  "Tes droits admin ont été mis à jour. Déconnecte-toi puis reconnecte-toi pour activer l'espace admin.",
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                fallbackCard,
+                if (_shouldShowAdminDebugCard(user, state: accessState))
+                  _buildAdminDebugCard(user, state: accessState),
+              ],
+            );
+          }
           if (_shouldShowAdminDebugCard(user, state: accessState)) {
             return _buildAdminDebugCard(user, state: accessState);
           }
