@@ -212,21 +212,42 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
   Object? firstError;
   StackTrace? firstStackTrace;
 
-  for (var i = 0; i < queries.length; i++) {
-    try {
-      final snapshot = await queries[i].get();
-      for (final doc in snapshot.docs) {
-        byId.putIfAbsent(doc.id, () => doc);
-      }
-      if (kDebugMode) {
-        debugPrint(
-          '[PUBLIC_OFFERS][$source#$i] docs=${snapshot.docs.length}',
+  final results = await Future.wait(
+    queries.asMap().entries.map((entry) async {
+      final index = entry.key;
+      final query = entry.value;
+      try {
+        final snapshot = await query.get();
+        if (kDebugMode) {
+          debugPrint(
+            '[PUBLIC_OFFERS][$source#$index] docs=${snapshot.docs.length}',
+          );
+        }
+        return (index: index, docs: snapshot.docs, error: null, stackTrace: null);
+      } catch (error, stackTrace) {
+        logPublicOffersReadErrorWithAppCheck(
+          '$source#$index',
+          error,
+          stackTrace,
+        );
+        return (
+          index: index,
+          docs: const <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+          error: error,
+          stackTrace: stackTrace,
         );
       }
-    } catch (error, stackTrace) {
-      firstError ??= error;
-      firstStackTrace ??= stackTrace;
-      logPublicOffersReadErrorWithAppCheck('$source#$i', error, stackTrace);
+    }),
+  );
+
+  for (final result in results) {
+    if (result.error != null) {
+      firstError ??= result.error;
+      firstStackTrace ??= result.stackTrace;
+      continue;
+    }
+    for (final doc in result.docs) {
+      byId.putIfAbsent(doc.id, () => doc);
     }
   }
 
