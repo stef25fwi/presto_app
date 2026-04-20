@@ -17,7 +17,7 @@ enum PublicListingsBrowseFilterField {
 }
 
 /// Backfill legacy temporaire en lecture seule pour les annonces publiques.
-const bool kEnableLegacyPublicOffersBackfill = true;
+const bool kEnableLegacyPublicOffersBackfill = false;
 
 
 /// Collection legacy des annonces (ancienne architecture, en lecture seule).

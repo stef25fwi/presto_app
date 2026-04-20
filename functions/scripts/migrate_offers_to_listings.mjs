@@ -1,12 +1,32 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import admin from 'firebase-admin';
+
+function resolveDefaultProjectId() {
+  const envProjectId = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || '';
+  if (envProjectId.trim().length > 0) {
+    return envProjectId.trim();
+  }
+
+  try {
+    const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+    const firebaseRcPath = path.resolve(scriptDir, '..', '..', '.firebaserc');
+    const firebaseRc = JSON.parse(readFileSync(firebaseRcPath, 'utf8'));
+    return String(firebaseRc?.projects?.default || '').trim();
+  } catch {
+    return '';
+  }
+}
 
 function parseArgs(argv) {
   const opts = {
     dryRun: false,
     limit: 0,
-    projectId: process.env.GCLOUD_PROJECT || '',
+    projectId: resolveDefaultProjectId(),
     onlyActive: true,
   };
 
@@ -248,6 +268,7 @@ async function main() {
   }
 
   console.log('--- migrate offers -> listings summary ---');
+  console.log(`project_id: ${admin.app().options.projectId || '(implicit default)'}`);
   console.log(`scanned: ${scanned}`);
   console.log(`eligible_missing_listings: ${eligible}`);
   console.log(`already_present: ${alreadyPresent}`);
