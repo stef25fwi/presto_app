@@ -66,13 +66,14 @@ service cloud.firestore {
     }
 
     function isPublicListingData(data) {
-      return (
-        (data.status == 'active' && data.visibility == 'public')
+      // Each branch maps 1-to-1 to a query variant so Firestore can statically
+      // validate list queries for unauthenticated users.
+      return data.status == 'active'
         || data.status == 'published'
         || data.isPublished == true
         || data.isActive == true
-        || (data.visibility is map && data.visibility.get('isPublic', false) == true)
-      );
+        || data.visibility == 'public'
+        || (data.visibility is map && data.visibility.get('isPublic', false) == true);
     }
 
     function isListingOwner(data) {
@@ -88,11 +89,13 @@ service cloud.firestore {
     }
 
     function isPublicOffer() {
-      // Toute annonce publiée est visible publiquement
-      return (resource.data.status == 'active' && resource.data.visibility == 'public')
-        || (resource.data.status == 'published')
-        || (resource.data.isPublished == true)
-        || (resource.data.isActive == true)
+      // Toute annonce active est visible publiquement — chaque branche correspond
+      // à un variant de query validable statiquement par Firestore.
+      return resource.data.status == 'active'
+        || resource.data.status == 'published'
+        || resource.data.isPublished == true
+        || resource.data.isActive == true
+        || resource.data.visibility == 'public'
         || (resource.data.visibility is map && resource.data.visibility.get('isPublic', false) == true);
     }
 
