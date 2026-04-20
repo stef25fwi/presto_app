@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../config/app_check_state.dart';
 import '../services/google_auth_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
@@ -95,6 +96,17 @@ class AccountSocialAuthActions {
           }
 
           if (googleAuthService.shouldFallbackToRedirect(popupError)) {
+            // Si App Check a échoué à l'init, le redirect échouera aussi
+            // (même token invalide côté serveur) → on ne boucle pas.
+            if (appCheckActivationAttempted && !appCheckActivationSucceeded) {
+              if (!context.mounted) return;
+              showErrorSnackBar(
+                context,
+                '🔒 Sécurité de l\'application non validée. '
+                'Actualise la page et réessaie.',
+              );
+              return;
+            }
             try {
               googleAuthService.logFallback(
                 'Popup',
