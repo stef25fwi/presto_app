@@ -1405,342 +1405,251 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildAuthContent(ColorScheme colorScheme, bool isDark) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                kIliPrestoOrange,
-                Color(0xFFFF8A3D),
+        // ── Header ──────────────────────────────────────────────────────────
+        const SizedBox(height: 8),
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: kIliPrestoOrange,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: kIliPrestoOrange.withOpacity(0.30),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: kIliPrestoOrange.withOpacity(0.22),
-                blurRadius: 22,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Icon(
-                  Icons.bolt_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _authHeadline,
-                style: const TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.05,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _authSubtitle,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.35,
-                  color: Color(0xFFFFF4EC),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+            child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 34),
           ),
         ),
-        const SizedBox(height: 22),
-
-        // Switch Connexion / Inscription
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(isDark ? 0.22 : 0.96),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: kIliPrestoBorder),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(4),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _authMode = AuthMode.login),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _authMode == AuthMode.login
-                          ? kIliPrestoBlue
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Connexion',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _authMode == AuthMode.login
-                            ? Colors.white
-                            : const Color(0xFF374151),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _authMode = AuthMode.signup),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _authMode == AuthMode.signup
-                          ? kIliPrestoBlue
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Inscription',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _authMode == AuthMode.signup
-                            ? Colors.white
-                            : const Color(0xFF374151),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
         const SizedBox(height: 20),
+        Text(
+          _authHeadline,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: isDark ? Colors.white : const Color(0xFF111827),
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _authSubtitle,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.4,
+            color: kIliPrestoTextMuted,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 28),
 
+        // ── Social sign-in ───────────────────────────────────────────────────
         _buildSocialButton(
-          icon: const _GoogleBrandLogo(size: 18),
+          icon: const _GoogleBrandLogo(size: 20),
           label: 'Continuer avec Google',
           onTap: () async => _onGoogleSignIn(),
           colorScheme: colorScheme,
           forceWhiteBackground: true,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         _buildSocialButton(
-          icon: const FaIcon(FontAwesomeIcons.facebookF, size: 18),
+          icon: const FaIcon(FontAwesomeIcons.facebookF, size: 18, color: Color(0xFF1877F2)),
           label: 'Continuer avec Facebook',
           onTap: () async => _onFacebookSignIn(),
           colorScheme: colorScheme,
         ),
         if (_isAppleSignInSupported) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _buildSocialButton(
-            icon: const Icon(Icons.apple),
+            icon: const Icon(Icons.apple, size: 22),
             label: 'Continuer avec Apple',
             onTap: () async => _onAppleSignIn(),
             colorScheme: colorScheme,
           ),
         ],
 
-        const SizedBox(height: 16),
+        // ── Divider ──────────────────────────────────────────────────────────
+        const SizedBox(height: 20),
         Row(
           children: [
-            Expanded(child: Divider(color: kIliPrestoBlue.withOpacity(0.28))),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.0),
+            Expanded(child: Divider(color: const Color(0xFF9CA3AF).withOpacity(0.40))),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'ou continuez avec e-mail',
+                'ou par e-mail',
                 style: TextStyle(
-                  color: kIliPrestoTextMuted,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
+                  color: const Color(0xFF9CA3AF).withOpacity(0.85),
+                  letterSpacing: 0.2,
                 ),
               ),
             ),
-            Expanded(child: Divider(color: kIliPrestoBlue.withOpacity(0.28))),
+            Expanded(child: Divider(color: const Color(0xFF9CA3AF).withOpacity(0.40))),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 20),
 
-        // Formulaire Email
-        Card(
-          color: Colors.white.withOpacity(0.98),
-          elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-          shadowColor: Colors.transparent,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKeyAuth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: kIliPrestoCream,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+        // ── Email form ───────────────────────────────────────────────────────
+        Form(
+          key: _formKeyAuth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                textInputAction: TextInputAction.next,
+                decoration: _authInputDecoration(
+                  labelText: 'Adresse e-mail',
+                  prefixIcon: const Icon(Icons.email_outlined),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir un e-mail';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Format e-mail invalide';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _passwordCtrl,
+                obscureText: true,
+                autofillHints: _authMode == AuthMode.login
+                    ? const [AutofillHints.password]
+                    : const [AutofillHints.newPassword],
+                textInputAction: _authMode == AuthMode.signup
+                    ? TextInputAction.next
+                    : TextInputAction.done,
+                onFieldSubmitted: (_) {
+                  if (_authMode == AuthMode.login) _onEmailAuth();
+                },
+                decoration: _authInputDecoration(
+                  labelText: 'Mot de passe',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir un mot de passe';
+                  }
+                  if (value.length < 6) {
+                    return 'Minimum 6 caractères';
+                  }
+                  return null;
+                },
+              ),
+              if (_authMode == AuthMode.signup) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _passwordConfirmCtrl,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.newPassword],
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _onEmailAuth(),
+                  decoration: _authInputDecoration(
+                    labelText: 'Confirmer le mot de passe',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                  ),
+                  validator: (value) {
+                    if (_authMode == AuthMode.signup) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez confirmer le mot de passe';
+                      }
+                      if (value != _passwordCtrl.text) {
+                        return 'Les mots de passe ne correspondent pas';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: 18),
+              FilledButton(
+                onPressed: _isLoading ? null : () async => _onEmailAuth(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: kIliPrestoOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  _isLoading
+                      ? 'Chargement...'
+                      : _authMode == AuthMode.login
+                          ? 'Se connecter'
+                          : 'Créer mon compte',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+              if (_authMode == AuthMode.login) ...[
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading ? null : () => _onForgotPassword(),
                     child: const Text(
-                      'Acces a votre espace iLiPresto',
+                      'Mot de passe oublié ?',
                       style: TextStyle(
-                        color: kIliPrestoOrange,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
+                        color: kIliPrestoBlue,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    textInputAction: TextInputAction.next,
-                    decoration: _authInputDecoration(
-                      labelText: 'E-mail',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez saisir un e-mail';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Format e-mail invalide';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordCtrl,
-                    obscureText: true,
-                    autofillHints: _authMode == AuthMode.login
-                        ? const [AutofillHints.password]
-                        : const [AutofillHints.newPassword],
-                    textInputAction: _authMode == AuthMode.signup
-                        ? TextInputAction.next
-                        : TextInputAction.done,
-                    onFieldSubmitted: (_) {
-                      if (_authMode == AuthMode.login) {
-                        _onEmailAuth();
-                      }
-                    },
-                    decoration: _authInputDecoration(
-                      labelText: 'Mot de passe',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez saisir un mot de passe';
-                      }
-                      if (value.length < 6) {
-                        return 'Minimum 6 caractères';
-                      }
-                      return null;
-                    },
-                  ),
-                  if (_authMode == AuthMode.signup) ...[
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _passwordConfirmCtrl,
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.newPassword],
-                      textInputAction: TextInputAction.done,
-                      onFieldSubmitted: (_) => _onEmailAuth(),
-                      decoration: _authInputDecoration(
-                        labelText: 'Confirmer le mot de passe',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                      ),
-                      validator: (value) {
-                        if (_authMode == AuthMode.signup) {
-                          if (value == null || value.isEmpty) {
-                            return 'Veuillez confirmer le mot de passe';
-                          }
-                          if (value != _passwordCtrl.text) {
-                            return 'Les mots de passe ne correspondent pas';
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 16),
+                ),
+              ],
+            ],
+          ),
+        ),
 
-                  // Bouton email
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _isLoading ? null : () async => _onEmailAuth(),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: kIliPrestoOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        _isLoading
-                            ? 'Chargement...'
-                            : _authMode == AuthMode.login
-                                ? 'Se connecter'
-                                : 'Créer mon compte',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
+        // ── Mode toggle ──────────────────────────────────────────────────────
+        const SizedBox(height: 20),
+        Center(
+          child: GestureDetector(
+            onTap: () => setState(() {
+              _authMode = _authMode == AuthMode.login ? AuthMode.signup : AuthMode.login;
+            }),
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(fontSize: 14, color: kIliPrestoTextMuted),
+                children: [
+                  TextSpan(
+                    text: _authMode == AuthMode.login
+                        ? 'Pas encore de compte ? '
+                        : 'Déjà un compte ? ',
+                  ),
+                  TextSpan(
+                    text: _authMode == AuthMode.login ? 'S\'inscrire' : 'Se connecter',
+                    style: const TextStyle(
+                      color: kIliPrestoBlue,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-
-                  if (_authMode == AuthMode.login) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed:
-                            _isLoading ? null : () => _onForgotPassword(),
-                        child: const Text(
-                          'Mot de passe oublié ?',
-                          style: TextStyle(
-                            color: kIliPrestoBlue,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
         ),
 
-        const SizedBox(height: 24),
+        // ── Promo cards ──────────────────────────────────────────────────────
+        const SizedBox(height: 28),
         _buildProAccessCard(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildPrestoPromoCard(colorScheme),
       ],
     );

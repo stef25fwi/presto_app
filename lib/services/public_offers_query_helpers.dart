@@ -152,7 +152,13 @@ Widget buildPublicOffersDebugCardWithAppCheck(
 // Robust multi-variant query helpers (no OR filters)
 // ---------------------------------------------------------------------------
 
-/// Builds simple single-field queries against [kListingsCollection].
+/// Builds compound and single-field queries against [kListingsCollection].
+///
+/// Each query is guaranteed to satisfy the Firestore security rule
+/// `isPublicListingData()` for unauthenticated users. Simple `status ==
+/// 'active'` or `visibility == 'public'` alone cannot be statically verified
+/// by Firestore rules for list operations, so they are replaced with compound
+/// queries or nested-field variants that map 1-to-1 to a rule branch.
 List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
   FirebaseFirestore? firestore,
   int limit = 200,
@@ -160,15 +166,24 @@ List<Query<Map<String, dynamic>>> buildPublicListingsQueryVariants({
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kListingsCollection);
   return <Query<Map<String, dynamic>>>[
-    col.where('status', isEqualTo: 'active').limit(limit),
+    // Branch 1: nominal marketplace format — both fields required by rule
+    col.where('status', isEqualTo: 'active').where('visibility', isEqualTo: 'public').limit(limit),
+    // Branch 2
     col.where('status', isEqualTo: 'published').limit(limit),
+    // Branch 3
     col.where('isPublished', isEqualTo: true).limit(limit),
+    // Branch 4
     col.where('isActive', isEqualTo: true).limit(limit),
-    col.where('visibility', isEqualTo: 'public').limit(limit),
+    // Branch 5: visibility stored as nested object {isPublic: true}
+    col.where('visibility.isPublic', isEqualTo: true).limit(limit),
   ];
 }
 
-/// Builds simple single-field queries against [kOffersCollection].
+/// Builds queries against [kOffersCollection] that satisfy `isPublicOffer()`
+/// for unauthenticated users. `status == 'active'` alone is rejected by
+/// Firestore list-query rules (branch 1 also requires visibility == 'public').
+/// It is removed and its data is already covered by `isActive == true` or
+/// `visibility.isPublic == true`.
 List<Query<Map<String, dynamic>>> buildPublicOffersQueryVariants({
   FirebaseFirestore? firestore,
   int limit = 200,
@@ -176,10 +191,13 @@ List<Query<Map<String, dynamic>>> buildPublicOffersQueryVariants({
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kOffersCollection);
   return <Query<Map<String, dynamic>>>[
+    // Branch 5: visibility as nested object {isPublic: true}
     col.where('visibility.isPublic', isEqualTo: true).limit(limit),
-    col.where('status', isEqualTo: 'active').limit(limit),
+    // Branch 2
     col.where('status', isEqualTo: 'published').limit(limit),
+    // Branch 4
     col.where('isActive', isEqualTo: true).limit(limit),
+    // Branch 3
     col.where('isPublished', isEqualTo: true).limit(limit),
   ];
 }
