@@ -231,6 +231,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
       _cachedOffersStream;
   String? _cachedOffersStreamKey;
+    final Map<String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _offersWarmCache =
+      <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    final Set<String> _offersWarmLoadsInFlight = <String>{};
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> _lastResolvedOfferDocs =
+      const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
 
   String _buildOffersQuerySignature({
     required bool hasCategory,
@@ -514,6 +520,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // ✅ Écouter les changements de connectivité
     _monitorConnectivity();
+
+    final initialStreamKey = _buildOffersStreamKey();
+    unawaited(_primeOffersWarmCache(initialStreamKey));
   }
 
   void _monitorConnectivity() {
@@ -788,12 +797,79 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     ].join('|');
   }
 
+  List<Query<Map<String, dynamic>>> _buildCurrentListingsQueries({
+    required int limit,
+  }) {
+    return buildMarketplaceListingsBrowseQueries(
+      limit: limit,
+      latestFirst: true,
+      categoryId: _effectiveListingsCategoryId(),
+      cityId: _effectiveListingsCityId(),
+    );
+  }
+
+  Future<void> _primeOffersWarmCache(String key) async {
+    if (_offersWarmCache.containsKey(key) ||
+        _offersWarmLoadsInFlight.contains(key)) {
+      return;
+    }
+
+    _offersWarmLoadsInFlight.add(key);
+    final limit = _hasActiveClientFilters ? _maxLimit : _pageLimit;
+
+    try {
+      final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
+        loadMergedPublicOfferQueryVariants(
+          queries: _buildCurrentListingsQueries(limit: limit),
+          source: 'consult_listings_warm',
+        ),
+      ];
+
+      if (kEnableLegacyPublicOffersBackfill) {
+        loads.add(
+          loadMergedPublicOfferQueryVariants(
+            queries: buildLatestPublicOffersQueryVariants(limit: limit),
+            source: 'consult_legacy_warm',
+          ),
+        );
+      }
+
+      final results = await Future.wait(loads);
+      final listings = results[0];
+      final legacy = results.length > 1
+          ? results[1]
+          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      final merged = mergeOfferDocsById(listings, legacy);
+
+      _offersWarmCache[key] = merged;
+      if (merged.isNotEmpty) {
+        _lastResolvedOfferDocs = merged;
+      }
+
+      if (mounted && _buildOffersStreamKey() == key) {
+        setState(() {});
+      }
+    } catch (_) {
+      // Le stream live reste la source de vérité ; l'amorçage est opportuniste.
+    } finally {
+      _offersWarmLoadsInFlight.remove(key);
+    }
+  }
+
   /// Retourne le stream mis en cache ou en crée un nouveau si les paramètres
   /// de la requête ont changé depuis le dernier build.
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getOffersStream() {
     final key = _buildOffersStreamKey();
     if (_cachedOffersStream == null || _cachedOffersStreamKey != key) {
-      _cachedOffersStream = _watchCombinedOffers();
+      unawaited(_primeOffersWarmCache(key));
+      _cachedOffersStream = _watchCombinedOffers().map((docs) {
+        _offersWarmCache[key] = docs;
+        if (docs.isNotEmpty) {
+          _lastResolvedOfferDocs = docs;
+        }
+        PrestoMonitoring.I.trackOffersSnapshot(docs.length);
+        return docs;
+      });
       _cachedOffersStreamKey = key;
     }
     return _cachedOffersStream!;
@@ -1627,6 +1703,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   @override
   Widget build(BuildContext context) {
     final baseTitle = _headerTitle;
+    final currentOffersStreamKey = _buildOffersStreamKey();
+    final initialOfferDocs = _offersWarmCache[currentOffersStreamKey] ??
+        (_lastResolvedOfferDocs.isNotEmpty ? _lastResolvedOfferDocs : null);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
@@ -1661,10 +1740,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 Expanded(
                   child: StreamBuilder<
                       List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-                    stream: _getOffersStream().map((docs) {
-                      PrestoMonitoring.I.trackOffersSnapshot(docs.length);
-                      return docs;
-                    }),
+                    stream: _getOffersStream(),
+                    initialData: initialOfferDocs,
                     builder: (context, snapshot) {
                       // ✅ Ne plus afficher le loader si on a déjà des données
                       if (snapshot.connectionState == ConnectionState.waiting &&
