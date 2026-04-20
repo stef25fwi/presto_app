@@ -56,8 +56,8 @@ class GoogleAuthService {
           return "🔒 Vérification de sécurité incomplète. "
               "Réessaie dans quelques secondes ou essaie un autre navigateur.";
         }
-        return "❌ Erreur interne Firebase. "
-            "Vérifie: Firebase Console → Authentication → Google → Configuration OAuth2";
+        return "❌ La fenêtre Google n'a pas pu s'ouvrir. "
+            "Autorise les pop-ups pour ce site, puis réessaie.";
       case 'auth-error':
         return "❌ Erreur d'authentification. "
             "Vérifie que Google Sign-In est activé dans Firebase Console.";
@@ -151,33 +151,49 @@ class GoogleAuthService {
     // échouerait de la même façon. Ne pas boucler.
     if (isLikelyAppCheckEnforcement(error)) return false;
 
+    final msg = error.toString().toLowerCase();
+    final hasCoopSignal = msg.contains('cross-origin-opener-policy') ||
+        msg.contains('cross-origin');
+    final hasPopupBlockedSignal = msg.contains('popup-blocked') ||
+        msg.contains('popup blocked') ||
+        msg.contains('popup-blocked-by-browser');
+
     if (error is FirebaseAuthException) {
       switch (error.code) {
         case 'popup-blocked':
         case 'popup-blocked-by-browser':
-        // internal-error déclenché par COOP/COEP (GitHub Pages, certains Safari)
-        // quand le popup ne peut pas communiquer avec l'opener.
-        case 'internal-error':
           return true;
+        // internal-error est trop générique (App Check, OAuth mal configuré,
+        // réseau…). Déclencher un redirect sur cette erreur provoque un
+        // rechargement de page/splash sans popup visible. On affiche un
+        // message d'erreur à la place.
         case 'popup-closed-by-user':
         case 'cancelled-popup-request':
         case 'cancelled':
         case 'user-cancelled':
           return false;
+        case 'internal-error':
+          // Rétablit le flow redirect uniquement quand les signaux indiquent
+          // un vrai blocage navigateur (COOP/popup), pas pour les erreurs
+          // OAuth/App Check génériques.
+          return hasCoopSignal || hasPopupBlockedSignal;
         default:
           break;
       }
     }
-    final msg = error.toString().toLowerCase();
+
     if (msg.contains('closed-by-user') ||
         msg.contains('cancelled-popup-request') ||
-        msg.contains('cancelled')) {
+        msg.contains('cancelled') ||
+        msg.contains('canceled')) {
       return false;
     }
-    return msg.contains('popup-blocked') ||
-        msg.contains('cross-origin-opener-policy') ||
-        msg.contains('cross-origin') ||
-        msg.contains('internal-error');
+
+    if (msg.contains('internal-error')) {
+      return hasCoopSignal || hasPopupBlockedSignal;
+    }
+
+    return hasPopupBlockedSignal || hasCoopSignal;
   }
 
   /// Vrai si l'erreur correspond à une annulation volontaire de l'utilisateur

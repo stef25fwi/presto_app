@@ -471,10 +471,39 @@ class AccountSocialAuthActions {
 
   static bool _shouldFallbackToRedirect(Object error) {
     final message = error.toString().toLowerCase();
-    return message.contains('popup') ||
-        message.contains('blocked') ||
-        message.contains('cross-origin') ||
-        message.contains('internal-error');
+    final hasCoopSignal = message.contains('cross-origin-opener-policy') ||
+        message.contains('cross-origin');
+    final hasPopupBlockedSignal = message.contains('popup-blocked') ||
+        message.contains('popup blocked') ||
+        message.contains('popup-blocked-by-browser');
+
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'popup-blocked':
+        case 'popup-blocked-by-browser':
+          return true;
+        case 'popup-closed-by-user':
+        case 'cancelled-popup-request':
+        case 'cancelled':
+        case 'user-cancelled':
+          return false;
+        case 'internal-error':
+          return hasCoopSignal || hasPopupBlockedSignal;
+      }
+    }
+
+    if (message.contains('closed-by-user') ||
+        message.contains('cancelled-popup-request') ||
+        message.contains('cancelled') ||
+        message.contains('canceled')) {
+      return false;
+    }
+
+    if (message.contains('internal-error')) {
+      return hasCoopSignal || hasPopupBlockedSignal;
+    }
+
+    return hasPopupBlockedSignal || hasCoopSignal;
   }
 
   static String _facebookErrorMessage(Object error) {
