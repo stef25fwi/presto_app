@@ -9,12 +9,35 @@ import 'package:flutter/material.dart';
 
 const String kListingsCollection = 'listings';
 
+enum PublicListingsBrowseFilterField {
+  none,
+  categoryId,
+  cityId,
+}
+
 /// Backfill legacy temporaire en lecture seule pour les annonces publiques.
 const bool kEnableLegacyPublicOffersBackfill = true;
 
 
 /// Collection legacy des annonces (ancienne architecture, en lecture seule).
 const String kOffersCollection = 'offers';
+
+PublicListingsBrowseFilterField pickPublicListingsBrowseFilterField({
+  String? categoryId,
+  String? cityId,
+}) {
+  final normalizedCityId = cityId?.trim() ?? '';
+  if (normalizedCityId.isNotEmpty) {
+    return PublicListingsBrowseFilterField.cityId;
+  }
+
+  final normalizedCategoryId = categoryId?.trim() ?? '';
+  if (normalizedCategoryId.isNotEmpty) {
+    return PublicListingsBrowseFilterField.categoryId;
+  }
+
+  return PublicListingsBrowseFilterField.none;
+}
 
 Filter publicListingsFilter() {
   return Filter.or(
@@ -271,6 +294,45 @@ List<Query<Map<String, dynamic>>> buildLatestPublicOffersQueryVariants({
         .orderBy('createdAt', descending: true)
         .limit(limit),
   ];
+}
+
+/// Builds the nominal modern marketplace browse query for listings.
+///
+/// This path targets the current production schema written by Cloud Functions:
+/// active + public listings. It can safely apply indexed server-side filters
+/// for category or city and keep newest-first ordering.
+List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
+  FirebaseFirestore? firestore,
+  int limit = 200,
+  bool latestFirst = true,
+  String? categoryId,
+  String? cityId,
+}) {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final col = fs.collection(kListingsCollection);
+  Query<Map<String, dynamic>> query = col
+      .where('status', isEqualTo: 'active')
+      .where('visibility', isEqualTo: 'public');
+
+  switch (pickPublicListingsBrowseFilterField(
+    categoryId: categoryId,
+    cityId: cityId,
+  )) {
+    case PublicListingsBrowseFilterField.cityId:
+      query = query.where('cityId', isEqualTo: cityId!.trim());
+      break;
+    case PublicListingsBrowseFilterField.categoryId:
+      query = query.where('categoryId', isEqualTo: categoryId!.trim());
+      break;
+    case PublicListingsBrowseFilterField.none:
+      break;
+  }
+
+  if (latestFirst) {
+    query = query.orderBy('createdAt', descending: true);
+  }
+
+  return <Query<Map<String, dynamic>>>[query.limit(limit)];
 }
 
 /// Executes every [queries] variant, merges results by document ID and returns

@@ -294,8 +294,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   bool _showFilters = false; // Panneau de filtres rétracté au départ
   int _lastResultCount = 0;
-  int? _resolvedVisibleOffersCount;
-  int _visibleOffersCountRequestId = 0;
   String _headerTitle = 'Je consulte les offres';
   static const int _autoApplyFiltersThreshold = 3;
 
@@ -513,10 +511,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
     _filterCityController.addListener(_syncLocationFieldFromFilter);
     _syncLocationFieldFromFilter();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshVisibleOffersCount();
-    });
 
     // ✅ Écouter les changements de connectivité
     _monitorConnectivity();
@@ -808,16 +802,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _watchCombinedOffers() {
     final limit = _hasActiveClientFilters ? _maxLimit : _pageLimit;
+    final categoryId = _effectiveListingsCategoryId();
+    final cityId = _effectiveListingsCityId();
 
     final listingsStream = watchMergedPublicOfferQueryVariants(
-      queries: buildPublicListingsQueryVariants(limit: limit),
+      queries: buildMarketplaceListingsBrowseQueries(
+        limit: limit,
+        latestFirst: true,
+        categoryId: categoryId,
+        cityId: cityId,
+      ),
       source: 'consult_listings_stream',
     );
 
-    final legacyStream = watchMergedPublicOfferQueryVariants(
-      queries: buildPublicOffersQueryVariants(limit: limit),
-      source: 'consult_legacy_stream',
-    );
+    final Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> legacyStream =
+        kEnableLegacyPublicOffersBackfill
+            ? watchMergedPublicOfferQueryVariants(
+                queries: buildLatestPublicOffersQueryVariants(limit: limit),
+                source: 'consult_legacy_stream',
+              )
+            : Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>.value(
+                const <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+              );
 
     return Stream.multi((controller) {
       var listingsDocs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
@@ -947,7 +953,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         setState(() {
           _nextJobDoneOverlayRefreshAt = null;
         });
-        _refreshVisibleOffersCount();
       },
     );
   }
@@ -963,6 +968,33 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   String _offerPostalCode(Map<String, dynamic> data) {
     return ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+  }
+
+  String? _effectiveListingsCategoryId() {
+    final categoryLabel = (_filterCategory != null && _filterCategory!.isNotEmpty)
+        ? _filterCategory
+        : ((_selectedCategory != null &&
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory
+            : null);
+    return _makeCategoryId(categoryLabel);
+  }
+
+  String? _effectiveListingsCityId() {
+    final loc = _locationController.text.trim();
+    final cp = _postalCodeController.text.trim();
+    final filterCity = _filterCityName?.trim();
+
+    final cityName = (filterCity != null && filterCity.isNotEmpty)
+        ? filterCity
+        : loc;
+    final cpForCity = (filterCity != null &&
+            filterCity.isNotEmpty &&
+            _filterPostalCodeController.text.trim().isNotEmpty)
+        ? _filterPostalCodeController.text.trim()
+        : cp;
+
+    return _makeCityId(cityName: cityName, postalCode: cpForCity);
   }
 
   String? _offerDepartmentCode(Map<String, dynamic> data) {
@@ -1062,66 +1094,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     return true;
-  }
-
-  Future<void> _refreshVisibleOffersCount() async {
-    final int requestId = ++_visibleOffersCountRequestId;
-
-    if (mounted) {
-      setState(() {
-        _resolvedVisibleOffersCount = null;
-      });
-    }
-
-    try {
-      int visibleCount;
-
-      if (!_hasActiveClientFilters) {
-        // ⚡ Aucun filtre client actif → count aggregation (0 lecture doc)
-        final listingsCount = await FirebaseFirestore.instance
-            .collection(kListingsCollection)
-            .where(publicListingsFilter())
-            .count()
-            .get();
-        var total = listingsCount.count ?? 0;
-        if (kEnableLegacyPublicOffersBackfill) {
-          final legacyCount = await FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .where(publicOffersFilter())
-              .count()
-              .get();
-          total += legacyCount.count ?? 0;
-        }
-        visibleCount = total;
-      } else {
-        // Filtres actifs → on doit charger les docs pour filtrer côté client
-        // Limiter à 500 docs maximum pour protéger le quota
-        final listings = await _buildOffersQuery().limit(500).get();
-        final legacy = await loadLegacyPublicOffersBackfill(
-          query: _buildLegacyOffersQuery().limit(500),
-          source: 'consult_visible_count_legacy_backfill',
-        );
-        final merged = mergeOfferDocsById(listings.docs, legacy);
-        visibleCount =
-            merged.where((doc) => _matchesOfferFilters(doc.data())).length;
-      }
-
-      if (!mounted || requestId != _visibleOffersCountRequestId) {
-        return;
-      }
-
-      setState(() {
-        _resolvedVisibleOffersCount = visibleCount;
-      });
-    } catch (e) {
-      if (!mounted || requestId != _visibleOffersCountRequestId) {
-        return;
-      }
-      setState(() {
-        _resolvedVisibleOffersCount = _lastResultCount;
-      });
-      debugPrint('[ConsultOffers] Erreur calcul compteur total: $e');
-    }
   }
 
   Future<void> _fetchOffers({bool resetPaging = false}) async {
@@ -1235,8 +1207,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
     });
-
-    _refreshVisibleOffersCount();
   }
 
   void _trackManualFilterCriterion(
@@ -1323,8 +1293,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // 3) ferme le clavier si besoin
     FocusScope.of(context).unfocus();
 
-    _refreshVisibleOffersCount();
-
     // 4) ✅ Pas de scroll forcé: on conserve la position courante
   }
 
@@ -1338,8 +1306,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _lastPaginationRequestAt = null;
       _headerTitle = _resolveConsultOffersTitle();
     });
-
-    _refreshVisibleOffersCount();
   }
 
   Widget _buildRemovableFilterChip({
