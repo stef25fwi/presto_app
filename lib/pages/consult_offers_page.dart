@@ -15,7 +15,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
-import '../features/offers/public_offers_read_diagnostics.dart';
 import '../main.dart'
     show
         CardShell,
@@ -941,111 +940,45 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _watchCombinedOffers() {
+    // ✅ Fetch-once (get) au lieu d'un snapshots() permanent: la consultation
+    // publique n'a pas besoin d'un live stream. La stream émet un unique
+    // résultat fusionné, puis se termine. Un changement de filtre/pagination
+    // change la clé (_buildOffersStreamKey), ce qui recrée un nouveau stream
+    // et déclenche un nouveau fetch. Le refresh manuel reste assuré par le
+    // bouton "Actualiser" qui invalide le cache du stream.
     final limit = _hasActiveClientFilters ? _maxLimit : _pageLimit;
     final categoryId = _effectiveListingsCategoryId();
     final cityId = _effectiveListingsCityId();
 
-    final listingsStream = watchMergedPublicOfferQueryVariants(
-      queries: buildMarketplaceListingsBrowseQueries(
-        limit: limit,
-        latestFirst: true,
-        categoryId: categoryId,
-        cityId: cityId,
-      ),
-      source: 'consult_listings_stream',
-    );
-
-    final Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> legacyStream =
-        kEnableLegacyPublicOffersBackfill
-            ? watchMergedPublicOfferQueryVariants(
-                queries: buildLatestPublicOffersQueryVariants(limit: limit),
-                source: 'consult_legacy_stream',
-              )
-            : Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>.value(
-                const <QueryDocumentSnapshot<Map<String, dynamic>>>[],
-              );
-
-    return Stream.multi((controller) {
-      var listingsDocs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      var legacyDocs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      bool listingsReady = false;
-      bool legacyReady = false;
-      Object? listingsError;
-      StackTrace? listingsStackTrace;
-      Object? legacyError;
-      StackTrace? legacyStackTrace;
-      bool controllerClosed = false;
-
-      void emitMerged() {
-        if (controllerClosed) return;
-        if (!listingsReady || !legacyReady) return;
-
-        final merged = mergeOfferDocsById(listingsDocs, legacyDocs);
-        if (merged.isNotEmpty) {
-          controller.add(merged);
-        } else if (listingsError != null) {
-          controller.addError(
-            PublicOffersReadException(
-              diagnosePublicOffersReadIssueWithAppCheck(
-                listingsError!,
-                source: 'consult_listings_stream',
-              ),
-            ),
-            listingsStackTrace ?? StackTrace.current,
-          );
-        } else if (legacyError != null) {
-          controller.addError(
-            PublicOffersReadException(
-              diagnosePublicOffersReadIssueWithAppCheck(
-                legacyError!,
-                source: 'consult_legacy_stream',
-              ),
-            ),
-            legacyStackTrace ?? StackTrace.current,
-          );
-        } else {
-          controller.add(const []);
-        }
+    Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> loadOnce() async {
+      final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
+        loadMergedPublicOfferQueryVariants(
+          queries: buildMarketplaceListingsBrowseQueries(
+            limit: limit,
+            latestFirst: true,
+            categoryId: categoryId,
+            cityId: cityId,
+          ),
+          source: 'consult_listings_fetch',
+        ),
+      ];
+      if (kEnableLegacyPublicOffersBackfill) {
+        loads.add(
+          loadMergedPublicOfferQueryVariants(
+            queries: buildLatestPublicOffersQueryVariants(limit: limit),
+            source: 'consult_legacy_fetch',
+          ),
+        );
       }
+      final results = await Future.wait(loads);
+      final listings = results[0];
+      final legacy = results.length > 1
+          ? results[1]
+          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      return mergeOfferDocsById(listings, legacy);
+    }
 
-      final listingsSub = listingsStream.listen(
-        (docs) {
-          listingsDocs = docs;
-          listingsError = null;
-          listingsStackTrace = null;
-          listingsReady = true;
-          emitMerged();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          listingsError = error;
-          listingsStackTrace = stackTrace;
-          listingsReady = true;
-          emitMerged();
-        },
-      );
-
-      final legacySub = legacyStream.listen(
-        (docs) {
-          legacyDocs = docs;
-          legacyError = null;
-          legacyStackTrace = null;
-          legacyReady = true;
-          emitMerged();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          legacyError = error;
-          legacyStackTrace = stackTrace;
-          legacyReady = true;
-          emitMerged();
-        },
-      );
-
-      controller.onCancel = () async {
-        controllerClosed = true;
-        await listingsSub.cancel();
-        await legacySub.cancel();
-      };
-    });
+    return loadOnce().asStream();
   }
 
   bool _offerIsActive(Map<String, dynamic> data) {

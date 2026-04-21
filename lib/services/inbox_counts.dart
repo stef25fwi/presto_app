@@ -33,6 +33,7 @@ Stream<int> streamInboxCount({
         const <String, dynamic>{};
     return readInboxCount(inboxCounts, type: type);
   }).asBroadcastStream();
+}
 
 Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
   final normalizedUserId = userId.trim();

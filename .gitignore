@@ -63,3 +63,4 @@ zicAlExN
 firestore_data.json
 *.firestore_backup.json
 /android/build/reports/
+.env.local
