@@ -915,6 +915,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
   }
 
+  Future<void> _refreshOffers() async {
+    final key = _buildOffersStreamKey();
+
+    _cachedOffersStream = null;
+    _cachedOffersStreamKey = null;
+    _offersWarmCache.remove(key);
+    _offersWarmLoadsInFlight.remove(key);
+
+    try {
+      await _primeOffersWarmCache(key);
+    } finally {
+      if (!mounted) return;
+      setState(() {});
+    }
+  }
+
   /// Retourne le stream mis en cache ou en crée un nouveau si les paramètres
   /// de la requête ont changé depuis le dernier build.
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getOffersStream() {
@@ -1832,9 +1848,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   ),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() {});
-                                  },
+                                  onPressed: _refreshOffers,
                                   icon: const Icon(Icons.refresh),
                                   label: const Text('Réessayer'),
                                   style: ElevatedButton.styleFrom(
@@ -1856,32 +1870,42 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       _scheduleJobDoneOverlayRefresh(rawDocs);
 
                       if (docs.isEmpty) {
-                        return Column(
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(24, 18, 24, 12),
-                              child: Row(
-                                children: const [
-                                  Icon(
-                                    Icons.grid_view_rounded,
-                                    size: 20,
-                                    color: _offersOrange,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    '0 annonce',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      color: _offersNavy,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        return RefreshIndicator(
+                          color: kPrestoOrange,
+                          onRefresh: _refreshOffers,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: ClampingScrollPhysics(),
                             ),
-                            const Expanded(child: _EmptyOffers()),
-                          ],
+                            padding: EdgeInsets.zero,
+                            children: const [
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(24, 18, 24, 12),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.grid_view_rounded,
+                                      size: 20,
+                                      color: _offersOrange,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      '0 annonce',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: _offersNavy,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 420,
+                                child: _EmptyOffers(),
+                              ),
+                            ],
+                          ),
                         );
                       }
 
@@ -1893,118 +1917,128 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       return Column(
                         children: [
                           Expanded(
-                            child: ListView.builder(
-                              key: const PageStorageKey<String>(
-                                'consult-offers-list',
-                              ),
-                              controller: _scrollController,
-                              physics: const ClampingScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
-                              addAutomaticKeepAlives: true,
-                              addRepaintBoundaries: true,
-                              itemCount: _totalItems,
-                              itemBuilder: (context, index) {
-                                final bool isAd =
-                                    (index + 1) % (_adsEvery + 1) == 0;
-                                if (isAd) {
-                                  return AdBanner(
-                                    margin: EdgeInsets.zero,
-                                    placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                                    placeholderFolderPrefix:
-                                        'assets/carousel_home/',
-                                    flat: true,
-                                    animatePlaceholder: false,
+                            child: RefreshIndicator(
+                              color: kPrestoOrange,
+                              onRefresh: _refreshOffers,
+                              child: ListView.builder(
+                                key: const PageStorageKey<String>(
+                                  'consult-offers-list',
+                                ),
+                                controller: _scrollController,
+                                physics: const AlwaysScrollableScrollPhysics(
+                                  parent: ClampingScrollPhysics(),
+                                ),
+                                padding:
+                                    const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                                addAutomaticKeepAlives: true,
+                                addRepaintBoundaries: true,
+                                itemCount: _totalItems,
+                                itemBuilder: (context, index) {
+                                  final bool isAd =
+                                      (index + 1) % (_adsEvery + 1) == 0;
+                                  if (isAd) {
+                                    return AdBanner(
+                                      margin: EdgeInsets.zero,
+                                      placeholderHeight:
+                                          kIsWeb ? 180.0 : 100.0,
+                                      placeholderFolderPrefix:
+                                          'assets/carousel_home/',
+                                      flat: true,
+                                      animatePlaceholder: false,
+                                    );
+                                  }
+
+                                  final adOffset = index ~/ (_adsEvery + 1);
+                                  final docIndex = index - adOffset;
+                                  final doc = docs[docIndex];
+                                  final data = doc.data();
+
+                                  final offerId = doc.id;
+                                  final title = (data['title'] ?? 'Sans titre')
+                                      .toString();
+                                  final city =
+                                      ((data['city'] ?? data['location']) ??
+                                              'Lieu non précisé')
+                                          .toString();
+                                  final postalCode =
+                                      ((data['postalCode'] ?? data['cp']) ?? '')
+                                          .toString()
+                                          .trim();
+                                  final category = (data['category'] ??
+                                          'Catégorie non précisée')
+                                      .toString();
+                                  final budgetRaw =
+                                      data['budget'] ?? data['price'];
+                                  final int budget = budgetRaw is num
+                                      ? budgetRaw.round()
+                                      : int.tryParse(
+                                              budgetRaw?.toString() ?? '') ??
+                                          0;
+                                  final publishedAge =
+                                      _ageLabelFromCreatedAt(data['createdAt']);
+                                  final publishedText = publishedAge.isEmpty
+                                      ? 'Publication récente'
+                                      : 'Publié il y a $publishedAge';
+                                  final isUrgent = data['urgent'] == true;
+                                  final showJobDoneOverlay =
+                                      isOfferJobDoneOverlayVisible(data);
+                                  final missionDelayLabel =
+                                      _extractMissionDelayLabel(data);
+                                  final cleanTitle = _sanitizeOfferTitle(
+                                    rawTitle: title,
+                                    city: city,
+                                    postalCode: postalCode,
                                   );
-                                }
 
-                                final int docIndex =
-                                    index - (index ~/ (_adsEvery + 1));
-                                final doc = docs[docIndex];
-                                final offerId = doc.id;
-                                final data = doc.data();
-
-                                final title =
-                                    (data['title'] ?? 'Sans titre') as String;
-
-                                final city =
-                                    ((data['city'] ?? data['location']) ??
-                                            'Lieu non précisé')
-                                        .toString();
-                                final postalCode =
-                                    ((data['postalCode'] ?? data['cp']) ?? '')
-                                        .toString()
-                                        .trim();
-                                final category = (data['category'] ??
-                                        'Catégorie non précisée')
-                                    .toString();
-                                final budgetRaw =
-                                    data['budget'] ?? data['price'];
-                                final int budget = budgetRaw is num
-                                    ? budgetRaw.round()
-                                    : int.tryParse(
-                                            budgetRaw?.toString() ?? '') ??
-                                        0;
-                                final publishedAge =
-                                    _ageLabelFromCreatedAt(data['createdAt']);
-                                final publishedText = publishedAge.isEmpty
-                                    ? 'Publication récente'
-                                    : 'Publié il y a $publishedAge';
-                                final isUrgent = data['urgent'] == true;
-                                final showJobDoneOverlay =
-                                    isOfferJobDoneOverlayVisible(data);
-                                final missionDelayLabel =
-                                    _extractMissionDelayLabel(data);
-                                final cleanTitle = _sanitizeOfferTitle(
-                                  rawTitle: title,
-                                  city: city,
-                                  postalCode: postalCode,
-                                );
-
-                                return RepaintBoundary(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: _OfferBrowseTile(
-                                      onTap: showJobDoneOverlay
-                                          ? null
-                                          : () {
-                                              _logOfferClicked(offerId, title);
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      OfferDetailsPage(
-                                                    offer:
-                                                        buildOfferDetailsOffer(
-                                                      offerId: offerId,
-                                                      data: data,
+                                  return RepaintBoundary(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 6),
+                                      child: _OfferBrowseTile(
+                                        onTap: showJobDoneOverlay
+                                            ? null
+                                            : () {
+                                                _logOfferClicked(offerId, title);
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        OfferDetailsPage(
+                                                      offer:
+                                                          buildOfferDetailsOffer(
+                                                        offerId: offerId,
+                                                        data: data,
+                                                      ),
+                                                      currentUserId:
+                                                          FirebaseAuth.instance
+                                                                  .currentUser
+                                                                  ?.uid ??
+                                                              '',
                                                     ),
-                                                    currentUserId: FirebaseAuth
-                                                            .instance
-                                                            .currentUser
-                                                            ?.uid ??
-                                                        '',
                                                   ),
-                                                ),
-                                              );
-                                            },
-                                      data: _OfferBrowseTileData(
-                                        title: cleanTitle,
-                                        subtitle: [
-                                          city,
-                                          if (postalCode.isNotEmpty) postalCode,
-                                          category,
-                                        ].join(' / '),
-                                        publishedText: publishedText,
-                                        price: budget,
-                                        missionDelayLabel: missionDelayLabel,
-                                        isUrgent:
-                                            isUrgent && !showJobDoneOverlay,
-                                        icon: _categoryIcon(category),
-                                        showJobDoneOverlay: showJobDoneOverlay,
+                                                );
+                                              },
+                                        data: _OfferBrowseTileData(
+                                          title: cleanTitle,
+                                          subtitle: [
+                                            city,
+                                            if (postalCode.isNotEmpty)
+                                              postalCode,
+                                            category,
+                                          ].join(' / '),
+                                          publishedText: publishedText,
+                                          price: budget,
+                                          missionDelayLabel:
+                                              missionDelayLabel,
+                                          isUrgent:
+                                              isUrgent && !showJobDoneOverlay,
+                                          icon: _categoryIcon(category),
+                                          showJobDoneOverlay:
+                                              showJobDoneOverlay,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ],
