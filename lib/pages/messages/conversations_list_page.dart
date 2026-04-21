@@ -300,18 +300,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return merged;
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> _conversationStream(
-    String participantField,
-    String userId,
-  ) {
-    return FirebaseFirestore.instance
-        .collection('conversations')
-        .where(participantField, arrayContains: userId)
-        .orderBy('lastMessageAt', descending: true)
-        .limit(500)
-        .snapshots();
-  }
-
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
     _appendAdminConversationLog(
       'Demarrage du chargement des conversations pour user=$userId',

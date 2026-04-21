@@ -1386,7 +1386,6 @@ class _HomePageState extends State<HomePage>
                               // users/{uid}/metadata/inbox: un seul snapshot
                               // léger, pas de fusion de flux conversations +
                               // messages + notifications.
-                              useVisibleUnreadMessages: false,
                               builder: (context, badgeCount) =>
                                   HomeBottomNavItem(
                                 icon: Icons.chat_bubble_outline,
@@ -1895,7 +1894,6 @@ class UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
   final InboxCountType countType;
-  final bool useVisibleUnreadMessages;
   final Widget Function(BuildContext context, int badgeCount) builder;
 
   const UnreadInboxBell({
@@ -1904,15 +1902,12 @@ class UnreadInboxBell extends StatelessWidget {
     required this.builder,
     this.monitoringKeyPrefix,
     this.countType = InboxCountType.totalUnread,
-    this.useVisibleUnreadMessages = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<int>(
-      stream: useVisibleUnreadMessages
-          ? streamVisibleUnreadMessageCount(userId: userId)
-          : streamInboxCount(userId: userId, type: countType),
+      stream: streamInboxCount(userId: userId, type: countType),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           final error = snapshot.error;
