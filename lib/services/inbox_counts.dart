@@ -24,14 +24,15 @@ Stream<int> streamInboxCount({
   return FirebaseFirestore.instance
       .collection('users')
       .doc(normalizedUserId)
+      .collection('metadata')
+      .doc('inbox')
       .snapshots()
       .map((snapshot) {
-    final inboxCounts =
-        (snapshot.data()?['inboxCounts'] as Map<String, dynamic>?) ??
-            const <String, dynamic>{};
+    final data = snapshot.data() ?? const <String, dynamic>{};
+    final inboxCounts = (data['inboxCounts'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
     return readInboxCount(inboxCounts, type: type);
-  });
-}
+  }).asBroadcastStream();
 
 Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
   final normalizedUserId = userId.trim();
@@ -69,6 +70,7 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
     querySubscriptions[participantField] = FirebaseFirestore.instance
         .collection('conversations')
         .where(participantField, arrayContains: normalizedUserId)
+        .limit(500)
         .snapshots()
         .listen(
       (snapshot) {

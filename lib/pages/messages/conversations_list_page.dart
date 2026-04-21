@@ -307,6 +307,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return FirebaseFirestore.instance
         .collection('conversations')
         .where(participantField, arrayContains: userId)
+        .orderBy('lastMessageAt', descending: true)
+        .limit(500)
         .snapshots();
   }
 
@@ -516,7 +518,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     listenField = (String participantField) {
       _appendAdminConversationLog('Abonnement source participants: $participantField');
       subscriptionsByField.remove(participantField)?.cancel();
-      final subscription = _conversationStream(participantField, userId).listen(
+      final query = FirebaseFirestore.instance
+          .collection('conversations')
+          .where(participantField, arrayContains: userId)
+          .orderBy('lastMessageAt', descending: true)
+          .limit(500);
+      final subscription = query.snapshots().listen(
         (snapshot) {
           docsByField[participantField] = snapshot.docs
               .map(ConversationSummary.fromFirestore)
@@ -612,10 +619,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         'Abonnement fallback messages demarres: $senderField',
       );
       subscriptionsByField.remove(source)?.cancel();
+      const maxStartedMessages = 100;
       final baseQuery = FirebaseFirestore.instance
           .collectionGroup('messages')
           .where(senderField, isEqualTo: userId)
-          .orderBy(FieldPath.documentId);
+          .orderBy(FieldPath.documentId)
+          .limit(maxStartedMessages);
       final subscription = FirebaseFirestore.instance
           .collectionGroup('messages')
           .where(senderField, isEqualTo: userId)
