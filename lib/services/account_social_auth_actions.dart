@@ -12,6 +12,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../config/app_check_state.dart';
 import '../services/google_auth_service.dart';
+import '../services/post_auth_navigation_intent_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 
@@ -48,6 +49,7 @@ class AccountSocialAuthActions {
             reason: 'GitHub Pages COOP headers — redirect direct',
           );
           try {
+            await _rememberAccountRouteForWebRedirect();
             await auth.signInWithRedirect(googleProvider);
           } catch (redirectError) {
             googleAuthService.logError('Redirect/GitHubPages', redirectError);
@@ -113,6 +115,7 @@ class AccountSocialAuthActions {
                 'Redirect',
                 reason: 'Popup bloqué par le navigateur',
               );
+              await _rememberAccountRouteForWebRedirect();
               await auth.signInWithRedirect(googleProvider);
               return;
             } catch (redirectError) {
@@ -225,6 +228,7 @@ class AccountSocialAuthActions {
           isNewUser = popupResult.additionalUserInfo?.isNewUser ?? false;
         } catch (popupError) {
           if (_shouldFallbackToRedirect(popupError)) {
+            await _rememberAccountRouteForWebRedirect();
             await auth.signInWithRedirect(provider);
             return;
           }
@@ -551,5 +555,10 @@ class AccountSocialAuthActions {
       'prompt': 'select_account',
     });
     return provider;
+  }
+
+  static Future<void> _rememberAccountRouteForWebRedirect() async {
+    if (!kIsWeb) return;
+    await PostAuthNavigationIntentService.rememberAccountRoute();
   }
 }

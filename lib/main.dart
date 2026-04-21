@@ -31,6 +31,7 @@ import 'services/email_action_service.dart';
 import 'services/app_route_parser.dart';
 import 'services/notification_service.dart';
 import 'services/admin_audio_runtime_store.dart';
+import 'services/post_auth_navigation_intent_service.dart';
 import 'services/user_profile_bootstrap_service.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
@@ -44,6 +45,7 @@ final AdminAudioRuntimeStore adminAudioRuntimeStore =
 /// contre la consommation interne du SDK Firebase.
 UserCredential? pendingRedirectAuthResult;
 Object? pendingRedirectAuthError;
+String? pendingPostAuthRoute;
 
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
@@ -764,6 +766,23 @@ Future<void> main() async {
           pendingRedirectAuthError = e;
           if (kDebugMode) debugPrint('[Auth] getRedirectResult error: $e');
         }
+
+        final shouldRestorePostAuthRoute =
+            pendingRedirectAuthResult?.user != null ||
+            pendingRedirectAuthError != null;
+        if (shouldRestorePostAuthRoute) {
+          try {
+            pendingPostAuthRoute =
+                await PostAuthNavigationIntentService.takePendingRoute();
+            if (kDebugMode && pendingPostAuthRoute != null) {
+              debugPrint('[Auth] pending post-auth route=$pendingPostAuthRoute');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('[Auth] takePendingRoute failed: $e');
+            }
+          }
+        }
       }
 
       // Ne force plus signInAnonymously() au démarrage
@@ -1148,6 +1167,10 @@ class _SplashScreenState extends State<SplashScreen>
       return const Duration(milliseconds: 3500);
     }
 
+    if (pendingPostAuthRoute == PostAuthNavigationIntentService.accountRoute) {
+      return const Duration(milliseconds: 1200);
+    }
+
     final webPath = _normalizedWebPath();
     final hasDeepLink = parseAppDeepLink(Uri.base.toString()) != null;
     if (webPath == '/account' || webPath == '/publish' || hasDeepLink) {
@@ -1170,6 +1193,12 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _destinationForCurrentLocation() {
     if (!kIsWeb) {
       return const HomePage();
+    }
+
+    final postAuthRoute = pendingPostAuthRoute;
+    pendingPostAuthRoute = null;
+    if (postAuthRoute == PostAuthNavigationIntentService.accountRoute) {
+      return const HomePage(initialIndex: 4);
     }
 
     final webPath = _normalizedWebPath();
