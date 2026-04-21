@@ -92,6 +92,7 @@ class ListingRepository {
     return _listings
         .where('ownerId', isEqualTo: userId)
         .orderBy('updatedAt', descending: true)
+        .limit(500)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
