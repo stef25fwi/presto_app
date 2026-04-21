@@ -22,6 +22,7 @@ class FavoriteRepository {
         .collection('favorites')
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
+        .limit(1000)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs

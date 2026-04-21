@@ -417,11 +417,9 @@ class _HomePageState extends State<HomePage>
   void _listenDynamicKeywords() {
     _dynamicKeywordsSubscription?.cancel();
 
-    // Important perf: ne pas écouter toute la collection `offers`.
-    // On se limite aux dernières offres pour alimenter des suggestions utiles,
-    // sans déclencher des rebuilds massifs quand la collection grossit.
-    _dynamicKeywordsSubscription = _recentOffersQuery().snapshots().listen(
-      (snapshot) {
+    Future<void> loadKeywords() async {
+      try {
+        final snapshot = await _recentOffersQuery().get();
         final words = <String>{};
         for (final doc in snapshot.docs) {
           final data = doc.data();
@@ -447,11 +445,13 @@ class _HomePageState extends State<HomePage>
         setState(() {
           _dynamicKeywords = next;
         });
-      },
-      onError: (e) {
-        debugPrint('Dynamic keywords stream error: $e');
-      },
-    );
+      } catch (e) {
+        debugPrint('Dynamic keywords load error: $e');
+      }
+    }
+
+    _dynamicKeywordsSubscription = null;
+    unawaited(loadKeywords());
   }
 
   @override
@@ -1120,26 +1120,29 @@ class _HomePageState extends State<HomePage>
         ),
         content: SizedBox(
           width: double.maxFinite,
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
+          child: FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            future: FirebaseFirestore.instance
                 .collection('notifications')
                 .where('userId', isEqualTo: userId)
                 .orderBy('createdAt', descending: true)
                 .limit(20)
-                .snapshots()
-                .map((snap) {
-              PrestoMonitoring.I.trackOtherStream(
-                key: 'home.dialog.notifications',
-                docsCount: snap.docs.length,
-              );
-              return snap;
-            }),
+                .get(),
             builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
 
               final notifications = snapshot.data!.docs;
+              if (notifications.isNotEmpty) {
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'home.dialog.notifications',
+                  docsCount: notifications.length,
+                );
+              }
 
               if (notifications.isEmpty) {
                 return const Text(
