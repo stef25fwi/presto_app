@@ -592,7 +592,6 @@ class _HomePageState extends State<HomePage>
       'Jardinage',
       'Peinture',
       'Main-d\'œuvre',
-      'Autre',
       'Garde d\'enfants',
       'Événementiel / DJ',
     ];
