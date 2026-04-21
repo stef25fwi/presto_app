@@ -1462,7 +1462,11 @@ class _HomePageState extends State<HomePage>
                               userId: currentUser.uid,
                               monitoringKeyPrefix: 'bottomBar.messages',
                               countType: InboxCountType.unreadMessages,
-                              useVisibleUnreadMessages: true,
+                              // ✅ Utilise uniquement le doc agrégé
+                              // users/{uid}/metadata/inbox: un seul snapshot
+                              // léger, pas de fusion de flux conversations +
+                              // messages + notifications.
+                              useVisibleUnreadMessages: false,
                               builder: (context, badgeCount) =>
                                   HomeBottomNavItem(
                                 icon: Icons.chat_bubble_outline,

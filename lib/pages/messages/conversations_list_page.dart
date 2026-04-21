@@ -570,27 +570,31 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     };
 
     listenNotifications = () {
-      _appendAdminConversationLog('Abonnement fallback notifications');
+      // ✅ Fallback notifications: one-shot get() au lieu d'un snapshots()
+      // permanent. Le flux canonique reste les subscriptions "participants"
+      // ci-dessus. Les erreurs récupérables sont reprises via scheduleRetry.
+      _appendAdminConversationLog('Chargement ponctuel fallback notifications');
       subscriptionsByField.remove(notificationsFallbackSource)?.cancel();
-      final subscription = FirebaseFirestore.instance
-          .collection('notifications')
-          .where('userId', isEqualTo: userId)
-          .orderBy('createdAt', descending: true)
-          .limit(notificationsFallbackLiveLimit)
-          .snapshots()
-          .listen(
-        (snapshot) {
+      unawaited(() async {
+        try {
+          final snapshot = await FirebaseFirestore.instance
+              .collection('notifications')
+              .where('userId', isEqualTo: userId)
+              .orderBy('createdAt', descending: true)
+              .limit(notificationsFallbackLiveLimit)
+              .get();
+          if (controller.isClosed) return;
           retryTimersByField.remove(notificationsFallbackSource)?.cancel();
           _appendAdminConversationLog(
-            'Notifications fallback -> ${snapshot.docs.length} notification(s) recues',
+            'Notifications fallback -> ${snapshot.docs.length} notification(s) recues (get)',
           );
-          unawaited(refreshNotificationFallback(snapshot.docs));
-        },
-        onError: (error, stackTrace) {
+          await refreshNotificationFallback(snapshot.docs);
+        } catch (error) {
+          if (controller.isClosed) return;
           errorsByField[notificationsFallbackSource] = error;
           if (kDebugMode) {
             debugPrint(
-              '[MessagesList] notifications stream error user=$userId error=$error',
+              '[MessagesList] notifications get error user=$userId error=$error',
             );
           }
           _appendAdminConversationLog('Erreur notifications fallback: $error');
@@ -608,15 +612,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           }
           emit();
           scheduleRetry(notificationsFallbackSource);
-        },
-      );
-      subscriptionsByField[notificationsFallbackSource] = subscription;
+        }
+      }());
     };
 
     listenStartedMessagesField = (String senderField) {
       final source = '$startedMessageFallbackSourcePrefix$senderField';
+      // ✅ Fallback messages démarrés: one-shot get() au lieu d'un
+      // collectionGroup('messages').snapshots(). Les subscriptions live
+      // multiples alourdissaient la page conversations sans apporter de
+      // valeur (les participants streams canoniques suffisent en live).
       _appendAdminConversationLog(
-        'Abonnement fallback messages demarres: $senderField',
+        'Chargement ponctuel fallback messages demarres: $senderField',
       );
       subscriptionsByField.remove(source)?.cancel();
       const maxStartedMessages = 100;
@@ -625,58 +632,50 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           .where(senderField, isEqualTo: userId)
           .orderBy(FieldPath.documentId)
           .limit(maxStartedMessages);
-      final subscription = FirebaseFirestore.instance
-          .collectionGroup('messages')
-          .where(senderField, isEqualTo: userId)
-          .orderBy(FieldPath.documentId)
-          .limit(startedMessageFallbackLiveLimit)
-          .snapshots()
-          .listen(
-        (snapshot) {
+      unawaited(() async {
+        try {
+          final snapshot = await FirebaseFirestore.instance
+              .collectionGroup('messages')
+              .where(senderField, isEqualTo: userId)
+              .orderBy(FieldPath.documentId)
+              .limit(startedMessageFallbackLiveLimit)
+              .get();
+          if (controller.isClosed) return;
           retryTimersByField.remove(source)?.cancel();
           _appendAdminConversationLog(
-            'Fallback $senderField -> ${snapshot.docs.length} message(s) source',
+            'Fallback $senderField -> ${snapshot.docs.length} message(s) source (get)',
           );
-          unawaited(
-            () async {
-              final conversationIds = snapshot.docs.length <
-                      startedMessageFallbackLiveLimit
-                  ? mergeUniqueConversationIds(
-                      snapshot.docs.map(
-                        (messageDoc) => conversationIdFromMessageDocumentPath(
-                          messageDoc.reference.path,
-                        ),
-                      ),
-                    )
-                  : await collectPagedConversationIds(
-                      initialConversationIds: snapshot.docs.map(
-                        (messageDoc) => conversationIdFromMessageDocumentPath(
-                          messageDoc.reference.path,
-                        ),
-                      ),
-                      baseQuery: baseQuery,
-                      lastDoc:
-                          snapshot.docs.isEmpty ? null : snapshot.docs.last,
-                      maxPages: startedMessageFallbackMaxPages,
-                      pageSize: startedMessageFallbackLiveLimit,
-                      extractConversationId: (messageDoc) =>
-                          conversationIdFromMessageDocumentPath(
-                        messageDoc.reference.path,
-                      ),
-                    );
-
-              await refreshConversationFallback(
-                source,
-                conversationIds,
-              );
-            }(),
-          );
-        },
-        onError: (error, stackTrace) {
+          final conversationIds = snapshot.docs.length <
+                  startedMessageFallbackLiveLimit
+              ? mergeUniqueConversationIds(
+                  snapshot.docs.map(
+                    (messageDoc) => conversationIdFromMessageDocumentPath(
+                      messageDoc.reference.path,
+                    ),
+                  ),
+                )
+              : await collectPagedConversationIds(
+                  initialConversationIds: snapshot.docs.map(
+                    (messageDoc) => conversationIdFromMessageDocumentPath(
+                      messageDoc.reference.path,
+                    ),
+                  ),
+                  baseQuery: baseQuery,
+                  lastDoc: snapshot.docs.isEmpty ? null : snapshot.docs.last,
+                  maxPages: startedMessageFallbackMaxPages,
+                  pageSize: startedMessageFallbackLiveLimit,
+                  extractConversationId: (messageDoc) =>
+                      conversationIdFromMessageDocumentPath(
+                    messageDoc.reference.path,
+                  ),
+                );
+          await refreshConversationFallback(source, conversationIds);
+        } catch (error) {
+          if (controller.isClosed) return;
           errorsByField[source] = error;
           if (kDebugMode) {
             debugPrint(
-              '[MessagesList] started messages stream error field=$senderField user=$userId error=$error',
+              '[MessagesList] started messages get error field=$senderField user=$userId error=$error',
             );
           }
           _appendAdminConversationLog('Erreur fallback $senderField: $error');
@@ -693,9 +692,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           }
           emit();
           scheduleRetry(source);
-        },
-      );
-      subscriptionsByField[source] = subscription;
+        }
+      }());
     };
 
     scheduleRetry = (String participantField) {
