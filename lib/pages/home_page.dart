@@ -152,6 +152,8 @@ class _HomePageState extends State<HomePage>
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _latestOffers = const [];
   bool _isLatestOffersLoading = true;
   Object? _latestOffersError;
+  int _latestOffersRawFetched = -1;
+  int _latestOffersAfterFilter = -1;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -556,9 +558,16 @@ class _HomePageState extends State<HomePage>
       final legacy = results.length > 1
           ? results[1]
           : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      final merged = mergeOfferDocsById(listings, legacy)
+      final mergedAll = mergeOfferDocsById(listings, legacy).toList();
+      final merged = mergedAll
           .where((doc) => isPublishedOfferData(doc.data()))
           .toList();
+      if (mounted) {
+        setState(() {
+          _latestOffersRawFetched = mergedAll.length;
+          _latestOffersAfterFilter = merged.length;
+        });
+      }
       merged.sort((a, b) {
         final aTs = a.data()['createdAt'];
         final bTs = b.data()['createdAt'];
@@ -738,13 +747,30 @@ class _HomePageState extends State<HomePage>
               ),
             )
           else if (_latestOffers.isEmpty)
-            const Text(
-              'Aucune offre publiée pour le moment.',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-                fontWeight: FontWeight.w500,
-              ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Aucune offre publiée pour le moment.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (_latestOffersRawFetched >= 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'DEBUG fetched=$_latestOffersRawFetched, '
+                      'kept=$_latestOffersAfterFilter',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black38,
+                      ),
+                    ),
+                  ),
+              ],
             )
           else
             Builder(
