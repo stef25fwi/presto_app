@@ -1,11 +1,11 @@
 {
-    "name": "presto_app",
-    "short_name": "presto_app",
+    "name": "iliprestō",
+    "short_name": "iliprestō",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FF8A1D",
+    "theme_color": "#FF8A1D",
+    "description": "La marketplace des services dans les territoires ultramarins",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
