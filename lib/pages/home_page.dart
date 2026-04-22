@@ -183,6 +183,9 @@ class _HomePageState extends State<HomePage>
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
       _dynamicKeywordsSubscription;
 
+  StreamSubscription<User?>? _authStateSubscription;
+  String? _lastAuthStateUid;
+
   /// Suggestions “smart” par défaut
   final List<String> _trendingSuggestions = const [
     "Jardinage aujourd’hui",
@@ -344,6 +347,26 @@ class _HomePageState extends State<HomePage>
 
     _loadLatestOffersOnOpen();
 
+    // Lorsque l'auth se résout après le mount (restauration de session ou
+    // login), on relance le fetch-once si l'offre n'est pas encore chargée
+    // ou si elle est en erreur, pour éviter une liste vide permanente.
+    _lastAuthStateUid = FirebaseAuth.instance.currentUser?.uid;
+    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen(
+      (user) {
+        if (!mounted) return;
+        final newUid = user?.uid;
+        if (newUid == _lastAuthStateUid) return;
+        _lastAuthStateUid = newUid;
+        if (_latestOffersError != null || _latestOffers.isEmpty) {
+          setState(() {
+            _isLatestOffersLoading = true;
+            _latestOffersError = null;
+          });
+          unawaited(_loadLatestOffersOnOpen());
+        }
+      },
+    );
+
     // Listener pour hide/show bottom bar au scroll
     _scrollController.addListener(() {
       _onPageScroll(_scrollController.offset);
@@ -480,6 +503,7 @@ class _HomePageState extends State<HomePage>
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
     _dynamicKeywordsSubscription?.cancel();
+    _authStateSubscription?.cancel();
     super.dispose();
   }
 
