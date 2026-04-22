@@ -235,6 +235,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
   final Set<String> _offersWarmLoadsInFlight = <String>{};
 
+  StreamSubscription<User?>? _authStateSubscription;
+  String? _lastAuthStateUid;
+
   String _buildOffersQuerySignature({
     required bool hasCategory,
     required bool hasDept,
@@ -525,6 +528,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (!_hasActiveClientFilters) {
       unawaited(_refreshPublishedOffersCount(force: true));
     }
+
+    // Si la session est restaurée ou qu'un login intervient après le mount,
+    // le fetch-once initial a déjà terminé et ne sera pas relancé. On
+    // réinvalide le cache pour forcer une nouvelle requête contre les règles
+    // avec l'auth maintenant disponible.
+    _lastAuthStateUid = FirebaseAuth.instance.currentUser?.uid;
+    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen(
+      (user) {
+        if (!mounted) return;
+        final newUid = user?.uid;
+        if (newUid == _lastAuthStateUid) return;
+        _lastAuthStateUid = newUid;
+        unawaited(_refreshOffers());
+      },
+    );
   }
 
   Future<void> _refreshPublishedOffersCount({
@@ -680,6 +698,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _budgetMinCtrl.dispose();
     _budgetMaxCtrl.dispose();
     _jobDoneOverlayTimer?.cancel();
+    _authStateSubscription?.cancel();
     super.dispose();
   }
 
