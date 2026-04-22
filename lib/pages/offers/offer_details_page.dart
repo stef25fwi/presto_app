@@ -621,7 +621,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final detailPath = data.isMarketplace ? 'listings' : 'offers';
     final offerUrl =
-        'https://presto-app-74abe.web.app/#/$detailPath/${data.offerId}';
+      '${prestoPublicAppOrigin()}/#/$detailPath/${data.offerId}';
     final shareText = '${data.title} - ${data.city}\n$offerUrl';
 
     await showModalBottomSheet<void>(

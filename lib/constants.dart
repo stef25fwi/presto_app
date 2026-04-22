@@ -1,6 +1,30 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'app/presto_overlay_theme.dart';
+
+const String kPrestoCanonicalWebOrigin =
+    'https://presto-app-74abe.firebaseapp.com';
+
+String prestoPublicAppOrigin() {
+  if (!kIsWeb) {
+    return kPrestoCanonicalWebOrigin;
+  }
+
+  final base = Uri.base;
+  final host = base.host.trim().toLowerCase();
+  const allowedHosts = <String>{
+    'presto-app-74abe.firebaseapp.com',
+    'presto-app-74abe.web.app',
+  };
+
+  if (!allowedHosts.contains(host)) {
+    return kPrestoCanonicalWebOrigin;
+  }
+
+  final port = base.hasPort ? ':${base.port}' : '';
+  return '${base.scheme}://$host$port';
+}
 
 /// Charte typo centralisée Presto.
 /// Les écrans peuvent encore surcharger localement certains textes,
