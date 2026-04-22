@@ -43,6 +43,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   static const String _profileSyncWarningMessage =
       'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
+  static const String _signupProfileSyncWarningMessage =
+      'Compte créé, mais le profil n\'a pas pu être synchronisé. Vérifie ton e-mail puis réessaie.';
 
   AuthMode _authMode = AuthMode.login;
 
@@ -146,6 +148,9 @@ class _ProfilePageState extends State<ProfilePage> {
             );
           } catch (e) {
             debugPrint('[AuthBootstrap] session restore failed: $e');
+              if (mounted) {
+                showErrorSnackBar(context, _profileSyncWarningMessage);
+              }
           }
           try {
             await EmailActionService.syncCurrentUserEmailVerificationState();
@@ -769,15 +774,18 @@ class _ProfilePageState extends State<ProfilePage> {
           } catch (_) {
             // Best effort.
           }
-          await _trackLogin(authMethod: 'email', isNewUser: false);
+          try {
+            await _trackLogin(authMethod: 'email', isNewUser: false);
+          } catch (error) {
+            debugPrint('[ProfilePage][Tracking] email login failed: $error');
+          }
         }
         if (!mounted) return;
-        showSuccessSnackBar(
-          context,
-          bootstrapFailed
-              ? 'Connexion reussie, profil en cours de synchronisation…'
-              : 'Connexion reussie',
-        );
+        if (bootstrapFailed) {
+          showErrorSnackBar(context, _profileSyncWarningMessage);
+        } else {
+          showSuccessSnackBar(context, 'Connexion reussie');
+        }
       } else {
         final credential = await _auth.createUserWithEmailAndPassword(
           email: email,
@@ -799,15 +807,18 @@ class _ProfilePageState extends State<ProfilePage> {
           } catch (error) {
             debugPrint('[EmailVerification] request failed: $error');
           }
-          await _trackLogin(authMethod: 'email', isNewUser: true);
+          try {
+            await _trackLogin(authMethod: 'email', isNewUser: true);
+          } catch (error) {
+            debugPrint('[ProfilePage][Tracking] email signup failed: $error');
+          }
         }
         if (!mounted) return;
-        showSuccessSnackBar(
-          context,
-          bootstrapFailed
-              ? 'Compte cree. Profil en cours de synchronisation, verifiez votre e-mail.'
-              : 'Compte cree. Verifiez votre e-mail.',
-        );
+        if (bootstrapFailed) {
+          showErrorSnackBar(context, _signupProfileSyncWarningMessage);
+        } else {
+          showSuccessSnackBar(context, 'Compte cree. Verifiez votre e-mail.');
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
