@@ -66,7 +66,8 @@ class _Debouncer {
   void dispose() => _t?.cancel();
 }
 
-class _ConsultOffersPageState extends State<ConsultOffersPage> {
+class _ConsultOffersPageState extends State<ConsultOffersPage>
+  with WidgetsBindingObserver {
   static const Color _offersBg = Colors.white;
   static const Color _offersNavy = Color(0xFF1E2554);
   static const Color _offersOrange = Color(0xFFFF7A00);
@@ -459,6 +460,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -543,6 +545,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         unawaited(_refreshOffers());
       },
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshOffers());
+    }
   }
 
   Future<void> _refreshPublishedOffersCount({
@@ -683,6 +692,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // _connectivitySubscription.cancel();
     _filterDebounce.dispose();
     _cacheInvalidationTimer?.cancel(); // ✅ Nettoyer le timer de cache
@@ -945,8 +955,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     try {
       await _primeOffersWarmCache(key);
     } finally {
-      if (!mounted) return;
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -1017,7 +1028,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   bool _offerIsActive(Map<String, dynamic> data) {
-    return isOfferJobDoneOverlayVisible(data) || isPublishedOfferData(data);
+    return isVisibleInPublicBrowse(
+      data,
+      preferModernListingContract: true,
+    );
   }
 
   void _scheduleJobDoneOverlayRefresh(
@@ -1897,7 +1911,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               parent: ClampingScrollPhysics(),
                             ),
                             padding: EdgeInsets.zero,
-                            children: const [
+                            children: [
                               Padding(
                                 padding: EdgeInsets.fromLTRB(24, 18, 24, 12),
                                 child: Row(
@@ -1921,7 +1935,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               ),
                               SizedBox(
                                 height: 420,
-                                child: _EmptyOffers(),
+                                child: _EmptyOffers(
+                                  onRefresh: _refreshOffers,
+                                ),
                               ),
                             ],
                           ),
@@ -2491,7 +2507,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }) {
     var title = rawTitle.trim();
     if (title.isEmpty) return 'Sans titre';
-
     final safeCity = city.trim();
     final safePostalCode = postalCode.trim();
 
@@ -3047,7 +3062,9 @@ class _StandardResponseBadge extends StatelessWidget {
 }
 
 class _EmptyOffers extends StatelessWidget {
-  const _EmptyOffers();
+  const _EmptyOffers({required this.onRefresh});
+
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -3056,8 +3073,8 @@ class _EmptyOffers extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
+          children: [
+            const Text(
               "Les annonces peuvent arriver à tout moment.",
               style: TextStyle(
                 fontSize: 17,
@@ -3067,8 +3084,25 @@ class _EmptyOffers extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 12),
+            const Text(
+              "Tire vers le bas ou appuie sur le bouton pour recharger les annonces.",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Actualiser'),
+            ),
+            const SizedBox(height: 16),
+            const Text(
               "Ajoutez cette catégorie en favori pour être alerté dès qu'une annonce est publiée.",
               style: TextStyle(
                 fontSize: 17,
@@ -3078,8 +3112,8 @@ class _EmptyOffers extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               "Créez un compte pour enregistrer vos favoris et activer les notifications.",
               style: TextStyle(
                 fontSize: 17,
@@ -3149,7 +3183,12 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     final filtered = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
     for (final doc in docs) {
       final data = doc.data();
-      if (!isPublishedOfferData(data)) continue;
+      if (!isVisibleInPublicBrowse(
+        data,
+        preferModernListingContract: true,
+      )) {
+        continue;
+      }
       filtered.add(doc);
     }
     return filtered;
