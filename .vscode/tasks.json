@@ -494,6 +494,16 @@
       "problemMatcher": []
     },
     {
+      "label": "Diag: Offers ne chargent pas",
+      "type": "shell",
+      "command": "bash tools/diag_offers_access.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
       "label": "Messaging: Smoke Test Existing Accounts",
       "type": "shell",
       "command": "node tools/messaging_existing_accounts_smoke.cjs",

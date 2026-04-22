@@ -326,7 +326,17 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       final index = entry.key;
       final query = entry.value;
       try {
-        final snapshot = await query.get();
+        // Timeout côté client pour éviter un hang silencieux si App Check /
+        // reCAPTCHA ne renvoient jamais de token : l'erreur devient visible
+        // sur la page au lieu d'un spinner infini.
+        final snapshot = await query.get().timeout(
+              const Duration(seconds: 12),
+              onTimeout: () {
+                throw TimeoutException(
+                  'Firestore public offers query #$index did not respond in 12s',
+                );
+              },
+            );
         if (kDebugMode) {
           debugPrint(
             '[PUBLIC_OFFERS][$source#$index] docs=${snapshot.docs.length}',
