@@ -95,6 +95,26 @@ bool isPublishedOfferData(Map<String, dynamic> data) {
   return false;
 }
 
+bool isVisibleInPublicBrowse(
+  Map<String, dynamic> data, {
+  bool preferModernListingContract = false,
+}) {
+  if (isOfferJobDoneOverlayVisible(data)) {
+    return true;
+  }
+
+  final status = (data['status'] ?? '').toString().trim().toLowerCase();
+  final visibility = (data['visibility'] ?? '').toString().trim().toLowerCase();
+
+  if (preferModernListingContract) {
+    return !isOfferArchivedLike(data) &&
+        status == 'active' &&
+        visibility == 'public';
+  }
+
+  return isPublishedOfferData(data);
+ }
+
 String offerDetailsPublishedLabel(dynamic raw) {
   if (raw is Timestamp) {
     final publishedAt = raw.toDate();

@@ -152,8 +152,6 @@ class _HomePageState extends State<HomePage>
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _latestOffers = const [];
   bool _isLatestOffersLoading = true;
   Object? _latestOffersError;
-  int _latestOffersRawFetched = -1;
-  int _latestOffersAfterFilter = -1;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -347,11 +345,11 @@ class _HomePageState extends State<HomePage>
 
     _listenDynamicKeywords();
 
-    _loadLatestOffersOnOpen();
+    unawaited(_refreshLatestOffers());
 
     // Lorsque l'auth se résout après le mount (restauration de session ou
-    // login), on relance le fetch-once si l'offre n'est pas encore chargée
-    // ou si elle est en erreur, pour éviter une liste vide permanente.
+    // login), on relance le fetch-once pour sortir proprement des états de
+    // démarrage où l'auth/App Check n'étaient pas encore stabilisés.
     _lastAuthStateUid = FirebaseAuth.instance.currentUser?.uid;
     _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen(
       (user) {
@@ -359,13 +357,7 @@ class _HomePageState extends State<HomePage>
         final newUid = user?.uid;
         if (newUid == _lastAuthStateUid) return;
         _lastAuthStateUid = newUid;
-        if (_latestOffersError != null || _latestOffers.isEmpty) {
-          setState(() {
-            _isLatestOffersLoading = true;
-            _latestOffersError = null;
-          });
-          unawaited(_loadLatestOffersOnOpen());
-        }
+        unawaited(_refreshLatestOffers());
       },
     );
 
@@ -420,6 +412,7 @@ class _HomePageState extends State<HomePage>
       case AppLifecycleState.resumed:
         // ✅ App reprend → online
         _touchPresence(status: 'online');
+        unawaited(_refreshLatestOffers());
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -560,14 +553,13 @@ class _HomePageState extends State<HomePage>
           : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final mergedAll = mergeOfferDocsById(listings, legacy).toList();
       final merged = mergedAll
-          .where((doc) => isPublishedOfferData(doc.data()))
+          .where(
+            (doc) => isVisibleInPublicBrowse(
+              doc.data(),
+              preferModernListingContract: true,
+            ),
+          )
           .toList();
-      if (mounted) {
-        setState(() {
-          _latestOffersRawFetched = mergedAll.length;
-          _latestOffersAfterFilter = merged.length;
-        });
-      }
       merged.sort((a, b) {
         final aTs = a.data()['createdAt'];
         final bTs = b.data()['createdAt'];
@@ -618,6 +610,17 @@ class _HomePageState extends State<HomePage>
         _latestOffersError = diagnosedError;
       });
     }
+  }
+
+  Future<void> _refreshLatestOffers() async {
+    if (mounted) {
+      setState(() {
+        _isLatestOffersLoading = true;
+        _latestOffersError = null;
+      });
+    }
+
+    await _loadLatestOffersOnOpen();
   }
 
   Widget _buildHomeCategoriesSection() {
@@ -739,6 +742,14 @@ class _HomePageState extends State<HomePage>
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      unawaited(_refreshLatestOffers());
+                    },
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Réessayer'),
+                  ),
                   buildPublicOffersDebugCardWithAppCheck(
                     _latestOffersError!,
                     source: 'home_latest_offers',
@@ -758,18 +769,14 @@ class _HomePageState extends State<HomePage>
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (_latestOffersRawFetched >= 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      'DEBUG fetched=$_latestOffersRawFetched, '
-                      'kept=$_latestOffersAfterFilter',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.black38,
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    unawaited(_refreshLatestOffers());
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Actualiser'),
+                ),
               ],
             )
           else

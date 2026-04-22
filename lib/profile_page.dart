@@ -41,6 +41,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  static const String _profileSyncWarningMessage =
+      'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
+
   AuthMode _authMode = AuthMode.login;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -204,6 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'google.com' => 'Google',
           _ => 'externe',
         };
+        var bootstrapFailed = false;
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: result.user!,
@@ -211,13 +215,18 @@ class _ProfilePageState extends State<ProfilePage> {
             isNewUserHint: isNew,
           );
         } catch (e) {
+          bootstrapFailed = true;
           debugPrint('[ProfilePage/OAuthRedirect] Bootstrap error: $e');
         }
         try {
           await _trackLogin(authMethod: authMethod, isNewUser: isNew);
         } catch (_) {}
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Connecté avec $providerLabel');
+        if (bootstrapFailed) {
+          showErrorSnackBar(context, _profileSyncWarningMessage);
+        } else {
+          showSuccessSnackBar(context, 'Connecté avec $providerLabel');
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;

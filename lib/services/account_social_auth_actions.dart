@@ -22,6 +22,9 @@ typedef AccountTrackLoginCallback = Future<void> Function({
 });
 
 class AccountSocialAuthActions {
+  static const String _profileSyncWarningMessage =
+      'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
+
   static Future<void> signInWithGoogle({
     required BuildContext context,
     required FirebaseAuth auth,
@@ -173,7 +176,7 @@ class AccountSocialAuthActions {
       if (!context.mounted) return;
       googleAuthService.logSuccess('signInWithGoogle', user.email);
       if (bootstrapFailed) {
-        showSuccessSnackBar(context, 'Connecté, profil en cours de création…');
+        showErrorSnackBar(context, _profileSyncWarningMessage);
       } else {
         showSuccessSnackBar(context, '✓ Connecté avec Google');
       }
@@ -350,7 +353,7 @@ class AccountSocialAuthActions {
 
       if (!context.mounted) return;
       if (bootstrapFailed) {
-        showSuccessSnackBar(context, 'Connecte, profil en cours de creation…');
+        showErrorSnackBar(context, _profileSyncWarningMessage);
       } else {
         showSuccessSnackBar(context, 'Connecte avec Apple ✓');
       }
@@ -467,7 +470,7 @@ class AccountSocialAuthActions {
 
     if (!context.mounted) return;
     if (bootstrapFailed) {
-      showSuccessSnackBar(context, 'Connecté, profil en cours de création…');
+      showErrorSnackBar(context, _profileSyncWarningMessage);
     } else {
       showSuccessSnackBar(context, '✓ Connecté avec $providerLabel');
     }
