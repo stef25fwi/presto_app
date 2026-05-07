@@ -6,8 +6,7 @@
   const host = window.location.hostname;
 
   const prodHosts = new Set([
-    'presto-app-74abe.web.app',
-    'presto-app-74abe.firebaseapp.com',
+    'ilipresto.fr',
   ]);
 
   const isLocalHost =

@@ -27,6 +27,29 @@
       "problemMatcher": []
     },
     {
+      "label": "Flutter: Open Web Preview",
+      "type": "shell",
+      "command": "\"$BROWSER\" \"http://127.0.0.1:8080\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Web Preview + Open",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Flutter: Web Preview",
+        "Flutter: Open Web Preview"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "CLIQUER: Aperçu Flutter Web",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Flutter: Web Preview + Open"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Flutter: Analyze",
       "type": "shell",
       "command": "flutter analyze",
@@ -504,6 +527,117 @@
       }
     },
     {
+      "label": "Diag: AppCheck Site Key dans build/web",
+      "type": "shell",
+      "command": "if grep -qE '\"6L[A-Za-z0-9_-]{20,60}\"' build/web/main.dart.js 2>/dev/null; then echo '✅ App Check site key embarquée dans le bundle web'; grep -oE '\"6L[A-Za-z0-9_-]{20,60}\"' build/web/main.dart.js | sort -u | head -3; else echo '❌ Aucune site key reCAPTCHA détectée dans build/web/main.dart.js — App Check ne sera PAS activé côté client (Firestore enforce -> 403). Définir APPCHECK_RECAPTCHA_SITE_KEY puis rebuild.'; exit 1; fi",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "CLIQUER: Audit IliPresto Firestore App Check Prod",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "CLIQUER: Commande unique IliPresto",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "CLIQUER: Audit IliPresto Firestore App Check Prod"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "IliPresto Audit: Etape 1 - Contexte + Config",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh context",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "IliPresto Audit: Etape 2 - Firestore",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh firestore",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "IliPresto Audit: Etape 3 - App Check + Auth",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh appcheck",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Verify: Domains + App Check + Web Prod",
+      "type": "shell",
+      "command": "bash tools/verify_ilipresto_domains_appcheck_web_prod.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "IliPresto Audit: Etape 4 - Runtime + Functions",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh runtime",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "IliPresto Audit: Etape 5 - Flutter + Build",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh flutter",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "IliPresto Audit: Etape 6 - Synthese",
+      "type": "shell",
+      "command": "bash tools/audit_ilipresto_firestore_appcheck_prod.sh summary",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "CLIQUER: Plan audit IliPresto (1-6)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "IliPresto Audit: Etape 1 - Contexte + Config",
+        "IliPresto Audit: Etape 2 - Firestore",
+        "IliPresto Audit: Etape 3 - App Check + Auth",
+        "IliPresto Audit: Etape 4 - Runtime + Functions",
+        "IliPresto Audit: Etape 5 - Flutter + Build",
+        "IliPresto Audit: Etape 6 - Synthese"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Messaging: Smoke Test Existing Accounts",
       "type": "shell",
       "command": "node tools/messaging_existing_accounts_smoke.cjs",
@@ -531,6 +665,75 @@
       "label": "Admin: Grant Stephane Access",
       "type": "shell",
       "command": "node tools/grant_stephane_admin_access.cjs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Admin Callable: Check Deployment (HTTP)",
+      "type": "shell",
+      "command": "node tools/check_admin_callable_deployment.cjs",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Admin Callable: List Deployed Functions",
+      "type": "shell",
+      "command": "npx --yes firebase-tools functions:list --project presto-app-74abe 2>&1 | grep -E 'getMyAdminAccessStatus|adminGetAccessStatus|europe-west1' || echo 'Aucune fonction trouvée ou firebase-tools indisponible'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Admin Callable: Describe getMyAdminAccessStatus",
+      "type": "shell",
+      "command": "gcloud functions describe getMyAdminAccessStatus --gen2 --region=europe-west1 --project=presto-app-74abe 2>&1 || echo 'ERREUR: fonction introuvable en europe-west1 (gen2) ou gcloud non configuré'",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Admin Callable: Logs getMyAdminAccessStatus",
+      "type": "shell",
+      "command": "npx --yes firebase-tools functions:log --project presto-app-74abe --only getMyAdminAccessStatus --limit 30",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Admin Callable: Verify Deployment",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Admin Callable: Check Deployment (HTTP)",
+        "Admin Callable: Describe getMyAdminAccessStatus",
+        "Admin Callable: Logs getMyAdminAccessStatus"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Admin Callable: Deploy getMyAdminAccessStatus",
+      "type": "shell",
+      "command": "npx --yes firebase-tools deploy --project presto-app-74abe --only functions:getMyAdminAccessStatus",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Admin Callable: Build + Deploy getMyAdminAccessStatus",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Functions: Build",
+        "Admin Callable: Deploy getMyAdminAccessStatus"
+      ],
       "problemMatcher": []
     },
     {

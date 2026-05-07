@@ -24,6 +24,31 @@ fi
 
 app_build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# Propage les secrets de build s'ils sont définis dans l'environnement.
+# Sans ça, un build web local active aucun App Check et Firestore (en mode
+# enforce) rejette toutes les lectures publiques avec PERMISSION_DENIED.
+# Conventions :
+#   - APPCHECK_RECAPTCHA_SITE_KEY      : reCAPTCHA Enterprise pour App Check Web
+#   - FCM_WEB_VAPID_KEY                : VAPID key pour notifications web
+#   - MARKETPLACE_RECAPTCHA_WEB_SITE_KEY : reCAPTCHA pour vérification humaine marketplace
+extra_defines=()
+if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
+  extra_defines+=(--dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY")
+fi
+if [[ -n "${FCM_WEB_VAPID_KEY:-}" ]]; then
+  extra_defines+=(--dart-define=FCM_WEB_VAPID_KEY="$FCM_WEB_VAPID_KEY")
+fi
+if [[ -n "${MARKETPLACE_RECAPTCHA_WEB_SITE_KEY:-}" ]]; then
+  extra_defines+=(--dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$MARKETPLACE_RECAPTCHA_WEB_SITE_KEY")
+fi
+
+# Trace minimale pour diagnostiquer un build sans App Check (Firestore 403).
+appcheck_status="absent"
+if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
+  appcheck_status="present(${#APPCHECK_RECAPTCHA_SITE_KEY} chars)"
+fi
+echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_SITE_KEY=$appcheck_status" >&2
+
 exec flutter "$@" \
   --dart-define=APP_VERSION="$app_version" \
   --dart-define=APP_BUILD_NUMBER="$app_build_number" \
@@ -31,4 +56,5 @@ exec flutter "$@" \
   --dart-define=APP_BUILD_SHA="$app_build_sha" \
   --dart-define=APP_BUILD_BRANCH="$app_build_branch" \
   --dart-define=APP_BUILD_TAG="$app_build_tag" \
-  --dart-define=APP_BUILD_TIME="$app_build_time"
+  --dart-define=APP_BUILD_TIME="$app_build_time" \
+  "${extra_defines[@]}"

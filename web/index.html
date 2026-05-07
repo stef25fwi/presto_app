@@ -34,6 +34,28 @@
 
   <title>iliprestō</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    (function () {
+      const host = window.location.hostname.toLowerCase();
+      const redirectHosts = new Set([
+        'www.ilipresto.fr',
+        'presto-app-74abe.firebaseapp.com',
+        'presto-app-74abe.web.app',
+      ]);
+
+      if (!redirectHosts.has(host)) {
+        return;
+      }
+
+      const canonicalUrl = new URL(window.location.href);
+      canonicalUrl.protocol = 'https:';
+      canonicalUrl.host = 'ilipresto.fr';
+
+      if (canonicalUrl.toString() !== window.location.href) {
+        window.location.replace(canonicalUrl.toString());
+      }
+    })();
+  </script>
   <style>
     html, body {
       margin: 0;
