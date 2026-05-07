@@ -498,7 +498,8 @@ class _HomePageState extends State<HomePage>
   Query<Map<String, dynamic>> _recentOffersQuery({int limit = 200}) {
     return FirebaseFirestore.instance
         .collection(kListingsCollection)
-        .where(publicListingsFilter())
+        .where('status', isEqualTo: 'active')
+        .where('visibility', isEqualTo: 'public')
         .limit(limit);
   }
 
@@ -514,7 +515,8 @@ class _HomePageState extends State<HomePage>
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
     try {
-      final loaders = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
+      final loaders =
+          <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
         loadMergedPublicOfferQueryVariants(
           queries: buildLatestPublicListingsQueryVariants(limit: 24),
           source: 'home_latest_offers_listings',

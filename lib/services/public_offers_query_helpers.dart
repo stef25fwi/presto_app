@@ -19,7 +19,6 @@ enum PublicListingsBrowseFilterField {
 /// Backfill legacy temporaire en lecture seule pour les annonces publiques.
 const bool kEnableLegacyPublicOffersBackfill = false;
 
-
 /// Collection legacy des annonces (ancienne architecture, en lecture seule).
 const String kOffersCollection = 'offers';
 
@@ -204,6 +203,13 @@ List<Query<Map<String, dynamic>>> buildLatestPublicListingsQueryVariants({
         .where('visibility', isEqualTo: 'public')
         .orderBy('createdAt', descending: true)
         .limit(limit),
+    // Secours strictement public si l'index orderBy(createdAt) n'est pas encore
+    // disponible ou si Firestore rejette la forme de requête. Le tri reste fait
+    // côté client par les écrans consommateurs.
+    col
+        .where('status', isEqualTo: 'active')
+        .where('visibility', isEqualTo: 'public')
+        .limit(limit),
   ];
 }
 
@@ -277,35 +283,58 @@ List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
 }) {
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kListingsCollection);
-  Query<Map<String, dynamic>> query = col
+  final baseQuery = col
       .where('status', isEqualTo: 'active')
       .where('visibility', isEqualTo: 'public');
+  Query<Map<String, dynamic>> filteredQuery = baseQuery;
+  final hasServerFilter = (categoryId?.trim().isNotEmpty ?? false) ||
+      (cityId?.trim().isNotEmpty ?? false);
 
   switch (pickPublicListingsBrowseFilterField(
     categoryId: categoryId,
     cityId: cityId,
   )) {
     case PublicListingsBrowseFilterField.cityCategoryKey:
-      query = query.where(
+      filteredQuery = filteredQuery.where(
         'cityCategoryKey',
         isEqualTo: '${cityId!.trim()}_${categoryId!.trim()}',
       );
       break;
     case PublicListingsBrowseFilterField.cityId:
-      query = query.where('cityId', isEqualTo: cityId!.trim());
+      filteredQuery = filteredQuery.where('cityId', isEqualTo: cityId!.trim());
       break;
     case PublicListingsBrowseFilterField.categoryId:
-      query = query.where('categoryId', isEqualTo: categoryId!.trim());
+      filteredQuery = filteredQuery.where(
+        'categoryId',
+        isEqualTo: categoryId!.trim(),
+      );
       break;
     case PublicListingsBrowseFilterField.none:
       break;
   }
 
+  final queries = <Query<Map<String, dynamic>>>[];
   if (latestFirst) {
-    query = query.orderBy('createdAt', descending: true);
+    queries
+        .add(filteredQuery.orderBy('createdAt', descending: true).limit(limit));
   }
 
-  return <Query<Map<String, dynamic>>>[query.limit(limit)];
+  // Fallback sans orderBy : conserve le contrat public active/public, évite un
+  // échec global si l'index composite n'est pas prêt.
+  queries.add(filteredQuery.limit(limit));
+
+  if (hasServerFilter) {
+    if (latestFirst) {
+      queries
+          .add(baseQuery.orderBy('createdAt', descending: true).limit(limit));
+    }
+    // Dernier secours : fetch public non filtré, puis filtrage exact côté
+    // client. Cela évite qu'une seule forme de requête indexée bloque toute la
+    // page Je consulte avec permission-denied/failed-precondition.
+    queries.add(baseQuery.limit(limit));
+  }
+
+  return queries;
 }
 
 /// Executes every [queries] variant, merges results by document ID and returns
@@ -330,19 +359,24 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
         // reCAPTCHA ne renvoient jamais de token : l'erreur devient visible
         // sur la page au lieu d'un spinner infini.
         final snapshot = await query.get().timeout(
-              const Duration(seconds: 12),
-              onTimeout: () {
-                throw TimeoutException(
-                  'Firestore public offers query #$index did not respond in 12s',
-                );
-              },
+          const Duration(seconds: 12),
+          onTimeout: () {
+            throw TimeoutException(
+              'Firestore public offers query #$index did not respond in 12s',
             );
+          },
+        );
         if (kDebugMode) {
           debugPrint(
             '[PUBLIC_OFFERS][$source#$index] docs=${snapshot.docs.length}',
           );
         }
-        return (index: index, docs: snapshot.docs, error: null, stackTrace: null);
+        return (
+          index: index,
+          docs: snapshot.docs,
+          error: null,
+          stackTrace: null
+        );
       } catch (error, stackTrace) {
         logPublicOffersReadErrorWithAppCheck(
           '$source#$index',
@@ -376,4 +410,3 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
 
   return byId.values.toList(growable: false);
 }
-
