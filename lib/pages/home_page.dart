@@ -183,9 +183,6 @@ class _HomePageState extends State<HomePage>
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
       _dynamicKeywordsSubscription;
 
-  StreamSubscription<User?>? _authStateSubscription;
-  String? _lastAuthStateUid;
-
   /// Suggestions “smart” par défaut
   final List<String> _trendingSuggestions = const [
     "Jardinage aujourd’hui",
@@ -347,20 +344,6 @@ class _HomePageState extends State<HomePage>
 
     unawaited(_refreshLatestOffers());
 
-    // Lorsque l'auth se résout après le mount (restauration de session ou
-    // login), on relance le fetch-once pour sortir proprement des états de
-    // démarrage où l'auth/App Check n'étaient pas encore stabilisés.
-    _lastAuthStateUid = FirebaseAuth.instance.currentUser?.uid;
-    _authStateSubscription = FirebaseAuth.instance.authStateChanges().listen(
-      (user) {
-        if (!mounted) return;
-        final newUid = user?.uid;
-        if (newUid == _lastAuthStateUid) return;
-        _lastAuthStateUid = newUid;
-        unawaited(_refreshLatestOffers());
-      },
-    );
-
     // Listener pour hide/show bottom bar au scroll
     _scrollController.addListener(() {
       _onPageScroll(_scrollController.offset);
@@ -498,7 +481,6 @@ class _HomePageState extends State<HomePage>
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
     _dynamicKeywordsSubscription?.cancel();
-    _authStateSubscription?.cancel();
     super.dispose();
   }
 
@@ -2129,18 +2111,30 @@ class OfferDeepLinkPage extends StatelessWidget {
       String collectionName, {
       required bool isMarketplace,
     }) async {
-      final snapshot =
-          await firestore.collection(collectionName).doc(offerId).get();
-      final data = snapshot.data();
-      if (data == null) {
-        return null;
+      try {
+        final snapshot =
+            await firestore.collection(collectionName).doc(offerId).get();
+        final data = snapshot.data();
+        if (data == null) {
+          return null;
+        }
+        return <String, dynamic>{
+          ...data,
+          'id': offerId,
+          'offerId': offerId,
+          'isMarketplace': isMarketplace,
+        };
+      } on FirebaseException catch (error) {
+        final code = error.code.trim().toLowerCase();
+        if (code == 'permission-denied' || code == 'unauthenticated') {
+          debugPrint(
+            '[OfferDeepLink] public load skipped '
+            'collection=$collectionName offerId=$offerId code=${error.code}',
+          );
+          return null;
+        }
+        rethrow;
       }
-      return <String, dynamic>{
-        ...data,
-        'id': offerId,
-        'offerId': offerId,
-        'isMarketplace': isMarketplace,
-      };
     }
 
     if (preferMarketplace) {

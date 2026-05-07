@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'app/presto_overlay_theme.dart';
 
 const String kPrestoCanonicalWebOrigin =
-    'https://presto-app-74abe.firebaseapp.com';
+  'https://ilipresto.fr';
 
 String prestoPublicAppOrigin() {
   if (!kIsWeb) {
@@ -13,10 +13,7 @@ String prestoPublicAppOrigin() {
 
   final base = Uri.base;
   final host = base.host.trim().toLowerCase();
-  const allowedHosts = <String>{
-    'presto-app-74abe.firebaseapp.com',
-    'presto-app-74abe.web.app',
-  };
+  const allowedHosts = <String>{'ilipresto.fr'};
 
   if (!allowedHosts.contains(host)) {
     return kPrestoCanonicalWebOrigin;

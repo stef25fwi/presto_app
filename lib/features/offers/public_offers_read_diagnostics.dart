@@ -191,6 +191,27 @@ PublicOffersReadIssue diagnosePublicOffersReadIssue(
   }
 
   if (isPermissionIssue) {
+    // Firestore renvoie `permission-denied` aussi bien pour un déni de règles
+    // que pour un déni App Check (en mode enforce). Si App Check n'est pas en
+    // état `ok`, on attribue le déni à App Check pour éviter un message
+    // trompeur orientant le diagnostic vers les règles Firestore.
+    final appCheckUnhealthy = appCheckState == 'failed' ||
+        appCheckState == 'not-attempted' ||
+        appCheckState == 'unknown';
+    if (appCheckUnhealthy) {
+      return PublicOffersReadIssue(
+        source: source,
+        kind: 'app_check',
+        code: code ?? 'permission-denied',
+        releaseMessage:
+            'Lecture bloquée par la sécurité de l\'application (App Check). '
+            'Si tu es en local ou en preview, vérifie l\'enregistrement du '
+            'domaine et la clé reCAPTCHA, ou bascule App Check en monitoring.',
+        rawMessage: rawMessage,
+        hasAuthenticatedUser: effectiveHasAuthenticatedUser,
+        appCheckState: appCheckState,
+      );
+    }
     return PublicOffersReadIssue(
       source: source,
       kind: 'rules',
@@ -209,7 +230,7 @@ PublicOffersReadIssue diagnosePublicOffersReadIssue(
       kind: 'auth',
       code: code,
       releaseMessage:
-          'Lecture impossible des annonces publiques. Vérifie l\'auth Firebase ou la configuration backend.',
+          'Lecture impossible des annonces publiques. Aucune connexion ne devrait être requise: vérifie le câblage Firestore public, les règles et App Check.',
       rawMessage: rawMessage,
       hasAuthenticatedUser: effectiveHasAuthenticatedUser,
       appCheckState: appCheckState,

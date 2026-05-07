@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -93,14 +92,14 @@ class EnhancedListingAiService {
         storagePath: storagePath,
         languageCode: 'fr',
       );
-      onTranscriptionReady(transcriptionResult.text);
+      onTranscriptionReady(transcriptionResult['text'] as String? ?? '');
       _reportProgress('transcribing', 1.0);
 
       // 3. Extrait les champs avec prompts optimisés
       _reportProgress('extracting', 0.0);
       final result = await _extractFieldsWithOptimizedPrompts(
         storagePath: storagePath,
-        transcription: transcriptionResult.text,
+        transcription: transcriptionResult['text'] as String? ?? '',
         request: request,
         onPartialData: onPartialExtraction,
       );
@@ -157,8 +156,8 @@ class EnhancedListingAiService {
     // Préparer le prompt amélioré
     final userPrompt = AiPrompts.extractListingFieldsUserPromptTemplate
         .replaceAll('{transcript}', transcription)
-        .replaceAll('{category}', request.category ?? 'Autre')
-        .replaceAll('{city}', request.city ?? '');
+        .replaceAll('{category}', request.category.isEmpty ? 'Autre' : request.category)
+        .replaceAll('{city}', request.city);
 
     final response = await retry(
       () => callable.call<dynamic>(<String, dynamic>{

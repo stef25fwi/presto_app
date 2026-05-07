@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/admin_access_state.dart';
 import 'firebase_functions_region.dart';
@@ -193,7 +195,11 @@ class AdminAccessResolver {
         '[AdminResolver] mismatch token/profile detected',
         stage: 'profile-token-mismatch',
       );
-      await syncUserRoleFromClaimsIfNeeded(resolvedUser, tokenResult, state: state);
+      state = await syncUserRoleFromClaimsIfNeeded(
+        resolvedUser,
+        tokenResult,
+        state: state,
+      );
     }
 
     state = await _verifyServerAccess(resolvedUser, state);
@@ -252,7 +258,7 @@ class AdminAccessResolver {
     return _finalize(state);
   }
 
-  Future<void> syncUserRoleFromClaimsIfNeeded(
+  Future<AdminAccessState> syncUserRoleFromClaimsIfNeeded(
     User user,
     IdTokenResult tokenResult, {
     AdminAccessState? state,
@@ -266,41 +272,43 @@ class AdminAccessResolver {
       primaryRole: tokenPrimaryRole,
     );
     if (!tokenHasAdmin) {
-      return;
+      return state ?? AdminAccessState.initial();
     }
 
     if (state?.profileHasAdmin == true) {
-      return;
+      return state!;
     }
 
-    // Actually verify with the server before syncing.
-    debugPrint('[AdminResolver] sync: verifying admin status with server for uid=${user.uid}');
-    try {
-      final callable = _functions.httpsCallable(
-        _adminAccessCallableName,
-        options: HttpsCallableOptions(timeout: _serverTimeout),
-      );
-      final response = await callable.call<dynamic>({});
-      final data = response.data is Map
-          ? Map<String, dynamic>.from(response.data as Map)
-          : <String, dynamic>{};
-      final serverIsAdmin = data['isAdmin'] == true;
+    final normalizedRoles = tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
+    final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
 
-      if (serverIsAdmin) {
-        // Server confirms admin — sync to profile doc.
-        await _firestore.collection('users').doc(user.uid).update(<String, dynamic>{
-          'roles': tokenRoles,
-          'primaryRole': tokenPrimaryRole ?? 'user',
-          'admin': true,
-          'lastRoleSyncAt': FieldValue.serverTimestamp(),
-        });
-        debugPrint('[AdminResolver] sync: profile updated with admin roles');
-      } else {
-        // Server says not admin — stale token claim.
-        debugPrint('[AdminResolver] sync: server denies admin, skipping profile sync');
-      }
+    debugPrint('[AdminResolver] sync: upserting profile from token claims for uid=${user.uid}');
+    try {
+      await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
+        'roles': normalizedRoles,
+        'primaryRole': normalizedPrimaryRole,
+        'admin': normalizedRoles.contains('admin') || normalizedRoles.contains('superadmin'),
+        'superadmin': normalizedRoles.contains('superadmin'),
+        'lastRoleSyncAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      debugPrint('[AdminResolver] sync: profile updated from token claims');
+      return _step(
+        (state ?? AdminAccessState.initial()).copyWith(
+          profileLoaded: true,
+          profileHasAdmin: true,
+          profileRoles: normalizedRoles,
+          profilePrimaryRole: normalizedPrimaryRole,
+        ),
+        '[AdminResolver] profile synced from token claims roles=$normalizedRoles',
+        stage: 'profile-synced-from-token',
+      );
     } catch (error) {
-      debugPrint('[AdminResolver] sync: server verification failed: $error');
+      debugPrint('[AdminResolver] sync: profile update from token claims failed: $error');
+      return _step(
+        state ?? AdminAccessState.initial(),
+        '[AdminResolver] profile sync from token claims failed error=$error',
+        stage: 'profile-sync-error',
+      );
     }
   }
 
@@ -394,43 +402,34 @@ class AdminAccessResolver {
       } on FirebaseFunctionsException catch (error) {
         if (!retrying && error.code == 'unauthenticated') {
           debugPrint('[AdminResolver] server verification failed unauthenticated');
-          debugPrint('[AdminResolver] retrying server verification after token refresh');
+          debugPrint('[AdminResolver] retrying via direct HTTP with explicit token');
           _diag(
             'call error function=$_adminAccessCallableName '
             'code=${error.code} message=${error.message ?? ''} '
             'details=${error.details}',
           );
+          // Fallback: appel HTTP direct avec le token rafraîchi explicitement
+          // dans Authorization header, contourne les problèmes de SDK callable v2
+          // sur Flutter Web où req.auth peut être absent malgré un token valide.
           try {
-            final refreshedToken = await callableUser.getIdToken(true);
+            final freshToken = await callableUser.getIdToken(true);
             _diag(
-              'call retry tokenRefresh=ok len=${(refreshedToken ?? '').length} '
-              'preview=${_tokenPreview(refreshedToken)}',
+              'call http-fallback tokenRefresh=ok len=${(freshToken ?? '').length} '
+              'preview=${_tokenPreview(freshToken)}',
             );
+            if (freshToken != null && freshToken.isNotEmpty) {
+              return _step(
+                await _verifyServerAccessHttpFallback(
+                  freshToken,
+                  callableUser,
+                  state,
+                ),
+                '[AdminResolver] http-fallback completed after unauthenticated',
+              );
+            }
           } catch (tokenError) {
-            _diag('call retry tokenRefresh=error error=$tokenError');
+            _diag('call http-fallback tokenRefresh=error error=$tokenError');
           }
-          final refreshedUser = _auth.currentUser ?? callableUser;
-          try {
-            callableUser = await _ensureCurrentUserBound(refreshedUser);
-          } catch (rebindError) {
-            _diag('call retry aborted auth rebind failed error=$rebindError');
-            return _step(
-              state.copyWith(
-                serverCheckAttempted: true,
-                serverCheckSucceeded: false,
-                clearServerIsAdmin: true,
-                serverErrorCode: 'unauthenticated',
-                serverErrorMessage:
-                    'Session client non synchronisée après refresh token.',
-              ),
-              '[AdminResolver] server verification retry aborted auth rebind failed',
-              stage: 'server-access-error',
-            );
-          }
-          return _step(
-            await _verifyServerAccessRetry(callable, callableUser, state),
-            '[AdminResolver] retry completed after token refresh',
-          );
         }
 
         _diag(
@@ -445,7 +444,11 @@ class AdminAccessResolver {
             serverCheckSucceeded: false,
             clearServerIsAdmin: true,
             serverErrorCode: error.code,
-            serverErrorMessage: error.message,
+            serverErrorMessage: _describeServerAccessError(
+              error.code,
+              fallback: error.message,
+              state: state,
+            ),
           ),
           '[AdminResolver] server verification failed ${error.code}',
           stage: 'server-access-error',
@@ -470,6 +473,130 @@ class AdminAccessResolver {
     }
 
     return runAttempt(false);
+  }
+
+  /// Appel HTTP direct à getMyAdminAccessStatus avec le token explicitement
+  /// dans l'en-tête Authorization — contourne les problèmes du SDK callable
+  /// v2 sur Flutter Web où req.auth peut être absent malgré un token valide.
+  Future<AdminAccessState> _verifyServerAccessHttpFallback(
+    String idToken,
+    User user,
+    AdminAccessState state,
+  ) async {
+    const projectId = 'presto-app-74abe';
+    final url = Uri.parse(
+      'https://$kFirebaseFunctionsRegion-$projectId.cloudfunctions.net/$_adminAccessCallableName',
+    );
+    _diag(
+      'call http-fallback start url=$url uid=${user.uid}',
+    );
+    try {
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $idToken',
+            },
+            body: jsonEncode({'data': {}}),
+          )
+          .timeout(_serverTimeout);
+
+      _diag(
+        'call http-fallback response status=${response.statusCode} '
+        'len=${response.body.length}',
+      );
+
+      Map<String, dynamic> body;
+      try {
+        final decoded = jsonDecode(response.body);
+        body = decoded is Map
+            ? Map<String, dynamic>.from(decoded)
+            : <String, dynamic>{};
+      } catch (_) {
+        body = <String, dynamic>{};
+      }
+
+      if (response.statusCode == 200) {
+        // Corps Firebase callable v2 : { result: { isAdmin, source, ... } }
+        // ou { data: { isAdmin, ... } } selon endpoint
+        final result = body['result'] is Map
+            ? Map<String, dynamic>.from(body['result'] as Map)
+            : body;
+
+        final isAdmin = result['isAdmin'] == true;
+        final serverSource = _normalizedText(result['source']);
+        final checkedAt = _dateTimeFromMilliseconds(result['checkedAt']);
+        final debugData = result['debug'] is Map
+            ? Map<String, dynamic>.from(result['debug'] as Map)
+            : const <String, dynamic>{};
+
+        _diag(
+          'call http-fallback success isAdmin=$isAdmin source=$serverSource',
+        );
+        return _step(
+          state.copyWith(
+            uid: user.uid,
+            email: user.email,
+            serverCheckAttempted: true,
+            serverCheckSucceeded: true,
+            serverIsAdmin: isAdmin,
+            serverSource: serverSource,
+            serverCheckedAt: checkedAt ?? DateTime.now(),
+            serverErrorCode: null,
+            serverErrorMessage: null,
+            serverDebug: debugData,
+            adminDocLoaded: debugData.containsKey('adminDocExists'),
+            adminDocHasAdmin: debugData['adminDocEnabled'] == true,
+          ),
+          '[AdminResolver] http-fallback success isAdmin=$isAdmin source=${serverSource ?? ''}',
+          stage: 'server-access-ok',
+        );
+      }
+
+      // Erreur JSON Firebase standard : { error: { status, message } }
+      final errBody = body['error'] is Map
+          ? Map<String, dynamic>.from(body['error'] as Map)
+          : <String, dynamic>{};
+      final errCode = _normalizedText(errBody['status'])?.toLowerCase() ??
+          'http-${response.statusCode}';
+      final errMsg = _normalizedText(errBody['message']) ??
+          'HTTP ${response.statusCode}';
+
+      _diag('call http-fallback error code=$errCode message=$errMsg');
+      return _step(
+        state.copyWith(
+          uid: user.uid,
+          email: user.email,
+          serverCheckAttempted: true,
+          serverCheckSucceeded: false,
+          clearServerIsAdmin: true,
+          serverErrorCode: errCode,
+          serverErrorMessage: _describeServerAccessError(
+            errCode,
+            fallback: errMsg,
+            state: state,
+          ),
+        ),
+        '[AdminResolver] http-fallback failed code=$errCode',
+        stage: 'server-access-error',
+      );
+    } catch (error) {
+      _diag('call http-fallback exception error=$error');
+      return _step(
+        state.copyWith(
+          uid: user.uid,
+          email: user.email,
+          serverCheckAttempted: true,
+          serverCheckSucceeded: false,
+          clearServerIsAdmin: true,
+          serverErrorCode: 'unknown',
+          serverErrorMessage: error.toString(),
+        ),
+        '[AdminResolver] http-fallback exception error=$error',
+        stage: 'server-access-error',
+      );
+    }
   }
 
   Future<AdminAccessState> _verifyServerAccessRetry(
@@ -524,7 +651,11 @@ class AdminAccessResolver {
           serverCheckSucceeded: false,
           clearServerIsAdmin: true,
           serverErrorCode: error.code,
-          serverErrorMessage: error.message,
+          serverErrorMessage: _describeServerAccessError(
+            error.code,
+            fallback: error.message,
+            state: state,
+          ),
         ),
         '[AdminResolver] server verification retry failed ${error.code}',
         stage: 'server-access-error',
@@ -669,6 +800,17 @@ class AdminAccessResolver {
 
   void _diag(String message) {
     debugPrint('[AdminResolver][Diag] $message');
+  }
+
+  String? _describeServerAccessError(
+    String? code, {
+    String? fallback,
+    required AdminAccessState state,
+  }) {
+    if (code == 'unauthenticated' && state.tokenHasAdmin) {
+      return 'La callable admin getMyAdminAccessStatus refuse l\'authentification alors que le token contient admin. Vérifie le déploiement Functions et la région $kFirebaseFunctionsRegion.';
+    }
+    return fallback;
   }
 
   String _firebaseProjectId() {
