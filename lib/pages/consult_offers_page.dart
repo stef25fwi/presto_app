@@ -67,7 +67,7 @@ class _Debouncer {
 }
 
 class _ConsultOffersPageState extends State<ConsultOffersPage>
-  with WidgetsBindingObserver {
+    with WidgetsBindingObserver {
   static const Color _offersBg = Colors.white;
   static const Color _offersNavy = Color(0xFF1E2554);
   static const Color _offersOrange = Color(0xFFFF7A00);
@@ -694,10 +694,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Query<Map<String, dynamic>> _buildOffersQuery() {
-    Query<Map<String, dynamic>> query =
-        FirebaseFirestore.instance.collection(kListingsCollection).where(
-              publicListingsFilter(),
-            );
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection(kListingsCollection)
+        .where('status', isEqualTo: 'active')
+        .where('visibility', isEqualTo: 'public');
 
     final loc = _locationController.text.trim();
     final cp = _postalCodeController.text.trim();
@@ -951,7 +951,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _cachedOffersStream = _watchCombinedOffers().map((docs) {
         final displayedCount = _buildDisplayedOfferDocs(docs).length;
         _offersWarmCache[key] = docs;
-        if (mounted && _cachedOffersStreamKey == key &&
+        if (mounted &&
+            _cachedOffersStreamKey == key &&
             _lastResultCount != displayedCount) {
           setState(() {
             _lastResultCount = displayedCount;
@@ -1074,12 +1075,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   String? _effectiveListingsCategoryId() {
-    final categoryLabel = (_filterCategory != null && _filterCategory!.isNotEmpty)
-        ? _filterCategory
-        : ((_selectedCategory != null &&
-                _selectedCategory != 'Toutes catégories')
-            ? _selectedCategory
-            : null);
+    final categoryLabel =
+        (_filterCategory != null && _filterCategory!.isNotEmpty)
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
     return _makeCategoryId(categoryLabel);
   }
 
@@ -1088,9 +1090,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final cp = _postalCodeController.text.trim();
     final filterCity = _filterCityName?.trim();
 
-    final cityName = (filterCity != null && filterCity.isNotEmpty)
-        ? filterCity
-        : loc;
+    final cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
     final cpForCity = (filterCity != null &&
             filterCity.isNotEmpty &&
             _filterPostalCodeController.text.trim().isNotEmpty)
@@ -1136,6 +1137,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   bool _matchesOfferFilters(Map<String, dynamic> data) {
     if (!_offerIsActive(data)) return false;
+
+    final effectiveCategoryId = _effectiveListingsCategoryId();
+    if (effectiveCategoryId != null && effectiveCategoryId.isNotEmpty) {
+      final rawCategoryId = (data['categoryId'] ?? '').toString().trim();
+      final derivedCategoryId = _makeCategoryId(_offerCategoryLabel(data));
+      if (rawCategoryId != effectiveCategoryId &&
+          derivedCategoryId != effectiveCategoryId) {
+        return false;
+      }
+    }
+
+    final effectiveCityId = _effectiveListingsCityId();
+    if (effectiveCityId != null && effectiveCityId.isNotEmpty) {
+      final rawCityId = (data['cityId'] ?? '').toString().trim();
+      final derivedCityId = _makeCityId(
+        cityName: _offerCityLabel(data),
+        postalCode: _offerPostalCode(data),
+      );
+      if (rawCityId != effectiveCityId && derivedCityId != effectiveCityId) {
+        return false;
+      }
+    }
 
     if (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty) {
       final offerSubCategory =
@@ -1955,8 +1978,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   if (isAd) {
                                     return AdBanner(
                                       margin: EdgeInsets.zero,
-                                      placeholderHeight:
-                                          kIsWeb ? 180.0 : 100.0,
+                                      placeholderHeight: kIsWeb ? 180.0 : 100.0,
                                       placeholderFolderPrefix:
                                           'assets/carousel_home/',
                                       flat: true,
@@ -2013,7 +2035,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                         onTap: showJobDoneOverlay
                                             ? null
                                             : () {
-                                                _logOfferClicked(offerId, title);
+                                                _logOfferClicked(
+                                                    offerId, title);
                                                 Navigator.of(context).push(
                                                   MaterialPageRoute(
                                                     builder: (_) =>
@@ -2024,7 +2047,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                                         data: data,
                                                       ),
                                                       currentUserId:
-                                                          FirebaseAuth.instance
+                                                          FirebaseAuth
+                                                                  .instance
                                                                   .currentUser
                                                                   ?.uid ??
                                                               '',
@@ -2042,8 +2066,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                           ].join(' / '),
                                           publishedText: publishedText,
                                           price: budget,
-                                          missionDelayLabel:
-                                              missionDelayLabel,
+                                          missionDelayLabel: missionDelayLabel,
                                           isUrgent:
                                               isUrgent && !showJobDoneOverlay,
                                           icon: _categoryIcon(category),
