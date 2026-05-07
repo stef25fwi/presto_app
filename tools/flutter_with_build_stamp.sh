@@ -24,6 +24,29 @@ fi
 
 app_build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# Les tâches VS Code n'héritent pas toujours des exports ajoutés dans ~/.bashrc.
+# Si une clé manque, on tente de la relire depuis un shell interactif pour
+# éviter de produire un bundle web sans App Check.
+hydrate_env_from_interactive_shell() {
+  local var_name="$1"
+  local current_value="${!var_name:-}"
+  local resolved_value=""
+
+  if [[ -n "$current_value" ]]; then
+    return 0
+  fi
+
+  resolved_value="$(bash -ic "printf '%s' \"\${$var_name:-}\"" 2>/dev/null || true)"
+  if [[ -n "$resolved_value" ]]; then
+    printf -v "$var_name" '%s' "$resolved_value"
+    export "$var_name"
+  fi
+}
+
+hydrate_env_from_interactive_shell APPCHECK_RECAPTCHA_SITE_KEY
+hydrate_env_from_interactive_shell FCM_WEB_VAPID_KEY
+hydrate_env_from_interactive_shell MARKETPLACE_RECAPTCHA_WEB_SITE_KEY
+
 # Propage les secrets de build s'ils sont définis dans l'environnement.
 # Sans ça, un build web local active aucun App Check et Firestore (en mode
 # enforce) rejette toutes les lectures publiques avec PERMISSION_DENIED.
