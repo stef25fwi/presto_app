@@ -702,7 +702,21 @@ Future<void> main() async {
       if (kIsWeb) {
         final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
         if (siteKey.isEmpty) {
-          if (kDebugMode) debugPrint('[AppCheck] Web skipped: reCAPTCHA site key absente');
+          const message =
+              '[AppCheck] Web skipped: reCAPTCHA site key absente';
+          if (kDebugMode) debugPrint(message);
+          if (kReleaseMode) {
+            try {
+              await FirebaseCrashlytics.instance.recordError(
+                StateError(message),
+                StackTrace.current,
+                reason: 'missing_app_check_recaptcha_site_key',
+                fatal: false,
+              );
+            } catch (_) {
+              // Crashlytics peut être indisponible très tôt au bootstrap web.
+            }
+          }
         } else {
           final preview =
               siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
