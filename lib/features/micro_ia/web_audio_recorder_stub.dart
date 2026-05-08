@@ -36,6 +36,9 @@ Future<Uint8List> webBlobToWav16kMono(Object blob) {
   throw UnsupportedError('webBlobToWav16kMono is only available on Web');
 }
 
-Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(Object blob) {
+Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(
+  Object blob, {
+  bool preferRawBytes = false,
+}) {
   throw UnsupportedError('webBlobToMicroIaUpload is only available on Web');
 }

@@ -7,8 +7,7 @@ import '../../utils/crashlytics_context.dart';
 import '../../utils/retry.dart';
 
 class AiDraftService {
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
   Future<void> _prepareAuthenticatedCallableSession() async {
     await MicroIaService.prepareSecureCallableContext(

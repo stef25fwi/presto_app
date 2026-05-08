@@ -33,11 +33,15 @@ class ListingAudioAiService {
   ListingAudioAiService({
     FirebaseFunctions? functions,
     FirebaseStorage? storage,
-  })  : _functions = functions ?? prestoFirebaseFunctions,
-        _storage = storage ?? FirebaseStorage.instance;
+  })  : _injectedFunctions = functions,
+        _injectedStorage = storage;
 
-  final FirebaseFunctions _functions;
-  final FirebaseStorage _storage;
+  final FirebaseFunctions? _injectedFunctions;
+  final FirebaseStorage? _injectedStorage;
+
+  FirebaseFunctions get _functions =>
+      _injectedFunctions ?? prestoFirebaseFunctions;
+  FirebaseStorage get _storage => _injectedStorage ?? FirebaseStorage.instance;
 
   Future<String> uploadAudioBytes({
     required String ownerUid,

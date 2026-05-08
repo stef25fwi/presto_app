@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -72,7 +74,8 @@ const List<_FirebaseDeployDiagnosticRule> _kFirebaseDeployDiagnosticRules = [
     title: 'Permissions projet insuffisantes',
     icon: Icons.admin_panel_settings_rounded,
     color: Color(0xFFD93025),
-    summary: 'Le compte connecté n’a pas les droits nécessaires sur le projet Firebase.',
+    summary:
+        'Le compte connecté n’a pas les droits nécessaires sur le projet Firebase.',
     action:
         'Vérifie l’owner du projet presto-app-74abe, les rôles IAM et le compte Google utilisé par la CLI.',
     needles: [
@@ -87,7 +90,8 @@ const List<_FirebaseDeployDiagnosticRule> _kFirebaseDeployDiagnosticRules = [
     title: 'Projet ou configuration Firebase invalide',
     icon: Icons.folder_off_rounded,
     color: Color(0xFFF29900),
-    summary: 'La CLI ne retrouve pas le projet, firebase.json ou la cible attendue.',
+    summary:
+        'La CLI ne retrouve pas le projet, firebase.json ou la cible attendue.',
     action:
         'Vérifie le dossier courant, le project id, firebase.json et le chemin vers firestore.rules.',
     needles: [
@@ -103,7 +107,8 @@ const List<_FirebaseDeployDiagnosticRule> _kFirebaseDeployDiagnosticRules = [
     title: 'Erreur de syntaxe ou compilation des rules',
     icon: Icons.rule_folder_rounded,
     color: Color(0xFF8E24AA),
-    summary: 'Le fichier firestore.rules ne compile pas ou contient une règle invalide.',
+    summary:
+        'Le fichier firestore.rules ne compile pas ou contient une règle invalide.',
     action:
         'Relis firestore.rules, corrige la ligne signalée puis relance uniquement les rules.',
     needles: [
@@ -118,7 +123,8 @@ const List<_FirebaseDeployDiagnosticRule> _kFirebaseDeployDiagnosticRules = [
     title: 'Réseau ou service Google indisponible',
     icon: Icons.cloud_off_rounded,
     color: Color(0xFF00897B),
-    summary: 'Le poste n’a pas réussi à joindre l’API Firebase ou Google Cloud.',
+    summary:
+        'Le poste n’a pas réussi à joindre l’API Firebase ou Google Cloud.',
     action:
         'Teste la connectivité, relance plus tard si les API sont dégradées, puis réessaie le deploy.',
     needles: [
@@ -135,7 +141,8 @@ const List<_FirebaseDeployDiagnosticRule> _kFirebaseDeployDiagnosticRules = [
     title: 'Quota, billing ou API Google Cloud',
     icon: Icons.account_balance_wallet_rounded,
     color: Color(0xFF6D4C41),
-    summary: 'Le projet n’a pas accès à la ressource requise ou a atteint une limite.',
+    summary:
+        'Le projet n’a pas accès à la ressource requise ou a atteint une limite.',
     action:
         'Contrôle billing, quotas, APIs activées et l’état du projet dans Google Cloud Console.',
     needles: [
@@ -273,8 +280,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
 
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   bool _loading = true;
   bool _saving = false;
@@ -1886,8 +1892,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
 
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
   final TextEditingController _deployDiagnosticController =
       TextEditingController();
@@ -2336,7 +2341,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              denied ? 'Acces admin non confirme' : 'Controle admin indisponible',
+              denied
+                  ? 'Acces admin non confirme'
+                  : 'Controle admin indisponible',
               style: const TextStyle(
                 fontWeight: FontWeight.w800,
                 color: Colors.black87,
@@ -2344,7 +2351,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ),
             const SizedBox(height: 6),
             Text(
-                denied
+              denied
                   ? 'Le chargement admin n est pas encore confirme pour cette session. Relance le controle apres synchronisation.'
                   : 'La verification admin a echoue temporairement. Relance le controle.',
               style: const TextStyle(
@@ -2545,7 +2552,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
           try {
             final callable = _functions.httpsCallable(
               'adminGetUserStats',
-              options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+              options:
+                  HttpsCallableOptions(timeout: const Duration(seconds: 15)),
             );
             final res = await callable.call<dynamic>({});
             final data = (res.data is Map)
@@ -2598,7 +2606,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         actions: [
           _AdminChip(
             label: 'Admin',
-            onTap: null,
+            onTap: () {
+              unawaited(_reloadAdminPage());
+            },
           ),
           const SizedBox(width: 12),
         ],

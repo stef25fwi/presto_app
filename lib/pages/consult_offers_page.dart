@@ -28,6 +28,7 @@ import 'account_page.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/app_route_parser.dart';
 import '../services/city_search.dart';
+import '../services/conversation_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
@@ -36,6 +37,7 @@ import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
 import '../widgets/home_interactions.dart';
+import 'messages/messages_page_v2.dart';
 
 class ConsultOffersPage extends StatefulWidget {
   final String? categoryFilter;
@@ -3227,6 +3229,56 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     }
 
     if (!context.mounted) return;
+
+    final currentUserId = user.uid.trim();
+    if (currentUserId == widget.userId.trim()) {
+      showSuccessSnackBar(
+        context,
+        'Ceci est votre profil.',
+      );
+      return;
+    }
+
+    try {
+      final docs = await _loadActiveOffers();
+      if (!context.mounted) return;
+      if (docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Aucune annonce active à contacter pour ce profil.'),
+          ),
+        );
+        return;
+      }
+
+      final firstOffer = docs.first;
+      final data = firstOffer.data();
+      final title = (data['title'] ?? 'Annonce IliPresto').toString().trim();
+      final conversationId = await ConversationService.ensureConversation(
+        offerId: firstOffer.id,
+        offerTitle: title.isEmpty ? 'Annonce IliPresto' : title,
+        currentUserId: currentUserId,
+        otherUserId: widget.userId.trim(),
+        currentUserName: user.displayName,
+        otherUserName: widget.initialPseudo,
+      );
+
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MessagesPageV2(
+            initialConversationId: conversationId,
+            initialDraftText:
+                'Bonjour, je vous contacte au sujet de votre annonce.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible d’ouvrir la conversation : $error')),
+      );
+    }
   }
 
   @override

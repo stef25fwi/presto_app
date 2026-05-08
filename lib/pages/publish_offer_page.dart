@@ -26,7 +26,8 @@ import '../config/app_check_state.dart';
 import '../config/env/openai_config.dart';
 import '../features/ai_draft/ai_draft_service.dart';
 import '../features/micro_ia/micro_ia_service.dart';
-import '../features/micro_ia/web_audio_recorder.dart';
+import '../features/micro_ia/web_audio_recorder_stub.dart'
+    if (dart.library.js_interop) '../features/micro_ia/web_audio_recorder.dart';
 import '../models/admin_access_state.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/admin_access_resolver.dart';
@@ -78,7 +79,7 @@ class PublishOfferPage extends StatefulWidget {
 }
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
-  static final MarketplacePublishService _marketplacePublishService =
+  MarketplacePublishService get _marketplacePublishService =>
       MarketplacePublishService();
   static const int _publishPhotoHardLimit = 2;
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
@@ -474,7 +475,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final List<Uint8List?> _selectedPhotoBytes = [];
   final List<String> _uploadedPhotoUrls = [];
 
-  final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
@@ -507,6 +508,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _publishAiTraceAttempt = 0;
   String? _shakingPublishFieldId;
   int _publishShakeTick = 0;
+
+  FirebaseAuth? get _authOrNull {
+    try {
+      return FirebaseAuth.instance;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  FirebaseFirestore? get _firestoreOrNull {
+    try {
+      return FirebaseFirestore.instance;
+    } catch (_) {
+      return null;
+    }
+  }
 
   final GlobalKey _titleFieldKey = GlobalKey();
   final GlobalKey _categoryFieldKey = GlobalKey();
@@ -1930,11 +1947,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _prefillPublishPhoneFromProfileIfNeeded() async {
     if (_phoneController.text.trim().isNotEmpty) return;
 
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _authOrNull?.currentUser;
     if (user == null) return;
 
-    final userRef =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final firestore = _firestoreOrNull;
+    if (firestore == null) return;
+
+    final userRef = firestore.collection('users').doc(user.uid);
 
     try {
       DocumentSnapshot<Map<String, dynamic>> doc;
@@ -2523,7 +2542,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<User?> _resolveSignedInUser() async {
-    final auth = FirebaseAuth.instance;
+    final auth = _authOrNull;
+    if (auth == null) return null;
     final currentUser = auth.currentUser;
     if (currentUser != null) {
       SessionState.userId = currentUser.uid;
@@ -2557,7 +2577,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     SessionState.userId = user.uid;
-    return FirebaseAuth.instance.currentUser ?? user;
+    return _authOrNull?.currentUser ?? user;
   }
 
   Future<void> _onPublishPressed() async {
@@ -2565,7 +2585,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       area: 'publish',
       action: 'tap-submit',
       details: <String, Object?>{
-        'signedIn': FirebaseAuth.instance.currentUser != null,
+        'signedIn': _authOrNull?.currentUser != null,
         'category': _category ?? '',
       },
     );
@@ -3857,8 +3877,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               children: [
                 // Bouton Premium AI avec enregistrement audio
                 StreamBuilder<User?>(
-                  stream: FirebaseAuth.instance.authStateChanges(),
-                  initialData: FirebaseAuth.instance.currentUser,
+                  stream: _authOrNull?.authStateChanges(),
+                  initialData: _authOrNull?.currentUser,
                   builder: (context, snapshot) {
                     final signedInUser = snapshot.data;
                     return Column(
