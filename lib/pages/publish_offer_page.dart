@@ -844,12 +844,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       unawaited(_adminAudioRuntimeStore.enableCloudSync());
 
       try {
-        await user.getIdToken(true);
+        await MicroIaService.prepareSecureCallableContext(
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
         final configCallable = _functions.httpsCallable(
           'adminGetMicroIaConfig',
           options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
         );
-        final configRes = await configCallable.call<dynamic>({});
+        HttpsCallableResult<dynamic> configRes;
+        try {
+          configRes = await configCallable.call<dynamic>({});
+        } on FirebaseFunctionsException catch (e) {
+          if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
+            rethrow;
+          }
+          _appendPublishAiTrace(
+            'admin_config',
+            'Re-tentative apres refresh token+appcheck (code=${e.code})',
+            level: PublishAiTraceLevel.warning,
+          );
+          await MicroIaService.prepareSecureCallableContext(
+            forceRefreshToken: true,
+            forceRefreshAppCheckToken: true,
+          );
+          configRes = await configCallable.call<dynamic>({});
+        }
         final data = Map<String, dynamic>.from(configRes.data as Map);
         final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
         _appendPublishAiTrace(

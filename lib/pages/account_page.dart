@@ -13,6 +13,7 @@ import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../constants.dart';
 import '../features/account/signed_out_account_fallback.dart';
+import '../features/micro_ia/micro_ia_service.dart';
 import '../models/admin_access_state.dart';
 import 'admin_space_page.dart';
 import '../services/admin_access_resolver.dart';
@@ -314,8 +315,23 @@ class _AccountPageState extends State<AccountPage> {
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
     );
     try {
-      await _auth.currentUser?.getIdToken(true);
-      final res = await callable.call<dynamic>({});
+      await MicroIaService.prepareSecureCallableContext(
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+      HttpsCallableResult<dynamic> res;
+      try {
+        res = await callable.call<dynamic>({});
+      } on FirebaseFunctionsException catch (e) {
+        if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
+          rethrow;
+        }
+        await MicroIaService.prepareSecureCallableContext(
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+        res = await callable.call<dynamic>({});
+      }
       sw.stop();
       PrestoMonitoring.I.trackFunctionsCall(
           name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
