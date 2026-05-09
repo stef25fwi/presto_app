@@ -169,9 +169,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       if (kIsWeb) {
         debugPrint('[AppCheck] retry activation for $flow');
+        final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+        if (siteKey.isEmpty) {
+          throw StateError(
+            'APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow',
+          );
+        }
         await FirebaseAppCheck.instance.activate(
-          webProvider:
-              ReCaptchaEnterpriseProvider(kAppCheckWebRecaptchaSiteKey),
+          webProvider: ReCaptchaEnterpriseProvider(siteKey),
         );
       } else {
         await FirebaseAppCheck.instance.activate(
@@ -182,13 +187,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
         );
       }
+      final appCheckToken = await FirebaseAppCheck.instance
+          .getToken(true)
+          .timeout(const Duration(seconds: 8));
+      if ((appCheckToken ?? '').trim().isEmpty) {
+        throw StateError('Jeton App Check vide apres reactive pour $flow');
+      }
       appCheckActivationAttempted = true;
       appCheckActivationSucceeded = true;
       appCheckActivationError = null;
       appCheckActivationStackTrace = null;
       _appendPublishAiTrace(
         'appcheck',
-        'App Check reactive avec succes pour $flow',
+        'App Check reactive avec succes pour $flow, token=ok',
         level: PublishAiTraceLevel.success,
       );
       return true;
@@ -3749,6 +3760,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
       if (user == null) {
         throw Exception('Utilisateur non connecté');
+      }
+      try {
+        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+          user: user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+      } catch (error, stackTrace) {
+        await CrashlyticsContext.recordError(
+          error,
+          stackTrace,
+          reason: 'publish blocked before submit: auth/appcheck/profile preflight failed',
+          fatal: false,
+          keys: <String, String>{
+            'component': 'PublishOfferPage',
+            'step': 'submit-preflight',
+            'uid': user.uid,
+          },
+        );
+        if (mounted) {
+          showErrorSnackBar(
+            context,
+            'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+          );
+        }
+        return;
       }
       logRuntimeAction(
         area: 'publish',
