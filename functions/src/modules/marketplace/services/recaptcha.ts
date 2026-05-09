@@ -27,7 +27,7 @@ export interface RecaptchaVerificationResult {
 }
 
 function shouldBypassRecaptcha(): boolean {
-  return !RECAPTCHA_ENTERPRISE_SITE_KEY || !GCP_PROJECT_ID || !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  return !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
 }
 
 export async function verifyRecaptchaAssessment({
@@ -39,11 +39,26 @@ export async function verifyRecaptchaAssessment({
   expectedAction: RecaptchaAction;
   userId?: string;
 }): Promise<RecaptchaVerificationResult> {
+  if (!RECAPTCHA_ENTERPRISE_SITE_KEY || !GCP_PROJECT_ID) {
+    logger.error("marketplace_recaptcha_missing_configuration", {
+      expectedAction,
+      userId,
+      missingSiteKey: !RECAPTCHA_ENTERPRISE_SITE_KEY,
+      missingProjectId: !GCP_PROJECT_ID,
+    });
+    return {
+      allowed: false,
+      score: 0,
+      reasons: ["MISSING_RECAPTCHA_CONFIGURATION"],
+      action: expectedAction,
+    };
+  }
+
   if (shouldBypassRecaptcha()) {
     logger.warn("marketplace_recaptcha_bypassed", {
       expectedAction,
       userId,
-      bypassReason: !RECAPTCHA_ENTERPRISE_SITE_KEY ? "missing_site_key" : "emulator_or_missing_project",
+      bypassReason: "emulator",
     });
     return {
       allowed: true,

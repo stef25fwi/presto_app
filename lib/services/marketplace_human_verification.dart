@@ -5,6 +5,7 @@ import 'marketplace_human_verification_stub.dart'
 enum MarketplaceHumanVerificationAction {
   listingSubmit,
   listingReport,
+  chatFirstMessage,
 }
 
 extension MarketplaceHumanVerificationActionValue
@@ -12,6 +13,7 @@ extension MarketplaceHumanVerificationActionValue
   String get value => switch (this) {
         MarketplaceHumanVerificationAction.listingSubmit => 'listing_submit',
         MarketplaceHumanVerificationAction.listingReport => 'listing_report',
+        MarketplaceHumanVerificationAction.chatFirstMessage => 'message_create',
       };
 }
 

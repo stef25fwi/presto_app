@@ -16,13 +16,19 @@ class AdminAccessResolver {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
-  }) : _auth = auth ?? FirebaseAuth.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance,
-       _functions = functions ?? prestoFirebaseFunctions;
+  })  : _injectedAuth = auth,
+        _injectedFirestore = firestore,
+        _injectedFunctions = functions;
 
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
-  final FirebaseFunctions _functions;
+  final FirebaseAuth? _injectedAuth;
+  final FirebaseFirestore? _injectedFirestore;
+  final FirebaseFunctions? _injectedFunctions;
+
+  FirebaseAuth get _auth => _injectedAuth ?? FirebaseAuth.instance;
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
+  FirebaseFunctions get _functions =>
+      _injectedFunctions ?? prestoFirebaseFunctions;
 
   static const Duration _authRestoreTimeout = Duration(seconds: 2);
   static const Duration _authRebindTimeout = Duration(seconds: 2);
@@ -149,7 +155,8 @@ class AdminAccessResolver {
       );
     }
 
-    _diag('firestore profilePath=users/${resolvedUser.uid} adminPath=admins/${resolvedUser.uid}');
+    _diag(
+        'firestore profilePath=users/${resolvedUser.uid} adminPath=admins/${resolvedUser.uid}');
 
     final userSnap = await _getDocumentWithFallback('users', resolvedUser.uid);
     final profileData = userSnap?.data();
@@ -279,15 +286,18 @@ class AdminAccessResolver {
       return state!;
     }
 
-    final normalizedRoles = tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
+    final normalizedRoles =
+        tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
     final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
 
-    debugPrint('[AdminResolver] sync: upserting profile from token claims for uid=${user.uid}');
+    debugPrint(
+        '[AdminResolver] sync: upserting profile from token claims for uid=${user.uid}');
     try {
       await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
         'roles': normalizedRoles,
         'primaryRole': normalizedPrimaryRole,
-        'admin': normalizedRoles.contains('admin') || normalizedRoles.contains('superadmin'),
+        'admin': normalizedRoles.contains('admin') ||
+            normalizedRoles.contains('superadmin'),
         'superadmin': normalizedRoles.contains('superadmin'),
         'lastRoleSyncAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -312,7 +322,8 @@ class AdminAccessResolver {
         stage: 'profile-synced-from-token',
       );
     } catch (error) {
-      debugPrint('[AdminResolver] sync: profile update from token claims failed: $error');
+      debugPrint(
+          '[AdminResolver] sync: profile update from token claims failed: $error');
       return _step(
         state ?? AdminAccessState.initial(),
         '[AdminResolver] profile sync from token claims failed error=$error',
@@ -410,8 +421,10 @@ class AdminAccessResolver {
         );
       } on FirebaseFunctionsException catch (error) {
         if (!retrying && error.code == 'unauthenticated') {
-          debugPrint('[AdminResolver] server verification failed unauthenticated');
-          debugPrint('[AdminResolver] retrying via direct HTTP with explicit token');
+          debugPrint(
+              '[AdminResolver] server verification failed unauthenticated');
+          debugPrint(
+              '[AdminResolver] retrying via direct HTTP with explicit token');
           _diag(
             'call error function=$_adminAccessCallableName '
             'code=${error.code} message=${error.message ?? ''} '
@@ -569,8 +582,8 @@ class AdminAccessResolver {
           : <String, dynamic>{};
       final errCode = _normalizedText(errBody['status'])?.toLowerCase() ??
           'http-${response.statusCode}';
-      final errMsg = _normalizedText(errBody['message']) ??
-          'HTTP ${response.statusCode}';
+      final errMsg =
+          _normalizedText(errBody['message']) ?? 'HTTP ${response.statusCode}';
 
       _diag('call http-fallback error code=$errCode message=$errMsg');
       return _step(
@@ -701,21 +714,26 @@ class AdminAccessResolver {
       final serverSnapshot = await reference
           .get(const GetOptions(source: Source.server))
           .timeout(_documentServerTimeout);
-      _diag('firestore read success path=$path source=server exists=${serverSnapshot.exists}');
+      _diag(
+          'firestore read success path=$path source=server exists=${serverSnapshot.exists}');
       return serverSnapshot;
     } catch (error) {
-      debugPrint('[AdminResolver] $collection/$docId server read fallback: $error');
+      debugPrint(
+          '[AdminResolver] $collection/$docId server read fallback: $error');
       _diag('firestore read failed path=$path source=server error=$error');
       try {
         _diag('firestore read start path=$path source=cache');
         final cacheSnapshot = await reference
             .get(const GetOptions(source: Source.cache))
             .timeout(_documentCacheTimeout);
-        _diag('firestore read success path=$path source=cache exists=${cacheSnapshot.exists}');
+        _diag(
+            'firestore read success path=$path source=cache exists=${cacheSnapshot.exists}');
         return cacheSnapshot;
       } catch (cacheError) {
-        debugPrint('[AdminResolver] $collection/$docId cache read failed: $cacheError');
-        _diag('firestore read failed path=$path source=cache error=$cacheError');
+        debugPrint(
+            '[AdminResolver] $collection/$docId cache read failed: $cacheError');
+        _diag(
+            'firestore read failed path=$path source=cache error=$cacheError');
         return null;
       }
     }

@@ -58,9 +58,9 @@ android {
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
-                // Fallback debug keys pour les builds locaux/CI sans keystore
-                logger.warn("⚠️  key.properties introuvable – release signé avec les clés debug")
-                signingConfigs.getByName("debug")
+                throw GradleException(
+                    "key.properties introuvable : refus de signer un build release avec les clés debug"
+                )
             }
         }
     }
