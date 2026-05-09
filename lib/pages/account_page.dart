@@ -25,12 +25,13 @@ import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/account_profile_sections.dart';
 
-import '../main.dart' show
-    PrestoMonitoring,
-    prestoOverlayStyleFor,
-    adminAudioRuntimeStore,
-    pendingRedirectAuthResult,
-    pendingRedirectAuthError;
+import '../main.dart'
+    show
+        PrestoMonitoring,
+        prestoOverlayStyleFor,
+        adminAudioRuntimeStore,
+        pendingRedirectAuthResult,
+        pendingRedirectAuthError;
 import 'user_offers_section.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
@@ -791,6 +792,11 @@ class _AccountPageState extends State<AccountPage> {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: FirebaseAuth.instance.currentUser,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       return await userRef
           .get(const GetOptions(source: Source.server))
           .timeout(const Duration(seconds: 5));
@@ -1211,6 +1217,11 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSavingProfile = true);
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
       final phone = _profilePhoneController.text.trim();
@@ -2569,7 +2580,8 @@ class _AccountPageState extends State<AccountPage> {
       stream: _auth.idTokenChanges(),
       builder: (context, snapshot) {
         final user = snapshot.data;
-        if (user == null && snapshot.connectionState == ConnectionState.waiting) {
+        if (user == null &&
+            snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
               child: Column(
@@ -2599,5 +2611,4 @@ class _AccountPageState extends State<AccountPage> {
       },
     );
   }
-
 }

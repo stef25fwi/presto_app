@@ -38,6 +38,7 @@ import '../services/marketplace_publish_service.dart';
 import '../services/marketplace_remote_config_service.dart';
 import '../services/offer_indexing.dart';
 import '../services/admin_audio_runtime_store.dart';
+import '../services/user_profile_bootstrap_service.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/runtime_action_logger.dart';
@@ -2001,6 +2002,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final userRef = firestore.collection('users').doc(user.uid);
 
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       DocumentSnapshot<Map<String, dynamic>> doc;
       try {
         doc = await userRef

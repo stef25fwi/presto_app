@@ -148,9 +148,9 @@ class _ProfilePageState extends State<ProfilePage> {
             );
           } catch (e) {
             debugPrint('[AuthBootstrap] session restore failed: $e');
-              if (mounted) {
-                showErrorSnackBar(context, _profileSyncWarningMessage);
-              }
+            if (mounted) {
+              showErrorSnackBar(context, _profileSyncWarningMessage);
+            }
           }
           try {
             await EmailActionService.syncCurrentUserEmailVerificationState();
@@ -158,7 +158,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Best effort
           }
         }
-        _bindProfile(user);
+        await _bindProfile(user);
         _loadNotificationPreferences(user.uid);
       } else {
         _unbindProfile();
@@ -320,7 +320,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _bindProfile(User user) {
+  Future<void> _bindProfile(User user) async {
     if (_activeProfileUid == user.uid && _profileSub != null) {
       return;
     }
@@ -331,6 +331,16 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _isProfileHydrating = true;
     });
+
+    try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+    } catch (error) {
+      debugPrint('[ProfilePage] Profile stream auth preflight failed: $error');
+    }
 
     _profileSub = FirebaseFirestore.instance
         .collection('users')
@@ -548,6 +558,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadNotificationPreferences(String userId) async {
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        forceRefreshAppCheckToken: true,
+      );
       final results = await Future.wait([
         FirebaseFirestore.instance
             .collection('notification_preferences')
@@ -842,6 +855,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _isLoading = true);
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       final displayName = _nameCtrl.text.trim();
       final normalizedPhone =
           _normalizePhoneForSave(_phoneCountryCode, _phoneCtrl.text.trim());
@@ -977,6 +995,11 @@ class _ProfilePageState extends State<ProfilePage> {
       'requester_email': user.email,
     };
 
+    await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      user: user,
+      forceRefreshToken: true,
+      forceRefreshAppCheckToken: true,
+    );
     await FirebaseFirestore.instance.collection('support_tickets').add(payload);
 
     return ticketNumber;
@@ -1466,7 +1489,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
-            child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 34),
+            child:
+                const Icon(Icons.bolt_rounded, color: Colors.white, size: 34),
           ),
         ),
         const SizedBox(height: 20),
@@ -1503,7 +1527,8 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(height: 10),
         _buildSocialButton(
-          icon: const FaIcon(FontAwesomeIcons.facebookF, size: 18, color: Color(0xFF1877F2)),
+          icon: const FaIcon(FontAwesomeIcons.facebookF,
+              size: 18, color: Color(0xFF1877F2)),
           label: 'Continuer avec Facebook',
           onTap: () async => _onFacebookSignIn(),
           colorScheme: colorScheme,
@@ -1522,7 +1547,9 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 20),
         Row(
           children: [
-            Expanded(child: Divider(color: const Color(0xFF9CA3AF).withOpacity(0.40))),
+            Expanded(
+                child:
+                    Divider(color: const Color(0xFF9CA3AF).withOpacity(0.40))),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
@@ -1535,7 +1562,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            Expanded(child: Divider(color: const Color(0xFF9CA3AF).withOpacity(0.40))),
+            Expanded(
+                child:
+                    Divider(color: const Color(0xFF9CA3AF).withOpacity(0.40))),
           ],
         ),
         const SizedBox(height: 20),
@@ -1635,7 +1664,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       : _authMode == AuthMode.login
                           ? 'Se connecter'
                           : 'Créer mon compte',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
                 ),
               ),
               if (_authMode == AuthMode.login) ...[
@@ -1664,11 +1694,14 @@ class _ProfilePageState extends State<ProfilePage> {
         Center(
           child: GestureDetector(
             onTap: () => setState(() {
-              _authMode = _authMode == AuthMode.login ? AuthMode.signup : AuthMode.login;
+              _authMode = _authMode == AuthMode.login
+                  ? AuthMode.signup
+                  : AuthMode.login;
             }),
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(fontSize: 14, color: kIliPrestoTextMuted),
+                style:
+                    const TextStyle(fontSize: 14, color: kIliPrestoTextMuted),
                 children: [
                   TextSpan(
                     text: _authMode == AuthMode.login
@@ -1676,7 +1709,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         : 'Déjà un compte ? ',
                   ),
                   TextSpan(
-                    text: _authMode == AuthMode.login ? 'S\'inscrire' : 'Se connecter',
+                    text: _authMode == AuthMode.login
+                        ? 'S\'inscrire'
+                        : 'Se connecter',
                     style: const TextStyle(
                       color: kIliPrestoBlue,
                       fontWeight: FontWeight.w700,

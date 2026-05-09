@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
 import '../constants.dart';
+import '../services/user_profile_bootstrap_service.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBeige = Color(0xFFFCEEE2);
@@ -47,6 +48,11 @@ class _ProProfilePageState extends State<ProProfilePage> {
     }
 
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       final snap = await FirebaseFirestore.instance
           .collection('pros')
           .doc(user.uid)
@@ -115,6 +121,11 @@ class _ProProfilePageState extends State<ProProfilePage> {
     }
 
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       final db = FirebaseFirestore.instance;
 
       final usersRef = db.collection('users').doc(user.uid);
@@ -161,12 +172,14 @@ class _ProProfilePageState extends State<ProProfilePage> {
         proRef,
         {
           ...profileData,
-          'status': 'pending',
-          'plan': 'free_pro_trial',
           'termsAccepted': _acceptTerms,
           'termsAcceptedAt': now,
           'updatedAt': now,
-          if (isCreate) 'createdAt': now,
+          if (isCreate) ...{
+            'status': 'pending',
+            'plan': 'free_pro_trial',
+            'createdAt': now,
+          },
         },
         SetOptions(merge: true),
       );
@@ -181,7 +194,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
 
     if (!mounted) return;
     showSuccessSnackBar(
-      context, "Profil Pro enregistré ✅ (options avancées bientôt)");
+        context, "Profil Pro enregistré ✅ (options avancées bientôt)");
     Navigator.pop(context);
   }
 
