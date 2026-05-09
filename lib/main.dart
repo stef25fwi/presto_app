@@ -1137,10 +1137,31 @@ void _showSignupDialog(BuildContext context) {
                       content: Text('Compte créé. Vérifiez votre e-mail. ✅')),
                 );
               }
+            } on FirebaseAuthException catch (e) {
+              if (!context.mounted) return;
+              final message = switch (e.code) {
+                'invalid-email' => 'Adresse e-mail invalide.',
+                'email-already-in-use' =>
+                  'Un compte existe déjà avec cet e-mail.',
+                'weak-password' =>
+                  'Mot de passe trop faible (minimum 6 caractères).',
+                'operation-not-allowed' =>
+                  'Inscription par e-mail non activée dans Firebase Authentication.',
+                'too-many-requests' =>
+                  'Trop de tentatives. Réessayez dans quelques minutes.',
+                'network-request-failed' =>
+                  'Erreur réseau. Vérifiez votre connexion internet.',
+                _ => e.message ?? "Erreur lors de la création du compte.",
+              };
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message)),
+              );
             } catch (e) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Erreur: $e')),
+                  const SnackBar(
+                      content: Text(
+                          'Création du compte impossible. Réessayez plus tard.')),
                 );
               }
             }
