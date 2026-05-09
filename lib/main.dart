@@ -26,6 +26,8 @@ import 'pages/messages/messages_page_v2.dart';
 import 'pages/home_page.dart';
 import 'pages/account_page.dart';
 import 'pages/publish_offer_page.dart';
+import 'pages/admin_space_page.dart';
+import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'services/city_search.dart';
 import 'services/email_action_service.dart';
 import 'services/app_route_parser.dart';
@@ -913,6 +915,13 @@ class _PrestoAppState extends State<PrestoApp> {
       );
     }
 
+    if (target.userId != null && target.routeName == '/profile') {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => UserPublicProfilePage(userId: target.userId!),
+      );
+    }
+
     if (target.routeName == AppDeepLinkTarget.messagesRouteName ||
         target.routeName == AppDeepLinkTarget.messagesV2RouteName) {
       return MaterialPageRoute(
@@ -953,6 +962,7 @@ class _PrestoAppState extends State<PrestoApp> {
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),
         '/account': (_) => const AccountPage(),
+        '/admin': (_) => const AdminSpacePage(),
         '/page-catalog': (_) => const PageCaptureCatalogPage(),
         /*
         '/auth': (context) => PrestoPremiumAuthPage(
