@@ -1,18 +1,28 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../services/firebase_functions_region.dart';
+import '../../services/marketplace_human_verification.dart';
 
 class ChatRepository {
-  ChatRepository({FirebaseFunctions? functions})
-      : _functions = functions ?? prestoFirebaseFunctions;
+  ChatRepository({
+    FirebaseFunctions? functions,
+    MarketplaceHumanVerification? verification,
+  })  : _functions = functions ?? prestoFirebaseFunctions,
+        _verification = verification ?? const MarketplaceHumanVerification();
 
   final FirebaseFunctions _functions;
+  final MarketplaceHumanVerification _verification;
 
   Future<String> createThreadFromListing({
     required String listingId,
     required String firstMessage,
-    required String recaptchaToken,
+    String? recaptchaToken,
   }) async {
+    final token = (recaptchaToken ?? '').trim().isNotEmpty
+        ? recaptchaToken!.trim()
+        : await _verification.obtainToken(
+            MarketplaceHumanVerificationAction.chatFirstMessage,
+          );
     final callable = _functions.httpsCallable(
       'createChatThreadFromListing',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
@@ -20,10 +30,11 @@ class ChatRepository {
     final response = await callable.call(<String, dynamic>{
       'listingId': listingId,
       'message': firstMessage,
-      'recaptchaToken': recaptchaToken,
+      'recaptchaToken': token,
     });
     final data = Map<String, dynamic>.from(
-      (response.data as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
+      (response.data as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{},
     );
     return (data['threadId'] ?? '').toString().trim();
   }

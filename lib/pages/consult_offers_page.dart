@@ -29,6 +29,7 @@ import '../pages/offers/offer_details_page.dart';
 import '../services/app_route_parser.dart';
 import '../services/conversation_service.dart';
 import '../services/city_search.dart';
+import '../services/conversation_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
@@ -37,6 +38,7 @@ import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
 import '../widgets/home_interactions.dart';
+import 'messages/messages_page_v2.dart';
 
 class ConsultOffersPage extends StatefulWidget {
   final String? categoryFilter;
@@ -3338,11 +3340,14 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     );
 
     if (!context.mounted) return;
-    final targetRoute = buildMessagesRoute(
-      conversationId: conversationId,
-      initialDraftText: initialDraftText,
+    navigator.push(
+      MaterialPageRoute(
+        builder: (_) => MessagesPageV2(
+          initialConversationId: conversationId,
+          initialDraftText: initialDraftText,
+        ),
+      ),
     );
-    navigator.pushNamed(targetRoute);
   }
 
   @override
