@@ -29,7 +29,6 @@ import '../pages/offers/offer_details_page.dart';
 import '../services/app_route_parser.dart';
 import '../services/conversation_service.dart';
 import '../services/city_search.dart';
-import '../services/conversation_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
@@ -3155,6 +3154,15 @@ class UserPublicProfilePage extends StatefulWidget {
 }
 
 class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
+  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _activeOffersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeOffersFuture = _loadActiveOffers();
+  }
+
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadActiveOffers() async {
     // Charger depuis la collection listings (marketplace) et offers (legacy)
@@ -3244,7 +3252,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     // none, the conversation cannot be created and we surface a clear error.
     List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
     try {
-      offers = await _loadActiveOffers();
+      offers = await _activeOffersFuture;
     } catch (error, stackTrace) {
       logRuntimeAction(
         area: 'messaging',
@@ -3291,7 +3299,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
         ? user.displayName!.trim()
         : (user.email ?? 'Utilisateur');
     final initialDraftText =
-        'Bonjour ${otherUserPseudo}, je vous contacte au sujet de votre annonce "$offerTitle".';
+        'Bonjour $otherUserPseudo, je vous contacte au sujet de votre annonce "$offerTitle".';
 
     String conversationId;
     try {
@@ -3373,20 +3381,13 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
           children: [
-            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(widget.userId)
-                  .snapshots()
-                  .map((snap) {
-                PrestoMonitoring.I.trackOtherStream(
-                  key: 'userProfile.userDoc',
-                  docsCount: snap.exists ? 1 : 0,
-                );
-                return snap;
-              }),
+            FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+              future: _activeOffersFuture,
               builder: (context, snap) {
-                final pseudo = _extractUserPseudo(snap.data?.data());
+                final publicProfileData = (snap.data?.isNotEmpty ?? false)
+                    ? snap.data!.first.data()
+                    : null;
+                final pseudo = _extractUserPseudo(publicProfileData);
                 return CardShell(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -3462,7 +3463,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                   const SizedBox(height: 12),
                   FutureBuilder<
                       List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-                    future: _loadActiveOffers(),
+                    future: _activeOffersFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(

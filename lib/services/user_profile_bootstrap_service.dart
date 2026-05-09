@@ -1,28 +1,82 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class UserProfileBootstrapService {
   UserProfileBootstrapService._();
 
+  static Future<User?> prepareProfileFirestoreAccess({
+    User? user,
+    bool forceRefreshToken = false,
+    bool forceRefreshAppCheckToken = false,
+  }) async {
+    User? resolvedUser = user ?? FirebaseAuth.instance.currentUser;
+    if (resolvedUser == null) {
+      try {
+        resolvedUser = await FirebaseAuth.instance
+            .authStateChanges()
+            .where((candidate) => candidate != null)
+            .cast<User>()
+            .first
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {
+        resolvedUser = FirebaseAuth.instance.currentUser;
+      }
+    }
+
+    if (resolvedUser == null) {
+      return null;
+    }
+
+    try {
+      await resolvedUser
+          .getIdToken(forceRefreshToken)
+          .timeout(const Duration(seconds: 8));
+    } catch (error) {
+      debugPrint('[ProfileFirestore] ID token refresh failed: $error');
+      rethrow;
+    }
+
+    try {
+      final appCheckToken = await FirebaseAppCheck.instance
+          .getToken(forceRefreshAppCheckToken)
+          .timeout(const Duration(seconds: 8));
+      if ((appCheckToken ?? '').trim().isEmpty) {
+        throw StateError('Jeton App Check absent pour Firestore profil.');
+      }
+    } catch (error) {
+      debugPrint('[ProfileFirestore] App Check token refresh failed: $error');
+      rethrow;
+    }
+
+    return FirebaseAuth.instance.currentUser ?? resolvedUser;
+  }
+
   static Future<void> ensureUserDocument({
     required User user,
     required String authMethod,
     bool isNewUserHint = false,
   }) async {
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final email = user.email?.trim().toLowerCase() ?? '';
-    final displayName = user.displayName?.trim() ?? '';
-
     // Reload to get fresh emailVerified state.
     try {
       await user.reload();
     } catch (_) {
       // Best effort — offline or token expired.
     }
-    final freshUser = FirebaseAuth.instance.currentUser ?? user;
+    final freshUser = await prepareProfileFirestoreAccess(
+          user: FirebaseAuth.instance.currentUser ?? user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        ) ??
+        FirebaseAuth.instance.currentUser ??
+        user;
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(freshUser.uid);
+    final email = freshUser.email?.trim().toLowerCase() ?? '';
+    final displayName = freshUser.displayName?.trim() ?? '';
 
     final commonData = <String, dynamic>{
       'uid': freshUser.uid,
