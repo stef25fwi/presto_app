@@ -197,18 +197,15 @@ List<Query<Map<String, dynamic>>> buildLatestPublicListingsQueryVariants({
 }) {
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kListingsCollection);
+  // The composite index for (status, visibility, createdAt desc) is deployed
+  // (see firestore.indexes.json), so we rely on the ordered query alone.
+  // Running a second non-ordered fallback in parallel doubled the network cost
+  // without benefit and slowed the home screen first paint.
   return <Query<Map<String, dynamic>>>[
     col
         .where('status', isEqualTo: 'active')
         .where('visibility', isEqualTo: 'public')
         .orderBy('createdAt', descending: true)
-        .limit(limit),
-    // Secours strictement public si l'index orderBy(createdAt) n'est pas encore
-    // disponible ou si Firestore rejette la forme de requête. Le tri reste fait
-    // côté client par les écrans consommateurs.
-    col
-        .where('status', isEqualTo: 'active')
-        .where('visibility', isEqualTo: 'public')
         .limit(limit),
   ];
 }
