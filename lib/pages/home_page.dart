@@ -152,6 +152,7 @@ class _HomePageState extends State<HomePage>
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _latestOffers = const [];
   bool _isLatestOffersLoading = true;
   Object? _latestOffersError;
+  DateTime? _lastLatestOffersLoadedAt;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -395,7 +396,13 @@ class _HomePageState extends State<HomePage>
       case AppLifecycleState.resumed:
         // ✅ App reprend → online
         _touchPresence(status: 'online');
-        unawaited(_refreshLatestOffers());
+        // Refetch only if the cached list is stale (>5 min) to avoid unnecessary
+        // network round-trips when the user toggles between apps.
+        final last = _lastLatestOffersLoadedAt;
+        if (last == null ||
+            DateTime.now().difference(last) > const Duration(minutes: 5)) {
+          unawaited(_refreshLatestOffers());
+        }
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -419,7 +426,10 @@ class _HomePageState extends State<HomePage>
 
     Future<void> loadKeywords() async {
       try {
-        final snapshot = await _recentOffersQuery().get();
+        // 60 docs is enough to populate the keyword chips; 200 was wasteful and
+        // delayed the home render because it ran in parallel with the main
+        // offers query.
+        final snapshot = await _recentOffersQuery(limit: 60).get();
         final words = <String>{};
         for (final doc in snapshot.docs) {
           final data = doc.data();
@@ -451,7 +461,12 @@ class _HomePageState extends State<HomePage>
     }
 
     _dynamicKeywordsSubscription = null;
-    unawaited(loadKeywords());
+    // Defer the keyword pre-fetch so the home offers query owns the network
+    // priority for the first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(loadKeywords());
+    });
   }
 
   @override
@@ -515,17 +530,20 @@ class _HomePageState extends State<HomePage>
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
     try {
+      // Fetch a small over-pool (16) to absorb post-filter losses while keeping
+      // the network payload tight. The query is already orderBy(createdAt desc),
+      // so client-side sorting is unnecessary.
       final loaders =
           <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
         loadMergedPublicOfferQueryVariants(
-          queries: buildLatestPublicListingsQueryVariants(limit: 24),
+          queries: buildLatestPublicListingsQueryVariants(limit: 16),
           source: 'home_latest_offers_listings',
         ),
       ];
       if (kEnableLegacyPublicOffersBackfill) {
         loaders.add(
           loadMergedPublicOfferQueryVariants(
-            queries: buildLatestPublicOffersQueryVariants(limit: 24),
+            queries: buildLatestPublicOffersQueryVariants(limit: 16),
             source: 'home_latest_offers_legacy',
           ),
         );
@@ -543,15 +561,9 @@ class _HomePageState extends State<HomePage>
               preferModernListingContract: true,
             ),
           )
-          .toList();
-      merged.sort((a, b) {
-        final aTs = a.data()['createdAt'];
-        final bTs = b.data()['createdAt'];
-        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-        return bMs.compareTo(aMs);
-      });
-      return merged.take(8).toList(growable: false);
+          .take(8)
+          .toList(growable: false);
+      return merged;
     } catch (error, stackTrace) {
       logPublicOffersReadErrorWithAppCheck(
         'home_latest_offers',
@@ -575,6 +587,7 @@ class _HomePageState extends State<HomePage>
         _latestOffers = docs;
         _isLatestOffersLoading = false;
         _latestOffersError = null;
+        _lastLatestOffersLoadedAt = DateTime.now();
       });
     } catch (error, stackTrace) {
       logPublicOffersReadErrorWithAppCheck(

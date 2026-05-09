@@ -2163,6 +2163,32 @@ class _AccountPageState extends State<AccountPage> {
               ],
             );
           }
+          // The server callable failed (network, unauthenticated, function not
+          // deployed in the expected region…) but the local token or Firestore
+          // profile says the user has admin role. Show a retry card with the
+          // diagnosis instead of silently hiding the entry — that way the
+          // admin can still trigger a reload or a sign-out / sign-in.
+          if (accessState.serverCheckAttempted &&
+              !accessState.serverCheckSucceeded &&
+              accessState.hasLocalAdminEvidence) {
+            final retryCard = _buildAdminLoadRetryCard(
+              user: user,
+              title: 'Vérification admin temporairement indisponible',
+              message:
+                  'Tes droits admin sont reconnus localement mais la vérification serveur a échoué. Réessaie ou reconnecte-toi.',
+              detail: accessState.serverErrorMessage ??
+                  accessState.serverErrorCode ??
+                  'Erreur inconnue côté serveur.',
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                retryCard,
+                if (_shouldShowAdminDebugCard(user, state: accessState))
+                  _buildAdminDebugCard(user, state: accessState),
+              ],
+            );
+          }
           if (_shouldShowAdminDebugCard(user, state: accessState)) {
             return _buildAdminDebugCard(user, state: accessState);
           }

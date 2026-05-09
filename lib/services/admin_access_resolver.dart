@@ -301,6 +301,15 @@ class AdminAccessResolver {
         'superadmin': normalizedRoles.contains('superadmin'),
         'lastRoleSyncAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      // Force a token refresh so the next callable invocation surfaces the
+      // freshly-written profile to the server (otherwise the callable may
+      // still rely on a token issued before the sync, returning isAdmin=false).
+      try {
+        await user.getIdToken(true);
+      } catch (refreshError) {
+        debugPrint(
+            '[AdminResolver] sync: token refresh after profile sync failed: $refreshError');
+      }
       debugPrint('[AdminResolver] sync: profile updated from token claims');
       return _step(
         (state ?? AdminAccessState.initial()).copyWith(
