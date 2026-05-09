@@ -1488,14 +1488,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         rawBudgetType == 'a_negocier' ||
         rawBudgetType == 'à négocier';
 
+    // The user-edited flags only block auto-fill when the field still holds
+    // user input. If the field is empty (user typed then cleared, or never
+    // typed), we still apply the AI suggestion — otherwise the IA button
+    // appears broken because it never updates anything.
+    bool canFillController(
+      TextEditingController controller,
+      bool editedFlag,
+    ) {
+      return controller.text.trim().isEmpty || !editedFlag;
+    }
+
     setState(() {
-      if (!_titleEditedByUser && title.isNotEmpty) {
+      if (canFillController(_titleController, _titleEditedByUser) &&
+          title.isNotEmpty) {
         _setControllerText(_titleController, title);
       }
-      if (!_descriptionEditedByUser && description.isNotEmpty) {
+      if (canFillController(_descriptionController, _descriptionEditedByUser) &&
+          description.isNotEmpty) {
         _setControllerText(_descriptionController, description);
       }
-      if (!_categoryEditedByUser && category != null && category.isNotEmpty) {
+      final hasNoCategory = (_category ?? '').trim().isEmpty;
+      if ((hasNoCategory || !_categoryEditedByUser) &&
+          category != null &&
+          category.isNotEmpty) {
         _category = category;
         _selectedSubCategory = null;
         // Apply AI-detected sub-category if valid for the resolved category
@@ -1508,11 +1524,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           }
         }
       }
-      if (!_delayEditedByUser && missionDelay != null) {
+      if ((_missionDelay == null || !_delayEditedByUser) &&
+          missionDelay != null) {
         _missionDelay = missionDelay;
         _isUrgent = missionDelay == 'Urgent';
       }
-      if (!_budgetEditedByUser) {
+      if (canFillController(_budgetController, _budgetEditedByUser)) {
         if (inferredBudget != null) {
           _budgetType = 'Fixe';
           final formattedBudget = inferredBudget % 1 == 0
@@ -1710,11 +1727,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final t = transcript.trim();
     if (t.isEmpty) return;
 
-    if (!_descriptionEditedByUser) {
+    bool canFillController(
+      TextEditingController controller,
+      bool editedFlag,
+    ) {
+      return controller.text.trim().isEmpty || !editedFlag;
+    }
+
+    if (canFillController(_descriptionController, _descriptionEditedByUser)) {
       _setControllerText(_descriptionController, t);
     }
 
-    if (!_titleEditedByUser) {
+    if (canFillController(_titleController, _titleEditedByUser)) {
       final firstLine = t.split('\n').first.trim();
       final firstSentence = firstLine.split(RegExp(r'[.!?]')).first.trim();
       final candidate = (firstSentence.isNotEmpty ? firstSentence : firstLine);
@@ -1727,7 +1751,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     }
 
-    if (!_postalCodeEditedByUser) {
+    if (canFillController(_postalCodeController, _postalCodeEditedByUser)) {
       final cp = _extractPostalCodeFromTranscript(t);
       if (cp != null && cp.isNotEmpty) {
         _setControllerText(_postalCodeController, cp);
@@ -1738,12 +1762,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ? null
         : _postalCodeController.text.trim();
 
-    if (!_locationEditedByUser) {
+    if (canFillController(_locationController, _locationEditedByUser)) {
       final cityRec = _extractCityRecordFromTranscript(t, cp: effectiveCp);
       if (cityRec != null) {
         _setControllerText(_locationController, cityRec.name);
 
-        if (!_postalCodeEditedByUser &&
+        if (canFillController(_postalCodeController, _postalCodeEditedByUser) &&
             _postalCodeController.text.trim().isEmpty &&
             cityRec.cp.isNotEmpty) {
           _setControllerText(_postalCodeController, cityRec.cp);
@@ -1760,14 +1784,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     final inferredMissionDelay = _extractMissionDelayFromTranscript(t);
-    if (!_delayEditedByUser && inferredMissionDelay != null) {
+    if ((_missionDelay == null || !_delayEditedByUser) &&
+        inferredMissionDelay != null) {
       setState(() {
         _missionDelay = inferredMissionDelay;
         _isUrgent = inferredMissionDelay == 'Urgent';
       });
     }
 
-    if (!_budgetEditedByUser) {
+    if (canFillController(_budgetController, _budgetEditedByUser)) {
       if (_transcriptRequestsNegotiatedBudget(t)) {
         setState(() {
           _budgetType = 'À négocier';
@@ -3122,12 +3147,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
 
       if (draft['success'] == true) {
+        // Snapshot the controllers before applying so we can detect whether
+        // anything actually changed — otherwise the user-edit guards may have
+        // silently skipped every field, leaving them with no visible result.
+        final beforeSnapshot = <String, String>{
+          'title': _titleController.text,
+          'description': _descriptionController.text,
+          'location': _locationController.text,
+          'postal': _postalCodeController.text,
+          'budget': _budgetController.text,
+        };
+        final beforeCategory = _category;
+
         _applyDraftToForm(draft);
         _applyKeywordCategoryPairFromText(input);
 
+        final didChange = beforeSnapshot['title'] != _titleController.text ||
+            beforeSnapshot['description'] != _descriptionController.text ||
+            beforeSnapshot['location'] != _locationController.text ||
+            beforeSnapshot['postal'] != _postalCodeController.text ||
+            beforeSnapshot['budget'] != _budgetController.text ||
+            beforeCategory != _category;
+
         showSuccessSnackBar(
           context,
-          '✨ Analyse IA complétée\nChamps remplis automatiquement',
+          didChange
+              ? '✨ Analyse IA complétée\nChamps remplis automatiquement'
+              : '✨ Analyse IA complétée — aucun nouveau champ à remplir',
         );
         return;
       }
