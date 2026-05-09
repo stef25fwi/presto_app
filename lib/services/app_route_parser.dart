@@ -6,6 +6,7 @@ class AppDeepLinkTarget {
   final String? conversationId;
   final String? initialDraftText;
   final String? offerId;
+  final String? userId;
   final bool preferMarketplace;
 
   const AppDeepLinkTarget._({
@@ -13,8 +14,15 @@ class AppDeepLinkTarget {
     this.conversationId,
     this.initialDraftText,
     this.offerId,
+    this.userId,
     this.preferMarketplace = false,
   });
+
+  const AppDeepLinkTarget.profile(String userId)
+      : this._(
+          routeName: '/profile',
+          userId: userId,
+        );
 
   const AppDeepLinkTarget.messages({String? initialDraftText})
       : this._(
@@ -184,6 +192,14 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       segments.first == 'listings' &&
       segments[1].isNotEmpty) {
     return AppDeepLinkTarget.listingDetail(
+      Uri.decodeComponent(segments[1]),
+    );
+  }
+
+  if (segments.length == 2 &&
+      (segments.first == 'profile' || segments.first == 'profil') &&
+      segments[1].isNotEmpty) {
+    return AppDeepLinkTarget.profile(
       Uri.decodeComponent(segments[1]),
     );
   }

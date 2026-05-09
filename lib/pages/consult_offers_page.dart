@@ -27,6 +27,7 @@ import 'home_page.dart' show UnreadInboxBell;
 import 'account_page.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/app_route_parser.dart';
+import '../services/conversation_service.dart';
 import '../services/city_search.dart';
 import '../services/conversation_service.dart';
 import '../services/firebase_functions_region.dart';
@@ -3216,11 +3217,12 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   }
 
   Future<void> _contactUser(BuildContext context) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final navigator = Navigator.of(context);
     final user = FirebaseAuth.instance.currentUser;
-    final bool isLoggedIn = user != null;
 
-    if (!isLoggedIn) {
-      Navigator.of(context).push(
+    if (user == null) {
+      navigator.push(
         MaterialPageRoute(
           builder: (_) => const AccountPage(),
         ),
@@ -3228,57 +3230,124 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       return;
     }
 
-    if (!context.mounted) return;
-
-    final currentUserId = user.uid.trim();
-    if (currentUserId == widget.userId.trim()) {
-      showSuccessSnackBar(
-        context,
-        'Ceci est votre profil.',
+    if (user.uid == widget.userId) {
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Vous ne pouvez pas vous envoyer un message.'),
+        ),
       );
       return;
     }
 
+    // The profile page has no offer context, so we anchor the conversation on
+    // the most recent active offer published by this advertiser. If they have
+    // none, the conversation cannot be created and we surface a clear error.
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
     try {
-      final docs = await _loadActiveOffers();
-      if (!context.mounted) return;
-      if (docs.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aucune annonce active à contacter pour ce profil.'),
-          ),
-        );
-        return;
-      }
-
-      final firstOffer = docs.first;
-      final data = firstOffer.data();
-      final title = (data['title'] ?? 'Annonce IliPresto').toString().trim();
-      final conversationId = await ConversationService.ensureConversation(
-        offerId: firstOffer.id,
-        offerTitle: title.isEmpty ? 'Annonce IliPresto' : title,
-        currentUserId: currentUserId,
-        otherUserId: widget.userId.trim(),
-        currentUserName: user.displayName,
-        otherUserName: widget.initialPseudo,
+      offers = await _loadActiveOffers();
+    } catch (error, stackTrace) {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'contact-user-load-offers-failed',
+        details: <String, Object?>{
+          'targetUid': widget.userId,
+          'error': error.toString(),
+        },
       );
-
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'consult_offers contactUser load offers failed',
+      );
       if (!context.mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => MessagesPageV2(
-            initialConversationId: conversationId,
-            initialDraftText:
-                'Bonjour, je vous contacte au sujet de votre annonce.',
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Impossible de charger les annonces de cet annonceur.'),
+        ),
+      );
+      return;
+    }
+
+    if (offers.isEmpty) {
+      if (!context.mounted) return;
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Cet annonceur n'a pas d'annonce active à laquelle rattacher la conversation.",
           ),
         ),
       );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible d’ouvrir la conversation : $error')),
-      );
+      return;
     }
+
+    final anchorDoc = offers.first;
+    final anchorData = anchorDoc.data();
+    final offerTitle =
+        (anchorData['title'] ?? anchorData['titre'] ?? '').toString().trim();
+    final offerId = anchorDoc.id;
+
+    final otherUserPseudo = _extractUserPseudo(anchorData);
+    final currentUserName = user.displayName?.trim().isNotEmpty == true
+        ? user.displayName!.trim()
+        : (user.email ?? 'Utilisateur');
+    final initialDraftText =
+        'Bonjour ${otherUserPseudo}, je vous contacte au sujet de votre annonce "$offerTitle".';
+
+    String conversationId;
+    try {
+      conversationId = await ConversationService.ensureConversation(
+        offerId: offerId,
+        offerTitle: offerTitle,
+        currentUserId: user.uid,
+        otherUserId: widget.userId,
+        currentUserName: currentUserName,
+        otherUserName: otherUserPseudo,
+      );
+    } catch (error, stackTrace) {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'contact-user-ensure-conversation-failed',
+        details: <String, Object?>{
+          'targetUid': widget.userId,
+          'offerId': offerId,
+          'error': error.toString(),
+        },
+      );
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'consult_offers contactUser ensureConversation failed',
+      );
+      if (!context.mounted) return;
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Impossible de démarrer la conversation : ${error.toString()}',
+          ),
+        ),
+      );
+      return;
+    }
+
+    logRuntimeAction(
+      area: 'messaging',
+      action: 'contact-user-open-conversation',
+      details: <String, Object?>{
+        'targetUid': widget.userId,
+        'offerId': offerId,
+        'conversationId': conversationId,
+      },
+    );
+
+    if (!context.mounted) return;
+    navigator.push(
+      MaterialPageRoute(
+        builder: (_) => MessagesPageV2(
+          initialConversationId: conversationId,
+          initialDraftText: initialDraftText,
+        ),
+      ),
+    );
   }
 
   @override
