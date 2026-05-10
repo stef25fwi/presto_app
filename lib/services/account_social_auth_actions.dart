@@ -22,9 +22,6 @@ typedef AccountTrackLoginCallback = Future<void> Function({
 });
 
 class AccountSocialAuthActions {
-  static const String _profileSyncWarningMessage =
-      'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
-
   static Future<void> signInWithGoogle({
     required BuildContext context,
     required FirebaseAuth auth,
@@ -151,7 +148,7 @@ class AccountSocialAuthActions {
       }
 
       final user = auth.currentUser;
-      bool bootstrapFailed = false;
+      Object? bootstrapFailure;
       if (user == null) {
         if (!context.mounted) return;
         showErrorSnackBar(context, 'Connexion Google incomplete. Reessayez.');
@@ -164,7 +161,7 @@ class AccountSocialAuthActions {
           isNewUserHint: isNewUser,
         );
       } catch (bootstrapError) {
-        bootstrapFailed = true;
+        bootstrapFailure = bootstrapError;
         googleAuthService.logError('AuthBootstrap', bootstrapError);
       }
       try {
@@ -175,8 +172,13 @@ class AccountSocialAuthActions {
 
       if (!context.mounted) return;
       googleAuthService.logSuccess('signInWithGoogle', user.email);
-      if (bootstrapFailed) {
-        showErrorSnackBar(context, _profileSyncWarningMessage);
+      if (bootstrapFailure != null) {
+        showErrorSnackBar(
+          context,
+          UserProfileBootstrapService.userFacingProfileSyncMessage(
+            bootstrapFailure,
+          ),
+        );
       } else {
         showSuccessSnackBar(context, '✓ Connecté avec Google');
       }
@@ -336,7 +338,7 @@ class AccountSocialAuthActions {
       }
 
       final user = auth.currentUser;
-      bool bootstrapFailed = false;
+      Object? bootstrapFailure;
       if (user != null) {
         try {
           await UserProfileBootstrapService.ensureUserDocument(
@@ -345,15 +347,20 @@ class AccountSocialAuthActions {
             isNewUserHint: isNewUser,
           );
         } catch (bootstrapError) {
-          bootstrapFailed = true;
+          bootstrapFailure = bootstrapError;
           debugPrint('[Apple Sign-In] Auth bootstrap error: $bootstrapError');
         }
       }
       await trackLogin(authMethod: 'apple', isNewUser: isNewUser);
 
       if (!context.mounted) return;
-      if (bootstrapFailed) {
-        showErrorSnackBar(context, _profileSyncWarningMessage);
+      if (bootstrapFailure != null) {
+        showErrorSnackBar(
+          context,
+          UserProfileBootstrapService.userFacingProfileSyncMessage(
+            bootstrapFailure,
+          ),
+        );
       } else {
         showSuccessSnackBar(context, 'Connecte avec Apple ✓');
       }
@@ -369,10 +376,12 @@ class AccountSocialAuthActions {
           msg = 'Connexion Apple annulée.';
           break;
         case AuthorizationErrorCode.credentialExport:
-          msg = 'Export des identifiants Apple non pris en charge sur cet appareil.';
+          msg =
+              'Export des identifiants Apple non pris en charge sur cet appareil.';
           break;
         case AuthorizationErrorCode.credentialImport:
-          msg = 'Import des identifiants Apple non pris en charge sur cet appareil.';
+          msg =
+              'Import des identifiants Apple non pris en charge sur cet appareil.';
           break;
         case AuthorizationErrorCode.failed:
           msg = 'Échec de l\'authentification Apple. Réessaye.';
@@ -440,7 +449,7 @@ class AccountSocialAuthActions {
     required AccountTrackLoginCallback trackLogin,
   }) async {
     final user = auth.currentUser;
-    bool bootstrapFailed = false;
+    Object? bootstrapFailure;
 
     if (user == null) {
       if (!context.mounted) return;
@@ -458,8 +467,9 @@ class AccountSocialAuthActions {
         isNewUserHint: isNewUser,
       );
     } catch (bootstrapError) {
-      bootstrapFailed = true;
-      debugPrint('[$providerLabel Sign-In] Auth bootstrap error: $bootstrapError');
+      bootstrapFailure = bootstrapError;
+      debugPrint(
+          '[$providerLabel Sign-In] Auth bootstrap error: $bootstrapError');
     }
 
     try {
@@ -469,8 +479,13 @@ class AccountSocialAuthActions {
     }
 
     if (!context.mounted) return;
-    if (bootstrapFailed) {
-      showErrorSnackBar(context, _profileSyncWarningMessage);
+    if (bootstrapFailure != null) {
+      showErrorSnackBar(
+        context,
+        UserProfileBootstrapService.userFacingProfileSyncMessage(
+          bootstrapFailure,
+        ),
+      );
     } else {
       showSuccessSnackBar(context, '✓ Connecté avec $providerLabel');
     }
@@ -537,7 +552,8 @@ class AccountSocialAuthActions {
   }
 
   static String _generateNonce([int length = 32]) {
-    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
     return List<String>.generate(
       length,
