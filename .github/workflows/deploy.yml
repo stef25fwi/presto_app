@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
       
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -57,9 +62,11 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Deploy Firebase Hosting, Functions, Firestore and Storage
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
+          if [ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
+            echo "❌ GOOGLE_APPLICATION_CREDENTIALS est vide. Vérifie le secret GOOGLE_CREDENTIALS dans l'environnement recaptcha."
+            exit 1
+          fi
+
           firebase deploy --project presto-app-74abe \
-            --only hosting,functions,firestore:rules,firestore:indexes,storage \
-            --token "$FIREBASE_TOKEN"
+            --only hosting,functions,firestore:rules,firestore:indexes,storage
