@@ -28,7 +28,10 @@ jobs:
             exit 1
           fi
 
-          echo "$GOOGLE_CREDENTIALS_B64" | base64 -d > "$RUNNER_TEMP/google-credentials.json"
+          printf "%s" "$GOOGLE_CREDENTIALS_B64" \
+            | tr -d '\r\n[:space:]' \
+            | base64 -d > "$RUNNER_TEMP/google-credentials.json"
+
           python3 -m json.tool "$RUNNER_TEMP/google-credentials.json" >/dev/null
 
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/google-credentials.json" >> "$GITHUB_ENV"
