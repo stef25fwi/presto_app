@@ -20,9 +20,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+        env:
+          GOOGLE_CREDENTIALS_B64: ${{ secrets.GOOGLE_CREDENTIALS_B64 }}
+        run: |
+          if [ -z "$GOOGLE_CREDENTIALS_B64" ]; then
+            echo "❌ GOOGLE_CREDENTIALS_B64 est vide. Ajoute ce secret dans l'environnement GitHub recaptcha."
+            exit 1
+          fi
+
+          echo "$GOOGLE_CREDENTIALS_B64" | base64 -d > "$RUNNER_TEMP/google-credentials.json"
+          python3 -m json.tool "$RUNNER_TEMP/google-credentials.json" >/dev/null
+
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/google-credentials.json" >> "$GITHUB_ENV"
+          echo "✅ Google credentials JSON décodé et validé"
 
       
       - name: Setup Flutter
