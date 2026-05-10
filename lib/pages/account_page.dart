@@ -754,7 +754,7 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) {
         showErrorSnackBar(
           context,
-          'Impossible de synchroniser le profil. Vérifie ta connexion.',
+          UserProfileBootstrapService.userFacingProfileSyncMessage(error),
         );
       }
     }
@@ -921,7 +921,7 @@ class _AccountPageState extends State<AccountPage> {
           'google.com' => 'Google',
           _ => 'externe',
         };
-        var bootstrapFailed = false;
+        Object? bootstrapFailure;
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: result.user!,
@@ -929,7 +929,7 @@ class _AccountPageState extends State<AccountPage> {
             isNewUserHint: isNew,
           );
         } catch (bootstrapError) {
-          bootstrapFailed = true;
+          bootstrapFailure = bootstrapError;
           debugPrint('[OAuth Redirect] Bootstrap error: $bootstrapError');
         }
         try {
@@ -938,8 +938,13 @@ class _AccountPageState extends State<AccountPage> {
           debugPrint('[OAuth Redirect] Tracking error: $error');
         }
         if (!mounted) return;
-        if (bootstrapFailed) {
-          showErrorSnackBar(context, _profileSyncWarningMessage);
+        if (bootstrapFailure != null) {
+          showErrorSnackBar(
+            context,
+            UserProfileBootstrapService.userFacingProfileSyncMessage(
+              bootstrapFailure,
+            ),
+          );
         } else {
           showSuccessSnackBar(context, 'Connecté avec $providerLabel');
         }
