@@ -53,6 +53,7 @@ jobs:
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run \
             --dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY" \
             --dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$MARKETPLACE_RECAPTCHA_WEB_SITE_KEY"
+            --dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$MARKETPLACE_RECAPTCHA_WEB_SITE_KEY"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
