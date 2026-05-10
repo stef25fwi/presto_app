@@ -29,7 +29,7 @@ class MarketplaceHumanVerification {
     defaultValue: '',
   );
   static const String _webSiteKey = String.fromEnvironment(
-    'MARKETPLACE_RECAPTCHA_WEB_SITE_KEY',
+    'APPCHECK_RECAPTCHA_SITE_KEY',
     defaultValue: '',
   );
 
