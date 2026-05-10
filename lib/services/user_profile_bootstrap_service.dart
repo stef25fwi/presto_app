@@ -107,12 +107,7 @@ class UserProfileBootstrapService {
     required bool forceRefreshToken,
   }) async {
     if (kIsWeb && appCheckActivationAttempted && !appCheckActivationSucceeded) {
-      throw UserProfileBootstrapException(
-        'app-check-unavailable',
-        'App Check Web indisponible pour la synchronisation du profil.',
-        cause: appCheckActivationError,
-        stackTrace: appCheckActivationStackTrace,
-      );
+      await _retryWebAppCheckActivation();
     }
 
     final retryDelays = kIsWeb
@@ -149,6 +144,41 @@ class UserProfileBootstrapService {
     }
 
     throw _normalizeBootstrapError(lastError, lastStackTrace);
+  }
+
+  static Future<void> _retryWebAppCheckActivation() async {
+    final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+    if (siteKey.isEmpty) {
+      throw UserProfileBootstrapException(
+        'app-check-unavailable',
+        'App Check Web indisponible pour la synchronisation du profil.',
+        cause: appCheckActivationError ??
+            StateError('APPCHECK_RECAPTCHA_SITE_KEY absente.'),
+        stackTrace: appCheckActivationStackTrace,
+      );
+    }
+
+    try {
+      debugPrint('[ProfileFirestore] Retrying App Check web activation');
+      await FirebaseAppCheck.instance.activate(
+        webProvider: ReCaptchaEnterpriseProvider(siteKey),
+      );
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = true;
+      appCheckActivationError = null;
+      appCheckActivationStackTrace = null;
+    } catch (error, stackTrace) {
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = false;
+      appCheckActivationError = error;
+      appCheckActivationStackTrace = stackTrace;
+      throw UserProfileBootstrapException(
+        'app-check-unavailable',
+        'App Check Web indisponible pour la synchronisation du profil.',
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   static UserProfileBootstrapException _normalizeBootstrapError(
