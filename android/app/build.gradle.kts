@@ -1,3 +1,4 @@
+import java.util.Properties
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -37,7 +38,7 @@ android {
     // key.properties contient les chemins + mots de passe du keystore.
     // Fichier NON versionné (.gitignore).  Voir key.properties.example.
     val keystorePropertiesFile = rootProject.file("key.properties")
-    val keystoreProperties = java.util.Properties()
+    val keystoreProperties = Properties()
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(keystorePropertiesFile.inputStream())
     }
