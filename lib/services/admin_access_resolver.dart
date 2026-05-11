@@ -298,8 +298,9 @@ class AdminAccessResolver {
         tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
     final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
     debugPrint(
-      '[AdminResolver] sync: token claims indicate admin; client profile '
-      'write skipped (server-side trigger onUserRolesChanged owns the mirror).',
+      '[AdminResolver] sync: token claims indicate admin for uid=${user.uid}; '
+      'client profile write skipped (server-side trigger onUserRolesChanged '
+      'owns the mirror).',
     );
     return _step(
       (state ?? AdminAccessState.initial()).copyWith(
