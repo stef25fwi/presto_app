@@ -26,6 +26,7 @@ import '../config/app_check_state.dart';
 import '../config/env/openai_config.dart';
 import '../features/ai_draft/ai_draft_service.dart';
 import '../features/micro_ia/micro_ia_service.dart';
+import '../features/publish_ai/profile_readiness.dart';
 import '../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.js_interop) '../features/micro_ia/web_audio_recorder.dart';
 import '../models/admin_access_state.dart';
@@ -549,6 +550,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final AiDraftService _aiService = AiDraftService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
   final AdminAccessResolver _publishAdminAccessResolver = AdminAccessResolver();
+  final ProfileReadinessChecker _publishAiProfileReadiness =
+      ProfileReadinessChecker();
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
@@ -2699,6 +2702,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       return;
     }
+    // Profile completeness gate: the AI button only opens after the user
+    // has filled their display name + city + postal code. This avoids
+    // generating drafts that cannot pass Firestore rules at publish time
+    // (and gives a clear signal to incomplete accounts).
+    final readiness = await _publishAiProfileReadiness.check();
+    if (!readiness.isReady) {
+      _appendPublishAiTrace(
+        'profile_check',
+        'Profil non complet — accès IA bloqué (${readiness.missingFields.join(", ")})',
+        level: PublishAiTraceLevel.warning,
+      );
+      if (!mounted) return;
+      showErrorSnackBar(context, readiness.describe());
+      return;
+    }
     if (_adminAudioRuntimeAccessState == 0) {
       unawaited(_refreshAdminAudioRuntimeAccess());
     }
@@ -3180,6 +3198,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'Connexion requise avant analyse IA textuelle',
         level: PublishAiTraceLevel.warning,
       );
+      return;
+    }
+
+    final readiness = await _publishAiProfileReadiness.check();
+    if (!readiness.isReady) {
+      _appendPublishAiTrace(
+        'profile_check',
+        'Profil non complet — accès IA bloqué (${readiness.missingFields.join(", ")})',
+        level: PublishAiTraceLevel.warning,
+      );
+      if (!mounted) return;
+      showErrorSnackBar(context, readiness.describe());
       return;
     }
 
