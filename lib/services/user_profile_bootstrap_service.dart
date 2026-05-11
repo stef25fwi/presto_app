@@ -47,6 +47,33 @@ class UserProfileBootstrapService {
   static const String _profileSyncTimeoutWarningMessage =
       'Connecté, mais la synchronisation du profil a expiré. Réessaie dans quelques secondes.';
 
+  /// Per-uid memoization of the last successful bootstrap. Within
+  /// [_recentSuccessTtl] of a successful run we skip the redundant
+  /// `getIdToken(true)` + Firestore probe round-trip that otherwise gives a
+  /// scary "synchronisation a expiré" snackbar when the user simply
+  /// navigates back to the account page within a few seconds.
+  static final Map<String, DateTime> _lastSuccessByUid = <String, DateTime>{};
+  static const Duration _recentSuccessTtl = Duration(minutes: 5);
+
+  /// Returns true when [ensureUserDocument] is allowed to short-circuit:
+  /// same uid was successfully synchronised within [_recentSuccessTtl] and
+  /// the caller did not request a forced refresh.
+  static bool _hasRecentSuccess(String uid) {
+    final last = _lastSuccessByUid[uid];
+    if (last == null) return false;
+    return DateTime.now().difference(last) < _recentSuccessTtl;
+  }
+
+  static void _markSuccess(String uid) {
+    _lastSuccessByUid[uid] = DateTime.now();
+  }
+
+  /// Test helper — clears memoized success markers.
+  @visibleForTesting
+  static void resetBootstrapMemoForTests() {
+    _lastSuccessByUid.clear();
+  }
+
   static String userFacingProfileSyncMessage([Object? error]) {
     final normalizedError = _normalizeBootstrapError(error);
     if (normalizedError.isAppCheckFailure) {
@@ -82,9 +109,12 @@ class UserProfileBootstrapService {
     }
 
     try {
+      // 12 s tolerates a slow first refresh after sign-in without making the
+      // UI feel frozen. Aggressive 8 s timeouts were the root cause of the
+      // false-positive "synchronisation a expiré" snackbar.
       await resolvedUser
           .getIdToken(forceRefreshToken)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 12));
     } catch (error) {
       debugPrint('[ProfileFirestore] ID token refresh failed: $error');
       rethrow;
@@ -129,7 +159,7 @@ class UserProfileBootstrapService {
       try {
         final appCheckToken = await FirebaseAppCheck.instance
             .getToken(forceRefreshToken || attempt > 0)
-            .timeout(const Duration(seconds: 8));
+            .timeout(const Duration(seconds: 12));
         if ((appCheckToken ?? '').trim().isEmpty) {
           throw UserProfileBootstrapException(
             'app-check-token-missing',
@@ -221,7 +251,20 @@ class UserProfileBootstrapService {
     required User user,
     required String authMethod,
     bool isNewUserHint = false,
+    bool forceRefresh = false,
   }) async {
+    // Fast path: if the same uid was successfully synchronised within the
+    // memoization TTL and the caller didn't explicitly request a refresh,
+    // skip the round-trip. This avoids the false-positive timeout snackbar
+    // when AdminSpacePage / AccountPage rapidly re-mount and re-trigger
+    // ensureUserDocument while the previous run is still cached.
+    if (!forceRefresh && !isNewUserHint && _hasRecentSuccess(user.uid)) {
+      debugPrint(
+        '[AuthBootstrap] skip uid=${user.uid} reason=recent-success-within-ttl',
+      );
+      return;
+    }
+
     Object? lastError;
     for (var attempt = 0; attempt < _maxAttempts; attempt++) {
       try {
@@ -229,7 +272,12 @@ class UserProfileBootstrapService {
           user: user,
           authMethod: authMethod,
           isNewUserHint: isNewUserHint,
+          // Force the refresh on the first attempt only. Retries inherit
+          // the now-warm token and App Check cache — otherwise every retry
+          // pays another 8-16 s of forced refresh latency for no benefit.
+          forceRefreshTokens: attempt == 0,
         );
+        _markSuccess(user.uid);
         return;
       } on FirebaseException catch (error) {
         lastError = error;
@@ -286,6 +334,7 @@ class UserProfileBootstrapService {
     required User user,
     required String authMethod,
     required bool isNewUserHint,
+    bool forceRefreshTokens = true,
   }) async {
     // Reload to get fresh emailVerified state.
     try {
@@ -295,8 +344,8 @@ class UserProfileBootstrapService {
     }
     final freshUser = await prepareProfileFirestoreAccess(
           user: FirebaseAuth.instance.currentUser ?? user,
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: true,
+          forceRefreshToken: forceRefreshTokens,
+          forceRefreshAppCheckToken: forceRefreshTokens,
         ) ??
         FirebaseAuth.instance.currentUser ??
         user;
