@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
@@ -141,19 +140,18 @@ class PublishAiPipeline {
     try {
       if (kIsWeb) {
         final blob = await _webRecorder.stopToBlob();
-        final upload =
-            await webBlobToMicroIaUpload(blob, preferRawBytes: true);
+        final upload = await webBlobToMicroIaUpload(blob, preferRawBytes: true);
         if (upload.bytes.isEmpty) {
           throw const PublishAiPipelineException(
             code: 'audio_empty',
             message: "Audio invalide (fichier vide). Réessaie.",
           );
         }
-        if (upload.usedClientSideWavConversion &&
-            upload.bytes.length < 30000) {
+        if (upload.usedClientSideWavConversion && upload.bytes.length < 30000) {
           throw const PublishAiPipelineException(
             code: 'audio_too_short',
-            message: "L'enregistrement est trop court. Réessaie plus longtemps.",
+            message:
+                "L'enregistrement est trop court. Réessaie plus longtemps.",
           );
         }
         audioBytes = upload.bytes;
@@ -235,9 +233,8 @@ class PublishAiPipeline {
         return;
       }
       final draftRaw = response['draft'];
-      final draft = draftRaw is Map
-          ? Map<String, dynamic>.from(draftRaw)
-          : null;
+      final draft =
+          draftRaw is Map ? Map<String, dynamic>.from(draftRaw) : null;
       final modeUsed = (response['modeUsed'] ?? '').toString();
       _emit(PublishAiResult(
         transcript: transcript,
