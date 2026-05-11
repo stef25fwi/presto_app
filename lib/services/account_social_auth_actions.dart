@@ -101,16 +101,18 @@ class AccountSocialAuthActions {
           }
 
           if (googleAuthService.shouldFallbackToRedirect(popupError)) {
-            // Si App Check a échoué à l'init, le redirect échouera aussi
-            // (même token invalide côté serveur) → on ne boucle pas.
+            // Previously we refused the redirect when App Check activation had
+            // failed (to avoid a guaranteed server rejection). That guard
+            // permanently locked out any user whose browser blocked
+            // grecaptcha / reCAPTCHA Enterprise (incognito, ad-blockers,
+            // strict CSP). We now always attempt the redirect: if App Check
+            // is genuinely broken, Firebase will surface a real error to the
+            // user, which is more actionable than a preemptive refusal.
             if (appCheckActivationAttempted && !appCheckActivationSucceeded) {
-              if (!context.mounted) return;
-              showErrorSnackBar(
-                context,
-                '🔒 Sécurité de l\'application non validée. '
-                'Actualise la page et réessaie.',
+              debugPrint(
+                '[GoogleSignIn] redirect attempted despite App Check '
+                'activation failure (popup blocked).',
               );
-              return;
             }
             try {
               googleAuthService.logFallback(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,10 +8,81 @@ import 'package:flutter/foundation.dart';
 class UserProfileBootstrapService {
   UserProfileBootstrapService._();
 
+  static const int _maxAttempts = 3;
+  static const Duration _baseBackoff = Duration(seconds: 1);
+
+  /// Best-effort profile creation/sync after sign-in. Retries on transient
+  /// failures (unavailable, deadline-exceeded, network) but does not retry
+  /// permission-denied or unauthenticated, which are definitive.
   static Future<void> ensureUserDocument({
     required User user,
     required String authMethod,
     bool isNewUserHint = false,
+  }) async {
+    Object? lastError;
+    for (var attempt = 0; attempt < _maxAttempts; attempt++) {
+      try {
+        await _ensureUserDocumentOnce(
+          user: user,
+          authMethod: authMethod,
+          isNewUserHint: isNewUserHint,
+        );
+        return;
+      } on FirebaseException catch (error) {
+        lastError = error;
+        if (!_isRetryableFirestoreCode(error.code) ||
+            attempt == _maxAttempts - 1) {
+          rethrow;
+        }
+        final backoff = _baseBackoff * math.pow(2, attempt).toInt();
+        debugPrint(
+          '[AuthBootstrap] retry ${attempt + 1}/$_maxAttempts after $backoff '
+          'due to code=${error.code}',
+        );
+        await Future<void>.delayed(backoff);
+      } catch (error) {
+        lastError = error;
+        if (attempt == _maxAttempts - 1) {
+          rethrow;
+        }
+        final backoff = _baseBackoff * math.pow(2, attempt).toInt();
+        debugPrint(
+          '[AuthBootstrap] retry ${attempt + 1}/$_maxAttempts after $backoff '
+          'due to $error',
+        );
+        await Future<void>.delayed(backoff);
+      }
+    }
+    if (lastError != null) {
+      throw lastError;
+    }
+  }
+
+  static bool _isRetryableFirestoreCode(String code) {
+    switch (code) {
+      case 'unavailable':
+      case 'deadline-exceeded':
+      case 'aborted':
+      case 'internal':
+      case 'cancelled':
+      case 'resource-exhausted':
+        return true;
+      case 'permission-denied':
+      case 'unauthenticated':
+      case 'not-found':
+      case 'already-exists':
+      case 'invalid-argument':
+      case 'failed-precondition':
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  static Future<void> _ensureUserDocumentOnce({
+    required User user,
+    required String authMethod,
+    required bool isNewUserHint,
   }) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
     final email = user.email?.trim().toLowerCase() ?? '';

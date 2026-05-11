@@ -286,50 +286,31 @@ class AdminAccessResolver {
       return state!;
     }
 
+    // Role / admin fields on users/{uid} are blacklisted for client writes by
+    // Firestore rules. The canonical role propagation now happens in the
+    // server-side trigger functions/src/modules/auth/role_claims_sync.ts
+    // (onUserRolesChanged): any admin write to users/{uid} via Admin SDK or
+    // Firebase Console is mirrored into custom claims, and getMyAdminAccessStatus
+    // trusts those claims. Attempting a client write here would silently fail
+    // with PERMISSION_DENIED, so we only record the in-memory evidence so the
+    // resolver finalize can prefer the token-only path.
     final normalizedRoles =
         tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
     final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
-
     debugPrint(
-        '[AdminResolver] sync: upserting profile from token claims for uid=${user.uid}');
-    try {
-      await _firestore.collection('users').doc(user.uid).set(<String, dynamic>{
-        'roles': normalizedRoles,
-        'primaryRole': normalizedPrimaryRole,
-        'admin': normalizedRoles.contains('admin') ||
-            normalizedRoles.contains('superadmin'),
-        'superadmin': normalizedRoles.contains('superadmin'),
-        'lastRoleSyncAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      // Force a token refresh so the next callable invocation surfaces the
-      // freshly-written profile to the server (otherwise the callable may
-      // still rely on a token issued before the sync, returning isAdmin=false).
-      try {
-        await user.getIdToken(true);
-      } catch (refreshError) {
-        debugPrint(
-            '[AdminResolver] sync: token refresh after profile sync failed: $refreshError');
-      }
-      debugPrint('[AdminResolver] sync: profile updated from token claims');
-      return _step(
-        (state ?? AdminAccessState.initial()).copyWith(
-          profileLoaded: true,
-          profileHasAdmin: true,
-          profileRoles: normalizedRoles,
-          profilePrimaryRole: normalizedPrimaryRole,
-        ),
-        '[AdminResolver] profile synced from token claims roles=$normalizedRoles',
-        stage: 'profile-synced-from-token',
-      );
-    } catch (error) {
-      debugPrint(
-          '[AdminResolver] sync: profile update from token claims failed: $error');
-      return _step(
-        state ?? AdminAccessState.initial(),
-        '[AdminResolver] profile sync from token claims failed error=$error',
-        stage: 'profile-sync-error',
-      );
-    }
+      '[AdminResolver] sync: token claims indicate admin; client profile '
+      'write skipped (server-side trigger onUserRolesChanged owns the mirror).',
+    );
+    return _step(
+      (state ?? AdminAccessState.initial()).copyWith(
+        profileLoaded: state?.profileLoaded ?? false,
+        profileHasAdmin: true,
+        profileRoles: normalizedRoles,
+        profilePrimaryRole: normalizedPrimaryRole,
+      ),
+      '[AdminResolver] in-memory profile flag set from token claims roles=$normalizedRoles',
+      stage: 'profile-synced-from-token',
+    );
   }
 
   Future<AdminAccessState> _verifyServerAccess(
