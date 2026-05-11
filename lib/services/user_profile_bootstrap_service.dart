@@ -282,6 +282,19 @@ class UserProfileBootstrapService {
     }
   }
 
+  @visibleForTesting
+  static bool isRetryableFirestoreCodeForTest(String code) {
+    return _isRetryableFirestoreCode(code);
+  }
+
+  @visibleForTesting
+  static Duration retryBackoffForAttemptForTest(int attempt) {
+    if (attempt < 0) {
+      throw ArgumentError.value(attempt, 'attempt', 'Must be >= 0');
+    }
+    return _baseBackoff * math.pow(2, attempt).toInt();
+  }
+
   static Future<void> _ensureUserDocumentOnce({
     required User user,
     required String authMethod,
