@@ -35,7 +35,7 @@ L'application est globalement bien architecturée (sécurité Firestore solide, 
 | **App Check Web** | `APPCHECK_RECAPTCHA_SITE_KEY` | `lib/config/app_check_state.dart:9` |
 | **Marketplace Android** | `MARKETPLACE_RECAPTCHA_ANDROID_SITE_KEY` | `lib/services/marketplace_human_verification.dart:21` |
 | **Marketplace iOS** | `MARKETPLACE_RECAPTCHA_IOS_SITE_KEY` | `lib/services/marketplace_human_verification.dart:25` |
-| **Marketplace Web** | `MARKETPLACE_RECAPTCHA_WEB_SITE_KEY` | `lib/services/marketplace_human_verification.dart:29` |
+| **Marketplace Web** | `APPCHECK_RECAPTCHA_SITE_KEY` | `lib/services/marketplace_human_verification.dart:29` |
 | **Backend (vérif assessment)** | `RECAPTCHA_ENTERPRISE_SITE_KEY` | `functions/src/config/env.ts:22` |
 
 ✅ **Pas de clé hardcodée** dans le code.
@@ -46,7 +46,7 @@ L'application est globalement bien architecturée (sécurité Firestore solide, 
 
 | # | Problème | Fichier | Action |
 |---|----------|---------|--------|
-| RC-1 | CI ne passe **que** `APPCHECK_RECAPTCHA_SITE_KEY` | `.github/workflows/deploy.yml:35` | Ajouter `--dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY=${{secrets.X}}` |
+| RC-1 | ✅ Résolu : clé Web unique | `.github/workflows/deploy.yml` | Utiliser uniquement `APPCHECK_RECAPTCHA_SITE_KEY` côté Web |
 | RC-2 | Action `chatFirstMessage` absente de l'enum | `lib/services/marketplace_human_verification.dart:5-16` | Ajouter `chatFirstMessage` + câbler `chat_repository.dart` |
 | RC-3 | Bypass silencieux si site key vide | `lib/main.dart:704-705` | Logger en `error` (Crashlytics) en prod, pas seulement `kDebugMode` |
 | RC-4 | Backend bypass si `RECAPTCHA_ENTERPRISE_SITE_KEY` vide | `functions/src/modules/marketplace/services/recaptcha.ts:30` | Définir le secret en prod & vérifier `gcloud secrets list` |
@@ -164,8 +164,7 @@ jobs:
   deploy-web:
     needs: validate
     - flutter build web --release \
-        --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=$X \
-        --dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY=$Y
+        --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=$APPCHECK_RECAPTCHA_SITE_KEY
     - firebase deploy --only hosting --project presto-app-74abe
 
   deploy-rules:

@@ -38,6 +38,7 @@ import '../services/marketplace_publish_service.dart';
 import '../services/marketplace_remote_config_service.dart';
 import '../services/offer_indexing.dart';
 import '../services/admin_audio_runtime_store.dart';
+import '../services/user_profile_bootstrap_service.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/runtime_action_logger.dart';
@@ -168,9 +169,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       if (kIsWeb) {
         debugPrint('[AppCheck] retry activation for $flow');
+        final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+        if (siteKey.isEmpty) {
+          throw StateError(
+            'APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow',
+          );
+        }
         await FirebaseAppCheck.instance.activate(
-          webProvider:
-              ReCaptchaEnterpriseProvider(kAppCheckWebRecaptchaSiteKey),
+          webProvider: ReCaptchaEnterpriseProvider(siteKey),
         );
       } else {
         await FirebaseAppCheck.instance.activate(
@@ -181,13 +187,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
         );
       }
+      final appCheckToken = await FirebaseAppCheck.instance
+          .getToken(true)
+          .timeout(const Duration(seconds: 8));
+      if ((appCheckToken ?? '').trim().isEmpty) {
+        throw StateError('Jeton App Check vide apres reactive pour $flow');
+      }
       appCheckActivationAttempted = true;
       appCheckActivationSucceeded = true;
       appCheckActivationError = null;
       appCheckActivationStackTrace = null;
       _appendPublishAiTrace(
         'appcheck',
-        'App Check reactive avec succes pour $flow',
+        'App Check reactive avec succes pour $flow, token=ok',
         level: PublishAiTraceLevel.success,
       );
       return true;
@@ -844,12 +856,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       unawaited(_adminAudioRuntimeStore.enableCloudSync());
 
       try {
-        await user.getIdToken(true);
+        await MicroIaService.prepareSecureCallableContext(
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
         final configCallable = _functions.httpsCallable(
           'adminGetMicroIaConfig',
           options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
         );
-        final configRes = await configCallable.call<dynamic>({});
+        HttpsCallableResult<dynamic> configRes;
+        try {
+          configRes = await configCallable.call<dynamic>({});
+        } on FirebaseFunctionsException catch (e) {
+          if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
+            rethrow;
+          }
+          _appendPublishAiTrace(
+            'admin_config',
+            'Re-tentative apres refresh token+appcheck (code=${e.code})',
+            level: PublishAiTraceLevel.warning,
+          );
+          await MicroIaService.prepareSecureCallableContext(
+            forceRefreshToken: true,
+            forceRefreshAppCheckToken: true,
+          );
+          configRes = await configCallable.call<dynamic>({});
+        }
         final data = Map<String, dynamic>.from(configRes.data as Map);
         final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
         _appendPublishAiTrace(
@@ -1981,6 +2013,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final userRef = firestore.collection('users').doc(user.uid);
 
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       DocumentSnapshot<Map<String, dynamic>> doc;
       try {
         doc = await userRef
@@ -3723,6 +3760,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
       if (user == null) {
         throw Exception('Utilisateur non connecté');
+      }
+      try {
+        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+          user: user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+      } catch (error, stackTrace) {
+        await CrashlyticsContext.recordError(
+          error,
+          stackTrace,
+          reason: 'publish blocked before submit: auth/appcheck/profile preflight failed',
+          fatal: false,
+          keys: <String, String>{
+            'component': 'PublishOfferPage',
+            'step': 'submit-preflight',
+            'uid': user.uid,
+          },
+        );
+        if (mounted) {
+          showErrorSnackBar(
+            context,
+            'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+          );
+        }
+        return;
       }
       logRuntimeAction(
         area: 'publish',
