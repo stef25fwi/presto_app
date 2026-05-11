@@ -707,18 +707,19 @@ Future<void> main() async {
           const message =
               '[AppCheck] Web skipped: reCAPTCHA site key absente';
           if (kDebugMode) debugPrint(message);
-          if (kReleaseMode) {
-            try {
-              await FirebaseCrashlytics.instance.recordError(
-                StateError(message),
-                StackTrace.current,
-                reason: 'missing_app_check_recaptcha_site_key',
-                fatal: false,
-              );
-            } catch (_) {
-              // Crashlytics peut être indisponible très tôt au bootstrap web.
-            }
+          try {
+            await FirebaseCrashlytics.instance.recordError(
+              StateError(message),
+              StackTrace.current,
+              reason: 'missing_app_check_recaptcha_site_key',
+              fatal: false,
+            );
+          } catch (_) {
+            // Crashlytics peut être indisponible très tôt au bootstrap web.
           }
+          throw StateError(
+            '$message. Ajoute --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=... au build web.',
+          );
         } else {
           final preview =
               siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
@@ -738,8 +739,14 @@ Future<void> main() async {
               : AppleProvider.appAttest,
         );
       }
+      final appCheckToken = await FirebaseAppCheck.instance
+          .getToken(true)
+          .timeout(const Duration(seconds: 8));
+      if ((appCheckToken ?? '').trim().isEmpty) {
+        throw StateError('Jeton App Check vide apres activation');
+      }
       appCheckActivationSucceeded = true;
-      if (kDebugMode) debugPrint('[AppCheck] ready');
+      if (kDebugMode) debugPrint('[AppCheck] ready token=ok');
     } catch (e, st) {
       appCheckActivationError = e;
       appCheckActivationStackTrace = st;

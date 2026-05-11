@@ -3,12 +3,12 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'firebase_functions_region.dart';
+import 'user_profile_bootstrap_service.dart';
 
 class EmailActionService {
   EmailActionService._();
 
-  static final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  static final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   static Future<bool> syncCurrentUserEmailVerificationState() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -28,9 +28,14 @@ class EmailActionService {
       return false;
     }
 
-    final userRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(refreshedUser.uid);
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(refreshedUser.uid);
+
+    await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      user: refreshedUser,
+      forceRefreshToken: true,
+      forceRefreshAppCheckToken: true,
+    );
 
     final payload = <String, dynamic>{
       'email': email,

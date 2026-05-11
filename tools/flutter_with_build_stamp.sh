@@ -45,7 +45,6 @@ hydrate_env_from_interactive_shell() {
 
 hydrate_env_from_interactive_shell APPCHECK_RECAPTCHA_SITE_KEY
 hydrate_env_from_interactive_shell FCM_WEB_VAPID_KEY
-hydrate_env_from_interactive_shell MARKETPLACE_RECAPTCHA_WEB_SITE_KEY
 
 # Propage les secrets de build s'ils sont définis dans l'environnement.
 # Sans ça, un build web local active aucun App Check et Firestore (en mode
@@ -53,7 +52,6 @@ hydrate_env_from_interactive_shell MARKETPLACE_RECAPTCHA_WEB_SITE_KEY
 # Conventions :
 #   - APPCHECK_RECAPTCHA_SITE_KEY      : reCAPTCHA Enterprise pour App Check Web
 #   - FCM_WEB_VAPID_KEY                : VAPID key pour notifications web
-#   - MARKETPLACE_RECAPTCHA_WEB_SITE_KEY : reCAPTCHA pour vérification humaine marketplace
 extra_defines=()
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   extra_defines+=(--dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY")
@@ -61,10 +59,6 @@ fi
 if [[ -n "${FCM_WEB_VAPID_KEY:-}" ]]; then
   extra_defines+=(--dart-define=FCM_WEB_VAPID_KEY="$FCM_WEB_VAPID_KEY")
 fi
-if [[ -n "${MARKETPLACE_RECAPTCHA_WEB_SITE_KEY:-}" ]]; then
-  extra_defines+=(--dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$MARKETPLACE_RECAPTCHA_WEB_SITE_KEY")
-fi
-
 # Trace minimale pour diagnostiquer un build sans App Check (Firestore 403).
 appcheck_status="absent"
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then

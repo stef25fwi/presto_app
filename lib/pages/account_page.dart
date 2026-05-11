@@ -13,6 +13,7 @@ import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../constants.dart';
 import '../features/account/signed_out_account_fallback.dart';
+import '../features/micro_ia/micro_ia_service.dart';
 import '../models/admin_access_state.dart';
 import 'admin_space_page.dart';
 import '../services/admin_access_resolver.dart';
@@ -24,12 +25,13 @@ import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/account_profile_sections.dart';
 
-import '../main.dart' show
-    PrestoMonitoring,
-    prestoOverlayStyleFor,
-    adminAudioRuntimeStore,
-    pendingRedirectAuthResult,
-    pendingRedirectAuthError;
+import '../main.dart'
+    show
+        PrestoMonitoring,
+        prestoOverlayStyleFor,
+        adminAudioRuntimeStore,
+        pendingRedirectAuthResult,
+        pendingRedirectAuthError;
 import 'user_offers_section.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
@@ -314,8 +316,23 @@ class _AccountPageState extends State<AccountPage> {
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
     );
     try {
-      await _auth.currentUser?.getIdToken(true);
-      final res = await callable.call<dynamic>({});
+      await MicroIaService.prepareSecureCallableContext(
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+      HttpsCallableResult<dynamic> res;
+      try {
+        res = await callable.call<dynamic>({});
+      } on FirebaseFunctionsException catch (e) {
+        if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
+          rethrow;
+        }
+        await MicroIaService.prepareSecureCallableContext(
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+        res = await callable.call<dynamic>({});
+      }
       sw.stop();
       PrestoMonitoring.I.trackFunctionsCall(
           name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
@@ -737,7 +754,7 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) {
         showErrorSnackBar(
           context,
-          'Impossible de synchroniser le profil. Vérifie ta connexion.',
+          UserProfileBootstrapService.userFacingProfileSyncMessage(error),
         );
       }
     }
@@ -775,6 +792,11 @@ class _AccountPageState extends State<AccountPage> {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: FirebaseAuth.instance.currentUser,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       return await userRef
           .get(const GetOptions(source: Source.server))
           .timeout(const Duration(seconds: 5));
@@ -899,7 +921,7 @@ class _AccountPageState extends State<AccountPage> {
           'google.com' => 'Google',
           _ => 'externe',
         };
-        var bootstrapFailed = false;
+        Object? bootstrapFailure;
         try {
           await UserProfileBootstrapService.ensureUserDocument(
             user: result.user!,
@@ -907,7 +929,7 @@ class _AccountPageState extends State<AccountPage> {
             isNewUserHint: isNew,
           );
         } catch (bootstrapError) {
-          bootstrapFailed = true;
+          bootstrapFailure = bootstrapError;
           debugPrint('[OAuth Redirect] Bootstrap error: $bootstrapError');
         }
         try {
@@ -916,8 +938,13 @@ class _AccountPageState extends State<AccountPage> {
           debugPrint('[OAuth Redirect] Tracking error: $error');
         }
         if (!mounted) return;
-        if (bootstrapFailed) {
-          showErrorSnackBar(context, _profileSyncWarningMessage);
+        if (bootstrapFailure != null) {
+          showErrorSnackBar(
+            context,
+            UserProfileBootstrapService.userFacingProfileSyncMessage(
+              bootstrapFailure,
+            ),
+          );
         } else {
           showSuccessSnackBar(context, 'Connecté avec $providerLabel');
         }
@@ -1195,6 +1222,11 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSavingProfile = true);
     try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
       final phone = _profilePhoneController.text.trim();
@@ -2553,7 +2585,8 @@ class _AccountPageState extends State<AccountPage> {
       stream: _auth.idTokenChanges(),
       builder: (context, snapshot) {
         final user = snapshot.data;
-        if (user == null && snapshot.connectionState == ConnectionState.waiting) {
+        if (user == null &&
+            snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
               child: Column(
@@ -2583,5 +2616,4 @@ class _AccountPageState extends State<AccountPage> {
       },
     );
   }
-
 }

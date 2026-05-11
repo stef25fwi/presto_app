@@ -15,9 +15,28 @@ concurrency:
 
 jobs:
   validate-and-deploy:
+    environment: recaptcha
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Authenticate to Google Cloud
+        env:
+          GOOGLE_CREDENTIALS_B64: ${{ secrets.GOOGLE_CREDENTIALS_B64 }}
+        run: |
+          if [ -z "$GOOGLE_CREDENTIALS_B64" ]; then
+            echo "❌ GOOGLE_CREDENTIALS_B64 est vide. Ajoute ce secret dans l'environnement GitHub recaptcha."
+            exit 1
+          fi
+
+          printf "%s" "$GOOGLE_CREDENTIALS_B64" \
+            | tr -d '\r\n[:space:]' \
+            | base64 -d > "$RUNNER_TEMP/google-credentials.json"
+
+          python3 -m json.tool "$RUNNER_TEMP/google-credentials.json" >/dev/null
+
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/google-credentials.json" >> "$GITHUB_ENV"
+          echo "✅ Google credentials JSON décodé et validé"
+
       
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -48,18 +67,19 @@ jobs:
       - name: Build Web for Firebase Hosting
         env:
           APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
-          MARKETPLACE_RECAPTCHA_WEB_SITE_KEY: ${{ secrets.MARKETPLACE_RECAPTCHA_WEB_SITE_KEY }}
         run: |
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run \
-            --dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$MARKETPLACE_RECAPTCHA_WEB_SITE_KEY"
+            --dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY"
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
       - name: Deploy Firebase Hosting, Functions, Firestore and Storage
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
+          if [ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
+            echo "❌ GOOGLE_APPLICATION_CREDENTIALS est vide. Vérifie le secret GOOGLE_CREDENTIALS dans l'environnement recaptcha."
+            exit 1
+          fi
+
           firebase deploy --project presto-app-74abe \
-            --only hosting,functions,firestore:rules,firestore:indexes,storage \
-            --token "$FIREBASE_TOKEN"
+            --only hosting,functions,firestore:rules,firestore:indexes,storage
