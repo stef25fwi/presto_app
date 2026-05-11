@@ -700,7 +700,7 @@
     {
       "label": "Admin Callable: Logs getMyAdminAccessStatus",
       "type": "shell",
-      "command": "npx --yes firebase-tools functions:log --project presto-app-74abe --only getMyAdminAccessStatus --limit 30",
+      "command": "npx --yes firebase-tools functions:log --project presto-app-74abe --only getMyAdminAccessStatus -n 30",
       "problemMatcher": [],
       "presentation": {
         "reveal": "always",

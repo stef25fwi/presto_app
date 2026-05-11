@@ -2,18 +2,221 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+
+import '../config/app_check_state.dart';
+
+class UserProfileBootstrapException implements Exception {
+  UserProfileBootstrapException(
+    this.code,
+    this.message, {
+    this.cause,
+    this.stackTrace,
+  });
+
+  final String code;
+  final String message;
+  final Object? cause;
+  final StackTrace? stackTrace;
+
+  bool get isAppCheckFailure =>
+      code == 'app-check-unavailable' || code == 'app-check-token-missing';
+
+  bool get isTimeout => code == 'profile-access-timeout';
+
+  @override
+  String toString() {
+    final causeText = cause == null ? '' : ' cause=$cause';
+    return 'UserProfileBootstrapException($code): $message$causeText';
+  }
+}
 
 class UserProfileBootstrapService {
   UserProfileBootstrapService._();
 
   static const int _maxAttempts = 3;
   static const Duration _baseBackoff = Duration(seconds: 1);
+  static const String _genericProfileSyncWarningMessage =
+      'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
 
-  /// Best-effort profile creation/sync after sign-in. Retries on transient
-  /// failures (unavailable, deadline-exceeded, network) but does not retry
-  /// permission-denied or unauthenticated, which are definitive.
+  static const String _webAppCheckProfileSyncWarningMessage =
+      'Connecté, mais la vérification de sécurité web a échoué. Actualise la page puis réessaie.';
+
+  static const String _profileSyncTimeoutWarningMessage =
+      'Connecté, mais la synchronisation du profil a expiré. Réessaie dans quelques secondes.';
+
+  static String userFacingProfileSyncMessage([Object? error]) {
+    final normalizedError = _normalizeBootstrapError(error);
+    if (normalizedError.isAppCheckFailure) {
+      return _webAppCheckProfileSyncWarningMessage;
+    }
+    if (normalizedError.isTimeout) {
+      return _profileSyncTimeoutWarningMessage;
+    }
+    return _genericProfileSyncWarningMessage;
+  }
+
+  static Future<User?> prepareProfileFirestoreAccess({
+    User? user,
+    bool forceRefreshToken = false,
+    bool forceRefreshAppCheckToken = false,
+  }) async {
+    User? resolvedUser = user ?? FirebaseAuth.instance.currentUser;
+    if (resolvedUser == null) {
+      try {
+        resolvedUser = await FirebaseAuth.instance
+            .authStateChanges()
+            .where((candidate) => candidate != null)
+            .cast<User>()
+            .first
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {
+        resolvedUser = FirebaseAuth.instance.currentUser;
+      }
+    }
+
+    if (resolvedUser == null) {
+      return null;
+    }
+
+    try {
+      await resolvedUser
+          .getIdToken(forceRefreshToken)
+          .timeout(const Duration(seconds: 8));
+    } catch (error) {
+      debugPrint('[ProfileFirestore] ID token refresh failed: $error');
+      rethrow;
+    }
+
+    try {
+      await _ensureAppCheckTokenAvailable(
+        forceRefreshToken: forceRefreshAppCheckToken,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('[ProfileFirestore] App Check token refresh failed: $error');
+      throw _normalizeBootstrapError(error, stackTrace);
+    }
+
+    return FirebaseAuth.instance.currentUser ?? resolvedUser;
+  }
+
+  static bool isAppCheckFailure(Object? error) {
+    return _normalizeBootstrapError(error).isAppCheckFailure;
+  }
+
+  static Future<void> _ensureAppCheckTokenAvailable({
+    required bool forceRefreshToken,
+  }) async {
+    if (kIsWeb && appCheckActivationAttempted && !appCheckActivationSucceeded) {
+      await _retryWebAppCheckActivation();
+    }
+
+    final retryDelays = kIsWeb
+        ? const <Duration>[Duration.zero, Duration(milliseconds: 1200)]
+        : const <Duration>[Duration.zero];
+
+    Object? lastError;
+    StackTrace? lastStackTrace;
+
+    for (var attempt = 0; attempt < retryDelays.length; attempt++) {
+      final delay = retryDelays[attempt];
+      if (delay > Duration.zero) {
+        await Future.delayed(delay);
+      }
+
+      try {
+        final appCheckToken = await FirebaseAppCheck.instance
+            .getToken(forceRefreshToken || attempt > 0)
+            .timeout(const Duration(seconds: 8));
+        if ((appCheckToken ?? '').trim().isEmpty) {
+          throw UserProfileBootstrapException(
+            'app-check-token-missing',
+            'Jeton App Check absent pour Firestore profil.',
+          );
+        }
+        return;
+      } catch (error, stackTrace) {
+        lastError = error;
+        lastStackTrace = stackTrace;
+        debugPrint(
+          '[ProfileFirestore] App Check token attempt ${attempt + 1}/${retryDelays.length} failed: $error',
+        );
+      }
+    }
+
+    throw _normalizeBootstrapError(lastError, lastStackTrace);
+  }
+
+  static Future<void> _retryWebAppCheckActivation() async {
+    final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+    if (siteKey.isEmpty) {
+      throw UserProfileBootstrapException(
+        'app-check-unavailable',
+        'App Check Web indisponible pour la synchronisation du profil.',
+        cause: appCheckActivationError ??
+            StateError('APPCHECK_RECAPTCHA_SITE_KEY absente.'),
+        stackTrace: appCheckActivationStackTrace,
+      );
+    }
+
+    try {
+      debugPrint('[ProfileFirestore] Retrying App Check web activation');
+      await FirebaseAppCheck.instance.activate(
+        webProvider: ReCaptchaEnterpriseProvider(siteKey),
+      );
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = true;
+      appCheckActivationError = null;
+      appCheckActivationStackTrace = null;
+    } catch (error, stackTrace) {
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = false;
+      appCheckActivationError = error;
+      appCheckActivationStackTrace = stackTrace;
+      throw UserProfileBootstrapException(
+        'app-check-unavailable',
+        'App Check Web indisponible pour la synchronisation du profil.',
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  static UserProfileBootstrapException _normalizeBootstrapError(
+    Object? error, [
+    StackTrace? stackTrace,
+  ]) {
+    if (error is UserProfileBootstrapException) {
+      return error;
+    }
+    if (error is TimeoutException) {
+      return UserProfileBootstrapException(
+        'profile-access-timeout',
+        'Délai dépassé pendant l\'accès au profil Firestore.',
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final message = (error ?? '').toString().toLowerCase();
+    if (message.contains('app check') || message.contains('app_check')) {
+      return UserProfileBootstrapException(
+        'app-check-unavailable',
+        'App Check indisponible pour la synchronisation du profil.',
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return UserProfileBootstrapException(
+      'profile-access-failed',
+      'Accès au profil Firestore impossible.',
+      cause: error,
+      stackTrace: stackTrace,
+    );
+  }
   static Future<void> ensureUserDocument({
     required User user,
     required String authMethod,
@@ -84,17 +287,23 @@ class UserProfileBootstrapService {
     required String authMethod,
     required bool isNewUserHint,
   }) async {
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final email = user.email?.trim().toLowerCase() ?? '';
-    final displayName = user.displayName?.trim() ?? '';
-
     // Reload to get fresh emailVerified state.
     try {
       await user.reload();
     } catch (_) {
       // Best effort — offline or token expired.
     }
-    final freshUser = FirebaseAuth.instance.currentUser ?? user;
+    final freshUser = await prepareProfileFirestoreAccess(
+          user: FirebaseAuth.instance.currentUser ?? user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        ) ??
+        FirebaseAuth.instance.currentUser ??
+        user;
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(freshUser.uid);
+    final email = freshUser.email?.trim().toLowerCase() ?? '';
+    final displayName = freshUser.displayName?.trim() ?? '';
 
     final commonData = <String, dynamic>{
       'uid': freshUser.uid,

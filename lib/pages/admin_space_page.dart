@@ -9,6 +9,7 @@ import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 
 import '../constants.dart';
+import '../features/micro_ia/micro_ia_service.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/firebase_functions_region.dart';
 
@@ -300,7 +301,10 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
 
   Future<void> _prepareAdminCallableAuth() async {
     try {
-      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+      await MicroIaService.prepareSecureCallableContext(
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
     } catch (_) {
       // Best effort: the callable will still provide the definitive auth error.
     }
@@ -314,7 +318,16 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
         'adminGetMicroIaConfig',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
       );
-      final res = await callable.call<dynamic>({});
+      HttpsCallableResult<dynamic> res;
+      try {
+        res = await callable.call<dynamic>({});
+      } on FirebaseFunctionsException catch (e) {
+        if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
+          rethrow;
+        }
+        await _prepareAdminCallableAuth();
+        res = await callable.call<dynamic>({});
+      }
       final data = Map<String, dynamic>.from(res.data as Map);
 
       final modeStr = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
@@ -1984,11 +1997,27 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       }
 
       try {
+        await MicroIaService.prepareSecureCallableContext(
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
         final configCallable = _functions.httpsCallable(
           'adminGetMicroIaConfig',
           options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
         );
-        final configRes = await configCallable.call<dynamic>({});
+        HttpsCallableResult<dynamic> configRes;
+        try {
+          configRes = await configCallable.call<dynamic>({});
+        } on FirebaseFunctionsException catch (e) {
+          if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
+            rethrow;
+          }
+          await MicroIaService.prepareSecureCallableContext(
+            forceRefreshToken: true,
+            forceRefreshAppCheckToken: true,
+          );
+          configRes = await configCallable.call<dynamic>({});
+        }
         final configData = (configRes.data is Map)
             ? Map<String, dynamic>.from(configRes.data as Map)
             : <String, dynamic>{};
