@@ -275,6 +275,60 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  bool _isProfileSyncExpired(Object? error) {
+    if (error is UserProfileBootstrapException) {
+      return error.isTimeout;
+    }
+    if (error is TimeoutException) {
+      return true;
+    }
+    final message = error?.toString().toLowerCase() ?? '';
+    return message.contains('timeout') ||
+        message.contains('deadline-exceeded') ||
+        message.contains('profile-access-timeout');
+  }
+
+  Future<bool> _suppressProfileSyncSnackBarWhenAdminConfirmed(
+    Object error, {
+    required String trigger,
+  }) async {
+    var state = _lastAdminAccessState;
+    if (state?.hasConfirmedAdminAccess != true) {
+      try {
+        state = await _adminAccessResolver.resolveAdminAccess();
+        if (mounted) {
+          setState(() {
+            _lastAdminAccessState = state;
+            _adminLastCheckedAt = state?.serverCheckedAt ?? _adminLastCheckedAt;
+          });
+        }
+      } catch (resolverError) {
+        debugPrint(
+          '[ProfileSync][AdminGuard] resolver failed trigger=$trigger error=$resolverError',
+        );
+      }
+    }
+
+    final finalCanAccessAdmin = state?.hasConfirmedAdminAccess == true;
+    final reason = finalCanAccessAdmin
+        ? 'admin-confirmed-by-${state!.consolidatedSourceOfTruth}'
+        : 'no-admin-source-confirmed';
+    debugPrint(
+      '[ProfileSync][AdminGuard] trigger=$trigger '
+      'profileSyncExpired=${_isProfileSyncExpired(error)} '
+      'serverIsAdmin=${state?.serverIsAdmin} '
+      'tokenHasAdmin=${state?.tokenHasAdmin ?? false} '
+      'profileHasAdmin=${state?.profileHasAdmin ?? false} '
+      'adminDocHasAdmin=${state?.adminDocHasAdmin ?? false} '
+      'finalCanAccessAdmin=$finalCanAccessAdmin '
+      'reason=$reason',
+    );
+    if (finalCanAccessAdmin) {
+      unawaited(adminAudioRuntimeStore.enableCloudSync());
+    }
+    return finalCanAccessAdmin;
+  }
+
   Map<String, dynamic> _adminServerDebug(AdminAccessState state) {
     return state.serverDebug;
   }
@@ -751,7 +805,12 @@ class _AccountPageState extends State<AccountPage> {
       );
     } catch (error) {
       debugPrint('[AuthBootstrap] account session restore failed: $error');
-      if (mounted) {
+      final suppressSnackBar =
+          await _suppressProfileSyncSnackBarWhenAdminConfirmed(
+        error,
+        trigger: 'session_restore',
+      );
+      if (mounted && !suppressSnackBar) {
         showErrorSnackBar(
           context,
           UserProfileBootstrapService.userFacingProfileSyncMessage(error),
@@ -939,12 +998,19 @@ class _AccountPageState extends State<AccountPage> {
         }
         if (!mounted) return;
         if (bootstrapFailure != null) {
-          showErrorSnackBar(
-            context,
-            UserProfileBootstrapService.userFacingProfileSyncMessage(
-              bootstrapFailure,
-            ),
+          final suppressSnackBar =
+              await _suppressProfileSyncSnackBarWhenAdminConfirmed(
+            bootstrapFailure,
+            trigger: 'federated_redirect',
           );
+          if (mounted && !suppressSnackBar) {
+            showErrorSnackBar(
+              context,
+              UserProfileBootstrapService.userFacingProfileSyncMessage(
+                bootstrapFailure,
+              ),
+            );
+          }
         } else {
           showSuccessSnackBar(context, 'Connecté avec $providerLabel');
         }

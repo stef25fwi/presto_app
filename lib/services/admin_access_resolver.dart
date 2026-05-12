@@ -722,38 +722,40 @@ class AdminAccessResolver {
   }
 
   AdminAccessState _finalize(AdminAccessState state) {
-    final sources = <String>[];
-    if (state.tokenHasAdmin) {
-      sources.add('token');
-    }
-    if (state.profileHasAdmin) {
-      sources.add('profile');
-    }
-    if (state.serverIsAdmin == true) {
-      sources.add('server');
-    }
-
-    var effectiveIsAdmin = sources.isNotEmpty;
-    final sourceOfTruth = effectiveIsAdmin ? sources.join('+') : 'none';
-
-    // Fix #13: prevent incoherent state where effectiveIsAdmin is true but
-    // no source actually confirmed it.
-    if (effectiveIsAdmin && sourceOfTruth == 'none') {
-      effectiveIsAdmin = false;
-    }
-
-    // If the server check succeeded, server is the authority.
-    if (state.serverCheckSucceeded) {
-      effectiveIsAdmin = state.serverIsAdmin == true;
-    }
+    final sourceOfTruth = state.consolidatedSourceOfTruth;
+    final effectiveIsAdmin = sourceOfTruth != 'none';
+    final reason = switch (sourceOfTruth) {
+      'server' => 'server-confirmed-admin',
+      'token' => state.serverCheckSucceeded && state.serverIsAdmin == false
+          ? 'token-fallback-after-server-denied'
+          : 'token-claims-confirmed-admin',
+      'profile' => state.serverCheckSucceeded && state.serverIsAdmin == false
+          ? 'profile-fallback-after-server-denied'
+          : 'profile-confirmed-admin',
+      'adminDoc' => state.serverCheckSucceeded && state.serverIsAdmin == false
+          ? 'admin-doc-fallback-after-server-denied'
+          : 'admin-doc-confirmed-admin',
+      _ => state.serverCheckSucceeded
+          ? 'no-admin-source-after-server-check'
+          : 'no-admin-source',
+    };
 
     final finalized = _step(
       state.copyWith(
         effectiveIsAdmin: effectiveIsAdmin,
-        sourceOfTruth: effectiveIsAdmin ? sourceOfTruth : 'none',
+        sourceOfTruth: sourceOfTruth,
       ),
-      '[AdminResolver] effectiveIsAdmin=$effectiveIsAdmin source=${effectiveIsAdmin ? sourceOfTruth : 'none'}',
+      '[AdminResolver] effectiveIsAdmin=$effectiveIsAdmin source=$sourceOfTruth reason=$reason',
       stage: 'finished',
+    );
+    debugPrint(
+      '[AdminResolver][FinalAccess] profileSyncExpired=false '
+      'serverIsAdmin=${state.serverIsAdmin} '
+      'tokenHasAdmin=${state.tokenHasAdmin} '
+      'profileHasAdmin=${state.profileHasAdmin} '
+      'adminDocHasAdmin=${state.adminDocHasAdmin} '
+      'finalCanAccessAdmin=$effectiveIsAdmin '
+      'reason=$reason',
     );
     debugPrint('[AdminResolver] finished');
     return finalized;
