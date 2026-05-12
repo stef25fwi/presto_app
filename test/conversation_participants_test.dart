@@ -2,6 +2,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/conversation_participants.dart';
 
 void main() {
+  test('expose tous les alias de requete participants attendus', () {
+    expect(
+      conversationParticipantQueryFieldAliases,
+      <String>[
+        'participants',
+        'participant_ids',
+        'participantIds',
+        'userIds',
+        'memberIds',
+      ],
+    );
+  });
+
   test('lit les participants depuis les listes et les maps legacy', () {
     final data = <String, dynamic>{
       'participantIds': <String>['alice'],

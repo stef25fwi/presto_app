@@ -708,7 +708,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       });
     };
 
-    listenField(conversationPrimaryParticipantField);
+    for (final participantField in conversationParticipantQueryFieldAliases) {
+      listenField(participantField);
+    }
     listenNotifications();
     for (final senderField in sentMessageFieldAliases) {
       listenStartedMessagesField(senderField);

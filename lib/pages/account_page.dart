@@ -209,7 +209,15 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     if (state.tokenHasAdmin && state.profileLoaded && !state.profileHasAdmin) {
-      messages.add('Profil Firestore non synchronisé avec les claims admin');
+      // Only surface this warning when the server has NOT confirmed admin access.
+      // When serverIsAdmin=true, the mismatch is a transient Firestore lag —
+      // the server is the source of truth and has already validated the access.
+      if (state.serverIsAdmin != true) {
+        messages.add(
+          'Profil Firestore en attente de synchronisation avec les claims admin '
+          '(résolution automatique en cours via le trigger serveur)',
+        );
+      }
     }
 
     if (state.serverCheckAttempted && !state.serverCheckSucceeded) {
