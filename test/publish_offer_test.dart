@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:presto_app/main.dart' as app;
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
+
   testWidgets('Le formulaire actif réagit aux choix principaux',
       (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1200, 5000);
@@ -49,5 +58,8 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Publier mon offre'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }

@@ -87,6 +87,26 @@ class AdminAccessState {
     return tokenHasAdmin || profileHasAdmin || adminDocHasAdmin;
   }
 
+  bool get hasConfirmedAdminAccess {
+    return serverIsAdmin == true || hasLocalAdminEvidence;
+  }
+
+  String get consolidatedSourceOfTruth {
+    if (serverIsAdmin == true) {
+      return 'server';
+    }
+    if (tokenHasAdmin) {
+      return 'token';
+    }
+    if (profileHasAdmin) {
+      return 'profile';
+    }
+    if (adminDocHasAdmin) {
+      return 'adminDoc';
+    }
+    return 'none';
+  }
+
   AdminAccessState copyWith({
     bool? isAuthenticated,
     String? uid,
