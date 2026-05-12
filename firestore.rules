@@ -69,6 +69,32 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    function protectedUserFields() {
+      return [
+        'roles',
+        'role',
+        'primaryRole',
+        'status',
+        'marketplaceAccess',
+        'moderationStrikeCount',
+        'spamScore',
+        'trustedSeller',
+        'lastRoleSyncAt',
+        'lastRecaptchaScore',
+        'createdAt',
+        'disabled',
+        'last_login_ip',
+        'login_signatures',
+        'last_login_signature',
+        'admin',
+        'superadmin',
+        'moderator',
+        'isAdmin',
+        'isModerator',
+        'isSuperadmin'
+      ];
+    }
+
     function isPublicListingData(data) {
       // Canonical public marketplace listing shape.
       return data.status == 'active'
@@ -110,45 +136,13 @@ service cloud.firestore {
 
     // ✅ [AUTORISÉ] Users — chaque utilisateur gère son doc
     match /users/{userId} {
-      allow read: if hasAppCheck() && isSignedIn() && (userId == uid() || isMarketplaceModerator());
+      allow read: if isSignedIn() && (userId == uid() || (hasAppCheck() && isMarketplaceModerator()));
       allow create: if isSignedIn()
-        && hasAppCheck()
         && userId == uid()
-        && !request.resource.data.keys().hasAny([
-          'roles',
-          'primaryRole',
-          'status',
-          'moderationStrikeCount',
-          'spamScore',
-          'trustedSeller',
-          'lastRoleSyncAt',
-          'lastRecaptchaScore',
-          'admin',
-          'superadmin',
-          'moderator',
-          'isAdmin',
-          'isModerator',
-          'isSuperadmin'
-        ]);
+        && !request.resource.data.keys().hasAny(protectedUserFields());
       allow update: if isSignedIn()
-        && hasAppCheck()
         && userId == uid()
-        && !changedKeys().hasAny([
-          'roles',
-          'primaryRole',
-          'status',
-          'moderationStrikeCount',
-          'spamScore',
-          'trustedSeller',
-          'lastRoleSyncAt',
-          'lastRecaptchaScore',
-          'admin',
-          'superadmin',
-          'moderator',
-          'isAdmin',
-          'isModerator',
-          'isSuperadmin'
-        ]);
+        && !changedKeys().hasAny(protectedUserFields());
       allow delete: if hasAppCheck() && isSignedIn() && userId == uid();
 
       match /push_tokens/{tokenId} {

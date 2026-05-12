@@ -175,15 +175,12 @@ class AccountSocialAuthActions {
       if (!context.mounted) return;
       googleAuthService.logSuccess('signInWithGoogle', user.email);
       if (bootstrapFailure != null) {
-        showErrorSnackBar(
-          context,
-          UserProfileBootstrapService.userFacingProfileSyncMessage(
-            bootstrapFailure,
-          ),
+        debugPrint(
+          '[Google Sign-In] auth sync failed but user is connected '
+          'uid=${user.uid} error=$bootstrapFailure',
         );
-      } else {
-        showSuccessSnackBar(context, '✓ Connecté avec Google');
       }
+      showSuccessSnackBar(context, '✓ Connecté avec Google');
     } on FirebaseAuthException catch (e, st) {
       debugPrint(
         '❌ FirebaseAuthException: code=${e.code} message=${e.message}',
@@ -357,15 +354,12 @@ class AccountSocialAuthActions {
 
       if (!context.mounted) return;
       if (bootstrapFailure != null) {
-        showErrorSnackBar(
-          context,
-          UserProfileBootstrapService.userFacingProfileSyncMessage(
-            bootstrapFailure,
-          ),
+        debugPrint(
+          '[Apple Sign-In] auth sync failed but user is connected '
+          'uid=${user?.uid ?? '-'} error=$bootstrapFailure',
         );
-      } else {
-        showSuccessSnackBar(context, 'Connecte avec Apple ✓');
       }
+      showSuccessSnackBar(context, 'Connecte avec Apple ✓');
     } on SignInWithAppleAuthorizationException catch (e) {
       if (!context.mounted) return;
       debugPrint(
@@ -482,15 +476,12 @@ class AccountSocialAuthActions {
 
     if (!context.mounted) return;
     if (bootstrapFailure != null) {
-      showErrorSnackBar(
-        context,
-        UserProfileBootstrapService.userFacingProfileSyncMessage(
-          bootstrapFailure,
-        ),
+      debugPrint(
+        '[$providerLabel Sign-In] auth sync failed but user is connected '
+        'uid=${user.uid} error=$bootstrapFailure',
       );
-    } else {
-      showSuccessSnackBar(context, '✓ Connecté avec $providerLabel');
     }
+    showSuccessSnackBar(context, '✓ Connecté avec $providerLabel');
   }
 
   static bool _shouldFallbackToRedirect(Object error) {

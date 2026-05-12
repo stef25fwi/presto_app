@@ -3,7 +3,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'firebase_functions_region.dart';
-import 'user_profile_bootstrap_service.dart';
 
 class EmailActionService {
   EmailActionService._();
@@ -31,11 +30,7 @@ class EmailActionService {
     final userRef =
         FirebaseFirestore.instance.collection('users').doc(refreshedUser.uid);
 
-    await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-      user: refreshedUser,
-      forceRefreshToken: true,
-      forceRefreshAppCheckToken: true,
-    );
+    await refreshedUser.getIdToken(true);
 
     final payload = <String, dynamic>{
       'email': email,
@@ -45,17 +40,10 @@ class EmailActionService {
       'isEmailVerified': FieldValue.delete(),
     };
 
-    try {
-      await userRef.update(payload);
-    } on FirebaseException catch (error) {
-      if (error.code != 'not-found') {
-        rethrow;
-      }
-      await userRef.set(<String, dynamic>{
-        'uid': refreshedUser.uid,
-        ...payload,
-      });
-    }
+    await userRef.set(<String, dynamic>{
+      'uid': refreshedUser.uid,
+      ...payload,
+    }, SetOptions(merge: true));
 
     return true;
   }
