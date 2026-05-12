@@ -247,6 +247,27 @@ class UserProfileBootstrapService {
       stackTrace: stackTrace,
     );
   }
+
+  static void _logFirestoreSyncError({
+    required String operation,
+    required String uid,
+    required Map<String, dynamic> payload,
+    required Object error,
+  }) {
+    if (error is FirebaseException) {
+      debugPrint(
+        '[AuthBootstrap][$operation] Firestore error '
+        'uid=$uid path=users/$uid code=${error.code} '
+        'message=${error.message} payload=$payload',
+      );
+      return;
+    }
+    debugPrint(
+      '[AuthBootstrap][$operation] error uid=$uid path=users/$uid '
+      'error=$error payload=$payload',
+    );
+  }
+
   static Future<void> ensureUserDocument({
     required User user,
     required String authMethod,
@@ -367,75 +388,62 @@ class UserProfileBootstrapService {
     final email = freshUser.email?.trim().toLowerCase() ?? '';
     final displayName = freshUser.displayName?.trim() ?? '';
 
-    final commonData = <String, dynamic>{
+    final authSyncData = <String, dynamic>{
       'uid': freshUser.uid,
       'updatedAt': FieldValue.serverTimestamp(),
       'lastLoginAt': FieldValue.serverTimestamp(),
       'lastAuthMethod': authMethod,
       if (email.isNotEmpty) 'email': email,
       'emailVerified': freshUser.emailVerified,
+    };
+
+    final createData = <String, dynamic>{
+      ...authSyncData,
+      'accountType': 'Particulier',
       if (displayName.isNotEmpty) 'displayName': displayName,
       if (displayName.isNotEmpty) 'pseudo': displayName,
+      'profileCompleted': false,
+      'profileCompleteness': 0.0,
     };
 
     // Probe existence: try server then cache. If both fail (offline, App
     // Check, timeout) we stay with "existence unknown" and use a safe
     // merge-set so we never throw NOT_FOUND on update().
     bool? docExists;
-    if (!isNewUserHint) {
+    try {
+      final existing = await userRef
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 6));
+      docExists = existing.exists;
+    } catch (serverError) {
+      debugPrint(
+        '[AuthBootstrap] server probe failed for users/${freshUser.uid}: $serverError',
+      );
       try {
-        final existing = await userRef
-            .get(const GetOptions(source: Source.server))
-            .timeout(const Duration(seconds: 6));
-        docExists = existing.exists;
-      } catch (serverError) {
+        final cached = await userRef
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(seconds: 3));
+        docExists = cached.exists;
+      } catch (cacheError) {
         debugPrint(
-          '[AuthBootstrap] server probe failed for users/${freshUser.uid}: $serverError',
+          '[AuthBootstrap] cache probe failed for users/${freshUser.uid}: $cacheError',
         );
-        try {
-          final cached = await userRef
-              .get(const GetOptions(source: Source.cache))
-              .timeout(const Duration(seconds: 3));
-          docExists = cached.exists;
-        } catch (cacheError) {
-          debugPrint(
-            '[AuthBootstrap] cache probe failed for users/${freshUser.uid}: $cacheError',
-          );
-        }
       }
     }
 
-    final shouldCreateWithDefaults = isNewUserHint || docExists == false;
+    final payload = docExists == false ? createData : authSyncData;
 
-    if (shouldCreateWithDefaults) {
-      // Fresh profile — atomic set with all defaults. Safe if the doc
-      // already exists thanks to merge:true (just refreshes the fields).
-      await userRef.set(<String, dynamic>{
-        ...commonData,
-        'createdAt': FieldValue.serverTimestamp(),
-        'accountType': 'Particulier',
-        'favoriteCategories': <String>[],
-        'selectedFavoriteCategories': <String>[],
-        'selectedFavoriteSubcategories': <String>[],
-        'profileCompleteness': 0.0,
-      }, SetOptions(merge: true));
+    try {
+      await userRef.set(payload, SetOptions(merge: true));
       return;
+    } catch (error) {
+      _logFirestoreSyncError(
+        operation: docExists == false ? 'create-auth-sync' : 'login-auth-sync',
+        uid: freshUser.uid,
+        payload: payload,
+        error: error,
+      );
+      rethrow;
     }
-
-    if (docExists == true) {
-      // Doc confirmed present — update only known fields and prune stale
-      // aliases produced by older builds.
-      await userRef.update(<String, dynamic>{
-        ...commonData,
-        'email_verified': FieldValue.delete(),
-        'isEmailVerified': FieldValue.delete(),
-      });
-      return;
-    }
-
-    // Existence unknown (probes failed). Use merge-set to avoid NOT_FOUND.
-    // Stale alias cleanup is skipped on this path to keep the write safe;
-    // the next successful login will handle it.
-    await userRef.set(commonData, SetOptions(merge: true));
   }
 }

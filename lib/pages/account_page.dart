@@ -21,6 +21,7 @@ import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
+import '../services/user_profile_save_payload.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/account_profile_sections.dart';
@@ -47,9 +48,6 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  static const String _profileSyncWarningMessage =
-      'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
@@ -119,6 +117,7 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController _profileCityController = TextEditingController();
   final TextEditingController _profilePhoneController = TextEditingController();
   String _profilePhoneCountryCode = '+33';
+  String _profileAccountType = 'Particulier';
   StreamSubscription<User?>? _profileAuthSub;
   String? _activeProfileUid;
 
@@ -772,6 +771,7 @@ class _AccountPageState extends State<AccountPage> {
     _lastMissingRequiredCount = -1;
     _isEditingProfile = false;
     _profilePhoneCountryCode = '+33';
+    _profileAccountType = 'Particulier';
     _favoriteCategories = <String>{};
     _selectedFavoriteCategories = <String>{};
     _selectedFavoriteSubcategories = <String>{};
@@ -803,19 +803,17 @@ class _AccountPageState extends State<AccountPage> {
         user: user,
         authMethod: 'session_restore',
       );
-    } catch (error) {
-      debugPrint('[AuthBootstrap] account session restore failed: $error');
-      final suppressSnackBar =
-          await _suppressProfileSyncSnackBarWhenAdminConfirmed(
-        error,
-        trigger: 'session_restore',
+    } on FirebaseException catch (error) {
+      debugPrint(
+        '[AuthBootstrap] account session restore Firestore failed '
+        'uid=${user.uid} path=users/${user.uid} '
+        'code=${error.code} message=${error.message}',
       );
-      if (mounted && !suppressSnackBar) {
-        showErrorSnackBar(
-          context,
-          UserProfileBootstrapService.userFacingProfileSyncMessage(error),
-        );
-      }
+    } catch (error) {
+      debugPrint(
+        '[AuthBootstrap] account session restore failed '
+        'uid=${user.uid} path=users/${user.uid} error=$error',
+      );
     }
 
     if (_activeProfileUid == user.uid &&
@@ -851,11 +849,9 @@ class _AccountPageState extends State<AccountPage> {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
     try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: FirebaseAuth.instance.currentUser,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
+      await FirebaseAuth.instance.currentUser
+          ?.getIdToken(true)
+          .timeout(const Duration(seconds: 12));
       return await userRef
           .get(const GetOptions(source: Source.server))
           .timeout(const Duration(seconds: 5));
@@ -998,22 +994,12 @@ class _AccountPageState extends State<AccountPage> {
         }
         if (!mounted) return;
         if (bootstrapFailure != null) {
-          final suppressSnackBar =
-              await _suppressProfileSyncSnackBarWhenAdminConfirmed(
-            bootstrapFailure,
-            trigger: 'federated_redirect',
+          debugPrint(
+            '[OAuth Redirect] auth sync failed but user is connected '
+            'uid=${result.user!.uid} error=$bootstrapFailure',
           );
-          if (mounted && !suppressSnackBar) {
-            showErrorSnackBar(
-              context,
-              UserProfileBootstrapService.userFacingProfileSyncMessage(
-                bootstrapFailure,
-              ),
-            );
-          }
-        } else {
-          showSuccessSnackBar(context, 'Connecté avec $providerLabel');
         }
+        showSuccessSnackBar(context, 'Connecté avec $providerLabel');
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -1082,13 +1068,13 @@ class _AccountPageState extends State<AccountPage> {
         );
         _profileCityController.text = _firstNonEmptyProfileValue(
           data,
-          const ['city', 'location', 'serviceArea', 'service_area'],
+          const ['city', 'ville', 'location', 'serviceArea', 'service_area'],
           fallbackValues: <String>[previousCity],
         );
 
         final loadedPhone = _firstNonEmptyProfileValue(
           data,
-          const ['phone', 'phoneNumber', 'phone_number'],
+          const ['phone', 'telephone', 'phoneNumber', 'phone_number'],
           fallbackValues: <String>[user.phoneNumber ?? ''],
         );
         if (loadedPhone.isNotEmpty) {
@@ -1142,6 +1128,14 @@ class _AccountPageState extends State<AccountPage> {
           _draftFavoriteSelections = mergedFavoriteSelections.toSet();
         }
 
+        final loadedAccountType = _firstNonEmptyProfileValue(
+          data,
+          const ['accountType'],
+          fallbackValues: <String>[_profileAccountType],
+        );
+        _profileAccountType =
+            loadedAccountType.isNotEmpty ? loadedAccountType : 'Particulier';
+
         // ✅ Si les champs sont remplis, ne pas être en mode édition par défaut
         final hasProfile = _hasProfileValuesInMemory();
         _isEditingProfile = !hasProfile;
@@ -1157,6 +1151,7 @@ class _AccountPageState extends State<AccountPage> {
           _profilePhoneCountryCode = previousPhoneCountryCode;
           _profilePhoneController.text = previousPhone;
         }
+        _profileAccountType = 'Particulier';
         _favoriteCategories = previousFavoriteCategories;
         _selectedFavoriteCategories = previousSelectedFavoriteCategories;
         _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
@@ -1288,45 +1283,50 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSavingProfile = true);
     try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
+      await user.getIdToken(true).timeout(const Duration(seconds: 12));
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
       final phone = _profilePhoneController.text.trim();
       final normalizedPhone =
           _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
 
-      final profileData = <String, dynamic>{
-        'pseudo': pseudo,
-        'displayName': pseudo,
-        'userName': pseudo,
-        'user_name': pseudo,
-        'name': pseudo,
-        'city': city,
-        'location': city,
-        'serviceArea': city,
-        'service_area': city,
-        'phone': normalizedPhone,
-        'phoneNumber': normalizedPhone,
-        'phone_number': normalizedPhone,
-        'phoneCountryCode': _profilePhoneCountryCode,
-        'favoriteCategories': _favoriteCategories.toList(),
-        'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
-        'selectedFavoriteSubcategories':
-            _selectedFavoriteSubcategories.toList(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'profileUpdatedAt': FieldValue.serverTimestamp(),
-        'profileCompleteness': _calculateProfileCompleteness(),
-      };
+      final profileData = UserProfileSavePayload.build(
+        uid: user.uid,
+        email: user.email,
+        displayName: pseudo,
+        accountType: _profileAccountType,
+        phone: normalizedPhone,
+        city: city,
+        selectedFavoriteCategories: _selectedFavoriteCategories.toList(),
+        selectedFavoriteSubcategories: _selectedFavoriteSubcategories.toList(),
+      );
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      debugPrint(
+          '[ProfileSave] write path=users/${user.uid} payload=$profileData');
+      await userRef
           .set(profileData, SetOptions(merge: true))
           .timeout(const Duration(seconds: 10));
+      final savedSnapshot = await userRef
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 10));
+      debugPrint(
+        '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
+      );
+      final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
+      final savedCompleteness = savedData['profileCompleteness'];
+      final savedCompletenessValue = savedCompleteness is num
+          ? savedCompleteness.toDouble()
+          : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
+      if (savedData['profileCompleted'] != true ||
+          savedCompletenessValue <= 0) {
+        throw StateError(
+          'Relecture users/${user.uid} invalide: '
+          'profileCompleted=${savedData['profileCompleted']} '
+          'profileCompleteness=${savedData['profileCompleteness']}',
+        );
+      }
 
       // Mise à jour du displayName Firebase Auth
       if (pseudo.isNotEmpty) {
@@ -1362,15 +1362,19 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) {
         setState(() => _isEditingProfile = false);
         if (showSuccess) {
-          showSuccessSnackBar(context, "Profil mis à jour avec succès");
+          showSuccessSnackBar(context, "Profil enregistré");
         }
       }
       return true;
     } on FirebaseException catch (e) {
+      debugPrint(
+        '[ProfileSave] Firestore error path=users/${user.uid} code=${e.code} message=${e.message}',
+      );
       if (mounted) {
         String errorMsg = 'Erreur lors de la sauvegarde du profil';
         if (e.code == 'permission-denied') {
-          errorMsg = 'Vous n\'êtes pas autorisé à modifier ce profil';
+          errorMsg =
+              'Firestore a refusé l\'écriture users/${user.uid}: ${e.message ?? e.code}';
         } else if (e.code == 'unavailable') {
           errorMsg = 'Service indisponible. Réessayez dans un instant';
         } else if (e.code == 'deadline-exceeded') {
@@ -1382,6 +1386,7 @@ class _AccountPageState extends State<AccountPage> {
       }
       return false;
     } on TimeoutException {
+      debugPrint('[ProfileSave] Timeout path=users/${user.uid}');
       if (mounted) {
         showErrorSnackBar(
           context,
@@ -1390,8 +1395,10 @@ class _AccountPageState extends State<AccountPage> {
       }
       return false;
     } catch (e) {
+      debugPrint('[ProfileSave] Error path=users/${user.uid}: $e');
       if (mounted) {
-        showErrorSnackBar(context, 'Erreur lors de la sauvegarde du profil');
+        showErrorSnackBar(
+            context, 'Erreur lors de la sauvegarde du profil: $e');
       }
       return false;
     } finally {
@@ -1432,6 +1439,11 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _applyDraftFavorites(User user) async {
     final draft = _draftFavoriteSelections.toSet();
+    final previousFavoriteCategories = _favoriteCategories.toSet();
+    final previousSelectedFavoriteCategories =
+        _selectedFavoriteCategories.toSet();
+    final previousSelectedFavoriteSubcategories =
+        _selectedFavoriteSubcategories.toSet();
 
     final selectedCats = draft.where((e) => !e.contains('—')).toSet();
     final selectedSubcats = draft.where((e) => e.contains('—')).toSet();
@@ -1446,6 +1458,12 @@ class _AccountPageState extends State<AccountPage> {
     if (!mounted) return;
     if (ok) {
       showSuccessSnackBar(context, 'Alertes enregistrées');
+    } else {
+      setState(() {
+        _favoriteCategories = previousFavoriteCategories;
+        _selectedFavoriteCategories = previousSelectedFavoriteCategories;
+        _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
+      });
     }
   }
 
@@ -2076,8 +2094,8 @@ class _AccountPageState extends State<AccountPage> {
                           return;
                         setState(() => _profilePhoneCountryCode = code);
                       },
-                      onSave: () {
-                        _saveProfile(user);
+                      onSave: () async {
+                        await _saveProfile(user);
                       },
                     ),
                     const SizedBox(height: 24),

@@ -19,6 +19,7 @@ import 'services/firebase_functions_region.dart';
 import 'services/google_auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/user_profile_bootstrap_service.dart';
+import 'services/user_profile_save_payload.dart';
 import 'services/app_route_parser.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
@@ -78,11 +79,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  static const String _profileSyncWarningMessage =
-      'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
-  static const String _signupProfileSyncWarningMessage =
-      'Compte créé, mais le profil n\'a pas pu être synchronisé. Vérifie ton e-mail puis réessaie.';
-
   AuthMode _authMode = AuthMode.login;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -184,10 +180,10 @@ class _ProfilePageState extends State<ProfilePage> {
               authMethod: 'session_restore',
             );
           } catch (e) {
-            debugPrint('[AuthBootstrap] session restore failed: $e');
-            if (mounted) {
-              showErrorSnackBar(context, _profileSyncWarningMessage);
-            }
+            debugPrint(
+              '[AuthBootstrap] session restore failed '
+              'uid=${user.uid} path=users/${user.uid} error=$e',
+            );
           }
           try {
             await EmailActionService.syncCurrentUserEmailVerificationState();
@@ -265,10 +261,12 @@ class _ProfilePageState extends State<ProfilePage> {
         } catch (_) {}
         if (!mounted) return;
         if (bootstrapFailed) {
-          showErrorSnackBar(context, _profileSyncWarningMessage);
-        } else {
-          showSuccessSnackBar(context, 'Connecté avec $providerLabel');
+          debugPrint(
+            '[ProfilePage/OAuthRedirect] auth sync failed but user is connected '
+            'uid=${result.user!.uid}',
+          );
         }
+        showSuccessSnackBar(context, 'Connecté avec $providerLabel');
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -370,11 +368,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
+      await user.getIdToken(true).timeout(const Duration(seconds: 12));
     } catch (error) {
       debugPrint('[ProfilePage] Profile stream auth preflight failed: $error');
     }
@@ -445,6 +439,7 @@ class _ProfilePageState extends State<ProfilePage> {
         );
     final profileCity = [
       profileData['city'],
+      profileData['ville'],
       profileData['location'],
     ].map((value) => value?.toString().trim() ?? '').firstWhere(
           (value) => value.isNotEmpty,
@@ -459,6 +454,7 @@ class _ProfilePageState extends State<ProfilePage> {
         );
     final profilePhone = [
       profileData['phone'],
+      profileData['telephone'],
       profileData['phoneNumber'],
       profileData['phone_number'],
     ].map((value) => value?.toString().trim() ?? '').firstWhere(
@@ -810,7 +806,8 @@ class _ProfilePageState extends State<ProfilePage> {
         }
         if (!mounted) return;
         if (bootstrapFailed) {
-          showErrorSnackBar(context, _profileSyncWarningMessage);
+          debugPrint(
+              '[AuthBootstrap] email login auth sync failed; user connected');
         } else {
           showSuccessSnackBar(context, 'Connexion reussie');
         }
@@ -843,7 +840,8 @@ class _ProfilePageState extends State<ProfilePage> {
         }
         if (!mounted) return;
         if (bootstrapFailed) {
-          showErrorSnackBar(context, _signupProfileSyncWarningMessage);
+          debugPrint(
+              '[AuthBootstrap] email signup auth sync failed; user connected');
         } else {
           showSuccessSnackBar(context, 'Compte cree. Verifiez votre e-mail.');
         }
@@ -870,11 +868,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _isLoading = true);
     try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
+      await user.getIdToken(true).timeout(const Duration(seconds: 12));
       final displayName = _nameCtrl.text.trim();
       final normalizedPhone =
           _normalizePhoneForSave(_phoneCountryCode, _phoneCtrl.text.trim());
@@ -886,90 +880,104 @@ class _ProfilePageState extends State<ProfilePage> {
           .where((entry) => entry.isNotEmpty)
           .toSet()
           .toList(growable: false);
+      final profileData = UserProfileSavePayload.build(
+        uid: user.uid,
+        email: _emailCtrl.text.trim().isNotEmpty
+            ? _emailCtrl.text.trim()
+            : user.email,
+        displayName: displayName,
+        accountType: _accountType,
+        phone: normalizedPhone,
+        city: _cityCtrl.text.trim(),
+        selectedFavoriteCategories: favoriteCategoryKeys,
+        selectedFavoriteSubcategories: favoriteSubcategories,
+      );
+
+      final userRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      debugPrint(
+          '[ProfileSave] write path=users/${user.uid} payload=$profileData');
+      await userRef.set(profileData, SetOptions(merge: true));
+      final savedSnapshot =
+          await userRef.get(const GetOptions(source: Source.server));
+      debugPrint(
+        '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
+      );
+      final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
+      final savedCompleteness = savedData['profileCompleteness'];
+      final savedCompletenessValue = savedCompleteness is num
+          ? savedCompleteness.toDouble()
+          : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
+      if (savedData['profileCompleted'] != true ||
+          savedCompletenessValue <= 0) {
+        throw StateError(
+          'Relecture users/${user.uid} invalide: '
+          'profileCompleted=${savedData['profileCompleted']} '
+          'profileCompleteness=${savedData['profileCompleteness']}',
+        );
+      }
+
       if (displayName.isNotEmpty) {
         await user.updateDisplayName(displayName);
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'pseudo': displayName,
-        'displayName': displayName,
-        'city': _cityCtrl.text.trim(),
-        'postalCode': _cpCtrl.text.trim(),
-        'phone': normalizedPhone,
-        'phoneNumber': normalizedPhone,
-        'phone_number': normalizedPhone,
-        'phoneCountryCode': _phoneCountryCode,
-        'email': _emailCtrl.text.trim(),
-        'accountType': _accountType,
-        'favoriteCategories': favoriteCategoryKeys,
-        'selectedFavoriteCategories': favoriteCategoryKeys,
-        'selectedFavoriteSubcategories': favoriteSubcategories,
-        'favoriteCategoryMap': _favoriteCategories.map(
-          (key, value) => MapEntry(
-            key,
-            value.toSet().toList(growable: false),
-          ),
-        ),
-        'preferences': {
-          'notifNearby': _savedSearchEmailMode != 'off',
-          'notifFavorites': _notifFavorites,
-          'notifAcceptOffer': _notifAcceptOffer,
-          'notifSystem': _notifSystem,
-          'savedSearchMode': _savedSearchEmailMode,
-          'messagingMode': _messagingEmailMode,
-          'listingMode': _listingEmailMode,
-          'marketingEmailsEnabled': _marketingEmailsEnabled,
-          'quietHoursEnabled': _quietHoursEnabled,
-          'timezone': _timezone,
-          'language': _language,
-          'theme': _theme,
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
       _dirtyProfileFields.clear();
 
-      await FirebaseFirestore.instance
-          .collection('notification_preferences')
-          .doc(user.uid)
-          .set({
-        'user_id': user.uid,
-        'locale': _language == 'Anglais'
-            ? 'en'
-            : _language == 'Créole'
-                ? 'cr'
-                : 'fr',
-        'timezone': _timezone,
-        'quiet_hours': {
-          'enabled': _quietHoursEnabled,
-          'start_local': _quietHoursStart,
-          'end_local': _quietHoursEnd,
-        },
-        'email': {
-          'account': {'enabled': true},
-          'messaging': {'mode': _messagingEmailMode},
-          'listings': {'mode': _listingEmailMode},
-          'saved_searches': {'mode': _savedSearchEmailMode},
-          'favorites': {'enabled': _notifFavorites},
-          'support': {'enabled': _notifSystem},
-          'marketing': {
-            'enabled': _marketingEmailsEnabled,
-            'frequency_cap_per_week': 2,
+      try {
+        await FirebaseFirestore.instance
+            .collection('notification_preferences')
+            .doc(user.uid)
+            .set({
+          'user_id': user.uid,
+          'locale': _language == 'Anglais'
+              ? 'en'
+              : _language == 'Créole'
+                  ? 'cr'
+                  : 'fr',
+          'timezone': _timezone,
+          'quiet_hours': {
+            'enabled': _quietHoursEnabled,
+            'start_local': _quietHoursStart,
+            'end_local': _quietHoursEnd,
           },
-        },
-        'push': {
-          'messaging': {'enabled': _notifAcceptOffer},
-          'listings': {'enabled': _listingEmailMode != 'off'},
-          'saved_searches': {'enabled': _savedSearchEmailMode != 'off'},
-          'favorites': {'enabled': _notifFavorites},
-          'support': {'enabled': _notifSystem},
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+          'email': {
+            'account': {'enabled': true},
+            'messaging': {'mode': _messagingEmailMode},
+            'listings': {'mode': _listingEmailMode},
+            'saved_searches': {'mode': _savedSearchEmailMode},
+            'favorites': {'enabled': _notifFavorites},
+            'support': {'enabled': _notifSystem},
+            'marketing': {
+              'enabled': _marketingEmailsEnabled,
+              'frequency_cap_per_week': 2,
+            },
+          },
+          'push': {
+            'messaging': {'enabled': _notifAcceptOffer},
+            'listings': {'enabled': _listingEmailMode != 'off'},
+            'saved_searches': {'enabled': _savedSearchEmailMode != 'off'},
+            'favorites': {'enabled': _notifFavorites},
+            'support': {'enabled': _notifSystem},
+          },
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('[ProfileSave] notification preferences sync failed: $e');
+      }
 
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Profil mis à jour.');
+      showSuccessSnackBar(context, 'Profil enregistré');
+    } on FirebaseException catch (e) {
+      debugPrint(
+        '[ProfileSave] Firestore error path=users/${user.uid} code=${e.code} message=${e.message}',
+      );
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Impossible d\'enregistrer users/${user.uid}: ${e.message ?? e.code}',
+      );
     } catch (e) {
+      debugPrint('[ProfileSave] Error path=users/${user.uid}: $e');
       if (!mounted) return;
       showErrorSnackBar(context, 'Impossible d\'enregistrer le profil: $e');
     } finally {

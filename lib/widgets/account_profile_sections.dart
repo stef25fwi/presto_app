@@ -13,7 +13,7 @@ class AccountProfileFormSection extends StatefulWidget {
   final bool isEditing;
   final bool isSaving;
   final VoidCallback onStartEditing;
-  final VoidCallback onSave;
+  final Future<void> Function() onSave;
   final ValueChanged<String> onPhoneCountryCodeChanged;
 
   const AccountProfileFormSection({
@@ -46,8 +46,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
   }
 
   String? _extractPostalCodeFromCityValue(String value) {
-    final match =
-        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
+    final match = RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
     return match?.group(1);
   }
 
@@ -227,9 +226,9 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                   ),
                   onPressed: widget.isSaving
                       ? null
-                      : () {
+                      : () async {
                           if (widget.isEditing) {
-                            widget.onSave();
+                            await widget.onSave();
                           } else {
                             widget.onStartEditing();
                           }
