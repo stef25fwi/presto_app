@@ -140,6 +140,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Task Aliases",
+      "type": "shell",
+      "command": "git add .vscode/tasks.json && git commit -m \"chore(tasks): add build workflow aliases\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Commit UI Improvements",
       "type": "shell",
       "command": "git commit -m \"feat(ui): improve filters, profile, phone input and overlay theming\"",
@@ -349,6 +355,19 @@
       "problemMatcher": []
     },
     {
+      "label": "Add Commit Push Build",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Prompt",
+        "Git: Push Main"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "add colmit psuh build deploy",
       "dependsOrder": "sequence",
       "dependsOn": [
@@ -369,6 +388,22 @@
       "dependsOrder": "sequence",
       "dependsOn": [
         "Add Commit Push Build Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "add commti psuh build dpeloy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Add Commit Push Build Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "add commti psuh build",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Add Commit Push Build"
       ],
       "problemMatcher": []
     },
