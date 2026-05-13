@@ -135,10 +135,6 @@ service cloud.firestore {
         );
     }
 
-    function canReadConversation(data) {
-      return isAdmin() || hasParticipantAccess(data);
-    }
-
     function canReadNotification(data) {
       return isAdmin()
         || (isSignedIn()
@@ -537,8 +533,17 @@ service cloud.firestore {
 
     // ✅ [AUTORISÉ] Conversations et messages
     match /conversations/{conversationId} {
+      function isParticipantInConversationId() {
+        return isSignedIn()
+          && (
+            conversationId.matches('^offer_.+__' + uid() + '__.+$')
+            || conversationId.matches('^offer_.+__.+__' + uid() + '$')
+          );
+      }
+
       function isParticipantInConversationData(data) {
         return hasParticipantAccess(data)
+          || isParticipantInConversationId()
           || (isSignedIn()
             && (
               ((data.participantNames is map) && data.participantNames.keys().hasAny([uid()]))
@@ -560,9 +565,9 @@ service cloud.firestore {
           && isParticipantInConversationData(convData);
       }
 
-      allow get, list: if canReadConversation(resource.data);
+          allow get, list: if isAdmin() || isParticipantInConversationData(resource.data);
       allow create: if isSignedIn() && hasParticipantAccess(request.resource.data);
-      allow update: if canReadConversation(resource.data);
+          allow update: if isAdmin() || isParticipantInConversationData(resource.data);
       allow delete: if isAdminClaim();
 
       match /messages/{messageId} {

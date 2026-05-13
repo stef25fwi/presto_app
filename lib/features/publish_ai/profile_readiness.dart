@@ -80,6 +80,37 @@ class ProfileReadinessResult {
   }
 }
 
+class ProfileLocationResolution {
+  const ProfileLocationResolution({
+    required this.city,
+    required this.citySource,
+    required this.postalCode,
+    required this.postalCodeSource,
+  });
+
+  final String city;
+  final String? citySource;
+  final String postalCode;
+  final String? postalCodeSource;
+
+  String get blockReason {
+    if (city.isEmpty && postalCode.isEmpty) return 'missing city and postalCode';
+    if (city.isEmpty) return 'missing city';
+    if (postalCode.isEmpty) return 'missing postalCode';
+    return 'none';
+  }
+}
+
+class _ResolvedProfileField {
+  const _ResolvedProfileField({
+    required this.value,
+    required this.source,
+  });
+
+  final String value;
+  final String? source;
+}
+
 String _friendlyFieldLabel(String key) {
   switch (key) {
     case 'displayName':
@@ -159,12 +190,10 @@ class ProfileReadinessChecker {
     }
 
     final data = snap.data() ?? const <String, dynamic>{};
-    const profilePath = 'users';
-    final city = firstNonEmptyString(
-      data,
-      const ['city', 'ville', 'commune', 'locality'],
-    );
-    final postalCode = _resolvePostalCode(data, city);
+    final profilePath = 'users/${user.uid}';
+    final location = resolveLocation(data);
+    final city = location.city;
+    final postalCode = location.postalCode;
 
     final missing = <String>[];
     if (firstNonEmptyString(
@@ -185,8 +214,12 @@ class ProfileReadinessChecker {
     }
 
     debugPrint(
-      '[ProfileReadiness] profilePath=$profilePath/${user.uid} '
-      'keys=${data.keys.toList()..sort()} city="$city" postalCode="$postalCode" '
+      '[ProfileReadiness] profilePath=$profilePath '
+      'fieldsPresent=${data.keys.toList()..sort()} '
+      'resolvedCity="$city" citySource=${location.citySource ?? 'none'} '
+      'resolvedPostalCode="$postalCode" '
+      'postalCodeSource=${location.postalCodeSource ?? 'none'} '
+      'blockReason=${missing.isEmpty ? 'none' : location.blockReason} '
       'missing=${missing.isEmpty ? 'none' : missing.join(',')}',
     );
 
@@ -204,35 +237,78 @@ class ProfileReadinessChecker {
     Map<String, dynamic> data,
     List<String> aliases,
   ) {
+    return _firstNonEmptyStringWithSource(data, aliases).value;
+  }
+
+  static ProfileLocationResolution resolveLocation(Map<String, dynamic> data) {
+    final city = _firstNonEmptyStringWithSource(
+      data,
+      const ['city', 'ville', 'commune', 'locality'],
+    );
+    final postalCode = _resolvePostalCode(data, city.value);
+
+    return ProfileLocationResolution(
+      city: city.value,
+      citySource: city.source,
+      postalCode: postalCode.value,
+      postalCodeSource: postalCode.source,
+    );
+  }
+
+  static _ResolvedProfileField _firstNonEmptyStringWithSource(
+    Map<String, dynamic> data,
+    List<String> aliases,
+  ) {
     for (final key in aliases) {
       final raw = data[key];
       if (raw == null) continue;
       final value = raw.toString().trim();
-      if (value.isNotEmpty) return value;
+      if (value.isNotEmpty) {
+        return _ResolvedProfileField(value: value, source: key);
+      }
     }
-    return '';
+    return const _ResolvedProfileField(value: '', source: null);
   }
 
-  static String _resolvePostalCode(Map<String, dynamic> data, String city) {
-    final explicitPostalCode = firstNonEmptyString(
+  static _ResolvedProfileField _resolvePostalCode(
+    Map<String, dynamic> data,
+    String city,
+  ) {
+    final explicitPostalCode = _firstNonEmptyStringWithSource(
       data,
-      const ['postalCode', 'codePostal', 'zipCode', 'zipcode', 'cp'],
+      const [
+        'postalCode',
+        'codePostal',
+        'zipCode',
+        'zipcode',
+        'cp',
+        'postal_code',
+        'code_postal',
+      ],
     );
-    if (explicitPostalCode.isNotEmpty) return explicitPostalCode;
-    if (city.isEmpty) return '';
+    if (explicitPostalCode.value.isNotEmpty) return explicitPostalCode;
+    if (city.isEmpty) {
+      return const _ResolvedProfileField(value: '', source: null);
+    }
 
     final directPostalCode = kCityPostalMap[city];
     if (directPostalCode != null && directPostalCode.trim().isNotEmpty) {
-      return directPostalCode.trim();
+      return _ResolvedProfileField(
+        value: directPostalCode.trim(),
+        source: 'cityPostalMap[$city]',
+      );
     }
 
     final normalizedCity = _normalizeCity(city);
     for (final entry in kCityPostalMap.entries) {
       if (_normalizeCity(entry.key) == normalizedCity) {
-        return entry.value.trim();
+        return _ResolvedProfileField(
+          value: entry.value.trim(),
+          source: 'cityPostalMap[${entry.key}]',
+        );
       }
     }
-    return '';
+    return const _ResolvedProfileField(value: '', source: null);
   }
 
   static String _normalizeCity(String value) {
