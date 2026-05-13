@@ -10,7 +10,6 @@ import 'package:http/http.dart' as http;
 
 import '../models/admin_access_state.dart';
 import 'firebase_functions_region.dart';
-import 'user_profile_bootstrap_service.dart';
 
 class AdminAccessResolver {
   AdminAccessResolver({
@@ -55,7 +54,6 @@ class AdminAccessResolver {
       '[AdminResolver] started forceRefresh=$forceRefresh',
       stage: 'start',
     );
-    _diag('profileSync.started forceRefresh=$forceRefresh');
 
     var user = _auth.currentUser;
     if (user == null) {
@@ -148,7 +146,6 @@ class AdminAccessResolver {
         'token roles=$tokenRoles primaryRole=${tokenPrimaryRole ?? '-'} '
         'tokenHasAdmin=$tokenHasAdmin',
       );
-      _diag('profileSync.claimsLoaded tokenHasAdmin=$tokenHasAdmin roles=$tokenRoles');
     } catch (error) {
       _diag('token loading failed error=$error');
       state = _step(
@@ -198,31 +195,17 @@ class AdminAccessResolver {
       'adminDocLoaded=$adminDocLoaded '
       'adminDocHasAdmin=$adminDocHasAdmin',
     );
-    _diag(
-      'profileSync.adminDocLoaded accessible=$adminDocLoaded hasAdmin=$adminDocHasAdmin',
-    );
-    _diag(
-      'profileSync.firestoreProfileLoaded '
-      'exists=${userSnap?.exists == true} '
-      'profileHasAdmin=$profileHasAdmin',
-    );
 
     if (state.tokenHasAdmin && !state.profileHasAdmin && tokenResult != null) {
       state = _step(
         state,
-        '[AdminResolver][profileSync.mismatchWarning] token has admin but Firestore profile does not — '
-        'in-memory alignment will run; server callable is the final arbiter',
+        '[AdminResolver] mismatch token/profile detected',
         stage: 'profile-token-mismatch',
       );
       state = await syncUserRoleFromClaimsIfNeeded(
         resolvedUser,
         tokenResult,
         state: state,
-      );
-      _diag(
-        'profileSync.mismatchWarning resolved in-memory '
-        'profileHasAdmin=${state.profileHasAdmin} '
-        '— server verification will arbitrate',
       );
     }
 
@@ -303,40 +286,21 @@ class AdminAccessResolver {
       return state!;
     }
 
-    final normalizedProfilePatch =
-        UserProfileBootstrapService.normalizeUserProfileFromClaims(claims);
+    // Role / admin fields on users/{uid} are blacklisted for client writes by
+    // Firestore rules. The canonical role propagation now happens in the
+    // server-side trigger functions/src/modules/auth/role_claims_sync.ts
+    // (onUserRolesChanged): any admin write to users/{uid} via Admin SDK or
+    // Firebase Console is mirrored into custom claims, and getMyAdminAccessStatus
+    // trusts those claims. Attempting a client write here would silently fail
+    // with PERMISSION_DENIED, so we only record the in-memory evidence so the
+    // resolver finalize can prefer the token-only path.
     final normalizedRoles =
         tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
     final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
-
-    // Best-effort profile alignment: keep users/{uid} role flags coherent with
-    // custom claims using merge semantics, without touching user-owned fields.
-    if (normalizedProfilePatch != null) {
-      try {
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .set(normalizedProfilePatch, SetOptions(merge: true));
-        _diag(
-          'profileSync.firestoreProfileLoaded patchApplied=true '
-          'uid=${user.uid} roles=${normalizedProfilePatch['roles']}',
-        );
-      } on FirebaseException catch (error) {
-        _diag(
-          'profileSync.mismatchWarning profile-alignment skipped '
-          'uid=${user.uid} code=${error.code} message=${error.message}',
-        );
-      } catch (error) {
-        _diag(
-          'profileSync.mismatchWarning profile-alignment failed '
-          'uid=${user.uid} error=$error',
-        );
-      }
-    }
-
     debugPrint(
       '[AdminResolver] sync: token claims indicate admin for uid=${user.uid}; '
-      'client profile alignment attempted via merge-safe admin fields only.',
+      'client profile write skipped (server-side trigger onUserRolesChanged '
+      'owns the mirror).',
     );
     return _step(
       (state ?? AdminAccessState.initial()).copyWith(
@@ -421,7 +385,6 @@ class AdminAccessResolver {
           'code=ok body=$data',
         );
 
-        _diag('profileSync.serverConfirmed isAdmin=$isAdmin source=${serverSource ?? 'token'}');
         return _step(
           state.copyWith(
             serverCheckAttempted: true,
@@ -575,9 +538,6 @@ class AdminAccessResolver {
         _diag(
           'call http-fallback success isAdmin=$isAdmin source=$serverSource',
         );
-        _diag(
-          'profileSync.serverConfirmed isAdmin=$isAdmin source=${serverSource ?? 'http-fallback'}',
-        );
         return _step(
           state.copyWith(
             uid: user.uid,
@@ -662,9 +622,6 @@ class AdminAccessResolver {
       _diag(
         'call retry success function=$_adminAccessCallableName '
         'code=ok body=$data',
-      );
-      _diag(
-        'profileSync.serverConfirmed isAdmin=$isAdmin source=${serverSource ?? 'retry'}',
       );
       return _step(
         state.copyWith(
@@ -801,12 +758,6 @@ class AdminAccessResolver {
       'reason=$reason',
     );
     debugPrint('[AdminResolver] finished');
-    _diag(
-      'profileSync.finished '
-      'effectiveIsAdmin=$effectiveIsAdmin '
-      'sourceOfTruth=$sourceOfTruth '
-      'reason=$reason',
-    );
     return finalized;
   }
 

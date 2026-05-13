@@ -85,51 +85,6 @@ class UserProfileBootstrapService {
     return _genericProfileSyncWarningMessage;
   }
 
-  /// Builds a Firestore-safe update payload that aligns a user's profile
-  /// document with the admin [claims] from their ID token.
-  ///
-  /// Only writes non-protected fields that the client is authorised to update:
-  /// roles, primaryRole, isAdmin, admin, updatedAt.
-  /// Never overwrites displayName, photoURL, phone, city, address, preferences.
-  ///
-  /// Returns `null` when [claims] do not include any admin evidence, so the
-  /// caller can skip the Firestore write entirely.
-  static Map<String, dynamic>? normalizeUserProfileFromClaims(
-    Map<String, dynamic> claims,
-  ) {
-    final dynamic rawRoles = claims['roles'];
-    final List<String> roles;
-    if (rawRoles is Iterable) {
-      roles = rawRoles.map((e) => e.toString()).toList();
-    } else if (rawRoles is String && rawRoles.isNotEmpty) {
-      roles = rawRoles.split(RegExp(r'[,\s]+')).toList();
-    } else {
-      roles = const <String>[];
-    }
-    final bool hasAdmin =
-        roles.contains('admin') || roles.contains('superadmin');
-    final bool hasSuperadmin = roles.contains('superadmin');
-    if (!hasAdmin) {
-      return null;
-    }
-    final String primaryRole = hasSuperadmin
-        ? 'superadmin'
-        : (claims['primaryRole']?.toString().trim().isNotEmpty == true
-            ? claims['primaryRole'].toString().trim()
-            : 'admin');
-    debugPrint(
-      '[profileSync] normalizeUserProfileFromClaims '
-      'roles=$roles primaryRole=$primaryRole hasAdmin=$hasAdmin',
-    );
-    return <String, dynamic>{
-      'roles': roles,
-      'primaryRole': primaryRole,
-      'isAdmin': true,
-      'admin': true,
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-  }
-
   static Future<User?> prepareProfileFirestoreAccess({
     User? user,
     bool forceRefreshToken = false,
