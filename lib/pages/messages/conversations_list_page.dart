@@ -54,6 +54,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   _ConversationListFilter _activeFilter = _ConversationListFilter.all;
   Stream<_ConversationQueryState>? _conversationStateStream;
   String? _conversationStateUserId;
+  bool? _conversationStateAdminMode;
   String? _adminStatusUid;
   bool _isAdminViewer = false;
 
@@ -62,14 +63,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     final now = DateTime.now();
     String two(int v) => v.toString().padLeft(2, '0');
-    final stamp =
-        '${two(now.hour)}:${two(now.minute)}:${two(now.second)}';
+    final stamp = '${two(now.hour)}:${two(now.minute)}:${two(now.second)}';
     final line = '[$stamp] $message';
 
     setState(() {
       _adminConversationLoadLogs.insert(0, line);
       if (_adminConversationLoadLogs.length > 12) {
-        _adminConversationLoadLogs.removeRange(12, _adminConversationLoadLogs.length);
+        _adminConversationLoadLogs.removeRange(
+            12, _adminConversationLoadLogs.length);
       }
     });
   }
@@ -79,17 +80,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     _adminStatusUid = user.uid;
 
     bool isAdmin = false;
+    var adminSource = 'none';
+    var detectedClaims = const <String, dynamic>{};
     try {
       final tokenResult = await user.getIdTokenResult(true);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
-      final claimRoles = (claims['roles'] as List<dynamic>? ?? const <dynamic>[])
-          .map((role) => role.toString().trim().toLowerCase())
-          .where((role) => role.isNotEmpty)
-          .toSet();
-      isAdmin = claimRoles.contains('admin') ||
-          claimRoles.contains('superadmin') ||
-          claims['admin'] == true ||
-          claims['superadmin'] == true;
+      detectedClaims = claims;
+      isAdmin = _hasAdminAccess(claims);
+      if (isAdmin) {
+        adminSource = 'claims';
+      }
 
       if (!isAdmin) {
         final userDoc = await FirebaseFirestore.instance
@@ -97,34 +97,85 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             .doc(user.uid)
             .get();
         final data = userDoc.data() ?? const <String, dynamic>{};
-        final docRoles = (data['roles'] as List<dynamic>? ?? const <dynamic>[])
-            .map((role) => role.toString().trim().toLowerCase())
-            .where((role) => role.isNotEmpty)
-            .toSet();
-        final primaryRole =
-            (data['primaryRole'] ?? '').toString().trim().toLowerCase();
-        isAdmin = docRoles.contains('admin') ||
-            docRoles.contains('superadmin') ||
-            primaryRole == 'admin' ||
-            primaryRole == 'superadmin' ||
-            data['admin'] == true ||
-            data['superadmin'] == true;
+        isAdmin = _hasAdminAccess(data);
+        if (isAdmin) {
+          adminSource = 'users/${user.uid}';
+        }
       }
-    } catch (_) {
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+            '[MessagesList] admin status check failed uid=${user.uid} error=$error');
+      }
       isAdmin = false;
     }
 
     if (!mounted) return;
     setState(() {
+      final adminModeChanged = _isAdminViewer != isAdmin;
       _isAdminViewer = isAdmin;
+      if (adminModeChanged) {
+        _conversationStateStream = null;
+        _conversationStateAdminMode = null;
+      }
       if (!isAdmin) {
         _adminConversationLoadLogs.clear();
       } else if (_adminConversationLoadLogs.isEmpty) {
         _adminConversationLoadLogs.add(
-          '[init] Journal admin actif pour le chargement des conversations.',
+          '[init] Journal admin actif source=$adminSource uid=${user.uid}.',
         );
       }
     });
+    if (kDebugMode) {
+      debugPrint(
+        '[MessagesList] adminViewer uid=${user.uid} isAdmin=$isAdmin '
+        'source=$adminSource claimsKeys=${detectedClaims.keys.toList()..sort()}',
+      );
+    }
+  }
+
+  bool _hasAdminAccess(Map<String, dynamic> data) {
+    final roles = _rolesFromValue(data['roles']);
+    final role = _firstNormalizedText(data, const [
+      'primaryRole',
+      'role',
+      'adminRole',
+    ]);
+    return roles.contains('admin') ||
+        roles.contains('superadmin') ||
+        role == 'admin' ||
+        role == 'superadmin' ||
+        data['admin'] == true ||
+        data['isAdmin'] == true ||
+        data['superadmin'] == true ||
+        data['superAdmin'] == true;
+  }
+
+  Set<String> _rolesFromValue(dynamic value) {
+    final Iterable<dynamic> rawValues;
+    if (value is String) {
+      rawValues = value.split(RegExp(r'[,\s]+'));
+    } else if (value is Iterable) {
+      rawValues = value;
+    } else if (value is Map) {
+      rawValues = value.entries
+          .where((entry) => entry.value == true)
+          .map((entry) => entry.key);
+    } else {
+      return const <String>{};
+    }
+    return rawValues
+        .map((entry) => entry.toString().trim().toLowerCase())
+        .where((entry) => entry.isNotEmpty)
+        .toSet();
+  }
+
+  String? _firstNormalizedText(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = (data[key] ?? '').toString().trim().toLowerCase();
+      if (value.isNotEmpty) return value;
+    }
+    return null;
   }
 
   bool _isNonRetryableConversationSourceError(Object error) {
@@ -313,6 +364,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         <String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>{};
     final retryTimersByField = <String, Timer>{};
     const notificationsFallbackSource = '__notifications__';
+    const adminGlobalSource = '__admin_global__';
     const startedMessageFallbackSourcePrefix = '__started_messages__:';
     const sentMessageFieldAliases = <String>['senderId', 'sender_id'];
     const notificationsFallbackLiveLimit = 60;
@@ -348,6 +400,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     late void Function(String participantField) scheduleRetry;
     late void Function(String participantField) listenField;
+    late void Function() listenAdminGlobal;
     late void Function() listenNotifications;
     late void Function(String senderField) listenStartedMessagesField;
 
@@ -431,8 +484,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         if (controller.isClosed) return;
 
         docsByField[source] = snapshots
-          .whereType<DocumentSnapshot<Map<String, dynamic>>>()
-          .where((snapshot) => snapshot.exists)
+            .whereType<DocumentSnapshot<Map<String, dynamic>>>()
+            .where((snapshot) => snapshot.exists)
             .map((snapshot) {
               final data = snapshot.data();
               if (data == null) return null;
@@ -504,7 +557,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     listenField = (String participantField) {
-      _appendAdminConversationLog('Abonnement source participants: $participantField');
+      _appendAdminConversationLog(
+          'Abonnement source participants: $participantField');
       subscriptionsByField.remove(participantField)?.cancel();
       final query = FirebaseFirestore.instance
           .collection('conversations')
@@ -555,6 +609,60 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         },
       );
       subscriptionsByField[participantField] = subscription;
+    };
+
+    listenAdminGlobal = () {
+      _appendAdminConversationLog(
+        'Abonnement source admin globale: conversations.updatedAt limit=50',
+      );
+      subscriptionsByField.remove(adminGlobalSource)?.cancel();
+      final subscription = FirebaseFirestore.instance
+          .collection('conversations')
+          .orderBy('updatedAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .listen(
+        (snapshot) {
+          docsByField[adminGlobalSource] = snapshot.docs
+              .map(ConversationSummary.fromFirestore)
+              .toList(growable: false);
+          errorsByField.remove(adminGlobalSource);
+          retryCountsByField[adminGlobalSource] = 0;
+          retryTimersByField.remove(adminGlobalSource)?.cancel();
+          _appendAdminConversationLog(
+            'Source admin globale -> ${snapshot.docs.length} conversation(s)',
+          );
+          if (kDebugMode) {
+            debugPrint(
+              '[MessagesList] admin global conversations docs=${snapshot.docs.length} user=$userId',
+            );
+          }
+          emit();
+        },
+        onError: (error, stackTrace) {
+          errorsByField[adminGlobalSource] = error;
+          _appendAdminConversationLog('Erreur source admin globale: $error');
+          if (kDebugMode) {
+            debugPrint(
+              '[MessagesList] admin global conversations error user=$userId error=$error',
+            );
+          }
+          if (_isNonRetryableConversationSourceError(error)) {
+            docsByField[adminGlobalSource] = const <ConversationSummary>[];
+            errorsByField.remove(adminGlobalSource);
+            retryCountsByField[adminGlobalSource] = 0;
+            retryTimersByField.remove(adminGlobalSource)?.cancel();
+            _appendAdminConversationLog(
+              'Source admin globale desactivee: erreur non recuperable',
+            );
+            emit();
+            return;
+          }
+          emit();
+          scheduleRetry(adminGlobalSource);
+        },
+      );
+      subscriptionsByField[adminGlobalSource] = subscription;
     };
 
     listenNotifications = () {
@@ -693,6 +801,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       retryTimersByField[participantField] = Timer(delay, () {
         retryTimersByField.remove(participantField);
         if (controller.isClosed) return;
+        if (participantField == adminGlobalSource) {
+          listenAdminGlobal();
+          return;
+        }
         if (participantField == notificationsFallbackSource) {
           listenNotifications();
           return;
@@ -711,13 +823,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     for (final participantField in conversationParticipantQueryFieldAliases) {
       listenField(participantField);
     }
+    if (_isAdminViewer) {
+      listenAdminGlobal();
+    }
     listenNotifications();
     for (final senderField in sentMessageFieldAliases) {
       listenStartedMessagesField(senderField);
     }
 
     controller.onCancel = () async {
-      _appendAdminConversationLog('Arret du flux de chargement des conversations');
+      _appendAdminConversationLog(
+          'Arret du flux de chargement des conversations');
       for (final timer in retryTimersByField.values) {
         timer.cancel();
       }
@@ -786,11 +902,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Stream<_ConversationQueryState> _conversationStateForUser(String userId) {
     if (_conversationStateUserId == userId &&
+        _conversationStateAdminMode == _isAdminViewer &&
         _conversationStateStream != null) {
       return _conversationStateStream!;
     }
 
     _conversationStateUserId = userId;
+    _conversationStateAdminMode = _isAdminViewer;
     _conversationStateStream = _buildConversationStateStream(userId);
     return _conversationStateStream!;
   }
@@ -1354,11 +1472,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                 '[MessagesList] orphan conversation ignored id=${conversation.id} user=$userId participants=${conversation.participants}',
                               );
                             }
-                            return false;
+                            return _isAdminViewer;
                           }
 
                           if (!conversation.hasRenderableContent) {
-                              return false;
+                            return false;
                           }
 
                           switch (_activeFilter) {
@@ -1389,7 +1507,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           _ConversationListFilter.archived
                                       ? 'Aucune conversation archivee.'
                                       : orphanCount > 0
-                                        ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
+                                          ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
                                           : 'Aucune conversation pour le moment.';
 
                           return Column(

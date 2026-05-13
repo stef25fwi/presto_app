@@ -1972,8 +1972,18 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     });
 
     try {
-      final accessState = await _adminAccessResolver.resolveAdminAccess(
+      final accessState = await _adminAccessResolver
+          .resolveAdminAccess(
         forceRefresh: true,
+        returnOnLocalAdminEvidence: true,
+      )
+          .timeout(
+        const Duration(seconds: 6),
+        onTimeout: () {
+          throw TimeoutException(
+            'admin verification timed out after 6 seconds',
+          );
+        },
       );
       if (!mounted) return;
       setState(() {
@@ -1991,6 +2001,14 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     : 'unauthenticated: no current user',
               );
       });
+      debugPrint(
+        '[AdminSpace] adminCheckComplete=true uid=${accessState.uid ?? '-'} '
+        'isAdmin=${accessState.effectiveIsAdmin} '
+        'source=${accessState.sourceOfTruth} '
+        'tokenAdmin=${accessState.tokenHasAdmin} '
+        'profileAdmin=${accessState.profileHasAdmin} '
+        'loading=false',
+      );
 
       if (!accessState.effectiveIsAdmin) {
         return;
@@ -2030,6 +2048,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       }
     } catch (error) {
       if (!mounted) return;
+      debugPrint(
+          '[AdminSpace] adminCheckComplete=true isAdmin=false error=$error');
       setState(() {
         _adminAccessGranted = false;
         _adminStatusError = error;

@@ -22,6 +22,10 @@ service cloud.firestore {
         || hasEnabledAdminUserDoc();
     }
 
+    function isAdminClaim() {
+      return hasAdminClaim();
+    }
+
     function hasAdminClaim() {
       return isSignedIn()
         && (
@@ -31,8 +35,12 @@ service cloud.firestore {
           || request.auth.token.role == 'superadmin'
           || request.auth.token.primaryRole == 'admin'
           || request.auth.token.primaryRole == 'superadmin'
+          || request.auth.token.adminRole == 'admin'
+          || request.auth.token.adminRole == 'superadmin'
           || request.auth.token.admin == true
+          || request.auth.token.isAdmin == true
           || request.auth.token.superadmin == true
+          || request.auth.token.superAdmin == true
         );
     }
 
@@ -42,12 +50,20 @@ service cloud.firestore {
         && (
           ((get(/databases/$(database)/documents/users/$(uid())).data.roles is list)
             && get(/databases/$(database)/documents/users/$(uid())).data.roles.hasAny(['admin', 'superadmin']))
+          || ((get(/databases/$(database)/documents/users/$(uid())).data.roles is map)
+            && (get(/databases/$(database)/documents/users/$(uid())).data.roles.admin == true
+              || get(/databases/$(database)/documents/users/$(uid())).data.roles.superadmin == true
+              || get(/databases/$(database)/documents/users/$(uid())).data.roles.superAdmin == true))
           || get(/databases/$(database)/documents/users/$(uid())).data.role == 'admin'
           || get(/databases/$(database)/documents/users/$(uid())).data.role == 'superadmin'
           || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == 'admin'
           || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == 'superadmin'
+          || get(/databases/$(database)/documents/users/$(uid())).data.adminRole == 'admin'
+          || get(/databases/$(database)/documents/users/$(uid())).data.adminRole == 'superadmin'
           || get(/databases/$(database)/documents/users/$(uid())).data.admin == true
+          || get(/databases/$(database)/documents/users/$(uid())).data.isAdmin == true
           || get(/databases/$(database)/documents/users/$(uid())).data.superadmin == true
+          || get(/databases/$(database)/documents/users/$(uid())).data.superAdmin == true
         );
     }
 
@@ -79,12 +95,61 @@ service cloud.firestore {
         && (
           ((get(/databases/$(database)/documents/users/$(uid())).data.roles is list)
             && get(/databases/$(database)/documents/users/$(uid())).data.roles.hasAny([role]))
+          || ((get(/databases/$(database)/documents/users/$(uid())).data.roles is map)
+            && get(/databases/$(database)/documents/users/$(uid())).data.roles[role] == true)
           || get(/databases/$(database)/documents/users/$(uid())).data.role == role
           || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == role
           || (role == 'moderator' && get(/databases/$(database)/documents/users/$(uid())).data.moderator == true)
           || (role == 'admin' && get(/databases/$(database)/documents/users/$(uid())).data.admin == true)
           || (role == 'superadmin' && get(/databases/$(database)/documents/users/$(uid())).data.superadmin == true)
         );
+    }
+
+    function hasParticipantAccess(data) {
+      return isSignedIn()
+        && (
+          data.userId == uid()
+          || data.uid == uid()
+          || data.ownerId == uid()
+          || data.createdBy == uid()
+          || data.senderId == uid()
+          || data.sender_id == uid()
+          || data.recipientId == uid()
+          || data.recipient_id == uid()
+          || data.receiverId == uid()
+          || data.receiver_id == uid()
+          || data.buyerId == uid()
+          || data.buyer_id == uid()
+          || data.sellerId == uid()
+          || data.seller_id == uid()
+          || data.clientId == uid()
+          || data.client_id == uid()
+          || data.providerId == uid()
+          || data.provider_id == uid()
+          || ((data.participants is list) && data.participants.hasAny([uid()]))
+          || ((data.participant_ids is list) && data.participant_ids.hasAny([uid()]))
+          || ((data.participantIds is list) && data.participantIds.hasAny([uid()]))
+          || ((data.memberIds is list) && data.memberIds.hasAny([uid()]))
+          || ((data.users is list) && data.users.hasAny([uid()]))
+          || ((data.userIds is list) && data.userIds.hasAny([uid()]))
+        );
+    }
+
+    function canReadConversation(data) {
+      return isAdmin() || hasParticipantAccess(data);
+    }
+
+    function canReadNotification(data) {
+      return isAdmin()
+        || (isSignedIn()
+          && (
+            data.userId == uid()
+            || data.uid == uid()
+            || data.recipientId == uid()
+            || data.receiverId == uid()
+            || data.toUid == uid()
+            || data.ownerId == uid()
+          ));
     }
 
     function isMarketplaceModerator() {
@@ -172,6 +237,12 @@ service cloud.firestore {
     // ⛔ [REFUSÉ] Configuration admins — server-only (Functions)
     match /admins/{adminId} {
       allow read, write: if false;
+    }
+
+    match /adminUsers/{adminId} {
+      allow get: if isSignedIn() && (uid() == adminId || isAdminClaim());
+      allow list: if isAdminClaim();
+      allow create, update, delete: if isAdminClaim();
     }
 
     // ✅ [AUTORISÉ] Users — chaque utilisateur gère son doc
@@ -403,8 +474,7 @@ service cloud.firestore {
 
     // ✅ [AUTORISÉ] Notifications globales
     match /notifications/{notifId} {
-      // ℹ️ [INFO] Lecture uniquement par le propriétaire
-      allow read: if hasAppCheck() && isSignedIn() && resource.data.userId == uid();
+      allow get, list: if canReadNotification(resource.data);
 
       // 🔒 [SÉCURITÉ] Le client ne peut modifier que le champ 'read'
       allow update: if isSignedIn()
@@ -468,24 +538,16 @@ service cloud.firestore {
     // ✅ [AUTORISÉ] Conversations et messages
     match /conversations/{conversationId} {
       function isParticipantInConversationData(data) {
-        return isSignedIn()
-          && (
-            ((data.participants is list) && data.participants.hasAny([uid()]))
-            || ((data.participant_ids is list) && data.participant_ids.hasAny([uid()]))
-            || ((data.participantIds is list) && data.participantIds.hasAny([uid()]))
-            || ((data.userIds is list) && data.userIds.hasAny([uid()]))
-            || ((data.memberIds is list) && data.memberIds.hasAny([uid()]))
-            || ((data.participantNames is map) && data.participantNames.keys().hasAny([uid()]))
-            || ((data.participant_names is map) && data.participant_names.keys().hasAny([uid()]))
-            || ((data.unreadCount is map) && data.unreadCount.keys().hasAny([uid()]))
-            || ((data.unread_count is map) && data.unread_count.keys().hasAny([uid()]))
-            || ((data.lastReadAt is map) && data.lastReadAt.keys().hasAny([uid()]))
-            || ((data.last_read_at is map) && data.last_read_at.keys().hasAny([uid()]))
-          );
-      }
-
-      function isParticipant() {
-        return isParticipantInConversationData(resource.data);
+        return hasParticipantAccess(data)
+          || (isSignedIn()
+            && (
+              ((data.participantNames is map) && data.participantNames.keys().hasAny([uid()]))
+              || ((data.participant_names is map) && data.participant_names.keys().hasAny([uid()]))
+              || ((data.unreadCount is map) && data.unreadCount.keys().hasAny([uid()]))
+              || ((data.unread_count is map) && data.unread_count.keys().hasAny([uid()]))
+              || ((data.lastReadAt is map) && data.lastReadAt.keys().hasAny([uid()]))
+              || ((data.last_read_at is map) && data.last_read_at.keys().hasAny([uid()]))
+            ));
       }
 
       function parentConversationExists() {
@@ -498,14 +560,25 @@ service cloud.firestore {
           && isParticipantInConversationData(convData);
       }
 
-      allow read: if hasAppCheck() && (isAdmin() || isParticipant());
-
-      allow create, update, delete: if false;
+      allow get, list: if canReadConversation(resource.data);
+      allow create: if isSignedIn() && hasParticipantAccess(request.resource.data);
+      allow update: if canReadConversation(resource.data);
+      allow delete: if isAdminClaim();
 
       match /messages/{messageId} {
-        allow read: if hasAppCheck() && (isAdmin() || isParentConversationParticipant());
-        allow create, update, delete: if false;
+        allow get, list: if isAdmin()
+          || isParentConversationParticipant()
+          || hasParticipantAccess(resource.data);
+        allow create: if isSignedIn()
+          && (isAdminClaim() || isParentConversationParticipant());
+        allow update, delete: if isAdminClaim();
       }
+    }
+
+    match /{path=**}/messages/{messageId} {
+      allow get, list: if isAdmin() || hasParticipantAccess(resource.data);
+      allow create: if isSignedIn() && hasParticipantAccess(request.resource.data);
+      allow update, delete: if isAdminClaim();
     }
 
     // ℹ️ [INFO] Debug MicroIA — écriture utilisateur, lecture refusée
