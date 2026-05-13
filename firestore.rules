@@ -498,13 +498,12 @@ service cloud.firestore {
           && isParticipantInConversationData(convData);
       }
 
-      allow get, list: if isAdmin() || (hasAppCheck() && isParticipant());
+      allow read: if hasAppCheck() && (isAdmin() || isParticipant());
 
       allow create, update, delete: if false;
 
       match /messages/{messageId} {
-        allow get, list: if isAdmin()
-          || (hasAppCheck() && isParentConversationParticipant());
+        allow read: if hasAppCheck() && (isAdmin() || isParentConversationParticipant());
         allow create, update, delete: if false;
       }
     }
