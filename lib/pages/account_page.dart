@@ -1306,7 +1306,6 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSavingProfile = true);
     try {
-      await user.getIdToken(true).timeout(const Duration(seconds: 12));
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
       final phone = _profilePhoneController.text.trim();
@@ -1331,23 +1330,33 @@ class _AccountPageState extends State<AccountPage> {
       await userRef
           .set(profileData, SetOptions(merge: true))
           .timeout(const Duration(seconds: 10));
-      final savedSnapshot = await userRef
-          .get(const GetOptions(source: Source.server))
-          .timeout(const Duration(seconds: 10));
-      debugPrint(
-        '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
-      );
-      final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
-      final savedCompleteness = savedData['profileCompleteness'];
-      final savedCompletenessValue = savedCompleteness is num
-          ? savedCompleteness.toDouble()
-          : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
-      if (savedData['profileCompleted'] != true ||
-          savedCompletenessValue <= 0) {
-        throw StateError(
-          'Relecture users/${user.uid} invalide: '
-          'profileCompleted=${savedData['profileCompleted']} '
-          'profileCompleteness=${savedData['profileCompleteness']}',
+      try {
+        final savedSnapshot = await userRef
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 5));
+        debugPrint(
+          '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
+        );
+        final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
+        final savedCompleteness = savedData['profileCompleteness'];
+        final savedCompletenessValue = savedCompleteness is num
+            ? savedCompleteness.toDouble()
+            : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
+        if (savedData['profileCompleted'] != true ||
+            savedCompletenessValue <= 0) {
+          throw StateError(
+            'Relecture users/${user.uid} invalide: '
+            'profileCompleted=${savedData['profileCompleted']} '
+            'profileCompleteness=${savedData['profileCompleteness']}',
+          );
+        }
+      } on TimeoutException catch (e) {
+        debugPrint(
+          '[ProfileSave] reread timeout ignored path=users/${user.uid}: $e',
+        );
+      } on FirebaseException catch (e) {
+        debugPrint(
+          '[ProfileSave] reread ignored path=users/${user.uid} code=${e.code} message=${e.message}',
         );
       }
 
