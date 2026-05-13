@@ -117,10 +117,10 @@ class AdminAccessResolver {
 
     IdTokenResult? tokenResult;
     try {
-      final forcedToken = await resolvedUser.getIdToken(true);
+      final token = await resolvedUser.getIdToken(forceRefresh);
       _diag(
-        'token getIdToken(true)=ok len=${(forcedToken ?? '').length} '
-        'preview=${_tokenPreview(forcedToken)}',
+        'token getIdToken($forceRefresh)=ok len=${(token ?? '').length} '
+        'preview=${_tokenPreview(token)}',
       );
 
       tokenResult = await resolvedUser.getIdTokenResult(forceRefresh);
