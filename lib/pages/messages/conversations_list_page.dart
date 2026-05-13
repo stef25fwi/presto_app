@@ -366,7 +366,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     const notificationsFallbackSource = '__notifications__';
     const adminGlobalSource = '__admin_global__';
     const startedMessageFallbackSourcePrefix = '__started_messages__:';
-    const sentMessageFieldAliases = <String>['senderId', 'sender_id'];
+    const sentMessageFieldAliases = <String>[
+      'senderId',
+      'sender_id',
+      'recipientId',
+      'recipient_id',
+    ];
     const notificationsFallbackLiveLimit = 60;
     const notificationsFallbackMaxPages = 4;
     const startedMessageFallbackLiveLimit = 80;
