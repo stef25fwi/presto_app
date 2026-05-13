@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserProfileSavePayload {
   const UserProfileSavePayload._();
 
+  static final RegExp _postalCodePattern =
+      RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b');
+
   static const List<String> _requiredFields = <String>[
     'displayName',
     'city',
@@ -40,7 +43,9 @@ class UserProfileSavePayload {
     final normalizedAccountType =
         accountType.trim().isEmpty ? 'Particulier' : accountType.trim();
     final normalizedPhone = phone.trim();
-    final normalizedCity = city.trim();
+    final cityResolution = _resolveCityAndPostalCode(city);
+    final normalizedCity = cityResolution.city;
+    final normalizedPostalCode = cityResolution.postalCode;
     final completeness = calculateCompleteness(
       displayName: normalizedDisplayName,
       city: normalizedCity,
@@ -54,6 +59,13 @@ class UserProfileSavePayload {
       'displayName': normalizedDisplayName,
       'accountType': normalizedAccountType,
       'city': normalizedCity,
+      'ville': normalizedCity,
+      'commune': normalizedCity,
+      'locality': normalizedCity,
+      if (normalizedPostalCode.isNotEmpty) 'postalCode': normalizedPostalCode,
+      if (normalizedPostalCode.isNotEmpty) 'codePostal': normalizedPostalCode,
+      if (normalizedPostalCode.isNotEmpty) 'zipCode': normalizedPostalCode,
+      if (normalizedPostalCode.isNotEmpty) 'cp': normalizedPostalCode,
       'phone': normalizedPhone,
       'selectedFavoriteCategories': selectedFavoriteCategories,
       'selectedFavoriteSubcategories': selectedFavoriteSubcategories,
@@ -62,5 +74,23 @@ class UserProfileSavePayload {
       'profileUpdatedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
+  }
+
+  static ({String city, String postalCode}) _resolveCityAndPostalCode(
+    String rawCity,
+  ) {
+    final trimmed = rawCity.trim();
+    final match = _postalCodePattern.firstMatch(trimmed);
+    final postalCode = match?.group(1) ?? '';
+    final city = trimmed
+        .replaceAll(RegExp(r'\(\s*(97\d{3}|98\d{3}|\d{5})\s*\)'), '')
+        .replaceAll(_postalCodePattern, '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    return (
+      city: city.isEmpty ? trimmed : city,
+      postalCode: postalCode,
+    );
   }
 }

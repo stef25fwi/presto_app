@@ -250,10 +250,12 @@ class _AccountPageState extends State<AccountPage> {
   void _refreshAdminAccessForUser(
     String uid, {
     bool forceRefresh = false,
+    bool returnOnLocalAdminEvidence = false,
   }) {
     _adminAccessFutureUid = uid;
     final future = _adminAccessResolver.resolveAdminAccess(
       forceRefresh: forceRefresh,
+      returnOnLocalAdminEvidence: returnOnLocalAdminEvidence,
     );
     _adminAccessFuture = future;
     unawaited(
@@ -268,10 +270,31 @@ class _AccountPageState extends State<AccountPage> {
         if (state.effectiveIsAdmin) {
           unawaited(adminAudioRuntimeStore.enableCloudSync());
         }
+        if (returnOnLocalAdminEvidence && !state.serverCheckAttempted) {
+          unawaited(_refreshAdminAccessServerForUser(uid));
+        }
       }).catchError((Object error, StackTrace stackTrace) {
         debugPrint('[AdminProfile] admin access resolution failed: $error');
       }),
     );
+  }
+
+  Future<void> _refreshAdminAccessServerForUser(String uid) async {
+    try {
+      final state = await _adminAccessResolver.resolveAdminAccess(
+        forceRefresh: true,
+      );
+      if (!mounted || _adminAccessFutureUid != uid) return;
+      setState(() {
+        _lastAdminAccessState = state;
+        _adminLastCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
+      });
+      if (state.effectiveIsAdmin) {
+        unawaited(adminAudioRuntimeStore.enableCloudSync());
+      }
+    } catch (error) {
+      debugPrint('[AdminProfile] background server admin check failed: $error');
+    }
   }
 
   bool _isProfileSyncExpired(Object? error) {
@@ -2196,9 +2219,10 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAdminSpaceEntry(User user) {
     if (_adminAccessFuture == null || _adminAccessFutureUid != user.uid) {
-      // Force a hard ID-token refresh on the first load so freshly-granted
-      // admin claims are picked up without requiring a manual sign-out.
-      _refreshAdminAccessForUser(user.uid, forceRefresh: true);
+      _refreshAdminAccessForUser(
+        user.uid,
+        returnOnLocalAdminEvidence: true,
+      );
     }
 
     return FutureBuilder<AdminAccessState>(

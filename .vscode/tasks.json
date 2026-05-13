@@ -68,6 +68,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Flutter: Test user_profile_save_payload",
+      "type": "shell",
+      "command": "flutter test test/user_profile_save_payload_test.dart",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Status Snapshot",
       "type": "shell",
       "command": "git status --short --branch",
@@ -161,6 +167,12 @@
       "label": "Git: Commit Admin + MicroIA Fixes",
       "type": "shell",
       "command": "git commit -m \"fix(admin,microia): trace admin resolution and align access rules\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Commit Profile Audit Fixes",
+      "type": "shell",
+      "command": "git add -A && git commit -m \"fix(profile): audit profile sources and speed admin check\"",
       "problemMatcher": []
     },
     {
@@ -695,6 +707,16 @@
       "type": "shell",
       "command": "node tools/check_stephane_admin_access.cjs",
       "problemMatcher": []
+    },
+    {
+      "label": "Admin: Audit Stephane Profile Sources",
+      "type": "shell",
+      "command": "node tools/audit_stephane_profile_sources.cjs",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
       "label": "Admin: Grant Stephane Access",

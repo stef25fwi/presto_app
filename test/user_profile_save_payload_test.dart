@@ -21,7 +21,7 @@ void main() {
         displayName: ' Stephane S ',
         accountType: 'Particulier',
         phone: '+590690000000',
-        city: 'Baie-Mahault',
+        city: 'Baie-Mahault (97122)',
         selectedFavoriteCategories: const <String>['Jardinage'],
         selectedFavoriteSubcategories: const <String>['Jardinage — Tonte'],
       );
@@ -33,6 +33,13 @@ void main() {
         'pseudo',
         'phone',
         'city',
+        'ville',
+        'commune',
+        'locality',
+        'postalCode',
+        'codePostal',
+        'zipCode',
+        'cp',
         'accountType',
         'selectedFavoriteCategories',
         'selectedFavoriteSubcategories',
@@ -49,6 +56,13 @@ void main() {
       expect(payload['accountType'], 'Particulier');
       expect(payload['phone'], '+590690000000');
       expect(payload['city'], 'Baie-Mahault');
+      expect(payload['ville'], 'Baie-Mahault');
+      expect(payload['commune'], 'Baie-Mahault');
+      expect(payload['locality'], 'Baie-Mahault');
+      expect(payload['postalCode'], '97122');
+      expect(payload['codePostal'], '97122');
+      expect(payload['zipCode'], '97122');
+      expect(payload['cp'], '97122');
       expect(
           payload['selectedFavoriteCategories'], const <String>['Jardinage']);
       expect(
