@@ -39,6 +39,7 @@ class AdminAccessResolver {
 
   Future<AdminAccessState> resolveAdminAccess({
     bool forceRefresh = false,
+    bool returnOnLocalAdminEvidence = false,
   }) async {
     _diag(
       'start forceRefresh=$forceRefresh '
@@ -125,7 +126,10 @@ class AdminAccessResolver {
       tokenResult = await resolvedUser.getIdTokenResult(forceRefresh);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
       final tokenRoles = _rolesFromValue(claims['roles']);
-      final tokenPrimaryRole = _normalizedText(claims['primaryRole']);
+      final tokenPrimaryRole = _firstNormalizedText(
+        claims,
+        const ['primaryRole', 'role', 'adminRole'],
+      );
       final tokenHasAdmin = _hasAdminAccess(
         claims,
         roles: tokenRoles,
@@ -146,6 +150,15 @@ class AdminAccessResolver {
         'token roles=$tokenRoles primaryRole=${tokenPrimaryRole ?? '-'} '
         'tokenHasAdmin=$tokenHasAdmin',
       );
+      if (returnOnLocalAdminEvidence && tokenHasAdmin) {
+        return _finalize(
+          _step(
+            state,
+            '[AdminResolver] returning after local token admin evidence',
+            stage: 'local-token-admin',
+          ),
+        );
+      }
     } catch (error) {
       _diag('token loading failed error=$error');
       state = _step(
@@ -161,7 +174,10 @@ class AdminAccessResolver {
     final userSnap = await _getDocumentWithFallback('users', resolvedUser.uid);
     final profileData = userSnap?.data();
     final profileRoles = _rolesFromValue(profileData?['roles']);
-    final profilePrimaryRole = _normalizedText(profileData?['primaryRole']);
+    final profilePrimaryRole = _firstNormalizedText(
+      profileData,
+      const ['primaryRole', 'role', 'adminRole'],
+    );
     final profileHasAdmin = _hasAdminAccess(
       profileData,
       roles: profileRoles,
@@ -196,6 +212,16 @@ class AdminAccessResolver {
       'adminDocHasAdmin=$adminDocHasAdmin',
     );
 
+    if (returnOnLocalAdminEvidence && state.hasLocalAdminEvidence) {
+      return _finalize(
+        _step(
+          state,
+          '[AdminResolver] returning after local profile admin evidence',
+          stage: 'local-profile-admin',
+        ),
+      );
+    }
+
     if (state.tokenHasAdmin && !state.profileHasAdmin && tokenResult != null) {
       state = _step(
         state,
@@ -229,7 +255,10 @@ class AdminAccessResolver {
         final refreshed = await resolvedUser.getIdTokenResult(true);
         final claims = refreshed.claims ?? const <String, dynamic>{};
         final refreshedRoles = _rolesFromValue(claims['roles']);
-        final refreshedPrimaryRole = _normalizedText(claims['primaryRole']);
+        final refreshedPrimaryRole = _firstNormalizedText(
+          claims,
+          const ['primaryRole', 'role', 'adminRole'],
+        );
         final refreshedTokenHasAdmin = _hasAdminAccess(
           claims,
           roles: refreshedRoles,
@@ -272,7 +301,10 @@ class AdminAccessResolver {
   }) async {
     final claims = tokenResult.claims ?? const <String, dynamic>{};
     final tokenRoles = _rolesFromValue(claims['roles']);
-    final tokenPrimaryRole = _normalizedText(claims['primaryRole']);
+    final tokenPrimaryRole = _firstNormalizedText(
+      claims,
+      const ['primaryRole', 'role', 'adminRole'],
+    );
     final tokenHasAdmin = _hasAdminAccess(
       claims,
       roles: tokenRoles,
@@ -849,6 +881,10 @@ class AdminAccessResolver {
       rawValues = value.split(RegExp(r'[,\s]+'));
     } else if (value is Iterable) {
       rawValues = value;
+    } else if (value is Map) {
+      rawValues = value.entries
+          .where((entry) => entry.value == true)
+          .map((entry) => entry.key);
     } else {
       return const <String>[];
     }
@@ -870,7 +906,22 @@ class AdminAccessResolver {
     if (primaryRole == 'admin' || primaryRole == 'superadmin') {
       return true;
     }
-    return data?['admin'] == true || data?['superadmin'] == true;
+    return data?['admin'] == true ||
+        data?['isAdmin'] == true ||
+        data?['superadmin'] == true ||
+        data?['superAdmin'] == true;
+  }
+
+  String? _firstNormalizedText(
+    Map<String, dynamic>? data,
+    List<String> keys,
+  ) {
+    if (data == null) return null;
+    for (final key in keys) {
+      final value = _normalizedText(data[key]);
+      if (value != null) return value;
+    }
+    return null;
   }
 
   String? _normalizedText(dynamic value) {
