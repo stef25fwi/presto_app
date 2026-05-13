@@ -598,6 +598,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           _appendAdminConversationLog(
             'Erreur source $participantField: $error',
           );
+          if (_isAdminViewer && _isPermissionDenied(error)) {
+            _appendAdminConversationLog(
+              'Source $participantField conservee en retry: permission-denied admin/debug',
+            );
+            emit();
+            scheduleRetry(participantField);
+            return;
+          }
           if (_isNonRetryableConversationSourceError(error)) {
             docsByField[participantField] = const <ConversationSummary>[];
             errorsByField.remove(participantField);
@@ -651,6 +659,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             debugPrint(
               '[MessagesList] admin global conversations error user=$userId error=$error',
             );
+          }
+          if (_isAdminViewer && _isPermissionDenied(error)) {
+            _appendAdminConversationLog(
+              'Source admin globale conservee en retry: permission-denied admin/debug',
+            );
+            emit();
+            scheduleRetry(adminGlobalSource);
+            return;
           }
           if (_isNonRetryableConversationSourceError(error)) {
             docsByField[adminGlobalSource] = const <ConversationSummary>[];
