@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../app_core.dart';
+
 /// Reasons a user is not allowed to start the AI publishing flow.
 enum ProfileReadinessGate {
   /// No Firebase user — auth required.
@@ -157,23 +159,36 @@ class ProfileReadinessChecker {
     }
 
     final data = snap.data() ?? const <String, dynamic>{};
+    const profilePath = 'users';
+    final city = firstNonEmptyString(
+      data,
+      const ['city', 'ville', 'commune', 'locality'],
+    );
+    final postalCode = _resolvePostalCode(data, city);
 
     final missing = <String>[];
-    if (_pickString(data, const ['displayName', 'pseudo', 'name', 'username'])
-        .isEmpty) {
+    if (firstNonEmptyString(
+      data,
+      const ['displayName', 'pseudo', 'name', 'username'],
+    ).isEmpty) {
       // Fall back to the FirebaseAuth user.displayName so legacy accounts
       // that pre-date the Firestore migration are still allowed through.
       if ((user.displayName ?? '').trim().isEmpty) {
         missing.add('displayName');
       }
     }
-    if (_pickString(data, const ['city', 'cityName', 'ville']).isEmpty) {
+    if (city.isEmpty) {
       missing.add('city');
     }
-    if (_pickString(data, const ['postalCode', 'postal_code', 'cp', 'zip'])
-        .isEmpty) {
+    if (postalCode.isEmpty) {
       missing.add('postalCode');
     }
+
+    debugPrint(
+      '[ProfileReadiness] profilePath=$profilePath/${user.uid} '
+      'keys=${data.keys.toList()..sort()} city="$city" postalCode="$postalCode" '
+      'missing=${missing.isEmpty ? 'none' : missing.join(',')}',
+    );
 
     if (missing.isEmpty) {
       return ProfileReadinessResult.ready(user);
@@ -185,7 +200,7 @@ class ProfileReadinessChecker {
     );
   }
 
-  static String _pickString(
+  static String firstNonEmptyString(
     Map<String, dynamic> data,
     List<String> aliases,
   ) {
@@ -196,5 +211,31 @@ class ProfileReadinessChecker {
       if (value.isNotEmpty) return value;
     }
     return '';
+  }
+
+  static String _resolvePostalCode(Map<String, dynamic> data, String city) {
+    final explicitPostalCode = firstNonEmptyString(
+      data,
+      const ['postalCode', 'codePostal', 'zipCode', 'zipcode', 'cp'],
+    );
+    if (explicitPostalCode.isNotEmpty) return explicitPostalCode;
+    if (city.isEmpty) return '';
+
+    final directPostalCode = kCityPostalMap[city];
+    if (directPostalCode != null && directPostalCode.trim().isNotEmpty) {
+      return directPostalCode.trim();
+    }
+
+    final normalizedCity = _normalizeCity(city);
+    for (final entry in kCityPostalMap.entries) {
+      if (_normalizeCity(entry.key) == normalizedCity) {
+        return entry.value.trim();
+      }
+    }
+    return '';
+  }
+
+  static String _normalizeCity(String value) {
+    return value.trim().toLowerCase();
   }
 }
