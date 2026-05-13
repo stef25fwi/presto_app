@@ -868,7 +868,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _isLoading = true);
     try {
-      await user.getIdToken(true).timeout(const Duration(seconds: 12));
       final displayName = _nameCtrl.text.trim();
       final normalizedPhone =
           _normalizePhoneForSave(_phoneCountryCode, _phoneCtrl.text.trim());
@@ -897,28 +896,47 @@ class _ProfilePageState extends State<ProfilePage> {
           FirebaseFirestore.instance.collection('users').doc(user.uid);
       debugPrint(
           '[ProfileSave] write path=users/${user.uid} payload=$profileData');
-      await userRef.set(profileData, SetOptions(merge: true));
-      final savedSnapshot =
-          await userRef.get(const GetOptions(source: Source.server));
-      debugPrint(
-        '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
-      );
-      final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
-      final savedCompleteness = savedData['profileCompleteness'];
-      final savedCompletenessValue = savedCompleteness is num
-          ? savedCompleteness.toDouble()
-          : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
-      if (savedData['profileCompleted'] != true ||
-          savedCompletenessValue <= 0) {
-        throw StateError(
-          'Relecture users/${user.uid} invalide: '
-          'profileCompleted=${savedData['profileCompleted']} '
-          'profileCompleteness=${savedData['profileCompleteness']}',
+      await userRef
+          .set(profileData, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 10));
+      try {
+        final savedSnapshot = await userRef
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 5));
+        debugPrint(
+          '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
+        );
+        final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
+        final savedCompleteness = savedData['profileCompleteness'];
+        final savedCompletenessValue = savedCompleteness is num
+            ? savedCompleteness.toDouble()
+            : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
+        if (savedData['profileCompleted'] != true ||
+            savedCompletenessValue <= 0) {
+          throw StateError(
+            'Relecture users/${user.uid} invalide: '
+            'profileCompleted=${savedData['profileCompleted']} '
+            'profileCompleteness=${savedData['profileCompleteness']}',
+          );
+        }
+      } on TimeoutException catch (e) {
+        debugPrint(
+          '[ProfileSave] reread timeout ignored path=users/${user.uid}: $e',
+        );
+      } on FirebaseException catch (e) {
+        debugPrint(
+          '[ProfileSave] reread ignored path=users/${user.uid} code=${e.code} message=${e.message}',
         );
       }
 
       if (displayName.isNotEmpty) {
-        await user.updateDisplayName(displayName);
+        try {
+          await user.updateDisplayName(displayName).timeout(
+                const Duration(seconds: 5),
+              );
+        } catch (e) {
+          debugPrint('[Profile] Erreur mise à jour displayName: $e');
+        }
       }
 
       _dirtyProfileFields.clear();
@@ -975,6 +993,13 @@ class _ProfilePageState extends State<ProfilePage> {
       showErrorSnackBar(
         context,
         'Impossible d\'enregistrer users/${user.uid}: ${e.message ?? e.code}',
+      );
+    } on TimeoutException {
+      debugPrint('[ProfileSave] Timeout path=users/${user.uid}');
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Délai d\'attente dépassé. Vérifiez votre connexion',
       );
     } catch (e) {
       debugPrint('[ProfileSave] Error path=users/${user.uid}: $e');
