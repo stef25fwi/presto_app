@@ -170,12 +170,6 @@
       "problemMatcher": []
     },
     {
-      "label": "Git: Commit Profile Audit Fixes",
-      "type": "shell",
-      "command": "git add -A && git commit -m \"fix(profile): audit profile sources and speed admin check\"",
-      "problemMatcher": []
-    },
-    {
       "label": "Git: Stash And Pull Rebase",
       "type": "shell",
       "command": "git stash && git pull --rebase origin main && git stash pop",
