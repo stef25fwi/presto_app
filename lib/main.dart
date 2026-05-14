@@ -840,7 +840,7 @@ class _PrestoAppState extends State<PrestoApp> {
           rawPath.endsWith('/') && rawPath.length > 1
               ? rawPath.substring(0, rawPath.length - 1)
               : rawPath;
-      if (normalizedPath == '/page-catalog') {
+      if (!kReleaseMode && normalizedPath == '/page-catalog') {
         return const PageCaptureCatalogPage();
       }
     }
@@ -857,7 +857,7 @@ class _PrestoAppState extends State<PrestoApp> {
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     final routeName = settings.name ?? '';
     final parsedRoute = Uri.tryParse(routeName);
-    if (parsedRoute != null && parsedRoute.path == '/page-catalog') {
+    if (!kReleaseMode && parsedRoute != null && parsedRoute.path == '/page-catalog') {
       return MaterialPageRoute(
         settings: settings,
         builder: (_) => const PageCaptureCatalogPage(),
@@ -925,7 +925,7 @@ class _PrestoAppState extends State<PrestoApp> {
         '/messages-2': (_) => const MessagesPageV2(),
         '/account': (_) => const AccountPage(),
         '/admin': (_) => const AdminSpacePage(),
-        '/page-catalog': (_) => const PageCaptureCatalogPage(),
+        if (!kReleaseMode) '/page-catalog': (_) => const PageCaptureCatalogPage(),
         /*
         '/auth': (context) => PrestoPremiumAuthPage(
               onGoogle: () async {

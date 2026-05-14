@@ -1,30 +1,32 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart'
     show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:presto_app/widgets/random_asset_ticker.dart';
 
-/// Config pour les IDs pub (remplacer par vos vrais IDs AdMob/AdSense)
+/// Config pour les IDs pub AdMob production
 class AdConfig {
-  // ====== ANDROID ======
+  // ====== ANDROID (com.presto.app) ======
   static const String androidBannerId =
-      'ca-app-pub-3940256099942544/6300978111'; // TEST
+      'ca-app-pub-1792076968124623/1951540793'; // PROD
   static const String androidNativeId =
-      'ca-app-pub-3940256099942544/2247696110'; // TEST
+      'ca-app-pub-3940256099942544/2247696110'; // non utilisé — remplacer si activé
   static const String androidInterstitialId =
-      'ca-app-pub-3940256099942544/1033173712'; // TEST
+      'ca-app-pub-3940256099942544/1033173712'; // non utilisé — remplacer si activé
 
-  // ====== iOS ======
+  // ====== iOS (fr.ilipresto.app) ======
   static const String iosBannerId =
-      'ca-app-pub-3940256099942544/2934735716'; // TEST
+      'ca-app-pub-1792076968124623/4960847514'; // PROD
   static const String iosNativeId =
-      'ca-app-pub-3940256099942544/3986624511'; // TEST
+      'ca-app-pub-3940256099942544/3986624511'; // non utilisé — remplacer si activé
   static const String iosInterstitialId =
-      'ca-app-pub-3940256099942544/5135589807'; // TEST
+      'ca-app-pub-3940256099942544/5135589807'; // non utilisé — remplacer si activé
 
   // ====== WEB / AdSense ======
   static const String webAdSlotId =
-      'ca-app-pub-3940256099942544'; // TEST (remplacer avec votre slot)
+      'ca-app-pub-1792076968124623'; // Publisher ID production
 }
 
 class AdBanner extends StatefulWidget {
@@ -54,13 +56,47 @@ class _AdBannerState extends State<AdBanner> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
 
+  // Demande le consentement UMP (Google User Messaging Platform) puis
+  // initialise MobileAds. Obligatoire pour les utilisateurs EEA (RGPD).
   static Future<void> _ensureInitialized() async {
     if (_initialized) return;
     try {
+      final params = ConsentRequestParameters();
+      final consentCompleter = Completer<void>();
+
+      ConsentInformation.instance.requestConsentInfoUpdate(
+        params,
+        () async {
+          // Afficher le formulaire de consentement si disponible et requis.
+          if (await ConsentInformation.instance.isConsentFormAvailable()) {
+            ConsentForm.loadAndShowConsentFormIfRequired(
+              (formError) {
+                // Erreur formulaire : on initialise quand même pour les
+                // utilisateurs hors EEA ou si le consentement n'est pas requis.
+                if (kDebugMode && formError != null) {
+                  debugPrint('[AdMob] UMP form error: ${formError.message}');
+                }
+                consentCompleter.complete();
+              },
+            );
+          } else {
+            consentCompleter.complete();
+          }
+        },
+        (requestError) {
+          // Erreur réseau UMP : initialiser ads sans consentement (hors EEA).
+          if (kDebugMode) {
+            debugPrint('[AdMob] UMP request error: ${requestError.message}');
+          }
+          consentCompleter.complete();
+        },
+      );
+
+      await consentCompleter.future;
       await MobileAds.instance.initialize();
       _initialized = true;
     } catch (e) {
-      if (kDebugMode) print('AdMob init error: $e');
+      if (kDebugMode) debugPrint('[AdMob] init error: $e');
     }
   }
 
