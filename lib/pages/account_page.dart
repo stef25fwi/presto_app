@@ -886,7 +886,11 @@ class _AccountPageState extends State<AccountPage> {
   ) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
     try {
-      // Firebase SDK manages token refresh automatically — no forced refresh needed.
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: FirebaseAuth.instance.currentUser,
+        forceRefreshToken: false,
+        forceRefreshAppCheckToken: false,
+      );
       return await userRef
           .get(const GetOptions(source: Source.server))
           .timeout(const Duration(seconds: 6));
@@ -912,6 +916,21 @@ class _AccountPageState extends State<AccountPage> {
       return userRef
           .get(const GetOptions(source: Source.cache))
           .timeout(const Duration(seconds: 3));
+    }
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _fetchCachedUserProfileDocument(
+    String uid,
+  ) async {
+    try {
+      return await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get(const GetOptions(source: Source.cache))
+          .timeout(const Duration(milliseconds: 800));
+    } catch (error) {
+      debugPrint('[Profile] Cache profil indisponible: $error');
+      return null;
     }
   }
 
@@ -1004,6 +1023,125 @@ class _AccountPageState extends State<AccountPage> {
 
     _profilePhoneCountryCode = '+33';
     _profilePhoneController.text = trimmed;
+  }
+
+  void _applyUserProfileDocument(
+    User user, {
+    Map<String, dynamic>? data,
+    required String previousPseudo,
+    required String previousCity,
+    required String previousPhoneCountryCode,
+    required String previousPhone,
+    required Set<String> previousFavoriteCategories,
+    required Set<String> previousSelectedFavoriteCategories,
+    required Set<String> previousSelectedFavoriteSubcategories,
+    required Set<String> previousDraftFavoriteSelections,
+  }) {
+    if (data != null) {
+      _profilePseudoController.text = _firstNonEmptyProfileValue(
+        data,
+        const ['pseudo', 'displayName', 'userName', 'user_name', 'name'],
+        fallbackValues: <String>[user.displayName ?? '', previousPseudo],
+      );
+      _profileCityController.text = _firstNonEmptyProfileValue(
+        data,
+        const ['city', 'ville', 'location', 'serviceArea', 'service_area'],
+        fallbackValues: <String>[previousCity],
+      );
+
+      final loadedPhone = _firstNonEmptyProfileValue(
+        data,
+        const ['phone', 'telephone', 'phoneNumber', 'phone_number'],
+        fallbackValues: <String>[user.phoneNumber ?? ''],
+      );
+      if (loadedPhone.isNotEmpty) {
+        _applyLoadedProfilePhone(loadedPhone);
+      } else if (previousPhone.isNotEmpty) {
+        _profilePhoneCountryCode = previousPhoneCountryCode;
+        _profilePhoneController.text = previousPhone;
+      } else {
+        _applyLoadedProfilePhone('');
+        final inferred =
+            _inferPhoneCountryCodeFromCity(_profileCityController.text);
+        if (inferred != '+33') {
+          _profilePhoneCountryCode = inferred;
+        }
+      }
+
+      final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList();
+      final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
+      _favoriteCategories = hasFavoriteCategoriesKey
+          ? favs.toSet()
+          : previousFavoriteCategories;
+      _draftFavoriteSelections = hasFavoriteCategoriesKey
+          ? _favoriteCategories.toSet()
+          : previousDraftFavoriteSelections;
+      final selectedCats =
+          (data['selectedFavoriteCategories'] as List<dynamic>? ?? [])
+              .map((e) => e.toString())
+              .toList();
+      final hasSelectedFavoriteCategoriesKey =
+          data.containsKey('selectedFavoriteCategories');
+      _selectedFavoriteCategories = hasSelectedFavoriteCategoriesKey
+          ? selectedCats.toSet()
+          : previousSelectedFavoriteCategories;
+      final selectedSubcats =
+          (data['selectedFavoriteSubcategories'] as List<dynamic>? ?? [])
+              .map((e) => e.toString())
+              .toList();
+      final hasSelectedFavoriteSubcategoriesKey =
+          data.containsKey('selectedFavoriteSubcategories');
+      _selectedFavoriteSubcategories = hasSelectedFavoriteSubcategoriesKey
+          ? selectedSubcats.toSet()
+          : previousSelectedFavoriteSubcategories;
+
+      final hasStoredFavorites = hasFavoriteCategoriesKey ||
+          hasSelectedFavoriteCategoriesKey ||
+          hasSelectedFavoriteSubcategoriesKey;
+      final mergedFavoriteSelections = <String>{
+        ...favs,
+        ...selectedCats,
+        ...selectedSubcats,
+      };
+      if (hasStoredFavorites) {
+        _favoriteCategories = mergedFavoriteSelections;
+        _draftFavoriteSelections = mergedFavoriteSelections.toSet();
+      }
+
+      final loadedAccountType = _firstNonEmptyProfileValue(
+        data,
+        const ['accountType'],
+        fallbackValues: <String>[_profileAccountType],
+      );
+      _profileAccountType =
+          loadedAccountType.isNotEmpty ? loadedAccountType : 'Particulier';
+    } else {
+      _profilePseudoController.text = user.displayName?.trim().isNotEmpty == true
+          ? user.displayName!.trim()
+          : previousPseudo;
+      _profileCityController.text = previousCity;
+      if (previousPhone.isNotEmpty) {
+        _profilePhoneCountryCode = previousPhoneCountryCode;
+        _profilePhoneController.text = previousPhone;
+      } else {
+        final inferred =
+            _inferPhoneCountryCodeFromCity(_profileCityController.text);
+        if (inferred != '+33') {
+          _profilePhoneCountryCode = inferred;
+        }
+      }
+      _profileAccountType = 'Particulier';
+      _favoriteCategories = previousFavoriteCategories;
+      _selectedFavoriteCategories = previousSelectedFavoriteCategories;
+      _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
+      _draftFavoriteSelections = previousDraftFavoriteSelections;
+    }
+
+    _isEditingProfile = !_hasProfileValuesInMemory();
+    _profileLoadError = false;
+    _profileLoadRetries = 0;
   }
 
   Future<void> _checkFederatedRedirectResult() async {
@@ -1125,122 +1263,47 @@ class _AccountPageState extends State<AccountPage> {
       debugPrint('[Profile] Erreur synchro emailVerified: $e');
     }
 
+    final cachedDoc = await _fetchCachedUserProfileDocument(user.uid);
+    if (mounted && _activeProfileUid == user.uid && cachedDoc?.exists == true) {
+      _applyUserProfileDocument(
+        user,
+        data: cachedDoc!.data(),
+        previousPseudo: previousPseudo,
+        previousCity: previousCity,
+        previousPhoneCountryCode: previousPhoneCountryCode,
+        previousPhone: previousPhone,
+        previousFavoriteCategories: previousFavoriteCategories,
+        previousSelectedFavoriteCategories: previousSelectedFavoriteCategories,
+        previousSelectedFavoriteSubcategories:
+            previousSelectedFavoriteSubcategories,
+        previousDraftFavoriteSelections: previousDraftFavoriteSelections,
+      );
+      setState(() {
+        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
+        _profileLoaded = true;
+        _profileLoadRequested = true;
+      });
+    }
+
     try {
       final doc = await _fetchUserProfileDocument(user.uid);
-
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>;
-        _profilePseudoController.text = _firstNonEmptyProfileValue(
-          data,
-          const ['pseudo', 'displayName', 'userName', 'user_name', 'name'],
-          fallbackValues: <String>[user.displayName ?? '', previousPseudo],
-        );
-        _profileCityController.text = _firstNonEmptyProfileValue(
-          data,
-          const ['city', 'ville', 'location', 'serviceArea', 'service_area'],
-          fallbackValues: <String>[previousCity],
-        );
-
-        final loadedPhone = _firstNonEmptyProfileValue(
-          data,
-          const ['phone', 'telephone', 'phoneNumber', 'phone_number'],
-          fallbackValues: <String>[user.phoneNumber ?? ''],
-        );
-        if (loadedPhone.isNotEmpty) {
-          _applyLoadedProfilePhone(loadedPhone);
-        } else if (previousPhone.isNotEmpty) {
-          _profilePhoneCountryCode = previousPhoneCountryCode;
-          _profilePhoneController.text = previousPhone;
-        } else {
-          _applyLoadedProfilePhone('');
-          // No phone stored — infer country code from city so the user
-          // gets the correct dialling prefix when they fill in the field.
-          final inferred =
-              _inferPhoneCountryCodeFromCity(_profileCityController.text);
-          if (inferred != '+33') {
-            _profilePhoneCountryCode = inferred;
-          }
-        }
-
-        final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
-            .map((e) => e.toString())
-            .toList();
-        final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
-        _favoriteCategories = hasFavoriteCategoriesKey
-            ? favs.toSet()
-            : previousFavoriteCategories;
-        _draftFavoriteSelections = hasFavoriteCategoriesKey
-            ? _favoriteCategories.toSet()
-            : previousDraftFavoriteSelections;
-        final selectedCats =
-            (data['selectedFavoriteCategories'] as List<dynamic>? ?? [])
-                .map((e) => e.toString())
-                .toList();
-        final hasSelectedFavoriteCategoriesKey =
-            data.containsKey('selectedFavoriteCategories');
-        _selectedFavoriteCategories = hasSelectedFavoriteCategoriesKey
-            ? selectedCats.toSet()
-            : previousSelectedFavoriteCategories;
-        final selectedSubcats =
-            (data['selectedFavoriteSubcategories'] as List<dynamic>? ?? [])
-                .map((e) => e.toString())
-                .toList();
-        final hasSelectedFavoriteSubcategoriesKey =
-            data.containsKey('selectedFavoriteSubcategories');
-        _selectedFavoriteSubcategories = hasSelectedFavoriteSubcategoriesKey
-            ? selectedSubcats.toSet()
-            : previousSelectedFavoriteSubcategories;
-
-        final hasStoredFavorites = hasFavoriteCategoriesKey ||
-            hasSelectedFavoriteCategoriesKey ||
-            hasSelectedFavoriteSubcategoriesKey;
-        final mergedFavoriteSelections = <String>{
-          ...favs,
-          ...selectedCats,
-          ...selectedSubcats,
-        };
-        if (hasStoredFavorites) {
-          _favoriteCategories = mergedFavoriteSelections;
-          _draftFavoriteSelections = mergedFavoriteSelections.toSet();
-        }
-
-        final loadedAccountType = _firstNonEmptyProfileValue(
-          data,
-          const ['accountType'],
-          fallbackValues: <String>[_profileAccountType],
-        );
-        _profileAccountType =
-            loadedAccountType.isNotEmpty ? loadedAccountType : 'Particulier';
-
-        // ✅ Si les champs sont remplis, ne pas être en mode édition par défaut
-        final hasProfile = _hasProfileValuesInMemory();
-        _isEditingProfile = !hasProfile;
-        _profileLoadError = false;
-        _profileLoadRetries = 0;
-      } else {
-        _profilePseudoController.text =
-            user.displayName?.trim().isNotEmpty == true
-                ? user.displayName!.trim()
-                : previousPseudo;
-        _profileCityController.text = previousCity;
-        if (previousPhone.isNotEmpty) {
-          _profilePhoneCountryCode = previousPhoneCountryCode;
-          _profilePhoneController.text = previousPhone;
-        } else {
-          final inferred =
-              _inferPhoneCountryCodeFromCity(_profileCityController.text);
-          if (inferred != '+33') {
-            _profilePhoneCountryCode = inferred;
-          }
-        }
-        _profileAccountType = 'Particulier';
-        _favoriteCategories = previousFavoriteCategories;
-        _selectedFavoriteCategories = previousSelectedFavoriteCategories;
-        _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
-        _draftFavoriteSelections = previousDraftFavoriteSelections;
-        _isEditingProfile = !_hasProfileValuesInMemory();
-        _profileLoadError = false;
+      if (!mounted || _activeProfileUid != user.uid) {
+        return;
       }
+
+      _applyUserProfileDocument(
+        user,
+        data: doc.exists ? doc.data() : null,
+        previousPseudo: previousPseudo,
+        previousCity: previousCity,
+        previousPhoneCountryCode: previousPhoneCountryCode,
+        previousPhone: previousPhone,
+        previousFavoriteCategories: previousFavoriteCategories,
+        previousSelectedFavoriteCategories: previousSelectedFavoriteCategories,
+        previousSelectedFavoriteSubcategories:
+            previousSelectedFavoriteSubcategories,
+        previousDraftFavoriteSelections: previousDraftFavoriteSelections,
+      );
     } catch (e) {
       debugPrint('[Profile] Erreur chargement profil: $e');
 
