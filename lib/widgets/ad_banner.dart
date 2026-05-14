@@ -24,7 +24,7 @@ class AdConfig {
 
   // ====== WEB / AdSense ======
   static const String webAdSlotId =
-      'ca-app-pub-3940256099942544'; // TEST (remplacer avec votre slot)
+      'ca-app-pub-1792076968124623'; // Publisher ID production
 }
 
 class AdBanner extends StatefulWidget {
