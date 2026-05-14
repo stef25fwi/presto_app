@@ -945,8 +945,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         return;
       }
 
-      final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-      final batch = FirebaseFirestore.instance.batch();
+      // Annonce legacy (collection 'offers') : mise à jour des 3 emplacements
+      final fs = FirebaseFirestore.instance;
+      final userRef = fs.collection('users').doc(uid);
+      final batch = fs.batch();
 
       batch.set(
         userRef,
@@ -961,6 +963,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
       if (isFavorite) {
         batch.delete(userRef.collection('favoriteOffers').doc(offerId));
+        // Nettoyage best-effort de la collection favorites top-level
+        batch.delete(fs.collection('favorites').doc('${uid}__$offerId'));
       } else {
         batch.set(
           userRef.collection('favoriteOffers').doc(offerId),

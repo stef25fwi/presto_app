@@ -11,6 +11,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
+import '../data/marketplace/favorite_repository.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/offer_indexing.dart';
@@ -140,34 +141,39 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return;
       }
 
-      final docs = await Future.wait(
+      // Résolution avec distinction marketplace vs legacy
+      final resolvedPairs = await Future.wait(
         favoriteIds.map(
           (offerId) async {
-            // Chercher d'abord dans listings (marketplace), puis offers (legacy)
             final listingSnap = await FirebaseFirestore.instance
                 .collection(kListingsCollection)
                 .doc(offerId)
                 .get();
-            if (listingSnap.exists) return listingSnap;
-            return FirebaseFirestore.instance
+            if (listingSnap.exists) {
+              return (doc: listingSnap, isMarketplace: true);
+            }
+            final offerSnap = await FirebaseFirestore.instance
                 .collection(kOffersCollection)
                 .doc(offerId)
                 .get();
+            return (doc: offerSnap, isMarketplace: false);
           },
         ),
       );
 
-      final existingDocs = docs.where((doc) => doc.exists).toList();
+      final existingPairs =
+          resolvedPairs.where((p) => p.doc.exists).toList();
 
-      existingDocs.sort((a, b) {
-        final ta = a.data()?['createdAt'];
-        final tb = b.data()?['createdAt'];
+      existingPairs.sort((a, b) {
+        final ta = a.doc.data()?['createdAt'];
+        final tb = b.doc.data()?['createdAt'];
         final ma = ta is Timestamp ? ta.millisecondsSinceEpoch : 0;
         final mb = tb is Timestamp ? tb.millisecondsSinceEpoch : 0;
         return mb.compareTo(ma);
       });
 
-      final items = existingDocs.map((doc) {
+      final items = existingPairs.map((pair) {
+        final doc = pair.doc;
         final data = doc.data() ?? const <String, dynamic>{};
         final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
             .map((e) => e.toString().trim())
@@ -185,6 +191,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
           imageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
           addedAt: null,
           rawData: data,
+          isMarketplace: pair.isMarketplace,
         );
       }).toList();
 
@@ -214,31 +221,46 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       details: <String, Object?>{
         'offerId': offerId,
         'userId': widget.userId,
+        'isMarketplace': _offers
+            .where((o) => o.offerId == offerId)
+            .firstOrNull
+            ?.isMarketplace,
       },
     );
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .set({
-        'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
-        'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('favoriteOffers')
-          .doc(offerId)
-          .delete();
+      final item = _offers.where((o) => o.offerId == offerId).firstOrNull;
+
+      if (item?.isMarketplace == true) {
+        // Cloud Function gère la suppression dans toutes les collections
+        // (favorites + users/{uid}/favoriteOffers + favoriteCount sur le listing)
+        await FavoriteRepository().toggleFavorite(offerId);
+      } else {
+        // Chemin legacy : nettoyage direct Firestore sur les 3 emplacements
+        final uid = widget.userId;
+        final fs = FirebaseFirestore.instance;
+        final batch = fs.batch();
+        batch.set(
+          fs.collection('users').doc(uid),
+          {
+            'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
+            'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+        batch.delete(
+          fs.collection('users').doc(uid).collection('favoriteOffers').doc(offerId),
+        );
+        // Nettoyage best-effort de la collection favorites (no-op si absent)
+        batch.delete(fs.collection('favorites').doc('${uid}__$offerId'));
+        await batch.commit();
+      }
 
       if (!mounted) return;
       showSuccessSnackBar(context, 'Annonce retirée des favoris');
       logRuntimeAction(
         area: 'favorites',
         action: 'remove-success',
-        details: <String, Object?>{
-          'offerId': offerId,
-        },
+        details: <String, Object?>{'offerId': offerId},
       );
       await _loadFavorites();
     } catch (e) {
@@ -535,6 +557,8 @@ class _FavoriteOfferItem {
   final String imageUrl;
   final Timestamp? addedAt;
   final Map<String, dynamic> rawData;
+  // true = annonce dans la collection 'listings' (marketplace)
+  final bool isMarketplace;
 
   const _FavoriteOfferItem({
     required this.offerId,
@@ -545,6 +569,7 @@ class _FavoriteOfferItem {
     required this.imageUrl,
     required this.addedAt,
     required this.rawData,
+    this.isMarketplace = false,
   });
 }
 
