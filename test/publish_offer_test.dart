@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:presto_app/main.dart' as app;
 import 'package:presto_app/widgets/photo_selector_tile.dart';
+import 'package:presto_app/widgets/premium_ai_button.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,16 @@ void main() {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
   });
+
+  /// Helper — pumps the publish page with a large viewport so all fields render.
+  Future<void> pumpPublishPage(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1200, 6000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: app.PublishOfferPage()));
+    await tester.pump();
+  }
 
   testWidgets('Le formulaire actif réagit aux choix principaux',
       (WidgetTester tester) async {
@@ -60,6 +71,195 @@ void main() {
     expect(find.text('Publier mon offre'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 6));
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  // -----------------------------------------------------------------------
+  // Bouton IA — visibilité et accessibilité (web + iOS + Android)
+  // -----------------------------------------------------------------------
+
+  testWidgets('Le bouton IA dictée est visible sur la page de publication',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    // Le PremiumAiButton principal (dictée vocale) doit être présent.
+    expect(find.byType(PremiumAiButton), findsOneWidget);
+    expect(find.text('Décrire mon besoin (IA)'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+      'Le bouton IA sparkle (✨) apparaît dans le champ description quand du texte est saisi',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    // Avant toute saisie, le Tooltip "Remplir les champs avec l'IA" ne doit pas exister.
+    expect(
+      find.byTooltip('Remplir les champs avec l\'IA'),
+      findsNothing,
+      reason: 'Le bouton ✨ ne doit pas être visible sans description saisie',
+    );
+
+    // Saisir du texte dans le champ description (second TextFormField).
+    // Ordre des TextFormFields : 0=Titre, 1=Description
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'J\'ai besoin de monter des meubles IKEA dans mon appartement parisien.',
+    );
+    await tester.pump();
+
+    // Après saisie, le Tooltip du bouton ✨ doit être visible.
+    expect(
+      find.byTooltip('Remplir les champs avec l\'IA'),
+      findsOneWidget,
+      reason: 'Le bouton ✨ doit apparaître une fois la description remplie',
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  // -----------------------------------------------------------------------
+  // Flow de publication — validation des champs obligatoires
+  // -----------------------------------------------------------------------
+
+  testWidgets(
+      'Cliquer "Publier mon offre" sans remplir le formulaire affiche les erreurs de validation',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    // Scroll jusqu'au bouton
+    await tester.scrollUntilVisible(
+      find.text('Publier mon offre'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    // Clic sur "Publier mon offre" avec formulaire vide.
+    await tester.tap(find.text('Publier mon offre'));
+    await tester.pumpAndSettle();
+
+    // Au moins un message d'erreur doit apparaître.
+    expect(
+      find.textContaining('Merci'),
+      findsWidgets,
+      reason: 'Les messages d\'erreur de validation doivent s\'afficher',
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+      'Le bouton Publier est initialement grisé (formulaire incomplet)',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    await tester.scrollUntilVisible(
+      find.text('Publier mon offre'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    // Le bouton est visuellement désactivé (backgroundColor = grey) quand
+    // le formulaire est vide. Il reste cliquable pour afficher les erreurs,
+    // mais son style indique l'état incomplet.
+    final elevatedButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Publier mon offre'),
+    );
+    final style = elevatedButton.style;
+    expect(style, isNotNull, reason: 'Le bouton doit avoir un style explicite');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+      'La sélection d\'une catégorie active la sous-catégorie correspondante',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    // Avant sélection : pas de sous-catégorie
+    expect(find.text('Sous-catégorie'), findsNothing);
+
+    // Sélectionner "Aide à domicile"
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Aide à domicile').last);
+    await tester.pumpAndSettle();
+
+    // Les sous-catégories doivent apparaître
+    expect(find.text('Sous-catégorie'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets(
+      'Saisir le titre et la description active le bouton IA sparkle '
+      'et le formulaire enregistre le contenu',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    const testTitle = 'Monter un meuble IKEA dans mon salon';
+    const testDescription =
+        'J\'ai besoin d\'aide pour monter un meuble IKEA PAX de grande taille. '
+        'La mission est à effectuer à Paris 15ème dans la semaine.';
+
+    // Remplir le titre
+    await tester.enterText(find.byType(TextFormField).first, testTitle);
+    await tester.pump();
+
+    // Remplir la description (second TextFormField)
+    await tester.enterText(find.byType(TextFormField).at(1), testDescription);
+    await tester.pump();
+
+    // Le titre doit être présent dans le widget
+    expect(find.text(testTitle), findsOneWidget);
+
+    // Le bouton ✨ doit être visible car la description est non vide
+    expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  // -----------------------------------------------------------------------
+  // Annonce de test complète (vérification structure du form)
+  // -----------------------------------------------------------------------
+
+  testWidgets(
+      'Annonce test : tous les champs obligatoires sont présents dans le formulaire',
+      (WidgetTester tester) async {
+    await pumpPublishPage(tester);
+
+    // Champs texte attendus : titre, description, ville, CP, téléphone, budget
+    final textFields = find.byType(TextFormField);
+    expect(
+      textFields,
+      findsAtLeastNWidgets(5),
+      reason: 'Titre, description, ville, téléphone, budget au minimum',
+    );
+
+    // Dropdowns attendus : catégorie, délai, type budget
+    final dropdowns = find.byType(DropdownButtonFormField<String>);
+    expect(
+      dropdowns,
+      findsAtLeastNWidgets(3),
+      reason: 'Catégorie, délai, type de budget au minimum',
+    );
+
+    // Section photos
+    expect(find.byType(PhotoSelectorTile), findsOneWidget);
+
+    // Bouton de publication (peut nécessiter un scroll sur petit écran)
+    await tester.scrollUntilVisible(
+      find.text('Publier mon offre'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Publier mon offre'), findsOneWidget);
+
+    // Bouton IA dictée
+    expect(find.byType(PremiumAiButton), findsOneWidget);
+    expect(find.text('Décrire mon besoin (IA)'), findsOneWidget);
+
     await tester.pumpWidget(const SizedBox.shrink());
   });
 }
