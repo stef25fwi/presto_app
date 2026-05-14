@@ -149,6 +149,8 @@ class _AccountPageState extends State<AccountPage> {
   Future<Map<String, dynamic>>? _adminCfgFuture;
   String? _adminCfgFutureUid;
   DateTime? _adminLastCheckedAt;
+  Timer? _adminLoadingTimeoutTimer;
+  bool _adminLoadingTimedOut = false;
 
   void _resetAdminAccessState() {
     _adminAccessFuture = null;
@@ -157,6 +159,9 @@ class _AccountPageState extends State<AccountPage> {
     _adminCfgFuture = null;
     _adminCfgFutureUid = null;
     _adminLastCheckedAt = null;
+    _adminLoadingTimeoutTimer?.cancel();
+    _adminLoadingTimeoutTimer = null;
+    _adminLoadingTimedOut = false;
   }
 
   bool _shouldShowAdminDebugCard(
@@ -253,6 +258,13 @@ class _AccountPageState extends State<AccountPage> {
     bool returnOnLocalAdminEvidence = false,
   }) {
     _adminAccessFutureUid = uid;
+    _adminLoadingTimedOut = false;
+    _adminLoadingTimeoutTimer?.cancel();
+    _adminLoadingTimeoutTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted && _adminAccessFutureUid == uid) {
+        setState(() => _adminLoadingTimedOut = true);
+      }
+    });
     final future = _adminAccessResolver.resolveAdminAccess(
       forceRefresh: forceRefresh,
       returnOnLocalAdminEvidence: returnOnLocalAdminEvidence,
@@ -263,9 +275,11 @@ class _AccountPageState extends State<AccountPage> {
         if (!mounted || _adminAccessFuture != future) {
           return;
         }
+        _adminLoadingTimeoutTimer?.cancel();
         setState(() {
           _lastAdminAccessState = state;
           _adminLastCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
+          _adminLoadingTimedOut = false;
         });
         if (state.effectiveIsAdmin) {
           unawaited(adminAudioRuntimeStore.enableCloudSync());
@@ -274,6 +288,7 @@ class _AccountPageState extends State<AccountPage> {
           unawaited(_refreshAdminAccessServerForUser(uid));
         }
       }).catchError((Object error, StackTrace stackTrace) {
+        _adminLoadingTimeoutTimer?.cancel();
         debugPrint('[AdminProfile] admin access resolution failed: $error');
       }),
     );
@@ -1050,6 +1065,7 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   void dispose() {
+    _adminLoadingTimeoutTimer?.cancel();
     _profileAuthSub?.cancel();
     _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
     _profileCityController.removeListener(_handleProfileCompletenessChanged);
@@ -1357,6 +1373,12 @@ class _AccountPageState extends State<AccountPage> {
       } on FirebaseException catch (e) {
         debugPrint(
           '[ProfileSave] reread ignored path=users/${user.uid} code=${e.code} message=${e.message}',
+        );
+      } on StateError catch (e) {
+        // Re-read validation mismatch — data was written but server snapshot
+        // may be inconsistent (cache, propagation delay). Log and continue.
+        debugPrint(
+          '[ProfileSave] reread validation ignored path=users/${user.uid}: $e',
         );
       }
 
@@ -2260,6 +2282,15 @@ class _AccountPageState extends State<AccountPage> {
 
         if (accessSnapshot.connectionState == ConnectionState.waiting &&
             resolvedState == null) {
+          if (_adminLoadingTimedOut) {
+            return _buildAdminLoadRetryCard(
+              user: user,
+              title: 'Vérification admin en cours…',
+              message:
+                  'La vérification prend plus de temps que prévu. Réessaie ou reconnecte-toi.',
+              detail: null,
+            );
+          }
           final loadingCard = _buildAdminLoadingCard();
           if (_shouldShowAdminDebugCard(user)) {
             return Column(
