@@ -149,6 +149,8 @@ class _AccountPageState extends State<AccountPage> {
   Future<Map<String, dynamic>>? _adminCfgFuture;
   String? _adminCfgFutureUid;
   DateTime? _adminLastCheckedAt;
+  Timer? _adminLoadingTimeoutTimer;
+  bool _adminLoadingTimedOut = false;
 
   void _resetAdminAccessState() {
     _adminAccessFuture = null;
@@ -157,6 +159,9 @@ class _AccountPageState extends State<AccountPage> {
     _adminCfgFuture = null;
     _adminCfgFutureUid = null;
     _adminLastCheckedAt = null;
+    _adminLoadingTimeoutTimer?.cancel();
+    _adminLoadingTimeoutTimer = null;
+    _adminLoadingTimedOut = false;
   }
 
   bool _shouldShowAdminDebugCard(
@@ -253,6 +258,13 @@ class _AccountPageState extends State<AccountPage> {
     bool returnOnLocalAdminEvidence = false,
   }) {
     _adminAccessFutureUid = uid;
+    _adminLoadingTimedOut = false;
+    _adminLoadingTimeoutTimer?.cancel();
+    _adminLoadingTimeoutTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted && _adminAccessFutureUid == uid) {
+        setState(() => _adminLoadingTimedOut = true);
+      }
+    });
     final future = _adminAccessResolver.resolveAdminAccess(
       forceRefresh: forceRefresh,
       returnOnLocalAdminEvidence: returnOnLocalAdminEvidence,
@@ -263,9 +275,11 @@ class _AccountPageState extends State<AccountPage> {
         if (!mounted || _adminAccessFuture != future) {
           return;
         }
+        _adminLoadingTimeoutTimer?.cancel();
         setState(() {
           _lastAdminAccessState = state;
           _adminLastCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
+          _adminLoadingTimedOut = false;
         });
         if (state.effectiveIsAdmin) {
           unawaited(adminAudioRuntimeStore.enableCloudSync());
@@ -274,6 +288,7 @@ class _AccountPageState extends State<AccountPage> {
           unawaited(_refreshAdminAccessServerForUser(uid));
         }
       }).catchError((Object error, StackTrace stackTrace) {
+        _adminLoadingTimeoutTimer?.cancel();
         debugPrint('[AdminProfile] admin access resolution failed: $error');
       }),
     );
@@ -870,16 +885,30 @@ class _AccountPageState extends State<AccountPage> {
     String uid,
   ) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-
     try {
-      await FirebaseAuth.instance.currentUser
-          ?.getIdToken(true)
-          .timeout(const Duration(seconds: 12));
+      // Firebase SDK manages token refresh automatically — no forced refresh needed.
       return await userRef
           .get(const GetOptions(source: Source.server))
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 6));
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied' ||
+          error.code == 'unauthenticated') {
+        // Token may be stale — force one refresh and retry.
+        debugPrint('[Profile] Auth error, forcing token refresh: ${error.code}');
+        await FirebaseAuth.instance.currentUser
+            ?.getIdToken(true)
+            .timeout(const Duration(seconds: 8));
+        return await userRef
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 5));
+      }
+      // Network or quota issue — serve from cache.
+      debugPrint('[Profile] Server unavailable (${error.code}), using cache');
+      return userRef
+          .get(const GetOptions(source: Source.cache))
+          .timeout(const Duration(seconds: 3));
     } catch (error) {
-      debugPrint('[Profile] Fallback cache pour le profil: $error');
+      debugPrint('[Profile] Fallback cache: $error');
       return userRef
           .get(const GetOptions(source: Source.cache))
           .timeout(const Duration(seconds: 3));
@@ -932,6 +961,22 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     return '+$codeDigits$phoneDigits';
+  }
+
+  String _inferPhoneCountryCodeFromCity(String cityValue) {
+    final match =
+        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(cityValue.trim());
+    if (match == null) return '+33';
+    final postal = match.group(1)!;
+    final dept = (postal.startsWith('97') || postal.startsWith('98'))
+        ? postal.substring(0, 3)
+        : postal.substring(0, 2);
+    if (dept == '971') return '+590'; // Guadeloupe
+    if (dept == '972') return '+596'; // Martinique
+    if (dept == '973') return '+594'; // Guyane
+    if (dept == '974' || dept == '976') return '+262'; // La Réunion / Mayotte
+    if (dept == '987') return '+689'; // Polynésie française
+    return '+33';
   }
 
   void _applyLoadedProfilePhone(String rawPhone) {
@@ -1050,6 +1095,7 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   void dispose() {
+    _adminLoadingTimeoutTimer?.cancel();
     _profileAuthSub?.cancel();
     _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
     _profileCityController.removeListener(_handleProfileCompletenessChanged);
@@ -1107,6 +1153,13 @@ class _AccountPageState extends State<AccountPage> {
           _profilePhoneController.text = previousPhone;
         } else {
           _applyLoadedProfilePhone('');
+          // No phone stored — infer country code from city so the user
+          // gets the correct dialling prefix when they fill in the field.
+          final inferred =
+              _inferPhoneCountryCodeFromCity(_profileCityController.text);
+          if (inferred != '+33') {
+            _profilePhoneCountryCode = inferred;
+          }
         }
 
         final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
@@ -1173,6 +1226,12 @@ class _AccountPageState extends State<AccountPage> {
         if (previousPhone.isNotEmpty) {
           _profilePhoneCountryCode = previousPhoneCountryCode;
           _profilePhoneController.text = previousPhone;
+        } else {
+          final inferred =
+              _inferPhoneCountryCodeFromCity(_profileCityController.text);
+          if (inferred != '+33') {
+            _profilePhoneCountryCode = inferred;
+          }
         }
         _profileAccountType = 'Particulier';
         _favoriteCategories = previousFavoriteCategories;
@@ -1299,7 +1358,6 @@ class _AccountPageState extends State<AccountPage> {
   }) async {
     if (!mounted) return false;
 
-    // Validation du profil
     if (!_validateProfile()) {
       return false;
     }
@@ -1325,78 +1383,22 @@ class _AccountPageState extends State<AccountPage> {
 
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(user.uid);
-      debugPrint(
-          '[ProfileSave] write path=users/${user.uid} payload=$profileData');
+      debugPrint('[ProfileSave] write path=users/${user.uid}');
       await userRef
           .set(profileData, SetOptions(merge: true))
           .timeout(const Duration(seconds: 10));
-      try {
-        final savedSnapshot = await userRef
-            .get(const GetOptions(source: Source.server))
-            .timeout(const Duration(seconds: 5));
-        debugPrint(
-          '[ProfileSave] reread path=users/${user.uid} data=${savedSnapshot.data()}',
-        );
-        final savedData = savedSnapshot.data() ?? const <String, dynamic>{};
-        final savedCompleteness = savedData['profileCompleteness'];
-        final savedCompletenessValue = savedCompleteness is num
-            ? savedCompleteness.toDouble()
-            : double.tryParse(savedCompleteness?.toString() ?? '') ?? 0;
-        if (savedData['profileCompleted'] != true ||
-            savedCompletenessValue <= 0) {
-          throw StateError(
-            'Relecture users/${user.uid} invalide: '
-            'profileCompleted=${savedData['profileCompleted']} '
-            'profileCompleteness=${savedData['profileCompleteness']}',
-          );
-        }
-      } on TimeoutException catch (e) {
-        debugPrint(
-          '[ProfileSave] reread timeout ignored path=users/${user.uid}: $e',
-        );
-      } on FirebaseException catch (e) {
-        debugPrint(
-          '[ProfileSave] reread ignored path=users/${user.uid} code=${e.code} message=${e.message}',
-        );
-      }
 
-      // Mise à jour du displayName Firebase Auth
-      if (pseudo.isNotEmpty) {
-        try {
-          await user.updateDisplayName(pseudo).timeout(
-                const Duration(seconds: 5),
-              );
-          await user.reload().timeout(
-                const Duration(seconds: 5),
-              );
-        } catch (e) {
-          debugPrint('[Profile] Erreur mise à jour displayName: $e');
-          // Continue même si échoue
-        }
-      }
-
-      final refreshedUser = FirebaseAuth.instance.currentUser ?? user;
-      try {
-        await _loadUserProfile(refreshedUser);
-      } catch (e) {
-        debugPrint('[Profile] Erreur rechargement profil après sauvegarde: $e');
-      }
-
-      // ✅ Vérifier l'email si pas encore vérifié
-      if (!refreshedUser.emailVerified && refreshedUser.email != null) {
-        try {
-          await EmailActionService.requestEmailVerificationEmail();
-        } catch (_) {
-          // Silencieux
-        }
-      }
-
+      // Write succeeded — exit edit mode and notify user immediately.
       if (mounted) {
         setState(() => _isEditingProfile = false);
         if (showSuccess) {
           showSuccessSnackBar(context, "Profil enregistré");
         }
       }
+
+      // Background: sync Auth displayName then refresh local profile data.
+      unawaited(_postSaveBackgroundSync(user, pseudo));
+
       return true;
     } on FirebaseException catch (e) {
       debugPrint(
@@ -1437,6 +1439,33 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) {
         setState(() => _isSavingProfile = false);
       }
+    }
+  }
+
+  Future<void> _postSaveBackgroundSync(User user, String pseudo) async {
+    // Update Auth display name (best effort).
+    if (pseudo.isNotEmpty) {
+      try {
+        await user.updateDisplayName(pseudo).timeout(const Duration(seconds: 5));
+        await user.reload().timeout(const Duration(seconds: 5));
+      } catch (e) {
+        debugPrint('[ProfileSave] displayName update failed (ignored): $e');
+      }
+    }
+
+    // Reload Firestore profile so local state reflects the saved data.
+    final refreshedUser = FirebaseAuth.instance.currentUser ?? user;
+    try {
+      await _loadUserProfile(refreshedUser);
+    } catch (e) {
+      debugPrint('[ProfileSave] Profile reload failed (ignored): $e');
+    }
+
+    // Send email verification if not yet verified (best effort).
+    if (!(refreshedUser.emailVerified) && refreshedUser.email != null) {
+      try {
+        await EmailActionService.requestEmailVerificationEmail();
+      } catch (_) {}
     }
   }
 
@@ -2260,6 +2289,15 @@ class _AccountPageState extends State<AccountPage> {
 
         if (accessSnapshot.connectionState == ConnectionState.waiting &&
             resolvedState == null) {
+          if (_adminLoadingTimedOut) {
+            return _buildAdminLoadRetryCard(
+              user: user,
+              title: 'Vérification admin en cours…',
+              message:
+                  'La vérification prend plus de temps que prévu. Réessaie ou reconnecte-toi.',
+              detail: null,
+            );
+          }
           final loadingCard = _buildAdminLoadingCard();
           if (_shouldShowAdminDebugCard(user)) {
             return Column(
