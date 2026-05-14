@@ -310,6 +310,44 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     return merged;
   }
 
+  bool _shouldHydrateMarketplaceOffer(Object? source, String listingId) {
+    if (listingId.isEmpty) {
+      return false;
+    }
+
+    if (source == null) {
+      return true;
+    }
+
+    if (source is! Map) {
+      return true;
+    }
+
+    final dynamicSource = Map<String, dynamic>.from(
+      source.cast<dynamic, dynamic>(),
+    );
+    final title = (dynamicSource['title'] ?? '').toString().trim();
+    final description =
+        (dynamicSource['description'] ?? dynamicSource['detail'] ?? '')
+            .toString()
+            .trim();
+    final advertiserId =
+        (dynamicSource['userId'] ?? dynamicSource['advertiserId'] ?? '')
+            .toString()
+            .trim();
+    final imageUrls = _collectImageUrls(
+      imageUrls: dynamicSource['imageUrls'],
+      media: dynamicSource['media'],
+      imageUrl: dynamicSource['imageUrl'],
+      thumbnailUrl: dynamicSource['thumbnailUrl'],
+    );
+
+    return title.isEmpty ||
+        description.isEmpty ||
+        advertiserId.isEmpty ||
+        imageUrls.isEmpty;
+  }
+
   String _toE164Like(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
@@ -1446,7 +1484,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     final listingId = _extractMarketplaceListingId(offer);
-    if (listingId.isEmpty) {
+    if (!_shouldHydrateMarketplaceOffer(offer, listingId)) {
       return buildPage(offer);
     }
 
