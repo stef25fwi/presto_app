@@ -119,7 +119,11 @@ class _AccountPageState extends State<AccountPage> {
   String _profilePhoneCountryCode = '+33';
   String _profileAccountType = 'Particulier';
   StreamSubscription<User?>? _profileAuthSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _profileDocSub;
   String? _activeProfileUid;
+  String _profileEmail = '';
+  String? _profilePhotoUrl;
 
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
@@ -134,6 +138,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _isFavoriteOffersExpanded = false;
   bool _profileLoadError = false;
   int _profileLoadRetries = 0;
+  bool _profileSyncInProgress = false;
   static const int _maxProfileLoadRetries = 3;
   int _lastMissingRequiredCount = -1;
 
@@ -810,6 +815,9 @@ class _AccountPageState extends State<AccountPage> {
     _isEditingProfile = false;
     _profilePhoneCountryCode = '+33';
     _profileAccountType = 'Particulier';
+    _profileEmail = '';
+    _profilePhotoUrl = null;
+    _profileSyncInProgress = false;
     _favoriteCategories = <String>{};
     _selectedFavoriteCategories = <String>{};
     _selectedFavoriteSubcategories = <String>{};
@@ -828,6 +836,8 @@ class _AccountPageState extends State<AccountPage> {
 
     if (user == null) {
       SessionState.userId = null;
+      await _profileDocSub?.cancel();
+      _profileDocSub = null;
       setState(() {
         _resetProfileState();
       });
@@ -836,43 +846,7 @@ class _AccountPageState extends State<AccountPage> {
 
     SessionState.userId = user.uid;
 
-    try {
-      await UserProfileBootstrapService.ensureUserDocument(
-        user: user,
-        authMethod: 'session_restore',
-      );
-    } on FirebaseException catch (error) {
-      debugPrint(
-        '[AuthBootstrap] account session restore Firestore failed '
-        'uid=${user.uid} path=users/${user.uid} '
-        'code=${error.code} message=${error.message}',
-      );
-    } catch (error) {
-      debugPrint(
-        '[AuthBootstrap] account session restore failed '
-        'uid=${user.uid} path=users/${user.uid} error=$error',
-      );
-    }
-
-    if (_activeProfileUid == user.uid &&
-        (_profileLoaded || _profileLoadRequested)) {
-      if (!mounted) return;
-      setState(() {
-        _refreshAdminAccessForUser(user.uid);
-      });
-      return;
-    }
-
-    setState(() {
-      _resetProfileState(clearControllers: false);
-      _activeProfileUid = user.uid;
-      final displayName = user.displayName?.trim() ?? '';
-      _profilePseudoController.text = displayName;
-      _profileLoadRequested = true;
-      _refreshAdminAccessForUser(user.uid, forceRefresh: true);
-    });
-
-    await _loadUserProfile(user);
+    await _startInstantProfileHydration(user);
   }
 
   bool _hasProfileValuesInMemory() {
@@ -1025,6 +999,185 @@ class _AccountPageState extends State<AccountPage> {
     _profilePhoneController.text = trimmed;
   }
 
+  String _deriveImmediatePseudo(User user) {
+    final displayName = user.displayName?.trim() ?? '';
+    if (displayName.isNotEmpty) {
+      return displayName;
+    }
+
+    final email = user.email?.trim() ?? '';
+    if (email.contains('@')) {
+      return email.split('@').first.trim();
+    }
+
+    return 'Utilisateur';
+  }
+
+  bool _canHydrateProfileField(TextEditingController controller) {
+    if (!_isEditingProfile) {
+      return true;
+    }
+    return controller.text.trim().isEmpty;
+  }
+
+  void _applyImmediateAuthProfile(User user) {
+    final nextEmail = user.email?.trim() ?? '';
+    if (nextEmail.isNotEmpty) {
+      _profileEmail = nextEmail;
+    }
+
+    final nextPhotoUrl = user.photoURL?.trim() ?? '';
+    if (nextPhotoUrl.isNotEmpty) {
+      _profilePhotoUrl = nextPhotoUrl;
+    }
+
+    final pseudo = _deriveImmediatePseudo(user);
+    if (pseudo.isNotEmpty && _canHydrateProfileField(_profilePseudoController)) {
+      _profilePseudoController.text = pseudo;
+    }
+
+    final authPhone = user.phoneNumber?.trim() ?? '';
+    if (authPhone.isNotEmpty && _canHydrateProfileField(_profilePhoneController)) {
+      _applyLoadedProfilePhone(authPhone);
+    }
+  }
+
+  String _firstNonEmptyProfilePhoto(Map<String, dynamic>? data) {
+    return _firstNonEmptyProfileValue(
+      data,
+      const ['photoUrl', 'photoURL', 'avatarUrl', 'avatarURL', 'imageUrl'],
+      fallbackValues: <String>[_profilePhotoUrl ?? ''],
+    );
+  }
+
+  Future<void> _startInstantProfileHydration(User user) async {
+    final uid = user.uid;
+    final isSameUser = _activeProfileUid == uid;
+    if (isSameUser && _profileDocSub != null) {
+      if (!mounted) return;
+      setState(() {
+        _applyImmediateAuthProfile(user);
+        _refreshAdminAccessForUser(uid);
+      });
+      return;
+    }
+
+    await _profileDocSub?.cancel();
+    _profileDocSub = null;
+    if (!mounted) return;
+
+    setState(() {
+      _resetProfileState();
+      _activeProfileUid = uid;
+      _profileLoadRequested = true;
+      _profileLoaded = true;
+      _profileSyncInProgress = true;
+      _applyImmediateAuthProfile(user);
+      _lastMissingRequiredCount = _missingRequiredProfileFields().length;
+      _refreshAdminAccessForUser(uid, forceRefresh: true);
+    });
+
+    unawaited(() async {
+      try {
+        await UserProfileBootstrapService.ensureUserDocument(
+          user: user,
+          authMethod: 'session_restore',
+        );
+      } on FirebaseException catch (error) {
+        debugPrint(
+          '[AuthBootstrap] account session restore Firestore failed '
+          'uid=${user.uid} path=users/${user.uid} '
+          'code=${error.code} message=${error.message}',
+        );
+      } catch (error) {
+        debugPrint(
+          '[AuthBootstrap] account session restore failed '
+          'uid=${user.uid} path=users/${user.uid} error=$error',
+        );
+      }
+    }());
+
+    unawaited(UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      user: user,
+      forceRefreshToken: false,
+      forceRefreshAppCheckToken: false,
+    ).catchError((Object error) {
+      debugPrint('[Profile] prepareProfileFirestoreAccess ignored: $error');
+      return null;
+    }));
+
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    _profileDocSub = userRef
+        .snapshots(includeMetadataChanges: true)
+        .listen((snapshot) {
+          if (!mounted || _activeProfileUid != uid) {
+            return;
+          }
+
+          final previousPseudo = _profilePseudoController.text.trim();
+          final previousCity = _profileCityController.text.trim();
+          final previousPhoneCountryCode = _profilePhoneCountryCode;
+          final previousPhone = _profilePhoneController.text.trim();
+          final previousFavoriteCategories = _favoriteCategories.toSet();
+          final previousSelectedFavoriteCategories =
+              _selectedFavoriteCategories.toSet();
+          final previousSelectedFavoriteSubcategories =
+              _selectedFavoriteSubcategories.toSet();
+          final previousDraftFavoriteSelections =
+              _draftFavoriteSelections.toSet();
+
+          setState(() {
+            _applyImmediateAuthProfile(user);
+            final data = snapshot.data();
+            if (data != null) {
+              _applyUserProfileDocument(
+                user,
+                data: data,
+                previousPseudo: previousPseudo,
+                previousCity: previousCity,
+                previousPhoneCountryCode: previousPhoneCountryCode,
+                previousPhone: previousPhone,
+                previousFavoriteCategories: previousFavoriteCategories,
+                previousSelectedFavoriteCategories:
+                    previousSelectedFavoriteCategories,
+                previousSelectedFavoriteSubcategories:
+                    previousSelectedFavoriteSubcategories,
+                previousDraftFavoriteSelections:
+                    previousDraftFavoriteSelections,
+              );
+              final hydratedEmail = _firstNonEmptyProfileValue(
+                data,
+                const ['email'],
+                fallbackValues: <String>[_profileEmail, user.email ?? ''],
+              );
+              if (hydratedEmail.isNotEmpty) {
+                _profileEmail = hydratedEmail;
+              }
+              final hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+              if (hydratedPhotoUrl.isNotEmpty) {
+                _profilePhotoUrl = hydratedPhotoUrl;
+              }
+            }
+            _profileLoadError = false;
+            _profileLoaded = true;
+            _profileLoadRequested = true;
+            _profileSyncInProgress = false;
+            _lastMissingRequiredCount = _missingRequiredProfileFields().length;
+          });
+        }, onError: (Object error) {
+          if (!mounted || _activeProfileUid != uid) {
+            return;
+          }
+          debugPrint('[Profile] snapshot users/$uid failed: $error');
+          setState(() {
+            _profileLoadError = true;
+            _profileLoaded = true;
+            _profileLoadRequested = true;
+            _profileSyncInProgress = false;
+          });
+        });
+  }
+
   void _applyUserProfileDocument(
     User user, {
     Map<String, dynamic>? data,
@@ -1038,33 +1191,58 @@ class _AccountPageState extends State<AccountPage> {
     required Set<String> previousDraftFavoriteSelections,
   }) {
     if (data != null) {
-      _profilePseudoController.text = _firstNonEmptyProfileValue(
+      final nextPseudo = _firstNonEmptyProfileValue(
         data,
-        const ['pseudo', 'displayName', 'userName', 'user_name', 'name'],
+        const [
+          'pseudo',
+          'displayName',
+          'userName',
+          'user_name',
+          'name',
+          'fullName',
+        ],
         fallbackValues: <String>[user.displayName ?? '', previousPseudo],
       );
-      _profileCityController.text = _firstNonEmptyProfileValue(
+      if (_canHydrateProfileField(_profilePseudoController)) {
+        _profilePseudoController.text = nextPseudo;
+      }
+
+      final nextCity = _firstNonEmptyProfileValue(
         data,
-        const ['city', 'ville', 'location', 'serviceArea', 'service_area'],
+        const [
+          'city',
+          'ville',
+          'commune',
+          'location',
+          'serviceArea',
+          'service_area',
+        ],
         fallbackValues: <String>[previousCity],
       );
+      if (_canHydrateProfileField(_profileCityController)) {
+        _profileCityController.text = nextCity;
+      }
 
       final loadedPhone = _firstNonEmptyProfileValue(
         data,
         const ['phone', 'telephone', 'phoneNumber', 'phone_number'],
         fallbackValues: <String>[user.phoneNumber ?? ''],
       );
-      if (loadedPhone.isNotEmpty) {
+      if (loadedPhone.isNotEmpty &&
+          _canHydrateProfileField(_profilePhoneController)) {
         _applyLoadedProfilePhone(loadedPhone);
-      } else if (previousPhone.isNotEmpty) {
+      } else if (previousPhone.isNotEmpty &&
+          _profilePhoneController.text.trim().isEmpty) {
         _profilePhoneCountryCode = previousPhoneCountryCode;
         _profilePhoneController.text = previousPhone;
       } else {
-        _applyLoadedProfilePhone('');
-        final inferred =
-            _inferPhoneCountryCodeFromCity(_profileCityController.text);
-        if (inferred != '+33') {
-          _profilePhoneCountryCode = inferred;
+        if (_profilePhoneController.text.trim().isEmpty) {
+          _applyLoadedProfilePhone('');
+          final inferred =
+              _inferPhoneCountryCodeFromCity(_profileCityController.text);
+          if (inferred != '+33') {
+            _profilePhoneCountryCode = inferred;
+          }
         }
       }
 
@@ -1118,13 +1296,20 @@ class _AccountPageState extends State<AccountPage> {
       _profileAccountType =
           loadedAccountType.isNotEmpty ? loadedAccountType : 'Particulier';
     } else {
-      _profilePseudoController.text = user.displayName?.trim().isNotEmpty == true
-          ? user.displayName!.trim()
-          : previousPseudo;
-      _profileCityController.text = previousCity;
+      if (_canHydrateProfileField(_profilePseudoController)) {
+        _profilePseudoController.text =
+            user.displayName?.trim().isNotEmpty == true
+                ? user.displayName!.trim()
+                : previousPseudo;
+      }
+      if (_canHydrateProfileField(_profileCityController)) {
+        _profileCityController.text = previousCity;
+      }
       if (previousPhone.isNotEmpty) {
-        _profilePhoneCountryCode = previousPhoneCountryCode;
-        _profilePhoneController.text = previousPhone;
+        if (_canHydrateProfileField(_profilePhoneController)) {
+          _profilePhoneCountryCode = previousPhoneCountryCode;
+          _profilePhoneController.text = previousPhone;
+        }
       } else {
         final inferred =
             _inferPhoneCountryCodeFromCity(_profileCityController.text);
@@ -1235,6 +1420,7 @@ class _AccountPageState extends State<AccountPage> {
   void dispose() {
     _adminLoadingTimeoutTimer?.cancel();
     _profileAuthSub?.cancel();
+    _profileDocSub?.cancel();
     _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
     _profileCityController.removeListener(_handleProfileCompletenessChanged);
     _profilePhoneController.removeListener(_handleProfileCompletenessChanged);
@@ -1246,103 +1432,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _loadUserProfile(User user, {int attempt = 0}) async {
-    final previousPseudo = _profilePseudoController.text.trim();
-    final previousCity = _profileCityController.text.trim();
-    final previousPhoneCountryCode = _profilePhoneCountryCode;
-    final previousPhone = _profilePhoneController.text.trim();
-    final previousFavoriteCategories = _favoriteCategories.toSet();
-    final previousSelectedFavoriteCategories =
-        _selectedFavoriteCategories.toSet();
-    final previousSelectedFavoriteSubcategories =
-        _selectedFavoriteSubcategories.toSet();
-    final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
-
-    try {
-      await EmailActionService.syncCurrentUserEmailVerificationState();
-    } catch (e) {
-      debugPrint('[Profile] Erreur synchro emailVerified: $e');
-    }
-
-    final cachedDoc = await _fetchCachedUserProfileDocument(user.uid);
-    if (mounted && _activeProfileUid == user.uid && cachedDoc?.exists == true) {
-      _applyUserProfileDocument(
-        user,
-        data: cachedDoc!.data(),
-        previousPseudo: previousPseudo,
-        previousCity: previousCity,
-        previousPhoneCountryCode: previousPhoneCountryCode,
-        previousPhone: previousPhone,
-        previousFavoriteCategories: previousFavoriteCategories,
-        previousSelectedFavoriteCategories: previousSelectedFavoriteCategories,
-        previousSelectedFavoriteSubcategories:
-            previousSelectedFavoriteSubcategories,
-        previousDraftFavoriteSelections: previousDraftFavoriteSelections,
-      );
-      setState(() {
-        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
-        _profileLoaded = true;
-        _profileLoadRequested = true;
-      });
-    }
-
-    try {
-      final doc = await _fetchUserProfileDocument(user.uid);
-      if (!mounted || _activeProfileUid != user.uid) {
-        return;
-      }
-
-      _applyUserProfileDocument(
-        user,
-        data: doc.exists ? doc.data() : null,
-        previousPseudo: previousPseudo,
-        previousCity: previousCity,
-        previousPhoneCountryCode: previousPhoneCountryCode,
-        previousPhone: previousPhone,
-        previousFavoriteCategories: previousFavoriteCategories,
-        previousSelectedFavoriteCategories: previousSelectedFavoriteCategories,
-        previousSelectedFavoriteSubcategories:
-            previousSelectedFavoriteSubcategories,
-        previousDraftFavoriteSelections: previousDraftFavoriteSelections,
-      );
-    } catch (e) {
-      debugPrint('[Profile] Erreur chargement profil: $e');
-
-      // Retry automatique jusqu'à 3 fois
-      if (attempt < _maxProfileLoadRetries) {
-        _profileLoadRetries = attempt + 1;
-        await Future.delayed(const Duration(milliseconds: 800));
-        if (mounted) {
-          await _loadUserProfile(user, attempt: attempt + 1);
-          return;
-        }
-      }
-
-      if (previousPseudo.isNotEmpty && _profilePseudoController.text.isEmpty) {
-        _profilePseudoController.text = previousPseudo;
-      }
-      if (previousCity.isNotEmpty && _profileCityController.text.isEmpty) {
-        _profileCityController.text = previousCity;
-      }
-      if (previousPhone.isNotEmpty && _profilePhoneController.text.isEmpty) {
-        _profilePhoneCountryCode = previousPhoneCountryCode;
-        _profilePhoneController.text = previousPhone;
-      }
-
-      _favoriteCategories = previousFavoriteCategories;
-      _selectedFavoriteCategories = previousSelectedFavoriteCategories;
-      _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
-      _draftFavoriteSelections = previousDraftFavoriteSelections;
-      _profileLoadError = true;
-      _isEditingProfile = !_hasProfileValuesInMemory();
-    }
-
-    if (mounted) {
-      setState(() {
-        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
-        _profileLoaded = true;
-        _profileLoadRequested = true;
-      });
-    }
+    await _startInstantProfileHydration(user);
   }
 
   bool _validateProfile() {
@@ -1516,12 +1606,11 @@ class _AccountPageState extends State<AccountPage> {
       }
     }
 
-    // Reload Firestore profile so local state reflects the saved data.
     final refreshedUser = FirebaseAuth.instance.currentUser ?? user;
-    try {
-      await _loadUserProfile(refreshedUser);
-    } catch (e) {
-      debugPrint('[ProfileSave] Profile reload failed (ignored): $e');
+    if (mounted && _activeProfileUid == refreshedUser.uid) {
+      setState(() {
+        _applyImmediateAuthProfile(refreshedUser);
+      });
     }
 
     // Send email verification if not yet verified (best effort).
@@ -1997,18 +2086,21 @@ class _AccountPageState extends State<AccountPage> {
     // Lier les crash reports à l'utilisateur connecté
     CrashlyticsContext.setUserId(user.uid);
 
-    if (_activeProfileUid != user.uid ||
-        (!_profileLoaded && !_profileLoadRequested)) {
+    if (_activeProfileUid != user.uid || _profileDocSub == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        unawaited(_handleProfileAuthStateChanged(user));
+        unawaited(_startInstantProfileHydration(user));
       });
     }
 
     final pseudo = _profilePseudoController.text.trim();
     final displayName = pseudo.isNotEmpty
         ? pseudo
-        : (user.displayName ?? "Utilisateur iliprestō");
+        : _deriveImmediatePseudo(user);
+    final visibleEmail = _profileEmail.trim().isNotEmpty
+        ? _profileEmail.trim()
+        : (user.email ?? '');
+    final visiblePhotoUrl = (_profilePhotoUrl ?? '').trim();
     final draftCategoryLabels = _draftFavoriteSelections
         .where((entry) => !entry.contains('—'))
         .toList()
@@ -2050,9 +2142,8 @@ class _AccountPageState extends State<AccountPage> {
                           CircleAvatar(
                             radius: 42,
                             backgroundColor: Colors.white,
-                            backgroundImage: user.photoURL != null &&
-                                    user.photoURL!.trim().isNotEmpty
-                                ? NetworkImage(user.photoURL!.trim())
+                            backgroundImage: visiblePhotoUrl.isNotEmpty
+                                ? NetworkImage(visiblePhotoUrl)
                                 : const AssetImage(
                                     'assets/images/logowebp.webp',
                                   ),
@@ -2076,12 +2167,23 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            user.email ?? "",
+                            visibleEmail,
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.black54,
                             ),
                           ),
+                          if (_profileSyncInProgress) ...[
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Synchronisation…',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black45,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           // ✅ Indicateur de complétude du profil
                           if (_profileLoaded)
