@@ -50,7 +50,7 @@
 		<string>remote-notification</string>
 	</array>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-1792076968124623~3798369694</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Nous avons besoin de l’appareil photo pour ajouter une photo à l’annonce.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
