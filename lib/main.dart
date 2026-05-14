@@ -235,50 +235,6 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   );
 }
 
-const Map<String, String> kCityPostalMap = {
-  'Baie-Mahault': '97122',
-  'Les Abymes': '97139',
-  'Pointe-à-Pitre': '97110',
-  'Le Gosier': '97190',
-  'Sainte-Anne': '97180',
-  'Saint-François': '97118',
-  'Petit-Bourg': '97170',
-  'Lamentin': '97129',
-  'Capesterre-Belle-Eau': '97130',
-  'Basse-Terre': '97100',
-  'Goyave': '97128',
-  'Morne-à-l\'Eau': '97111',
-  'Sainte-Rose': '97115',
-  'Le Moule': '97160',
-  'Saint-Claude': '97120',
-  'Bouillante': '97125',
-  'Deshaies': '97126',
-  'Trois-Rivières': '97114',
-  'Vieux-Habitants': '97119',
-  'Vieux-Fort': '97141',
-  'Anse-Bertrand': '97121',
-  'Port-Louis': '97117',
-  'Petit-Canal': '97131',
-  'La Désirade': '97127',
-  'Terre-de-Bas': '97136',
-  'Terre-de-Haut': '97137',
-  'Marie-Galante': '97140',
-  'Fort-de-France': '97200',
-  'Le Lamentin': '97232',
-  'Schoelcher': '97233',
-  'Le Robert': '97231',
-  'Le François': '97240',
-  'Le Marin': '97290',
-  'Les Trois-Îlets': '97229',
-  'Sainte-Luce': '97228',
-  'Sainte-Anne (MQ)': '97227',
-  'La Trinité': '97220',
-  'Le Lorrain': '97214',
-  'Le Carbet': '97221',
-  'Le Diamant': '97223',
-  'Saint-Esprit': '97270',
-};
-
 String? inferRegionFromPostalCode(String cp) {
   cp = cp.trim();
   if (cp.length < 2) return null;
@@ -817,13 +773,12 @@ Future<void> main() async {
         SessionState.userId = null;
       }
 
-      // ✅ Synchroniser SessionState.userId automatiquement avec les changements d'auth
-      /*
-      FirebaseService.instance.authStateChanges.listen((User? user) {
+      // Synchronise SessionState.userId globalement dès qu'Auth change
+      // (couvre sign-in/sign-out depuis n'importe quelle page).
+      FirebaseAuth.instance.authStateChanges().listen((User? user) {
         SessionState.userId = user?.uid;
-        debugPrint('[Auth] State changed: ${user?.uid ?? "null"}');
+        if (kDebugMode) debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
       });
-      */
     } catch (e) {
       if (kDebugMode) debugPrint('[Auth] check failed: $e');
     }
