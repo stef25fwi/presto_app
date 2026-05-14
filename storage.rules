@@ -98,11 +98,14 @@ service firebase.storage {
     }
 
     // ✅ [AUTORISÉ] MicroIA STT — upload audio par l'utilisateur
+    // Note: hasAppCheck() retiré car le SDK Flutter web n'attache pas le token
+    // App Check aux requêtes Storage (uniquement aux Cloud Callables). La sécurité
+    // est maintenue par : auth uid + nommage par UID + contentType audio + taille max.
     match /stt/{file} {
-      allow write: if hasAppCheck()
-        && request.auth != null
+      allow write: if request.auth != null
         && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$")
         && request.resource != null
+        && request.resource.contentType.matches('audio/.*|video/webm')
         && request.resource.size < 25 * 1024 * 1024;
 
       // ℹ️ [INFO] Lecture restreinte au propriétaire
@@ -112,11 +115,11 @@ service firebase.storage {
 
     // ✅ [AUTORISÉ] MicroIA Streaming — chunks audio par l'utilisateur
     match /stt_streaming/{uid}/{file} {
-      allow write: if hasAppCheck()
-        && request.auth != null
+      allow write: if request.auth != null
         && request.auth.uid == uid
         && file.matches("^[0-9]+_chunk\\.(wav|webm|mp4|aac|m4a)$")
         && request.resource != null
+        && request.resource.contentType.matches('audio/.*|video/webm')
         && request.resource.size < 5 * 1024 * 1024;
       allow read: if request.auth != null
         && request.auth.uid == uid;
