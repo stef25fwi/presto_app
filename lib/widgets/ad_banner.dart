@@ -10,16 +10,15 @@ import 'package:presto_app/widgets/random_asset_ticker.dart';
 class AdConfig {
   // ====== ANDROID (com.presto.app) ======
   static const String androidBannerId =
-      'ca-app-pub-1792076968124623/4960847514'; // PROD
+      'ca-app-pub-1792076968124623/1951540793'; // PROD
   static const String androidNativeId =
       'ca-app-pub-3940256099942544/2247696110'; // non utilisé — remplacer si activé
   static const String androidInterstitialId =
       'ca-app-pub-3940256099942544/1033173712'; // non utilisé — remplacer si activé
 
   // ====== iOS (fr.ilipresto.app) ======
-  // TODO: remplacer par l'Ad Unit ID banner iOS de production (admob.google.com)
   static const String iosBannerId =
-      'ca-app-pub-3940256099942544/2934735716'; // TEST — manquant
+      'ca-app-pub-1792076968124623/4960847514'; // PROD
   static const String iosNativeId =
       'ca-app-pub-3940256099942544/3986624511'; // non utilisé — remplacer si activé
   static const String iosInterstitialId =
