@@ -33,8 +33,8 @@ Notation interne:
 | ACTIF | AccountPage | lib/main.dart | bottom nav index 4, route /account | profil, auth, admin gate |
 | ACTIF | OfferDeepLinkPage | lib/main.dart | /offers/{id}, /listings/{id} | resolution deep links vers detail actif |
 | ACTIF | OfferDetailsPage | lib/pages/offers/offer_details_page.dart | detail annonce depuis home, favoris, deep links | detail prod actuel |
-| ACTIF_SECONDAIRE | ProfilePage | lib/profile_page.dart | fallback compte si utilisateur non connecte | flux auth/profil parallele mais encore branche |
-| ACTIF_SECONDAIRE | ProProfilePage | lib/pages/pro_profile_page.dart | depuis ProfilePage | parcours pro secondaire |
+| SUPPRIME | ProfilePage | lib/profile_page.dart | ancien fallback compte non connecte | supprime: le fallback auth vit dans lib/features/account/signed_out_account_fallback.dart |
+| ACTIF_SECONDAIRE | ProProfilePage | lib/pages/pro_profile_page.dart | navigation secondaire dediee | parcours pro secondaire |
 | ACTIF_SECONDAIRE | UserPublicProfilePage | lib/main.dart | depuis detail/messages selon contexte | pas de route nommee directe visible |
 | ACTIF_SECONDAIRE | LegalInfoPage | lib/pages/legal_info_page.dart | depuis accueil | ecran informationnel |
 | ACTIF_SECONDAIRE | ToolboxHubPage | lib/pages/toolbox_hub_page.dart | route nommee + slide accueil | hub outils entrepreneur |
@@ -101,7 +101,7 @@ Points fragiles releves:
 - coexistence listings / offers legacy dans les lectures publiques
 - App Check critique pour micro IA et lecture backend selon environnement
 - notifications dependantes du moment ou navigatorKey devient disponible
-- profil non connecte renvoie encore vers un flux profile_page.dart parallele au compte principal
+- profil non connecte renvoie vers SignedOutAccountFallback, sans flux profil parallele
 
 Verifications ciblees supplementaires:
 - la page Messagerie ne depend pas uniquement de participants array-contains: elle fusionne aussi un fallback notifications et un fallback messages deja demarres via lib/pages/messages/conversations_list_page.dart
@@ -201,7 +201,7 @@ Risques residuels apres cette passe:
 - lib/main.dart reste trop gros et melange bootstrap, navigation, ecrans, UI et logique metier
 - le projet mobile n'embarque toujours pas les fichiers natifs Firebase officiels; les options de fallback maintiennent la compilation mais ne remplacent pas une configuration FlutterFire definitive
 - les lectures publiques reposent encore sur une coexistence listings + offers legacy, meme si elle est maintenant bornee et mieux diagnostiquee
-- le flux profile_page.dart reste un fallback secondaire encore reachable et devra etre revalide avant suppression ou fusion
+- l'ancien flux profile_page.dart a ete supprime; le compte charge le profil officiel via AccountPage et users/{uid}
 - certaines validations de comportement reel n'ont pas ete executees dans cette session, notamment notifications a froid/chaud, erreurs backend simulees, et parcours admin complet
 
 Validations manuelles encore requises avant cloture PROD:
@@ -232,7 +232,6 @@ Priorite moyenne:
 
 - lib/pages/toolbox_page.dart
 - lib/pages/entrepreneur_toolbox_page.dart
-- lib/profile_page.dart
 - wrapper MessagesPage dans lib/main.dart
 
 Condition stricte avant suppression:
