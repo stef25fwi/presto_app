@@ -116,7 +116,7 @@ class _HomePageState extends State<HomePage>
     _HomeCategoryShortcut(
       icon: Icons.handyman_outlined,
       label: 'Main-d\'oeuvre',
-      targetCategory: 'Main-d\'œuvre',
+      targetCategory: 'Main-d\'oeuvre',
     ),
     _HomeCategoryShortcut(
       icon: Icons.other_houses_outlined,
@@ -624,7 +624,7 @@ class _HomePageState extends State<HomePage>
     const compactTargets = <String>[
       'Jardinage',
       'Peinture',
-      'Main-d\'œuvre',
+      'Main-d\'oeuvre',
       'Garde d\'enfants',
       'Événementiel / DJ',
     ];

@@ -7,6 +7,7 @@ exports.COLLECTIONS = {
     userProfiles: "user_profiles",
     offers: "offers",
     listings: "listings",
+    // Active draft collection (Firestore name "listingDrafts", clé intentionnellement listingDraftsV2)
     listingDraftsV2: "listingDrafts",
     listingModeration: "listingModeration",
     listingReports: "listingReports",
@@ -17,11 +18,13 @@ exports.COLLECTIONS = {
     analyticsSnapshots: "analyticsSnapshots",
     appConfig: "appConfig",
     newsletterCampaigns: "newsletter_campaigns",
+    // Legacy drafts collection (Firestore name "listing_drafts")
     listingDrafts: "listing_drafts",
     conversations: "conversations",
     conversationMessages: "conversation_messages",
     savedSearches: "saved_searches",
     favorites: "favorites",
+    pros: "pros",
     supportTickets: "support_tickets",
     reports: "reports",
     subscriptions: "subscriptions",
