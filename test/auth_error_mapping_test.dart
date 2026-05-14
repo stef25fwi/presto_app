@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/profile_page.dart';
+import 'package:presto_app/services/email_auth_error_mapper.dart';
 
 void main() {
   group('friendlyEmailAuthErrorMessage', () {
