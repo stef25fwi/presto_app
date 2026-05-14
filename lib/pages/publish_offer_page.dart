@@ -1600,6 +1600,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       postalCode: (draft['postalCode'] ?? '').toString(),
     );
     _applyKeywordCategoryPairFromText('$title\n$description');
+    // Guarantee the publish button re-evaluates after AI sets state variables
+    // (_category, _missionDelay, _budgetType) that have no controller listeners.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _recompute();
+    });
   }
 
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
@@ -1865,6 +1870,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     _applyKeywordCategoryPairFromText(t);
+    // Same guarantee as _applyRichDraftToForm: state-only fields (_missionDelay,
+    // _budgetType) don't trigger controller listeners, so force a recompute.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _recompute();
+    });
   }
 
   /// Apply draft payload returned by the publish IA pipeline.
