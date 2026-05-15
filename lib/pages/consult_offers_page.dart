@@ -227,8 +227,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   String? _selectedRegionCode;
   String? _selectedSubCategory;
 
-  String? _lastOffersQuerySignature;
-
   // Cache du stream pour éviter de le recréer à chaque setState non pertinent.
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
       _cachedOffersStream;
@@ -237,31 +235,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _offersWarmCache =
       <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
   final Set<String> _offersWarmLoadsInFlight = <String>{};
-
-  String _buildOffersQuerySignature({
-    required bool hasCategory,
-    required bool hasDept,
-    required bool hasLocation,
-    required bool hasPostalCode,
-    required bool hasSubcategory,
-    required bool hasBudgetRange,
-  }) {
-    final parts = <String>[
-      'offers',
-      if (hasCategory) 'where(category==)',
-      if (hasDept) 'where(dept==)',
-      if (hasLocation) 'where(location==)',
-      if (hasPostalCode) 'where(postalCode==)',
-      if (hasSubcategory) 'where(subcategory==)',
-      if (hasBudgetRange) 'where(budgetValue>=/<=)',
-      if (hasBudgetRange)
-        'orderBy(budgetValue asc) + orderBy(createdAt desc)'
-      else
-        'orderBy(createdAt desc)',
-      'limit($_pageLimit)',
-    ];
-    return parts.join(' + ');
-  }
 
   final _Debouncer _filterDebounce =
       _Debouncer(delay: const Duration(milliseconds: 300));
@@ -273,7 +246,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   // Pagination / loading state
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
-  bool _isLoading = false;
 
   // + Pagination progressive (moins brutale: 10 par page au lieu de 20)
   static const int _initialLimit = 10;
@@ -695,161 +667,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     super.dispose();
   }
 
-  Query<Map<String, dynamic>> _buildOffersQuery() {
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-        .collection(kListingsCollection)
-        .where('status', isEqualTo: 'active')
-        .where('visibility', isEqualTo: 'public');
-
-    final loc = _locationController.text.trim();
-    final cp = _postalCodeController.text.trim();
-    final cat = _selectedCategory;
-    final regionCode = _selectedRegionCode;
-    final subcat = _selectedSubCategory;
-
-    final filterCat = _filterCategory;
-    final filterRegCode = _filterRegionCode;
-    final filterDeptCode = _filterDepartmentCode;
-    final filterCity = _filterCityName?.trim();
-
-    final String? categoryLabel =
-        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
-    final String? categoryId = _makeCategoryId(categoryLabel);
-
-    final String cityName =
-        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
-
-    final String cpForCity = (filterCity != null &&
-            filterCity.isNotEmpty &&
-            _filterPostalCodeController.text.trim().isNotEmpty)
-        ? _filterPostalCodeController.text.trim()
-        : cp;
-
-    final String? cityId =
-        _makeCityId(cityName: cityName, postalCode: cpForCity);
-
-    final String? cityCategoryKey =
-        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
-
-    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
-    final bool hasDept =
-        (filterDeptCode != null && filterDeptCode.isNotEmpty) ||
-            (filterRegCode != null && filterRegCode.isNotEmpty) ||
-            (regionCode != null && regionCode.isNotEmpty);
-
-    final min = _parseBudgetBound(_budgetMinCtrl.text);
-    final max = _parseBudgetBound(_budgetMaxCtrl.text);
-    final bool wantsBudgetRange = _advancedFilters &&
-        (min != null || max != null) &&
-        _budgetRangeWarning == null;
-
-    // NOTE:
-    // Ne pas trier côté Firestore ici: la combinaison OR (public/legacy active)
-    // + orderBy(createdAt) peut déclencher des erreurs d'index selon l'état du
-    // projet. On trie côté client après filtrage pour garder une UX stable.
-
-    final hasClientFilters = categoryId != null ||
-        cityId != null ||
-        cityCategoryKey != null ||
-        hasSubcategory ||
-        hasDept ||
-        wantsBudgetRange ||
-        (_activeSearchQuery?.trim().isNotEmpty ?? false);
-
-    query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
-
-    // Signature (audit index) — minimaliste
-    _lastOffersQuerySignature = _buildOffersQuerySignature(
-      hasCategory: categoryId != null,
-      hasDept: hasDept,
-      hasLocation: cityId != null || cityCategoryKey != null,
-      hasPostalCode: cpForCity.trim().isNotEmpty,
-      hasSubcategory: hasSubcategory,
-      hasBudgetRange: wantsBudgetRange,
-    );
-
-    // ✅ Log la signature de la query (debug only)
-    if (kDebugMode) {
-      debugPrint('[OFFERS][QUERY] $_lastOffersQuerySignature');
-    }
-
-    // ✅ Log en Crashlytics en prod (non-fatal)
-    if (!kDebugMode && _lastOffersQuerySignature != null) {
-      try {
-        FirebaseCrashlytics.instance.log(
-          'Offers Query: $_lastOffersQuerySignature',
-        );
-      } catch (e) {
-        debugPrint('[Crashlytics] log error: $e');
-      }
-    }
-
-    // ✅ Monitoring local (dashboard admin)
-    PrestoMonitoring.I
-        .trackOffersQueryBuild(signature: _lastOffersQuerySignature);
-
-    return query;
-  }
-
-  Query<Map<String, dynamic>> _buildLegacyOffersQuery() {
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
-        .collection(kOffersCollection)
-        .where(publicOffersFilter());
-
-    final loc = _locationController.text.trim();
-    final cp = _postalCodeController.text.trim();
-    final cat = _selectedCategory;
-    final regionCode = _selectedRegionCode;
-    final subcat = _selectedSubCategory;
-
-    final filterCat = _filterCategory;
-    final filterRegCode = _filterRegionCode;
-    final filterDeptCode = _filterDepartmentCode;
-    final filterCity = _filterCityName?.trim();
-
-    final String? categoryLabel =
-        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
-    final String? categoryId = _makeCategoryId(categoryLabel);
-
-    final String cityName =
-        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
-
-    final String cpForCity = (filterCity != null &&
-            filterCity.isNotEmpty &&
-            _filterPostalCodeController.text.trim().isNotEmpty)
-        ? _filterPostalCodeController.text.trim()
-        : cp;
-
-    final String? cityId =
-        _makeCityId(cityName: cityName, postalCode: cpForCity);
-
-    final String? cityCategoryKey =
-        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
-
-    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
-    final bool hasDept =
-        (filterDeptCode != null && filterDeptCode.isNotEmpty) ||
-            (filterRegCode != null && filterRegCode.isNotEmpty) ||
-            (regionCode != null && regionCode.isNotEmpty);
-
-    final min = _parseBudgetBound(_budgetMinCtrl.text);
-    final max = _parseBudgetBound(_budgetMaxCtrl.text);
-    final bool wantsBudgetRange = _advancedFilters &&
-        (min != null || max != null) &&
-        _budgetRangeWarning == null;
-
-    final hasClientFilters = categoryId != null ||
-        cityId != null ||
-        cityCategoryKey != null ||
-        hasSubcategory ||
-        hasDept ||
-        wantsBudgetRange ||
-        (_activeSearchQuery?.trim().isNotEmpty ?? false);
-
-    query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
-    return query;
-  }
-
   /// Clé unique qui représente l'état courant de la requête.
   /// Le stream n'est recréé que quand cette clé change.
   String _buildOffersStreamKey() {
@@ -861,6 +678,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _filterDepartmentCode ?? '',
       _filterCityName ?? '',
       _filterPostalCodeController.text,
+      _postalCodeController.text,
       _selectedSubCategory ?? '',
       _activeSearchQuery ?? '',
       _pageLimit.toString(),
@@ -1211,50 +1029,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     }
 
     return true;
-  }
-
-  Future<void> _fetchOffers({bool resetPaging = false}) async {
-    if (_isLoading) return;
-
-    setState(() => _isLoading = true);
-
-    final sw = Stopwatch()..start();
-
-    if (resetPaging) {
-      _lastDoc = null;
-      // Si tu stockes une liste d'offres en mémoire : offers.clear();
-    }
-
-    try {
-      var query = _buildOffersQuery();
-
-      // Exemple de pagination si besoin
-      if (_lastDoc != null) {
-        query = query.startAfterDocument(_lastDoc!);
-      }
-
-      // Charge une première page (adapter la limite si besoin)
-      final snap = await query.limit(20).get();
-
-      sw.stop();
-      PrestoMonitoring.I.trackOffersFetchOnce(
-          ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
-
-      if (snap.docs.isNotEmpty) {
-        _lastDoc = snap.docs.last;
-      }
-
-      // Si tu conserves les résultats : setState(() => offers = ...);
-    } catch (e) {
-      PrestoMonitoring.I.trackError('offers.fetchOnce', e);
-      if (kDebugMode) {
-        debugPrint('Erreur lors du chargement des offres: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   void _applyFiltersOrSearch() {
