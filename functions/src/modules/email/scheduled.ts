@@ -7,17 +7,19 @@ import { triggerDeliverabilityAlerts } from "./analytics/alerts";
 export const purgeOldEmailWebhooks = onSchedule("every day 04:00", async () => {
   const threshold = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const q = await db.collection(COLLECTIONS.emailProviderWebhooks).where("received_at", "<", threshold).limit(500).get();
-  for (const doc of q.docs) {
-    await doc.ref.delete();
-  }
+  if (q.empty) return;
+  const batch = db.batch();
+  for (const doc of q.docs) batch.delete(doc.ref);
+  await batch.commit();
 });
 
 export const purgeOldEmailLogs = onSchedule("every day 04:30", async () => {
   const threshold = Date.now() - 90 * 24 * 60 * 60 * 1000;
   const q = await db.collection(COLLECTIONS.emailLogs).where("created_at", "<", threshold).limit(500).get();
-  for (const doc of q.docs) {
-    await doc.ref.delete();
-  }
+  if (q.empty) return;
+  const batch = db.batch();
+  for (const doc of q.docs) batch.delete(doc.ref);
+  await batch.commit();
 });
 
 export const syncEmailAnalytics = onSchedule("every 1 hours", async () => {
@@ -101,13 +103,4 @@ export const syncEmailAnalytics = onSchedule("every 1 hours", async () => {
     by_template: byTemplate,
   }, { merge: true });
 
-  await db.collection(COLLECTIONS.audits).add({
-    action: "email.analytics.sync",
-    created_at: Date.now(),
-    metrics,
-    recent_dead_letters: recentDeadLetters,
-    sampled_logs: logsSnap.size,
-    by_provider: byProvider,
-    by_template: byTemplate,
-  });
 });
