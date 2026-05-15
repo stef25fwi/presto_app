@@ -407,3 +407,14 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
 
   return byId.values.toList(growable: false);
 }
+
+Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+    loadLegacyPublicOffersOnDemand({
+  required int limit,
+  required String source,
+}) {
+  return loadMergedPublicOfferQueryVariants(
+    queries: buildLatestPublicOffersQueryVariants(limit: limit),
+    source: source,
+  );
+}
