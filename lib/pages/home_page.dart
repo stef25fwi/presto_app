@@ -550,9 +550,14 @@ class _HomePageState extends State<HomePage>
       }
       final results = await Future.wait(loaders);
       final listings = results[0];
-      final legacy = results.length > 1
+        final legacy = results.length > 1
           ? results[1]
-          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+          : listings.isEmpty
+            ? await loadLegacyPublicOffersOnDemand(
+              limit: 16,
+              source: 'home_latest_offers_legacy_fallback',
+            )
+            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final mergedAll = mergeOfferDocsById(listings, legacy).toList();
       final merged = mergedAll
           .where(
