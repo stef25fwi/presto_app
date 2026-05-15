@@ -2929,7 +2929,10 @@ class _AccountPageState extends State<AccountPage> {
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
-          return const SignedOutAccountFallback(source: 'account-route');
+          return SignedOutAccountFallback(
+            source: 'account-route',
+            startInSignup: widget.startInSignup,
+          );
         } else {
           return _buildProfile(user);
         }

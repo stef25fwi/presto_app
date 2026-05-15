@@ -13,9 +13,11 @@ class SignedOutAccountFallback extends StatefulWidget {
   const SignedOutAccountFallback({
     super.key,
     this.source = 'account',
+    this.startInSignup = false,
   });
 
   final String source;
+  final bool startInSignup;
 
   @override
   State<SignedOutAccountFallback> createState() =>
@@ -34,6 +36,12 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
   bool _didLogOpen = false;
   bool _isLoading = false;
   bool _isSignup = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isSignup = widget.startInSignup;
+  }
 
   @override
   void dispose() {
