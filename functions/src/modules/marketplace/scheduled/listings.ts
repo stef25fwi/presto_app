@@ -82,7 +82,7 @@ export const expireOldListings = onSchedule({
 
 export const publishApprovedListings = onSchedule({
   region: PROJECT_REGION,
-  schedule: "every 1 minutes",
+  schedule: "every 5 minutes",
   timeZone: "Europe/Paris",
 }, async () => {
   const now = admin.firestore.Timestamp.now();
