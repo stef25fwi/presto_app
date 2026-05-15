@@ -81,8 +81,7 @@ class PublishOfferPage extends StatefulWidget {
 }
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
-  MarketplacePublishService get _marketplacePublishService =>
-      MarketplacePublishService();
+  late final MarketplacePublishService _marketplacePublishService;
   static const int _publishPhotoHardLimit = 2;
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
   static const int _minimumMaxListingPhotos = 1;
@@ -1885,6 +1884,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     super.initState();
+    _marketplacePublishService = MarketplacePublishService();
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
     unawaited(_prefillPublishPhoneFromProfileIfNeeded());
