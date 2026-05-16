@@ -34,12 +34,13 @@ class MarketplacePublishService {
   })  : _listingRepository = listingRepository ?? ListingRepository(),
         _listingReadRepository =
             listingReadRepository ?? ListingReadRepository(),
-        _storage = storage ?? FirebaseStorage.instance,
+        _storageOverride = storage,
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
   final ListingReadRepository _listingReadRepository;
-  final FirebaseStorage _storage;
+  final FirebaseStorage? _storageOverride;
+  FirebaseStorage get _storage => _storageOverride ?? FirebaseStorage.instance;
   final MarketplaceHumanVerification _verification;
 
   String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {

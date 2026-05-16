@@ -830,19 +830,28 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     String field,
   ) async {
     try {
-      // Charger depuis les deux collections et fusionner
-      final results = await Future.wait([
+      // Prod marketplace contract:
+      // listings est la source normale. offers legacy est un backfill lecture seule,
+      // désactivé en prod par kEnableLegacyPublicOffersBackfill.
+      final futures = <Future<QuerySnapshot<Map<String, dynamic>>>>[
         FirebaseFirestore.instance
             .collection(kListingsCollection)
             .where(field, isEqualTo: widget.userId)
             .limit(120)
             .get(),
-        FirebaseFirestore.instance
-            .collection(kOffersCollection)
-            .where(field, isEqualTo: widget.userId)
-            .limit(120)
-            .get(),
-      ]);
+      ];
+
+      if (kEnableLegacyPublicOffersBackfill) {
+        futures.add(
+          FirebaseFirestore.instance
+              .collection(kOffersCollection)
+              .where(field, isEqualTo: widget.userId)
+              .limit(120)
+              .get(),
+        );
+      }
+
+      final results = await Future.wait(futures);
       final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
       for (final snap in results) {
         for (final doc in snap.docs) {
