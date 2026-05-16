@@ -127,7 +127,10 @@ class MarketplacePublishService {
     return error is FirebaseException && error.code == 'permission-denied';
   }
 
-  Future<void> _prepareProtectedFirestoreWrite(String ownerId) async {
+  Future<void> _prepareProtectedFirestoreWrite(
+    String ownerId, {
+    required bool forceRefreshAppCheckToken,
+  }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null || user.uid.trim() != ownerId.trim()) {
       return;
@@ -136,7 +139,7 @@ class MarketplacePublishService {
     await UserProfileBootstrapService.prepareProfileFirestoreAccess(
       user: user,
       forceRefreshToken: true,
-      forceRefreshAppCheckToken: true,
+      forceRefreshAppCheckToken: forceRefreshAppCheckToken,
     );
   }
 
@@ -145,7 +148,16 @@ class MarketplacePublishService {
     required String stepLabel,
     required Future<T> Function() action,
   }) async {
-    await _prepareProtectedFirestoreWrite(ownerId);
+    try {
+      await _prepareProtectedFirestoreWrite(
+        ownerId,
+        forceRefreshAppCheckToken: false,
+      );
+    } catch (error) {
+      debugPrint(
+        '[MarketplacePublish] Initial App Check preflight failed before $stepLabel; trying Firestore write: $error',
+      );
+    }
     try {
       return await _runWithChannelRetry<T>(
         stepLabel: stepLabel,
@@ -155,7 +167,10 @@ class MarketplacePublishService {
       if (!_isFirestorePermissionDenied(error)) rethrow;
     }
 
-    await _prepareProtectedFirestoreWrite(ownerId);
+    await _prepareProtectedFirestoreWrite(
+      ownerId,
+      forceRefreshAppCheckToken: true,
+    );
     return _runWithChannelRetry<T>(
       stepLabel: stepLabel,
       action: action,

@@ -3934,7 +3934,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await UserProfileBootstrapService.prepareProfileFirestoreAccess(
           user: user,
           forceRefreshToken: true,
-          forceRefreshAppCheckToken: true,
+          forceRefreshAppCheckToken: false,
         );
       } catch (error, stackTrace) {
         await CrashlyticsContext.recordError(
@@ -3949,13 +3949,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             'uid': user.uid,
           },
         );
-        if (mounted) {
-          showErrorSnackBar(
-            context,
-            'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+        if (UserProfileBootstrapService.isAppCheckFailure(error)) {
+          debugPrint(
+            '[PublishOffer] App Check preflight failed; continuing to protected draft write retry: $error',
           );
+        } else {
+          if (mounted) {
+            showErrorSnackBar(
+              context,
+              'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+            );
+          }
+          return;
         }
-        return;
       }
       logRuntimeAction(
         area: 'publish',
