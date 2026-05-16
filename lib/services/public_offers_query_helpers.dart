@@ -219,6 +219,10 @@ List<Query<Map<String, dynamic>>> buildPublicOffersQueryVariants({
   FirebaseFirestore? firestore,
   int limit = 200,
 }) {
+  if (!kEnableLegacyPublicOffersBackfill) {
+    return const <Query<Map<String, dynamic>>>[];
+  }
+
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kOffersCollection);
   return <Query<Map<String, dynamic>>>[
@@ -236,6 +240,10 @@ List<Query<Map<String, dynamic>>> buildLatestPublicOffersQueryVariants({
   FirebaseFirestore? firestore,
   int limit = 200,
 }) {
+  if (!kEnableLegacyPublicOffersBackfill) {
+    return const <Query<Map<String, dynamic>>>[];
+  }
+
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kOffersCollection);
   return <Query<Map<String, dynamic>>>[

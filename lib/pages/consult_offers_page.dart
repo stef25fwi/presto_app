@@ -2933,25 +2933,35 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadActiveOffers() async {
-    // Charger depuis la collection listings (marketplace) et offers (legacy)
+    // Prod marketplace contract:
+    // listings est la source normale. offers legacy est un backfill lecture seule,
+    // désactivé en prod par kEnableLegacyPublicOffersBackfill.
     final listingsCol =
         FirebaseFirestore.instance.collection(kListingsCollection);
-    final offersCol = FirebaseFirestore.instance.collection(kOffersCollection);
 
-    final results = await Future.wait([
+    final futures = <Future<QuerySnapshot<Map<String, dynamic>>>>[
       listingsCol
           .where('ownerId', isEqualTo: widget.userId)
           .where(publicListingsFilter())
           .get(),
-      offersCol
-          .where('uid', isEqualTo: widget.userId)
-          .where(publicOffersFilter())
-          .get(),
-      offersCol
-          .where('userId', isEqualTo: widget.userId)
-          .where(publicOffersFilter())
-          .get(),
-    ]);
+    ];
+
+    if (kEnableLegacyPublicOffersBackfill) {
+      final offersCol =
+          FirebaseFirestore.instance.collection(kOffersCollection);
+      futures.addAll([
+        offersCol
+            .where('uid', isEqualTo: widget.userId)
+            .where(publicOffersFilter())
+            .get(),
+        offersCol
+            .where('userId', isEqualTo: widget.userId)
+            .where(publicOffersFilter())
+            .get(),
+      ]);
+    }
+
+    final results = await Future.wait(futures);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final snap in results) {
