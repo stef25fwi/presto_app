@@ -1899,6 +1899,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
     unawaited(_prefillPublishPhoneFromProfileIfNeeded());
+    unawaited(_prefillPublishLocationFromProfileIfNeeded());
     unawaited(_refreshAdminAudioRuntimeAccess());
 
     _scrollController.addListener(() {
@@ -2077,6 +2078,110 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _recompute();
     } catch (error) {
       debugPrint('[Publish] Préremplissage téléphone impossible: $error');
+    }
+  }
+
+  Future<void> _prefillPublishLocationFromProfileIfNeeded() async {
+    final locationAlreadyFilled = _locationController.text.trim().isNotEmpty;
+    final postalCodeAlreadyFilled =
+        _postalCodeController.text.trim().isNotEmpty;
+    if ((locationAlreadyFilled || _locationEditedByUser) &&
+        (postalCodeAlreadyFilled || _postalCodeEditedByUser)) {
+      return;
+    }
+
+    final user = _authOrNull?.currentUser;
+    if (user == null) return;
+
+    final firestore = _firestoreOrNull;
+    if (firestore == null) return;
+
+    final userRef = firestore.collection('users').doc(user.uid);
+
+    try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+      DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        doc = await userRef
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {
+        doc = await userRef
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(seconds: 3));
+      }
+
+      final data = doc.data();
+      if (data == null) return;
+
+      final location = ProfileReadinessChecker.resolveLocation(data);
+      final profileCity = location.city.trim();
+      final profilePostalCode = location.postalCode.trim();
+      if (profileCity.isEmpty && profilePostalCode.isEmpty) return;
+
+      CityRecord? cityRecord;
+      if (profilePostalCode.isNotEmpty) {
+        cityRecord = CitySearch.instance.pickBestForPostalCode(
+          profilePostalCode,
+        );
+      }
+      if (cityRecord == null && profileCity.isNotEmpty) {
+        final matches = CitySearch.instance.search(profileCity, limit: 5);
+        for (final candidate in matches) {
+          if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
+            cityRecord = candidate;
+            break;
+          }
+        }
+      }
+
+      final resolvedCity = cityRecord?.name.trim().isNotEmpty == true
+          ? cityRecord!.name.trim()
+          : profileCity;
+      final resolvedPostalCode = cityRecord?.cp.trim().isNotEmpty == true
+          ? cityRecord!.cp.trim()
+          : profilePostalCode;
+
+      if (!mounted) return;
+
+      var changed = false;
+      setState(() {
+        if (!_locationEditedByUser &&
+            _locationController.text.trim().isEmpty &&
+            resolvedCity.isNotEmpty) {
+          _setControllerText(_locationController, resolvedCity);
+          changed = true;
+        }
+        if (!_postalCodeEditedByUser &&
+            _postalCodeController.text.trim().isEmpty &&
+            resolvedPostalCode.isNotEmpty) {
+          _setControllerText(_postalCodeController, resolvedPostalCode);
+          changed = true;
+        }
+
+        final dept = cityRecord?.dept ??
+            departmentFromPostalCode(
+              resolvedPostalCode,
+            );
+        if (dept != null && dept.isNotEmpty) {
+          _selectedDeptCode = dept;
+          _selectedPhoneCountryCode = _countryCodeForDept(dept);
+        }
+        final region = cityRecord?.region;
+        if (region != null && region.isNotEmpty) {
+          _selectedRegionCode = region;
+        }
+      });
+
+      if (changed) {
+        _recompute();
+      }
+    } catch (error) {
+      debugPrint('[Publish] Préremplissage ville/CP impossible: $error');
     }
   }
 
@@ -2683,10 +2788,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _publishLocked = true;
     });
 
-    // Si l'utilisateur est déjà connecté, on peut préremplir le téléphone
+    // Si l'utilisateur est déjà connecté, on peut préremplir les données profil
     // avant validation. Sinon on affiche d'abord les erreurs du formulaire.
     if (_authOrNull?.currentUser != null) {
       await _prefillPublishPhoneFromProfileIfNeeded();
+      await _prefillPublishLocationFromProfileIfNeeded();
       if (!mounted) return;
       _canonicalizeLocationInputs();
     }
@@ -2716,6 +2822,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     await _prefillPublishPhoneFromProfileIfNeeded();
+    await _prefillPublishLocationFromProfileIfNeeded();
     if (!mounted) return;
     _canonicalizeLocationInputs();
 
@@ -3367,6 +3474,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
     unawaited(_prefillPublishPhoneFromProfileIfNeeded());
+    unawaited(_prefillPublishLocationFromProfileIfNeeded());
     showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
