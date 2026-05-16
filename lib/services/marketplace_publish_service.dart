@@ -12,6 +12,7 @@ import '../models/marketplace_listing_draft.dart';
 import 'city_search.dart';
 import 'marketplace_human_verification.dart';
 import 'offer_indexing.dart';
+import 'user_profile_bootstrap_service.dart';
 
 class MarketplacePublishResult {
   final String listingId;
@@ -120,6 +121,45 @@ class MarketplacePublishService {
         'Connexion au service "$stepLabel" impossible. Fermez puis relancez l\'application et réessayez.',
       );
     }
+  }
+
+  bool _isFirestorePermissionDenied(Object error) {
+    return error is FirebaseException && error.code == 'permission-denied';
+  }
+
+  Future<void> _prepareProtectedFirestoreWrite(String ownerId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.uid.trim() != ownerId.trim()) {
+      return;
+    }
+
+    await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      user: user,
+      forceRefreshToken: true,
+      forceRefreshAppCheckToken: true,
+    );
+  }
+
+  Future<T> _runProtectedDraftWrite<T>({
+    required String ownerId,
+    required String stepLabel,
+    required Future<T> Function() action,
+  }) async {
+    await _prepareProtectedFirestoreWrite(ownerId);
+    try {
+      return await _runWithChannelRetry<T>(
+        stepLabel: stepLabel,
+        action: action,
+      );
+    } catch (error) {
+      if (!_isFirestorePermissionDenied(error)) rethrow;
+    }
+
+    await _prepareProtectedFirestoreWrite(ownerId);
+    return _runWithChannelRetry<T>(
+      stepLabel: stepLabel,
+      action: action,
+    );
   }
 
   Future<List<ListingMediaInput>> _uploadPhotos({
@@ -278,7 +318,8 @@ class MarketplacePublishService {
     }
 
     // 1. Créer le draft SANS media d'abord (évite les orphelins Storage si le draft échoue)
-    final draftId = await _runWithChannelRetry<String>(
+    final draftId = await _runProtectedDraftWrite<String>(
+      ownerId: ownerId,
       stepLabel: 'brouillon Firestore',
       action: () => _listingRepository.createDraft(
         MarketplaceListingDraft(
@@ -315,7 +356,8 @@ class MarketplacePublishService {
     try {
       // 3. Mettre à jour le draft avec les media si nécessaire
       if (media.isNotEmpty) {
-        await _runWithChannelRetry<void>(
+        await _runProtectedDraftWrite<void>(
+          ownerId: ownerId,
           stepLabel: 'mise à jour media draft',
           action: () => _listingRepository.updateDraftMedia(
             draftId: draftId,
