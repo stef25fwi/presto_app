@@ -413,6 +413,10 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
   required int limit,
   required String source,
 }) {
+  if (!kEnableLegacyPublicOffersBackfill) {
+    return Future.value(const <QueryDocumentSnapshot<Map<String, dynamic>>>[]);
+  }
+
   return loadMergedPublicOfferQueryVariants(
     queries: buildLatestPublicOffersQueryVariants(limit: limit),
     source: source,

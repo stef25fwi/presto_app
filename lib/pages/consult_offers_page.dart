@@ -713,27 +713,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           source: 'consult_listings_warm',
         ),
       ];
-
-      if (kEnableLegacyPublicOffersBackfill) {
-        loads.add(
-          loadMergedPublicOfferQueryVariants(
-            queries: buildLatestPublicOffersQueryVariants(limit: limit),
-            source: 'consult_legacy_warm',
-          ),
-        );
-      }
-
       final results = await Future.wait(loads);
-      final listings = results[0];
-        final legacy = results.length > 1
-          ? results[1]
-          : listings.isEmpty
-            ? await loadLegacyPublicOffersOnDemand(
-              limit: limit,
-              source: 'consult_legacy_warm_fallback',
-            )
-            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      final merged = mergeOfferDocsById(listings, legacy);
+      final merged = results[0];
       final displayedCount = _buildDisplayedOfferDocs(merged).length;
 
       _offersWarmCache[key] = merged;
@@ -815,25 +796,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           source: 'consult_listings_fetch',
         ),
       ];
-      if (kEnableLegacyPublicOffersBackfill) {
-        loads.add(
-          loadMergedPublicOfferQueryVariants(
-            queries: buildLatestPublicOffersQueryVariants(limit: limit),
-            source: 'consult_legacy_fetch',
-          ),
-        );
-      }
       final results = await Future.wait(loads);
-      final listings = results[0];
-      final legacy = results.length > 1
-          ? results[1]
-          : listings.isEmpty
-              ? await loadLegacyPublicOffersOnDemand(
-                  limit: limit,
-                  source: 'consult_legacy_fetch_fallback',
-                )
-              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      return mergeOfferDocsById(listings, legacy);
+      return results[0];
     }
 
     return loadOnce().asStream();

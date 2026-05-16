@@ -53,7 +53,7 @@ exports.purgeOrphanedStorageFiles = (0, scheduler_1.onSchedule)({
     const bucket = admin.storage().bucket();
     const cutoff = Date.now() - 24 * 60 * 60 * 1000; // 24 h
     let deletedCount = 0;
-    const [files] = await bucket.getFiles({ prefix: "offers_raw/" });
+    const [files] = await bucket.getFiles({ prefix: "offers_raw/", maxResults: 500 });
     for (const file of files) {
         const metadata = file.metadata;
         const timeCreated = new Date(metadata.timeCreated ?? 0).getTime();

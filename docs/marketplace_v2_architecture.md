@@ -2,7 +2,7 @@
 
 ## A. Architecture globale
 
-Marketplace V2 ajoute une couche robuste au-dessus de l'application existante sans casser le flux legacy `offers`.
+Marketplace V2 est maintenant la source canonique des annonces publiques. Le flux legacy `offers` reste seulement pour quelques compatibilites de detail ou de messagerie, plus pour la navigation publique catalogue.
 
 - Les brouillons sont ecrits par le client dans `listingDrafts`.
 - La publication passe exclusivement par la Cloud Function `submitListingDraft`.
@@ -186,7 +186,8 @@ Phase 3:
 
 Phase 4:
 
-- migrer progressivement les experiences legacy `offers` vers `listings` si souhaite.
+- migration publique `offers` vers `listings` terminee pour les ecrans catalogue.
+- conserver uniquement les compatibilites legacy encore necessaires hors catalogue public.
 
 ## K. Liste des fichiers a creer ou modifier
 
@@ -237,3 +238,5 @@ Notes d'integration:
 - La couche messaging legacy reste en place et a ete durcie en parallele.
 - `toggleFavorite` ecrit aussi dans `users/{uid}/favoriteOffers/{listingId}` pour la compatibilite actuelle.
 - `COLLECTIONS.listingDraftsV2` pointe volontairement vers la collection Firestore `listingDrafts` pour le client Flutter.
+- Les ecrans publics Accueil et Je consulte lisent desormais `listings` uniquement avec le contrat `status == active && visibility == public`.
+- Sur le web, une absence de `APPCHECK_RECAPTCHA_SITE_KEY` ne doit pas bloquer la lecture publique Firestore; elle place seulement le bootstrap App Check en mode skip/monitoring tant qu'aucun enforce n'est requis pour cette lecture.

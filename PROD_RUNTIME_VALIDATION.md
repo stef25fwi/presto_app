@@ -85,6 +85,7 @@ Attendu:
 
 ## Notes d'architecture
 
-- listings est la source canonique des annonces publiques
-- offers legacy reste un backfill de compatibilite borne, en lecture seule
+- listings est la source canonique et unique du catalogue public d'annonces
+- offers legacy reste reserve aux compatibilites residuelles hors catalogue public
+- sur le web, une absence de `APPCHECK_RECAPTCHA_SITE_KEY` ne doit pas casser la simple lecture publique des annonces; elle doit seulement empecher l'activation App Check stricte tant qu'aucun enforce n'est requis
 - les notifications attendent desormais explicitement la disponibilite du navigator avant push

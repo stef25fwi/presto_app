@@ -12,11 +12,9 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'app/app_globals.dart';
-import 'app/presto_overlay_theme.dart';
 import 'app/secondary_named_routes.dart';
 import 'app/theme.dart';
 import 'app_core.dart';
-import 'constants.dart';
 import 'firebase_init.dart';
 import 'dev/page_capture_catalog_page.dart';
 import 'debug_auth.dart';
@@ -29,12 +27,10 @@ import 'pages/publish_offer_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'services/city_search.dart';
-import 'services/email_action_service.dart';
 import 'services/app_route_parser.dart';
 import 'services/notification_service.dart';
 import 'services/admin_audio_runtime_store.dart';
 import 'services/post_auth_navigation_intent_service.dart';
-import 'services/user_profile_bootstrap_service.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -54,6 +50,7 @@ class PrestoRemoteConfig {
 
   static Future<void> init() async {}
 }
+
 const String kOfferDeleteReasonFoundProvider =
     'J ai deja trouve un prestataire';
 const String kOfferDeleteReasonFoundOnIliPresto =
@@ -85,141 +82,6 @@ const String kAppBuildTimeUtc = String.fromEnvironment(
   defaultValue: '',
 );
 
-String _normalizeOfferDeletionReason(String input) {
-  return input
-      .trim()
-      .toLowerCase()
-      .replaceAll('’', "'")
-      .replaceAll(RegExp(r'[àâä]'), 'a')
-      .replaceAll('ç', 'c')
-      .replaceAll(RegExp(r'[éèêë]'), 'e')
-      .replaceAll(RegExp(r'[îï]'), 'i')
-      .replaceAll(RegExp(r'[ôöō]'), 'o')
-      .replaceAll(RegExp(r'[ùûü]'), 'u')
-      .replaceAll(RegExp(r'\s+'), ' ');
-}
-
-bool _isOfferJobDoneDeletionReason(String? reason) {
-  final normalized = _normalizeOfferDeletionReason(reason ?? '');
-  final foundOnIliPresto =
-      normalized.contains('trouve quelqu') && normalized.contains('ilipresto');
-  final foundProvider =
-      normalized.contains('deja trouve') && normalized.contains('prestataire');
-  return foundOnIliPresto || foundProvider;
-}
-
-DateTime? _offerDateTimeFromDynamic(dynamic value) {
-  if (value is Timestamp) return value.toDate();
-  if (value is DateTime) return value;
-  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-  if (value is String) return DateTime.tryParse(value);
-  return null;
-}
-
-DateTime? _offerJobDoneVisibleUntil(Map<String, dynamic> data) {
-  return _offerDateTimeFromDynamic(
-    data['jobDoneOverlayVisibleUntil'] ??
-        data['removeFromBrowseAt'] ??
-        data['pendingScreenRemovalUntil'],
-  );
-}
-
-class PrestoMonitoring extends ChangeNotifier {
-  PrestoMonitoring._();
-
-  static final PrestoMonitoring I = PrestoMonitoring._();
-
-  bool enabled = true;
-  bool monitorOffersFetchOnce = true;
-  bool monitorMessagesFetchOnce = true;
-  bool monitorFunctionsCalls = true;
-  bool monitorOtherStreams = true;
-
-  DateTime sessionStart = DateTime.now();
-
-  int offersQueryBuildCount = 0;
-  int offersSnapshotsCount = 0;
-  int offersFetchOnceCount = 0;
-  int lastOffersFetchMs = 0;
-  int lastOffersFetchDocs = 0;
-  int messagesFetchOnceCount = 0;
-  int lastMessagesFetchMs = 0;
-  int lastMessagesFetchDocs = 0;
-  int functionsCallsCount = 0;
-  int lastFunctionsCallMs = 0;
-  int otherStreamsEvents = 0;
-  final Map<String, int> otherStreamEventCounts = <String, int>{};
-  final Map<String, int> otherStreamLastDocs = <String, int>{};
-  String lastOtherStreamKey = '';
-  int lastOtherStreamDocs = 0;
-  String lastErrorKey = '';
-  String lastErrorMessage = '';
-
-  void _maybeLog(String message) {
-    if (!enabled || !kDebugMode) return;
-    debugPrint('[PrestoMonitoring] $message');
-  }
-
-  void trackOffersQueryBuild({String? signature}) {
-    if (!enabled) return;
-    offersQueryBuildCount++;
-    _maybeLog('offers.queryBuild signature=${signature ?? '-'}');
-    notifyListeners();
-  }
-
-  void trackOffersSnapshot(int docsCount) {
-    if (!enabled) return;
-    offersSnapshotsCount++;
-    lastOffersFetchDocs = docsCount;
-    _maybeLog('offers.snapshot docs=$docsCount');
-    notifyListeners();
-  }
-
-  void trackOffersFetchOnce({required int ms, required int docsCount}) {
-    offersFetchOnceCount++;
-    lastOffersFetchMs = ms;
-    lastOffersFetchDocs = docsCount;
-    _maybeLog('offers.fetchOnce ms=$ms docs=$docsCount');
-    notifyListeners();
-  }
-
-  void trackMessagesFetchOnce({required int ms, required int docsCount}) {
-    if (!enabled || !monitorMessagesFetchOnce) return;
-    messagesFetchOnceCount++;
-    lastMessagesFetchMs = ms;
-    lastMessagesFetchDocs = docsCount;
-    _maybeLog('messages.fetchOnce ms=$ms docs=$docsCount');
-    notifyListeners();
-  }
-
-  void trackFunctionsCall({required String name, required int ms}) {
-    if (!enabled || !monitorFunctionsCalls) return;
-    functionsCallsCount++;
-    lastFunctionsCallMs = ms;
-    _maybeLog('functions.call name=$name ms=$ms');
-    notifyListeners();
-  }
-
-  void trackOtherStream({required String key, required int docsCount}) {
-    if (!enabled || !monitorOtherStreams) return;
-    otherStreamsEvents++;
-    otherStreamEventCounts[key] = (otherStreamEventCounts[key] ?? 0) + 1;
-    otherStreamLastDocs[key] = docsCount;
-    lastOtherStreamKey = key;
-    lastOtherStreamDocs = docsCount;
-    _maybeLog('stream.other key=$key docs=$docsCount');
-    notifyListeners();
-  }
-
-  void trackError(String key, Object error) {
-    if (!enabled) return;
-    lastErrorKey = key;
-    lastErrorMessage = error.toString();
-    _maybeLog('error key=$key error=$error');
-    notifyListeners();
-  }
-}
-
 SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
   final isDarkBackground = estimated == Brightness.dark;
@@ -235,13 +97,20 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   );
 }
 
-String? inferRegionFromPostalCode(String cp) {
-  cp = cp.trim();
+DateTime? _offerDateTimeFromDynamic(dynamic value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
+String? inferRegionFromPostalCode(String postalCode) {
+  final cp = postalCode.trim();
   if (cp.length < 2) return null;
 
-  if (cp.length >= 3) {
-    final dromPrefix = cp.substring(0, 3);
-    switch (dromPrefix) {
+  if (cp.length >= 3 && cp.startsWith('97')) {
+    switch (cp.substring(0, 3)) {
       case '971':
         return 'Guadeloupe';
       case '972':
@@ -270,57 +139,46 @@ String? inferRegionFromPostalCode(String cp) {
     return 'Bourgogne-Franche-Comté';
   }
 
-  // Bretagne
   if (<int>{22, 29, 35, 56}.contains(two)) {
     return 'Bretagne';
   }
 
-  // Centre-Val de Loire
   if (<int>{18, 28, 36, 37, 41, 45}.contains(two)) {
     return 'Centre-Val de Loire';
   }
 
-  // Grand Est
   if (<int>{8, 10, 51, 52, 54, 55, 57, 67, 68, 88}.contains(two)) {
     return 'Grand Est';
   }
 
-  // Hauts-de-France
   if (<int>{2, 59, 60, 62, 80}.contains(two)) {
     return 'Hauts-de-France';
   }
 
-  // Île-de-France
   if (<int>{75, 77, 78, 91, 92, 93, 94, 95}.contains(two)) {
     return 'Île-de-France';
   }
 
-  // Normandie
   if (<int>{14, 27, 50, 61, 76}.contains(two)) {
     return 'Normandie';
   }
 
-  // Nouvelle-Aquitaine
   if (<int>{16, 17, 19, 23, 24, 33, 40, 47, 64, 79, 86, 87}.contains(two)) {
     return 'Nouvelle-Aquitaine';
   }
 
-  // Occitanie
   if (<int>{9, 11, 12, 30, 31, 32, 34, 46, 48, 65, 66, 81, 82}.contains(two)) {
     return 'Occitanie';
   }
 
-  // Pays de la Loire
   if (<int>{44, 49, 53, 72, 85}.contains(two)) {
     return 'Pays de la Loire';
   }
 
-  // Provence-Alpes-Côte d'Azur
   if (<int>{4, 5, 6, 13, 83, 84}.contains(two)) {
     return 'Provence-Alpes-Côte d\'Azur';
   }
 
-  // Si on n'a rien trouvé, on ne force pas
   return null;
 }
 
@@ -650,7 +508,7 @@ Future<void> main() async {
     //   Exemple:
     //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
     // Clé site reCAPTCHA Enterprise (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
-    appCheckActivationAttempted = true;
+    appCheckActivationAttempted = false;
     appCheckActivationSucceeded = false;
     appCheckActivationError = null;
     appCheckActivationStackTrace = null;
@@ -673,19 +531,23 @@ Future<void> main() async {
           } catch (_) {
             // Crashlytics peut être indisponible très tôt au bootstrap web.
           }
-          throw StateError(
-            '$message. Ajoute --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=... au build web.',
-          );
+          if (kDebugMode) {
+            debugPrint(
+              '$message. Les lectures publiques Firestore continuent sans App Check enforce.',
+            );
+          }
         } else {
           final preview =
               siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
           if (kDebugMode) debugPrint('[APPCHECK] siteKey=$preview...');
+          appCheckActivationAttempted = true;
           await FirebaseAppCheck.instance.activate(
             webProvider: ReCaptchaEnterpriseProvider(siteKey),
           );
           if (kDebugMode) debugPrint('[AppCheck] Web activated (reCAPTCHA Enterprise)');
         }
       } else {
+        appCheckActivationAttempted = true;
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
               ? AndroidProvider.debug
@@ -926,213 +788,12 @@ class _PrestoAppState extends State<PrestoApp> {
         '/account': (_) => const AccountPage(),
         '/admin': (_) => const AdminSpacePage(),
         if (!kReleaseMode) '/page-catalog': (_) => const PageCaptureCatalogPage(),
-        /*
-        '/auth': (context) => PrestoPremiumAuthPage(
-              onGoogle: () async {
-                final auth = FirebaseAuth.instance;
-                final provider = GoogleAuthProvider()
-                  ..setCustomParameters({'prompt': 'select_account'});
-                provider.addScope('email');
-                provider.addScope('profile');
-
-                if (kIsWeb) {
-                  try {
-                    await auth.signInWithPopup(provider);
-                  } catch (_) {
-                    await auth.signInWithRedirect(provider);
-                  }
-                } else {
-                  await auth.signInWithProvider(provider);
-                }
-              },
-              onApple: () async {
-                if (kIsWeb ||
-                    !(defaultTargetPlatform == TargetPlatform.iOS ||
-                        defaultTargetPlatform == TargetPlatform.macOS)) {
-                  throw Exception('Connexion Apple disponible sur iOS/macOS.');
-                }
-                final appleCredential =
-                    await SignInWithApple.getAppleIDCredential(
-                  scopes: [
-                    AppleIDAuthorizationScopes.email,
-                    AppleIDAuthorizationScopes.fullName,
-                  ],
-                );
-                if (appleCredential.identityToken == null) {
-                  throw Exception('Identité Apple non reçue');
-                }
-                final oauthCredential = OAuthProvider('apple.com').credential(
-                  idToken: appleCredential.identityToken,
-                  accessToken: appleCredential.authorizationCode,
-                );
-                await FirebaseAuth.instance
-                    .signInWithCredential(oauthCredential);
-              },
-              onEmailLogin: (email, password) async {
-                await FirebaseAuth.instance.signInWithEmailAndPassword(
-                  email: email,
-                  password: password,
-                );
-              },
-              onResetPassword: (email) async {
-                await EmailActionService.requestPasswordResetEmail(email);
-              },
-              onGoToSignup: () {
-                _showSignupDialog(context);
-              },
-              onDiscoverPro: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Prochainement disponible')),
-                );
-              },
-            ),
-        */
         ...buildSecondaryNamedRoutes(),
       },
       theme: buildPrestoTheme(),
       home: _buildInitialHome(),
     );
   }
-}
-
-/// Dialogue de création de compte (inscription)
-void _showSignupDialog(BuildContext context) {
-  final emailCtrl = TextEditingController();
-  final passCtrl = TextEditingController();
-  final confirmPassCtrl = TextEditingController();
-  final overlayTheme = context.prestoOverlayTheme;
-
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: overlayTheme.surfaceColor,
-      surfaceTintColor: overlayTheme.surfaceTintColor,
-      shape: overlayTheme.dialogShape,
-      title: const Text(
-        'Créer un compte',
-        style: kPrestoSectionTitleStyle,
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                hintText: 'votre@email.com',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: passCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Mot de passe',
-                hintText: 'Min. 6 caractères',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: confirmPassCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Confirmer le mot de passe',
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Annuler'),
-        ),
-        FilledButton(
-          onPressed: () async {
-            final email = emailCtrl.text.trim();
-            final pass = passCtrl.text;
-            final confirmPass = confirmPassCtrl.text;
-
-            if (email.isEmpty || !email.contains('@')) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Email invalide')),
-              );
-              return;
-            }
-
-            if (pass.length < 6) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Mot de passe trop court (min. 6)')),
-              );
-              return;
-            }
-
-            if (pass != confirmPass) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Les mots de passe ne correspondent pas')),
-              );
-              return;
-            }
-
-            try {
-              final credential =
-                  await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                email: email,
-                password: pass,
-              );
-              if (credential.user != null) {
-                await UserProfileBootstrapService.ensureUserDocument(
-                  user: credential.user!,
-                  authMethod: 'email',
-                  isNewUserHint: true,
-                );
-                await EmailActionService.requestEmailVerificationEmail();
-              }
-              if (ctx.mounted) Navigator.of(ctx).pop();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Compte créé. Vérifiez votre e-mail. ✅')),
-                );
-              }
-            } on FirebaseAuthException catch (e) {
-              if (!context.mounted) return;
-              final message = switch (e.code) {
-                'invalid-email' => 'Adresse e-mail invalide.',
-                'email-already-in-use' =>
-                  'Un compte existe déjà avec cet e-mail.',
-                'weak-password' =>
-                  'Mot de passe trop faible (minimum 6 caractères).',
-                'operation-not-allowed' =>
-                  'Inscription par e-mail non activée dans Firebase Authentication.',
-                'too-many-requests' =>
-                  'Trop de tentatives. Réessayez dans quelques minutes.',
-                'network-request-failed' =>
-                  'Erreur réseau. Vérifiez votre connexion internet.',
-                _ => e.message ?? "Erreur lors de la création du compte.",
-              };
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(message)),
-              );
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(
-                          'Création du compte impossible. Réessayez plus tard.')),
-                );
-              }
-            }
-          },
-          child: const Text('Créer le compte'),
-        ),
-      ],
-    ),
-  );
 }
 
 /// SPLASH /////////////////////////////////////////////////////////////////

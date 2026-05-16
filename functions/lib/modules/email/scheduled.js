@@ -9,16 +9,22 @@ const alerts_1 = require("./analytics/alerts");
 exports.purgeOldEmailWebhooks = (0, scheduler_1.onSchedule)("every day 04:00", async () => {
     const threshold = Date.now() - 30 * 24 * 60 * 60 * 1000;
     const q = await firestore_1.db.collection(constants_1.COLLECTIONS.emailProviderWebhooks).where("received_at", "<", threshold).limit(500).get();
-    for (const doc of q.docs) {
-        await doc.ref.delete();
-    }
+    if (q.empty)
+        return;
+    const batch = firestore_1.db.batch();
+    for (const doc of q.docs)
+        batch.delete(doc.ref);
+    await batch.commit();
 });
 exports.purgeOldEmailLogs = (0, scheduler_1.onSchedule)("every day 04:30", async () => {
     const threshold = Date.now() - 90 * 24 * 60 * 60 * 1000;
     const q = await firestore_1.db.collection(constants_1.COLLECTIONS.emailLogs).where("created_at", "<", threshold).limit(500).get();
-    for (const doc of q.docs) {
-        await doc.ref.delete();
-    }
+    if (q.empty)
+        return;
+    const batch = firestore_1.db.batch();
+    for (const doc of q.docs)
+        batch.delete(doc.ref);
+    await batch.commit();
 });
 exports.syncEmailAnalytics = (0, scheduler_1.onSchedule)("every 1 hours", async () => {
     const threshold = Date.now() - 60 * 60 * 1000;
@@ -96,14 +102,5 @@ exports.syncEmailAnalytics = (0, scheduler_1.onSchedule)("every 1 hours", async 
         by_provider: byProvider,
         by_template: byTemplate,
     }, { merge: true });
-    await firestore_1.db.collection(constants_1.COLLECTIONS.audits).add({
-        action: "email.analytics.sync",
-        created_at: Date.now(),
-        metrics,
-        recent_dead_letters: recentDeadLetters,
-        sampled_logs: logsSnap.size,
-        by_provider: byProvider,
-        by_template: byTemplate,
-    });
 });
 //# sourceMappingURL=scheduled.js.map

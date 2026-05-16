@@ -540,25 +540,8 @@ class _HomePageState extends State<HomePage>
           source: 'home_latest_offers_listings',
         ),
       ];
-      if (kEnableLegacyPublicOffersBackfill) {
-        loaders.add(
-          loadMergedPublicOfferQueryVariants(
-            queries: buildLatestPublicOffersQueryVariants(limit: 16),
-            source: 'home_latest_offers_legacy',
-          ),
-        );
-      }
       final results = await Future.wait(loaders);
-      final listings = results[0];
-        final legacy = results.length > 1
-          ? results[1]
-          : listings.isEmpty
-            ? await loadLegacyPublicOffersOnDemand(
-              limit: 16,
-              source: 'home_latest_offers_legacy_fallback',
-            )
-            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      final mergedAll = mergeOfferDocsById(listings, legacy).toList();
+      final mergedAll = results[0].toList();
       final merged = mergedAll
           .where(
             (doc) => isVisibleInPublicBrowse(

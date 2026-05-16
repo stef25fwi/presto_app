@@ -27,7 +27,7 @@ Notation interne:
 | --- | --- | --- | --- | --- |
 | ACTIF | SplashScreen | lib/main.dart | ecran initial | gere redirect Google Sign-In web et bootstrap |
 | ACTIF | HomePage | lib/main.dart | root app | orchestre bottom nav, hero, categories, notifications |
-| ACTIF | ConsultOffersPage | lib/main.dart | bottom nav index 1 | lecture listings + offers legacy fusionnes |
+| ACTIF | ConsultOffersPage | lib/main.dart | bottom nav index 1 | lecture publique listings uniquement |
 | ACTIF | PublishOfferPage | lib/main.dart | bottom nav index 2, route /publish | publication marketplace active |
 | ACTIF | MessagesPageV2 | lib/pages/messages/messages_page_v2.dart | bottom nav index 3, /messages, /messages-2, deep links | point d'entree messagerie active |
 | ACTIF | AccountPage | lib/main.dart | bottom nav index 4, route /account | profil, auth, admin gate |
@@ -80,7 +80,7 @@ Actions actives mais fragiles:
 - ouverture messages depuis detail: depend de ensureConversation + etat auth
 - publication: depend auth, App Check, Storage, Cloud Functions, Firestore
 - notifications: click avant navigator pret gere via pending route, mais ordre d'init reste sensible
-- lecture offres publiques: fusion listings/offers legacy, indexes et App Check a surveiller
+- lecture offres publiques: listings uniquement, avec diagnostics Firestore/App Check dedies
 
 ## Services critiques et dependances Firebase
 
@@ -98,7 +98,7 @@ Services critiques:
 
 Points fragiles releves:
 - main.dart reste trop gros et concentre bootstrap + pages + logique metier
-- coexistence listings / offers legacy dans les lectures publiques
+- detail et messagerie gardent encore quelques compatibilites legacy, mais le catalogue public ne lit plus `offers`
 - App Check critique pour micro IA et lecture backend selon environnement
 - notifications dependantes du moment ou navigatorKey devient disponible
 - profil non connecte renvoie vers SignedOutAccountFallback, sans flux profil parallele
@@ -190,7 +190,7 @@ Checklist etat reel apres nouvelle passe:
 Correctifs confirmes dans le code:
 - centralisation de Firebase init et reutilisation sur le bootstrap principal et le background messaging
 - diagnostics plus honnetes pour les lectures publiques d'annonces, avec debug card en mode debug
-- lecture publique listings-first avec backfill legacy borne et explicite
+- lecture publique listings-only sur les ecrans catalogue
 - robustesse accrue du routage push au demarrage
 - visibilite de conversations preservee meme en cas de metadonnees d'aperçu partielles
 - desactivation honnete de plusieurs actions decoratives au lieu d'un silence UI
@@ -200,13 +200,13 @@ Correctifs confirmes dans le code:
 Risques residuels apres cette passe:
 - lib/main.dart reste trop gros et melange bootstrap, navigation, ecrans, UI et logique metier
 - le projet mobile n'embarque toujours pas les fichiers natifs Firebase officiels; les options de fallback maintiennent la compilation mais ne remplacent pas une configuration FlutterFire definitive
-- les lectures publiques reposent encore sur une coexistence listings + offers legacy, meme si elle est maintenant bornee et mieux diagnostiquee
+- les lectures publiques catalogue ne reposent plus sur `offers`; le legacy reste cantonne aux chemins de compatibilite hors catalogue
 - l'ancien flux profile_page.dart a ete supprime; le compte charge le profil officiel via AccountPage et users/{uid}
 - certaines validations de comportement reel n'ont pas ete executees dans cette session, notamment notifications a froid/chaud, erreurs backend simulees, et parcours admin complet
 
 Validations manuelles encore requises avant cloture PROD:
 - notifications push a chaud et a froid sur messages et offers
-- lecture des annonces publiques en cas d'erreur App Check, regles Firestore ou index manquant
+- lecture des annonces publiques en cas d'erreur Firestore, index ou App Check enforce selon environnement
 - parcours Publier une offre avec photos, auth, micro et erreurs reseau
 - compte non connecte puis connecte, y compris le fallback SignedOutAccountFallback
 - acces admin autorise / refuse sur un vrai compte
