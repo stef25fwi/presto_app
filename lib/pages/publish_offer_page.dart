@@ -81,7 +81,7 @@ class PublishOfferPage extends StatefulWidget {
 }
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
-  late final MarketplacePublishService _marketplacePublishService;
+  MarketplacePublishService? _marketplacePublishService;
   static const int _publishPhotoHardLimit = 2;
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
   static const int _minimumMaxListingPhotos = 1;
@@ -811,6 +811,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _refreshAdminAudioRuntimeAccess() async {
+    // Test-safe + UX-safe :
+    // ne pas attendre authStateChanges().timeout(5s) au simple montage de la page.
+    // Le check admin audio n'est utile que si un utilisateur est déjà connu.
+    final currentUser = _authOrNull?.currentUser;
+    if (currentUser == null) {
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = 0;
+      });
+      return;
+    }
+
     final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
     if (user == null) {
       _appendPublishAiTrace(
@@ -1884,7 +1896,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     super.initState();
-    _marketplacePublishService = MarketplacePublishService();
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
     unawaited(_prefillPublishPhoneFromProfileIfNeeded());
@@ -2665,23 +2676,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       },
     );
 
-    final loggedIn = await _ensureLoggedInForPublish();
-    if (!loggedIn) {
-      logRuntimeAction(
-        area: 'publish',
-        action: 'blocked-auth',
-      );
-      return;
-    }
-
-    await _prefillPublishPhoneFromProfileIfNeeded();
-
     _canonicalizeLocationInputs();
 
     setState(() {
       _attemptedSubmit = true;
       _publishLocked = true;
     });
+
+    // Si l'utilisateur est déjà connecté, on peut préremplir le téléphone
+    // avant validation. Sinon on affiche d'abord les erreurs du formulaire.
+    if (_authOrNull?.currentUser != null) {
+      await _prefillPublishPhoneFromProfileIfNeeded();
+      if (!mounted) return;
+      _canonicalizeLocationInputs();
+    }
 
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || !_requiredOk()) {
@@ -2697,6 +2705,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
       return;
     }
+
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'blocked-auth',
+      );
+      return;
+    }
+
+    await _prefillPublishPhoneFromProfileIfNeeded();
+    if (!mounted) return;
+    _canonicalizeLocationInputs();
 
     await _submitForm();
   }
@@ -3811,7 +3832,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await CrashlyticsContext.recordError(
           error,
           stackTrace,
-          reason: 'publish blocked before submit: auth/appcheck/profile preflight failed',
+          reason:
+              'publish blocked before submit: auth/appcheck/profile preflight failed',
           fatal: false,
           keys: <String, String>{
             'component': 'PublishOfferPage',
@@ -3840,7 +3862,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final budgetValue = _budgetType == 'À négocier'
           ? 0.0
           : (_parseBudget(_budgetController.text) ?? 0.0);
-      final publishResult = await _marketplacePublishService.publish(
+      final publishService =
+          _marketplacePublishService ??= MarketplacePublishService();
+      final publishResult = await publishService.publish(
         ownerId: user.uid,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),

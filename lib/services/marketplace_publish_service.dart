@@ -28,16 +28,17 @@ class MarketplacePublishResult {
 class MarketplacePublishService {
   MarketplacePublishService({
     ListingRepository? listingRepository,
-        ListingReadRepository? listingReadRepository,
+    ListingReadRepository? listingReadRepository,
     FirebaseStorage? storage,
     MarketplaceHumanVerification? verification,
   })  : _listingRepository = listingRepository ?? ListingRepository(),
-        _listingReadRepository = listingReadRepository ?? ListingReadRepository(),
+        _listingReadRepository =
+            listingReadRepository ?? ListingReadRepository(),
         _storage = storage ?? FirebaseStorage.instance,
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
-      final ListingReadRepository _listingReadRepository;
+  final ListingReadRepository _listingReadRepository;
   final FirebaseStorage _storage;
   final MarketplaceHumanVerification _verification;
 
@@ -66,13 +67,16 @@ class MarketplacePublishService {
     final trimmedDescription = description.trim();
 
     if (trimmedTitle.length < ListingValidation.titleMinLength) {
-      throw StateError('Le titre doit contenir au moins ${ListingValidation.titleMinLength} caractères.');
+      throw StateError(
+          'Le titre doit contenir au moins ${ListingValidation.titleMinLength} caractères.');
     }
     if (trimmedTitle.length > ListingValidation.titleMaxLength) {
-      throw StateError('Le titre doit contenir au maximum ${ListingValidation.titleMaxLength} caractères.');
+      throw StateError(
+          'Le titre doit contenir au maximum ${ListingValidation.titleMaxLength} caractères.');
     }
     if (trimmedDescription.length < ListingValidation.descriptionMinLength) {
-      throw StateError('La description doit contenir au moins ${ListingValidation.descriptionMinLength} caractères.');
+      throw StateError(
+          'La description doit contenir au moins ${ListingValidation.descriptionMinLength} caractères.');
     }
     if (trimmedDescription.length > ListingValidation.descriptionMaxLength) {
       throw StateError(
@@ -163,14 +167,16 @@ class MarketplacePublishService {
     return media;
   }
 
-  Future<void> _deleteUploadedMediaBestEffort(List<ListingMediaInput> media) async {
+  Future<void> _deleteUploadedMediaBestEffort(
+      List<ListingMediaInput> media) async {
     for (final entry in media) {
       final storagePath = entry.storagePath.trim();
       if (storagePath.isEmpty) continue;
       try {
         await _storage.ref().child(storagePath).delete();
       } catch (error) {
-        debugPrint('[MarketplacePublish] raw media rollback failed for $storagePath: $error');
+        debugPrint(
+            '[MarketplacePublish] raw media rollback failed for $storagePath: $error');
       }
     }
   }
@@ -352,7 +358,8 @@ class MarketplacePublishService {
       );
 
       if (submission == null) {
-        throw StateError('La publication a échoué sans retourner de résultat. Réessayez.');
+        throw StateError(
+            'La publication a échoué sans retourner de résultat. Réessayez.');
       }
       return submission;
     } catch (_) {
