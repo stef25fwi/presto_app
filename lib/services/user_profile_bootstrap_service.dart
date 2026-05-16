@@ -394,6 +394,7 @@ class UserProfileBootstrapService {
       'lastLoginAt': FieldValue.serverTimestamp(),
       'lastAuthMethod': authMethod,
       if (email.isNotEmpty) 'email': email,
+      if (displayName.isNotEmpty) 'displayName': displayName,
       'emailVerified': freshUser.emailVerified,
     };
 
