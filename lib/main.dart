@@ -51,6 +51,34 @@ class PrestoRemoteConfig {
   static Future<void> init() async {}
 }
 
+class PrestoMonitoring {
+  PrestoMonitoring._();
+
+  static final PrestoMonitoring I = PrestoMonitoring._();
+
+  void trackOtherStream({required String key, required int docsCount}) {
+    if (kDebugMode) {
+      debugPrint('[monitoring] stream=$key count=$docsCount');
+    }
+  }
+
+  void trackOffersSnapshot(int docsCount) {
+    trackOtherStream(key: 'offers.snapshot', docsCount: docsCount);
+  }
+
+  void trackFunctionsCall({required String name, required int ms}) {
+    if (kDebugMode) {
+      debugPrint('[monitoring] function=$name ms=$ms');
+    }
+  }
+
+  void trackError(String key, Object error) {
+    if (kDebugMode) {
+      debugPrint('[monitoring] error=$key $error');
+    }
+  }
+}
+
 const String kOfferDeleteReasonFoundProvider =
     'J ai deja trouve un prestataire';
 const String kOfferDeleteReasonFoundOnIliPresto =

@@ -105,11 +105,11 @@ function readOfferOwnerId(data) {
     return "";
 }
 function resolveOfferLikeData({ offerData, listingData, }) {
-    if (offerData != null) {
-        return { data: offerData, source: "offers" };
-    }
     if (listingData != null) {
         return { data: listingData, source: "listings" };
+    }
+    if (offerData != null) {
+        return { data: offerData, source: "offers" };
     }
     throw new https_1.HttpsError("not-found", "offer not found");
 }

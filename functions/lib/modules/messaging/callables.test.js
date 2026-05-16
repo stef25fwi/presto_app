@@ -27,13 +27,13 @@ const mirror_1 = require("./mirror");
         deletedCreatedAt: new Date("2026-03-28T10:00:00.000Z"),
     }), { buyer_a: 0, seller_b: 1 });
 });
-(0, node_test_1.default)("resolveOfferLikeData prefers legacy offers when both sources exist", () => {
+(0, node_test_1.default)("resolveOfferLikeData prefers listings when both sources exist", () => {
     const result = (0, callables_1.resolveOfferLikeData)({
         offerData: { ownerId: "owner_offer", title: "Offre legacy" },
         listingData: { ownerId: "owner_listing", title: "Listing marketplace" },
     });
-    strict_1.default.equal(result.source, "offers");
-    strict_1.default.equal(result.data.ownerId, "owner_offer");
+    strict_1.default.equal(result.source, "listings");
+    strict_1.default.equal(result.data.ownerId, "owner_listing");
 });
 (0, node_test_1.default)("resolveOfferLikeData falls back to listings when offer is absent", () => {
     const result = (0, callables_1.resolveOfferLikeData)({

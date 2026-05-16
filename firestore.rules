@@ -565,10 +565,11 @@ service cloud.firestore {
           && isParticipantInConversationData(convData);
       }
 
-          allow get, list: if isAdmin() || isParticipantInConversationData(resource.data);
-      allow create: if isSignedIn() && hasParticipantAccess(request.resource.data);
-          allow update: if isAdmin() || isParticipantInConversationData(resource.data);
-      allow delete: if isAdminClaim();
+      // ✅ Enforce App Check on conversations (critical security boundary)
+      allow get, list: if hasAppCheck() && (isAdmin() || isParticipantInConversationData(resource.data));
+      allow create: if hasAppCheck() && isSignedIn() && hasParticipantAccess(request.resource.data);
+      allow update: if hasAppCheck() && (isAdmin() || isParticipantInConversationData(resource.data));
+      allow delete: if hasAppCheck() && isAdminClaim();
 
       match /messages/{messageId} {
         allow get, list: if isAdmin()

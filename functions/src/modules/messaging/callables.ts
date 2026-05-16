@@ -151,12 +151,12 @@ export function resolveOfferLikeData({
   data: Record<string, unknown>;
   source: "offers" | "listings";
 } {
-  if (offerData != null) {
-    return {data: offerData, source: "offers"};
-  }
-
   if (listingData != null) {
     return {data: listingData, source: "listings"};
+  }
+
+  if (offerData != null) {
+    return {data: offerData, source: "offers"};
   }
 
   throw new HttpsError("not-found", "offer not found");

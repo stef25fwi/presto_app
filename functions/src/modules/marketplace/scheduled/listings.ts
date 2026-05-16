@@ -23,9 +23,7 @@ export function isListingReadyForScheduledPublication(
   const moderationStatus = normalizeString(data.moderationStatus);
   const mediaProcessingStatus = normalizeString(data.mediaProcessingStatus);
   const moderationStatusAllowed = moderationStatus === "" ||
-    moderationStatus === "approved" ||
-    moderationStatus === "auto_flagged" ||
-    moderationStatus === "manual_review";
+    moderationStatus === "approved";
   const mediaStatusAllowed = mediaProcessingStatus === "" ||
     mediaProcessingStatus === "completed";
 

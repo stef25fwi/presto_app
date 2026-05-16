@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../constants/validation_constants.dart';
+import '../data/marketplace/listing_read_repository.dart';
 import '../data/marketplace/listing_repository.dart';
-import '../models/marketplace_enums.dart';
+import '../data/marketplace/marketplace_listing_ui_mapper.dart';
 import '../models/marketplace_listing_draft.dart';
 import 'city_search.dart';
 import 'marketplace_human_verification.dart';
@@ -14,23 +16,28 @@ import 'offer_indexing.dart';
 class MarketplacePublishResult {
   final String listingId;
   final Map<String, dynamic> detailData;
+  final bool isPubliclyVisible;
 
   const MarketplacePublishResult({
     required this.listingId,
     required this.detailData,
+    required this.isPubliclyVisible,
   });
 }
 
 class MarketplacePublishService {
   MarketplacePublishService({
     ListingRepository? listingRepository,
+        ListingReadRepository? listingReadRepository,
     FirebaseStorage? storage,
     MarketplaceHumanVerification? verification,
   })  : _listingRepository = listingRepository ?? ListingRepository(),
+        _listingReadRepository = listingReadRepository ?? ListingReadRepository(),
         _storage = storage ?? FirebaseStorage.instance,
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
+      final ListingReadRepository _listingReadRepository;
   final FirebaseStorage _storage;
   final MarketplaceHumanVerification _verification;
 
@@ -154,6 +161,18 @@ class MarketplacePublishService {
     }
 
     return media;
+  }
+
+  Future<void> _deleteUploadedMediaBestEffort(List<ListingMediaInput> media) async {
+    for (final entry in media) {
+      final storagePath = entry.storagePath.trim();
+      if (storagePath.isEmpty) continue;
+      try {
+        await _storage.ref().child(storagePath).delete();
+      } catch (error) {
+        debugPrint('[MarketplacePublish] raw media rollback failed for $storagePath: $error');
+      }
+    }
   }
 
   CityRecord? _resolveCanonicalCity({
@@ -286,144 +305,60 @@ class MarketplacePublishService {
         ? const <ListingMediaInput>[]
         : await _uploadPhotos(uid: ownerId, photos: photos);
 
-    // 3. Mettre à jour le draft avec les media si nécessaire
-    if (media.isNotEmpty) {
-      await _runWithChannelRetry<void>(
-        stepLabel: 'mise à jour media draft',
-        action: () => _listingRepository.updateDraftMedia(
-          draftId: draftId,
-          media: media,
+    try {
+      // 3. Mettre à jour le draft avec les media si nécessaire
+      if (media.isNotEmpty) {
+        await _runWithChannelRetry<void>(
+          stepLabel: 'mise à jour media draft',
+          action: () => _listingRepository.updateDraftMedia(
+            draftId: draftId,
+            media: media,
+          ),
+        );
+      }
+
+      final recaptchaToken = await _runWithChannelRetry<String>(
+        stepLabel: 'vérification humaine',
+        fallbackValue: '',
+        action: () => _verification.obtainToken(
+          MarketplaceHumanVerificationAction.listingSubmit,
         ),
       );
+      final submission = await _runWithChannelRetry<MarketplacePublishResult?>(
+        stepLabel: 'publication finale',
+        action: () async {
+          final result = await _listingRepository.submitDraft(
+            draftId: draftId,
+            recaptchaToken: recaptchaToken,
+          );
+          final listingData = await _listingReadRepository.getListingData(
+            result.listingId,
+          );
+          if (listingData == null) {
+            throw StateError('Annonce publiee introuvable apres soumission.');
+          }
+          final isPublic = isPublicActiveListingData(listingData);
+          return MarketplacePublishResult(
+            listingId: result.listingId,
+            detailData: isPublic
+                ? mapMarketplaceListingToOfferUi(
+                    listingId: result.listingId,
+                    data: listingData,
+                  )
+                : const <String, dynamic>{},
+            isPubliclyVisible: isPublic,
+          );
+        },
+      );
+
+      if (submission == null) {
+        throw StateError('La publication a échoué sans retourner de résultat. Réessayez.');
+      }
+      return submission;
+    } catch (_) {
+      await _deleteUploadedMediaBestEffort(media);
+      rethrow;
     }
-
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final recaptchaToken = await _runWithChannelRetry<String>(
-      stepLabel: 'vérification humaine',
-      fallbackValue: '',
-      action: () => _verification.obtainToken(
-        MarketplaceHumanVerificationAction.listingSubmit,
-      ),
-    );
-    final submission = await _runWithChannelRetry<MarketplacePublishResult?>(
-      stepLabel: 'publication finale',
-      action: () async {
-        final result = await _listingRepository.submitDraft(
-          draftId: draftId,
-          recaptchaToken: recaptchaToken,
-        );
-        final isPublishingSoon = result.status.value != 'active' &&
-            result.moderationStatus.value == 'approved';
-        final ownerDisplayName = _resolveOwnerDisplayName(ownerId, currentUser: currentUser);
-        final displayMedia = result.media.isNotEmpty
-            ? result.media
-                .map(
-                  (entry) => ListingMediaInput(
-                    storagePath: (entry['storagePath'] ?? '').toString().trim(),
-                    downloadUrl: (entry['downloadUrl'] ?? '').toString().trim(),
-                    thumbnailUrl:
-                        ((entry['thumbnailUrl'] ?? entry['downloadUrl']) ?? '')
-                            .toString()
-                            .trim(),
-                    width: entry['width'] is num
-                        ? (entry['width'] as num).toInt()
-                        : null,
-                    height: entry['height'] is num
-                        ? (entry['height'] as num).toInt()
-                        : null,
-                    mimeType:
-                        (entry['mimeType'] ?? '').toString().trim().isEmpty
-                            ? null
-                            : (entry['mimeType'] ?? '').toString().trim(),
-                    sizeBytes: entry['sizeBytes'] is num
-                        ? (entry['sizeBytes'] as num).toInt()
-                        : null,
-                  ),
-                )
-                .where((entry) =>
-                    entry.storagePath.isNotEmpty &&
-                    entry.downloadUrl.isNotEmpty)
-                .toList(growable: false)
-            : media;
-
-        final statusBadges = <String>[
-          if (isUrgent) 'Urgent',
-          if (result.status.value == 'active')
-            'En ligne'
-          else if (isPublishingSoon)
-            'Publication imminente'
-          else
-            'En revue',
-        ];
-
-        return MarketplacePublishResult(
-          listingId: result.listingId,
-          detailData: <String, dynamic>{
-            'id': result.listingId,
-            'offerId': result.listingId,
-            'title': title.trim(),
-            'shortDescription': (subCategory ?? '').trim(),
-            'detail': (subCategory ?? '').trim(),
-            'city': resolvedCity,
-            'location': resolvedCity,
-            'postalCode': resolvedPostalCode,
-            'cp': resolvedPostalCode,
-            'dept': canonicalCity.dept,
-            'region': canonicalCity.region,
-            'category': resolvedCategory,
-            'categoryId': categoryId,
-            'cityId': cityId,
-            'cityCategoryKey':
-                (indexed['cityCategoryKey'] ?? '').toString().trim(),
-            'description': description.trim(),
-            'phone': phone.trim(),
-            'price': price,
-            'budget': price,
-            'budgetValue': price,
-            'budgetType': budgetType,
-            'isUrgent': isUrgent,
-            'publishedAtLabel': result.status.value == 'active'
-                ? 'Annonce publiée'
-                : (isPublishingSoon
-                    ? 'Publication automatique en cours'
-                    : 'Annonce en revue'),
-            'availability': (missionDelay ?? '').trim().isEmpty
-                ? 'Disponibilité à confirmer'
-                : missionDelay!.trim(),
-            'missionDelay': (missionDelay ?? '').trim(),
-            'averageDelay': (missionDelay ?? '').trim(),
-            'statusBadges': statusBadges,
-            'imageUrls': displayMedia
-                .map((entry) => entry.downloadUrl)
-                .toList(growable: false),
-            'media': displayMedia
-                .map((entry) => entry.toMap())
-                .toList(growable: false),
-            'pseudo': ownerDisplayName,
-            'displayName': ownerDisplayName,
-            'userName': ownerDisplayName,
-            'ownerName': ownerDisplayName,
-            'ownerId': ownerId,
-            'userId': ownerId,
-            'status': result.status.value,
-            'moderationStatus': result.moderationStatus.value,
-            'visibility': result.visibility.value,
-            'isMarketplace': true,
-            'advertiser': <String, dynamic>{
-              'id': ownerId,
-              'name': ownerDisplayName,
-              'verified': false,
-              'avatarUrl': '',
-            },
-          },
-        );
-      },
-    );
-
-    if (submission == null) {
-      throw StateError('La publication a échoué sans retourner de résultat. Réessayez.');
-    }
-    return submission;
   }
 
   String _storageExtension(XFile photo) {

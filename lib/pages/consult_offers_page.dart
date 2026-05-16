@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
+import '../data/marketplace/listing_read_repository.dart';
 import '../main.dart'
     show
         CardShell,
@@ -70,6 +71,8 @@ class _Debouncer {
 
 class _ConsultOffersPageState extends State<ConsultOffersPage>
     with WidgetsBindingObserver {
+  final ListingReadRepository _listingReadRepository = ListingReadRepository();
+
   static const Color _offersBg = Colors.white;
   static const Color _offersNavy = Color(0xFF1E2554);
   static const Color _offersOrange = Color(0xFFFF7A00);
@@ -689,7 +692,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   List<Query<Map<String, dynamic>>> _buildCurrentListingsQueries({
     required int limit,
   }) {
-    return buildMarketplaceListingsBrowseQueries(
+    return _listingReadRepository.buildBrowseQueries(
       limit: limit,
       latestFirst: true,
       categoryId: _effectiveListingsCategoryId(),
@@ -708,8 +711,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     try {
       final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        loadMergedPublicOfferQueryVariants(
-          queries: _buildCurrentListingsQueries(limit: limit),
+        _listingReadRepository.loadBrowsePublicListingDocs(
+          limit: limit,
+          latestFirst: true,
+          categoryId: _effectiveListingsCategoryId(),
+          cityId: _effectiveListingsCityId(),
           source: 'consult_listings_warm',
         ),
       ];
@@ -786,13 +792,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> loadOnce() async {
       final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        loadMergedPublicOfferQueryVariants(
-          queries: buildMarketplaceListingsBrowseQueries(
-            limit: limit,
-            latestFirst: true,
-            categoryId: categoryId,
-            cityId: cityId,
-          ),
+        _listingReadRepository.loadBrowsePublicListingDocs(
+          limit: limit,
+          latestFirst: true,
+          categoryId: categoryId,
+          cityId: cityId,
           source: 'consult_listings_fetch',
         ),
       ];
