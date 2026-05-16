@@ -75,7 +75,7 @@ exports.expireOldListings = (0, scheduler_1.onSchedule)({
 });
 exports.publishApprovedListings = (0, scheduler_1.onSchedule)({
     region: env_1.PROJECT_REGION,
-    schedule: "every 1 minutes",
+    schedule: "every 5 minutes",
     timeZone: "Europe/Paris",
 }, async () => {
     const now = firebase_admin_1.default.firestore.Timestamp.now();
