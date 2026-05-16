@@ -20,10 +20,11 @@ import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../widgets/phone_input_field.dart';
 
-import '../main.dart' show
-    buildOfferDetailsOffer,
-    kOfferDeleteReasonFoundProvider,
-  kOfferDeleteReasonFoundOnIliPresto;
+import '../main.dart'
+    show
+        buildOfferDetailsOffer,
+        kOfferDeleteReasonFoundProvider,
+        kOfferDeleteReasonFoundOnIliPresto;
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
 class UserOffersSection extends StatefulWidget {
@@ -110,8 +111,9 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
             .get();
         for (final doc in legacyFavoriteSnap.docs) {
           final data = doc.data();
-          final listingId =
-              (data['listingId'] ?? data['offerId'] ?? doc.id).toString().trim();
+          final listingId = (data['listingId'] ?? data['offerId'] ?? doc.id)
+              .toString()
+              .trim();
           if (listingId.isEmpty || favoriteDates.containsKey(listingId)) {
             continue;
           }
@@ -2566,28 +2568,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                                     .collection(
                                                         kListingsCollection)
                                                     .doc(item.offerId);
-                                            final offersRef = FirebaseFirestore
-                                                .instance
-                                                .collection(kOffersCollection)
-                                                .doc(item.offerId);
                                             final listingsSnap =
                                                 await listingsRef.get();
-                                            final offersSnap =
-                                                listingsSnap.exists
-                                                    ? null
-                                                    : await offersRef.get();
-                                            if (!listingsSnap.exists &&
-                                                !(offersSnap?.exists ??
-                                                    false)) {
+                                            if (!listingsSnap.exists) {
                                               throw StateError(
-                                                'Annonce introuvable',
+                                                'Annonce legacy non modifiable depuis l’UI : migration listings requise',
                                               );
                                             }
-
-                                            final targetRef =
-                                                listingsSnap.exists
-                                                    ? listingsRef
-                                                    : offersRef;
                                             final update = <String, dynamic>{
                                               'title':
                                                   titleController.text.trim(),
@@ -2678,7 +2665,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                                       .toDouble();
                                             }
 
-                                            await targetRef.update(update);
+                                            await listingsRef.update(update);
 
                                             if (dialogContext.mounted) {
                                               Navigator.of(dialogContext).pop();
@@ -2749,42 +2736,31 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     setState(() => _busyOfferId = item.offerId);
 
     try {
-      // Déterminer la collection correcte (listings ou offers legacy)
       final listingsRef = FirebaseFirestore.instance
           .collection(kListingsCollection)
           .doc(item.offerId);
       final listingsSnap = await listingsRef.get();
-      final isListing = listingsSnap.exists;
+      if (!listingsSnap.exists) {
+        throw StateError(
+          'Annonce legacy non supprimable depuis l’UI : migration listings requise',
+        );
+      }
 
-      final doc = isListing
-          ? listingsSnap
-          : await FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .doc(item.offerId)
-              .get();
-
-      final latestData = doc.data() ?? item.data;
-      final shouldKeepVisibleWithJobDone =
-          isOfferJobDoneDeletionReason(reason);
+      final latestData = listingsSnap.data() ?? item.data;
+      final shouldKeepVisibleWithJobDone = isOfferJobDoneDeletionReason(reason);
 
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
 
-      if (isListing) {
-        final callable = prestoFirebaseFunctions.httpsCallable(
-          'deleteListing',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 30),
-          ),
-        );
-        await callable.call<dynamic>({
-          'listingId': item.offerId,
-          'reason': reason,
-        });
-      } else {
-        throw StateError(
-          'Cette annonce legacy doit être migrée vers listings avant suppression ou archivage.',
-        );
-      }
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'deleteListing',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 30),
+        ),
+      );
+      await callable.call<dynamic>({
+        'listingId': item.offerId,
+        'reason': reason,
+      });
 
       if (!mounted) return;
 

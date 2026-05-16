@@ -2143,13 +2143,20 @@ class OfferDeepLinkPage extends StatelessWidget {
       }
     }
 
-    if (preferMarketplace) {
-      return await loadDocument('listings', isMarketplace: true) ??
-          await loadDocument('offers', isMarketplace: false);
+    // Prod marketplace contract:
+    // Toujours préférer listings. La route /offers/{id} reste uniquement
+    // une URL publique/backward-compatible, pas une preuve de collection Firestore.
+    final listingPayload = await loadDocument('listings', isMarketplace: true);
+    if (listingPayload != null) {
+      return listingPayload;
     }
 
-    return await loadDocument('offers', isMarketplace: false) ??
-        await loadDocument('listings', isMarketplace: true);
+    // Lecture legacy strictement contrôlée par flag de migration.
+    if (kEnableLegacyPublicOffersBackfill) {
+      return await loadDocument('offers', isMarketplace: false);
+    }
+
+    return null;
   }
 
   @override

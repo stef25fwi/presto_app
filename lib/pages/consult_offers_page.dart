@@ -2414,17 +2414,27 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     if (ok != true) return;
 
     try {
-      // Essayer d'abord dans listings (marketplace), puis fallback offers (legacy)
+      // Prod marketplace contract:
+      // l'UI ne modifie plus jamais offers legacy. Une annonce absente de
+      // listings doit être migrée avant modification.
       final listingsRef = FirebaseFirestore.instance
           .collection(kListingsCollection)
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
-      final targetRef = listingsSnap.exists
-          ? listingsRef
-          : FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .doc(offerId);
-      await targetRef.update({
+      if (!listingsSnap.exists) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Cette annonce legacy doit être migrée avant modification.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      await listingsRef.update({
         'title': titleCtrl.text.trim(),
         'city': cityCtrl.text.trim(),
         'description': descCtrl.text.trim(),
@@ -2473,20 +2483,26 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           .collection(kListingsCollection)
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
-      if (listingsSnap.exists) {
-        final callable = prestoFirebaseFunctions.httpsCallable(
-          'deleteListing',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 30),
-          ),
-        );
-        await callable.call<dynamic>({'listingId': offerId});
-      } else {
-        await FirebaseFirestore.instance
-            .collection(kOffersCollection)
-            .doc(offerId)
-            .delete();
+      if (!listingsSnap.exists) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Cette annonce legacy doit être migrée avant suppression.',
+              ),
+            ),
+          );
+        }
+        return;
       }
+
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'deleteListing',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 30),
+        ),
+      );
+      await callable.call<dynamic>({'listingId': offerId});
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
