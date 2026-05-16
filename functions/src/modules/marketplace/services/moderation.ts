@@ -417,33 +417,6 @@ export function finalizeListingPublication({
     };
   }
 
-  // auto_flagged listings (riskScore 35-54, no severe flags) are safe to
-  // auto-publish when auto-approval is enabled.
-  if (evaluation.moderationDecision === "auto_flagged" && allowAutoApproval) {
-    return {
-      status: "active",
-      moderationStatus: "auto_flagged",
-      visibility: "public",
-      publishedAt: now,
-      autoPublishAfter: null,
-      riskScore: evaluation.riskScore,
-    };
-  }
-
-  // manual_review listings (riskScore >= 55, often caused by duplicate titles
-  // or high submission volume) can also be auto-published when auto-approval
-  // is enabled to avoid permanent pending state.
-  if (evaluation.moderationDecision === "manual_review" && allowAutoApproval) {
-    return {
-      status: "active",
-      moderationStatus: "manual_review",
-      visibility: "public",
-      publishedAt: now,
-      autoPublishAfter: null,
-      riskScore: evaluation.riskScore,
-    };
-  }
-
   const moderationStatus: ModerationStatus = evaluation.moderationDecision === "auto_flagged"
     ? "auto_flagged"
     : "manual_review";

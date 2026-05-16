@@ -37,14 +37,14 @@ test("computeUnreadCountAfterMessageDeletion decrements only unread recipients",
   );
 });
 
-test("resolveOfferLikeData prefers legacy offers when both sources exist", () => {
+test("resolveOfferLikeData prefers listings when both sources exist", () => {
   const result = resolveOfferLikeData({
     offerData: {ownerId: "owner_offer", title: "Offre legacy"},
     listingData: {ownerId: "owner_listing", title: "Listing marketplace"},
   });
 
-  assert.equal(result.source, "offers");
-  assert.equal(result.data.ownerId, "owner_offer");
+  assert.equal(result.source, "listings");
+  assert.equal(result.data.ownerId, "owner_listing");
 });
 
 test("resolveOfferLikeData falls back to listings when offer is absent", () => {

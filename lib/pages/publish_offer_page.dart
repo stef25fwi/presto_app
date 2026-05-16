@@ -3910,6 +3910,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Fermer le checkmark puis aller au détail.
       Navigator.of(context, rootNavigator: true).pop();
       if (!mounted) return;
+      if (!publishResult.isPubliclyVisible) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => _ListingReviewSuccessPage(
+              onViewMyListings: () {
+                appNavigatorKey.currentState?.pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const HomePage(initialIndex: 4),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => OfferDetailsPage(
@@ -4497,6 +4514,80 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           : kPrestoOrange,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ListingReviewSuccessPage extends StatelessWidget {
+  const _ListingReviewSuccessPage({required this.onViewMyListings});
+
+  final VoidCallback onViewMyListings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFFBF7),
+      appBar: AppBar(
+        title: const Text('Annonce envoyée'),
+        backgroundColor: Colors.white,
+        foregroundColor: kPrestoBlue,
+        elevation: 0,
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 460),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.rate_review_outlined,
+                  color: kPrestoOrange,
+                  size: 72,
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Annonce envoyée en revue',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: kPrestoBlue,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Elle apparaîtra dans le marketplace dès validation.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.35,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: onViewMyListings,
+                    icon: const Icon(Icons.list_alt_outlined),
+                    label: const Text('Voir mes annonces'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrestoOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                 ),

@@ -147,3 +147,49 @@ test("finalizeListingPublication rejects blocked listings", () => {
   assert.equal(publication.publishedAt, null);
   assert.equal(publication.autoPublishAfter, null);
 });
+
+test("finalizeListingPublication keeps auto-flagged listings private even with auto-approval", () => {
+  const now = Symbol("serverTimestamp") as unknown as FirebaseFirestore.FieldValue;
+  const publication = finalizeListingPublication({
+    evaluation: {
+      safeSearchResult: {},
+      autoFlags: ["suspicious_text"],
+      riskScore: 42,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "auto_flagged",
+      moderationReason: "risk_threshold_exceeded",
+    },
+    now,
+    autoApproveEnabled: true,
+  });
+
+  assert.equal(publication.status, "pending");
+  assert.equal(publication.moderationStatus, "auto_flagged");
+  assert.equal(publication.visibility, "private");
+  assert.equal(publication.publishedAt, null);
+  assert.equal(publication.autoPublishAfter, null);
+});
+
+test("finalizeListingPublication keeps manual-review listings private even with auto-approval", () => {
+  const now = Symbol("serverTimestamp") as unknown as FirebaseFirestore.FieldValue;
+  const publication = finalizeListingPublication({
+    evaluation: {
+      safeSearchResult: {},
+      autoFlags: ["duplicate_listing"],
+      riskScore: 58,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "manual_review",
+      moderationReason: "manual_review_required",
+    },
+    now,
+    autoApproveEnabled: true,
+  });
+
+  assert.equal(publication.status, "pending");
+  assert.equal(publication.moderationStatus, "manual_review");
+  assert.equal(publication.visibility, "private");
+  assert.equal(publication.publishedAt, null);
+  assert.equal(publication.autoPublishAfter, null);
+});

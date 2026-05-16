@@ -134,4 +134,46 @@ const moderation_1 = require("./moderation");
     strict_1.default.equal(publication.publishedAt, null);
     strict_1.default.equal(publication.autoPublishAfter, null);
 });
+(0, node_test_1.default)("finalizeListingPublication keeps auto-flagged listings private even with auto-approval", () => {
+    const now = Symbol("serverTimestamp");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: ["suspicious_text"],
+            riskScore: 42,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "auto_flagged",
+            moderationReason: "risk_threshold_exceeded",
+        },
+        now,
+        autoApproveEnabled: true,
+    });
+    strict_1.default.equal(publication.status, "pending");
+    strict_1.default.equal(publication.moderationStatus, "auto_flagged");
+    strict_1.default.equal(publication.visibility, "private");
+    strict_1.default.equal(publication.publishedAt, null);
+    strict_1.default.equal(publication.autoPublishAfter, null);
+});
+(0, node_test_1.default)("finalizeListingPublication keeps manual-review listings private even with auto-approval", () => {
+    const now = Symbol("serverTimestamp");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: ["duplicate_listing"],
+            riskScore: 58,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "manual_review",
+            moderationReason: "manual_review_required",
+        },
+        now,
+        autoApproveEnabled: true,
+    });
+    strict_1.default.equal(publication.status, "pending");
+    strict_1.default.equal(publication.moderationStatus, "manual_review");
+    strict_1.default.equal(publication.visibility, "private");
+    strict_1.default.equal(publication.publishedAt, null);
+    strict_1.default.equal(publication.autoPublishAfter, null);
+});
 //# sourceMappingURL=moderation.test.js.map

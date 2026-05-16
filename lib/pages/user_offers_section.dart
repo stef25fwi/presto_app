@@ -5,7 +5,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
@@ -24,8 +23,7 @@ import '../widgets/phone_input_field.dart';
 import '../main.dart' show
     buildOfferDetailsOffer,
     kOfferDeleteReasonFoundProvider,
-    kOfferDeleteReasonFoundOnIliPresto,
-    kOfferJobDoneOverlayDuration;
+  kOfferDeleteReasonFoundOnIliPresto;
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
 class UserOffersSection extends StatefulWidget {
@@ -79,57 +77,52 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     }
 
     try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
+      final fs = FirebaseFirestore.instance;
+      final favoriteSnap = await fs
+          .collection('favorites')
+          .where('userId', isEqualTo: widget.userId)
+          .orderBy('createdAt', descending: true)
+          .limit(200)
           .get();
 
-      final favoriteMetaSnap = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .collection('favoriteOffers')
-          .orderBy('addedAt', descending: true)
-          .get();
+      final favoriteIds = favoriteSnap.docs
+          .map((doc) => (doc.data()['listingId'] ?? '').toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
 
-      if (favoriteMetaSnap.docs.isNotEmpty) {
-        final items = favoriteMetaSnap.docs.map((doc) {
-          final data = doc.data();
-          return _FavoriteOfferItem(
-            offerId: doc.id,
-            title: (data['title'] ?? 'Sans titre').toString().trim(),
-            city: (data['city'] ?? 'Lieu non précisé').toString().trim(),
-            category: (data['category'] ?? 'Catégorie non précisée')
-                .toString()
-                .trim(),
-            price: (data['price'] as num?)?.toDouble(),
-            imageUrl: (data['imageUrl'] ?? '').toString().trim(),
-            addedAt: data['addedAt'] is Timestamp
-                ? data['addedAt'] as Timestamp
-                : null,
-            rawData: data,
-          );
-        }).toList();
-
-        if (!mounted) return;
-        setState(() {
-          _offers = items;
-          _isLoading = false;
-
-          final ids = items.map((item) => item.offerId).toSet();
-          if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
-            _selectedOfferId = items.isNotEmpty ? items.first.offerId : null;
-          }
-        });
-        return;
+      final favoriteDates = <String, Timestamp?>{};
+      for (final doc in favoriteSnap.docs) {
+        final data = doc.data();
+        final listingId = (data['listingId'] ?? '').toString().trim();
+        if (listingId.isEmpty) continue;
+        favoriteDates[listingId] = data['createdAt'] is Timestamp
+            ? data['createdAt'] as Timestamp
+            : null;
       }
 
-      final favoriteIds =
-          (userDoc.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
-              .map((e) => e.toString().trim())
-              .where((e) => e.isNotEmpty)
-              .toList()
-              .reversed
-              .toList();
+      if (favoriteIds.isEmpty) {
+        final legacyFavoriteSnap = await fs
+            .collection('users')
+            .doc(widget.userId)
+            .collection('favoriteOffers')
+            .orderBy('createdAt', descending: true)
+            .limit(200)
+            .get();
+        for (final doc in legacyFavoriteSnap.docs) {
+          final data = doc.data();
+          final listingId =
+              (data['listingId'] ?? data['offerId'] ?? doc.id).toString().trim();
+          if (listingId.isEmpty || favoriteDates.containsKey(listingId)) {
+            continue;
+          }
+          favoriteIds.add(listingId);
+          favoriteDates[listingId] = data['createdAt'] is Timestamp
+              ? data['createdAt'] as Timestamp
+              : data['addedAt'] is Timestamp
+                  ? data['addedAt'] as Timestamp
+                  : null;
+        }
+      }
 
       if (favoriteIds.isEmpty) {
         if (!mounted) return;
@@ -141,45 +134,24 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return;
       }
 
-      // Résolution avec distinction marketplace vs legacy
-      final resolvedPairs = await Future.wait(
-        favoriteIds.map(
-          (offerId) async {
-            final listingSnap = await FirebaseFirestore.instance
-                .collection(kListingsCollection)
-                .doc(offerId)
-                .get();
-            if (listingSnap.exists) {
-              return (doc: listingSnap, isMarketplace: true);
-            }
-            final offerSnap = await FirebaseFirestore.instance
-                .collection(kOffersCollection)
-                .doc(offerId)
-                .get();
-            return (doc: offerSnap, isMarketplace: false);
-          },
-        ),
+      final listingSnaps = await Future.wait(
+        favoriteIds.map((listingId) {
+          return fs.collection(kListingsCollection).doc(listingId).get();
+        }),
       );
 
-      final existingPairs =
-          resolvedPairs.where((p) => p.doc.exists).toList();
-
-      existingPairs.sort((a, b) {
-        final ta = a.doc.data()?['createdAt'];
-        final tb = b.doc.data()?['createdAt'];
-        final ma = ta is Timestamp ? ta.millisecondsSinceEpoch : 0;
-        final mb = tb is Timestamp ? tb.millisecondsSinceEpoch : 0;
-        return mb.compareTo(ma);
-      });
-
-      final items = existingPairs.map((pair) {
-        final doc = pair.doc;
+      final items = <_FavoriteOfferItem>[];
+      for (final doc in listingSnaps) {
+        if (!doc.exists) continue;
         final data = doc.data() ?? const <String, dynamic>{};
+        final status = (data['status'] ?? '').toString().trim();
+        final visibility = (data['visibility'] ?? '').toString().trim();
+        if (status != 'active' || visibility != 'public') continue;
         final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
             .map((e) => e.toString().trim())
             .where((e) => e.isNotEmpty)
             .toList();
-        return _FavoriteOfferItem(
+        items.add(_FavoriteOfferItem(
           offerId: doc.id,
           title: (data['title'] ?? 'Sans titre').toString().trim(),
           city: (data['location'] ?? data['city'] ?? 'Lieu non précisé')
@@ -189,11 +161,11 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
               (data['category'] ?? 'Catégorie non précisée').toString().trim(),
           price: (data['budget'] as num?)?.toDouble(),
           imageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
-          addedAt: null,
+          addedAt: favoriteDates[doc.id],
           rawData: data,
-          isMarketplace: pair.isMarketplace,
-        );
-      }).toList();
+          isMarketplace: true,
+        ));
+      }
 
       if (!mounted) return;
       setState(() {
@@ -230,30 +202,10 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     try {
       final item = _offers.where((o) => o.offerId == offerId).firstOrNull;
 
-      if (item?.isMarketplace == true) {
-        // Cloud Function gère la suppression dans toutes les collections
-        // (favorites + users/{uid}/favoriteOffers + favoriteCount sur le listing)
-        await FavoriteRepository().toggleFavorite(offerId);
-      } else {
-        // Chemin legacy : nettoyage direct Firestore sur les 3 emplacements
-        final uid = widget.userId;
-        final fs = FirebaseFirestore.instance;
-        final batch = fs.batch();
-        batch.set(
-          fs.collection('users').doc(uid),
-          {
-            'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
-            'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
-        batch.delete(
-          fs.collection('users').doc(uid).collection('favoriteOffers').doc(offerId),
-        );
-        // Nettoyage best-effort de la collection favorites (no-op si absent)
-        batch.delete(fs.collection('favorites').doc('${uid}__$offerId'));
-        await batch.commit();
+      if (item?.isMarketplace != true) {
+        throw StateError('Ce favori legacy doit être migré avant suppression.');
       }
+      await FavoriteRepository().toggleFavorite(offerId);
 
       if (!mounted) return;
       showSuccessSnackBar(context, 'Annonce retirée des favoris');
@@ -2829,49 +2781,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           'reason': reason,
         });
       } else {
-        final imageUrls =
-            (latestData['imageUrls'] as List<dynamic>? ?? const [])
-                .map((e) => e.toString())
-                .where((e) => e.isNotEmpty)
-                .toList();
-
-        if (!shouldKeepVisibleWithJobDone) {
-          for (final url in imageUrls) {
-            try {
-              final ref = FirebaseStorage.instance.refFromURL(url);
-              await ref.delete();
-            } catch (_) {
-              // Best-effort: une image manquante ne doit pas bloquer la suppression.
-            }
-          }
-        }
-
-        if (shouldKeepVisibleWithJobDone) {
-          final visibleUntil = Timestamp.fromDate(
-            DateTime.now().add(kOfferJobDoneOverlayDuration),
-          );
-
-          await FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .doc(item.offerId)
-              .update({
-            'status': 'sold',
-            'isActive': true,
-            'isPublished': false,
-            'deletedAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-            'deletedReason': reason,
-            'archiveReason': reason,
-            'jobDoneOverlayVisible': true,
-            'jobDoneOverlayVisibleUntil': visibleUntil,
-            'removeFromBrowseAt': visibleUntil,
-          });
-        } else {
-          await FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .doc(item.offerId)
-              .delete();
-        }
+        throw StateError(
+          'Cette annonce legacy doit être migrée vers listings avant suppression ou archivage.',
+        );
       }
 
       if (!mounted) return;

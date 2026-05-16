@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/data/marketplace/marketplace_listing_ui_mapper.dart';
 import 'package:presto_app/models/marketplace_enums.dart';
 import 'package:presto_app/models/marketplace_listing.dart';
 import 'package:presto_app/models/marketplace_listing_draft.dart';
@@ -55,5 +56,50 @@ void main() {
     expect(listing.moderationStatus, ModerationStatus.approved);
     expect(listing.isPubliclyVisible, isTrue);
     expect(listing.favoriteCount, 5);
+  });
+
+  test('marketplace listing UI mapper exposes only canonical listing fields', () {
+    final uiData = mapMarketplaceListingToOfferUi(
+      listingId: 'listing_42',
+      data: <String, dynamic>{
+        'ownerId': 'owner_42',
+        'ownerName': 'Sam Presto',
+        'title': 'Pose de cuisine',
+        'description': 'Besoin pose cuisine complete.',
+        'city': 'Lyon',
+        'price': 250,
+        'status': 'active',
+        'visibility': 'public',
+        'media': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'storagePath': 'listings/owner_42/photo.webp',
+            'downloadUrl': 'https://example.test/photo.webp',
+          },
+        ],
+      },
+    );
+
+    expect(uiData['offerId'], 'listing_42');
+    expect(uiData['listingId'], 'listing_42');
+    expect(uiData['isMarketplace'], isTrue);
+    expect(uiData['imageUrls'], <String>['https://example.test/photo.webp']);
+    expect((uiData['advertiser'] as Map<String, dynamic>)['id'], 'owner_42');
+  });
+
+  test('public listing predicate requires active and public', () {
+    expect(
+      isPublicActiveListingData(<String, dynamic>{
+        'status': 'active',
+        'visibility': 'public',
+      }),
+      isTrue,
+    );
+    expect(
+      isPublicActiveListingData(<String, dynamic>{
+        'status': 'pending',
+        'visibility': 'private',
+      }),
+      isFalse,
+    );
   });
 }
