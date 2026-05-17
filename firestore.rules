@@ -481,7 +481,10 @@ service cloud.firestore {
       }
 
       function canReadConversationAsAdmin() {
-        return hasAppCheck() && isAdmin();
+        // Admin access is already protected by Firebase Auth custom claims / admin docs.
+        // Do not require App Check here, otherwise a valid admin can be blocked on web
+        // when App Check activation/token is missing while rules still see isAdmin() == true.
+        return isAdmin();
       }
 
       function canReadConversationAsParticipant(data) {
@@ -493,9 +496,12 @@ service cloud.firestore {
       allow create, update, delete: if false;
 
       match /messages/{messageId} {
-        allow get, list: if hasAppCheck() && (isAdmin()
-          || isParentConversationParticipant()
-          || hasParticipantAccess(resource.data));
+        allow get, list: if isAdmin()
+          || (hasAppCheck()
+            && (
+              isParentConversationParticipant()
+              || hasParticipantAccess(resource.data)
+            ));
         allow create, update, delete: if false;
       }
     }
