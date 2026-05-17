@@ -8,7 +8,10 @@ import {
   buildListingDocumentPath,
   buildListingDraftDocumentPath,
 } from "./listings";
-import { buildProcessedListingMediaDestinationPath } from "./media";
+import {
+  buildProcessedListingMediaDestinationPath,
+  STANDARDIZED_LISTING_IMAGE_SIZE,
+} from "./media";
 
 test("createListingDraft targets canonical listingDrafts collection", () => {
   assert.equal(buildListingDraftDocumentPath("draft_123"), "listingDrafts/draft_123");
@@ -56,4 +59,8 @@ test("media final path starts with listings/{uid}/{listingId}/", () => {
   });
 
   assert.equal(path, "listings/user_1/listing_9/photo.original.webp");
+});
+
+test("listing media output size stays standardized for cards", () => {
+  assert.equal(STANDARDIZED_LISTING_IMAGE_SIZE, 1200);
 });

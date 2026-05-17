@@ -250,7 +250,7 @@
     {
       "label": "Flutter: Test Marketplace",
       "type": "shell",
-      "command": "flutter test test/marketplace_models_test.dart test/marketplace_publish_architecture_test.dart test/favorites_architecture_test.dart",
+      "command": "flutter test test/marketplace_models_test.dart test/marketplace_publish_architecture_test.dart test/favorites_architecture_test.dart test/french_city_postal_validator_test.dart",
       "problemMatcher": []
     },
     {

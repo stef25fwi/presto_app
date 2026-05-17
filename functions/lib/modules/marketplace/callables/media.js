@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processOfferPhoto = void 0;
+exports.processOfferPhoto = exports.STANDARDIZED_LISTING_IMAGE_SIZE = void 0;
 exports.buildProcessedListingMediaDestinationPath = buildProcessedListingMediaDestinationPath;
 exports.processOfferPhotoStoragePath = processOfferPhotoStoragePath;
 const node_crypto_1 = require("node:crypto");
@@ -13,6 +13,7 @@ const https_1 = require("firebase-functions/v2/https");
 const sharp_1 = __importDefault(require("sharp"));
 const env_1 = require("../../../config/env");
 const BRAND_WATERMARK_TEXT = "iliprestō";
+exports.STANDARDIZED_LISTING_IMAGE_SIZE = 1200;
 function requireAuthUid(request) {
     const uid = String(request.auth?.uid || "").trim();
     if (!uid) {
@@ -83,15 +84,15 @@ async function processOfferPhotoStoragePath({ uid, draftId, listingId, storagePa
         const resized = await (0, sharp_1.default)(srcBuffer)
             .rotate()
             .resize({
-            width: 1600,
-            height: 1600,
-            fit: "inside",
-            withoutEnlargement: true,
+            width: exports.STANDARDIZED_LISTING_IMAGE_SIZE,
+            height: exports.STANDARDIZED_LISTING_IMAGE_SIZE,
+            fit: "cover",
+            position: "attention",
         })
             .webp({ quality: 82, effort: 5 })
             .toBuffer({ resolveWithObject: true });
-        width = resized.info.width ?? 1600;
-        height = resized.info.height ?? 1200;
+        width = resized.info.width ?? exports.STANDARDIZED_LISTING_IMAGE_SIZE;
+        height = resized.info.height ?? exports.STANDARDIZED_LISTING_IMAGE_SIZE;
         const watermarkInput = buildBrandWatermarkSvg({ width, height });
         const finalImage = await (0, sharp_1.default)(resized.data)
             .composite([
