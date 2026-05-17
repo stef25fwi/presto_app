@@ -1,7 +1,7 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db } from "../../core/firestore";
 import { APP_BASE_URL } from "../../config/env";
-import { COLLECTIONS } from "../../shared/constants";
+import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
 
 type ListingDoc = {
@@ -20,6 +20,10 @@ function isPublishedStatus(data: Record<string, unknown>): boolean {
   return status === "published" || status === "active" || data.isActive === true;
 }
 
+export function hasPublishedListingRecords(records: Record<string, unknown>[]): boolean {
+  return records.some((record) => isPublishedStatus(record));
+}
+
 function toMillis(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
   if (value instanceof Date) return value.getTime();
@@ -31,15 +35,25 @@ function toMillis(value: unknown): number {
 }
 
 async function userHasPublishedListing(userId: string): Promise<boolean> {
-  const [listingsByOwnerId, listingsByOwnerUnderscore, offersByOwnerId, offersByOwnerUnderscore] = await Promise.all([
+  const [listingsByOwnerId, listingsByOwnerUnderscore] = await Promise.all([
     db.collection(COLLECTIONS.listings).where("ownerId", "==", userId).limit(20).get(),
     db.collection(COLLECTIONS.listings).where("owner_id", "==", userId).limit(20).get(),
-    db.collection(COLLECTIONS.offers).where("ownerId", "==", userId).limit(20).get(),
-    db.collection(COLLECTIONS.offers).where("owner_id", "==", userId).limit(20).get(),
   ]);
 
-  return [...listingsByOwnerId.docs, ...listingsByOwnerUnderscore.docs, ...offersByOwnerId.docs, ...offersByOwnerUnderscore.docs]
-    .some((doc) => isPublishedStatus(doc.data() as Record<string, unknown>));
+  const listingRecords = [...listingsByOwnerId.docs, ...listingsByOwnerUnderscore.docs]
+    .map((doc) => doc.data() as Record<string, unknown>);
+  if (hasPublishedListingRecords(listingRecords)) {
+    return true;
+  }
+
+  const [offersByOwnerId, offersByOwnerUnderscore] = await Promise.all([
+    db.collection(LEGACY_COLLECTIONS.offers).where("ownerId", "==", userId).limit(20).get(),
+    db.collection(LEGACY_COLLECTIONS.offers).where("owner_id", "==", userId).limit(20).get(),
+  ]);
+
+  const offerRecords = [...offersByOwnerId.docs, ...offersByOwnerUnderscore.docs]
+    .map((doc) => doc.data() as Record<string, unknown>);
+  return hasPublishedListingRecords(offerRecords);
 }
 
 async function emitFirstListingNotPublishedEvent({
@@ -63,7 +77,7 @@ async function emitFirstListingNotPublishedEvent({
   await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
     event_id: eventId,
     event_name: "listing.first_not_published.reminder",
-    source_collection: COLLECTIONS.listingDraftsV2,
+    source_collection: COLLECTIONS.listingDrafts,
     source_id: draftId,
     recipient_user_id: userId,
     dedupe_key: sha256(`listing.first_not_published.reminder:${userId}:${reminderBucket}`),
@@ -197,13 +211,13 @@ export const enqueueExpiringListingEmails = onSchedule("every 1 hours", async ()
   const now = Date.now();
   const in72h = now + 72 * 60 * 60 * 1000;
   await processCollection(COLLECTIONS.listings, (docId) => `https://presto.app/listings/${docId}/renew`, now, in72h);
-  await processCollection(COLLECTIONS.offers, (docId) => `https://presto.app/offers/${docId}`, now, in72h);
+  await processCollection(LEGACY_COLLECTIONS.offers, (docId) => `https://presto.app/offers/${docId}`, now, in72h);
 });
 
 export const enqueueFirstListingNotPublishedReminders = onSchedule("every day 10:00", async () => {
   const cutoffMs = Date.now() - 24 * 60 * 60 * 1000;
   const emittedUsers = new Set<string>();
 
-  await processDraftCollection(COLLECTIONS.listingDraftsV2, emittedUsers, cutoffMs);
   await processDraftCollection(COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
+  await processDraftCollection(LEGACY_COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
 });

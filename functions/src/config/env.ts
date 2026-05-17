@@ -11,12 +11,6 @@ export const DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
 export const EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <sahai.stephane@gmail.com>";
 
 export const PROJECT_REGION = process.env.FUNCTION_REGION || "europe-west1";
-const appCheckRequested = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase() === "true";
-// Safe mode is enabled by default to avoid locking out users when client App Check
-// setup is incomplete (missing token/provider mismatch/domain mismatch).
-// To enforce App Check again in production, set APPCHECK_SAFE_MODE=false.
-const appCheckSafeMode = String(process.env.APPCHECK_SAFE_MODE || "true").toLowerCase() !== "false";
-export const ENFORCE_APP_CHECK = appCheckRequested && !appCheckSafeMode;
 export const APP_BASE_URL = process.env.APP_BASE_URL || "https://presto.app";
 export const GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
 export const RECAPTCHA_ENTERPRISE_SITE_KEY = process.env.RECAPTCHA_ENTERPRISE_SITE_KEY || "";
@@ -26,6 +20,34 @@ export const MARKETPLACE_AUTO_APPROVE_ENABLED = process.env.MARKETPLACE_AUTO_APP
 export const MARKETPLACE_REPORT_REVIEW_THRESHOLD = Number(process.env.MARKETPLACE_REPORT_REVIEW_THRESHOLD || 3);
 export const MARKETPLACE_RECAPTCHA_MIN_SCORE = Number(process.env.MARKETPLACE_RECAPTCHA_MIN_SCORE || 0.5);
 export const MARKETPLACE_VIEW_RATE_LIMIT = Number(process.env.MARKETPLACE_VIEW_RATE_LIMIT || 20);
+
+export const IS_EMULATOR =
+	process.env.FUNCTIONS_EMULATOR === "true" ||
+	Boolean(process.env.FIREBASE_EMULATOR_HUB);
+
+export const IS_PROD = GCP_PROJECT_ID === "presto-app-74abe";
+
+const rawSafeMode = String(process.env.APPCHECK_SAFE_MODE || "").toLowerCase() === "true";
+const rawEnforce = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase();
+
+export const ENFORCE_APP_CHECK = IS_EMULATOR
+	? false
+	: IS_PROD
+		? rawEnforce !== "false" && !rawSafeMode
+		: rawEnforce === "true" && !rawSafeMode;
+
+export function assertProdSecurityConfig(): void {
+	if (IS_PROD && !IS_EMULATOR && !ENFORCE_APP_CHECK) {
+		console.error("CRITICAL_APP_CHECK_DISABLED", {
+			projectId: GCP_PROJECT_ID,
+			rawEnforce,
+			rawSafeMode,
+			emulator: IS_EMULATOR,
+		});
+	}
+}
+
+assertProdSecurityConfig();
 
 export const EMAIL_PROVIDER_SECRETS = [
 	EMAIL_PROVIDER_API_KEY,

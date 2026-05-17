@@ -80,7 +80,7 @@ const listings_1 = require("./listings");
         cityId: "97139_les-abymes",
         media: [
             {
-                storagePath: "offers_raw/u1/photo.jpg",
+                storagePath: "listingDrafts/u1/draft_1/photo.jpg",
                 downloadUrl: "https://cdn.example/photo.jpg",
                 mimeType: "image/jpeg",
             },

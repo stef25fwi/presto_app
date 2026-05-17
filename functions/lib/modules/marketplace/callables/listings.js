@@ -4,6 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = void 0;
+exports.buildListingDraftDocumentPath = buildListingDraftDocumentPath;
+exports.buildListingDocumentPath = buildListingDocumentPath;
+exports.assertDraftOwnership = assertDraftOwnership;
+exports.assertCategoryAndCityConfigured = assertCategoryAndCityConfigured;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../../config/env");
@@ -36,6 +40,22 @@ function normalizeDisplayName(...values) {
         }
     }
     return "Annonceur iliprestō";
+}
+function buildListingDraftDocumentPath(draftId) {
+    return `${constants_1.COLLECTIONS.listingDrafts}/${draftId}`;
+}
+function buildListingDocumentPath(listingId) {
+    return `${constants_1.COLLECTIONS.listings}/${listingId}`;
+}
+function assertDraftOwnership(ownerId, draftData) {
+    if (normalizeString(draftData.ownerId) !== ownerId) {
+        throw new https_1.HttpsError("permission-denied", "You do not own this draft");
+    }
+}
+function assertCategoryAndCityConfigured({ categoryExists, categoryActive, cityExists, cityActive, }) {
+    if (!categoryExists || !categoryActive || !cityExists || !cityActive) {
+        throw new https_1.HttpsError("failed-precondition", "Category or city is not configured");
+    }
 }
 function readListingOwnerId(data) {
     for (const field of ["ownerId", "userId", "uid"]) {
@@ -113,7 +133,7 @@ function buildCategoryKeywords(label, categoryId) {
         .filter((value) => value.length >= 2);
     return Array.from(new Set(tokens)).slice(0, 20);
 }
-async function normalizeListingMediaForSubmission({ ownerId, media, }) {
+async function normalizeListingMediaForSubmission({ ownerId, draftId, listingId, media, }) {
     return Promise.all(media.map(async (entry) => {
         const storagePath = normalizeString(entry.storagePath);
         const mimeType = normalizeString(entry.mimeType).toLowerCase();
@@ -125,6 +145,8 @@ async function normalizeListingMediaForSubmission({ ownerId, media, }) {
         }
         const processed = await (0, media_1.processOfferPhotoStoragePath)({
             uid: ownerId,
+            draftId,
+            listingId,
             storagePath,
         });
         return {
@@ -140,12 +162,12 @@ async function normalizeListingMediaForSubmission({ ownerId, media, }) {
     }));
 }
 async function loadDraftSnapshot(draftId) {
-    const primaryRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).doc(draftId);
+    const primaryRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc(draftId);
     const primarySnap = await primaryRef.get();
     if (primarySnap.exists) {
         return primarySnap;
     }
-    const legacyRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc(draftId);
+    const legacyRef = firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.listingDrafts).doc(draftId);
     const legacySnap = await legacyRef.get();
     if (legacySnap.exists) {
         return legacySnap;
@@ -157,12 +179,12 @@ async function ensureCategoryAndCityAreActive(categoryId, cityId) {
         firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(categoryId).get(),
         firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(cityId).get(),
     ]);
-    if (!categorySnap.exists || categorySnap.data()?.isActive === false) {
-        throw new https_1.HttpsError("failed-precondition", "Category is invalid or inactive");
-    }
-    if (!citySnap.exists || citySnap.data()?.isActive === false) {
-        throw new https_1.HttpsError("failed-precondition", "City is invalid or inactive");
-    }
+    assertCategoryAndCityConfigured({
+        categoryExists: categorySnap.exists,
+        categoryActive: categorySnap.data()?.isActive !== false,
+        cityExists: citySnap.exists,
+        cityActive: citySnap.data()?.isActive !== false,
+    });
     return {
         category: categorySnap.data() ?? {},
         city: citySnap.data() ?? {},
@@ -282,7 +304,7 @@ exports.createListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
     try {
         (0, listings_1.validateListingDraftPayload)(draft, env_1.MARKETPLACE_MAX_MEDIA_COUNT);
         const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
-        const draftRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).doc();
+        const draftRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc();
         await draftRef.set({
             ...draft,
             createdAt: now,
@@ -314,9 +336,7 @@ exports.updateListingDraftMedia = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         const media = (0, listings_1.validateListingMedia)(request.data?.media, env_1.MARKETPLACE_MAX_MEDIA_COUNT);
         const draftSnap = await loadDraftSnapshot(draftId);
         const draftData = (draftSnap.data() ?? {});
-        if (normalizeString(draftData.ownerId) !== ownerId) {
-            throw new https_1.HttpsError("permission-denied", "You do not own this draft");
-        }
+        assertDraftOwnership(ownerId, draftData);
         await draftSnap.ref.set({
             media,
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
@@ -350,11 +370,9 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
         const config = await (0, moderation_1.loadModerationConfig)();
         const draftSnap = await loadDraftSnapshot(draftId);
         const draftData = (draftSnap.data() ?? {});
-        if (normalizeString(draftData.ownerId) !== ownerId) {
-            throw new https_1.HttpsError("permission-denied", "You do not own this draft");
-        }
+        assertDraftOwnership(ownerId, draftData);
         const validated = (0, listings_1.validateListingDraftPayload)(draftData, config.maxMediaCount || env_1.MARKETPLACE_MAX_MEDIA_COUNT);
-        const refsData = await ensureCategoryAndCityAreResolvable(validated);
+        const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
         const listingId = draftId;
         const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase(), listingId);
         const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
@@ -364,7 +382,12 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
         const cityData = refsData.city;
         // 1. Traiter les médias AVANT tout write Firestore (évite la race condition)
         const normalizedMedia = validated.media.length > 0
-            ? await normalizeListingMediaForSubmission({ ownerId, media: validated.media })
+            ? await normalizeListingMediaForSubmission({
+                ownerId,
+                draftId,
+                listingId,
+                media: validated.media,
+            })
             : validated.media;
         const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
         const imageUrls = collectListingImageUrls(normalizedMedia);
@@ -671,8 +694,8 @@ exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enfo
         });
         batch.delete(listingRef);
         batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId));
-        batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).doc(listingId));
         batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc(listingId));
+        batch.delete(firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.listingDrafts).doc(listingId));
         await batch.commit();
         logger_1.logger.info("marketplace_listing_deleted", {
             listingId,

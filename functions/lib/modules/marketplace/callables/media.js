@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processOfferPhoto = void 0;
+exports.buildProcessedListingMediaDestinationPath = buildProcessedListingMediaDestinationPath;
 exports.processOfferPhotoStoragePath = processOfferPhotoStoragePath;
 const node_crypto_1 = require("node:crypto");
+const node_path_1 = require("node:path");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const sharp_1 = __importDefault(require("sharp"));
@@ -20,6 +22,22 @@ function requireAuthUid(request) {
 }
 function normalizeStoragePath(value) {
     return String(value ?? "").trim();
+}
+function buildProcessedListingMediaDestinationPath({ uid, listingId, storagePath, }) {
+    const fileName = node_path_1.posix.basename(storagePath).replace(/\.[^/.]+$/, "");
+    return `listings/${uid}/${listingId}/${fileName}.webp`;
+}
+function extractDraftIdFromStoragePath(uid, storagePath) {
+    const prefix = `listingDrafts/${uid}/`;
+    if (!storagePath.startsWith(prefix)) {
+        return "";
+    }
+    const suffix = storagePath.slice(prefix.length);
+    const slashIndex = suffix.indexOf("/");
+    if (slashIndex <= 0) {
+        return "";
+    }
+    return suffix.slice(0, slashIndex).trim();
 }
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -40,8 +58,8 @@ function buildBrandWatermarkSvg({ width, height, }) {
       <text x="${overlayWidth - padX - 1}" y="${baselineY - 1}" text-anchor="end" class="t" fill="#ffffff" fill-opacity="0.82">${BRAND_WATERMARK_TEXT}</text>
     </svg>`);
 }
-async function processOfferPhotoStoragePath({ uid, storagePath, }) {
-    const expectedPrefix = `offers_raw/${uid}/`;
+async function processOfferPhotoStoragePath({ uid, draftId, listingId, storagePath, }) {
+    const expectedPrefix = `listingDrafts/${uid}/${draftId}/`;
     if (!storagePath.startsWith(expectedPrefix)) {
         throw new https_1.HttpsError("permission-denied", "Unauthorized storage path");
     }
@@ -82,7 +100,6 @@ async function processOfferPhotoStoragePath({ uid, storagePath, }) {
                 gravity: "southeast",
             },
         ])
-            .webp({ quality: 82, effort: 5 })
             .toBuffer({ resolveWithObject: true });
         outputBuffer = finalImage.data;
         width = finalImage.info.width ?? width;
@@ -91,10 +108,11 @@ async function processOfferPhotoStoragePath({ uid, storagePath, }) {
     catch {
         throw new https_1.HttpsError("internal", "Image processing failed");
     }
-    const baseDestPath = storagePath
-        .replace(/^offers_raw\//, "offers/")
-        .replace(/\.[^/.]+$/, "");
-    const destPath = `${baseDestPath}.webp`;
+    const destPath = buildProcessedListingMediaDestinationPath({
+        uid,
+        listingId,
+        storagePath,
+    });
     const token = (0, node_crypto_1.randomUUID)();
     try {
         await bucket.file(destPath).save(outputBuffer, {
@@ -136,9 +154,12 @@ exports.processOfferPhoto = (0, https_1.onCall)({
 }, async (request) => {
     const uid = requireAuthUid(request);
     const storagePath = normalizeStoragePath(request.data?.storagePath);
-    if (!storagePath) {
-        throw new https_1.HttpsError("invalid-argument", "storagePath is required");
+    const draftId = normalizeStoragePath(request.data?.draftId) ||
+        extractDraftIdFromStoragePath(uid, storagePath);
+    const listingId = normalizeStoragePath(request.data?.listingId) || draftId;
+    if (!storagePath || !draftId || !listingId) {
+        throw new https_1.HttpsError("invalid-argument", "storagePath, draftId and listingId are required");
     }
-    return processOfferPhotoStoragePath({ uid, storagePath });
+    return processOfferPhotoStoragePath({ uid, draftId, listingId, storagePath });
 });
 //# sourceMappingURL=media.js.map

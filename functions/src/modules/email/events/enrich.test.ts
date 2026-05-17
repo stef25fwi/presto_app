@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildBillingInvoiceEnrichment, buildSubscriptionEnrichment } from "./enrich";
+import { buildBillingInvoiceEnrichment, buildListingLikeEnrichment, buildSubscriptionEnrichment } from "./enrich";
+import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../../shared/constants";
 
 test("billing invoice enrichment adds currency, method and retry info", () => {
   const source = {
@@ -55,4 +56,31 @@ test("subscription enrichment defaults plan and manageUrl", () => {
   assert.equal(extra.paymentMethod, "SEPA");
   assert.equal(extra.manageUrl, "https://presto.app/abonnement");
   assert.equal(typeof extra.renewalDate, "string");
+});
+
+test("listing enrichment uses canonical listing URL for listings", () => {
+  const extra = buildListingLikeEnrichment({
+    sourceCollection: COLLECTIONS.listings,
+    sourceId: "listing_123",
+    source: { title: "Listing marketplace", city: "Paris" },
+    payload: {},
+  });
+
+  assert.equal(extra.listingTitle, "Listing marketplace");
+  assert.equal(extra.listingUrl, "https://presto.app/listings/listing_123");
+  assert.equal(extra.city, "Paris");
+});
+
+test("listing enrichment keeps legacy offer URL for historical offers events", () => {
+  const extra = buildListingLikeEnrichment({
+    sourceCollection: LEGACY_COLLECTIONS.offers,
+    sourceId: "offer_123",
+    source: { title: "Offre legacy" },
+    payload: {},
+    fallbackCity: "Lyon",
+  });
+
+  assert.equal(extra.listingTitle, "Offre legacy");
+  assert.equal(extra.listingUrl, "https://presto.app/offers/offer_123");
+  assert.equal(extra.city, "Lyon");
 });

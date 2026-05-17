@@ -14,6 +14,8 @@ test("buildConversationMirrorFields writes critical camelCase and snake_case ali
       seller_b: "Bruno",
     },
     otherUserName: "Bruno",
+    listingId: "listing_123",
+    listingTitle: "Peinture salon",
     offerId: "offer_123",
     offerTitle: "Peinture salon",
     lastMessage: "Bonjour",
@@ -34,8 +36,10 @@ test("buildConversationMirrorFields writes critical camelCase and snake_case ali
   assert.deepEqual(fields.participantIds, ["buyer_a", "seller_b"]);
   assert.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
   assert.deepEqual(fields.participant_names, { buyer_a: "Alice", seller_b: "Bruno" });
+  assert.equal(fields.listingId, "listing_123");
   assert.equal(fields.offerId, "offer_123");
   assert.equal(fields.offer_id, "offer_123");
+  assert.equal(fields.listingTitle, "Peinture salon");
   assert.equal(fields.lastMessage, "Bonjour");
   assert.equal(fields.last_message, "Bonjour");
   assert.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 1 });
@@ -75,6 +79,21 @@ test("readConversationMirrorData tolerates legacy snake_case only payloads", () 
   assert.equal(mirror.lastSenderName, "Bruno");
   assert.deepEqual(mirror.unreadCount, { buyer_a: 1, seller_b: 0 });
   assert.equal(mirror.messageCount, 4);
+});
+
+test("readConversationMirrorData prefers canonical listing fields when available", () => {
+  const mirror = readConversationMirrorData({
+    participantIds: ["buyer_a", "seller_b"],
+    listingId: "listing_123",
+    listingTitle: "Cuisine a monter",
+    offerId: "offer_legacy_123",
+    offerTitle: "Offre legacy",
+  });
+
+  assert.equal(mirror.listingId, "listing_123");
+  assert.equal(mirror.listingTitle, "Cuisine a monter");
+  assert.equal(mirror.offerId, "offer_legacy_123");
+  assert.equal(mirror.offerTitle, "Offre legacy");
 });
 
 test("readConversationMessageCount falls back to mirrored last message aliases", () => {

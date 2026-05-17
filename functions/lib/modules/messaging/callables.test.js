@@ -43,10 +43,40 @@ const mirror_1 = require("./mirror");
     strict_1.default.equal(result.source, "listings");
     strict_1.default.equal(result.data.ownerId, "owner_listing");
 });
+(0, node_test_1.default)("resolveOfferLikeData falls back to legacy offers only when listing is absent", () => {
+    const result = (0, callables_1.resolveOfferLikeData)({
+        offerData: { ownerId: "owner_offer", title: "Offre legacy" },
+        listingData: null,
+    });
+    strict_1.default.equal(result.source, "offers");
+    strict_1.default.equal(result.data.ownerId, "owner_offer");
+});
 (0, node_test_1.default)("resolveOfferLikeData throws not-found when neither source exists", () => {
     strict_1.default.throws(() => (0, callables_1.resolveOfferLikeData)({ offerData: null, listingData: null }), (error) => {
         strict_1.default.ok(error instanceof https_1.HttpsError);
         strict_1.default.equal(error.code, "not-found");
+        return true;
+    });
+});
+(0, node_test_1.default)("canonicalConversationId is stable and order-independent", () => {
+    const left = (0, callables_1.canonicalConversationId)({
+        listingId: "listing_123",
+        currentUserId: "buyer_a",
+        otherUserId: "seller_b",
+    });
+    const right = (0, callables_1.canonicalConversationId)({
+        listingId: "listing_123",
+        currentUserId: "seller_b",
+        otherUserId: "buyer_a",
+    });
+    strict_1.default.equal(left, right);
+    strict_1.default.match(left, /^conv_[a-f0-9]{32}$/);
+});
+(0, node_test_1.default)("sendConversationMessage refuses non participant access", () => {
+    strict_1.default.throws(() => (0, callables_1.assertConversationParticipantAccess)(["buyer_a", "seller_b"], "intruder_c"), (error) => {
+        strict_1.default.ok(error instanceof https_1.HttpsError);
+        strict_1.default.equal(error.code, "permission-denied");
+        strict_1.default.equal(error.message, "not allowed to access this conversation");
         return true;
     });
 });

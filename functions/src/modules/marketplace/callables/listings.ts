@@ -4,7 +4,7 @@ import { ENFORCE_APP_CHECK, PROJECT_REGION, MARKETPLACE_MAX_MEDIA_COUNT } from "
 import { db } from "../../../core/firestore";
 import { canProceedRateLimited } from "../../../core/rate_limit";
 import { logger } from "../../../core/logger";
-import { COLLECTIONS } from "../../../shared/constants";
+import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../../shared/constants";
 import { createInAppNotification } from "../../notifications/push";
 import { trackProductEventBackend } from "../services/analytics";
 import { processOfferPhotoStoragePath } from "./media";
@@ -38,6 +38,39 @@ function normalizeDisplayName(...values: unknown[]): string {
     }
   }
   return "Annonceur iliprestō";
+}
+
+export function buildListingDraftDocumentPath(draftId: string): string {
+  return `${COLLECTIONS.listingDrafts}/${draftId}`;
+}
+
+export function buildListingDocumentPath(listingId: string): string {
+  return `${COLLECTIONS.listings}/${listingId}`;
+}
+
+export function assertDraftOwnership(
+  ownerId: string,
+  draftData: Record<string, unknown>,
+): void {
+  if (normalizeString(draftData.ownerId) !== ownerId) {
+    throw new HttpsError("permission-denied", "You do not own this draft");
+  }
+}
+
+export function assertCategoryAndCityConfigured({
+  categoryExists,
+  categoryActive,
+  cityExists,
+  cityActive,
+}: {
+  categoryExists: boolean;
+  categoryActive: boolean;
+  cityExists: boolean;
+  cityActive: boolean;
+}): void {
+  if (!categoryExists || !categoryActive || !cityExists || !cityActive) {
+    throw new HttpsError("failed-precondition", "Category or city is not configured");
+  }
 }
 
 function readListingOwnerId(data: Record<string, unknown>): string {
@@ -131,9 +164,13 @@ function buildCategoryKeywords(label: string, categoryId: string): string[] {
 
 async function normalizeListingMediaForSubmission({
   ownerId,
+  draftId,
+  listingId,
   media,
 }: {
   ownerId: string;
+  draftId: string;
+  listingId: string;
   media: ListingMedia[];
 }): Promise<ListingMedia[]> {
   return Promise.all(media.map(async (entry) => {
@@ -150,6 +187,8 @@ async function normalizeListingMediaForSubmission({
 
     const processed = await processOfferPhotoStoragePath({
       uid: ownerId,
+      draftId,
+      listingId,
       storagePath,
     });
 
@@ -167,13 +206,13 @@ async function normalizeListingMediaForSubmission({
 }
 
 async function loadDraftSnapshot(draftId: string) {
-  const primaryRef = db.collection(COLLECTIONS.listingDraftsV2).doc(draftId);
+  const primaryRef = db.collection(COLLECTIONS.listingDrafts).doc(draftId);
   const primarySnap = await primaryRef.get();
   if (primarySnap.exists) {
     return primarySnap;
   }
 
-  const legacyRef = db.collection(COLLECTIONS.listingDrafts).doc(draftId);
+  const legacyRef = db.collection(LEGACY_COLLECTIONS.listingDrafts).doc(draftId);
   const legacySnap = await legacyRef.get();
   if (legacySnap.exists) {
     return legacySnap;
@@ -188,12 +227,12 @@ async function ensureCategoryAndCityAreActive(categoryId: string, cityId: string
     db.collection(COLLECTIONS.cities).doc(cityId).get(),
   ]);
 
-  if (!categorySnap.exists || categorySnap.data()?.isActive === false) {
-    throw new HttpsError("failed-precondition", "Category is invalid or inactive");
-  }
-  if (!citySnap.exists || citySnap.data()?.isActive === false) {
-    throw new HttpsError("failed-precondition", "City is invalid or inactive");
-  }
+  assertCategoryAndCityConfigured({
+    categoryExists: categorySnap.exists,
+    categoryActive: categorySnap.data()?.isActive !== false,
+    cityExists: citySnap.exists,
+    cityActive: citySnap.data()?.isActive !== false,
+  });
 
   return {
     category: categorySnap.data() ?? {},
@@ -351,7 +390,7 @@ export const createListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
   try {
     validateListingDraftPayload(draft, MARKETPLACE_MAX_MEDIA_COUNT);
     const now = admin.firestore.FieldValue.serverTimestamp();
-    const draftRef = db.collection(COLLECTIONS.listingDraftsV2).doc();
+    const draftRef = db.collection(COLLECTIONS.listingDrafts).doc();
     await draftRef.set({
       ...draft,
       createdAt: now,
@@ -387,9 +426,7 @@ export const updateListingDraftMedia = onCall({ region: PROJECT_REGION, enforceA
     const media = validateListingMedia(request.data?.media, MARKETPLACE_MAX_MEDIA_COUNT);
     const draftSnap = await loadDraftSnapshot(draftId);
     const draftData = (draftSnap.data() ?? {}) as Record<string, unknown>;
-    if (normalizeString(draftData.ownerId) !== ownerId) {
-      throw new HttpsError("permission-denied", "You do not own this draft");
-    }
+    assertDraftOwnership(ownerId, draftData);
 
     await draftSnap.ref.set({
       media,
@@ -429,12 +466,10 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
     const config = await loadModerationConfig();
     const draftSnap = await loadDraftSnapshot(draftId);
     const draftData = (draftSnap.data() ?? {}) as Record<string, unknown>;
-    if (normalizeString(draftData.ownerId) !== ownerId) {
-      throw new HttpsError("permission-denied", "You do not own this draft");
-    }
+    assertDraftOwnership(ownerId, draftData);
 
     const validated = validateListingDraftPayload(draftData, config.maxMediaCount || MARKETPLACE_MAX_MEDIA_COUNT);
-    const refsData = await ensureCategoryAndCityAreResolvable(validated);
+    const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
     const listingId = draftId;
     const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase(), listingId);
     const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
@@ -446,7 +481,12 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
 
     // 1. Traiter les médias AVANT tout write Firestore (évite la race condition)
     const normalizedMedia = validated.media.length > 0
-      ? await normalizeListingMediaForSubmission({ ownerId, media: validated.media })
+      ? await normalizeListingMediaForSubmission({
+        ownerId,
+        draftId,
+        listingId,
+        media: validated.media,
+      })
       : validated.media;
     const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
     const imageUrls = collectListingImageUrls(normalizedMedia);
@@ -785,8 +825,8 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
     });
     batch.delete(listingRef);
     batch.delete(db.collection(COLLECTIONS.listingModeration).doc(listingId));
-    batch.delete(db.collection(COLLECTIONS.listingDraftsV2).doc(listingId));
     batch.delete(db.collection(COLLECTIONS.listingDrafts).doc(listingId));
+    batch.delete(db.collection(LEGACY_COLLECTIONS.listingDrafts).doc(listingId));
     await batch.commit();
 
     logger.info("marketplace_listing_deleted", {

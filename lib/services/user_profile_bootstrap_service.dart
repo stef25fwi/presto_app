@@ -38,6 +38,9 @@ class UserProfileBootstrapService {
 
   static const int _maxAttempts = 3;
   static const Duration _baseBackoff = Duration(seconds: 1);
+
+  @visibleForTesting
+  static String userDocumentPathForTest(String uid) => 'users/$uid';
   static const String _genericProfileSyncWarningMessage =
       'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
 
@@ -383,8 +386,9 @@ class UserProfileBootstrapService {
         ) ??
         FirebaseAuth.instance.currentUser ??
         user;
-    final userRef =
-        FirebaseFirestore.instance.collection('users').doc(freshUser.uid);
+    final userRef = FirebaseFirestore.instance.doc(
+      userDocumentPathForTest(freshUser.uid),
+    );
     final email = freshUser.email?.trim().toLowerCase() ?? '';
     final displayName = freshUser.displayName?.trim() ?? '';
 

@@ -51,8 +51,8 @@ async function loadReferencedRawStoragePaths() {
     const referenced = new Set();
     const snapshots = await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.listings).limit(1000).get(),
-        firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).limit(1000).get(),
         firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).limit(1000).get(),
+        firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.listingDrafts).limit(1000).get(),
     ]);
     for (const snapshot of snapshots) {
         for (const doc of snapshot.docs) {

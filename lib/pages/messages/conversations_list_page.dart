@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
+import '../../core/firebase_contract.dart';
 import '../../models/conversation_summary.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
@@ -24,6 +25,24 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
   statusBarIconBrightness: Brightness.light,
   statusBarBrightness: Brightness.dark,
 );
+
+class ConversationsQueryContract {
+  const ConversationsQueryContract._();
+
+  static Map<String, Object?> shape({
+    required bool isAdminMode,
+    required String userId,
+  }) {
+    return <String, Object?>{
+      'collection': FirestoreCollections.conversations,
+      'orderBy': 'updatedAt',
+      'descending': true,
+      'participantField': isAdminMode ? null : 'participantIds',
+      'participantValue': isAdminMode ? null : userId,
+      'limit': isAdminMode ? 50 : null,
+    };
+  }
+}
 
 class ConversationsListPage extends StatefulWidget {
   final String? initialConversationId;
@@ -249,7 +268,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         data,
         const ['participantDisplayName', 'participant_display_name'],
       ),
-      _conversationValue(data, const ['offerTitle', 'offer_title']),
+      _conversationValue(
+        data,
+        const ['listingTitle', 'offerTitle', 'offer_title'],
+      ),
     ];
     for (final candidate in candidates) {
       final value = (candidate ?? '').toString().trim();
@@ -269,7 +291,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     ).toString().trim();
     final offerTitle = _conversationValue(
       data,
-      const ['offerTitle', 'offer_title'],
+      const ['listingTitle', 'offerTitle', 'offer_title'],
     ).toString().trim();
 
     if (lastMessage.isNotEmpty) {
@@ -290,7 +312,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return [
       _conversationTitle(data, userId),
       _conversationPreview(data, userId),
-      _conversationValue(data, const ['offerTitle', 'offer_title']).toString(),
+      _conversationValue(
+        data,
+        const ['listingTitle', 'offerTitle', 'offer_title'],
+      ).toString(),
       _conversationValue(data, const ['lastMessage', 'last_message'])
           .toString(),
       _conversationValue(data, const ['lastSenderName', 'last_sender_name'])
@@ -335,6 +360,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final isAdminMode = _isAdminViewer;
     final mode = isAdminMode ? 'admin_global' : 'user_participantIds';
     final controller = StreamController<_ConversationQueryState>();
+    final queryShape = ConversationsQueryContract.shape(
+      isAdminMode: isAdminMode,
+      userId: userId,
+    );
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -343,13 +372,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     final query = isAdminMode
         ? FirebaseFirestore.instance
-            .collection('conversations')
-            .orderBy('updatedAt', descending: true)
-            .limit(50)
+          .collection(queryShape['collection']! as String)
+            .orderBy(queryShape['orderBy']! as String, descending: queryShape['descending']! as bool)
+            .limit(queryShape['limit']! as int)
         : FirebaseFirestore.instance
-            .collection('conversations')
-            .where('participantIds', arrayContains: userId)
-            .orderBy('updatedAt', descending: true);
+          .collection(queryShape['collection']! as String)
+            .where(queryShape['participantField']! as String, arrayContains: queryShape['participantValue'])
+            .orderBy(queryShape['orderBy']! as String, descending: queryShape['descending']! as bool);
 
     late final StreamSubscription<QuerySnapshot<Map<String, dynamic>>>
         subscription;
