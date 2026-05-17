@@ -413,8 +413,16 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
   required int limit,
   required String source,
 }) {
+  // Certains documents legacy n'ont pas `createdAt` exploitable.
+  // On combine les variantes ordonnees (quand dispo) et non ordonnees
+  // pour eviter de masquer toutes les annonces fallback.
+  final queries = <Query<Map<String, dynamic>>>[
+    ...buildLatestPublicOffersQueryVariants(limit: limit),
+    ...buildPublicOffersQueryVariants(limit: limit),
+  ];
+
   return loadMergedPublicOfferQueryVariants(
-    queries: buildLatestPublicOffersQueryVariants(limit: limit),
+    queries: queries,
     source: source,
   );
 }
