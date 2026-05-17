@@ -28,6 +28,7 @@ DEPARTMENTS=(
   studio-operations
   testing
   bonus
+  presto
 )
 
 TOOL="claude-code"
@@ -51,7 +52,7 @@ Options:
 
 Departments:
   engineering  design  marketing  product
-  project-management  studio-operations  testing  bonus
+  project-management  studio-operations  testing  bonus  presto
 
 If no department is given, every department is installed.
 EOF
