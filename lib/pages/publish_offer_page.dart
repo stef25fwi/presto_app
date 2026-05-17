@@ -34,6 +34,7 @@ import '../services/admin_access_resolver.dart';
 import '../services/ai/listing_audio_ai_service.dart';
 import '../services/city_search.dart';
 import '../services/firebase_functions_region.dart';
+import '../services/french_city_postal_validator.dart';
 import '../services/marketplace_publish_service.dart';
 import '../services/marketplace_remote_config_service.dart';
 import '../services/offer_indexing.dart';
@@ -1628,7 +1629,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   CityRecord? _extractCityRecordFromTranscript(String transcript,
       {String? cp}) {
     if (cp != null && cp.trim().isNotEmpty) {
-      return CitySearch.instance.pickBestForPostalCode(cp.trim());
+      return FrenchCityPostalValidator.instance.resolveCanonicalCity(
+        city: '',
+        postalCode: cp.trim(),
+      );
     }
 
     // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
@@ -1640,8 +1644,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final rawCity = m?.group(1)?.trim();
     if (rawCity == null || rawCity.isEmpty) return null;
 
-    final candidates = CitySearch.instance.search(rawCity, limit: 1);
-    return candidates.isNotEmpty ? candidates.first : null;
+    return FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: rawCity,
+      postalCode: '',
+    );
   }
 
   String? _resolvePublishCategoryLabel(String? rawCategory) {
@@ -1661,41 +1667,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     String? city,
     String? postalCode,
   }) {
-    final rawCity = (city ?? '').trim();
-    final rawPostalCode = (postalCode ?? '').trim();
-
-    if (rawPostalCode.isNotEmpty) {
-      final exactPostal =
-          CitySearch.instance.pickBestForPostalCode(rawPostalCode);
-      if (exactPostal != null) {
-        if (rawCity.isEmpty ||
-            normalizeOfferText(exactPostal.name) ==
-                normalizeOfferText(rawCity)) {
-          return exactPostal;
-        }
-
-        final cityMatches = CitySearch.instance.search(rawCity, limit: 10);
-        for (final candidate in cityMatches) {
-          if (candidate.cp == rawPostalCode) {
-            return candidate;
-          }
-        }
-      }
-    }
-
-    if (rawCity.isEmpty) return null;
-    final candidates = CitySearch.instance.search(rawCity, limit: 10);
-    if (candidates.isEmpty) return null;
-
-    if (rawPostalCode.isNotEmpty) {
-      for (final candidate in candidates) {
-        if (candidate.cp == rawPostalCode) {
-          return candidate;
-        }
-      }
-    }
-
-    return candidates.first;
+    return FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: city,
+      postalCode: postalCode,
+    );
   }
 
   void _canonicalizeLocationInputs() {
@@ -1709,7 +1684,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final samePostalCode = _postalCodeController.text.trim() == best.cp;
     if (sameCity && samePostalCode) return;
 
-    _applyCity(best);
+    _applyCity(best, forceApply: true);
   }
 
   void _applyDetectedCityData({
@@ -2123,12 +2098,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       CityRecord? cityRecord;
       if (profilePostalCode.isNotEmpty) {
-        cityRecord = CitySearch.instance.pickBestForPostalCode(
-          profilePostalCode,
+        cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+          city: profileCity,
+          postalCode: profilePostalCode,
         );
       }
       if (cityRecord == null && profileCity.isNotEmpty) {
-        final matches = CitySearch.instance.search(profileCity, limit: 5);
+        final matches = FrenchCityPostalValidator.instance.searchSuggestions(
+          profileCity,
+          postalCodeHint: profilePostalCode,
+          limit: 5,
+        );
         for (final candidate in matches) {
           if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
             cityRecord = candidate;
@@ -2277,12 +2257,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Merci de saisir une ville';
     }
 
-    final best = _resolveCanonicalCityRecord(
+    final result = FrenchCityPostalValidator.instance.validate(
       city: trimmed,
       postalCode: _postalCodeController.text,
     );
-    if (best == null) {
-      return 'Choisissez une ville valide dans la liste';
+    if (!result.isKnownCity) {
+      return 'Choisissez une ville dans la liste ou vérifiez l\'orthographe.';
     }
     return null;
   }
@@ -2296,12 +2276,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Code postal invalide';
     }
 
-    final best = _resolveCanonicalCityRecord(
+    final result = FrenchCityPostalValidator.instance.validate(
       city: _locationController.text,
       postalCode: trimmed,
     );
-    if (best == null) {
-      return 'Le code postal ne correspond pas à la ville';
+    if (!result.isKnownCity) {
+      return null;
+    }
+    if (!result.postalCodeMatches) {
+      return 'Le code postal ne correspond pas à cette ville.';
     }
     return null;
   }
@@ -3487,11 +3470,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final results = CitySearch.instance.search(query, limit: 10);
+    final results = FrenchCityPostalValidator.instance.searchSuggestions(
+      query,
+      postalCodeHint: _postalCodeController.text,
+      limit: 10,
+    );
+    final exactMatch = FrenchCityPostalValidator.instance.resolveExactTypedCity(
+      city: query,
+      postalCode: _postalCodeController.text,
+    );
     setState(() {
       _citySuggestions = results;
       _highlightedIndex = results.isNotEmpty ? 0 : -1;
     });
+
+    if (exactMatch != null) {
+      _applyCity(exactMatch, forceApply: true);
+    }
   }
 
   void _onPostalCodeChanged(String value) {
@@ -3501,7 +3496,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final results = CitySearch.instance.searchByPostalCode(cp, limit: 10);
+    final results = FrenchCityPostalValidator.instance.searchSuggestions(
+      '',
+      postalCodeHint: cp,
+      limit: 10,
+    );
 
     if (!mounted) return;
 
@@ -3513,7 +3512,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final best = CitySearch.instance.pickBestForPostalCode(cp);
+    final best = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: _locationController.text,
+      postalCode: cp,
+    );
 
     setState(() {
       _citySuggestions = results;
@@ -3521,16 +3523,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     if (best != null) {
-      _applyCity(best);
+      _applyCity(best, forceApply: true);
     }
   }
 
-  void _applyCity(CityRecord city, {bool markAsUserEdited = false}) {
+  void _applyCity(
+    CityRecord city, {
+    bool markAsUserEdited = false,
+    bool forceApply = false,
+  }) {
     setState(() {
-      if (markAsUserEdited || !_locationEditedByUser) {
+      if (forceApply || markAsUserEdited || !_locationEditedByUser) {
         _setControllerText(_locationController, city.name);
       }
-      if (markAsUserEdited || !_postalCodeEditedByUser) {
+      if (forceApply || markAsUserEdited || !_postalCodeEditedByUser) {
         _setControllerText(_postalCodeController, city.cp);
       }
 
@@ -4400,6 +4406,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             horizontal: 12, vertical: 14),
                       ),
                       onChanged: _onCityChanged,
+                      onEditingComplete: _canonicalizeLocationInputs,
                       validator: _validateCanonicalCity,
                     ),
                   ),
@@ -4422,6 +4429,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           horizontal: 12, vertical: 14),
                     ),
                     onChanged: _onPostalCodeChanged,
+                    onEditingComplete: _canonicalizeLocationInputs,
                     validator: _validatePostalCode,
                   ),
                 ),

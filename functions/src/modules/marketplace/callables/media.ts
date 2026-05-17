@@ -8,6 +8,7 @@ import sharp from "sharp";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";
 
 const BRAND_WATERMARK_TEXT = "iliprestō";
+export const STANDARDIZED_LISTING_IMAGE_SIZE = 1200;
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -131,16 +132,16 @@ export async function processOfferPhotoStoragePath({
     const resized = await sharp(srcBuffer)
       .rotate()
       .resize({
-        width: 1600,
-        height: 1600,
-        fit: "inside",
-        withoutEnlargement: true,
+        width: STANDARDIZED_LISTING_IMAGE_SIZE,
+        height: STANDARDIZED_LISTING_IMAGE_SIZE,
+        fit: "cover",
+        position: "attention",
       })
       .webp({ quality: 82, effort: 5 })
       .toBuffer({ resolveWithObject: true });
 
-    width = resized.info.width ?? 1600;
-    height = resized.info.height ?? 1200;
+    width = resized.info.width ?? STANDARDIZED_LISTING_IMAGE_SIZE;
+    height = resized.info.height ?? STANDARDIZED_LISTING_IMAGE_SIZE;
     const watermarkInput = buildBrandWatermarkSvg({ width, height });
 
     const finalImage = await sharp(resized.data)

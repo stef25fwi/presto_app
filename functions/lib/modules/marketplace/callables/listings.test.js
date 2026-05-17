@@ -44,4 +44,7 @@ const media_1 = require("./media");
     });
     strict_1.default.equal(path, "listings/user_1/listing_9/photo.original.webp");
 });
+(0, node_test_1.default)("listing media output size stays standardized for cards", () => {
+    strict_1.default.equal(media_1.STANDARDIZED_LISTING_IMAGE_SIZE, 1200);
+});
 //# sourceMappingURL=listings.test.js.map

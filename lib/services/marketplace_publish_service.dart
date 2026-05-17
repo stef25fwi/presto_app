@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +11,9 @@ import '../data/marketplace/listing_read_repository.dart';
 import '../data/marketplace/listing_repository.dart';
 import '../data/marketplace/marketplace_listing_ui_mapper.dart';
 import '../models/marketplace_listing_draft.dart';
+import 'firebase_functions_region.dart';
 import 'city_search.dart';
+import 'french_city_postal_validator.dart';
 import 'marketplace_human_verification.dart';
 import 'offer_indexing.dart';
 import 'user_profile_bootstrap_service.dart';
@@ -27,6 +30,63 @@ class MarketplacePublishResult {
   });
 }
 
+class _ProcessedOfferPhotoPayload {
+  final String storagePath;
+  final String downloadUrl;
+  final String thumbnailUrl;
+  final int? width;
+  final int? height;
+  final String? mimeType;
+  final int? sizeBytes;
+
+  const _ProcessedOfferPhotoPayload({
+    required this.storagePath,
+    required this.downloadUrl,
+    required this.thumbnailUrl,
+    this.width,
+    this.height,
+    this.mimeType,
+    this.sizeBytes,
+  });
+
+  factory _ProcessedOfferPhotoPayload.fromMap(Map<String, dynamic> data) {
+    final storagePath = (data['storagePath'] ?? '').toString().trim();
+    final downloadUrl = (data['downloadUrl'] ?? '').toString().trim();
+    final thumbnailUrl =
+        ((data['thumbnailUrl'] ?? data['downloadUrl']) ?? '').toString().trim();
+    final mimeType = (data['mimeType'] ?? '').toString().trim();
+
+    if (storagePath.isEmpty || downloadUrl.isEmpty || thumbnailUrl.isEmpty) {
+      throw StateError(
+        'Le traitement photo n\'a pas renvoyé les métadonnées attendues.',
+      );
+    }
+
+    return _ProcessedOfferPhotoPayload(
+      storagePath: storagePath,
+      downloadUrl: downloadUrl,
+      thumbnailUrl: thumbnailUrl,
+      width: data['width'] is num ? (data['width'] as num).toInt() : null,
+      height: data['height'] is num ? (data['height'] as num).toInt() : null,
+      mimeType: mimeType.isEmpty ? null : mimeType,
+      sizeBytes:
+          data['sizeBytes'] is num ? (data['sizeBytes'] as num).toInt() : null,
+    );
+  }
+
+  ListingMediaInput toListingMediaInput() {
+    return ListingMediaInput(
+      storagePath: storagePath,
+      downloadUrl: downloadUrl,
+      thumbnailUrl: thumbnailUrl,
+      width: width,
+      height: height,
+      mimeType: mimeType,
+      sizeBytes: sizeBytes,
+    );
+  }
+}
+
 class MarketplacePublishService {
   MarketplacePublishService({
     ListingRepository? listingRepository,
@@ -37,12 +97,14 @@ class MarketplacePublishService {
         _listingReadRepository =
             listingReadRepository ?? ListingReadRepository(),
         _storageOverride = storage,
+      _functions = prestoFirebaseFunctions,
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
   final ListingReadRepository _listingReadRepository;
   final FirebaseStorage? _storageOverride;
   FirebaseStorage get _storage => _storageOverride ?? FirebaseStorage.instance;
+  final FirebaseFunctions _functions;
   final MarketplaceHumanVerification _verification;
 
   @visibleForTesting
@@ -199,6 +261,10 @@ class MarketplacePublishService {
     required String draftId,
     required List<XFile> photos,
   }) async {
+    final processOfferPhotoCallable = _functions.httpsCallable(
+      'processOfferPhoto',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
+    );
     final media = <ListingMediaInput>[];
     for (var index = 0; index < photos.length; index += 1) {
       final photo = photos[index];
@@ -233,15 +299,34 @@ class MarketplacePublishService {
             'Le stockage photo n\'a pas renvoyé d\'URL exploitable.');
       }
 
-      media.add(
-        ListingMediaInput(
-          storagePath: rawPath,
-          downloadUrl: downloadUrl,
-          thumbnailUrl: downloadUrl,
-          mimeType: contentType,
-          sizeBytes: bytes.length,
-        ),
-      );
+      try {
+        final processedResponse =
+            await _runWithChannelRetry<HttpsCallableResult<dynamic>>(
+          stepLabel: 'traitement photo',
+          action: () => processOfferPhotoCallable.call(<String, dynamic>{
+            'draftId': draftId,
+            'listingId': draftId,
+            'storagePath': rawPath,
+          }),
+        );
+
+        final processedData = Map<String, dynamic>.from(
+          (processedResponse.data as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{},
+        );
+        final processedPhoto =
+            _ProcessedOfferPhotoPayload.fromMap(processedData);
+        media.add(processedPhoto.toListingMediaInput());
+      } catch (_) {
+        try {
+          await ref.delete();
+        } catch (deleteError) {
+          debugPrint(
+            '[MarketplacePublish] raw media cleanup failed for $rawPath after processing error: $deleteError',
+          );
+        }
+        rethrow;
+      }
     }
 
     return media;
@@ -265,41 +350,10 @@ class MarketplacePublishService {
     required String city,
     required String postalCode,
   }) {
-    final rawCity = city.trim();
-    final rawPostalCode = postalCode.trim();
-
-    if (rawPostalCode.isNotEmpty) {
-      final exactPostal =
-          CitySearch.instance.pickBestForPostalCode(rawPostalCode);
-      if (exactPostal != null) {
-        if (rawCity.isEmpty ||
-            normalizeOfferText(exactPostal.name) ==
-                normalizeOfferText(rawCity)) {
-          return exactPostal;
-        }
-
-        final cityMatches = CitySearch.instance.search(rawCity, limit: 10);
-        for (final candidate in cityMatches) {
-          if (candidate.cp == rawPostalCode) {
-            return candidate;
-          }
-        }
-      }
-    }
-
-    if (rawCity.isEmpty) return null;
-    final candidates = CitySearch.instance.search(rawCity, limit: 10);
-    if (candidates.isEmpty) return null;
-
-    if (rawPostalCode.isNotEmpty) {
-      for (final candidate in candidates) {
-        if (candidate.cp == rawPostalCode) {
-          return candidate;
-        }
-      }
-    }
-
-    return candidates.first;
+    return FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: city,
+      postalCode: postalCode,
+    );
   }
 
   Future<MarketplacePublishResult> publish({
@@ -330,13 +384,20 @@ class MarketplacePublishService {
           'La ville est obligatoire pour publier une annonce marketplace.');
     }
 
-    final canonicalCity = _resolveCanonicalCity(
+    final locationValidation = FrenchCityPostalValidator.instance.validate(
       city: inputCity,
       postalCode: resolvedPostalCode,
     );
-    if (canonicalCity == null) {
-      throw StateError('Choisissez une ville valide dans la liste proposée.');
+    if (!locationValidation.isKnownCity) {
+      throw StateError(
+        'Choisissez une ville dans la liste ou vérifiez l\'orthographe.',
+      );
     }
+    if (resolvedPostalCode.isNotEmpty && !locationValidation.postalCodeMatches) {
+      throw StateError('Le code postal ne correspond pas à cette ville.');
+    }
+
+    final canonicalCity = locationValidation.canonicalCity!;
 
     final resolvedCity = canonicalCity.name.trim();
     resolvedPostalCode = canonicalCity.cp.trim();
