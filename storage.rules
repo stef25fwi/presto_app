@@ -61,9 +61,14 @@ service firebase.storage {
         && firestore.get(listingPath).data.visibility == 'public';
     }
 
+    // Note: hasAppCheck() retiré (comme pour /stt) car le SDK Flutter web
+    // n'attache pas le token App Check aux requêtes Storage (uniquement aux
+    // Cloud Callables) : l'exiger ici bloquait l'upload des photos de
+    // publication sur le web. Sécurité maintenue par : auth + propriété du
+    // chemin (uid) + contentType image + taille max (isImageUpload()).
     match /listingDrafts/{uid}/{draftId}/{fileName} {
-      allow write: if hasAppCheck() && isSignedIn() && uid == request.auth.uid && isImageUpload();
-      allow read: if hasAppCheck() && isSignedIn() && uid == request.auth.uid;
+      allow write: if isSignedIn() && uid == request.auth.uid && isImageUpload();
+      allow read: if isSignedIn() && uid == request.auth.uid;
     }
 
     match /listings/{uid}/{listingId}/{fileName} {
