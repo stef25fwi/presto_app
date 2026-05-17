@@ -5,13 +5,7 @@ void main() {
   test('expose tous les alias de requete participants attendus', () {
     expect(
       conversationParticipantQueryFieldAliases,
-      <String>[
-        'participants',
-        'participant_ids',
-        'participantIds',
-        'userIds',
-        'memberIds',
-      ],
+      <String>['participantIds'],
     );
   });
 
@@ -31,7 +25,7 @@ void main() {
 
   test('verifie explicitement la presence de l utilisateur courant', () {
     final data = <String, dynamic>{
-      'participants': <String>['alice', 'bob'],
+      'participantIds': <String>['alice', 'bob'],
     };
 
     expect(conversationIncludesUser(data, 'alice'), isTrue);
