@@ -182,6 +182,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit reCAPTCHA Build Cleanup",
+      "type": "shell",
+      "command": "git commit -m \"fix(build): load recaptcha site key from local env\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Stash And Pull Rebase",
       "type": "shell",
       "command": "git stash && git pull --rebase origin main && git stash pop",
