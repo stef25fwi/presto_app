@@ -4,6 +4,41 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+load_local_env_file() {
+  local env_file="$1"
+
+  if [[ ! -f "$env_file" ]]; then
+    return 0
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" != *=* ]] && continue
+
+    local key="${line%%=*}"
+    local value="${line#*=}"
+
+    key="${key#${key%%[![:space:]]*}}"
+    key="${key%${key##*[![:space:]]}}"
+    value="${value#${value%%[![:space:]]*}}"
+    value="${value%${value##*[![:space:]]}}"
+
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "$value" == \'.*\' && "$value" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+
+    if [[ -z "${!key:-}" ]]; then
+      printf -v "$key" '%s' "$value"
+      export "$key"
+    fi
+  done < "$env_file"
+}
+
+load_local_env_file ".env.local"
+
 version_line="$(grep -E '^version:' pubspec.yaml | head -n 1 | sed -E 's/^version:[[:space:]]*//')"
 app_version="${version_line%%+*}"
 app_build_number="0"
@@ -46,11 +81,18 @@ hydrate_env_from_interactive_shell() {
 hydrate_env_from_interactive_shell APPCHECK_RECAPTCHA_SITE_KEY
 hydrate_env_from_interactive_shell FCM_WEB_VAPID_KEY
 
+if [[ -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
+  if [[ -n "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" ]]; then
+    export APPCHECK_RECAPTCHA_SITE_KEY="$RECAPTCHA_ENTERPRISE_SITE_KEY"
+  fi
+fi
+
 # Propage les secrets de build s'ils sont définis dans l'environnement.
 # Sans ça, un build web local active aucun App Check et Firestore (en mode
 # enforce) rejette toutes les lectures publiques avec PERMISSION_DENIED.
 # Conventions :
 #   - APPCHECK_RECAPTCHA_SITE_KEY      : reCAPTCHA Enterprise pour App Check Web
+#   - RECAPTCHA_ENTERPRISE_SITE_KEY    : même site key consommée côté Functions
 #   - FCM_WEB_VAPID_KEY                : VAPID key pour notifications web
 extra_defines=()
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
