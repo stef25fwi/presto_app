@@ -15,7 +15,7 @@ import {
 } from "../services/moderation";
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
 import { toHttpsError } from "../services/errors";
-import { validateListingDraftPayload } from "../validators/listings";
+import { validateListingDraftPayload, validateListingMedia } from "../validators/listings";
 import type { ListingMedia } from "../models/firestore";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
@@ -48,6 +48,49 @@ function readListingOwnerId(data: Record<string, unknown>): string {
     }
   }
   return "";
+}
+
+function sanitizeDraftPayload(rawDraft: Record<string, unknown>, ownerId: string): Record<string, unknown> {
+  const allowedFields = [
+    "title",
+    "description",
+    "price",
+    "categoryId",
+    "cityId",
+    "media",
+    "status",
+    "phone",
+    "budgetType",
+    "missionDelay",
+    "isUrgent",
+    "subCategory",
+    "category",
+    "city",
+    "location",
+    "postalCode",
+    "cp",
+    "dept",
+    "region",
+    "cityCategoryKey",
+    "budgetValue",
+  ];
+
+  const sanitized: Record<string, unknown> = {
+    ownerId,
+    media: [],
+    status: "draft",
+  };
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(rawDraft, field)) {
+      sanitized[field] = rawDraft[field];
+    }
+  }
+
+  sanitized.ownerId = ownerId;
+  sanitized.status = normalizeString(sanitized.status) || "draft";
+  sanitized.media = Array.isArray(sanitized.media) ? sanitized.media : [];
+  return sanitized;
 }
 
 function collectListingMediaStoragePaths(data: Record<string, unknown>): string[] {
@@ -299,6 +342,65 @@ async function loadOwnerPublicIdentity(ownerId: string): Promise<{
 
   return { displayName, avatarUrl, verified };
 }
+
+export const createListingDraft = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  const ownerId = requireAuthUid(request);
+  const rawDraft = (request.data?.draft ?? {}) as Record<string, unknown>;
+  const draft = sanitizeDraftPayload(rawDraft, ownerId);
+
+  try {
+    validateListingDraftPayload(draft, MARKETPLACE_MAX_MEDIA_COUNT);
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const draftRef = db.collection(COLLECTIONS.listingDraftsV2).doc();
+    await draftRef.set({
+      ...draft,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await trackProductEventBackend({
+      eventName: "listing_create_completed",
+      userId: ownerId,
+      listingId: draftRef.id,
+      params: {
+        category_id: normalizeString(draft.categoryId),
+        city_id: normalizeString(draft.cityId),
+        media_count: Array.isArray(draft.media) ? draft.media.length : 0,
+      },
+    });
+
+    return { ok: true, draftId: draftRef.id };
+  } catch (error) {
+    throw toHttpsError(error, "Unable to create listing draft");
+  }
+});
+
+export const updateListingDraftMedia = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  const ownerId = requireAuthUid(request);
+  const draftId = normalizeString(request.data?.draftId);
+
+  if (!draftId) {
+    throw new HttpsError("invalid-argument", "draftId is required");
+  }
+
+  try {
+    const media = validateListingMedia(request.data?.media, MARKETPLACE_MAX_MEDIA_COUNT);
+    const draftSnap = await loadDraftSnapshot(draftId);
+    const draftData = (draftSnap.data() ?? {}) as Record<string, unknown>;
+    if (normalizeString(draftData.ownerId) !== ownerId) {
+      throw new HttpsError("permission-denied", "You do not own this draft");
+    }
+
+    await draftSnap.ref.set({
+      media,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return { ok: true, draftId, mediaCount: media.length };
+  } catch (error) {
+    throw toHttpsError(error, "Unable to update listing draft media");
+  }
+});
 
 export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const ownerId = requireAuthUid(request);
