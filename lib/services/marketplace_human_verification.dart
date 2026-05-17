@@ -29,6 +29,10 @@ class MarketplaceHumanVerification {
     defaultValue: '',
   );
   static const String _webSiteKey = String.fromEnvironment(
+    'MARKETPLACE_RECAPTCHA_WEB_SITE_KEY',
+    defaultValue: '',
+  );
+  static const String _legacyWebSiteKey = String.fromEnvironment(
     'APPCHECK_RECAPTCHA_SITE_KEY',
     defaultValue: '',
   );
@@ -40,7 +44,7 @@ class MarketplaceHumanVerification {
       action: action.value,
       androidSiteKey: _androidSiteKey,
       iosSiteKey: _iosSiteKey,
-      webSiteKey: _webSiteKey,
+      webSiteKey: _webSiteKey.isNotEmpty ? _webSiteKey : _legacyWebSiteKey,
     );
   }
 }
