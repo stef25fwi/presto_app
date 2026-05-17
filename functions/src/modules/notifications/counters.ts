@@ -2,7 +2,7 @@ import admin from "firebase-admin";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 
-const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participants";
+const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participantIds";
 
 function safeNumber(value: unknown): number {
   const parsed = Number(value);

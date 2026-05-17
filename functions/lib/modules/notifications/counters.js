@@ -8,7 +8,7 @@ exports.refreshUnreadNotificationCount = refreshUnreadNotificationCount;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("../../core/firestore");
 const constants_1 = require("../../shared/constants");
-const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participants";
+const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participantIds";
 function safeNumber(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
