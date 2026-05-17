@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { HttpsError } from "firebase-functions/v2/https";
 import {
+  assertConversationParticipantAccess,
+  canonicalConversationId,
   computeUnreadCountAfterMessageDeletion,
   mergeConversationParticipants,
   resolveOfferLikeData,
@@ -57,12 +59,50 @@ test("resolveOfferLikeData falls back to listings when offer is absent", () => {
   assert.equal(result.data.ownerId, "owner_listing");
 });
 
+test("resolveOfferLikeData falls back to legacy offers only when listing is absent", () => {
+  const result = resolveOfferLikeData({
+    offerData: {ownerId: "owner_offer", title: "Offre legacy"},
+    listingData: null,
+  });
+
+  assert.equal(result.source, "offers");
+  assert.equal(result.data.ownerId, "owner_offer");
+});
+
 test("resolveOfferLikeData throws not-found when neither source exists", () => {
   assert.throws(
     () => resolveOfferLikeData({offerData: null, listingData: null}),
     (error: unknown) => {
       assert.ok(error instanceof HttpsError);
       assert.equal(error.code, "not-found");
+      return true;
+    },
+  );
+});
+
+test("canonicalConversationId is stable and order-independent", () => {
+  const left = canonicalConversationId({
+    listingId: "listing_123",
+    currentUserId: "buyer_a",
+    otherUserId: "seller_b",
+  });
+  const right = canonicalConversationId({
+    listingId: "listing_123",
+    currentUserId: "seller_b",
+    otherUserId: "buyer_a",
+  });
+
+  assert.equal(left, right);
+  assert.match(left, /^conv_[a-f0-9]{32}$/);
+});
+
+test("sendConversationMessage refuses non participant access", () => {
+  assert.throws(
+    () => assertConversationParticipantAccess(["buyer_a", "seller_b"], "intruder_c"),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpsError);
+      assert.equal(error.code, "permission-denied");
+      assert.equal(error.message, "not allowed to access this conversation");
       return true;
     },
   );

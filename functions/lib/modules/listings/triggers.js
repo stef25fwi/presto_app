@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onListingPublished = exports.onOfferUpdated = exports.onOfferCreated = void 0;
+exports.buildListingRouteUrl = buildListingRouteUrl;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const firestore_2 = require("../../core/firestore");
 const env_1 = require("../../config/env");
@@ -15,7 +16,10 @@ function getOwnerId(data) {
 function getTitle(data) {
     return String(data?.title || "Votre annonce");
 }
-function getOfferUrl(sourceId) {
+function buildListingRouteUrl(sourceCollection, sourceId) {
+    if (sourceCollection === constants_1.COLLECTIONS.listings) {
+        return `${env_1.APP_BASE_URL}/listings/${sourceId}`;
+    }
     return `${env_1.APP_BASE_URL}/offers/${sourceId}`;
 }
 function getCategory(data) {
@@ -44,7 +48,8 @@ async function notifyFavoriteCategoryUsers({ offerId, offerData, ownerId, }) {
     if (recipients.size === 0)
         return;
     const title = getTitle(offerData);
-    const routeName = `/offers/${encodeURIComponent(offerId)}`;
+    const routeName = buildListingRouteUrl(constants_1.COLLECTIONS.listings, offerId)
+        .replace(env_1.APP_BASE_URL, "");
     for (const userId of recipients) {
         const notificationId = `notif_favorite_listing_${offerId}_${userId}`;
         await Promise.all([
@@ -126,7 +131,7 @@ exports.onOfferCreated = (0, firestore_1.onDocumentCreated)("offers/{offerId}", 
     if (isSubmittedStatus(after)) {
         await emitListingEvent({
             eventName: "listing.submitted",
-            sourceCollection: constants_1.COLLECTIONS.offers,
+            sourceCollection: constants_1.LEGACY_COLLECTIONS.offers,
             sourceId: offerId,
             ownerId,
             dedupeSeed: `listing.submitted:${offerId}`,
@@ -139,13 +144,13 @@ exports.onOfferCreated = (0, firestore_1.onDocumentCreated)("offers/{offerId}", 
     if (isPublishedStatus(after)) {
         await emitListingEvent({
             eventName: "listing.published",
-            sourceCollection: constants_1.COLLECTIONS.offers,
+            sourceCollection: constants_1.LEGACY_COLLECTIONS.offers,
             sourceId: offerId,
             ownerId,
             dedupeSeed: `listing.published:${offerId}`,
             payload: {
                 listingTitle: getTitle(after),
-                listingUrl: getOfferUrl(offerId),
+                listingUrl: buildListingRouteUrl(constants_1.LEGACY_COLLECTIONS.offers, offerId),
             },
         });
         await notifyFavoriteCategoryUsers({
@@ -165,7 +170,7 @@ exports.onOfferUpdated = (0, firestore_1.onDocumentUpdated)("offers/{offerId}", 
     if (!isSubmittedStatus(before) && isSubmittedStatus(after)) {
         await emitListingEvent({
             eventName: "listing.submitted",
-            sourceCollection: constants_1.COLLECTIONS.offers,
+            sourceCollection: constants_1.LEGACY_COLLECTIONS.offers,
             sourceId: offerId,
             ownerId,
             dedupeSeed: `listing.submitted:${offerId}:${normalizeStatus(after)}`,
@@ -177,13 +182,13 @@ exports.onOfferUpdated = (0, firestore_1.onDocumentUpdated)("offers/{offerId}", 
     if (!isPublishedStatus(before) && isPublishedStatus(after)) {
         await emitListingEvent({
             eventName: "listing.published",
-            sourceCollection: constants_1.COLLECTIONS.offers,
+            sourceCollection: constants_1.LEGACY_COLLECTIONS.offers,
             sourceId: offerId,
             ownerId,
             dedupeSeed: `listing.published:${offerId}:${normalizeStatus(after)}`,
             payload: {
                 listingTitle: getTitle(after),
-                listingUrl: getOfferUrl(offerId),
+                listingUrl: buildListingRouteUrl(constants_1.LEGACY_COLLECTIONS.offers, offerId),
             },
         });
         await notifyFavoriteCategoryUsers({
@@ -195,14 +200,14 @@ exports.onOfferUpdated = (0, firestore_1.onDocumentUpdated)("offers/{offerId}", 
     if (!isRejectedStatus(before) && isRejectedStatus(after)) {
         await emitListingEvent({
             eventName: "listing.rejected",
-            sourceCollection: constants_1.COLLECTIONS.offers,
+            sourceCollection: constants_1.LEGACY_COLLECTIONS.offers,
             sourceId: offerId,
             ownerId,
             dedupeSeed: `listing.rejected:${offerId}:${normalizeStatus(after)}`,
             payload: {
                 listingTitle: getTitle(after),
                 rejectionReason: String(after.rejectionReason || after.moderationReason || after.rejectedReason || "Annonce non conforme à la charte"),
-                editUrl: getOfferUrl(offerId),
+                editUrl: buildListingRouteUrl(constants_1.LEGACY_COLLECTIONS.offers, offerId),
             },
         });
     }
@@ -221,8 +226,13 @@ exports.onListingPublished = (0, firestore_1.onDocumentUpdated)("listings/{listi
         dedupeSeed: `listing.published:${listingId}`,
         payload: {
             listingTitle: getTitle(after),
-            listingUrl: getOfferUrl(listingId),
+            listingUrl: buildListingRouteUrl(constants_1.COLLECTIONS.listings, listingId),
         },
+    });
+    await notifyFavoriteCategoryUsers({
+        offerId: listingId,
+        offerData: after,
+        ownerId: getOwnerId(after),
     });
 });
 //# sourceMappingURL=triggers.js.map

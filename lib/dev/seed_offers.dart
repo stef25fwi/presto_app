@@ -331,3 +331,47 @@ Future<void> resetAndSeedOffers() async {
   }
   await commitIfNeeded();
 }
+
+Future<void> patchLegacyOfferCompatFields() async {
+  final fs = FirebaseFirestore.instance;
+  final col = fs.collection(kOffersCollection);
+  final snap = await col.get();
+
+  WriteBatch batch = fs.batch();
+  int ops = 0;
+
+  Future<void> commitIfNeeded() async {
+    if (ops == 0) return;
+    await batch.commit();
+    batch = fs.batch();
+    ops = 0;
+  }
+
+  for (final doc in snap.docs) {
+    final data = doc.data();
+    final city = (data['city'] ?? '').toString();
+    final cp = (data['cp'] ?? '').toString();
+
+    final needsLocation =
+        !(data.containsKey('location')) || (data['location'] == null);
+    final needsPostalCode =
+        !(data.containsKey('postalCode')) || (data['postalCode'] == null);
+
+    if (!needsLocation && !needsPostalCode) continue;
+    if (city.isEmpty && cp.isEmpty) continue;
+
+    final patch = <String, dynamic>{};
+    if (needsLocation && city.isNotEmpty) patch['location'] = city;
+    if (needsPostalCode && cp.isNotEmpty) patch['postalCode'] = cp;
+
+    if (patch.isEmpty) continue;
+
+    batch.set(doc.reference, patch, SetOptions(merge: true));
+    ops++;
+    if (ops >= 450) {
+      await commitIfNeeded();
+    }
+  }
+
+  await commitIfNeeded();
+}

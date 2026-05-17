@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.enqueueFirstListingNotPublishedReminders = exports.enqueueExpiringListingEmails = void 0;
+exports.hasPublishedListingRecords = hasPublishedListingRecords;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("../../core/firestore");
 const env_1 = require("../../config/env");
@@ -12,6 +13,9 @@ function normalizeOwnerId(data) {
 function isPublishedStatus(data) {
     const status = String(data.status || "").trim().toLowerCase();
     return status === "published" || status === "active" || data.isActive === true;
+}
+function hasPublishedListingRecords(records) {
+    return records.some((record) => isPublishedStatus(record));
 }
 function toMillis(value) {
     if (typeof value === "number" && Number.isFinite(value) && value > 0)
@@ -26,14 +30,22 @@ function toMillis(value) {
     return 0;
 }
 async function userHasPublishedListing(userId) {
-    const [listingsByOwnerId, listingsByOwnerUnderscore, offersByOwnerId, offersByOwnerUnderscore] = await Promise.all([
+    const [listingsByOwnerId, listingsByOwnerUnderscore] = await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.listings).where("ownerId", "==", userId).limit(20).get(),
         firestore_1.db.collection(constants_1.COLLECTIONS.listings).where("owner_id", "==", userId).limit(20).get(),
-        firestore_1.db.collection(constants_1.COLLECTIONS.offers).where("ownerId", "==", userId).limit(20).get(),
-        firestore_1.db.collection(constants_1.COLLECTIONS.offers).where("owner_id", "==", userId).limit(20).get(),
     ]);
-    return [...listingsByOwnerId.docs, ...listingsByOwnerUnderscore.docs, ...offersByOwnerId.docs, ...offersByOwnerUnderscore.docs]
-        .some((doc) => isPublishedStatus(doc.data()));
+    const listingRecords = [...listingsByOwnerId.docs, ...listingsByOwnerUnderscore.docs]
+        .map((doc) => doc.data());
+    if (hasPublishedListingRecords(listingRecords)) {
+        return true;
+    }
+    const [offersByOwnerId, offersByOwnerUnderscore] = await Promise.all([
+        firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.offers).where("ownerId", "==", userId).limit(20).get(),
+        firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.offers).where("owner_id", "==", userId).limit(20).get(),
+    ]);
+    const offerRecords = [...offersByOwnerId.docs, ...offersByOwnerUnderscore.docs]
+        .map((doc) => doc.data());
+    return hasPublishedListingRecords(offerRecords);
 }
 async function emitFirstListingNotPublishedEvent({ userId, draftId, draftTitle, }) {
     const userSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId).get();
@@ -47,7 +59,7 @@ async function emitFirstListingNotPublishedEvent({ userId, draftId, draftTitle, 
     await firestore_1.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
         event_id: eventId,
         event_name: "listing.first_not_published.reminder",
-        source_collection: constants_1.COLLECTIONS.listingDraftsV2,
+        source_collection: constants_1.COLLECTIONS.listingDrafts,
         source_id: draftId,
         recipient_user_id: userId,
         dedupe_key: (0, hash_1.sha256)(`listing.first_not_published.reminder:${userId}:${reminderBucket}`),
@@ -154,12 +166,12 @@ exports.enqueueExpiringListingEmails = (0, scheduler_1.onSchedule)("every 1 hour
     const now = Date.now();
     const in72h = now + 72 * 60 * 60 * 1000;
     await processCollection(constants_1.COLLECTIONS.listings, (docId) => `https://presto.app/listings/${docId}/renew`, now, in72h);
-    await processCollection(constants_1.COLLECTIONS.offers, (docId) => `https://presto.app/offers/${docId}`, now, in72h);
+    await processCollection(constants_1.LEGACY_COLLECTIONS.offers, (docId) => `https://presto.app/offers/${docId}`, now, in72h);
 });
 exports.enqueueFirstListingNotPublishedReminders = (0, scheduler_1.onSchedule)("every day 10:00", async () => {
     const cutoffMs = Date.now() - 24 * 60 * 60 * 1000;
     const emittedUsers = new Set();
-    await processDraftCollection(constants_1.COLLECTIONS.listingDraftsV2, emittedUsers, cutoffMs);
     await processDraftCollection(constants_1.COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
+    await processDraftCollection(constants_1.LEGACY_COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
 });
 //# sourceMappingURL=scheduled.js.map

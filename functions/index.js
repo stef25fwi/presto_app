@@ -16,7 +16,31 @@ const { randomUUID } = require('crypto');
 
 admin.initializeApp();
 
-const ENFORCE_APP_CHECK = String(process.env.ENFORCE_APP_CHECK || '').toLowerCase() === 'true';
+const GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || '';
+const IS_EMULATOR =
+  process.env.FUNCTIONS_EMULATOR === 'true' ||
+  Boolean(process.env.FIREBASE_EMULATOR_HUB);
+const IS_PROD = GCP_PROJECT_ID === 'presto-app-74abe';
+const rawSafeMode = String(process.env.APPCHECK_SAFE_MODE || '').toLowerCase() === 'true';
+const rawEnforce = String(process.env.ENFORCE_APP_CHECK || '').toLowerCase();
+const ENFORCE_APP_CHECK = IS_EMULATOR
+  ? false
+  : IS_PROD
+    ? rawEnforce !== 'false' && !rawSafeMode
+    : rawEnforce === 'true' && !rawSafeMode;
+
+function assertProdSecurityConfig() {
+  if (IS_PROD && !IS_EMULATOR && !ENFORCE_APP_CHECK) {
+    console.error('CRITICAL_APP_CHECK_DISABLED', {
+      projectId: GCP_PROJECT_ID,
+      rawEnforce,
+      rawSafeMode,
+      emulator: IS_EMULATOR,
+    });
+  }
+}
+
+assertProdSecurityConfig();
 
 const USER_STATS_DOC = admin.firestore().collection('_stats').doc('users');
 

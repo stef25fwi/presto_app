@@ -426,3 +426,59 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
     source: source,
   );
 }
+
+List<Query<Map<String, dynamic>>> buildLegacyPublicOffersByOwnerQueryVariants({
+  FirebaseFirestore? firestore,
+  required String ownerField,
+  required String ownerId,
+  int limit = 200,
+}) {
+  final fs = firestore ?? FirebaseFirestore.instance;
+  final col = fs.collection(kOffersCollection);
+
+  return <Query<Map<String, dynamic>>>[
+    col
+        .where(ownerField, isEqualTo: ownerId)
+        .where('status', isEqualTo: 'active')
+        .limit(limit),
+    col
+        .where(ownerField, isEqualTo: ownerId)
+        .where('status', isEqualTo: 'published')
+        .limit(limit),
+    col
+        .where(ownerField, isEqualTo: ownerId)
+        .where('isActive', isEqualTo: true)
+        .limit(limit),
+    col
+        .where(ownerField, isEqualTo: ownerId)
+        .where('isPublished', isEqualTo: true)
+        .limit(limit),
+    col
+        .where(ownerField, isEqualTo: ownerId)
+        .where('visibility', isEqualTo: 'public')
+        .limit(limit),
+    col
+        .where(ownerField, isEqualTo: ownerId)
+        .where('visibility.isPublic', isEqualTo: true)
+        .limit(limit),
+  ];
+}
+
+Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+    loadLegacyPublicOffersByOwner({
+  FirebaseFirestore? firestore,
+  required String ownerField,
+  required String ownerId,
+  required int limit,
+  required String source,
+}) {
+  return loadMergedPublicOfferQueryVariants(
+    queries: buildLegacyPublicOffersByOwnerQueryVariants(
+      firestore: firestore,
+      ownerField: ownerField,
+      ownerId: ownerId,
+      limit: limit,
+    ),
+    source: source,
+  );
+}

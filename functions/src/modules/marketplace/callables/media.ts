@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { posix as pathPosix } from "node:path";
 
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -18,6 +19,34 @@ function requireAuthUid(request: { auth?: { uid?: string } }): string {
 
 function normalizeStoragePath(value: unknown): string {
   return String(value ?? "").trim();
+}
+
+export function buildProcessedListingMediaDestinationPath({
+  uid,
+  listingId,
+  storagePath,
+}: {
+  uid: string;
+  listingId: string;
+  storagePath: string;
+}): string {
+  const fileName = pathPosix.basename(storagePath).replace(/\.[^/.]+$/, "");
+  return `listings/${uid}/${listingId}/${fileName}.webp`;
+}
+
+function extractDraftIdFromStoragePath(uid: string, storagePath: string): string {
+  const prefix = `listingDrafts/${uid}/`;
+  if (!storagePath.startsWith(prefix)) {
+    return "";
+  }
+
+  const suffix = storagePath.slice(prefix.length);
+  const slashIndex = suffix.indexOf("/");
+  if (slashIndex <= 0) {
+    return "";
+  }
+
+  return suffix.slice(0, slashIndex).trim();
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -66,12 +95,16 @@ export interface ProcessedOfferPhotoResult {
 
 export async function processOfferPhotoStoragePath({
   uid,
+  draftId,
+  listingId,
   storagePath,
 }: {
   uid: string;
+  draftId: string;
+  listingId: string;
   storagePath: string;
 }): Promise<ProcessedOfferPhotoResult> {
-  const expectedPrefix = `offers_raw/${uid}/`;
+  const expectedPrefix = `listingDrafts/${uid}/${draftId}/`;
   if (!storagePath.startsWith(expectedPrefix)) {
     throw new HttpsError("permission-denied", "Unauthorized storage path");
   }
@@ -117,7 +150,6 @@ export async function processOfferPhotoStoragePath({
           gravity: "southeast",
         },
       ])
-      .webp({ quality: 82, effort: 5 })
       .toBuffer({ resolveWithObject: true });
 
     outputBuffer = finalImage.data;
@@ -127,10 +159,11 @@ export async function processOfferPhotoStoragePath({
     throw new HttpsError("internal", "Image processing failed");
   }
 
-  const baseDestPath = storagePath
-    .replace(/^offers_raw\//, "offers/")
-    .replace(/\.[^/.]+$/, "");
-  const destPath = `${baseDestPath}.webp`;
+  const destPath = buildProcessedListingMediaDestinationPath({
+    uid,
+    listingId,
+    storagePath,
+  });
   const token = randomUUID();
 
   try {
@@ -177,10 +210,17 @@ export const processOfferPhoto = onCall(
   async (request) => {
     const uid = requireAuthUid(request);
     const storagePath = normalizeStoragePath(request.data?.storagePath);
+    const draftId =
+      normalizeStoragePath(request.data?.draftId) ||
+      extractDraftIdFromStoragePath(uid, storagePath);
+    const listingId = normalizeStoragePath(request.data?.listingId) || draftId;
 
-    if (!storagePath) {
-      throw new HttpsError("invalid-argument", "storagePath is required");
+    if (!storagePath || !draftId || !listingId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "storagePath, draftId and listingId are required",
+      );
     }
-    return processOfferPhotoStoragePath({ uid, storagePath });
+    return processOfferPhotoStoragePath({ uid, draftId, listingId, storagePath });
   },
 );

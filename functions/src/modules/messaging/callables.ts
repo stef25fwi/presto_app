@@ -3,7 +3,8 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";
-import { COLLECTIONS } from "../../shared/constants";
+import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../shared/constants";
+import { sha256 } from "../../utils/hash";
 import { refreshUnreadMessageCount, refreshUnreadNotificationCount } from "../notifications/counters";
 import {
   computeConversationStatus,
@@ -26,20 +27,20 @@ const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
 
 async function findConversationSnapshotsForParticipant(
   currentUserId: string,
-  offerId?: string,
+  listingId?: string,
 ): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
   const conversationCollection = db.collection(COLLECTIONS.conversations);
-  const offerFieldAliases = offerId ? ["offerId", "offer_id"] as const : [null] as const;
+  const listingFieldAliases = listingId ? ["listingId", "offerId", "offer_id"] as const : [null] as const;
   const snapshots = await Promise.all(
     CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES.flatMap((participantField) =>
-      offerFieldAliases.map((offerField) => {
+      listingFieldAliases.map((listingField) => {
         let query: FirebaseFirestore.Query = conversationCollection.where(
           participantField,
           "array-contains",
           currentUserId,
         );
-        if (offerId && offerField) {
-          query = query.where(offerField, "==", offerId);
+        if (listingId && listingField) {
+          query = query.where(listingField, "==", listingId);
         }
         return query.limit(20).get();
       }),
@@ -65,6 +66,15 @@ function requireAuthUid(request: { auth?: { uid?: string; token?: Record<string,
 
 function sanitizeConversationPart(value: string): string {
   return value.replaceAll("/", "_").trim();
+}
+
+export function assertConversationParticipantAccess(
+  participants: string[],
+  currentUserId: string,
+): void {
+  if (!participants.includes(currentUserId)) {
+    throw new HttpsError("permission-denied", "not allowed to access this conversation");
+  }
 }
 
 async function deleteNotificationsForConversation(conversationId: string): Promise<Set<string>> {
@@ -112,17 +122,17 @@ async function deleteNotificationsForConversation(conversationId: string): Promi
   return affectedUserIds;
 }
 
-function canonicalConversationId({
-  offerId,
+export function canonicalConversationId({
+  listingId,
   currentUserId,
   otherUserId,
 }: {
-  offerId: string;
+  listingId: string;
   currentUserId: string;
   otherUserId: string;
 }): string {
   const participants = [sanitizeConversationPart(currentUserId), sanitizeConversationPart(otherUserId)].sort();
-  return `offer_${sanitizeConversationPart(offerId)}__${participants.join("__")}`;
+  return `conv_${sha256(`${sanitizeConversationPart(listingId)}::${participants.join("::")}`).slice(0, 32)}`;
 }
 
 function normalizeParticipantName(...values: unknown[]): string {
@@ -162,14 +172,19 @@ export function resolveOfferLikeData({
   throw new HttpsError("not-found", "offer not found");
 }
 
-async function loadOfferLikeSnapshot(offerId: string): Promise<{
+async function loadOfferLikeSnapshot(listingId: string): Promise<{
   data: Record<string, unknown>;
   source: "offers" | "listings";
 }> {
-  const [offerSnap, listingSnap] = await Promise.all([
-    db.collection(COLLECTIONS.offers).doc(offerId).get(),
-    db.collection(COLLECTIONS.listings).doc(offerId).get(),
-  ]);
+  const listingSnap = await db.collection(COLLECTIONS.listings).doc(listingId).get();
+  if (listingSnap.exists) {
+    return {
+      data: (listingSnap.data() ?? {}) as Record<string, unknown>,
+      source: "listings",
+    };
+  }
+
+  const offerSnap = await db.collection(LEGACY_COLLECTIONS.offers).doc(listingId).get();
 
   return resolveOfferLikeData({
     offerData: offerSnap.exists
@@ -257,28 +272,25 @@ async function loadConversationForParticipant(conversationId: string, currentUse
   const data = (convSnap.data() ?? {}) as Record<string, unknown>;
   const conversation = readConversationMirrorData(data, { conversationId });
   const participants = conversation.participants;
-
-  if (!participants.includes(currentUserId)) {
-    throw new HttpsError("permission-denied", "not allowed to access this conversation");
-  }
+  assertConversationParticipantAccess(participants, currentUserId);
 
   return { convRef, data, participants, conversation };
 }
 
 export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
-  const offerId = String(request.data?.offerId || "").trim();
+  const listingId = String(request.data?.listingId || request.data?.offerId || "").trim();
   const otherUserId = String(request.data?.otherUserId || "").trim();
 
-  if (!offerId || !otherUserId) {
-    throw new HttpsError("invalid-argument", "offerId and otherUserId are required");
+  if (!listingId || !otherUserId) {
+    throw new HttpsError("invalid-argument", "listingId and otherUserId are required");
   }
 
   if (currentUserId == otherUserId) {
     throw new HttpsError("failed-precondition", "cannot create a conversation with yourself");
   }
 
-  const { data: offerData, source: offerSource } = await loadOfferLikeSnapshot(offerId);
+  const { data: offerData, source: offerSource } = await loadOfferLikeSnapshot(listingId);
   const offerOwnerId = readOfferOwnerId(offerData);
   if (!offerOwnerId) {
     throw new HttpsError("failed-precondition", `${offerSource} owner is missing`);
@@ -287,7 +299,14 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
     throw new HttpsError("permission-denied", `conversation target does not match ${offerSource} owner`);
   }
 
-  const offerTitle = String(offerData.title || request.data?.offerTitle || "").trim();
+  const offerTitle = String(
+    offerData.listingTitle ||
+    offerData.offerTitle ||
+    offerData.title ||
+    request.data?.listingTitle ||
+    request.data?.offerTitle ||
+    "",
+  ).trim();
   if (!offerTitle) {
     throw new HttpsError("failed-precondition", "offer title is missing");
   }
@@ -315,7 +334,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
   };
 
   const convCol = db.collection(COLLECTIONS.conversations);
-  const existingDocs = await findConversationSnapshotsForParticipant(currentUserId, offerId);
+  const existingDocs = await findConversationSnapshotsForParticipant(currentUserId, listingId);
 
   for (const doc of existingDocs) {
     const docData = doc.data() as Record<string, unknown>;
@@ -346,7 +365,9 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
           ...participantNames,
         },
         otherUserName,
-        offerId,
+        listingId,
+        listingTitle: offerTitle,
+        offerId: listingId,
         offerTitle,
         archivedBy,
         blockedBy,
@@ -363,7 +384,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
     };
   }
 
-  const conversationId = canonicalConversationId({ offerId, currentUserId, otherUserId });
+  const conversationId = canonicalConversationId({ listingId, currentUserId, otherUserId });
   const participants = [currentUserId, otherUserId].sort();
   const convRef = convCol.doc(conversationId);
 
@@ -390,7 +411,9 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
             ...participantNames,
           },
           otherUserName,
-          offerId,
+          listingId,
+          listingTitle: offerTitle,
+          offerId: listingId,
           offerTitle,
           archivedBy,
           blockedBy,
@@ -408,7 +431,9 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
         participants,
         participantNames,
         otherUserName,
-        offerId,
+        listingId,
+        listingTitle: offerTitle,
+        offerId: listingId,
         offerTitle,
         status: "open",
         archivedBy: {},
@@ -432,6 +457,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
   return {
     ok: true,
     conversationId,
+    listingId,
     offerTitle,
   };
 });
@@ -507,10 +533,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION, enforceA
     const data = (convSnap.data() ?? {}) as Record<string, unknown>;
     const conversation = readConversationMirrorData(data, { conversationId });
     const participants = conversation.participants;
-
-    if (!participants.includes(currentUserId)) {
-      throw new HttpsError("permission-denied", "not allowed to access this conversation");
-    }
+    assertConversationParticipantAccess(participants, currentUserId);
 
     if (isConversationBlocked(data)) {
       throw new HttpsError("failed-precondition", "conversation is blocked");

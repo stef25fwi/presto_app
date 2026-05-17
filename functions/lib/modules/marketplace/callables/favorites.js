@@ -32,7 +32,6 @@ exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enf
         const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
         const favoriteId = `${userId}__${listingId}`;
         const favoriteRef = firestore_1.db.collection(constants_1.COLLECTIONS.favorites).doc(favoriteId);
-        const legacyFavoriteRef = firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId).collection("favoriteOffers").doc(listingId);
         const userRef = firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId);
         let active = false;
         await firestore_1.db.runTransaction(async (transaction) => {
@@ -50,7 +49,6 @@ exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enf
             if (favoriteSnap.exists) {
                 active = false;
                 transaction.delete(favoriteRef);
-                transaction.delete(legacyFavoriteRef);
                 transaction.set(listingRef, {
                     favoriteCount: firebase_admin_1.default.firestore.FieldValue.increment(-1),
                     updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
@@ -64,10 +62,6 @@ exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enf
                     listingId,
                     createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
                 });
-                transaction.set(legacyFavoriteRef, {
-                    listingId,
-                    createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
                 transaction.set(listingRef, {
                     favoriteCount: firebase_admin_1.default.firestore.FieldValue.increment(1),
                     updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),

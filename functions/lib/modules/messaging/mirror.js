@@ -170,6 +170,8 @@ function readConversationMirrorData(data, options = {}) {
         }),
         participantNames: readStringMap(data, ["participantNames", "participant_names"]),
         otherUserName: normalizeString(pickFirstValue(data, ["otherUserName", "other_user_name"])),
+        listingId: normalizeString(pickFirstValue(data, ["listingId", "offerId", "offer_id"])),
+        listingTitle: normalizeString(pickFirstValue(data, ["listingTitle", "offerTitle", "offer_title"])),
         offerId: normalizeString(pickFirstValue(data, ["offerId", "offer_id"])),
         offerTitle: normalizeString(pickFirstValue(data, ["offerTitle", "offer_title"])),
         lastMessage: normalizeString(pickFirstValue(data, ["lastMessage", "last_message"])),
@@ -213,10 +215,22 @@ function buildConversationMirrorFields(input) {
         fields.otherUserName = value;
         fields.other_user_name = value;
     }
+    if (input.listingId !== undefined) {
+        const value = normalizeString(input.listingId);
+        fields.listingId = value;
+        fields.offerId = value;
+        fields.offer_id = value;
+    }
     if (input.offerId !== undefined) {
         const value = normalizeString(input.offerId);
         fields.offerId = value;
         fields.offer_id = value;
+    }
+    if (input.listingTitle !== undefined) {
+        const value = normalizeString(input.listingTitle);
+        fields.listingTitle = value;
+        fields.offerTitle = value;
+        fields.offer_title = value;
     }
     if (input.offerTitle !== undefined) {
         const value = normalizeString(input.offerTitle);

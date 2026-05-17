@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,7 +17,6 @@ import 'app_core.dart';
 import 'firebase_init.dart';
 import 'dev/page_capture_catalog_page.dart';
 import 'debug_auth.dart';
-import 'config/app_check_state.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
 import 'pages/home_page.dart';
@@ -27,6 +25,7 @@ import 'pages/publish_offer_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'services/city_search.dart';
+import 'services/app_check_bootstrap.dart';
 import 'services/app_route_parser.dart';
 import 'services/notification_service.dart';
 import 'services/admin_audio_runtime_store.dart';
@@ -529,75 +528,7 @@ Future<void> main() async {
     await PrestoRemoteConfig.init();
     if (kDebugMode) debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
 
-    // 🔒 App Check
-    // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
-    // - Release: Play Integrity (Android) + App Attest (iOS)
-    // - Web: reCAPTCHA Enterprise si une siteKey est fournie.
-    //   Exemple:
-    //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
-    // Clé site reCAPTCHA Enterprise (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
-    appCheckActivationAttempted = false;
-    appCheckActivationSucceeded = false;
-    appCheckActivationError = null;
-    appCheckActivationStackTrace = null;
-    if (kDebugMode) debugPrint(
-        '[AppCheck] initializing platform=${firebaseInitPlatformLabel()}');
-    try {
-      if (kIsWeb) {
-        final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
-        if (siteKey.isEmpty) {
-          const message =
-              '[AppCheck] Web skipped: reCAPTCHA site key absente';
-          if (kDebugMode) debugPrint(message);
-          try {
-            await FirebaseCrashlytics.instance.recordError(
-              StateError(message),
-              StackTrace.current,
-              reason: 'missing_app_check_recaptcha_site_key',
-              fatal: false,
-            );
-          } catch (_) {
-            // Crashlytics peut être indisponible très tôt au bootstrap web.
-          }
-          if (kDebugMode) {
-            debugPrint(
-              '$message. Les lectures publiques Firestore continuent sans App Check enforce.',
-            );
-          }
-        } else {
-          final preview =
-              siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
-          if (kDebugMode) debugPrint('[APPCHECK] siteKey=$preview...');
-          appCheckActivationAttempted = true;
-          await FirebaseAppCheck.instance.activate(
-            webProvider: ReCaptchaEnterpriseProvider(siteKey),
-          );
-          if (kDebugMode) debugPrint('[AppCheck] Web activated (reCAPTCHA Enterprise)');
-        }
-      } else {
-        appCheckActivationAttempted = true;
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode
-              ? AppleProvider.debug
-              : AppleProvider.appAttest,
-        );
-      }
-      final appCheckToken = await FirebaseAppCheck.instance
-          .getToken(true)
-          .timeout(const Duration(seconds: 8));
-      if ((appCheckToken ?? '').trim().isEmpty) {
-        throw StateError('Jeton App Check vide apres activation');
-      }
-      appCheckActivationSucceeded = true;
-      if (kDebugMode) debugPrint('[AppCheck] ready token=ok');
-    } catch (e, st) {
-      appCheckActivationError = e;
-      appCheckActivationStackTrace = st;
-      if (kDebugMode) debugPrint('[AppCheck] activation failed: $e');
-    }
+    await bootstrapAppCheck();
 
     // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
     // Supprimé : on n'impose plus de connexion automatique au démarrage

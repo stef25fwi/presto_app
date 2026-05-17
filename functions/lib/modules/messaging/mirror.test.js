@@ -14,6 +14,8 @@ const mirror_1 = require("./mirror");
             seller_b: "Bruno",
         },
         otherUserName: "Bruno",
+        listingId: "listing_123",
+        listingTitle: "Peinture salon",
         offerId: "offer_123",
         offerTitle: "Peinture salon",
         lastMessage: "Bonjour",
@@ -33,8 +35,10 @@ const mirror_1 = require("./mirror");
     strict_1.default.deepEqual(fields.participantIds, ["buyer_a", "seller_b"]);
     strict_1.default.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
     strict_1.default.deepEqual(fields.participant_names, { buyer_a: "Alice", seller_b: "Bruno" });
+    strict_1.default.equal(fields.listingId, "listing_123");
     strict_1.default.equal(fields.offerId, "offer_123");
     strict_1.default.equal(fields.offer_id, "offer_123");
+    strict_1.default.equal(fields.listingTitle, "Peinture salon");
     strict_1.default.equal(fields.lastMessage, "Bonjour");
     strict_1.default.equal(fields.last_message, "Bonjour");
     strict_1.default.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 1 });
@@ -72,6 +76,19 @@ const mirror_1 = require("./mirror");
     strict_1.default.equal(mirror.lastSenderName, "Bruno");
     strict_1.default.deepEqual(mirror.unreadCount, { buyer_a: 1, seller_b: 0 });
     strict_1.default.equal(mirror.messageCount, 4);
+});
+(0, node_test_1.default)("readConversationMirrorData prefers canonical listing fields when available", () => {
+    const mirror = (0, mirror_1.readConversationMirrorData)({
+        participantIds: ["buyer_a", "seller_b"],
+        listingId: "listing_123",
+        listingTitle: "Cuisine a monter",
+        offerId: "offer_legacy_123",
+        offerTitle: "Offre legacy",
+    });
+    strict_1.default.equal(mirror.listingId, "listing_123");
+    strict_1.default.equal(mirror.listingTitle, "Cuisine a monter");
+    strict_1.default.equal(mirror.offerId, "offer_legacy_123");
+    strict_1.default.equal(mirror.offerTitle, "Offre legacy");
 });
 (0, node_test_1.default)("readConversationMessageCount falls back to mirrored last message aliases", () => {
     strict_1.default.equal((0, mirror_1.readConversationMessageCount)({ last_message: "Salut" }), 1);
