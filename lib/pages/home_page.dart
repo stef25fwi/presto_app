@@ -518,15 +518,6 @@ class _HomePageState extends State<HomePage>
         .limit(limit);
   }
 
-  Query<Map<String, dynamic>> _legacyRecentOffersQuery({int limit = 200}) {
-    return FirebaseFirestore.instance
-        .collection(kOffersCollection)
-        .where(publicOffersFilter())
-        // Pas d'orderBy : Filter.or(5 branches) nécessiterait 5 index composites
-        // pour offers dont certains sont manquants → erreur silencieuse. Tri côté client.
-        .limit(limit);
-  }
-
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
     try {
@@ -849,48 +840,7 @@ class _HomePageState extends State<HomePage>
       }
 
       await resetAndSeedOffers();
-
-      // Compat legacy : certaines vues utilisent encore `location` / `postalCode`.
-      // On les remplit à partir de `city` / `cp` si absents.
-      final fs = FirebaseFirestore.instance;
-      final col = fs.collection(kOffersCollection);
-      final snap = await col.get();
-
-      WriteBatch batch = fs.batch();
-      int ops = 0;
-      Future<void> commitIfNeeded() async {
-        if (ops == 0) return;
-        await batch.commit();
-        batch = fs.batch();
-        ops = 0;
-      }
-
-      for (final doc in snap.docs) {
-        final data = doc.data();
-        final city = (data['city'] ?? '').toString();
-        final cp = (data['cp'] ?? '').toString();
-
-        final needsLocation =
-            !(data.containsKey('location')) || (data['location'] == null);
-        final needsPostalCode =
-            !(data.containsKey('postalCode')) || (data['postalCode'] == null);
-
-        if (!needsLocation && !needsPostalCode) continue;
-        if (city.isEmpty && cp.isEmpty) continue;
-
-        final patch = <String, dynamic>{};
-        if (needsLocation && city.isNotEmpty) patch['location'] = city;
-        if (needsPostalCode && cp.isNotEmpty) patch['postalCode'] = cp;
-
-        if (patch.isEmpty) continue;
-
-        batch.set(doc.reference, patch, SetOptions(merge: true));
-        ops++;
-        if (ops >= 450) {
-          await commitIfNeeded();
-        }
-      }
-      await commitIfNeeded();
+      await patchLegacyOfferCompatFields();
 
       if (mounted) {
         showSuccessSnackBar(

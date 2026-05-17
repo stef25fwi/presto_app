@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const strict_1 = __importDefault(require("node:assert/strict"));
 const node_test_1 = __importDefault(require("node:test"));
 const enrich_1 = require("./enrich");
+const constants_1 = require("../../../shared/constants");
 (0, node_test_1.default)("billing invoice enrichment adds currency, method and retry info", () => {
     const source = {
         amount_due: 39.99,
@@ -54,5 +55,28 @@ const enrich_1 = require("./enrich");
     strict_1.default.equal(extra.paymentMethod, "SEPA");
     strict_1.default.equal(extra.manageUrl, "https://presto.app/abonnement");
     strict_1.default.equal(typeof extra.renewalDate, "string");
+});
+(0, node_test_1.default)("listing enrichment uses canonical listing URL for listings", () => {
+    const extra = (0, enrich_1.buildListingLikeEnrichment)({
+        sourceCollection: constants_1.COLLECTIONS.listings,
+        sourceId: "listing_123",
+        source: { title: "Listing marketplace", city: "Paris" },
+        payload: {},
+    });
+    strict_1.default.equal(extra.listingTitle, "Listing marketplace");
+    strict_1.default.equal(extra.listingUrl, "https://presto.app/listings/listing_123");
+    strict_1.default.equal(extra.city, "Paris");
+});
+(0, node_test_1.default)("listing enrichment keeps legacy offer URL for historical offers events", () => {
+    const extra = (0, enrich_1.buildListingLikeEnrichment)({
+        sourceCollection: constants_1.LEGACY_COLLECTIONS.offers,
+        sourceId: "offer_123",
+        source: { title: "Offre legacy" },
+        payload: {},
+        fallbackCity: "Lyon",
+    });
+    strict_1.default.equal(extra.listingTitle, "Offre legacy");
+    strict_1.default.equal(extra.listingUrl, "https://presto.app/offers/offer_123");
+    strict_1.default.equal(extra.city, "Lyon");
 });
 //# sourceMappingURL=enrich.test.js.map

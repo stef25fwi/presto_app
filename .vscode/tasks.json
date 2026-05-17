@@ -64,13 +64,13 @@
     {
       "label": "Flutter: Test conversation state",
       "type": "shell",
-      "command": "flutter test test/conversation_state_test.dart test/app_route_parser_test.dart",
+      "command": "flutter test test/conversation_state_test.dart test/app_route_parser_test.dart test/conversations_list_page_query_test.dart",
       "problemMatcher": []
     },
     {
       "label": "Flutter: Test user_profile_save_payload",
       "type": "shell",
-      "command": "flutter test test/user_profile_save_payload_test.dart",
+      "command": "flutter test test/user_profile_save_payload_test.dart test/user_profile_bootstrap_service_test.dart",
       "problemMatcher": []
     },
     {
@@ -176,6 +176,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Canonical Firebase Architecture",
+      "type": "shell",
+      "command": "git commit -m \"feat(firebase): canonicalize marketplace architecture\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Stash And Pull Rebase",
       "type": "shell",
       "command": "git stash && git pull --rebase origin main && git stash pop",
@@ -238,7 +244,7 @@
     {
       "label": "Flutter: Test Marketplace",
       "type": "shell",
-      "command": "flutter test test/marketplace_models_test.dart",
+      "command": "flutter test test/marketplace_models_test.dart test/marketplace_publish_architecture_test.dart test/favorites_architecture_test.dart",
       "problemMatcher": []
     },
     {

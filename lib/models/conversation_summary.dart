@@ -72,8 +72,11 @@ class ConversationSummary {
         data,
         const ['otherUserName', 'other_user_name'],
       ),
-      offerId: _readString(data, const ['offerId', 'offer_id']),
-      offerTitle: _readString(data, const ['offerTitle', 'offer_title']),
+      offerId: _readString(data, const ['listingId', 'offerId', 'offer_id']),
+      offerTitle: _readString(
+        data,
+        const ['listingTitle', 'offerTitle', 'offer_title'],
+      ),
       lastMessage: _readString(data, const ['lastMessage', 'last_message']),
       lastSenderId: _readString(data, const ['lastSenderId', 'last_sender_id']),
       lastSenderName: _readString(

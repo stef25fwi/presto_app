@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
+exports.assertConversationParticipantAccess = assertConversationParticipantAccess;
+exports.canonicalConversationId = canonicalConversationId;
 exports.resolveOfferLikeData = resolveOfferLikeData;
 exports.mergeConversationParticipants = mergeConversationParticipants;
 exports.computeUnreadCountAfterMessageDeletion = computeUnreadCountAfterMessageDeletion;
@@ -13,6 +15,7 @@ const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
 const rate_limit_1 = require("../../core/rate_limit");
 const constants_1 = require("../../shared/constants");
+const hash_1 = require("../../utils/hash");
 const counters_1 = require("../notifications/counters");
 const state_1 = require("./state");
 const participants_1 = require("./participants");
@@ -20,13 +23,13 @@ const mirror_1 = require("./mirror");
 const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
-async function findConversationSnapshotsForParticipant(currentUserId, offerId) {
+async function findConversationSnapshotsForParticipant(currentUserId, listingId) {
     const conversationCollection = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
-    const offerFieldAliases = offerId ? ["offerId", "offer_id"] : [null];
-    const snapshots = await Promise.all(participants_1.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES.flatMap((participantField) => offerFieldAliases.map((offerField) => {
+    const listingFieldAliases = listingId ? ["listingId", "offerId", "offer_id"] : [null];
+    const snapshots = await Promise.all(participants_1.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES.flatMap((participantField) => listingFieldAliases.map((listingField) => {
         let query = conversationCollection.where(participantField, "array-contains", currentUserId);
-        if (offerId && offerField) {
-            query = query.where(offerField, "==", offerId);
+        if (listingId && listingField) {
+            query = query.where(listingField, "==", listingId);
         }
         return query.limit(20).get();
     })));
@@ -47,6 +50,11 @@ function requireAuthUid(request) {
 }
 function sanitizeConversationPart(value) {
     return value.replaceAll("/", "_").trim();
+}
+function assertConversationParticipantAccess(participants, currentUserId) {
+    if (!participants.includes(currentUserId)) {
+        throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
+    }
 }
 async function deleteNotificationsForConversation(conversationId) {
     const routeName = `/messages/${encodeURIComponent(conversationId)}`;
@@ -84,9 +92,9 @@ async function deleteNotificationsForConversation(conversationId) {
     }
     return affectedUserIds;
 }
-function canonicalConversationId({ offerId, currentUserId, otherUserId, }) {
+function canonicalConversationId({ listingId, currentUserId, otherUserId, }) {
     const participants = [sanitizeConversationPart(currentUserId), sanitizeConversationPart(otherUserId)].sort();
-    return `offer_${sanitizeConversationPart(offerId)}__${participants.join("__")}`;
+    return `conv_${(0, hash_1.sha256)(`${sanitizeConversationPart(listingId)}::${participants.join("::")}`).slice(0, 32)}`;
 }
 function normalizeParticipantName(...values) {
     for (const value of values) {
@@ -113,11 +121,15 @@ function resolveOfferLikeData({ offerData, listingData, }) {
     }
     throw new https_1.HttpsError("not-found", "offer not found");
 }
-async function loadOfferLikeSnapshot(offerId) {
-    const [offerSnap, listingSnap] = await Promise.all([
-        firestore_1.db.collection(constants_1.COLLECTIONS.offers).doc(offerId).get(),
-        firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(offerId).get(),
-    ]);
+async function loadOfferLikeSnapshot(listingId) {
+    const listingSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId).get();
+    if (listingSnap.exists) {
+        return {
+            data: (listingSnap.data() ?? {}),
+            source: "listings",
+        };
+    }
+    const offerSnap = await firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.offers).doc(listingId).get();
     return resolveOfferLikeData({
         offerData: offerSnap.exists
             ? (offerSnap.data() ?? {})
@@ -176,22 +188,20 @@ async function loadConversationForParticipant(conversationId, currentUserId) {
     const data = (convSnap.data() ?? {});
     const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId });
     const participants = conversation.participants;
-    if (!participants.includes(currentUserId)) {
-        throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
-    }
+    assertConversationParticipantAccess(participants, currentUserId);
     return { convRef, data, participants, conversation };
 }
 exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
-    const offerId = String(request.data?.offerId || "").trim();
+    const listingId = String(request.data?.listingId || request.data?.offerId || "").trim();
     const otherUserId = String(request.data?.otherUserId || "").trim();
-    if (!offerId || !otherUserId) {
-        throw new https_1.HttpsError("invalid-argument", "offerId and otherUserId are required");
+    if (!listingId || !otherUserId) {
+        throw new https_1.HttpsError("invalid-argument", "listingId and otherUserId are required");
     }
     if (currentUserId == otherUserId) {
         throw new https_1.HttpsError("failed-precondition", "cannot create a conversation with yourself");
     }
-    const { data: offerData, source: offerSource } = await loadOfferLikeSnapshot(offerId);
+    const { data: offerData, source: offerSource } = await loadOfferLikeSnapshot(listingId);
     const offerOwnerId = readOfferOwnerId(offerData);
     if (!offerOwnerId) {
         throw new https_1.HttpsError("failed-precondition", `${offerSource} owner is missing`);
@@ -199,7 +209,12 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     if (offerOwnerId != otherUserId) {
         throw new https_1.HttpsError("permission-denied", `conversation target does not match ${offerSource} owner`);
     }
-    const offerTitle = String(offerData.title || request.data?.offerTitle || "").trim();
+    const offerTitle = String(offerData.listingTitle ||
+        offerData.offerTitle ||
+        offerData.title ||
+        request.data?.listingTitle ||
+        request.data?.offerTitle ||
+        "").trim();
     if (!offerTitle) {
         throw new https_1.HttpsError("failed-precondition", "offer title is missing");
     }
@@ -214,7 +229,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         [otherUserId]: otherUserName,
     };
     const convCol = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
-    const existingDocs = await findConversationSnapshotsForParticipant(currentUserId, offerId);
+    const existingDocs = await findConversationSnapshotsForParticipant(currentUserId, listingId);
     for (const doc of existingDocs) {
         const docData = doc.data();
         const conversation = (0, mirror_1.readConversationMirrorData)(docData, { conversationId: doc.id });
@@ -237,7 +252,9 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
                 ...participantNames,
             },
             otherUserName,
-            offerId,
+            listingId,
+            listingTitle: offerTitle,
+            offerId: listingId,
             offerTitle,
             archivedBy,
             blockedBy,
@@ -250,7 +267,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             offerTitle,
         };
     }
-    const conversationId = canonicalConversationId({ offerId, currentUserId, otherUserId });
+    const conversationId = canonicalConversationId({ listingId, currentUserId, otherUserId });
     const participants = [currentUserId, otherUserId].sort();
     const convRef = convCol.doc(conversationId);
     await firestore_1.db.runTransaction(async (transaction) => {
@@ -272,7 +289,9 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
                     ...participantNames,
                 },
                 otherUserName,
-                offerId,
+                listingId,
+                listingTitle: offerTitle,
+                offerId: listingId,
                 offerTitle,
                 archivedBy,
                 blockedBy,
@@ -285,7 +304,9 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             participants,
             participantNames,
             otherUserName,
-            offerId,
+            listingId,
+            listingTitle: offerTitle,
+            offerId: listingId,
             offerTitle,
             status: "open",
             archivedBy: {},
@@ -307,6 +328,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     return {
         ok: true,
         conversationId,
+        listingId,
         offerTitle,
     };
 });
@@ -359,9 +381,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         const data = (convSnap.data() ?? {});
         const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId });
         const participants = conversation.participants;
-        if (!participants.includes(currentUserId)) {
-            throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
-        }
+        assertConversationParticipantAccess(participants, currentUserId);
         if ((0, state_1.isConversationBlocked)(data)) {
             throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
         }

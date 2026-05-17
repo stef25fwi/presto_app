@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:image_picker/image_picker.dart';
@@ -485,7 +484,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Photos marketplace
   final List<XFile> _selectedPhotos = [];
   final List<Uint8List?> _selectedPhotoBytes = [];
-  final List<String> _uploadedPhotoUrls = [];
 
   FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
@@ -3449,7 +3447,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _budgetType = 'Fixe';
       _selectedPhotos.clear();
       _selectedPhotoBytes.clear();
-      _uploadedPhotoUrls.clear();
       _latestRecognizedTranscript = '';
       _titleEditedByUser = false;
       _descriptionEditedByUser = false;
@@ -3818,9 +3815,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (photoIndex < _selectedPhotoBytes.length) {
         _selectedPhotoBytes.removeAt(photoIndex);
       }
-      if (photoIndex < _uploadedPhotoUrls.length) {
-        _uploadedPhotoUrls.removeAt(photoIndex);
-      }
     });
   }
 
@@ -3855,53 +3849,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'image/gif';
       default:
         return 'image/jpeg';
-    }
-  }
-
-  Future<void> _uploadPhotos({required String uid}) async {
-    if (_selectedPhotos.isEmpty) {
-      _uploadedPhotoUrls.clear();
-      return;
-    }
-
-    try {
-      _uploadedPhotoUrls.clear();
-
-      final callable = _functions.httpsCallable(
-        'processOfferPhoto',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
-      );
-
-      for (int i = 0; i < _selectedPhotos.length; i++) {
-        final photo = _selectedPhotos[i];
-        final ts = DateTime.now().millisecondsSinceEpoch;
-        final sourceExt = _storageExtFromPhoto(photo);
-        final sourceContentType = _storageContentTypeFromPhoto(photo);
-        final rawPath = 'offers_raw/$uid/${ts}_$i.$sourceExt';
-
-        final ref = FirebaseStorage.instance.ref().child(rawPath);
-        final bytes = await photo.readAsBytes();
-        await ref.putData(
-          bytes,
-          SettableMetadata(contentType: sourceContentType),
-        );
-
-        final res = await callable.call<dynamic>({
-          'storagePath': rawPath,
-        });
-        final data = (res.data is Map)
-            ? Map<String, dynamic>.from(res.data as Map)
-            : <String, dynamic>{};
-        final url = (data['downloadUrl'] ?? '').toString().trim();
-        if (url.isEmpty) {
-          throw Exception('URL de photo manquante');
-        }
-        _uploadedPhotoUrls.add(url);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, "Erreur lors de l'upload : $e");
-      debugPrint('[Upload] Erreur: $e');
     }
   }
 

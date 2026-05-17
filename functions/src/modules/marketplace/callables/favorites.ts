@@ -30,7 +30,6 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
     const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
     const favoriteId = `${userId}__${listingId}`;
     const favoriteRef = db.collection(COLLECTIONS.favorites).doc(favoriteId);
-    const legacyFavoriteRef = db.collection(COLLECTIONS.users).doc(userId).collection("favoriteOffers").doc(listingId);
     const userRef = db.collection(COLLECTIONS.users).doc(userId);
 
     let active = false;
@@ -52,7 +51,6 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
       if (favoriteSnap.exists) {
         active = false;
         transaction.delete(favoriteRef);
-        transaction.delete(legacyFavoriteRef);
         transaction.set(listingRef, {
           favoriteCount: admin.firestore.FieldValue.increment(-1),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -65,10 +63,6 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
           listingId,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-        transaction.set(legacyFavoriteRef, {
-          listingId,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
         transaction.set(listingRef, {
           favoriteCount: admin.firestore.FieldValue.increment(1),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),

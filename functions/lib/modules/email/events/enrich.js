@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildBillingInvoiceEnrichment = buildBillingInvoiceEnrichment;
 exports.buildSubscriptionEnrichment = buildSubscriptionEnrichment;
+exports.buildListingLikeEnrichment = buildListingLikeEnrichment;
 exports.enrichEventPayload = enrichEventPayload;
 const firestore_1 = require("../../../core/firestore");
 const constants_1 = require("../../../shared/constants");
@@ -42,6 +43,19 @@ function buildSubscriptionEnrichment(source, payload) {
         extra.manageUrl = "https://presto.app/abonnement";
     return extra;
 }
+function buildListingLikeEnrichment({ sourceCollection, sourceId, source, payload, fallbackCity, }) {
+    const extra = {};
+    if (!payload.listingTitle)
+        extra.listingTitle = String(source.title ?? "");
+    if (!payload.listingUrl) {
+        extra.listingUrl = sourceCollection === constants_1.COLLECTIONS.listings ?
+            `https://presto.app/listings/${sourceId}` :
+            `https://presto.app/offers/${sourceId}`;
+    }
+    if (!payload.city)
+        extra.city = String(source.city ?? fallbackCity ?? "");
+    return extra;
+}
 async function enrichEventPayload(event) {
     const extra = { enriched_at: Date.now() };
     // Enrichissement depuis le profil utilisateur destinataire
@@ -69,13 +83,14 @@ async function enrichEventPayload(event) {
             const sourceDoc = await firestore_1.db.collection(event.source_collection).doc(event.source_id).get();
             if (sourceDoc.exists) {
                 const s = sourceDoc.data() ?? {};
-                if (event.source_collection === constants_1.COLLECTIONS.listings || event.source_collection === constants_1.COLLECTIONS.offers) {
-                    if (!event.payload.listingTitle)
-                        extra.listingTitle = String(s.title ?? "");
-                    if (!event.payload.listingUrl)
-                        extra.listingUrl = `https://presto.app/offers/${event.source_id}`;
-                    if (!event.payload.city)
-                        extra.city = String(s.city ?? extra.city ?? "");
+                if (event.source_collection === constants_1.COLLECTIONS.listings || event.source_collection === constants_1.LEGACY_COLLECTIONS.offers) {
+                    Object.assign(extra, buildListingLikeEnrichment({
+                        sourceCollection: event.source_collection,
+                        sourceId: event.source_id,
+                        source: s,
+                        payload: event.payload,
+                        fallbackCity: extra.city,
+                    }));
                 }
                 else if (event.source_collection === constants_1.COLLECTIONS.conversations) {
                     if (!event.payload.conversationUrl)

@@ -56,6 +56,8 @@ class FavoriteOffersSection extends StatefulWidget {
 }
 
 class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
+  static final FavoriteRepository _favoriteRepository = FavoriteRepository();
+
   List<_FavoriteOfferItem> _offers = const [];
   bool _isLoading = true;
   String? _error;
@@ -79,52 +81,10 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
 
     try {
       final fs = FirebaseFirestore.instance;
-      final favoriteSnap = await fs
-          .collection('favorites')
-          .where('userId', isEqualTo: widget.userId)
-          .orderBy('createdAt', descending: true)
-          .limit(200)
-          .get();
-
-      final favoriteIds = favoriteSnap.docs
-          .map((doc) => (doc.data()['listingId'] ?? '').toString().trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
-
-      final favoriteDates = <String, Timestamp?>{};
-      for (final doc in favoriteSnap.docs) {
-        final data = doc.data();
-        final listingId = (data['listingId'] ?? '').toString().trim();
-        if (listingId.isEmpty) continue;
-        favoriteDates[listingId] = data['createdAt'] is Timestamp
-            ? data['createdAt'] as Timestamp
-            : null;
-      }
-
-      if (favoriteIds.isEmpty) {
-        final legacyFavoriteSnap = await fs
-            .collection('users')
-            .doc(widget.userId)
-            .collection('favoriteOffers')
-            .orderBy('createdAt', descending: true)
-            .limit(200)
-            .get();
-        for (final doc in legacyFavoriteSnap.docs) {
-          final data = doc.data();
-          final listingId = (data['listingId'] ?? data['offerId'] ?? doc.id)
-              .toString()
-              .trim();
-          if (listingId.isEmpty || favoriteDates.containsKey(listingId)) {
-            continue;
-          }
-          favoriteIds.add(listingId);
-          favoriteDates[listingId] = data['createdAt'] is Timestamp
-              ? data['createdAt'] as Timestamp
-              : data['addedAt'] is Timestamp
-                  ? data['addedAt'] as Timestamp
-                  : null;
-        }
-      }
+      final favorites = await _favoriteRepository
+          .loadFavoriteListingIdsWithLegacyFallback(widget.userId);
+      final favoriteIds = favorites.listingIds;
+      final favoriteDates = favorites.favoriteDates;
 
       if (favoriteIds.isEmpty) {
         if (!mounted) return;
@@ -833,28 +793,30 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       // Prod marketplace contract:
       // listings est la source normale. offers legacy est un backfill lecture seule,
       // désactivé en prod par kEnableLegacyPublicOffersBackfill.
-      final futures = <Future<QuerySnapshot<Map<String, dynamic>>>>[
+      final futures = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> >[
         FirebaseFirestore.instance
             .collection(kListingsCollection)
             .where(field, isEqualTo: widget.userId)
             .limit(120)
-            .get(),
+            .get()
+            .then((snap) => snap.docs),
       ];
 
       if (kEnableLegacyPublicOffersBackfill) {
         futures.add(
-          FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .where(field, isEqualTo: widget.userId)
-              .limit(120)
-              .get(),
+          loadLegacyPublicOffersByOwner(
+            ownerField: field,
+            ownerId: widget.userId,
+            limit: 120,
+            source: 'user_offers_section_legacy_$field',
+          ),
         );
       }
 
       final results = await Future.wait(futures);
       final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
-      for (final snap in results) {
-        for (final doc in snap.docs) {
+      for (final docs in results) {
+        for (final doc in docs) {
           byId.putIfAbsent(doc.id, () => doc);
         }
       }
@@ -2906,4 +2868,15 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       },
     );
   }
+
+}
+
+class _QuerySnapshotAdapter implements QuerySnapshot<Map<String, dynamic>> {
+  _QuerySnapshotAdapter(this.docs);
+
+  @override
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

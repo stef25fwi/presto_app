@@ -2442,29 +2442,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     if (ok != true) return;
 
-    try {
-      // Essayer d'abord dans listings (marketplace), puis fallback offers (legacy)
-      final listingsRef = FirebaseFirestore.instance
-          .collection(kListingsCollection)
-          .doc(offerId);
-      final listingsSnap = await listingsRef.get();
-      final targetRef = listingsSnap.exists
-          ? listingsRef
-          : FirebaseFirestore.instance
-              .collection(kOffersCollection)
-              .doc(offerId);
-      await targetRef.update({
-        'title': titleCtrl.text.trim(),
-        'city': cityCtrl.text.trim(),
-        'description': descCtrl.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Impossible de modifier l\'annonce : $e')),
-        );
-      }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La modification d\'annonce doit passer par le flux canonique Marketplace. Cette edition directe n\'est plus autorisee ici.',
+          ),
+        ),
+      );
     }
   }
 
@@ -2510,11 +2495,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           ),
         );
         await callable.call<dynamic>({'listingId': offerId});
-      } else {
-        await FirebaseFirestore.instance
-            .collection(kOffersCollection)
-            .doc(offerId)
-            .delete();
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Cette annonce legacy doit etre migree vers Marketplace avant suppression.',
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -2949,26 +2937,30 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     // Charger depuis la collection listings (marketplace) et offers (legacy)
     final listingsCol =
         FirebaseFirestore.instance.collection(kListingsCollection);
-    final offersCol = FirebaseFirestore.instance.collection(kOffersCollection);
 
-    final results = await Future.wait([
+    final results = await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
       listingsCol
           .where('ownerId', isEqualTo: widget.userId)
           .where(publicListingsFilter())
-          .get(),
-      offersCol
-          .where('uid', isEqualTo: widget.userId)
-          .where(publicOffersFilter())
-          .get(),
-      offersCol
-          .where('userId', isEqualTo: widget.userId)
-          .where(publicOffersFilter())
-          .get(),
+          .get()
+          .then((snap) => snap.docs),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'uid',
+        ownerId: widget.userId,
+        limit: 200,
+        source: 'consult_active_offers_legacy_uid',
+      ),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'userId',
+        ownerId: widget.userId,
+        limit: 200,
+        source: 'consult_active_offers_legacy_userId',
+      ),
     ]);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
-    for (final snap in results) {
-      for (final d in snap.docs) {
+    for (final docs in results) {
+      for (final d in docs) {
         byId[d.id] = d;
       }
     }
