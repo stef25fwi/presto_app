@@ -1,11 +1,7 @@
-const conversationPrimaryParticipantField = 'participants';
+const conversationPrimaryParticipantField = 'participantIds';
 
 const conversationParticipantQueryFieldAliases = <String>[
-  'participants',
-  'participant_ids',
   'participantIds',
-  'userIds',
-  'memberIds',
 ];
 
 const conversationParticipantFieldAliases = <String>[
@@ -54,8 +50,8 @@ List<String> readConversationParticipants(
     }
   }
 
-  for (final participantId in
-      readConversationParticipantIdsFromCanonicalId(conversationId ?? '')) {
+  for (final participantId
+      in readConversationParticipantIdsFromCanonicalId(conversationId ?? '')) {
     addParticipant(participantId);
   }
 
@@ -63,7 +59,8 @@ List<String> readConversationParticipants(
   return result;
 }
 
-List<String> readConversationParticipantIdsFromCanonicalId(String conversationId) {
+List<String> readConversationParticipantIdsFromCanonicalId(
+    String conversationId) {
   final normalizedConversationId = conversationId.trim();
   if (!normalizedConversationId.startsWith('offer_')) {
     return const <String>[];

@@ -10,8 +10,6 @@ import 'package:flutter/services.dart';
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../models/conversation_summary.dart';
-import '../../services/conversation_discovery.dart';
-import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
@@ -56,6 +54,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   String? _conversationStateUserId;
   bool? _conversationStateAdminMode;
   String? _adminStatusUid;
+  bool _adminStatusReady = false;
+  bool _adminStatusLoading = false;
   bool _isAdminViewer = false;
 
   void _appendAdminConversationLog(String message) {
@@ -76,8 +76,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Future<void> _refreshAdminViewerStatus(User user) async {
-    if (_adminStatusUid == user.uid) return;
+    if (_adminStatusUid == user.uid &&
+        (_adminStatusReady || _adminStatusLoading)) {
+      return;
+    }
     _adminStatusUid = user.uid;
+    _adminStatusReady = false;
+    _adminStatusLoading = true;
 
     bool isAdmin = false;
     var adminSource = 'none';
@@ -114,6 +119,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     setState(() {
       final adminModeChanged = _isAdminViewer != isAdmin;
       _isAdminViewer = isAdmin;
+      _adminStatusReady = true;
+      _adminStatusLoading = false;
       if (adminModeChanged) {
         _conversationStateStream = null;
         _conversationStateAdminMode = null;
@@ -176,29 +183,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (value.isNotEmpty) return value;
     }
     return null;
-  }
-
-  bool _isNonRetryableConversationSourceError(Object error) {
-    if (error is FirebaseException) {
-      final code = error.code.trim().toLowerCase();
-      if (code == 'permission-denied' ||
-          code == 'failed-precondition' ||
-          code == 'invalid-argument' ||
-          code == 'unimplemented') {
-        return true;
-      }
-
-      final message = (error.message ?? '').toLowerCase();
-      if (message.contains('requires an index') ||
-          message.contains('index') && message.contains('create it')) {
-        return true;
-      }
-    }
-
-    final message = error.toString().toLowerCase();
-    return message.contains('requires an index') ||
-        message.contains('failed-precondition') ||
-        message.contains('create it here');
   }
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
@@ -325,544 +309,73 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return conversationId.isEmpty ? null : conversationId;
   }
 
-  List<ConversationSummary> _mergeConversationDocs(
-    Iterable<List<ConversationSummary>> docLists,
-  ) {
-    final byId = <String, ConversationSummary>{};
-    for (final docs in docLists) {
-      for (final conversation in docs) {
-        final existing = byId[conversation.id];
-        byId[conversation.id] =
-            existing == null ? conversation : existing.mergeWith(conversation);
-      }
-    }
-
-    final merged = byId.values.toList(growable: false);
-    merged.sort((left, right) {
-      final rightDate = right.sortDate;
-      final leftDate = left.sortDate;
-      if (leftDate == null && rightDate == null) {
-        return right.id.compareTo(left.id);
-      }
-      if (leftDate == null) return 1;
-      if (rightDate == null) return -1;
-      return rightDate.compareTo(leftDate);
-    });
-    return merged;
-  }
-
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
-    _appendAdminConversationLog(
-      'Demarrage du chargement des conversations pour user=$userId',
-    );
+    final isAdminMode = _isAdminViewer;
+    final mode = isAdminMode ? 'admin_global' : 'user_participantIds';
     final controller = StreamController<_ConversationQueryState>();
-    final errorsByField = <String, Object>{};
-    final docsByField = <String, List<ConversationSummary>>{};
-    final retryCountsByField = <String, int>{};
-    var docs = const <ConversationSummary>[];
-    final subscriptionsByField =
-        <String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>{};
-    final retryTimersByField = <String, Timer>{};
-    const notificationsFallbackSource = '__notifications__';
-    const adminGlobalSource = '__admin_global__';
-    const startedMessageFallbackSourcePrefix = '__started_messages__:';
-    const sentMessageFieldAliases = <String>[
-      'senderId',
-      'sender_id',
-      'recipientId',
-      'recipient_id',
-    ];
-    const notificationsFallbackLiveLimit = 60;
-    const notificationsFallbackMaxPages = 4;
-    const startedMessageFallbackLiveLimit = 80;
-    const startedMessageFallbackMaxPages = 4;
 
-    void emit() {
-      if (controller.isClosed) return;
-      docs = _mergeConversationDocs(docsByField.values);
-      _appendAdminConversationLog(
-        'Etat fusionne: total=${docs.length}, sources_ok=${docsByField.length}, sources_erreur=${errorsByField.length}',
-      );
-      controller.add(
-        _ConversationQueryState(
-          docs: docs,
-          errorsByField: Map<String, Object>.unmodifiable(errorsByField),
-          isLoading: docsByField.isEmpty && errorsByField.isEmpty,
-        ),
-      );
+    _appendAdminConversationLog('mode=$mode user=$userId');
+    if (kDebugMode) {
+      debugPrint('[MessagesList] mode=$mode user=$userId');
     }
 
-    Duration retryDelayForField(String participantField) {
-      final failureCount = (retryCountsByField[participantField] ?? 0) + 1;
-      retryCountsByField[participantField] = failureCount;
-      final seconds = failureCount <= 1
-          ? 2
-          : failureCount == 2
-              ? 5
-              : 10;
-      return Duration(seconds: seconds);
-    }
+    final query = isAdminMode
+        ? FirebaseFirestore.instance
+            .collection('conversations')
+            .orderBy('updatedAt', descending: true)
+            .limit(50)
+        : FirebaseFirestore.instance
+            .collection('conversations')
+            .where('participantIds', arrayContains: userId)
+            .orderBy('updatedAt', descending: true);
 
-    late void Function(String participantField) scheduleRetry;
-    late void Function(String participantField) listenField;
-    late void Function() listenAdminGlobal;
-    late void Function() listenNotifications;
-    late void Function(String senderField) listenStartedMessagesField;
-
-    Future<List<String>> collectPagedConversationIds({
-      required Iterable<String?> initialConversationIds,
-      required Query<Map<String, dynamic>> baseQuery,
-      required QueryDocumentSnapshot<Map<String, dynamic>>? lastDoc,
-      required int maxPages,
-      required int pageSize,
-      required String? Function(QueryDocumentSnapshot<Map<String, dynamic>> doc)
-          extractConversationId,
-    }) async {
-      var mergedConversationIds = mergeConversationIdPages(
-        initialConversationIds,
-      );
-      if (lastDoc == null || maxPages <= 1) {
-        return mergedConversationIds;
-      }
-
-      var cursor = lastDoc;
-      var loadedPages = 1;
-      while (loadedPages < maxPages) {
-        final snapshot =
-            await baseQuery.startAfterDocument(cursor).limit(pageSize).get();
-
-        if (snapshot.docs.isEmpty) {
-          break;
-        }
-
-        mergedConversationIds = mergeConversationIdPages(
-          mergedConversationIds,
-          additionalPages: <Iterable<String?>>[
-            snapshot.docs.map(extractConversationId),
-          ],
-        );
-
-        loadedPages += 1;
-        if (snapshot.docs.length < pageSize) {
-          break;
-        }
-        cursor = snapshot.docs.last;
-      }
-
-      return mergedConversationIds;
-    }
-
-    Future<void> refreshConversationFallback(
-      String source,
-      Iterable<String?> rawConversationIds,
-    ) async {
-      try {
-        final conversationIds = mergeUniqueConversationIds(rawConversationIds);
-
-        if (conversationIds.isEmpty) {
-          docsByField[source] = const <ConversationSummary>[];
-          errorsByField.remove(source);
-          retryCountsByField[source] = 0;
-          emit();
-          return;
-        }
-
-        final snapshots = await Future.wait(
-          conversationIds.map((conversationId) async {
-            try {
-              return await FirebaseFirestore.instance
-                  .collection('conversations')
-                  .doc(conversationId)
-                  .get();
-            } catch (error) {
-              // Une conversation inaccessible ne doit pas casser tout le fallback.
-              if (kDebugMode) {
-                debugPrint(
-                  '[MessagesList] skip fallback conversation source=$source id=$conversationId error=$error',
-                );
-              }
-              return null;
-            }
-          }),
-        );
-
-        if (controller.isClosed) return;
-
-        docsByField[source] = snapshots
-            .whereType<DocumentSnapshot<Map<String, dynamic>>>()
-            .where((snapshot) => snapshot.exists)
-            .map((snapshot) {
-              final data = snapshot.data();
-              if (data == null) return null;
-              return ConversationSummary.fromMap(
-                snapshot.id,
-                Map<String, dynamic>.from(data),
-                assumedParticipants: <String>[userId],
-              );
-            })
-            .whereType<ConversationSummary>()
-            .where((conversation) => conversation.includesUser(userId))
+    late final StreamSubscription<QuerySnapshot<Map<String, dynamic>>>
+        subscription;
+    subscription = query.snapshots().listen(
+      (snapshot) {
+        final docs = snapshot.docs
+            .map(ConversationSummary.fromFirestore)
             .toList(growable: false);
-        errorsByField.remove(source);
-        retryCountsByField[source] = 0;
-        emit();
-      } catch (error) {
-        errorsByField[source] = error;
+        _appendAdminConversationLog(
+          'mode=$mode conversations_count=${docs.length}',
+        );
         if (kDebugMode) {
           debugPrint(
-            '[MessagesList] fallback error source=$source user=$userId error=$error',
+            '[MessagesList] mode=$mode conversations_count=${docs.length} user=$userId',
           );
         }
-        if (_isNonRetryableConversationSourceError(error)) {
-          docsByField[source] = const <ConversationSummary>[];
-          errorsByField.remove(source);
-          retryCountsByField[source] = 0;
-          _appendAdminConversationLog(
-            'Fallback $source desactive: erreur non recuperable',
+        if (!controller.isClosed) {
+          controller.add(
+            _ConversationQueryState(
+              docs: docs,
+              errorsByField: const <String, Object>{},
+              isLoading: false,
+            ),
           );
-          emit();
-          return;
         }
-        emit();
-        scheduleRetry(source);
-      }
-    }
-
-    Future<void> refreshNotificationFallback(
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
-    ) async {
-      final conversationIds = notificationDocs.length <
-              notificationsFallbackLiveLimit
-          ? mergeUniqueConversationIds(
-              notificationDocs.map(
-                (notificationDoc) =>
-                    _notificationConversationId(notificationDoc.data()),
-              ),
-            )
-          : await collectPagedConversationIds(
-              initialConversationIds: notificationDocs.map(
-                (notificationDoc) =>
-                    _notificationConversationId(notificationDoc.data()),
-              ),
-              baseQuery: FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('userId', isEqualTo: userId)
-                  .orderBy('createdAt', descending: true),
-              lastDoc: notificationDocs.isEmpty ? null : notificationDocs.last,
-              maxPages: notificationsFallbackMaxPages,
-              pageSize: notificationsFallbackLiveLimit,
-              extractConversationId: (notificationDoc) =>
-                  _notificationConversationId(notificationDoc.data()),
-            );
-
-      await refreshConversationFallback(
-        notificationsFallbackSource,
-        conversationIds,
-      );
-    }
-
-    listenField = (String participantField) {
-      _appendAdminConversationLog(
-          'Abonnement source participants: $participantField');
-      subscriptionsByField.remove(participantField)?.cancel();
-      final query = FirebaseFirestore.instance
-          .collection('conversations')
-          .where(participantField, arrayContains: userId)
-          .orderBy('lastMessageAt', descending: true)
-          .limit(500);
-      final subscription = query.snapshots().listen(
-        (snapshot) {
-          docsByField[participantField] = snapshot.docs
-              .map(ConversationSummary.fromFirestore)
-              .toList(growable: false);
-          errorsByField.remove(participantField);
-          retryCountsByField[participantField] = 0;
-          retryTimersByField.remove(participantField)?.cancel();
-          if (kDebugMode) {
-            debugPrint(
-              '[MessagesList] query field=$participantField docs=${snapshot.docs.length} user=$userId',
-            );
-          }
-          _appendAdminConversationLog(
-            'Source $participantField -> ${snapshot.docs.length} conversation(s)',
+      },
+      onError: (error, stackTrace) {
+        _appendAdminConversationLog('mode=$mode erreur=$error');
+        if (kDebugMode) {
+          debugPrint(
+            '[MessagesList] mode=$mode error user=$userId error=$error',
           );
-          emit();
-        },
-        onError: (error, stackTrace) {
-          errorsByField[participantField] = error;
-          if (kDebugMode) {
-            debugPrint(
-              '[MessagesList] query error field=$participantField user=$userId error=$error',
-            );
-          }
-          _appendAdminConversationLog(
-            'Erreur source $participantField: $error',
-          );
-          if (_isAdminViewer && _isPermissionDenied(error)) {
-            _appendAdminConversationLog(
-              'Source $participantField conservee en retry: permission-denied admin/debug',
-            );
-            emit();
-            scheduleRetry(participantField);
-            return;
-          }
-          if (_isNonRetryableConversationSourceError(error)) {
-            docsByField[participantField] = const <ConversationSummary>[];
-            errorsByField.remove(participantField);
-            retryCountsByField[participantField] = 0;
-            retryTimersByField.remove(participantField)?.cancel();
-            _appendAdminConversationLog(
-              'Source $participantField desactivee: erreur non recuperable',
-            );
-            emit();
-            return;
-          }
-          emit();
-          scheduleRetry(participantField);
-        },
-      );
-      subscriptionsByField[participantField] = subscription;
-    };
-
-    listenAdminGlobal = () {
-      _appendAdminConversationLog(
-        'Abonnement source admin globale: conversations.updatedAt limit=50',
-      );
-      subscriptionsByField.remove(adminGlobalSource)?.cancel();
-      final subscription = FirebaseFirestore.instance
-          .collection('conversations')
-          .orderBy('updatedAt', descending: true)
-          .limit(50)
-          .snapshots()
-          .listen(
-        (snapshot) {
-          docsByField[adminGlobalSource] = snapshot.docs
-              .map(ConversationSummary.fromFirestore)
-              .toList(growable: false);
-          errorsByField.remove(adminGlobalSource);
-          retryCountsByField[adminGlobalSource] = 0;
-          retryTimersByField.remove(adminGlobalSource)?.cancel();
-          _appendAdminConversationLog(
-            'Source admin globale -> ${snapshot.docs.length} conversation(s)',
-          );
-          if (kDebugMode) {
-            debugPrint(
-              '[MessagesList] admin global conversations docs=${snapshot.docs.length} user=$userId',
-            );
-          }
-          emit();
-        },
-        onError: (error, stackTrace) {
-          errorsByField[adminGlobalSource] = error;
-          _appendAdminConversationLog('Erreur source admin globale: $error');
-          if (kDebugMode) {
-            debugPrint(
-              '[MessagesList] admin global conversations error user=$userId error=$error',
-            );
-          }
-          if (_isAdminViewer && _isPermissionDenied(error)) {
-            _appendAdminConversationLog(
-              'Source admin globale conservee en retry: permission-denied admin/debug',
-            );
-            emit();
-            scheduleRetry(adminGlobalSource);
-            return;
-          }
-          if (_isNonRetryableConversationSourceError(error)) {
-            docsByField[adminGlobalSource] = const <ConversationSummary>[];
-            errorsByField.remove(adminGlobalSource);
-            retryCountsByField[adminGlobalSource] = 0;
-            retryTimersByField.remove(adminGlobalSource)?.cancel();
-            _appendAdminConversationLog(
-              'Source admin globale desactivee: erreur non recuperable',
-            );
-            emit();
-            return;
-          }
-          emit();
-          scheduleRetry(adminGlobalSource);
-        },
-      );
-      subscriptionsByField[adminGlobalSource] = subscription;
-    };
-
-    listenNotifications = () {
-      // ✅ Fallback notifications: one-shot get() au lieu d'un snapshots()
-      // permanent. Le flux canonique reste les subscriptions "participants"
-      // ci-dessus. Les erreurs récupérables sont reprises via scheduleRetry.
-      _appendAdminConversationLog('Chargement ponctuel fallback notifications');
-      subscriptionsByField.remove(notificationsFallbackSource)?.cancel();
-      unawaited(() async {
-        try {
-          final snapshot = await FirebaseFirestore.instance
-              .collection('notifications')
-              .where('userId', isEqualTo: userId)
-              .orderBy('createdAt', descending: true)
-              .limit(notificationsFallbackLiveLimit)
-              .get();
-          if (controller.isClosed) return;
-          retryTimersByField.remove(notificationsFallbackSource)?.cancel();
-          _appendAdminConversationLog(
-            'Notifications fallback -> ${snapshot.docs.length} notification(s) recues (get)',
-          );
-          await refreshNotificationFallback(snapshot.docs);
-        } catch (error) {
-          if (controller.isClosed) return;
-          errorsByField[notificationsFallbackSource] = error;
-          if (kDebugMode) {
-            debugPrint(
-              '[MessagesList] notifications get error user=$userId error=$error',
-            );
-          }
-          _appendAdminConversationLog('Erreur notifications fallback: $error');
-          if (_isNonRetryableConversationSourceError(error)) {
-            docsByField[notificationsFallbackSource] =
-                const <ConversationSummary>[];
-            errorsByField.remove(notificationsFallbackSource);
-            retryCountsByField[notificationsFallbackSource] = 0;
-            retryTimersByField.remove(notificationsFallbackSource)?.cancel();
-            _appendAdminConversationLog(
-              'Notifications fallback desactivees: erreur non recuperable',
-            );
-            emit();
-            return;
-          }
-          emit();
-          scheduleRetry(notificationsFallbackSource);
         }
-      }());
-    };
-
-    listenStartedMessagesField = (String senderField) {
-      final source = '$startedMessageFallbackSourcePrefix$senderField';
-      // ✅ Fallback messages démarrés: one-shot get() au lieu d'un
-      // collectionGroup('messages').snapshots(). Les subscriptions live
-      // multiples alourdissaient la page conversations sans apporter de
-      // valeur (les participants streams canoniques suffisent en live).
-      _appendAdminConversationLog(
-        'Chargement ponctuel fallback messages demarres: $senderField',
-      );
-      subscriptionsByField.remove(source)?.cancel();
-      const maxStartedMessages = 100;
-      final baseQuery = FirebaseFirestore.instance
-          .collectionGroup('messages')
-          .where(senderField, isEqualTo: userId)
-          .orderBy(FieldPath.documentId)
-          .limit(maxStartedMessages);
-      unawaited(() async {
-        try {
-          final snapshot = await FirebaseFirestore.instance
-              .collectionGroup('messages')
-              .where(senderField, isEqualTo: userId)
-              .orderBy(FieldPath.documentId)
-              .limit(startedMessageFallbackLiveLimit)
-              .get();
-          if (controller.isClosed) return;
-          retryTimersByField.remove(source)?.cancel();
-          _appendAdminConversationLog(
-            'Fallback $senderField -> ${snapshot.docs.length} message(s) source (get)',
+        if (!controller.isClosed) {
+          controller.add(
+            _ConversationQueryState(
+              docs: const <ConversationSummary>[],
+              errorsByField: <String, Object>{mode: error},
+              isLoading: false,
+            ),
           );
-          final conversationIds = snapshot.docs.length <
-                  startedMessageFallbackLiveLimit
-              ? mergeUniqueConversationIds(
-                  snapshot.docs.map(
-                    (messageDoc) => conversationIdFromMessageDocumentPath(
-                      messageDoc.reference.path,
-                    ),
-                  ),
-                )
-              : await collectPagedConversationIds(
-                  initialConversationIds: snapshot.docs.map(
-                    (messageDoc) => conversationIdFromMessageDocumentPath(
-                      messageDoc.reference.path,
-                    ),
-                  ),
-                  baseQuery: baseQuery,
-                  lastDoc: snapshot.docs.isEmpty ? null : snapshot.docs.last,
-                  maxPages: startedMessageFallbackMaxPages,
-                  pageSize: startedMessageFallbackLiveLimit,
-                  extractConversationId: (messageDoc) =>
-                      conversationIdFromMessageDocumentPath(
-                    messageDoc.reference.path,
-                  ),
-                );
-          await refreshConversationFallback(source, conversationIds);
-        } catch (error) {
-          if (controller.isClosed) return;
-          errorsByField[source] = error;
-          if (kDebugMode) {
-            debugPrint(
-              '[MessagesList] started messages get error field=$senderField user=$userId error=$error',
-            );
-          }
-          _appendAdminConversationLog('Erreur fallback $senderField: $error');
-          if (_isNonRetryableConversationSourceError(error)) {
-            docsByField[source] = const <ConversationSummary>[];
-            errorsByField.remove(source);
-            retryCountsByField[source] = 0;
-            retryTimersByField.remove(source)?.cancel();
-            _appendAdminConversationLog(
-              'Fallback $senderField desactive: erreur non recuperable',
-            );
-            emit();
-            return;
-          }
-          emit();
-          scheduleRetry(source);
         }
-      }());
-    };
-
-    scheduleRetry = (String participantField) {
-      retryTimersByField.remove(participantField)?.cancel();
-      final delay = retryDelayForField(participantField);
-      _appendAdminConversationLog(
-        'Retry programme pour $participantField dans ${delay.inSeconds}s',
-      );
-      retryTimersByField[participantField] = Timer(delay, () {
-        retryTimersByField.remove(participantField);
-        if (controller.isClosed) return;
-        if (participantField == adminGlobalSource) {
-          listenAdminGlobal();
-          return;
-        }
-        if (participantField == notificationsFallbackSource) {
-          listenNotifications();
-          return;
-        }
-        if (participantField.startsWith(startedMessageFallbackSourcePrefix)) {
-          listenStartedMessagesField(
-            participantField
-                .substring(startedMessageFallbackSourcePrefix.length),
-          );
-          return;
-        }
-        listenField(participantField);
-      });
-    };
-
-    for (final participantField in conversationParticipantQueryFieldAliases) {
-      listenField(participantField);
-    }
-    if (_isAdminViewer) {
-      listenAdminGlobal();
-    }
-    listenNotifications();
-    for (final senderField in sentMessageFieldAliases) {
-      listenStartedMessagesField(senderField);
-    }
+      },
+    );
 
     controller.onCancel = () async {
-      _appendAdminConversationLog(
-          'Arret du flux de chargement des conversations');
-      for (final timer in retryTimersByField.values) {
-        timer.cancel();
-      }
-      retryTimersByField.clear();
-      for (final subscription in subscriptionsByField.values) {
-        await subscription.cancel();
-      }
-      subscriptionsByField.clear();
+      _appendAdminConversationLog('mode=$mode arret_abonnement');
+      await subscription.cancel();
     };
 
     return controller.stream;
@@ -1272,13 +785,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       );
     }
     if (errorsByField.isNotEmpty && shouldExposeErrors) {
-      if (errorsByField.containsKey(conversationPrimaryParticipantField)) {
-        lines.add(
-            'La source principale participants est temporairement indisponible ; la page continue a tenter une recuperation via les alias legacy pendant la relance automatique.');
-      } else {
-        lines.add(
-            'Certaines sources Firestore sont temporairement indisponibles ; la liste affiche uniquement les conversations recuperables.');
-      }
+      lines.add(_isAdminViewer
+          ? 'Erreur de chargement des conversations admin. Verifiez les droits admin et les regles Firestore.'
+          : 'Erreur de chargement des conversations. Verifiez les droits utilisateur et le champ participantIds.');
       if (kDebugMode) {
         for (final entry in errorsByField.entries) {
           lines.add('${entry.key}: ${entry.value}');
@@ -1425,6 +934,30 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 _buildWatermark(),
                 _buildEmptyState(
                     'Connexion / inscription pour accéder à la messagerie.'),
+              ],
+            ),
+          );
+        }
+
+        if (!_adminStatusReady || _adminStatusUid != userId) {
+          return Scaffold(
+            backgroundColor: kMessagesPageBackground,
+            appBar: AppBar(
+              systemOverlayStyle: kMessagesStatusBarStyle,
+              backgroundColor: kPrestoOrange,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              centerTitle: true,
+              title: _buildMessagesAppBarTitle(),
+            ),
+            body: Stack(
+              children: [
+                _buildWatermark(),
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                  ),
+                ),
               ],
             ),
           );
