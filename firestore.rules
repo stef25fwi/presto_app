@@ -584,9 +584,9 @@ service cloud.firestore {
         allow get, list: if hasAppCheck() && (isAdmin()
           || isParentConversationParticipant()
           || hasParticipantAccess(resource.data));
-        allow create: if isSignedIn()
+        allow create: if hasAppCheck() && isSignedIn()
           && (isAdminClaim() || isParentConversationParticipant());
-        allow update, delete: if isAdminClaim();
+        allow update, delete: if hasAppCheck() && isAdminClaim();
       }
     }
 
