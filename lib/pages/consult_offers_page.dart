@@ -840,10 +840,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   bool _offerIsActive(Map<String, dynamic> data) {
-    return isVisibleInPublicBrowse(
-      data,
-      preferModernListingContract: true,
-    );
+    return isVisibleInPublicBrowse(data);
   }
 
   void _scheduleJobDoneOverlayRefresh(
@@ -2984,7 +2981,6 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       final data = doc.data();
       if (!isVisibleInPublicBrowse(
         data,
-        preferModernListingContract: true,
       )) {
         continue;
       }

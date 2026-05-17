@@ -107,6 +107,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           adminSource = 'users/${user.uid}';
         }
       }
+
+      if (!isAdmin) {
+        final adminUserDoc = await FirebaseFirestore.instance
+            .collection('adminUsers')
+            .doc(user.uid)
+            .get();
+        final data = adminUserDoc.data() ?? const <String, dynamic>{};
+        isAdmin = _hasAdminAccess(data) || _isEnabledAdminGrant(data);
+        if (isAdmin) {
+          adminSource = 'adminUsers/${user.uid}';
+        }
+      }
     } catch (error) {
       if (kDebugMode) {
         debugPrint(
@@ -156,6 +168,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         data['isAdmin'] == true ||
         data['superadmin'] == true ||
         data['superAdmin'] == true;
+  }
+
+  bool _isEnabledAdminGrant(Map<String, dynamic> data) {
+    if (data.isEmpty) return false;
+    if (data['enabled'] == false) return false;
+    final expiresAt = parseFirestoreDateTime(data['expiresAt']);
+    if (expiresAt != null && expiresAt.isBefore(DateTime.now())) {
+      return false;
+    }
+    return true;
   }
 
   Set<String> _rolesFromValue(dynamic value) {

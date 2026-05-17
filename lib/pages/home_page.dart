@@ -563,7 +563,6 @@ class _HomePageState extends State<HomePage>
           .where(
             (doc) => isVisibleInPublicBrowse(
               doc.data(),
-              preferModernListingContract: true,
             ),
           )
           .take(8)
