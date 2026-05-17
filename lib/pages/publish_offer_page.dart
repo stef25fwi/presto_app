@@ -45,7 +45,7 @@ import '../utils/friendly_snackbar.dart';
 import '../utils/runtime_action_logger.dart';
 import '../utils/recording_path_web.dart'
     if (dart.library.io) '../utils/recording_path_io.dart';
-import '../widgets/premium_ai_button.dart';
+import '../widgets/ai_publish_control.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/photo_selector_tile.dart';
 
@@ -1382,6 +1382,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void _handlePublishBudgetChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _budgetEditedByUser = true;
+  }
+
+  AiPublishState get _aiPublishState {
+    if (_isListening) return AiPublishState.recording;
+    if (_isAnalyzing) return AiPublishState.analyzing;
+    return AiPublishState.ready;
   }
 
   String? _normalizeDraftMissionDelay(String? rawUrgency) {
@@ -3152,104 +3158,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     showSuccessSnackBar(context, 'Aucun audio disponible');
   }
 
-  /// Construire le bouton d'enregistrement au micro avec indicateur visuel
-  Widget _buildMicRecordingButton() {
-    return PremiumAiButton(
-      onPressed: _stopMic,
-      label: 'Arrêter',
-      icon: Icons.stop_circle_rounded,
-      gradientColors: const [
-        Color(0xFFFF5A4F),
-        Color(0xFFE53935),
-      ],
-      shadowColor: const Color(0xFFE53935),
-    );
-  }
-
-  Widget _buildPublishAiStatusArea() {
-    final showCloudBadge = _useCloudStt && !kIsWeb;
-
-    if (_isListening) {
-      return Center(
-        key: const ValueKey('publish-ai-listening'),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE53935).withOpacity(0.08),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: const Color(0xFFE53935).withOpacity(0.24),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                showCloudBadge ? Icons.cloud_upload_rounded : Icons.mic_rounded,
-                size: 16,
-                color: const Color(0xFFE53935),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Enregistrement en cours',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFE53935),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_isAnalyzing) {
-      return Center(
-        key: const ValueKey('publish-ai-analyzing'),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: kPrestoBlue.withOpacity(0.06),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              showCloudBadge
-                  ? const Icon(Icons.cloud_sync, size: 16, color: kPrestoBlue)
-                  : SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(kPrestoBlue),
-                      ),
-                    ),
-              const SizedBox(width: 8),
-              Text(
-                showCloudBadge
-                    ? 'Transcription et analyse (Cloud)…'
-                    : 'Analyse en cours…',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: kPrestoBlue,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return const SizedBox(
-      key: ValueKey('publish-ai-idle'),
-      width: double.infinity,
-    );
-  }
-
   Future<void> _uploadAndTranscribe(String localPath) async {
     // Upload vers Firebase Storage puis appel de la Cloud Function.
     // Le traitement reste côté backend pour conserver les secrets serveur.
@@ -4132,56 +4040,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
               children: [
-                // Bouton Premium AI avec enregistrement audio
-                StreamBuilder<User?>(
-                  stream: _authOrNull?.authStateChanges(),
-                  initialData: _authOrNull?.currentUser,
-                  builder: (context, snapshot) {
-                    final signedInUser = snapshot.data;
-                    return Column(
-                      children: [
-                        Center(
-                          child: _isListening
-                              ? _buildMicRecordingButton()
-                              : PremiumAiButton(
-                                  onPressed:
-                                      _isAnalyzing || signedInUser == null
-                                          ? null
-                                          : _startMic,
-                                  label: 'Décrire mon besoin (IA)',
-                                ),
-                        ),
-                        if (!_isListening && signedInUser == null) ...[
-                          const SizedBox(height: 8),
-                          TextButton.icon(
-                            onPressed: () {
-                              unawaited(_ensureLoggedInForPublish());
-                            },
-                            icon: const Icon(Icons.login_rounded),
-                            label: const Text(
-                              'Connectez-vous pour utiliser la dictée IA',
-                            ),
-                          ),
-                        ],
-                      ],
-                    );
-                  },
+                const SizedBox(height: 6),
+                AiPublishControl(
+                  state: _aiPublishState,
+                  onStartRecording: _startMic,
+                  onStopRecording: _stopMic,
+                  onDiagnostic: _showPublishAiTraceDialog,
+                  onClear: _clearPublishAiTrace,
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 56,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: _buildPublishAiStatusArea(),
-                  ),
-                ),
-                if (_adminAudioRuntimeAccessState == 1) ...[
-                  const SizedBox(height: 8),
-                  _buildAdminAudioRuntimeIndicator(),
-                ],
-                _buildPublishAiTraceActions(),
                 const SizedBox(height: 16),
 
                 // TITRE
