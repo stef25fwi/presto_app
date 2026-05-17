@@ -15,7 +15,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
-import '../data/marketplace/listing_read_repository.dart';
 import '../main.dart'
     show
         CardShell,
@@ -71,8 +70,6 @@ class _Debouncer {
 
 class _ConsultOffersPageState extends State<ConsultOffersPage>
     with WidgetsBindingObserver {
-  final ListingReadRepository _listingReadRepository = ListingReadRepository();
-
   static const Color _offersBg = Colors.white;
   static const Color _offersNavy = Color(0xFF1E2554);
   static const Color _offersOrange = Color(0xFFFF7A00);
@@ -692,7 +689,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   List<Query<Map<String, dynamic>>> _buildCurrentListingsQueries({
     required int limit,
   }) {
-    return _listingReadRepository.buildBrowseQueries(
+    return buildMarketplaceListingsBrowseQueries(
       limit: limit,
       latestFirst: true,
       categoryId: _effectiveListingsCategoryId(),
@@ -711,16 +708,32 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     try {
       final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        _listingReadRepository.loadBrowsePublicListingDocs(
-          limit: limit,
-          latestFirst: true,
-          categoryId: _effectiveListingsCategoryId(),
-          cityId: _effectiveListingsCityId(),
+        loadMergedPublicOfferQueryVariants(
+          queries: _buildCurrentListingsQueries(limit: limit),
           source: 'consult_listings_warm',
         ),
       ];
+
+      if (kEnableLegacyPublicOffersBackfill) {
+        loads.add(
+          loadMergedPublicOfferQueryVariants(
+            queries: buildLatestPublicOffersQueryVariants(limit: limit),
+            source: 'consult_legacy_warm',
+          ),
+        );
+      }
+
       final results = await Future.wait(loads);
-      final merged = results[0];
+      final listings = results[0];
+        final legacy = results.length > 1
+          ? results[1]
+          : listings.isEmpty
+            ? await loadLegacyPublicOffersOnDemand(
+              limit: limit,
+              source: 'consult_legacy_warm_fallback',
+            )
+            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      final merged = mergeOfferDocsById(listings, legacy);
       final displayedCount = _buildDisplayedOfferDocs(merged).length;
 
       _offersWarmCache[key] = merged;
@@ -792,16 +805,35 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> loadOnce() async {
       final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        _listingReadRepository.loadBrowsePublicListingDocs(
-          limit: limit,
-          latestFirst: true,
-          categoryId: categoryId,
-          cityId: cityId,
+        loadMergedPublicOfferQueryVariants(
+          queries: buildMarketplaceListingsBrowseQueries(
+            limit: limit,
+            latestFirst: true,
+            categoryId: categoryId,
+            cityId: cityId,
+          ),
           source: 'consult_listings_fetch',
         ),
       ];
+      if (kEnableLegacyPublicOffersBackfill) {
+        loads.add(
+          loadMergedPublicOfferQueryVariants(
+            queries: buildLatestPublicOffersQueryVariants(limit: limit),
+            source: 'consult_legacy_fetch',
+          ),
+        );
+      }
       final results = await Future.wait(loads);
-      return results[0];
+      final listings = results[0];
+      final legacy = results.length > 1
+          ? results[1]
+          : listings.isEmpty
+              ? await loadLegacyPublicOffersOnDemand(
+                  limit: limit,
+                  source: 'consult_legacy_fetch_fallback',
+                )
+              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      return mergeOfferDocsById(listings, legacy);
     }
 
     return loadOnce().asStream();
@@ -2414,27 +2446,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     if (ok != true) return;
 
     try {
-      // Prod marketplace contract:
-      // l'UI ne modifie plus jamais offers legacy. Une annonce absente de
-      // listings doit être migrée avant modification.
+      // Essayer d'abord dans listings (marketplace), puis fallback offers (legacy)
       final listingsRef = FirebaseFirestore.instance
           .collection(kListingsCollection)
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
-      if (!listingsSnap.exists) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Cette annonce legacy doit être migrée avant modification.',
-              ),
-            ),
-          );
-        }
-        return;
-      }
-
-      await listingsRef.update({
+      final targetRef = listingsSnap.exists
+          ? listingsRef
+          : FirebaseFirestore.instance
+              .collection(kOffersCollection)
+              .doc(offerId);
+      await targetRef.update({
         'title': titleCtrl.text.trim(),
         'city': cityCtrl.text.trim(),
         'description': descCtrl.text.trim(),
@@ -2483,26 +2505,20 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           .collection(kListingsCollection)
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
-      if (!listingsSnap.exists) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Cette annonce legacy doit être migrée avant suppression.',
-              ),
-            ),
-          );
-        }
-        return;
+      if (listingsSnap.exists) {
+        final callable = prestoFirebaseFunctions.httpsCallable(
+          'deleteListing',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 30),
+          ),
+        );
+        await callable.call<dynamic>({'listingId': offerId});
+      } else {
+        await FirebaseFirestore.instance
+            .collection(kOffersCollection)
+            .doc(offerId)
+            .delete();
       }
-
-      final callable = prestoFirebaseFunctions.httpsCallable(
-        'deleteListing',
-        options: HttpsCallableOptions(
-          timeout: const Duration(seconds: 30),
-        ),
-      );
-      await callable.call<dynamic>({'listingId': offerId});
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2933,35 +2949,25 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadActiveOffers() async {
-    // Prod marketplace contract:
-    // listings est la source normale. offers legacy est un backfill lecture seule,
-    // désactivé en prod par kEnableLegacyPublicOffersBackfill.
+    // Charger depuis la collection listings (marketplace) et offers (legacy)
     final listingsCol =
         FirebaseFirestore.instance.collection(kListingsCollection);
+    final offersCol = FirebaseFirestore.instance.collection(kOffersCollection);
 
-    final futures = <Future<QuerySnapshot<Map<String, dynamic>>>>[
+    final results = await Future.wait([
       listingsCol
           .where('ownerId', isEqualTo: widget.userId)
           .where(publicListingsFilter())
           .get(),
-    ];
-
-    if (kEnableLegacyPublicOffersBackfill) {
-      final offersCol =
-          FirebaseFirestore.instance.collection(kOffersCollection);
-      futures.addAll([
-        offersCol
-            .where('uid', isEqualTo: widget.userId)
-            .where(publicOffersFilter())
-            .get(),
-        offersCol
-            .where('userId', isEqualTo: widget.userId)
-            .where(publicOffersFilter())
-            .get(),
-      ]);
-    }
-
-    final results = await Future.wait(futures);
+      offersCol
+          .where('uid', isEqualTo: widget.userId)
+          .where(publicOffersFilter())
+          .get(),
+      offersCol
+          .where('userId', isEqualTo: widget.userId)
+          .where(publicOffersFilter())
+          .get(),
+    ]);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final snap in results) {

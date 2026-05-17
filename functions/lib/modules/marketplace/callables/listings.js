@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = void 0;
+exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../../config/env");
@@ -45,6 +45,45 @@ function readListingOwnerId(data) {
         }
     }
     return "";
+}
+function sanitizeDraftPayload(rawDraft, ownerId) {
+    const allowedFields = [
+        "title",
+        "description",
+        "price",
+        "categoryId",
+        "cityId",
+        "media",
+        "status",
+        "phone",
+        "budgetType",
+        "missionDelay",
+        "isUrgent",
+        "subCategory",
+        "category",
+        "city",
+        "location",
+        "postalCode",
+        "cp",
+        "dept",
+        "region",
+        "cityCategoryKey",
+        "budgetValue",
+    ];
+    const sanitized = {
+        ownerId,
+        media: [],
+        status: "draft",
+    };
+    for (const field of allowedFields) {
+        if (Object.prototype.hasOwnProperty.call(rawDraft, field)) {
+            sanitized[field] = rawDraft[field];
+        }
+    }
+    sanitized.ownerId = ownerId;
+    sanitized.status = normalizeString(sanitized.status) || "draft";
+    sanitized.media = Array.isArray(sanitized.media) ? sanitized.media : [];
+    return sanitized;
 }
 function collectListingMediaStoragePaths(data) {
     const media = Array.isArray(data.media) ? data.media : [];
@@ -236,6 +275,58 @@ async function loadOwnerPublicIdentity(ownerId) {
     }
     return { displayName, avatarUrl, verified };
 }
+exports.createListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const ownerId = requireAuthUid(request);
+    const rawDraft = (request.data?.draft ?? {});
+    const draft = sanitizeDraftPayload(rawDraft, ownerId);
+    try {
+        (0, listings_1.validateListingDraftPayload)(draft, env_1.MARKETPLACE_MAX_MEDIA_COUNT);
+        const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
+        const draftRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).doc();
+        await draftRef.set({
+            ...draft,
+            createdAt: now,
+            updatedAt: now,
+        });
+        await (0, analytics_1.trackProductEventBackend)({
+            eventName: "listing_create_completed",
+            userId: ownerId,
+            listingId: draftRef.id,
+            params: {
+                category_id: normalizeString(draft.categoryId),
+                city_id: normalizeString(draft.cityId),
+                media_count: Array.isArray(draft.media) ? draft.media.length : 0,
+            },
+        });
+        return { ok: true, draftId: draftRef.id };
+    }
+    catch (error) {
+        throw (0, errors_1.toHttpsError)(error, "Unable to create listing draft");
+    }
+});
+exports.updateListingDraftMedia = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const ownerId = requireAuthUid(request);
+    const draftId = normalizeString(request.data?.draftId);
+    if (!draftId) {
+        throw new https_1.HttpsError("invalid-argument", "draftId is required");
+    }
+    try {
+        const media = (0, listings_1.validateListingMedia)(request.data?.media, env_1.MARKETPLACE_MAX_MEDIA_COUNT);
+        const draftSnap = await loadDraftSnapshot(draftId);
+        const draftData = (draftSnap.data() ?? {});
+        if (normalizeString(draftData.ownerId) !== ownerId) {
+            throw new https_1.HttpsError("permission-denied", "You do not own this draft");
+        }
+        await draftSnap.ref.set({
+            media,
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return { ok: true, draftId, mediaCount: media.length };
+    }
+    catch (error) {
+        throw (0, errors_1.toHttpsError)(error, "Unable to update listing draft media");
+    }
+});
 exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const ownerId = requireAuthUid(request);
     const draftId = normalizeString(request.data?.draftId);

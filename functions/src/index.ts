@@ -35,6 +35,8 @@ export {
 export { onListingPublished, onOfferCreated, onOfferUpdated } from "./modules/listings/triggers";
 export { enqueueExpiringListingEmails, enqueueFirstListingNotPublishedReminders } from "./modules/listings/scheduled";
 export {
+  createListingDraft,
+  updateListingDraftMedia,
   submitListingDraft,
   incrementListingView,
   deleteListing,

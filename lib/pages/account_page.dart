@@ -119,7 +119,8 @@ class _AccountPageState extends State<AccountPage> {
   String _profilePhoneCountryCode = '+33';
   String _profileAccountType = 'Particulier';
   StreamSubscription<User?>? _profileAuthSub;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileDocSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _profileDocSub;
   String? _activeProfileUid;
   String _profileEmail = '';
   String? _profilePhotoUrl;
@@ -871,8 +872,7 @@ class _AccountPageState extends State<AccountPage> {
       if (error.code == 'permission-denied' ||
           error.code == 'unauthenticated') {
         // Token may be stale — force one refresh and retry.
-        debugPrint(
-            '[Profile] Auth error, forcing token refresh: ${error.code}');
+        debugPrint('[Profile] Auth error, forcing token refresh: ${error.code}');
         await FirebaseAuth.instance.currentUser
             ?.getIdToken(true)
             .timeout(const Duration(seconds: 8));
@@ -893,8 +893,7 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<DocumentSnapshot<Map<String, dynamic>>?>
-      _fetchCachedUserProfileDocument(
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _fetchCachedUserProfileDocument(
     String uid,
   ) async {
     try {
@@ -1033,14 +1032,12 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _deriveImmediatePseudo(user);
-    if (pseudo.isNotEmpty &&
-        _canHydrateProfileField(_profilePseudoController)) {
+    if (pseudo.isNotEmpty && _canHydrateProfileField(_profilePseudoController)) {
       _profilePseudoController.text = pseudo;
     }
 
     final authPhone = user.phoneNumber?.trim() ?? '';
-    if (authPhone.isNotEmpty &&
-        _canHydrateProfileField(_profilePhoneController)) {
+    if (authPhone.isNotEmpty && _canHydrateProfileField(_profilePhoneController)) {
       _applyLoadedProfilePhone(authPhone);
     }
   }
@@ -1110,72 +1107,75 @@ class _AccountPageState extends State<AccountPage> {
     }));
 
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    _profileDocSub =
-        userRef.snapshots(includeMetadataChanges: true).listen((snapshot) {
-      if (!mounted || _activeProfileUid != uid) {
-        return;
-      }
-
-      final previousPseudo = _profilePseudoController.text.trim();
-      final previousCity = _profileCityController.text.trim();
-      final previousPhoneCountryCode = _profilePhoneCountryCode;
-      final previousPhone = _profilePhoneController.text.trim();
-      final previousFavoriteCategories = _favoriteCategories.toSet();
-      final previousSelectedFavoriteCategories =
-          _selectedFavoriteCategories.toSet();
-      final previousSelectedFavoriteSubcategories =
-          _selectedFavoriteSubcategories.toSet();
-      final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
-
-      setState(() {
-        _applyImmediateAuthProfile(user);
-        final data = snapshot.data();
-        if (data != null) {
-          _applyUserProfileDocument(
-            user,
-            data: data,
-            previousPseudo: previousPseudo,
-            previousCity: previousCity,
-            previousPhoneCountryCode: previousPhoneCountryCode,
-            previousPhone: previousPhone,
-            previousFavoriteCategories: previousFavoriteCategories,
-            previousSelectedFavoriteCategories:
-                previousSelectedFavoriteCategories,
-            previousSelectedFavoriteSubcategories:
-                previousSelectedFavoriteSubcategories,
-            previousDraftFavoriteSelections: previousDraftFavoriteSelections,
-          );
-          final hydratedEmail = _firstNonEmptyProfileValue(
-            data,
-            const ['email'],
-            fallbackValues: <String>[_profileEmail, user.email ?? ''],
-          );
-          if (hydratedEmail.isNotEmpty) {
-            _profileEmail = hydratedEmail;
+    _profileDocSub = userRef
+        .snapshots(includeMetadataChanges: true)
+        .listen((snapshot) {
+          if (!mounted || _activeProfileUid != uid) {
+            return;
           }
-          final hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
-          if (hydratedPhotoUrl.isNotEmpty) {
-            _profilePhotoUrl = hydratedPhotoUrl;
+
+          final previousPseudo = _profilePseudoController.text.trim();
+          final previousCity = _profileCityController.text.trim();
+          final previousPhoneCountryCode = _profilePhoneCountryCode;
+          final previousPhone = _profilePhoneController.text.trim();
+          final previousFavoriteCategories = _favoriteCategories.toSet();
+          final previousSelectedFavoriteCategories =
+              _selectedFavoriteCategories.toSet();
+          final previousSelectedFavoriteSubcategories =
+              _selectedFavoriteSubcategories.toSet();
+          final previousDraftFavoriteSelections =
+              _draftFavoriteSelections.toSet();
+
+          setState(() {
+            _applyImmediateAuthProfile(user);
+            final data = snapshot.data();
+            if (data != null) {
+              _applyUserProfileDocument(
+                user,
+                data: data,
+                previousPseudo: previousPseudo,
+                previousCity: previousCity,
+                previousPhoneCountryCode: previousPhoneCountryCode,
+                previousPhone: previousPhone,
+                previousFavoriteCategories: previousFavoriteCategories,
+                previousSelectedFavoriteCategories:
+                    previousSelectedFavoriteCategories,
+                previousSelectedFavoriteSubcategories:
+                    previousSelectedFavoriteSubcategories,
+                previousDraftFavoriteSelections:
+                    previousDraftFavoriteSelections,
+              );
+              final hydratedEmail = _firstNonEmptyProfileValue(
+                data,
+                const ['email'],
+                fallbackValues: <String>[_profileEmail, user.email ?? ''],
+              );
+              if (hydratedEmail.isNotEmpty) {
+                _profileEmail = hydratedEmail;
+              }
+              final hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+              if (hydratedPhotoUrl.isNotEmpty) {
+                _profilePhotoUrl = hydratedPhotoUrl;
+              }
+            }
+            _profileLoadError = false;
+            _profileLoaded = true;
+            _profileLoadRequested = true;
+            _profileSyncInProgress = false;
+            _lastMissingRequiredCount = _missingRequiredProfileFields().length;
+          });
+        }, onError: (Object error) {
+          if (!mounted || _activeProfileUid != uid) {
+            return;
           }
-        }
-        _profileLoadError = false;
-        _profileLoaded = true;
-        _profileLoadRequested = true;
-        _profileSyncInProgress = false;
-        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
-      });
-    }, onError: (Object error) {
-      if (!mounted || _activeProfileUid != uid) {
-        return;
-      }
-      debugPrint('[Profile] snapshot users/$uid failed: $error');
-      setState(() {
-        _profileLoadError = true;
-        _profileLoaded = true;
-        _profileLoadRequested = true;
-        _profileSyncInProgress = false;
-      });
-    });
+          debugPrint('[Profile] snapshot users/$uid failed: $error');
+          setState(() {
+            _profileLoadError = true;
+            _profileLoaded = true;
+            _profileLoadRequested = true;
+            _profileSyncInProgress = false;
+          });
+        });
   }
 
   void _applyUserProfileDocument(
@@ -1191,21 +1191,18 @@ class _AccountPageState extends State<AccountPage> {
     required Set<String> previousDraftFavoriteSelections,
   }) {
     if (data != null) {
-      final authDisplayName = user.displayName?.trim() ?? '';
-      final nextPseudo = authDisplayName.isNotEmpty
-          ? authDisplayName
-          : _firstNonEmptyProfileValue(
-              data,
-              const [
-                'displayName',
-                'pseudo',
-                'userName',
-                'user_name',
-                'name',
-                'fullName',
-              ],
-              fallbackValues: <String>[previousPseudo],
-            );
+      final nextPseudo = _firstNonEmptyProfileValue(
+        data,
+        const [
+          'pseudo',
+          'displayName',
+          'userName',
+          'user_name',
+          'name',
+          'fullName',
+        ],
+        fallbackValues: <String>[user.displayName ?? '', previousPseudo],
+      );
       if (_canHydrateProfileField(_profilePseudoController)) {
         _profilePseudoController.text = nextPseudo;
       }
@@ -1253,8 +1250,9 @@ class _AccountPageState extends State<AccountPage> {
           .map((e) => e.toString())
           .toList();
       final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
-      _favoriteCategories =
-          hasFavoriteCategoriesKey ? favs.toSet() : previousFavoriteCategories;
+      _favoriteCategories = hasFavoriteCategoriesKey
+          ? favs.toSet()
+          : previousFavoriteCategories;
       _draftFavoriteSelections = hasFavoriteCategoriesKey
           ? _favoriteCategories.toSet()
           : previousDraftFavoriteSelections;
@@ -1601,9 +1599,7 @@ class _AccountPageState extends State<AccountPage> {
     // Update Auth display name (best effort).
     if (pseudo.isNotEmpty) {
       try {
-        await user
-            .updateDisplayName(pseudo)
-            .timeout(const Duration(seconds: 5));
+        await user.updateDisplayName(pseudo).timeout(const Duration(seconds: 5));
         await user.reload().timeout(const Duration(seconds: 5));
       } catch (e) {
         debugPrint('[ProfileSave] displayName update failed (ignored): $e');
@@ -2098,8 +2094,9 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _profilePseudoController.text.trim();
-    final displayName =
-        pseudo.isNotEmpty ? pseudo : _deriveImmediatePseudo(user);
+    final displayName = pseudo.isNotEmpty
+        ? pseudo
+        : _deriveImmediatePseudo(user);
     final visibleEmail = _profileEmail.trim().isNotEmpty
         ? _profileEmail.trim()
         : (user.email ?? '');

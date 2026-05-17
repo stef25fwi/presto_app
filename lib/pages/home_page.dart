@@ -13,7 +13,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../constants.dart';
-import '../data/marketplace/listing_read_repository.dart';
 import '../features/offers/public_offers_read_diagnostics.dart';
 import '../utils/friendly_snackbar.dart';
 import '../dev/seed_offers.dart' hide kOffersCollection;
@@ -73,8 +72,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  final ListingReadRepository _listingReadRepository = ListingReadRepository();
-
   static const List<_HomeCategoryShortcut> _homeCategoryShortcuts = [
     _HomeCategoryShortcut(
       icon: Icons.restaurant_outlined,
@@ -538,13 +535,30 @@ class _HomePageState extends State<HomePage>
       // so client-side sorting is unnecessary.
       final loaders =
           <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        _listingReadRepository.loadLatestPublicListingDocs(
-          limit: 16,
+        loadMergedPublicOfferQueryVariants(
+          queries: buildLatestPublicListingsQueryVariants(limit: 16),
           source: 'home_latest_offers_listings',
         ),
       ];
+      if (kEnableLegacyPublicOffersBackfill) {
+        loaders.add(
+          loadMergedPublicOfferQueryVariants(
+            queries: buildLatestPublicOffersQueryVariants(limit: 16),
+            source: 'home_latest_offers_legacy',
+          ),
+        );
+      }
       final results = await Future.wait(loaders);
-      final mergedAll = results[0].toList();
+      final listings = results[0];
+        final legacy = results.length > 1
+          ? results[1]
+          : listings.isEmpty
+            ? await loadLegacyPublicOffersOnDemand(
+              limit: 16,
+              source: 'home_latest_offers_legacy_fallback',
+            )
+            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      final mergedAll = mergeOfferDocsById(listings, legacy).toList();
       final merged = mergedAll
           .where(
             (doc) => isVisibleInPublicBrowse(
@@ -2143,20 +2157,13 @@ class OfferDeepLinkPage extends StatelessWidget {
       }
     }
 
-    // Prod marketplace contract:
-    // Toujours préférer listings. La route /offers/{id} reste uniquement
-    // une URL publique/backward-compatible, pas une preuve de collection Firestore.
-    final listingPayload = await loadDocument('listings', isMarketplace: true);
-    if (listingPayload != null) {
-      return listingPayload;
+    if (preferMarketplace) {
+      return await loadDocument('listings', isMarketplace: true) ??
+          await loadDocument('offers', isMarketplace: false);
     }
 
-    // Lecture legacy strictement contrôlée par flag de migration.
-    if (kEnableLegacyPublicOffersBackfill) {
-      return await loadDocument('offers', isMarketplace: false);
-    }
-
-    return null;
+    return await loadDocument('offers', isMarketplace: false) ??
+        await loadDocument('listings', isMarketplace: true);
   }
 
   @override
