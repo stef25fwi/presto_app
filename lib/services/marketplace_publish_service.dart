@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../core/firebase_contract.dart';
 import '../constants/validation_constants.dart';
 import '../data/marketplace/listing_read_repository.dart';
 import '../data/marketplace/listing_repository.dart';
@@ -43,6 +44,22 @@ class MarketplacePublishService {
   final FirebaseStorage? _storageOverride;
   FirebaseStorage get _storage => _storageOverride ?? FirebaseStorage.instance;
   final MarketplaceHumanVerification _verification;
+
+  @visibleForTesting
+  static String buildRawPhotoStoragePathForTest({
+    required String uid,
+    required String draftId,
+    required int index,
+    required String extension,
+    int? timestampMs,
+  }) {
+    final effectiveTimestamp = timestampMs ?? DateTime.now().millisecondsSinceEpoch;
+    return StoragePaths.listingDraftRaw(
+      uid: uid,
+      draftId: draftId,
+      fileName: '${effectiveTimestamp}_$index.$extension',
+    );
+  }
 
   String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {
     final user = currentUser ?? FirebaseAuth.instance.currentUser;
@@ -179,6 +196,7 @@ class MarketplacePublishService {
 
   Future<List<ListingMediaInput>> _uploadPhotos({
     required String uid,
+    required String draftId,
     required List<XFile> photos,
   }) async {
     final media = <ListingMediaInput>[];
@@ -187,7 +205,13 @@ class MarketplacePublishService {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final extension = _storageExtension(photo);
       final contentType = _storageContentType(photo);
-      final rawPath = 'offers_raw/$uid/${timestamp}_$index.$extension';
+      final rawPath = buildRawPhotoStoragePathForTest(
+        uid: uid,
+        draftId: draftId,
+        index: index,
+        extension: extension,
+        timestampMs: timestamp,
+      );
 
       final ref = _storage.ref().child(rawPath);
       final bytes = await photo.readAsBytes();
@@ -366,7 +390,7 @@ class MarketplacePublishService {
     // 2. Upload les photos en référençant le draftId
     final media = photos.isEmpty
         ? const <ListingMediaInput>[]
-        : await _uploadPhotos(uid: ownerId, photos: photos);
+      : await _uploadPhotos(uid: ownerId, draftId: draftId, photos: photos);
 
     try {
       // 3. Mettre à jour le draft avec les media si nécessaire

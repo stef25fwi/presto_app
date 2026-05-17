@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -959,67 +960,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     try {
-      if (data.isMarketplace) {
-        final active = await _favoriteRepository.toggleFavorite(offerId);
-        logRuntimeAction(
-          area: 'favorites',
-          action: 'toggle-success',
-          details: <String, Object?>{
-            'offerId': offerId,
-            'active': active,
-            'source': 'marketplace',
-          },
-        );
-        if (!context.mounted) return;
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-              active
-                  ? 'Annonce ajoutée aux favoris.'
-                  : 'Annonce retirée des favoris.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      // Annonce legacy (collection 'offers') : mise à jour des 3 emplacements
-      final fs = FirebaseFirestore.instance;
-      final userRef = fs.collection('users').doc(uid);
-      final batch = fs.batch();
-
-      batch.set(
-        userRef,
-        {
-          'favoriteOfferIds': isFavorite
-              ? FieldValue.arrayRemove([offerId])
-              : FieldValue.arrayUnion([offerId]),
-          'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-
-      if (isFavorite) {
-        batch.delete(userRef.collection('favoriteOffers').doc(offerId));
-        // Nettoyage best-effort de la collection favorites top-level
-        batch.delete(fs.collection('favorites').doc('${uid}__$offerId'));
-      } else {
-        batch.set(
-          userRef.collection('favoriteOffers').doc(offerId),
-          _buildFavoriteOfferPayload(data),
-          SetOptions(merge: true),
-        );
-      }
-
-      await batch.commit();
+      final active = await _favoriteRepository.toggleFavorite(offerId);
 
       logRuntimeAction(
         area: 'favorites',
         action: 'toggle-success',
         details: <String, Object?>{
           'offerId': offerId,
-          'active': !isFavorite,
-          'source': 'legacy-user-doc',
+          'active': active,
+          'source': data.isMarketplace ? 'marketplace' : 'canonical-callable',
         },
       );
 
@@ -1027,9 +976,32 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       messenger?.showSnackBar(
         SnackBar(
           content: Text(
-            isFavorite
-                ? 'Annonce retirée des favoris.'
-                : 'Annonce ajoutée aux favoris.',
+            active
+                ? 'Annonce ajoutée aux favoris.'
+                : 'Annonce retirée des favoris.',
+          ),
+        ),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'toggle-failure',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+          'code': e.code,
+        },
+      );
+      if (!context.mounted) return;
+      final isLegacyUnavailable = !data.isMarketplace &&
+          (e.code == 'not-found' || e.code == 'failed-precondition');
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isLegacyUnavailable
+                ? 'Cette annonce legacy n\'a pas encore ete migree vers Marketplace. Les favoris ne sont disponibles que sur les listings canoniques.'
+                : 'Erreur lors de la mise à jour du favori : $e',
           ),
         ),
       );

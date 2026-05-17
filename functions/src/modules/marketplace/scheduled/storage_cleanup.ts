@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { PROJECT_REGION } from "../../../config/env";
 import { db } from "../../../core/firestore";
-import { COLLECTIONS } from "../../../shared/constants";
+import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../../shared/constants";
 import { logger } from "firebase-functions";
 
 function collectMediaStoragePaths(data: Record<string, unknown>): string[] {
@@ -17,8 +17,8 @@ async function loadReferencedRawStoragePaths(): Promise<Set<string>> {
   const referenced = new Set<string>();
   const snapshots = await Promise.all([
     db.collection(COLLECTIONS.listings).limit(1000).get(),
-    db.collection(COLLECTIONS.listingDraftsV2).limit(1000).get(),
     db.collection(COLLECTIONS.listingDrafts).limit(1000).get(),
+    db.collection(LEGACY_COLLECTIONS.listingDrafts).limit(1000).get(),
   ]);
 
   for (const snapshot of snapshots) {

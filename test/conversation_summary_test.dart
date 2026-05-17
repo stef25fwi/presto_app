@@ -51,4 +51,19 @@ void main() {
     expect(merged.messageCount, 1);
     expect(merged.titleFor('buyer_1'), 'Vendeur');
   });
+
+  test('lit les champs listingId et listingTitle canoniques', () {
+    final summary = ConversationSummary.fromMap(
+      'conversation_456',
+      <String, dynamic>{
+        'participantIds': <String>['buyer_1', 'seller_1'],
+        'listingId': 'listing_456',
+        'listingTitle': 'Montage de cuisine',
+      },
+    );
+
+    expect(summary.offerId, 'listing_456');
+    expect(summary.offerTitle, 'Montage de cuisine');
+    expect(summary.participants, <String>['buyer_1', 'seller_1']);
+  });
 }

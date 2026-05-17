@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/user_profile_bootstrap_service.dart';
 
@@ -61,6 +63,25 @@ void main() {
         () => UserProfileBootstrapService.retryBackoffForAttemptForTest(-1),
         throwsArgumentError,
       );
+    });
+
+    test('sync profil cible users/{uid}', () {
+      expect(
+        UserProfileBootstrapService.userDocumentPathForTest('uid-123'),
+        'users/uid-123',
+      );
+    });
+
+    test('sync profil ne reference plus profiles ni user_profiles', () async {
+      final source = await File(
+        'lib/services/user_profile_bootstrap_service.dart',
+      ).readAsString();
+
+      expect(source.contains("collection('profiles')"), isFalse);
+      expect(source.contains('collection("profiles")'), isFalse);
+      expect(source.contains("collection('user_profiles')"), isFalse);
+      expect(source.contains('collection("user_profiles")'), isFalse);
+      expect(source.contains("users/"), isTrue);
     });
   });
 }

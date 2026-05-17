@@ -255,20 +255,24 @@ export const enqueueReactivation30DaysEmails = onSchedule("every day 09:30", asy
 });
 
 async function countRecentPublishedListingsForCity(city: string, sinceMs: number): Promise<number> {
-  const [listingsSnap, offersSnap] = await Promise.all([
-    db.collection(COLLECTIONS.listings).where("city", "==", city).limit(100).get(),
-    db.collection(COLLECTIONS.offers).where("city", "==", city).limit(100).get(),
-  ]);
+  const listingsSnap = await db.collection(COLLECTIONS.listings).where("city", "==", city).limit(100).get();
 
-  const matches = [...listingsSnap.docs, ...offersSnap.docs].filter((doc) => {
-    const data = doc.data() as Record<string, unknown>;
+  return countRecentPublishedListingRecords(
+    listingsSnap.docs.map((doc) => doc.data() as Record<string, unknown>),
+    sinceMs,
+  );
+}
+
+export function countRecentPublishedListingRecords(
+  records: Record<string, unknown>[],
+  sinceMs: number,
+): number {
+  return records.filter((data) => {
     const status = String(data.status || "").trim().toLowerCase();
     if (status !== "published" && status !== "active") return false;
     const publishedAt = readTimestampMs(data.published_at ?? data.publishedAt ?? data.created_at ?? data.createdAt);
     return publishedAt >= sinceMs;
-  });
-
-  return matches.length;
+  }).length;
 }
 
 export const enqueueNearbyNewListingsEmails = onSchedule("every day 08:30", async () => {

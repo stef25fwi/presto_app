@@ -63,38 +63,32 @@ service firebase.storage {
 
     match /listingDrafts/{uid}/{draftId}/{fileName} {
       allow write: if hasAppCheck() && isSignedIn() && uid == request.auth.uid && isImageUpload();
-      allow read: if isSignedIn() && uid == request.auth.uid;
+      allow read: if hasAppCheck() && isSignedIn() && uid == request.auth.uid;
     }
 
     match /listings/{uid}/{listingId}/{fileName} {
       allow write: if false;
-      allow read: if (isSignedIn() && uid == request.auth.uid)
+      allow read: if (hasAppCheck() && isSignedIn() && uid == request.auth.uid)
         || isPublicListingMedia(listingId)
         || isMarketplaceModerator();
     }
 
-    // ✅ [AUTORISÉ] Upload photos d'offres brutes — traitement serveur (resize + filigrane)
+    // LEGACY RAW MEDIA - READ-ONLY / MIGRATION ONLY.
     match /offers_raw/{uid}/{file} {
-      allow write: if hasAppCheck()
-        && request.auth != null
-        && request.auth.uid == uid
-        && file.matches('[a-zA-Z0-9_\\-\\.]{1,128}')
-        && request.resource != null
-        && request.resource.contentType.matches('image/.*')
-        && request.resource.size < 15 * 1024 * 1024;
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+      allow read: if hasAppCheck() && request.auth != null && request.auth.uid == uid;
     }
 
-    // ⛔ [REFUSÉ] Photos d'offres finales — écriture server-only via Admin SDK
+    // LEGACY FINAL MEDIA - READ-ONLY / MIGRATION ONLY.
     match /offers/{uid}/{file} {
-      allow write: if false; // ⛔ server-only
-      allow read: if request.auth != null;
+      allow write: if false;
+      allow read: if hasAppCheck() && ((request.auth != null && request.auth.uid == uid) || isMarketplaceModerator());
     }
 
-    // ⛔ [REFUSÉ] Photos d'offres (chemin legacy) — écriture server-only
+    // LEGACY FINAL MEDIA - READ-ONLY / MIGRATION ONLY.
     match /offers/{file} {
       allow write: if false;
-      allow read: if request.auth != null;
+      allow read: if hasAppCheck() && isMarketplaceModerator();
     }
 
     // ✅ [AUTORISÉ] MicroIA STT — upload audio par l'utilisateur

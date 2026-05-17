@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.enqueueNearbyNewListingsEmails = exports.enqueueReactivation30DaysEmails = exports.enqueueProfileIncompleteReminderEmails = exports.enqueueMarketingOnboardingEmails = void 0;
+exports.countRecentPublishedListingRecords = countRecentPublishedListingRecords;
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
@@ -235,19 +236,17 @@ exports.enqueueReactivation30DaysEmails = (0, scheduler_1.onSchedule)("every day
     await processReactivation30Days(Date.now());
 });
 async function countRecentPublishedListingsForCity(city, sinceMs) {
-    const [listingsSnap, offersSnap] = await Promise.all([
-        firestore_1.db.collection(constants_1.COLLECTIONS.listings).where("city", "==", city).limit(100).get(),
-        firestore_1.db.collection(constants_1.COLLECTIONS.offers).where("city", "==", city).limit(100).get(),
-    ]);
-    const matches = [...listingsSnap.docs, ...offersSnap.docs].filter((doc) => {
-        const data = doc.data();
+    const listingsSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.listings).where("city", "==", city).limit(100).get();
+    return countRecentPublishedListingRecords(listingsSnap.docs.map((doc) => doc.data()), sinceMs);
+}
+function countRecentPublishedListingRecords(records, sinceMs) {
+    return records.filter((data) => {
         const status = String(data.status || "").trim().toLowerCase();
         if (status !== "published" && status !== "active")
             return false;
         const publishedAt = readTimestampMs(data.published_at ?? data.publishedAt ?? data.created_at ?? data.createdAt);
         return publishedAt >= sinceMs;
-    });
-    return matches.length;
+    }).length;
 }
 exports.enqueueNearbyNewListingsEmails = (0, scheduler_1.onSchedule)("every day 08:30", async () => {
     const now = Date.now();

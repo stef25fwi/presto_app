@@ -1,5 +1,5 @@
 import { db } from "../../../core/firestore";
-import { COLLECTIONS } from "../../../shared/constants";
+import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../../shared/constants";
 import { DomainEventPayload } from "../../../types/events";
 
 export function buildBillingInvoiceEnrichment(
@@ -40,6 +40,30 @@ export function buildSubscriptionEnrichment(
   return extra;
 }
 
+export function buildListingLikeEnrichment({
+  sourceCollection,
+  sourceId,
+  source,
+  payload,
+  fallbackCity,
+}: {
+  sourceCollection: string;
+  sourceId: string;
+  source: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  fallbackCity?: unknown;
+}): Record<string, unknown> {
+  const extra: Record<string, unknown> = {};
+  if (!payload.listingTitle) extra.listingTitle = String(source.title ?? "");
+  if (!payload.listingUrl) {
+    extra.listingUrl = sourceCollection === COLLECTIONS.listings ?
+      `https://presto.app/listings/${sourceId}` :
+      `https://presto.app/offers/${sourceId}`;
+  }
+  if (!payload.city) extra.city = String(source.city ?? fallbackCity ?? "");
+  return extra;
+}
+
 export async function enrichEventPayload(event: DomainEventPayload): Promise<DomainEventPayload> {
   const extra: Record<string, unknown> = { enriched_at: Date.now() };
 
@@ -65,10 +89,14 @@ export async function enrichEventPayload(event: DomainEventPayload): Promise<Dom
       const sourceDoc = await db.collection(event.source_collection).doc(event.source_id).get();
       if (sourceDoc.exists) {
         const s = sourceDoc.data() ?? {};
-        if (event.source_collection === COLLECTIONS.listings || event.source_collection === COLLECTIONS.offers) {
-          if (!event.payload.listingTitle) extra.listingTitle = String(s.title ?? "");
-          if (!event.payload.listingUrl) extra.listingUrl = `https://presto.app/offers/${event.source_id}`;
-          if (!event.payload.city) extra.city = String(s.city ?? extra.city ?? "");
+        if (event.source_collection === COLLECTIONS.listings || event.source_collection === LEGACY_COLLECTIONS.offers) {
+          Object.assign(extra, buildListingLikeEnrichment({
+            sourceCollection: event.source_collection,
+            sourceId: event.source_id,
+            source: s,
+            payload: event.payload,
+            fallbackCity: extra.city,
+          }));
         } else if (event.source_collection === COLLECTIONS.conversations) {
           if (!event.payload.conversationUrl) extra.conversationUrl = `https://presto.app/messages/${event.source_id}`;
           if (!event.payload.listingTitle) extra.listingTitle = String(s.offerTitle ?? s.listingTitle ?? s.title ?? "");
