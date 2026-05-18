@@ -7,6 +7,8 @@
 
   const prodHosts = new Set([
     'ilipresto.fr',
+    'presto-app-74abe.web.app',
+    'presto-app-74abe.firebaseapp.com',
   ]);
 
   const isLocalHost =
