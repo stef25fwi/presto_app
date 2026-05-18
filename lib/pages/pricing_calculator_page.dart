@@ -131,9 +131,6 @@ class _ModeSelectionPage extends StatefulWidget {
 class _ModeSelectionPageState extends State<_ModeSelectionPage> {
   PricingMode _mode = PricingMode.express;
 
-  _ModeOption get _selectedOption =>
-      _pricingModes.firstWhere((option) => option.mode == _mode);
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,47 +140,43 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
         showBack: false,
       ),
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 6),
-              const Text(
-                'Calculatrice de Prix Artisan',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+          children: [
+            const SizedBox(height: 6),
+            const Text(
+              'Calculatrice de Prix Artisan',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 14),
+            ..._pricingModes.map(
+              (option) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ModeCard(
+                  option: option,
+                  selected: _mode == option.mode,
+                  onTap: () => setState(() => _mode = option.mode),
                 ),
               ),
-              const SizedBox(height: 14),
-              ..._pricingModes.map(
-                (option) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ModeCard(
-                    option: option,
-                    selected: _mode == option.mode,
-                    onTap: () => setState(() => _mode = option.mode),
+            ),
+            const SizedBox(height: 12),
+            _PrestoPrimaryButton(
+              icon: Icons.play_arrow_rounded,
+              text: 'Commencer',
+              background: kPrestoOrange,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => _ExpressFormPage(mode: _mode),
                   ),
-                ),
-              ),
-              _ModeComparisonCard(selectedMode: _selectedOption),
-              const Spacer(),
-              _PrestoPrimaryButton(
-                icon: Icons.play_arrow_rounded,
-                text: 'Commencer',
-                background: kPrestoOrange,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => _ExpressFormPage(mode: _mode),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-            ],
-          ),
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+          ],
         ),
       ),
     );
@@ -321,207 +314,6 @@ class _ModeMetaChip extends StatelessWidget {
           fontSize: 11.5,
           fontWeight: FontWeight.w700,
           color: accent,
-        ),
-      ),
-    );
-  }
-}
-
-class _ModeComparisonCard extends StatelessWidget {
-  const _ModeComparisonCard({required this.selectedMode});
-
-  final _ModeOption selectedMode;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x11000000),
-            blurRadius: 16,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: selectedMode.accent.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.balance_rounded,
-                  color: selectedMode.accent,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Comparer les 3 modes',
-                      style: kPrestoCardTitleStyle.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Le mode sélectionné est mis en avant pour t’aider à choisir vite.',
-                      style: kPrestoMetaTextStyle.copyWith(
-                        fontSize: 12.5,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ..._pricingModes.map(
-            (option) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ModeComparisonRow(
-                option: option,
-                highlighted: option.mode == selectedMode.mode,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeComparisonRow extends StatelessWidget {
-  const _ModeComparisonRow({
-    required this.option,
-    required this.highlighted,
-  });
-
-  final _ModeOption option;
-  final bool highlighted;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: highlighted ? option.accent.withOpacity(0.08) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: highlighted ? option.accent.withOpacity(0.45) : const Color(0xFFE5E7EB),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  option.title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              if (highlighted)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: option.accent,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Text(
-                    'Sélectionné',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ComparisonMetric(label: 'Temps', value: option.timeLabel),
-              _ComparisonMetric(label: 'Saisie', value: option.fieldsLabel),
-              _ComparisonMetric(label: 'Usage', value: option.bestFor),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            option.highlights.join(' • '),
-            style: const TextStyle(
-              fontSize: 12.5,
-              height: 1.45,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonMetric extends StatelessWidget {
-  const _ComparisonMetric({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(color: Colors.black87),
-          children: [
-            TextSpan(
-              text: '$label : ',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            TextSpan(
-              text: value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );
