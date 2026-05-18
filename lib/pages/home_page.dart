@@ -1301,39 +1301,46 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
+    // Capture the full MediaQuery so child pages can still detect keyboard.
+    final mq = MediaQuery.of(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          resizeToAvoidBottomInset: false,
-          extendBody: false,
-          backgroundColor: Colors.white,
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: [
-              _buildHomeContent(),
-              ConsultOffersPage(
-                key: ValueKey<String>(
-                  'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                ),
-                onScroll: _onPageScroll,
-                categoryFilter: _consultCategoryFilter,
-                searchQuery: _consultSearchQuery,
+        // Strip viewInsets from the Scaffold so the bottomNavigationBar is
+        // never pushed up by the software keyboard. The original MediaQuery
+        // is restored inside the body so child pages still resize correctly.
+        child: MediaQuery(
+          data: mq.copyWith(viewInsets: EdgeInsets.zero),
+          child: Scaffold(
+            resizeToAvoidBottomInset: false,
+            extendBody: false,
+            backgroundColor: Colors.white,
+            body: MediaQuery(
+              data: mq,
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  _buildHomeContent(),
+                  ConsultOffersPage(
+                    key: ValueKey<String>(
+                      'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
+                    ),
+                    onScroll: _onPageScroll,
+                    categoryFilter: _consultCategoryFilter,
+                    searchQuery: _consultSearchQuery,
+                  ),
+                  PublishOfferPage(onScroll: _onPageScroll),
+                  MessagesPageV2(
+                    initialConversationId: widget.initialMessagesConversationId,
+                    initialDraftText: widget.initialMessagesDraftText,
+                  ),
+                  const AccountPage(),
+                ],
               ),
-              PublishOfferPage(onScroll: _onPageScroll),
-              MessagesPageV2(
-                initialConversationId: widget.initialMessagesConversationId,
-                initialDraftText: widget.initialMessagesDraftText,
-              ),
-              const AccountPage(),
-            ],
-          ),
-          bottomNavigationBar: MediaQuery.removeViewInsets(
-            removeBottom: true,
-            context: context,
-            child: Container(
+            ),
+            bottomNavigationBar: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
