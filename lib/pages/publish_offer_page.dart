@@ -2329,6 +2329,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (trimmed == 'reCAPTCHA assessment rejected the listing submission') {
       return 'La vérification anti-abus a échoué. Réessaie dans quelques secondes.';
     }
+    if (trimmed ==
+        'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.') {
+      return 'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.';
+    }
     if (trimmed == 'Authentication required.' || trimmed == 'unauthenticated') {
       return 'Connecte-toi pour utiliser la dictée.';
     }
