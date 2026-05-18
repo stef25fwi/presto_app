@@ -38,6 +38,7 @@
     (function () {
       const host = window.location.hostname.toLowerCase();
       const redirectHosts = new Set([
+        'ilipresto.fr',
         'www.ilipresto.fr',
         'presto-app-74abe.firebaseapp.com',
         'presto-app-74abe.web.app',
@@ -49,7 +50,7 @@
 
       const canonicalUrl = new URL(window.location.href);
       canonicalUrl.protocol = 'https:';
-      canonicalUrl.host = 'ilipresto.fr';
+      canonicalUrl.host = 'presto-app-74abe.web.app';
 
       if (canonicalUrl.toString() !== window.location.href) {
         window.location.replace(canonicalUrl.toString());
