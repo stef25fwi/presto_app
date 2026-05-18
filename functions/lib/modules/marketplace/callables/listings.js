@@ -20,6 +20,7 @@ const analytics_1 = require("../services/analytics");
 const media_1 = require("./media");
 const moderation_1 = require("../services/moderation");
 const recaptcha_1 = require("../services/recaptcha");
+const recaptcha_2 = require("../services/recaptcha");
 const errors_1 = require("../services/errors");
 const listings_1 = require("../validators/listings");
 function requireAuthUid(request) {
@@ -363,8 +364,17 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
         expectedAction: "listing_submit",
         userId: ownerId,
     });
-    if (!recaptcha.allowed) {
+    if ((0, recaptcha_2.shouldRejectListingSubmissionForRecaptcha)(recaptcha)) {
         throw new https_1.HttpsError("permission-denied", "reCAPTCHA assessment rejected the listing submission");
+    }
+    if (!recaptcha.allowed) {
+        logger_1.logger.warn("marketplace_listing_submit_low_recaptcha_score", {
+            ownerId,
+            draftId,
+            score: recaptcha.score,
+            reasons: recaptcha.reasons,
+            action: recaptcha.action,
+        });
     }
     try {
         const config = await (0, moderation_1.loadModerationConfig)();

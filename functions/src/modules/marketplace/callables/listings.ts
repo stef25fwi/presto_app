@@ -14,6 +14,7 @@ import {
   persistModerationResult,
 } from "../services/moderation";
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
+import { shouldRejectListingSubmissionForRecaptcha } from "../services/recaptcha";
 import { toHttpsError } from "../services/errors";
 import { validateListingDraftPayload, validateListingMedia } from "../validators/listings";
 import type { ListingMedia } from "../models/firestore";
@@ -458,8 +459,17 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
     expectedAction: "listing_submit",
     userId: ownerId,
   });
-  if (!recaptcha.allowed) {
+  if (shouldRejectListingSubmissionForRecaptcha(recaptcha)) {
     throw new HttpsError("permission-denied", "reCAPTCHA assessment rejected the listing submission");
+  }
+  if (!recaptcha.allowed) {
+    logger.warn("marketplace_listing_submit_low_recaptcha_score", {
+      ownerId,
+      draftId,
+      score: recaptcha.score,
+      reasons: recaptcha.reasons,
+      action: recaptcha.action,
+    });
   }
 
   try {
