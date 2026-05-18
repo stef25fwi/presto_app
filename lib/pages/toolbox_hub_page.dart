@@ -100,12 +100,34 @@ class ToolboxHubPage extends StatelessWidget {
         bottom: true,
         child: LayoutBuilder(
           builder: (context, constraints) {
+            const contentPadding = EdgeInsets.fromLTRB(10, 10, 10, 18);
+            const cardSpacing = 12.0;
+            const minPhoneTileHeight = 292.0;
+            final availableHeight =
+                constraints.maxHeight -
+                contentPadding.top -
+                contentPadding.bottom;
+            final equalTileHeight = (availableHeight - cardSpacing) / 2;
+
             if (isPhone) {
+              if (equalTileHeight >= minPhoneTileHeight) {
+                return Padding(
+                  padding: contentPadding,
+                  child: Column(
+                    children: [
+                      SizedBox(height: equalTileHeight, child: firstCard),
+                      const SizedBox(height: cardSpacing),
+                      SizedBox(height: equalTileHeight, child: secondCard),
+                    ],
+                  ),
+                );
+              }
+
               return ListView(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 18),
+                padding: contentPadding,
                 children: [
                   firstCard,
-                  const SizedBox(height: 12),
+                  const SizedBox(height: cardSpacing),
                   secondCard,
                 ],
               );

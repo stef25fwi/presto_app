@@ -44,6 +44,83 @@ class PrestoPriceCalculatorApp extends StatelessWidget {
 // ---------------------------
 enum PricingMode { express, standard, expert }
 
+class _ModeOption {
+  const _ModeOption({
+    required this.mode,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+    required this.badge,
+    required this.timeLabel,
+    required this.bestFor,
+    required this.fieldsLabel,
+    required this.analysisLabel,
+    required this.highlights,
+  });
+
+  final PricingMode mode;
+  final String title;
+  final String subtitle;
+  final Color accent;
+  final String badge;
+  final String timeLabel;
+  final String bestFor;
+  final String fieldsLabel;
+  final String analysisLabel;
+  final List<String> highlights;
+}
+
+const List<_ModeOption> _pricingModes = [
+  _ModeOption(
+    mode: PricingMode.express,
+    title: 'Mode Express',
+    subtitle: 'Rapide & Simple',
+    accent: kPrestoOrange,
+    badge: 'Le plus rapide',
+    timeLabel: '2 min',
+    bestFor: 'Estimation immédiate',
+    fieldsLabel: 'Essentiels',
+    analysisLabel: 'Base prix + marge',
+    highlights: [
+      'Saisie minimale',
+      'Parfait pour tester une idée',
+      'Résultat immédiat',
+    ],
+  ),
+  _ModeOption(
+    mode: PricingMode.standard,
+    title: 'Mode Standard',
+    subtitle: 'Complet',
+    accent: kPrestoBlue,
+    badge: 'Le plus équilibré',
+    timeLabel: '5 min',
+    bestFor: 'Fixer un vrai tarif de vente',
+    fieldsLabel: 'Coûts + charges + marché',
+    analysisLabel: 'Prix conseillé + positionnement',
+    highlights: [
+      'Vision plus fiable',
+      'Inclut les charges réelles',
+      'Adapté à la plupart des cas',
+    ],
+  ),
+  _ModeOption(
+    mode: PricingMode.expert,
+    title: 'Mode Expert',
+    subtitle: 'Analyse avancée',
+    accent: Color(0xFF0F4C81),
+    badge: 'Le plus précis',
+    timeLabel: '8 min',
+    bestFor: 'Décision fine et arbitrages',
+    fieldsLabel: 'Données détaillées',
+    analysisLabel: 'Lecture avancée de rentabilité',
+    highlights: [
+      'Scénarios plus poussés',
+      'Analyse détaillée des postes',
+      'Pour affiner au maximum',
+    ],
+  ),
+];
+
 class _ModeSelectionPage extends StatefulWidget {
   const _ModeSelectionPage();
 
@@ -53,6 +130,9 @@ class _ModeSelectionPage extends StatefulWidget {
 
 class _ModeSelectionPageState extends State<_ModeSelectionPage> {
   PricingMode _mode = PricingMode.express;
+
+  _ModeOption get _selectedOption =>
+      _pricingModes.firstWhere((option) => option.mode == _mode);
 
   @override
   Widget build(BuildContext context) {
@@ -77,29 +157,17 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
                 ),
               ),
               const SizedBox(height: 14),
-              _ModeCard(
-                title: 'Mode Express',
-                subtitle: 'Rapide & Simple',
-                selected: _mode == PricingMode.express,
-                accent: kPrestoOrange,
-                onTap: () => setState(() => _mode = PricingMode.express),
+              ..._pricingModes.map(
+                (option) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ModeCard(
+                    option: option,
+                    selected: _mode == option.mode,
+                    onTap: () => setState(() => _mode = option.mode),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-              _ModeCard(
-                title: 'Mode Standard',
-                subtitle: 'Complet',
-                selected: _mode == PricingMode.standard,
-                accent: kPrestoBlue,
-                onTap: () => setState(() => _mode = PricingMode.standard),
-              ),
-              const SizedBox(height: 12),
-              _ModeCard(
-                title: 'Mode Expert',
-                subtitle: 'Analyse avancée',
-                selected: _mode == PricingMode.expert,
-                accent: kPrestoBlue,
-                onTap: () => setState(() => _mode = PricingMode.expert),
-              ),
+              _ModeComparisonCard(selectedMode: _selectedOption),
               const Spacer(),
               _PrestoPrimaryButton(
                 icon: Icons.play_arrow_rounded,
@@ -123,22 +191,19 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
 }
 
 class _ModeCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
+  final _ModeOption option;
   final bool selected;
-  final Color accent;
   final VoidCallback onTap;
 
   const _ModeCard({
-    required this.title,
-    required this.subtitle,
+    required this.option,
     required this.selected,
-    required this.accent,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accent = option.accent;
     final border = selected ? accent : const Color(0xFFE5E7EB);
     final fill = selected ? accent.withOpacity(0.10) : Colors.white;
 
@@ -167,18 +232,293 @@ class _ModeCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: kPrestoCardTitleStyle.copyWith(
-                        fontWeight: FontWeight.w900,
-                      )),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(option.title,
+                            style: kPrestoCardTitleStyle.copyWith(
+                              fontWeight: FontWeight.w900,
+                            )),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accent.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          option.timeLabel,
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 3),
-                  Text(subtitle,
+                  Text(option.subtitle,
+                      style: kPrestoCardTitleStyle.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      )),
+                  const SizedBox(height: 4),
+                  Text(option.bestFor,
                       style: kPrestoMetaTextStyle.copyWith(
                         fontSize: 13,
                         color: Colors.black54,
                         fontWeight: FontWeight.w600,
                       )),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _ModeMetaChip(
+                        label: option.badge,
+                        accent: accent,
+                      ),
+                      _ModeMetaChip(
+                        label: option.analysisLabel,
+                        accent: accent,
+                      ),
+                    ],
+                  ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeMetaChip extends StatelessWidget {
+  const _ModeMetaChip({
+    required this.label,
+    required this.accent,
+  });
+
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          color: accent,
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeComparisonCard extends StatelessWidget {
+  const _ModeComparisonCard({required this.selectedMode});
+
+  final _ModeOption selectedMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x11000000),
+            blurRadius: 16,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: selectedMode.accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.balance_rounded,
+                  color: selectedMode.accent,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Comparer les 3 modes',
+                      style: kPrestoCardTitleStyle.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Le mode sélectionné est mis en avant pour t’aider à choisir vite.',
+                      style: kPrestoMetaTextStyle.copyWith(
+                        fontSize: 12.5,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ..._pricingModes.map(
+            (option) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _ModeComparisonRow(
+                option: option,
+                highlighted: option.mode == selectedMode.mode,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeComparisonRow extends StatelessWidget {
+  const _ModeComparisonRow({
+    required this.option,
+    required this.highlighted,
+  });
+
+  final _ModeOption option;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: highlighted ? option.accent.withOpacity(0.08) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: highlighted ? option.accent.withOpacity(0.45) : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  option.title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (highlighted)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: option.accent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'Sélectionné',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _ComparisonMetric(label: 'Temps', value: option.timeLabel),
+              _ComparisonMetric(label: 'Saisie', value: option.fieldsLabel),
+              _ComparisonMetric(label: 'Usage', value: option.bestFor),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            option.highlights.join(' • '),
+            style: const TextStyle(
+              fontSize: 12.5,
+              height: 1.45,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonMetric extends StatelessWidget {
+  const _ComparisonMetric({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Colors.black87),
+          children: [
+            TextSpan(
+              text: '$label : ',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
