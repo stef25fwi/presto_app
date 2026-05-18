@@ -202,6 +202,30 @@ class MarketplacePublishService {
     }
   }
 
+  Future<String> _obtainRequiredRecaptchaToken(
+    MarketplaceHumanVerificationAction action,
+  ) async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final token = (await _runWithChannelRetry<String>(
+        stepLabel: 'vérification humaine',
+        fallbackValue: '',
+        action: () => _verification.obtainToken(action),
+      ))
+          .trim();
+      if (token.isNotEmpty) {
+        return token;
+      }
+
+      if (attempt == 0) {
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+    }
+
+    throw StateError(
+      'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.',
+    );
+  }
+
   bool _isFirestorePermissionDenied(Object error) {
     return error is FirebaseException && error.code == 'permission-denied';
   }
@@ -466,12 +490,8 @@ class MarketplacePublishService {
         );
       }
 
-      final recaptchaToken = await _runWithChannelRetry<String>(
-        stepLabel: 'vérification humaine',
-        fallbackValue: '',
-        action: () => _verification.obtainToken(
-          MarketplaceHumanVerificationAction.listingSubmit,
-        ),
+      final recaptchaToken = await _obtainRequiredRecaptchaToken(
+        MarketplaceHumanVerificationAction.listingSubmit,
       );
       final submission = await _runWithChannelRetry<MarketplacePublishResult?>(
         stepLabel: 'publication finale',
