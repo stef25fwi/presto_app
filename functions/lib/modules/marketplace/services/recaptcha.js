@@ -1,9 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.shouldRejectListingSubmissionForRecaptcha = shouldRejectListingSubmissionForRecaptcha;
 exports.verifyRecaptchaAssessment = verifyRecaptchaAssessment;
 const logger_1 = require("../../../core/logger");
 const env_1 = require("../../../config/env");
 const google_api_1 = require("./google_api");
+function shouldRejectListingSubmissionForRecaptcha(result) {
+    return !result.tokenValid || !result.actionMatches;
+}
 function shouldBypassRecaptcha() {
     return !!process.env.FIREBASE_AUTH_EMULATOR_HOST;
 }
@@ -20,6 +24,9 @@ async function verifyRecaptchaAssessment({ token, expectedAction, userId, }) {
             score: 0,
             reasons: ["MISSING_RECAPTCHA_CONFIGURATION"],
             action: expectedAction,
+            tokenValid: false,
+            actionMatches: false,
+            meetsScoreThreshold: false,
         };
     }
     if (shouldBypassRecaptcha()) {
@@ -33,6 +40,9 @@ async function verifyRecaptchaAssessment({ token, expectedAction, userId, }) {
             score: 1,
             reasons: ["BYPASS"],
             action: expectedAction,
+            tokenValid: true,
+            actionMatches: true,
+            meetsScoreThreshold: true,
         };
     }
     if (!token) {
@@ -41,6 +51,9 @@ async function verifyRecaptchaAssessment({ token, expectedAction, userId, }) {
             score: 0,
             reasons: ["MISSING_TOKEN"],
             action: expectedAction,
+            tokenValid: false,
+            actionMatches: false,
+            meetsScoreThreshold: false,
         };
     }
     const url = `https://recaptchaenterprise.googleapis.com/v1/projects/${encodeURIComponent(env_1.GCP_PROJECT_ID)}/assessments`;
@@ -59,12 +72,17 @@ async function verifyRecaptchaAssessment({ token, expectedAction, userId, }) {
     const action = String(response.tokenProperties?.action || "").trim();
     const score = Number(response.riskAnalysis?.score || 0);
     const reasons = response.riskAnalysis?.reasons ?? [];
-    const allowed = valid && action === expectedAction && score >= env_1.MARKETPLACE_RECAPTCHA_MIN_SCORE;
+    const actionMatches = action === expectedAction;
+    const meetsScoreThreshold = score >= env_1.MARKETPLACE_RECAPTCHA_MIN_SCORE;
+    const allowed = valid && actionMatches && meetsScoreThreshold;
     return {
         allowed,
         score,
         reasons,
         action,
+        tokenValid: valid,
+        actionMatches,
+        meetsScoreThreshold,
     };
 }
 //# sourceMappingURL=recaptcha.js.map

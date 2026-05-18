@@ -24,6 +24,15 @@ export interface RecaptchaVerificationResult {
   score: number;
   reasons: string[];
   action: string;
+  tokenValid: boolean;
+  actionMatches: boolean;
+  meetsScoreThreshold: boolean;
+}
+
+export function shouldRejectListingSubmissionForRecaptcha(
+  result: RecaptchaVerificationResult,
+): boolean {
+  return !result.tokenValid || !result.actionMatches;
 }
 
 function shouldBypassRecaptcha(): boolean {
@@ -51,6 +60,9 @@ export async function verifyRecaptchaAssessment({
       score: 0,
       reasons: ["MISSING_RECAPTCHA_CONFIGURATION"],
       action: expectedAction,
+      tokenValid: false,
+      actionMatches: false,
+      meetsScoreThreshold: false,
     };
   }
 
@@ -65,6 +77,9 @@ export async function verifyRecaptchaAssessment({
       score: 1,
       reasons: ["BYPASS"],
       action: expectedAction,
+      tokenValid: true,
+      actionMatches: true,
+      meetsScoreThreshold: true,
     };
   }
 
@@ -74,6 +89,9 @@ export async function verifyRecaptchaAssessment({
       score: 0,
       reasons: ["MISSING_TOKEN"],
       action: expectedAction,
+      tokenValid: false,
+      actionMatches: false,
+      meetsScoreThreshold: false,
     };
   }
 
@@ -94,12 +112,17 @@ export async function verifyRecaptchaAssessment({
   const action = String(response.tokenProperties?.action || "").trim();
   const score = Number(response.riskAnalysis?.score || 0);
   const reasons = response.riskAnalysis?.reasons ?? [];
-  const allowed = valid && action === expectedAction && score >= MARKETPLACE_RECAPTCHA_MIN_SCORE;
+  const actionMatches = action === expectedAction;
+  const meetsScoreThreshold = score >= MARKETPLACE_RECAPTCHA_MIN_SCORE;
+  const allowed = valid && actionMatches && meetsScoreThreshold;
 
   return {
     allowed,
     score,
     reasons,
     action,
+    tokenValid: valid,
+    actionMatches,
+    meetsScoreThreshold,
   };
 }
