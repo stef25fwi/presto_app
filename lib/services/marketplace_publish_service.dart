@@ -10,6 +10,7 @@ import '../constants/validation_constants.dart';
 import '../data/marketplace/listing_read_repository.dart';
 import '../data/marketplace/listing_repository.dart';
 import '../data/marketplace/marketplace_listing_ui_mapper.dart';
+import '../models/marketplace_listing.dart' show ListingSubmissionResult;
 import '../models/marketplace_listing_draft.dart';
 import 'firebase_functions_region.dart';
 import 'city_search.dart';
@@ -477,8 +478,11 @@ class MarketplacePublishService {
         ? const <ListingMediaInput>[]
       : await _uploadPhotos(uid: ownerId, draftId: draftId, photos: photos);
 
+    // 3. Mettre à jour le draft puis soumettre. Le rollback des photos ne
+    //    s'applique QUE si la soumission échoue : une fois l'annonce soumise,
+    //    elle possède ses photos et les supprimer casserait l'image affichée.
+    final ListingSubmissionResult submission;
     try {
-      // 3. Mettre à jour le draft avec les media si nécessaire
       if (media.isNotEmpty) {
         await _runProtectedDraftWrite<void>(
           ownerId: ownerId,
@@ -493,42 +497,44 @@ class MarketplacePublishService {
       final recaptchaToken = await _obtainRequiredRecaptchaToken(
         MarketplaceHumanVerificationAction.listingSubmit,
       );
-      final submission = await _runWithChannelRetry<MarketplacePublishResult?>(
+      submission = await _runWithChannelRetry<ListingSubmissionResult>(
         stepLabel: 'publication finale',
-        action: () async {
-          final result = await _listingRepository.submitDraft(
-            draftId: draftId,
-            recaptchaToken: recaptchaToken,
-          );
-          final listingData = await _listingReadRepository.getListingData(
-            result.listingId,
-          );
-          if (listingData == null) {
-            throw StateError('Annonce publiee introuvable apres soumission.');
-          }
-          final isPublic = isPublicActiveListingData(listingData);
-          return MarketplacePublishResult(
-            listingId: result.listingId,
-            detailData: isPublic
-                ? mapMarketplaceListingToOfferUi(
-                    listingId: result.listingId,
-                    data: listingData,
-                  )
-                : const <String, dynamic>{},
-            isPubliclyVisible: isPublic,
-          );
-        },
+        action: () => _listingRepository.submitDraft(
+          draftId: draftId,
+          recaptchaToken: recaptchaToken,
+        ),
       );
-
-      if (submission == null) {
-        throw StateError(
-            'La publication a échoué sans retourner de résultat. Réessayez.');
-      }
-      return submission;
     } catch (_) {
+      // La soumission n'a jamais abouti : nettoyage des uploads orphelins.
       await _deleteUploadedMediaBestEffort(media);
       rethrow;
     }
+
+    // L'annonce existe désormais côté serveur avec ses photos attachées.
+    // Une relecture en échec est non bloquante et ne doit JAMAIS déclencher
+    // la suppression des médias (sinon l'annonce reste avec une image cassée).
+    final listingId = submission.listingId;
+    Map<String, dynamic> detailData = const <String, dynamic>{};
+    try {
+      final listingData =
+          await _listingReadRepository.getListingData(listingId);
+      if (listingData != null && isPublicActiveListingData(listingData)) {
+        detailData = mapMarketplaceListingToOfferUi(
+          listingId: listingId,
+          data: listingData,
+        );
+      }
+    } catch (error) {
+      debugPrint(
+        '[MarketplacePublish] relecture post-soumission impossible (non bloquant): $error',
+      );
+    }
+
+    return MarketplacePublishResult(
+      listingId: listingId,
+      detailData: detailData,
+      isPubliclyVisible: detailData.isNotEmpty,
+    );
   }
 
   String _storageExtension(XFile photo) {
