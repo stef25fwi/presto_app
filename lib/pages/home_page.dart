@@ -344,11 +344,6 @@ class _HomePageState extends State<HomePage>
     _listenDynamicKeywords();
 
     unawaited(_refreshLatestOffers());
-
-    // Listener pour hide/show bottom bar au scroll
-    _scrollController.addListener(() {
-      _onPageScroll(_scrollController.offset);
-    });
   }
 
   Future<void> _touchPresence({String? status}) async {
@@ -415,10 +410,6 @@ class _HomePageState extends State<HomePage>
         _touchPresence(status: 'offline');
         break;
     }
-  }
-
-  void _onPageScroll(double offset) {
-    // Intentionnel : bottom bar fixe sur toutes les pages.
   }
 
   void _listenDynamicKeywords() {
@@ -1327,11 +1318,11 @@ class _HomePageState extends State<HomePage>
                     key: ValueKey<String>(
                       'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
                     ),
-                    onScroll: _onPageScroll,
+                    onScroll: (_) {},
                     categoryFilter: _consultCategoryFilter,
                     searchQuery: _consultSearchQuery,
                   ),
-                  PublishOfferPage(onScroll: _onPageScroll),
+                  PublishOfferPage(onScroll: (_) {}),
                   MessagesPageV2(
                     initialConversationId: widget.initialMessagesConversationId,
                     initialDraftText: widget.initialMessagesDraftText,
