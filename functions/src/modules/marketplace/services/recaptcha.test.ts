@@ -17,6 +17,7 @@ function buildResult(
     tokenValid: true,
     actionMatches: true,
     meetsScoreThreshold: true,
+    assessed: true,
     ...overrides,
   };
 }
@@ -55,6 +56,24 @@ test("listing submission is not rejected solely for low score", () => {
         allowed: false,
         score: 0.2,
         meetsScoreThreshold: false,
+      }),
+    ),
+    false,
+  );
+});
+
+test("listing submission is not rejected when the assessment is unavailable", () => {
+  // Server misconfiguration / assessment error: no verdict was obtained, so
+  // publication must fail open instead of blocking every user.
+  assert.equal(
+    shouldRejectListingSubmissionForRecaptcha(
+      buildResult({
+        allowed: false,
+        reasons: ["MISSING_RECAPTCHA_CONFIGURATION"],
+        tokenValid: false,
+        actionMatches: false,
+        meetsScoreThreshold: false,
+        assessed: false,
       }),
     ),
     false,
