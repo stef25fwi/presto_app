@@ -206,6 +206,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Merge BottomBar Branch Into Main",
+      "type": "shell",
+      "command": "git stash push -m copilot-temp-merge-task -- .vscode/tasks.json && git checkout main && git pull --rebase origin main && git merge --no-ff claude/fix-bottombar-keyboard-jzJ3T -m \"merge: integrate claude/fix-bottombar-keyboard-jzJ3T into main\"; status=$?; git stash drop stash^{/copilot-temp-merge-task} >/dev/null 2>&1 || true; exit $status",
+      "problemMatcher": []
+    },
+    {
       "label": "Functions: Build",
       "type": "shell",
       "command": "npm --prefix functions run build",
