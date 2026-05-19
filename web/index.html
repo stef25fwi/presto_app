@@ -75,54 +75,139 @@
   <script>
     (function () {
       let recaptchaLoader = null;
+      let recaptchaLoaderSiteKey = null;
+
+      function loadRecaptchaEnterpriseScript(baseUrl, siteKey) {
+        return new Promise(function (resolve, reject) {
+          if (window.grecaptcha && window.grecaptcha.enterprise) {
+            resolve();
+            return;
+          }
+
+          const script = document.createElement('script');
+          let settled = false;
+
+          const timeout = window.setTimeout(function () {
+            if (settled) return;
+            settled = true;
+            try { script.remove(); } catch (_) {}
+            reject(new Error('Timeout chargement reCAPTCHA Enterprise depuis ' + baseUrl));
+          }, 8000);
+
+          script.src = baseUrl + encodeURIComponent(siteKey);
+          script.async = true;
+          script.defer = true;
+
+          script.onload = function () {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+            console.debug('[Marketplace reCAPTCHA] script loaded', baseUrl);
+            resolve();
+          };
+
+          script.onerror = function () {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+            try { script.remove(); } catch (_) {}
+            reject(new Error('Impossible de charger reCAPTCHA Enterprise depuis ' + baseUrl));
+          };
+
+          document.head.appendChild(script);
+        });
+      }
 
       function ensureRecaptchaEnterprise(siteKey) {
-        if (!siteKey) {
-          return Promise.resolve();
-        }
         if (window.grecaptcha && window.grecaptcha.enterprise) {
           return Promise.resolve();
         }
-        if (recaptchaLoader) {
+
+        if (recaptchaLoader && recaptchaLoaderSiteKey === siteKey) {
           return recaptchaLoader;
         }
 
-        recaptchaLoader = new Promise(function (resolve, reject) {
-          const script = document.createElement('script');
-          script.src = 'https://www.google.com/recaptcha/enterprise.js?render=' + encodeURIComponent(siteKey);
-          script.async = true;
-          script.defer = true;
-          script.onload = function () {
-            resolve();
-          };
-          script.onerror = function () {
-            reject(new Error('Impossible de charger reCAPTCHA Enterprise.'));
-          };
-          document.head.appendChild(script);
+        recaptchaLoaderSiteKey = siteKey;
+        recaptchaLoader = loadRecaptchaEnterpriseScript(
+          'https://www.google.com/recaptcha/enterprise.js?render=',
+          siteKey
+        ).catch(function (googleError) {
+          console.warn('[Marketplace reCAPTCHA] google.com failed, retry recaptcha.net', googleError);
+          return loadRecaptchaEnterpriseScript(
+            'https://www.recaptcha.net/recaptcha/enterprise.js?render=',
+            siteKey
+          );
+        }).catch(function (error) {
+          recaptchaLoader = null;
+          recaptchaLoaderSiteKey = null;
+          throw error;
         });
 
         return recaptchaLoader;
       }
 
+      function withTimeout(promise, ms, label) {
+        return new Promise(function (resolve, reject) {
+          const timer = window.setTimeout(function () {
+            reject(new Error(label + ' timeout'));
+          }, ms);
+
+          promise.then(function (value) {
+            window.clearTimeout(timer);
+            resolve(value);
+          }).catch(function (error) {
+            window.clearTimeout(timer);
+            reject(error);
+          });
+        });
+      }
+
       window.prestoMarketplaceRecaptcha = {
         execute: function (siteKey, action) {
-          if (!siteKey || !action) {
+          siteKey = String(siteKey || '').trim();
+          action = String(action || 'listing_submit').trim();
+
+          if (!siteKey) {
+            console.warn('[Marketplace reCAPTCHA] missing site key');
             return Promise.resolve('');
           }
 
-          return ensureRecaptchaEnterprise(siteKey).then(function () {
-            return new Promise(function (resolve, reject) {
-              if (!window.grecaptcha || !window.grecaptcha.enterprise) {
-                reject(new Error('grecaptcha.enterprise indisponible.'));
-                return;
-              }
+          console.debug('[Marketplace reCAPTCHA] execute start', {
+            action: action,
+            hasSiteKey: true
+          });
 
-              window.grecaptcha.enterprise.ready(function () {
-                window.grecaptcha.enterprise.execute(siteKey, { action: action })
-                  .then(resolve)
-                  .catch(reject);
-              });
+          return ensureRecaptchaEnterprise(siteKey).then(function () {
+            return withTimeout(new Promise(function (resolve, reject) {
+              try {
+                if (!window.grecaptcha || !window.grecaptcha.enterprise) {
+                  reject(new Error('grecaptcha.enterprise indisponible.'));
+                  return;
+                }
+
+                window.grecaptcha.enterprise.ready(function () {
+                  try {
+                    window.grecaptcha.enterprise.execute(siteKey, { action: action })
+                      .then(resolve)
+                      .catch(reject);
+                  } catch (executeError) {
+                    reject(executeError);
+                  }
+                });
+              } catch (readyError) {
+                reject(readyError);
+              }
+            }), 12000, 'execute reCAPTCHA Enterprise');
+          }).then(function (token) {
+            token = String(token || '').trim();
+            console.debug('[Marketplace reCAPTCHA] execute result', {
+              action: action,
+              tokenPresent: token.length > 0
             });
+            return token;
+          }).catch(function (error) {
+            console.error('[Marketplace reCAPTCHA] execute failed', error);
+            return '';
           });
         }
       };

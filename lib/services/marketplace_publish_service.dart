@@ -88,6 +88,15 @@ class _ProcessedOfferPhotoPayload {
   }
 }
 
+class MarketplaceHumanVerificationUnavailable implements Exception {
+  const MarketplaceHumanVerificationUnavailable(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class MarketplacePublishService {
   MarketplacePublishService({
     ListingRepository? listingRepository,
@@ -98,7 +107,7 @@ class MarketplacePublishService {
         _listingReadRepository =
             listingReadRepository ?? ListingReadRepository(),
         _storageOverride = storage,
-      _functions = prestoFirebaseFunctions,
+        _functions = prestoFirebaseFunctions,
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
@@ -116,7 +125,8 @@ class MarketplacePublishService {
     required String extension,
     int? timestampMs,
   }) {
-    final effectiveTimestamp = timestampMs ?? DateTime.now().millisecondsSinceEpoch;
+    final effectiveTimestamp =
+        timestampMs ?? DateTime.now().millisecondsSinceEpoch;
     return StoragePaths.listingDraftRaw(
       uid: uid,
       draftId: draftId,
@@ -222,7 +232,7 @@ class MarketplacePublishService {
       }
     }
 
-    throw StateError(
+    throw const MarketplaceHumanVerificationUnavailable(
       'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.',
     );
   }
@@ -418,7 +428,8 @@ class MarketplacePublishService {
         'Choisissez une ville dans la liste ou vérifiez l\'orthographe.',
       );
     }
-    if (resolvedPostalCode.isNotEmpty && !locationValidation.postalCodeMatches) {
+    if (resolvedPostalCode.isNotEmpty &&
+        !locationValidation.postalCodeMatches) {
       throw StateError('Le code postal ne correspond pas à cette ville.');
     }
 
@@ -476,7 +487,7 @@ class MarketplacePublishService {
     // 2. Upload les photos en référençant le draftId
     final media = photos.isEmpty
         ? const <ListingMediaInput>[]
-      : await _uploadPhotos(uid: ownerId, draftId: draftId, photos: photos);
+        : await _uploadPhotos(uid: ownerId, draftId: draftId, photos: photos);
 
     // 3. Mettre à jour le draft puis soumettre. Le rollback des photos ne
     //    s'applique QUE si la soumission échoue : une fois l'annonce soumise,
