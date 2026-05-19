@@ -203,7 +203,14 @@ class MarketplacePublishService {
     }
   }
 
-  Future<String> _obtainRequiredRecaptchaToken(
+  /// Obtient un jeton de vérification anti-abus en *best-effort*.
+  ///
+  /// reCAPTCHA est un signal anti-abus, pas une barrière bloquante. Si le
+  /// jeton ne peut pas être produit (script indisponible, clé absente, délai
+  /// dépassé...), on renvoie une chaîne vide : la publication continue et le
+  /// serveur évalue le jeton en *fail-open*. Lever une erreur ici empêcherait
+  /// toute publication dès que reCAPTCHA est momentanément indisponible.
+  Future<String> _obtainBestEffortRecaptchaToken(
     MarketplaceHumanVerificationAction action,
   ) async {
     for (var attempt = 0; attempt < 2; attempt++) {
@@ -222,9 +229,10 @@ class MarketplacePublishService {
       }
     }
 
-    throw StateError(
-      'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.',
+    debugPrint(
+      '[MarketplacePublish] jeton anti-abus indisponible — publication poursuivie en fail-open',
     );
+    return '';
   }
 
   bool _isFirestorePermissionDenied(Object error) {
@@ -494,7 +502,7 @@ class MarketplacePublishService {
         );
       }
 
-      final recaptchaToken = await _obtainRequiredRecaptchaToken(
+      final recaptchaToken = await _obtainBestEffortRecaptchaToken(
         MarketplaceHumanVerificationAction.listingSubmit,
       );
       submission = await _runWithChannelRetry<ListingSubmissionResult>(

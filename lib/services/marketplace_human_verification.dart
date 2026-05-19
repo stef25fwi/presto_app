@@ -28,9 +28,14 @@ class MarketplaceHumanVerification {
     'MARKETPLACE_RECAPTCHA_IOS_SITE_KEY',
     defaultValue: '',
   );
+  // La site key reCAPTCHA est publique (embarquée dans le HTML/JS côté
+  // navigateur par conception). On la fournit en valeur par défaut pour que
+  // le build web dispose toujours d'une clé même si le pipeline de build
+  // n'injecte pas le --dart-define : sans clé, aucun jeton ne peut être
+  // produit et la publication d'annonce reste bloquée.
   static const String _webSiteKey = String.fromEnvironment(
     'MARKETPLACE_RECAPTCHA_WEB_SITE_KEY',
-    defaultValue: '',
+    defaultValue: '6Lc0DuIsAAAAAI7JFa1B6EY1OpCs43kPMDqBFJhC',
   );
   static const String _legacyWebSiteKey = String.fromEnvironment(
     'APPCHECK_RECAPTCHA_SITE_KEY',
