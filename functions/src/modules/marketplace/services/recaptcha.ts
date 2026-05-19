@@ -27,11 +27,22 @@ export interface RecaptchaVerificationResult {
   tokenValid: boolean;
   actionMatches: boolean;
   meetsScoreThreshold: boolean;
+  // True only when Google actually returned an assessment. False when the
+  // server is misconfigured, no token was supplied, or the assessment call
+  // failed — i.e. when we could not get a verdict at all.
+  assessed: boolean;
 }
 
 export function shouldRejectListingSubmissionForRecaptcha(
   result: RecaptchaVerificationResult,
 ): boolean {
+  // Only hard-reject on a definitive negative verdict from a completed
+  // assessment. A missing server configuration or an assessment error must
+  // not block publication — otherwise a single infra problem takes down the
+  // whole publish pipeline for every user. Those cases are surfaced via logs.
+  if (!result.assessed) {
+    return false;
+  }
   return !result.tokenValid || !result.actionMatches;
 }
 
@@ -63,6 +74,7 @@ export async function verifyRecaptchaAssessment({
       tokenValid: false,
       actionMatches: false,
       meetsScoreThreshold: false,
+      assessed: false,
     };
   }
 
@@ -80,10 +92,12 @@ export async function verifyRecaptchaAssessment({
       tokenValid: true,
       actionMatches: true,
       meetsScoreThreshold: true,
+      assessed: true,
     };
   }
 
   if (!token) {
+    logger.warn("marketplace_recaptcha_missing_token", { expectedAction, userId });
     return {
       allowed: false,
       score: 0,
@@ -92,21 +106,41 @@ export async function verifyRecaptchaAssessment({
       tokenValid: false,
       actionMatches: false,
       meetsScoreThreshold: false,
+      assessed: false,
     };
   }
 
   const url = `https://recaptchaenterprise.googleapis.com/v1/projects/${encodeURIComponent(GCP_PROJECT_ID)}/assessments`;
-  const response = await fetchGoogleApiJson<RecaptchaAssessmentResponse>({
-    url,
-    body: {
-      event: {
-        token,
-        siteKey: RECAPTCHA_ENTERPRISE_SITE_KEY,
-        expectedAction,
-        userInfo: userId ? { accountId: userId } : undefined,
+  let response: RecaptchaAssessmentResponse;
+  try {
+    response = await fetchGoogleApiJson<RecaptchaAssessmentResponse>({
+      url,
+      body: {
+        event: {
+          token,
+          siteKey: RECAPTCHA_ENTERPRISE_SITE_KEY,
+          expectedAction,
+          userInfo: userId ? { accountId: userId } : undefined,
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    logger.warn("marketplace_recaptcha_assessment_failed", {
+      expectedAction,
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return {
+      allowed: false,
+      score: 0,
+      reasons: ["ASSESSMENT_ERROR"],
+      action: expectedAction,
+      tokenValid: false,
+      actionMatches: false,
+      meetsScoreThreshold: false,
+      assessed: false,
+    };
+  }
 
   const valid = response.tokenProperties?.valid === true;
   const action = String(response.tokenProperties?.action || "").trim();
@@ -124,5 +158,6 @@ export async function verifyRecaptchaAssessment({
     tokenValid: valid,
     actionMatches,
     meetsScoreThreshold,
+    assessed: true,
   };
 }
