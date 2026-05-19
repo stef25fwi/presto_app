@@ -98,6 +98,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Merge claude/fix-bottombar-keyboard-jzJ3T into main",
+      "type": "shell",
+      "command": "git stash push -m temp-tasks-merge -- .vscode/tasks.json && git fetch origin && git checkout main && git pull --rebase origin main && git merge origin/claude/fix-bottombar-keyboard-jzJ3T",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Stage Messages Release",
       "type": "shell",
       "command": "git add .vscode/tasks.json lib/main.dart lib/pages/messages/conversations_list_page.dart lib/services/notification_service.dart tools/create_stephane_test_conversation.cjs",
