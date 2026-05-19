@@ -349,6 +349,8 @@ exports.updateListingDraftMedia = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     }
 });
 exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const deploymentRevision = "2026-05-19-recaptcha-env-refresh";
+    void deploymentRevision;
     const ownerId = requireAuthUid(request);
     const draftId = normalizeString(request.data?.draftId);
     const recaptchaToken = normalizeString(request.data?.recaptchaToken);
