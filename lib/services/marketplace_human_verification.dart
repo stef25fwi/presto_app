@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'marketplace_human_verification_stub.dart'
     if (dart.library.js_interop) 'marketplace_human_verification_web.dart'
     if (dart.library.io) 'marketplace_human_verification_mobile.dart' as impl;
@@ -32,19 +34,46 @@ class MarketplaceHumanVerification {
     'MARKETPLACE_RECAPTCHA_WEB_SITE_KEY',
     defaultValue: '',
   );
+  static const String _enterpriseWebSiteKey = String.fromEnvironment(
+    'RECAPTCHA_ENTERPRISE_SITE_KEY',
+    defaultValue: '',
+  );
   static const String _legacyWebSiteKey = String.fromEnvironment(
     'APPCHECK_RECAPTCHA_SITE_KEY',
     defaultValue: '',
   );
 
+  static String get _effectiveWebSiteKey {
+    final marketplace = _webSiteKey.trim();
+    if (marketplace.isNotEmpty) return marketplace;
+
+    final enterprise = _enterpriseWebSiteKey.trim();
+    if (enterprise.isNotEmpty) return enterprise;
+
+    final legacy = _legacyWebSiteKey.trim();
+    if (legacy.isNotEmpty) return legacy;
+
+    return '';
+  }
+
   Future<String> obtainToken(
     MarketplaceHumanVerificationAction action,
   ) {
+    final webSiteKey = _effectiveWebSiteKey;
+
+    if (kDebugMode) {
+      debugPrint(
+        '[Marketplace reCAPTCHA] init '
+        'action=${action.value} '
+        'hasWebSiteKey=${webSiteKey.isNotEmpty}',
+      );
+    }
+
     return impl.requestMarketplaceHumanVerificationToken(
       action: action.value,
       androidSiteKey: _androidSiteKey,
       iosSiteKey: _iosSiteKey,
-      webSiteKey: _webSiteKey.isNotEmpty ? _webSiteKey : _legacyWebSiteKey,
+      webSiteKey: webSiteKey,
     );
   }
 }
