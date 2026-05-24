@@ -232,9 +232,13 @@ class MarketplacePublishService {
       }
     }
 
-    throw const MarketplaceHumanVerificationUnavailable(
-      'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.',
+    // Le backend traite deja l'absence de verdict reCAPTCHA comme un cas
+    // non bloquant pour eviter qu'une indisponibilite client-side coupe toute
+    // la publication. On laisse donc passer une soumission sans token.
+    debugPrint(
+      '[MarketplacePublish] reCAPTCHA indisponible cote client, soumission sans token',
     );
+    return '';
   }
 
   bool _isFirestorePermissionDenied(Object error) {

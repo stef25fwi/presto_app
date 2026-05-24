@@ -31,29 +31,12 @@ class MarketplaceHumanVerification {
     defaultValue: '',
   );
   static const String _webSiteKey = String.fromEnvironment(
-    'MARKETPLACE_RECAPTCHA_WEB_SITE_KEY',
-    defaultValue: '',
-  );
-  static const String _enterpriseWebSiteKey = String.fromEnvironment(
-    'RECAPTCHA_ENTERPRISE_SITE_KEY',
-    defaultValue: '',
-  );
-  static const String _legacyWebSiteKey = String.fromEnvironment(
     'APPCHECK_RECAPTCHA_SITE_KEY',
     defaultValue: '',
   );
 
   static String get _effectiveWebSiteKey {
-    final marketplace = _webSiteKey.trim();
-    if (marketplace.isNotEmpty) return marketplace;
-
-    final enterprise = _enterpriseWebSiteKey.trim();
-    if (enterprise.isNotEmpty) return enterprise;
-
-    final legacy = _legacyWebSiteKey.trim();
-    if (legacy.isNotEmpty) return legacy;
-
-    return '';
+    return _webSiteKey.trim();
   }
 
   Future<String> obtainToken(
