@@ -591,6 +591,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _publishedSectionExpanded = false;
   bool _rejectedSectionExpanded = false;
   bool _archivedSectionExpanded = false;
+  final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
+      _offersWatchSubscriptions =
+      <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
 
   bool _isPermissionDeniedError(Object error) {
     if (error is FirebaseException) {
@@ -796,9 +799,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       return null;
     }
     if (_offerMediaStillProcessing(data)) {
-      return 'Photos en traitement. Publication automatique une fois les photos prêtes.';
+      return 'Vérification du texte et conversion des images en cours. L’annonce sera publiée automatiquement dès que tout est prêt.';
     }
-    return 'Annonce en cours de verification avant publication.';
+    return 'Annonce en cours de vérification avant publication automatique.';
   }
 
   String _sectionTitle(_OfferManagementSection section) {
@@ -909,7 +912,51 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   @override
   void initState() {
     super.initState();
+    _bindOffersWatcher();
     _loadOffers();
+  }
+
+  @override
+  void didUpdateWidget(covariant UserOffersSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId == widget.userId) {
+      return;
+    }
+    _bindOffersWatcher();
+    _loadOffers();
+  }
+
+  @override
+  void dispose() {
+    for (final subscription in _offersWatchSubscriptions) {
+      subscription.cancel();
+    }
+    super.dispose();
+  }
+
+  void _bindOffersWatcher() {
+    for (final subscription in _offersWatchSubscriptions) {
+      subscription.cancel();
+    }
+    _offersWatchSubscriptions.clear();
+
+    final userId = widget.userId.trim();
+    if (userId.isEmpty) {
+      return;
+    }
+
+    for (final field in const <String>['userId', 'uid', 'ownerId']) {
+      final subscription = FirebaseFirestore.instance
+          .collection(kListingsCollection)
+          .where(field, isEqualTo: userId)
+          .limit(120)
+          .snapshots()
+          .listen((_) {
+        if (!mounted) return;
+        unawaited(_loadOffers());
+      });
+      _offersWatchSubscriptions.add(subscription);
+    }
   }
 
   Future<void> _loadOffers() async {
@@ -1316,7 +1363,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                         const Divider(height: 1),
                         const SizedBox(height: 12),
                         const Text(
-                          'Retrouve ici toutes les annonces déjà en ligne et ouvre leur fiche quand tu veux les consulter.',
+                          'Quand une annonce quitte "En attente de validation", elle est publiée et apparaît ici dans la liste des annonces publiées.',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.black54,
