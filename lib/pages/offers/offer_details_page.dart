@@ -1323,7 +1323,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           icon: Icon(
             isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
           ),
-          color: Colors.white,
+          color: isFavorite ? const Color(0xFFE53935) : Colors.white,
           splashRadius: 20,
         );
       },
