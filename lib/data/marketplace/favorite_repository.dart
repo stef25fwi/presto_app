@@ -27,6 +27,16 @@ class FavoriteRepository {
   final FirebaseFunctions _functions;
   final ProductAnalyticsService _analytics;
 
+  bool _isPermissionDenied(Object error) {
+    if (error is FirebaseException) {
+      return error.code == 'permission-denied';
+    }
+
+    final message = error.toString().toLowerCase();
+    return message.contains('permission-denied') ||
+        message.contains('permission denied');
+  }
+
   Stream<Set<String>> watchFavoriteListingIds(String userId) {
     return _firestore
         .collection('favorites')
@@ -67,28 +77,34 @@ class FavoriteRepository {
     }
 
     if (favoriteIds.isEmpty) {
-      final legacyFavoriteSnap = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('favoriteOffers')
-          .orderBy('createdAt', descending: true)
-          .limit(200)
-          .get();
+      try {
+        final legacyFavoriteSnap = await _firestore
+            .collection('users')
+            .doc(userId)
+            .collection('favoriteOffers')
+            .orderBy('createdAt', descending: true)
+            .limit(200)
+            .get();
 
-      for (final doc in legacyFavoriteSnap.docs) {
-        final data = doc.data();
-        final listingId = (data['listingId'] ?? data['offerId'] ?? doc.id)
-            .toString()
-            .trim();
-        if (listingId.isEmpty || favoriteDates.containsKey(listingId)) {
-          continue;
+        for (final doc in legacyFavoriteSnap.docs) {
+          final data = doc.data();
+          final listingId = (data['listingId'] ?? data['offerId'] ?? doc.id)
+              .toString()
+              .trim();
+          if (listingId.isEmpty || favoriteDates.containsKey(listingId)) {
+            continue;
+          }
+          favoriteIds.add(listingId);
+          favoriteDates[listingId] = data['createdAt'] is Timestamp
+              ? data['createdAt'] as Timestamp
+              : data['addedAt'] is Timestamp
+                  ? data['addedAt'] as Timestamp
+                  : null;
         }
-        favoriteIds.add(listingId);
-        favoriteDates[listingId] = data['createdAt'] is Timestamp
-            ? data['createdAt'] as Timestamp
-            : data['addedAt'] is Timestamp
-                ? data['addedAt'] as Timestamp
-                : null;
+      } catch (error) {
+        if (!_isPermissionDenied(error)) {
+          rethrow;
+        }
       }
     }
 
