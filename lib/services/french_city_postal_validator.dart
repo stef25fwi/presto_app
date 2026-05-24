@@ -170,6 +170,16 @@ class FrenchCityPostalValidator {
       }
     }
 
+    if (results.isEmpty && normalizedQuery.isNotEmpty) {
+      for (final candidate in CitySearch.instance.searchFuzzy(
+        query,
+        postalCode: normalizedPostalCode.isEmpty ? null : normalizedPostalCode,
+        limit: 20,
+      )) {
+        addCandidate(candidate);
+      }
+    }
+
     results.sort((left, right) {
       final leftScore = _scoreCandidate(
         left,
@@ -352,7 +362,10 @@ class FrenchCityPostalValidator {
     }
     final names = _candidateNames(city: candidate.name);
     return names.any(
-      (name) => name == normalizedCity || name.startsWith(normalizedCity),
+      (name) =>
+          name == normalizedCity ||
+          name.startsWith(normalizedCity) ||
+          _isVeryCloseCityName(name, normalizedCity),
     );
   }
 
@@ -373,8 +386,56 @@ class FrenchCityPostalValidator {
         score += 2;
       } else if (names.any((name) => name.contains(normalizedCity))) {
         score += 1;
+      } else if (names.any((name) => _isVeryCloseCityName(name, normalizedCity))) {
+        score += 2;
       }
     }
     return score;
+  }
+
+  static bool _isVeryCloseCityName(String candidate, String query) {
+    final left = candidate.replaceAll(' ', '');
+    final right = query.replaceAll(' ', '');
+    if (left.isEmpty || right.isEmpty) {
+      return false;
+    }
+
+    final maxDistance = _maxFuzzyDistanceFor(left.length > right.length ? left.length : right.length);
+    return _levenshteinDistance(left, right) <= maxDistance;
+  }
+
+  static int _maxFuzzyDistanceFor(int length) {
+    if (length <= 4) return 1;
+    return 2;
+  }
+
+  static int _levenshteinDistance(String left, String right) {
+    if (left == right) return 0;
+    if (left.isEmpty) return right.length;
+    if (right.isEmpty) return left.length;
+
+    var previous = List<int>.generate(right.length + 1, (index) => index);
+    for (var i = 0; i < left.length; i++) {
+      final current = List<int>.filled(right.length + 1, 0);
+      current[0] = i + 1;
+
+      for (var j = 0; j < right.length; j++) {
+        final substitutionCost = left[i] == right[j] ? 0 : 1;
+        current[j + 1] = _min3(
+          current[j] + 1,
+          previous[j + 1] + 1,
+          previous[j] + substitutionCost,
+        );
+      }
+
+      previous = current;
+    }
+
+    return previous[right.length];
+  }
+
+  static int _min3(int a, int b, int c) {
+    final ab = a < b ? a : b;
+    return ab < c ? ab : c;
   }
 }

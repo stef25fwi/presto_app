@@ -243,6 +243,45 @@ class CitySearch {
     return results.take(limit).toList();
   }
 
+  List<CityRecord> searchFuzzy(
+    String query, {
+    String? postalCode,
+    int limit = 20,
+  }) {
+    final normalizedQuery = _normalize(query);
+    final normalizedPostalCode = postalCode?.trim() ?? '';
+    if (normalizedQuery.isEmpty) return const [];
+
+    final maxDistance = _maxFuzzyDistanceFor(normalizedQuery.length);
+    final scored = <({CityRecord city, int distance})>[];
+
+    for (final city in _allCities) {
+      if (normalizedPostalCode.isNotEmpty && city.postalCode != normalizedPostalCode) {
+        continue;
+      }
+
+      final normalizedName = _normalize(city.name);
+      final distance = _levenshteinDistance(normalizedQuery, normalizedName);
+      if (distance > maxDistance) {
+        continue;
+      }
+
+      scored.add((city: city, distance: distance));
+    }
+
+    scored.sort((left, right) {
+      final byDistance = left.distance.compareTo(right.distance);
+      if (byDistance != 0) return byDistance;
+
+      final byPostal = left.city.postalCode.compareTo(right.city.postalCode);
+      if (byPostal != 0) return byPostal;
+
+      return left.city.name.compareTo(right.city.name);
+    });
+
+    return scored.take(limit).map((entry) => entry.city).toList(growable: false);
+  }
+
   /// Choisit la meilleure ville pour un CP : d'abord match exact, sinon le 1er résultat
   CityRecord? pickBestForPostalCode(String postalCode) {
     final trimmed = postalCode.trim();
@@ -257,5 +296,40 @@ class CitySearch {
     }
     // Sinon premier résultat
     return results.first;
+  }
+
+  int _maxFuzzyDistanceFor(int length) {
+    if (length <= 4) return 1;
+    return 2;
+  }
+
+  int _levenshteinDistance(String left, String right) {
+    if (left == right) return 0;
+    if (left.isEmpty) return right.length;
+    if (right.isEmpty) return left.length;
+
+    var previous = List<int>.generate(right.length + 1, (index) => index);
+    for (var i = 0; i < left.length; i++) {
+      final current = List<int>.filled(right.length + 1, 0);
+      current[0] = i + 1;
+
+      for (var j = 0; j < right.length; j++) {
+        final substitutionCost = left[i] == right[j] ? 0 : 1;
+        current[j + 1] = _min3(
+          current[j] + 1,
+          previous[j + 1] + 1,
+          previous[j] + substitutionCost,
+        );
+      }
+
+      previous = current;
+    }
+
+    return previous[right.length];
+  }
+
+  int _min3(int a, int b, int c) {
+    final ab = a < b ? a : b;
+    return ab < c ? ab : c;
   }
 }

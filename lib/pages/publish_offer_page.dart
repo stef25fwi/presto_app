@@ -1710,19 +1710,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    setState(() {
-      if (!_locationEditedByUser && rawCity.isNotEmpty) {
-        _setControllerText(_locationController, rawCity);
-      }
-      if (!_postalCodeEditedByUser && rawPostalCode.isNotEmpty) {
-        _setControllerText(_postalCodeController, rawPostalCode);
-        final dept = departmentFromPostalCode(rawPostalCode);
-        if (dept != null && dept.isNotEmpty) {
-          _selectedDeptCode = dept;
-          _selectedPhoneCountryCode = _countryCodeForDept(dept);
-        }
-      }
-    });
+    // Ne jamais injecter une ville/CP IA non resolus dans le formulaire.
+    // Sinon l'utilisateur voit des champs remplis mais invalides, puis se
+    // retrouve bloque plus tard par la validation "ville/CP".
+    if (kDebugMode && (rawCity.isNotEmpty || rawPostalCode.isNotEmpty)) {
+      debugPrint(
+        '[Publish] IA location ignored: unresolved city="$rawCity" postalCode="$rawPostalCode"',
+      );
+    }
   }
 
   void _applyKeywordCategoryPairFromText(String text) {
