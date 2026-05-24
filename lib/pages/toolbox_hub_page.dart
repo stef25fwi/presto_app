@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:presto_app/pages/pricing_calculator_page.dart';
 import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
+
+import '../constants.dart';
 
 class AppRoutes {
   static const toolboxHub = '/toolbox_hub';
@@ -12,482 +13,324 @@ class AppRoutes {
 class ToolboxHubPage extends StatelessWidget {
   const ToolboxHubPage({super.key});
 
-  static const Color _orange = Color(0xFFFF5A00);
-  static const Color _orangeDark = Color(0xFFFF2F00);
-  static const Color _blue = Color(0xFF0A7DFF);
-  static const Color _blueDark = Color(0xFF0034C8);
-  static const Color _pageBg = Color(0xFFF4F5F7);
-  static const Color _titleColor = Color(0xFF090D1A);
-  static const Color _textColor = Color(0xFF4E5360);
-  static const Color _success = Color(0xFF2EAA6F);
+  static const Color prestoOrange = Color(0xFFFF6600);
+  static const Color prestoBlue = Color(0xFF1A73E8);
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: _orange,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+    final mq = MediaQuery.of(context);
+    final isPhone = mq.size.width < 700;
+
+    final firstCard = _ToolCard(
+      leading: const _IconBadge(
+        icon: Icons.rocket_launch_rounded,
+        bg: Color(0xFFFFE6D6),
+        fg: prestoOrange,
       ),
-      child: Scaffold(
-        backgroundColor: _pageBg,
-        appBar: AppBar(
-          backgroundColor: _orange,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: const Text('Boîte à outils'),
+      title: 'Je me lance !',
+      subtitle: 'IliPrestō te guide pour la création de ton entreprise.',
+      description: 'Décris ton projet, ta situation et ton territoire.',
+      bullets: const [
+        'Statut juridique conseillé',
+        'Coûts & démarches exactes',
+        'Aides, subventions & organismes',
+        'Plan d’actions sur 30 jours',
+      ],
+      buttonText: 'Démarrer mon projet',
+      buttonGradient: const LinearGradient(
+        colors: [Color(0xFF42A5F5), Color(0xFF1250B0)],
+      ),
+      compact: isPhone,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
+        );
+      },
+    );
+
+    final secondCard = _ToolCard(
+      leading: const _IconBadge(
+        icon: Icons.calculate_rounded,
+        bg: Color(0xFFE7F0FF),
+        fg: prestoBlue,
+      ),
+      title: "La calculatrice de l'entrepreneur",
+      subtitle: 'Fixe le bon prix pour vendre sans perdre d’argent.',
+      description:
+          'En quelques clics, calcule ton coût de revient, ton prix de vente conseillé et compare avec le marché.',
+      bullets: const [
+        'Matières premières',
+        'Temps de travail',
+        'Charges & frais réels',
+        'Positionnement face à la concurrence',
+      ],
+      buttonText: 'Calculer mon prix',
+      buttonGradient: const LinearGradient(
+        colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+      ),
+      compact: isPhone,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const EntrepreneurCalculatorPage(),
+          ),
+        );
+      },
+    );
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF3F4F6),
+      appBar: AppBar(
+        backgroundColor: prestoOrange,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Boîte à outils'),
+      ),
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const contentPadding = EdgeInsets.fromLTRB(10, 10, 10, 18);
+            const cardSpacing = 12.0;
+            const minPhoneTileHeight = 292.0;
+            final availableHeight =
+                constraints.maxHeight - contentPadding.top - contentPadding.bottom;
+            final equalTileHeight = (availableHeight - cardSpacing) / 2;
+
+            if (isPhone) {
+              if (equalTileHeight >= minPhoneTileHeight) {
+                return Padding(
+                  padding: contentPadding,
+                  child: Column(
+                    children: [
+                      SizedBox(height: equalTileHeight, child: firstCard),
+                      const SizedBox(height: cardSpacing),
+                      SizedBox(height: equalTileHeight, child: secondCard),
+                    ],
+                  ),
+                );
+              }
+
+              return ListView(
+                padding: contentPadding,
+                children: [
+                  firstCard,
+                  const SizedBox(height: cardSpacing),
+                  secondCard,
+                ],
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 24),
+              child: Column(
+                children: [
+                  Expanded(child: firstCard),
+                  const SizedBox(height: 10),
+                  Expanded(child: secondCard),
+                ],
+              ),
+            );
+          },
         ),
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxHeight < 760;
-              return Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  compact ? 10 : 14,
-                  16,
-                  compact ? 12 : 18,
+      ),
+    );
+  }
+}
+
+class _ToolCard extends StatelessWidget {
+  const _ToolCard({
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.description,
+    required this.bullets,
+    required this.buttonText,
+    required this.buttonGradient,
+    required this.compact,
+    required this.onPressed,
+  });
+
+  final Widget leading;
+  final String title;
+  final String subtitle;
+  final String description;
+  final List<String> bullets;
+  final String buttonText;
+  final LinearGradient buttonGradient;
+  final bool compact;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 14 : 16,
+          compact ? 14 : 16,
+          compact ? 14 : 16,
+          compact ? 14 : 16,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                leading,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: kPrestoCardTitleStyle.copyWith(
+                          fontSize: compact ? 18 : 19,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                        ),
+                      ),
+                      SizedBox(height: compact ? 3 : 4),
+                      Text(
+                        subtitle,
+                        style: kPrestoMetaTextStyle.copyWith(
+                          fontSize: compact ? 13.5 : 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                        ),
+                      ),
+                      SizedBox(height: compact ? 4 : 5),
+                      Text(
+                        description,
+                        style: kPrestoMetaTextStyle.copyWith(
+                          fontSize: compact ? 13 : 13.5,
+                          color: Colors.black.withOpacity(0.70),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: _ToolboxCard(
-                        compact: compact,
-                        icon: Icons.rocket_launch_rounded,
-                        iconColor: _orange,
-                        iconBackground: const Color(0xFFFFEEE5),
-                        titleLines: const [
-                          'CRÉER MON',
-                          'ENTREPRISE',
-                        ],
-                        subtitle: 'Prestō me guide pas à pas.',
-                        description:
-                            'Décris ton projet, ta situation et ton territoire pour obtenir des conseils concrets.',
-                        leftItems: const [
-                          'Statut juridique\nconseillé',
-                          'Aides, subventions &\norganismes',
-                        ],
-                        rightItems: const [
-                          'Coûts & démarches\nexactes',
-                          'Plan d’action sur 30\njours',
-                        ],
-                        buttonLabel: 'Démarrer mon projet',
-                        buttonGradient: const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [_blue, _blueDark],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CurrentToolboxPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(height: compact ? 10 : 16),
-                    Expanded(
-                      child: _ToolboxCard(
-                        compact: compact,
-                        icon: Icons.calculate_rounded,
-                        iconColor: const Color(0xFF1565D8),
-                        iconBackground: const Color(0xFFEAF3FF),
-                        titleLines: const [
-                          'FIXER MON PRIX',
-                          'DE VENTE',
-                        ],
-                        subtitle: 'Je calcule un prix rentable.',
-                        description:
-                            'En quelques clics, j’estime mon coût de revient, mes charges et mon positionnement marché.',
-                        leftItems: const [
-                          'Matières premières',
-                          'Charges & frais réels',
-                        ],
-                        rightItems: const [
-                          'Temps de travail',
-                          'Positionnement face à\nla concurrence',
-                        ],
-                        buttonLabel: 'Calculer mon prix',
-                        buttonGradient: const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [_orange, _orangeDark],
-                        ),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  const EntrepreneurCalculatorPage(),
-                            ),
-                          );
-                        },
-                      ),
+              ],
+            ),
+            SizedBox(height: compact ? 14 : 16),
+            _BulletsGrid(bullets: bullets),
+            if (!compact) const Spacer(),
+            SizedBox(height: compact ? 16 : 18),
+            SizedBox(
+              width: double.infinity,
+              height: compact ? 54 : 58,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: buttonGradient,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: buttonGradient.colors.last.withOpacity(0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ToolboxHeader extends StatelessWidget {
-  const _ToolboxHeader({
-    required this.title,
-    required this.onBack,
-  });
-
-  final String title;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
-    return Container(
-      height: topPadding + 86,
-      padding: EdgeInsets.only(top: topPadding),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            ToolboxHubPage._orange,
-            ToolboxHubPage._orangeDark,
-          ],
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 8,
-            child: IconButton(
-              onPressed: onBack,
-              icon: const Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
-            ),
-          ),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ToolboxCard extends StatelessWidget {
-  const _ToolboxCard({
-    required this.compact,
-    required this.icon,
-    required this.iconColor,
-    required this.iconBackground,
-    required this.titleLines,
-    required this.subtitle,
-    required this.description,
-    required this.leftItems,
-    required this.rightItems,
-    required this.buttonLabel,
-    required this.buttonGradient,
-    required this.onTap,
-  });
-
-  final bool compact;
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBackground;
-  final List<String> titleLines;
-  final String subtitle;
-  final String description;
-  final List<String> leftItems;
-  final List<String> rightItems;
-  final String buttonLabel;
-  final Gradient buttonGradient;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        compact ? 16 : 20,
-        compact ? 16 : 22,
-        compact ? 16 : 20,
-        compact ? 16 : 20,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(compact ? 24 : 28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _IconTile(
-                compact: compact,
-                icon: icon,
-                iconColor: iconColor,
-                backgroundColor: iconBackground,
-              ),
-              SizedBox(width: compact ? 14 : 18),
-              Expanded(
-                child: _CardIntro(
-                  compact: compact,
-                  titleLines: titleLines,
-                  subtitle: subtitle,
-                  description: description,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: compact ? 16 : 28),
-          _ChecklistGrid(
-            compact: compact,
-            leftItems: leftItems,
-            rightItems: rightItems,
-          ),
-          SizedBox(height: compact ? 16 : 28),
-          _GradientButton(
-            compact: compact,
-            label: buttonLabel,
-            gradient: buttonGradient,
-            onTap: onTap,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IconTile extends StatelessWidget {
-  const _IconTile({
-    required this.compact,
-    required this.icon,
-    required this.iconColor,
-    required this.backgroundColor,
-  });
-
-  final bool compact;
-  final IconData icon;
-  final Color iconColor;
-  final Color backgroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: compact ? 56 : 68,
-      height: compact ? 56 : 68,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(compact ? 18 : 22),
-      ),
-      child: Icon(
-        icon,
-        color: iconColor,
-        size: compact ? 30 : 36,
-      ),
-    );
-  }
-}
-
-class _CardIntro extends StatelessWidget {
-  const _CardIntro({
-    required this.compact,
-    required this.titleLines,
-    required this.subtitle,
-    required this.description,
-  });
-
-  final bool compact;
-  final List<String> titleLines;
-  final String subtitle;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _StrongTitle(lines: titleLines, compact: compact),
-        SizedBox(height: compact ? 4 : 8),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: Color(0xFF1565D8),
-            fontSize: compact ? 17 : 20,
-            fontWeight: FontWeight.w800,
-            height: 1.15,
-          ),
-        ),
-        SizedBox(height: compact ? 6 : 8),
-        Text(
-          description,
-          style: TextStyle(
-            color: ToolboxHubPage._textColor,
-            fontSize: compact ? 14 : 16.5,
-            fontWeight: FontWeight.w500,
-            height: 1.35,
-            letterSpacing: 0.1,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StrongTitle extends StatelessWidget {
-  const _StrongTitle({required this.lines, required this.compact});
-
-  final List<String> lines;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final line in lines)
-          SizedBox(
-            width: double.infinity,
-            child: FittedBox(
-              alignment: Alignment.centerLeft,
-              fit: BoxFit.scaleDown,
-              child: Text(
-                line,
-                maxLines: 1,
-                style: TextStyle(
-                  color: ToolboxHubPage._titleColor,
-                  fontSize: compact ? 28 : 38,
-                  fontWeight: FontWeight.w900,
-                  height: 0.95,
-                  letterSpacing: -0.8,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  onPressed: onPressed,
+                  child: Text(
+                    buttonText,
+                    style: TextStyle(
+                      fontSize: compact ? 15 : 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }
 
-class _ChecklistGrid extends StatelessWidget {
-  const _ChecklistGrid({
-    required this.compact,
-    required this.leftItems,
-    required this.rightItems,
-  });
+class _BulletsGrid extends StatelessWidget {
+  const _BulletsGrid({required this.bullets});
 
-  final bool compact;
-  final List<String> leftItems;
-  final List<String> rightItems;
+  final List<String> bullets;
 
   @override
   Widget build(BuildContext context) {
-    final isNarrow = MediaQuery.sizeOf(context).width < 420;
-    if (isNarrow) {
-      final allItems = [...leftItems, ...rightItems];
-      return Column(
-        children: [
-          for (int i = 0; i < allItems.length; i++) ...[
-            _CheckItem(text: allItems[i], compact: compact),
-            if (i != allItems.length - 1)
-              SizedBox(height: compact ? 10 : 18),
-          ],
-        ],
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final itemWidth = (constraints.maxWidth - spacing) / 2;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              for (int i = 0; i < leftItems.length; i++) ...[
-                _CheckItem(text: leftItems[i], compact: compact),
-                if (i != leftItems.length - 1)
-                  SizedBox(height: compact ? 10 : 18),
-              ],
-            ],
-          ),
-        ),
-        SizedBox(width: compact ? 12 : 18),
-        Expanded(
-          child: Column(
-            children: [
-              for (int i = 0; i < rightItems.length; i++) ...[
-                _CheckItem(text: rightItems[i], compact: compact),
-                if (i != rightItems.length - 1)
-                  SizedBox(height: compact ? 10 : 18),
-              ],
-            ],
-          ),
-        ),
-      ],
+        return Wrap(
+          spacing: spacing,
+          runSpacing: 10,
+          children: bullets
+              .map(
+                (bullet) => SizedBox(
+                  width: itemWidth,
+                  child: _BulletItem(text: bullet),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
 
-class _CheckItem extends StatelessWidget {
-  const _CheckItem({required this.text, required this.compact});
+class _BulletItem extends StatelessWidget {
+  const _BulletItem({required this.text});
 
   final String text;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: compact ? 20 : 25,
-          height: compact ? 20 : 25,
-          margin: const EdgeInsets.only(top: 1),
-          decoration: const BoxDecoration(
-            color: ToolboxHubPage._success,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.check_rounded,
-            color: Colors.white,
-            size: 16,
+        const Padding(
+          padding: EdgeInsets.only(top: 1),
+          child: Icon(
+            Icons.check_circle_rounded,
+            size: 17,
+            color: Color(0xFF2EAD6B),
           ),
         ),
-        SizedBox(width: compact ? 8 : 11),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              color: Color(0xFF17191F),
-              fontSize: compact ? 14 : 17.5,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
-              letterSpacing: -0.1,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
             ),
           ),
         ),
@@ -496,57 +339,27 @@ class _CheckItem extends StatelessWidget {
   }
 }
 
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.compact,
-    required this.label,
-    required this.gradient,
-    required this.onTap,
+class _IconBadge extends StatelessWidget {
+  const _IconBadge({
+    required this.icon,
+    required this.bg,
+    required this.fg,
   });
 
-  final bool compact;
-  final String label;
-  final Gradient gradient;
-  final VoidCallback onTap;
+  final IconData icon;
+  final Color bg;
+  final Color fg;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return Container(
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
-        gradient: gradient,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: onTap,
-          child: SizedBox(
-            width: double.infinity,
-            height: compact ? 50 : 64,
-            child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: compact ? 17 : 20,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.1,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      child: Icon(icon, color: fg, size: 22),
     );
   }
 }
