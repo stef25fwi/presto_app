@@ -37,6 +37,7 @@ import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
 import '../widgets/home_interactions.dart';
+import '../widgets/listing_thumbnail_image.dart';
 import 'messages/messages_page_v2.dart';
 
 class ConsultOffersPage extends StatefulWidget {
@@ -2575,20 +2576,17 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
 
   Widget _buildPhoto() {
     final imageUrl = widget.data.imageUrl.trim();
-    if (imageUrl.isEmpty) {
-      return _buildFallbackPhoto();
-    }
+    final fallback = _buildFallbackPhoto();
+    if (imageUrl.isEmpty) return fallback;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: Image.network(
-        imageUrl,
-        width: 92,
-        height: 92,
-        fit: BoxFit.cover,
-        cacheWidth: 184,
-        cacheHeight: 184,
-        errorBuilder: (_, __, ___) => _buildFallbackPhoto(),
+    return SizedBox(
+      width: 92,
+      height: 92,
+      child: ListingThumbnailImage(
+        rawUrl: imageUrl,
+        size: 92,
+        borderRadius: 18,
+        placeholder: fallback,
       ),
     );
   }
@@ -2832,10 +2830,10 @@ String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
     for (final entry in media) {
       if (entry is! Map) continue;
       final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
-      final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
-          .toString()
-          .trim();
-      if (candidate.isNotEmpty) return candidate;
+      for (final key in const ['thumbnailUrl', 'downloadUrl', 'storagePath']) {
+        final candidate = (map[key] ?? '').toString().trim();
+        if (candidate.isNotEmpty) return candidate;
+      }
     }
   }
 

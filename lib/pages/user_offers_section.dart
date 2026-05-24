@@ -18,6 +18,7 @@ import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
+import '../widgets/listing_thumbnail_image.dart';
 import '../widgets/phone_input_field.dart';
 
 import '../main.dart'
@@ -1833,10 +1834,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       for (final entry in media) {
         if (entry is! Map) continue;
         final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
-        final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
-            .toString()
-            .trim();
-        if (candidate.isNotEmpty) return candidate;
+        for (final key in const ['thumbnailUrl', 'downloadUrl', 'storagePath']) {
+          final candidate = (map[key] ?? '').toString().trim();
+          if (candidate.isNotEmpty) return candidate;
+        }
       }
     }
 
@@ -1845,46 +1846,32 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
   Widget _buildOfferPhotoPreview(Map<String, dynamic> data) {
     final imageUrl = _primaryManagedOfferImageUrl(data);
-    if (imageUrl.isEmpty) {
-      return Container(
-        width: 84,
-        height: 84,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF4F4F5),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.image_outlined,
-          color: Color(0xFF9CA3AF),
-          size: 28,
-        ),
-      );
-    }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: Image.network(
-        imageUrl,
-        width: 84,
-        height: 84,
-        fit: BoxFit.cover,
-        cacheWidth: 168,
-        cacheHeight: 168,
-        errorBuilder: (_, __, ___) => Container(
-          width: 84,
-          height: 84,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F4F5),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.broken_image_outlined,
-            color: Color(0xFF9CA3AF),
-            size: 28,
-          ),
-        ),
+    final placeholder = Container(
+      width: 84,
+      height: 84,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        color: Color(0xFF9CA3AF),
+        size: 28,
+      ),
+    );
+
+    if (imageUrl.isEmpty) return placeholder;
+
+    return SizedBox(
+      width: 84,
+      height: 84,
+      child: ListingThumbnailImage(
+        rawUrl: imageUrl,
+        size: 84,
+        borderRadius: 14,
+        placeholder: placeholder,
       ),
     );
   }
