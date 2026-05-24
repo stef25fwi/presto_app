@@ -306,7 +306,7 @@ service cloud.firestore {
     }
 
     match /favorites/{favoriteId} {
-      allow read: if hasAppCheck() && isSignedIn() && resource.data.userId == uid();
+      allow read: if isSignedIn() && resource.data.userId == uid();
       allow write: if false;
     }
 

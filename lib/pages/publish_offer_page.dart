@@ -2012,23 +2012,39 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final userRef = firestore.collection('users').doc(user.uid);
 
     try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
-      DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+          user: user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+      } catch (error) {
+        debugPrint(
+          '[Publish] Préparation accès profil téléphone échouée, fallback cache/Auth: $error',
+        );
+      }
+
+      DocumentSnapshot<Map<String, dynamic>>? doc;
       try {
         doc = await userRef
             .get(const GetOptions(source: Source.server))
             .timeout(const Duration(seconds: 5));
-      } catch (_) {
-        doc = await userRef
-            .get(const GetOptions(source: Source.cache))
-            .timeout(const Duration(seconds: 3));
+      } catch (serverError) {
+        debugPrint(
+          '[Publish] Lecture serveur téléphone profil impossible, fallback cache: $serverError',
+        );
+        try {
+          doc = await userRef
+              .get(const GetOptions(source: Source.cache))
+              .timeout(const Duration(seconds: 3));
+        } catch (cacheError) {
+          debugPrint(
+            '[Publish] Lecture cache téléphone profil impossible, fallback Auth: $cacheError',
+          );
+        }
       }
 
-      final data = doc.data();
+      final data = doc?.data();
       final rawPhone = _firstNonEmptyPublishPhone(
         data,
         const ['phone', 'phoneNumber', 'phone_number'],
