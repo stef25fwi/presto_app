@@ -122,7 +122,7 @@ function buildAutoPublishAfterForSubmission({ mediaCount, nowMs = Date.now(), })
     if (mediaCount <= 0) {
         return null;
     }
-    return firebase_admin_1.default.firestore.Timestamp.fromMillis(nowMs + 60 * 1000);
+    return firebase_admin_1.default.firestore.Timestamp.fromMillis(nowMs + 30 * 1000);
 }
 function departmentFromPostalCode(postalCode) {
     const cp = postalCode.trim();
