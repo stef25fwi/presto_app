@@ -66,14 +66,14 @@ test("listing media output size stays standardized for cards", () => {
   assert.equal(STANDARDIZED_LISTING_IMAGE_SIZE, 1200);
 });
 
-test("submitListingDraft delays publication by one minute when photos are present", () => {
+test("submitListingDraft delays publication by 30 seconds when photos are present", () => {
   const autoPublishAfter = buildAutoPublishAfterForSubmission({
     mediaCount: 2,
     nowMs: 1_700_000_000_000,
   });
 
   assert.ok(autoPublishAfter);
-  assert.equal(autoPublishAfter?.toMillis(), 1_700_000_060_000);
+  assert.equal(autoPublishAfter?.toMillis(), 1_700_000_030_000);
 });
 
 test("submitListingDraft publishes immediately when no photo is present", () => {

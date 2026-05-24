@@ -155,7 +155,7 @@ export function buildAutoPublishAfterForSubmission({
     return null;
   }
 
-  return admin.firestore.Timestamp.fromMillis(nowMs + 60 * 1000);
+  return admin.firestore.Timestamp.fromMillis(nowMs + 30 * 1000);
 }
 
 function departmentFromPostalCode(postalCode: string): string {
