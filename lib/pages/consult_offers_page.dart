@@ -1759,13 +1759,24 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   final bool isAd =
                                       (index + 1) % (_adsEvery + 1) == 0;
                                   if (isAd) {
-                                    return AdBanner(
-                                      margin: EdgeInsets.zero,
-                                      placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                                      placeholderFolderPrefix:
-                                          'assets/carousel_home/',
-                                      flat: true,
-                                      animatePlaceholder: false,
+                                    final screenWidth =
+                                        MediaQuery.sizeOf(context).width;
+                                    return OverflowBox(
+                                      minWidth: screenWidth,
+                                      maxWidth: screenWidth,
+                                      alignment: Alignment.center,
+                                      child: SizedBox(
+                                        width: screenWidth,
+                                        child: AdBanner(
+                                          margin: EdgeInsets.zero,
+                                          placeholderHeight:
+                                              kIsWeb ? 180.0 : 100.0,
+                                          placeholderFolderPrefix:
+                                              'assets/carousel_home/',
+                                          flat: true,
+                                          animatePlaceholder: false,
+                                        ),
+                                      ),
                                     );
                                   }
 
