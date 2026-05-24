@@ -1759,18 +1759,18 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   final bool isAd =
                                       (index + 1) % (_adsEvery + 1) == 0;
                                   if (isAd) {
-                                    final screenWidth =
-                                        MediaQuery.sizeOf(context).width;
-                                    return OverflowBox(
-                                      minWidth: screenWidth,
-                                      maxWidth: screenWidth,
-                                      alignment: Alignment.center,
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 6,
+                                        right: 6,
+                                        bottom: 6,
+                                      ),
                                       child: SizedBox(
-                                        width: screenWidth,
+                                        width: double.infinity,
                                         child: AdBanner(
                                           margin: EdgeInsets.zero,
                                           placeholderHeight:
-                                              kIsWeb ? 180.0 : 100.0,
+                                              kIsWeb ? 112.0 : 100.0,
                                           placeholderFolderPrefix:
                                               'assets/carousel_home/',
                                           flat: true,
@@ -1814,6 +1814,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   final isUrgent = data['urgent'] == true;
                                   final showJobDoneOverlay =
                                       isOfferJobDoneOverlayVisible(data);
+                                    final imageUrl =
+                                      _primaryBrowseOfferImageUrl(data);
                                   final missionDelayLabel =
                                       _extractMissionDelayLabel(data);
                                   final cleanTitle = _sanitizeOfferTitle(
@@ -1851,6 +1853,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                                 );
                                               },
                                         data: _OfferBrowseTileData(
+                                          imageUrl: imageUrl,
                                           title: cleanTitle,
                                           subtitle: [
                                             city,
@@ -2076,20 +2079,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               _filterCitySuggestions = [];
               _filterCityHighlightedIndex = -1;
             } else {
-              // ✅ Tous départements => reset ville + CP
-              _filterCityController.clear();
-              _filterPostalCodeController.clear();
-              _filterCityName = null;
-              _filterCitySuggestions = [];
-              _filterCityHighlightedIndex = -1;
+              _filterRegionCode = null;
             }
-          });
-
-          _onAnyFilterChanged(); // ✅ auto-apply
-
-          // Passe au champ ville
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            FocusScope.of(context).requestFocus(_filterCityFocusNode);
           });
         },
       ),
@@ -2526,6 +2517,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 }
 
 class _OfferBrowseTileData {
+  final String imageUrl;
   final String title;
   final String subtitle;
   final String publishedText;
@@ -2536,6 +2528,7 @@ class _OfferBrowseTileData {
   final bool showJobDoneOverlay;
 
   const _OfferBrowseTileData({
+    required this.imageUrl,
     required this.title,
     required this.subtitle,
     required this.publishedText,
@@ -2561,6 +2554,52 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
+  Widget _buildPhoto() {
+    final imageUrl = widget.data.imageUrl.trim();
+    if (imageUrl.isEmpty) {
+      return Container(
+        width: 92,
+        height: 92,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F4F5),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.image_outlined,
+          color: Color(0xFF9CA3AF),
+          size: 30,
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Image.network(
+        imageUrl,
+        width: 92,
+        height: 92,
+        fit: BoxFit.cover,
+        cacheWidth: 184,
+        cacheHeight: 184,
+        errorBuilder: (_, __, ___) => Container(
+          width: 92,
+          height: 92,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F4F5),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.broken_image_outlined,
+            color: Color(0xFF9CA3AF),
+            size: 30,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Keep a visible urgent contour but disable continuous blink,
@@ -2647,42 +2686,44 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            widget.data.title.toUpperCase(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              height: 1.15,
-                              fontWeight: FontWeight.w700,
-                              color: _ConsultOffersPageState._offersNavy,
-                              letterSpacing: 0.15,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            widget.data.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.0,
-                              fontWeight: FontWeight.w500,
-                              color: _ConsultOffersPageState._offersNavy
-                                  .withValues(alpha: 0.82),
-                              letterSpacing: -0.1,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Expanded(
-                                child: Text(
+                          _buildPhoto(),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.data.title.toUpperCase(),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    height: 1.15,
+                                    fontWeight: FontWeight.w700,
+                                    color: _ConsultOffersPageState._offersNavy,
+                                    letterSpacing: 0.15,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  widget.data.subtitle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.15,
+                                    fontWeight: FontWeight.w500,
+                                    color: _ConsultOffersPageState._offersNavy
+                                        .withValues(alpha: 0.82),
+                                    letterSpacing: -0.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
                                   widget.data.publishedText,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -2694,37 +2735,38 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                                         _ConsultOffersPageState._offersSoftText,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 148),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
+                                const SizedBox(height: 10),
+                                Row(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text(
-                                      '${widget.data.price} €',
-                                      textAlign: TextAlign.right,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 26,
-                                        height: 1.0,
-                                        fontWeight: FontWeight.w700,
-                                        color: _ConsultOffersPageState
-                                            ._offersOrange,
-                                        letterSpacing: -0.9,
+                                    Expanded(
+                                      child: _OfferMissionDelayChip(
+                                        label: widget.data.missionDelayLabel,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
-                                    _OfferMissionDelayChip(
-                                      label: widget.data.missionDelayLabel,
+                                    const SizedBox(width: 12),
+                                    ConstrainedBox(
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 132),
+                                      child: Text(
+                                        '${widget.data.price} €',
+                                        textAlign: TextAlign.right,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 26,
+                                          height: 1.0,
+                                          fontWeight: FontWeight.w700,
+                                          color: _ConsultOffersPageState
+                                              ._offersOrange,
+                                          letterSpacing: -0.9,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -2763,6 +2805,36 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
       ),
     );
   }
+}
+
+String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
+  final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
+  if (thumbnailUrl.isNotEmpty) return thumbnailUrl;
+
+  final imageUrl = (data['imageUrl'] ?? '').toString().trim();
+  if (imageUrl.isNotEmpty) return imageUrl;
+
+  final imageUrls = data['imageUrls'];
+  if (imageUrls is List) {
+    for (final entry in imageUrls) {
+      final value = entry.toString().trim();
+      if (value.isNotEmpty) return value;
+    }
+  }
+
+  final media = data['media'];
+  if (media is List) {
+    for (final entry in media) {
+      if (entry is! Map) continue;
+      final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
+      final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
+          .toString()
+          .trim();
+      if (candidate.isNotEmpty) return candidate;
+    }
+  }
+
+  return '';
 }
 
 class _OfferMissionDelayChip extends StatelessWidget {
