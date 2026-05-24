@@ -2075,8 +2075,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final locationAlreadyFilled = _locationController.text.trim().isNotEmpty;
     final postalCodeAlreadyFilled =
         _postalCodeController.text.trim().isNotEmpty;
-    if ((locationAlreadyFilled || _locationEditedByUser) &&
-        (postalCodeAlreadyFilled || _postalCodeEditedByUser)) {
+    final locationHasUserInput = locationAlreadyFilled || _locationEditedByUser;
+    final postalCodeHasUserInput =
+        postalCodeAlreadyFilled || _postalCodeEditedByUser;
+
+    // Ne jamais compléter à moitié depuis le profil au moment de publier.
+    // Sinon une ville saisie manuellement peut être combinée avec un CP profil
+    // d'une autre commune, puis la validation bloque la publication.
+    if (locationHasUserInput || postalCodeHasUserInput) {
       return;
     }
 
