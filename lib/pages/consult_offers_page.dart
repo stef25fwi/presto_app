@@ -2554,23 +2554,29 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
+  Widget _buildFallbackPhoto() {
+    return Container(
+      width: 92,
+      height: 92,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F5),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.asset(
+          'assets/images/logowebp.webp',
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
   Widget _buildPhoto() {
     final imageUrl = widget.data.imageUrl.trim();
     if (imageUrl.isEmpty) {
-      return Container(
-        width: 92,
-        height: 92,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF4F4F5),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.image_outlined,
-          color: Color(0xFF9CA3AF),
-          size: 30,
-        ),
-      );
+      return _buildFallbackPhoto();
     }
 
     return ClipRRect(
@@ -2582,20 +2588,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         fit: BoxFit.cover,
         cacheWidth: 184,
         cacheHeight: 184,
-        errorBuilder: (_, __, ___) => Container(
-          width: 92,
-          height: 92,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F4F5),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.broken_image_outlined,
-            color: Color(0xFF9CA3AF),
-            size: 30,
-          ),
-        ),
+        errorBuilder: (_, __, ___) => _buildFallbackPhoto(),
       ),
     );
   }
