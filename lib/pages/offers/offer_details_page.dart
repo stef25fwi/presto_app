@@ -1310,40 +1310,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       );
     }
 
-    if (data.isMarketplace) {
-      return StreamBuilder<Set<String>>(
-        stream: _favoriteRepository.watchFavoriteListingIds(uid),
-        builder: (context, snapshot) {
-          final favoriteIds = snapshot.data ?? const <String>{};
-          final isFavorite = data.offerId.trim().isNotEmpty &&
-              favoriteIds.contains(data.offerId.trim());
-
-          return IconButton(
-            tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
-            onPressed: () => _toggleFavorite(context, data, isFavorite),
-            icon: Icon(
-              isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded,
-            ),
-            color: Colors.white,
-            splashRadius: 20,
-          );
-        },
-      );
-    }
-
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream:
-          FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+    return StreamBuilder<Set<String>>(
+      stream: _favoriteRepository.watchFavoriteListingIds(uid),
       builder: (context, snapshot) {
-        final favoriteIds =
-            (snapshot.data?.data()?['favoriteOfferIds'] as List<dynamic>? ??
-                    const [])
-                .map((e) => e.toString().trim())
-                .where((e) => e.isNotEmpty)
-                .toSet();
-
+        final favoriteIds = snapshot.data ?? const <String>{};
         final isFavorite = data.offerId.trim().isNotEmpty &&
             favoriteIds.contains(data.offerId.trim());
 

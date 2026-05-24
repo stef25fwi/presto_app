@@ -328,9 +328,17 @@ Offer buildOfferDetailsOffer({
   final categoryId = (data['categoryId'] ?? '').toString().trim();
   final cityId = (data['cityId'] ?? '').toString().trim();
   final isMarketplaceValue = data['isMarketplace'];
+    final inferredMarketplace = categoryId.isNotEmpty ||
+      cityId.isNotEmpty ||
+      listingStatus.isNotEmpty ||
+      visibility.isNotEmpty ||
+      mediaProcessingStatus.isNotEmpty ||
+      data.containsKey('favoriteCount') ||
+      data.containsKey('ownerId');
   final isMarketplace = isMarketplaceValue is bool
       ? isMarketplaceValue
-      : isMarketplaceValue.toString().trim().toLowerCase() == 'true';
+      : isMarketplaceValue.toString().trim().toLowerCase() == 'true' ||
+        inferredMarketplace;
 
   return Offer(
     id: offerId,
