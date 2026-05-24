@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/services/city_search.dart';
 import 'package:presto_app/services/french_city_postal_validator.dart';
 
 void main() {
@@ -49,5 +50,31 @@ void main() {
     expect(result.isValid, isFalse);
     expect(result.isKnownCity, isTrue);
     expect(result.postalCodeMatches, isFalse);
+  });
+
+  test('resolveCanonicalCity prefers close valid city from list', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await CitySearch.instance.ensureLoaded();
+
+    final result = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: 'hans bertrand',
+      postalCode: '97121',
+    );
+
+    expect(result, isNotNull);
+    expect(result?.name, 'ANSE BERTRAND');
+    expect(result?.postalCode, '97121');
+  });
+
+  test('resolveCanonicalCity does not force distant invalid city names', () async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await CitySearch.instance.ensureLoaded();
+
+    final result = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: 'zzzzzzzzzz',
+      postalCode: '97121',
+    );
+
+    expect(result, isNull);
   });
 }
