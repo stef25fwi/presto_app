@@ -47,4 +47,19 @@ const media_1 = require("./media");
 (0, node_test_1.default)("listing media output size stays standardized for cards", () => {
     strict_1.default.equal(media_1.STANDARDIZED_LISTING_IMAGE_SIZE, 1200);
 });
+(0, node_test_1.default)("submitListingDraft delays publication by one minute when photos are present", () => {
+    const autoPublishAfter = (0, listings_1.buildAutoPublishAfterForSubmission)({
+        mediaCount: 2,
+        nowMs: 1_700_000_000_000,
+    });
+    strict_1.default.ok(autoPublishAfter);
+    strict_1.default.equal(autoPublishAfter?.toMillis(), 1_700_000_060_000);
+});
+(0, node_test_1.default)("submitListingDraft publishes immediately when no photo is present", () => {
+    const autoPublishAfter = (0, listings_1.buildAutoPublishAfterForSubmission)({
+        mediaCount: 0,
+        nowMs: 1_700_000_000_000,
+    });
+    strict_1.default.equal(autoPublishAfter, null);
+});
 //# sourceMappingURL=listings.test.js.map

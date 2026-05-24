@@ -8,6 +8,7 @@ exports.buildListingDraftDocumentPath = buildListingDraftDocumentPath;
 exports.buildListingDocumentPath = buildListingDocumentPath;
 exports.assertDraftOwnership = assertDraftOwnership;
 exports.assertCategoryAndCityConfigured = assertCategoryAndCityConfigured;
+exports.buildAutoPublishAfterForSubmission = buildAutoPublishAfterForSubmission;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../../config/env");
@@ -116,6 +117,12 @@ function collectListingImageUrls(media) {
     return Array.from(new Set(media
         .map((entry) => normalizeString(entry.downloadUrl || entry.thumbnailUrl))
         .filter((url) => url.length > 0)));
+}
+function buildAutoPublishAfterForSubmission({ mediaCount, nowMs = Date.now(), }) {
+    if (mediaCount <= 0) {
+        return null;
+    }
+    return firebase_admin_1.default.firestore.Timestamp.fromMillis(nowMs + 60 * 1000);
 }
 function departmentFromPostalCode(postalCode) {
     const cp = postalCode.trim();
@@ -472,9 +479,11 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
                 lastRecaptchaScore: recaptcha.score,
             },
         });
-        // Photos are processed synchronously above, so no need for deferred
-        // autoPublishAfter — publish immediately when approved.
-        const autoPublishAfter = null;
+        // Keep photo listings in pending briefly so users see the validation step
+        // before the scheduler flips them to public/active.
+        const autoPublishAfter = buildAutoPublishAfterForSubmission({
+            mediaCount: normalizedMedia.length,
+        });
         const publication = await (0, moderation_1.persistModerationResult)({
             listingId,
             ownerId,
