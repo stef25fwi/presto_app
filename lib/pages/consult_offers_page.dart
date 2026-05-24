@@ -2686,87 +2686,99 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                      child: Row(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildPhoto(),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.data.title.toUpperCase(),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    height: 1.15,
-                                    fontWeight: FontWeight.w700,
-                                    color: _ConsultOffersPageState._offersNavy,
-                                    letterSpacing: 0.15,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  widget.data.subtitle,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    height: 1.15,
-                                    fontWeight: FontWeight.w500,
-                                    color: _ConsultOffersPageState._offersNavy
-                                        .withValues(alpha: 0.82),
-                                    letterSpacing: -0.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  widget.data.publishedText,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    height: 1.0,
-                                    fontWeight: FontWeight.w500,
-                                    color:
-                                        _ConsultOffersPageState._offersSoftText,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                          Text(
+                            widget.data.title.toUpperCase(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: _ConsultOffersPageState._offersNavy,
+                              letterSpacing: 0.15,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: _buildPhoto(),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: _OfferMissionDelayChip(
-                                        label: widget.data.missionDelayLabel,
+                                    Text(
+                                      widget.data.subtitle,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        height: 1.15,
+                                        fontWeight: FontWeight.w500,
+                                        color: _ConsultOffersPageState
+                                            ._offersNavy
+                                            .withValues(alpha: 0.82),
+                                        letterSpacing: -0.1,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    ConstrainedBox(
-                                      constraints:
-                                          const BoxConstraints(maxWidth: 132),
-                                      child: Text(
-                                        '${widget.data.price} €',
-                                        textAlign: TextAlign.right,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 26,
-                                          height: 1.0,
-                                          fontWeight: FontWeight.w700,
-                                          color: _ConsultOffersPageState
-                                              ._offersOrange,
-                                          letterSpacing: -0.9,
-                                        ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      widget.data.publishedText,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        height: 1.0,
+                                        fontWeight: FontWeight.w500,
+                                        color: _ConsultOffersPageState
+                                            ._offersSoftText,
                                       ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Expanded(
+                                          child: _OfferMissionDelayChip(
+                                            label: widget.data.missionDelayLabel,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 132,
+                                          ),
+                                          child: Text(
+                                            '${widget.data.price} €',
+                                            textAlign: TextAlign.right,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 26,
+                                              height: 1.0,
+                                              fontWeight: FontWeight.w700,
+                                              color: _ConsultOffersPageState
+                                                  ._offersOrange,
+                                              letterSpacing: -0.9,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
