@@ -62,11 +62,44 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   bool _isLoading = true;
   String? _error;
   String? _selectedOfferId;
+  StreamSubscription<Set<String>>? _favoritesSubscription;
 
   @override
   void initState() {
     super.initState();
+    _bindFavoritesWatcher();
     _loadFavorites();
+  }
+
+  @override
+  void didUpdateWidget(covariant FavoriteOffersSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId == widget.userId) {
+      return;
+    }
+    _bindFavoritesWatcher();
+    _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    _favoritesSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _bindFavoritesWatcher() {
+    _favoritesSubscription?.cancel();
+    final userId = widget.userId.trim();
+    if (userId.isEmpty) {
+      _favoritesSubscription = null;
+      return;
+    }
+
+    _favoritesSubscription =
+        _favoriteRepository.watchFavoriteListingIds(userId).listen((_) {
+      if (!mounted) return;
+      _loadFavorites();
+    });
   }
 
   Future<void> _loadFavorites() async {
