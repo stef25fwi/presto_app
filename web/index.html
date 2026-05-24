@@ -77,9 +77,40 @@
       let recaptchaLoader = null;
       let recaptchaLoaderSiteKey = null;
 
+      function hasRecaptchaEnterpriseApi() {
+        return !!(
+          window.grecaptcha &&
+          window.grecaptcha.enterprise &&
+          typeof window.grecaptcha.enterprise.ready === 'function' &&
+          typeof window.grecaptcha.enterprise.execute === 'function'
+        );
+      }
+
+      function waitForRecaptchaEnterpriseApi(timeoutMs) {
+        return new Promise(function (resolve, reject) {
+          const startedAt = Date.now();
+
+          function check() {
+            if (hasRecaptchaEnterpriseApi()) {
+              resolve();
+              return;
+            }
+
+            if (Date.now() - startedAt >= timeoutMs) {
+              reject(new Error('API reCAPTCHA Enterprise indisponible apres chargement du script.'));
+              return;
+            }
+
+            window.setTimeout(check, 50);
+          }
+
+          check();
+        });
+      }
+
       function loadRecaptchaEnterpriseScript(baseUrl, siteKey) {
         return new Promise(function (resolve, reject) {
-          if (window.grecaptcha && window.grecaptcha.enterprise) {
+          if (hasRecaptchaEnterpriseApi()) {
             resolve();
             return;
           }
@@ -100,10 +131,19 @@
 
           script.onload = function () {
             if (settled) return;
-            settled = true;
-            window.clearTimeout(timeout);
             console.debug('[Marketplace reCAPTCHA] script loaded', baseUrl);
-            resolve();
+            waitForRecaptchaEnterpriseApi(3000).then(function () {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timeout);
+              resolve();
+            }).catch(function (error) {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timeout);
+              try { script.remove(); } catch (_) {}
+              reject(error);
+            });
           };
 
           script.onerror = function () {
@@ -119,7 +159,7 @@
       }
 
       function ensureRecaptchaEnterprise(siteKey) {
-        if (window.grecaptcha && window.grecaptcha.enterprise) {
+        if (hasRecaptchaEnterpriseApi()) {
           return Promise.resolve();
         }
 
@@ -180,7 +220,7 @@
           return ensureRecaptchaEnterprise(siteKey).then(function () {
             return withTimeout(new Promise(function (resolve, reject) {
               try {
-                if (!window.grecaptcha || !window.grecaptcha.enterprise) {
+                if (!hasRecaptchaEnterpriseApi()) {
                   reject(new Error('grecaptcha.enterprise indisponible.'));
                   return;
                 }
