@@ -142,10 +142,6 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         final status = (data['status'] ?? '').toString().trim();
         final visibility = (data['visibility'] ?? '').toString().trim();
         if (status != 'active' || visibility != 'public') continue;
-        final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
         items.add(_FavoriteOfferItem(
           offerId: doc.id,
           title: (data['title'] ?? 'Sans titre').toString().trim(),
@@ -155,7 +151,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
           category:
               (data['category'] ?? 'Catégorie non précisée').toString().trim(),
           price: (data['budget'] as num?)?.toDouble(),
-          imageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
+          imageUrl: _primaryOfferImageUrl(data),
           addedAt: favoriteDates[doc.id],
           rawData: data,
           isMarketplace: true,
@@ -492,6 +488,36 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return 'Ajouté le $day/$month/${date.year}';
+  }
+
+  String _primaryOfferImageUrl(Map<String, dynamic> data) {
+    final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
+    if (thumbnailUrl.isNotEmpty) return thumbnailUrl;
+
+    final imageUrl = (data['imageUrl'] ?? '').toString().trim();
+    if (imageUrl.isNotEmpty) return imageUrl;
+
+    final imageUrls = data['imageUrls'];
+    if (imageUrls is List) {
+      for (final entry in imageUrls) {
+        final value = entry.toString().trim();
+        if (value.isNotEmpty) return value;
+      }
+    }
+
+    final media = data['media'];
+    if (media is List) {
+      for (final entry in media) {
+        if (entry is! Map) continue;
+        final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
+        final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
+            .toString()
+            .trim();
+        if (candidate.isNotEmpty) return candidate;
+      }
+    }
+
+    return '';
   }
 }
 
@@ -1722,6 +1748,82 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     );
   }
 
+  String _primaryManagedOfferImageUrl(Map<String, dynamic> data) {
+    final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
+    if (thumbnailUrl.isNotEmpty) return thumbnailUrl;
+
+    final imageUrl = (data['imageUrl'] ?? '').toString().trim();
+    if (imageUrl.isNotEmpty) return imageUrl;
+
+    final imageUrls = data['imageUrls'];
+    if (imageUrls is List) {
+      for (final entry in imageUrls) {
+        final value = entry.toString().trim();
+        if (value.isNotEmpty) return value;
+      }
+    }
+
+    final media = data['media'];
+    if (media is List) {
+      for (final entry in media) {
+        if (entry is! Map) continue;
+        final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
+        final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
+            .toString()
+            .trim();
+        if (candidate.isNotEmpty) return candidate;
+      }
+    }
+
+    return '';
+  }
+
+  Widget _buildOfferPhotoPreview(Map<String, dynamic> data) {
+    final imageUrl = _primaryManagedOfferImageUrl(data);
+    if (imageUrl.isEmpty) {
+      return Container(
+        width: 84,
+        height: 84,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF4F4F5),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.image_outlined,
+          color: Color(0xFF9CA3AF),
+          size: 28,
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Image.network(
+        imageUrl,
+        width: 84,
+        height: 84,
+        fit: BoxFit.cover,
+        cacheWidth: 168,
+        cacheHeight: 168,
+        errorBuilder: (_, __, ___) => Container(
+          width: 84,
+          height: 84,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF4F4F5),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.broken_image_outlined,
+            color: Color(0xFF9CA3AF),
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOfferTile(_ManagedOfferItem item) {
     final data = item.data;
     final statusColor = _statusColor(item.section);
@@ -1742,13 +1844,33 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildOfferPhotoPreview(data),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  _offerTitle(data),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _offerTitle(data),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        _buildMetaChip(
+                            Icons.category_outlined, _offerCategory(data)),
+                        _buildMetaChip(
+                            Icons.event_outlined, _formatOfferDate(data)),
+                        _buildMetaChip(
+                            Icons.place_outlined, _offerLocation(data)),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
@@ -1768,16 +1890,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              _buildMetaChip(Icons.category_outlined, _offerCategory(data)),
-              _buildMetaChip(Icons.event_outlined, _formatOfferDate(data)),
-              _buildMetaChip(Icons.place_outlined, _offerLocation(data)),
             ],
           ),
           if (pendingPhotoNotice != null) ...[
