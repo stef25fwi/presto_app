@@ -64,6 +64,16 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   String? _selectedOfferId;
   StreamSubscription<Set<String>>? _favoritesSubscription;
 
+  bool _isPermissionDeniedError(Object error) {
+    if (error is FirebaseException) {
+      return error.code == 'permission-denied';
+    }
+
+    final text = error.toString().toLowerCase();
+    return text.contains('permission-denied') ||
+        text.contains('permission denied');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -129,14 +139,22 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return;
       }
 
-      final listingSnaps = await Future.wait(
-        favoriteIds.map((listingId) {
-          return fs.collection(kListingsCollection).doc(listingId).get();
+      final listingSnaps = await Future.wait<DocumentSnapshot<Map<String, dynamic>>?>(
+        favoriteIds.map((listingId) async {
+          try {
+            return await fs.collection(kListingsCollection).doc(listingId).get();
+          } catch (error) {
+            if (_isPermissionDeniedError(error)) {
+              return null;
+            }
+            rethrow;
+          }
         }),
       );
 
       final items = <_FavoriteOfferItem>[];
       for (final doc in listingSnaps) {
+        if (doc == null) continue;
         if (!doc.exists) continue;
         final data = doc.data() ?? const <String, dynamic>{};
         final status = (data['status'] ?? '').toString().trim();
