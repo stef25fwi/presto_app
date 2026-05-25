@@ -787,7 +787,7 @@ class _AccountPageState extends State<AccountPage> {
     _profileCityController.addListener(_handleProfileCompletenessChanged);
     _profilePostalCodeController.addListener(_handleProfileCompletenessChanged);
     _profilePhoneController.addListener(_handleProfileCompletenessChanged);
-    _profileAuthSub = _auth.idTokenChanges().listen((user) {
+    _profileAuthSub = _auth.authStateChanges().listen((user) {
       if (!mounted) return;
       unawaited(_handleProfileAuthStateChanged(user));
     });
@@ -853,6 +853,12 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     SessionState.userId = user.uid;
+
+    if (_activeProfileUid == user.uid &&
+        _profileDocSub != null &&
+        _profileLoaded) {
+      return;
+    }
 
     await _startInstantProfileHydration(user);
   }
@@ -3013,7 +3019,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: _auth.idTokenChanges(),
+      stream: _auth.authStateChanges(),
       builder: (context, snapshot) {
         final user = snapshot.data;
         if (user == null &&
