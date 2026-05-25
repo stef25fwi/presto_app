@@ -22,14 +22,17 @@ Future<void> bootstrapAppCheck() async {
       final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
       if (siteKey.isEmpty) {
         final error = StateError(
-          'missing_app_check_recaptcha_site_key',
+          'missing_app_check_recaptcha_site_key (source=$kAppCheckWebRecaptchaSiteKeySource)',
         );
         appCheckActivationAttempted = true;
         appCheckActivationSucceeded = false;
         appCheckActivationError = error;
         appCheckActivationStackTrace = StackTrace.current;
         if (kDebugMode) {
-          debugPrint('[AppCheck] missing_app_check_recaptcha_site_key');
+          debugPrint(
+            '[AppCheck] missing_app_check_recaptcha_site_key '
+            'source=$kAppCheckWebRecaptchaSiteKeySource',
+          );
         }
         try {
           await FirebaseCrashlytics.instance.recordError(
@@ -43,7 +46,11 @@ Future<void> bootstrapAppCheck() async {
       }
 
       final preview = siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
-      if (kDebugMode) debugPrint('[APPCHECK] siteKey=$preview...');
+      if (kDebugMode) {
+        debugPrint(
+          '[APPCHECK] siteKey=$preview... source=$kAppCheckWebRecaptchaSiteKeySource',
+        );
+      }
       appCheckActivationAttempted = true;
       await FirebaseAppCheck.instance.activate(
         webProvider: ReCaptchaEnterpriseProvider(siteKey),

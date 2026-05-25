@@ -6,7 +6,14 @@ bool appCheckActivationSucceeded = false;
 Object? appCheckActivationError;
 StackTrace? appCheckActivationStackTrace;
 
-const String kAppCheckWebRecaptchaSiteKey = String.fromEnvironment(
+const String _kAppCheckWebRecaptchaSiteKeyPrimary = String.fromEnvironment(
   'APPCHECK_RECAPTCHA_SITE_KEY',
   defaultValue: '',
 );
+const String kAppCheckWebRecaptchaSiteKey =
+    _kAppCheckWebRecaptchaSiteKeyPrimary;
+
+const String kAppCheckWebRecaptchaSiteKeySource =
+    _kAppCheckWebRecaptchaSiteKeyPrimary != ''
+    ? 'APPCHECK_RECAPTCHA_SITE_KEY'
+    : 'missing';

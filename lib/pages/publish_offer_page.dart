@@ -170,7 +170,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         debugPrint('[AppCheck] retry activation for $flow');
         final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
         if (siteKey.isEmpty) {
-          throw StateError('APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow');
+          throw StateError(
+            'Aucune cle App Check Web embarquee au build '
+            '(source: APPCHECK_RECAPTCHA_SITE_KEY) pour $flow',
+          );
         }
         await FirebaseAppCheck.instance.activate(
           webProvider: ReCaptchaEnterpriseProvider(siteKey),
@@ -238,9 +241,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
 
     if (mounted && showBlockingMessage) {
+      final missingBuildKey = kIsWeb &&
+          kAppCheckWebRecaptchaSiteKeySource == 'missing';
       showErrorSnackBar(
         context,
-        'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
+        missingBuildKey
+            ? 'App Check indisponible: ce build web ne contient aucune cle de verification. Recompile avec --dart-define=APPCHECK_RECAPTCHA_SITE_KEY puis recharge la page.'
+            : 'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
       );
     }
     return false;
