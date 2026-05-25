@@ -1755,6 +1755,56 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
   }
 
+  void _syncLiveDerivedLocationFieldsFromInputs() {
+    final city = _locationController.text.trim();
+    final postalCode = _postalCodeController.text.trim();
+
+    String? dept;
+    String? region;
+
+    final resolved = _resolveCanonicalCityRecord(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (resolved != null) {
+      dept = resolved.dept;
+      region = resolved.region;
+    }
+
+    if ((dept == null || dept.isEmpty) || (region == null || region.isEmpty)) {
+      final candidates = postalCode.isNotEmpty
+          ? FrenchCityPostalValidator.instance.citiesForPostalCode(postalCode)
+          : (city.isNotEmpty
+              ? FrenchCityPostalValidator.instance.postalCodesForCity(city)
+              : const <CityRecord>[]);
+      if (candidates.isNotEmpty) {
+        final depts = candidates
+            .map((candidate) => candidate.dept.trim())
+            .where((candidate) => candidate.isNotEmpty)
+            .toSet();
+        final regions = candidates
+            .map((candidate) => candidate.region.trim())
+            .where((candidate) => candidate.isNotEmpty)
+            .toSet();
+        if (depts.length == 1) {
+          dept = depts.first;
+        }
+        if (regions.length == 1) {
+          region = regions.first;
+        }
+      }
+    }
+
+    setState(() {
+      _selectedDeptCode = dept;
+      _selectedRegionCode = region;
+      _setControllerText(_regionController, region ?? '');
+      if (dept != null && dept.isNotEmpty) {
+        _selectedPhoneCountryCode = _countryCodeForDept(dept);
+      }
+    });
+  }
+
   String? _validateRegionField(String? _) {
     final city = _locationController.text.trim();
     final postalCode = _postalCodeController.text.trim();
@@ -1930,12 +1980,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _setControllerText(_postalCodeController, cityRec.cp);
         }
 
-        // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
+        // bonus cohérence UI: region + dept + indicatif selon la ville détectée
         if (!mounted) return;
         setState(() {
-          _selectedDeptCode = cityRec.dept;
-          _selectedRegionCode = cityRec.region;
-          _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
+          _syncDerivedLocationFields(cityRec);
         });
       }
     }
@@ -3536,6 +3584,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _citySuggestions = [];
         _highlightedIndex = -1;
       });
+      _syncLiveDerivedLocationFieldsFromInputs();
       return;
     }
 
@@ -3557,6 +3606,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _locationSelectionPending = !resolution.isResolved && results.isNotEmpty;
     });
 
+    _syncLiveDerivedLocationFieldsFromInputs();
+
     if (resolution.isResolved &&
         _isExactTypedCanonicalSelection(resolution.selected!, query)) {
       _applyCity(resolution.selected!, forceApply: true);
@@ -3570,6 +3621,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         cityQuery: _locationController.text,
         postalCode: cp,
       );
+      _syncLiveDerivedLocationFieldsFromInputs();
       return;
     }
 
@@ -3592,6 +3644,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _highlightedIndex = -1;
         _locationSelectionPending = false;
       });
+      _syncLiveDerivedLocationFieldsFromInputs();
       return;
     }
 
@@ -3600,6 +3653,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _highlightedIndex = 0;
       _locationSelectionPending = !resolution.isResolved && results.isNotEmpty;
     });
+
+    _syncLiveDerivedLocationFieldsFromInputs();
 
     if (resolution.isResolved && _locationController.text.trim().isNotEmpty) {
       _applyCity(resolution.selected!, forceApply: true);
