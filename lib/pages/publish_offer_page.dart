@@ -492,6 +492,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
   // Autocomplétion villes
+  static const int _cityAutocompleteMinChars = 3;
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
 
@@ -1702,6 +1703,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _locationSelectionPending = false;
         _selectedDeptCode = null;
         _selectedRegionCode = null;
+        _setControllerText(_regionController, '');
         _selectedPhoneCountryCode = '+33';
         _citySuggestions = [];
         _highlightedIndex = -1;
@@ -1839,7 +1841,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) {
     final query = cityQuery.trim();
     final cp = postalCode.trim();
-    if (query.length < 2 && cp.length < 2) {
+    if (query.length < _cityAutocompleteMinChars && cp.length < 2) {
       setState(() {
         _citySuggestions = [];
         _highlightedIndex = -1;
@@ -3579,7 +3581,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   void _onCityChanged(String value) {
     final query = value.trim();
-    if (query.length < 2) {
+    if (query.length < _cityAutocompleteMinChars) {
       setState(() {
         _citySuggestions = [];
         _highlightedIndex = -1;
