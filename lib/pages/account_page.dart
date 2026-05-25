@@ -1083,7 +1083,14 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _deriveImmediatePseudo(user);
-    if (pseudo.isNotEmpty && _canHydrateProfileField(_profilePseudoController)) {
+    // Only use Auth pseudo as a bootstrap value. Once profile loading started,
+    // avoid overwriting an already hydrated Firestore pseudo on token refreshes.
+    final canSeedPseudoFromAuth =
+      _profilePseudoController.text.trim().isEmpty ||
+      (!_profileLoadRequested && !_profileSyncInProgress);
+    if (pseudo.isNotEmpty &&
+      canSeedPseudoFromAuth &&
+      _canHydrateProfileField(_profilePseudoController)) {
       _profilePseudoController.text = pseudo;
     }
 
