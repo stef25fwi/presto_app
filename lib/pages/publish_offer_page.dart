@@ -3832,7 +3832,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (source == null) return;
 
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: source);
+      // imageQuality forces HEIC→JPEG conversion on iOS so sharp can process it.
+      final XFile? image = await picker.pickImage(source: source, imageQuality: 88);
 
       if (image == null) return;
 
