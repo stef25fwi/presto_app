@@ -75,6 +75,9 @@ class CityPostalAutocompleteField extends StatefulWidget {
   final TextEditingController postalCodeController;
   final InputDecoration decoration;
   final ValueChanged<CityRecord>? onSelectedCity;
+  final FormFieldValidator<String>? validator;
+  final ValueChanged<String>? onChanged;
+  final bool enabled;
 
   const CityPostalAutocompleteField({
     super.key,
@@ -82,6 +85,9 @@ class CityPostalAutocompleteField extends StatefulWidget {
     required this.postalCodeController,
     required this.decoration,
     this.onSelectedCity,
+    this.validator,
+    this.onChanged,
+    this.enabled = true,
   });
 
   @override
@@ -156,6 +162,9 @@ class _CityPostalAutocompleteFieldState
           controller: widget.cityController,
           focusNode: focusNode,
           decoration: widget.decoration,
+          enabled: widget.enabled,
+          validator: widget.validator,
+          onChanged: widget.onChanged,
         );
       },
       optionsViewBuilder: (context, onSelected, options) {

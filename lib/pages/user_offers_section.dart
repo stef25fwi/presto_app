@@ -13,11 +13,13 @@ import '../app_core.dart';
 import '../data/marketplace/favorite_repository.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/firebase_functions_region.dart';
+import '../services/french_city_postal_validator.dart';
 import '../services/offer_indexing.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
+import '../widgets/city_postal_autocomplete_field.dart';
 import '../widgets/listing_thumbnail_image.dart';
 import '../widgets/phone_input_field.dart';
 
@@ -2192,6 +2194,29 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       );
     }
 
+    String? validateCanonicalLocation() {
+      final city = locationController.text.trim();
+      final postalCode = postalCodeController.text.trim();
+      if (city.isEmpty) {
+        return 'Ville obligatoire';
+      }
+      if (postalCode.isEmpty) {
+        return 'Code postal obligatoire';
+      }
+
+      final validation = FrenchCityPostalValidator.instance.validate(
+        city: city,
+        postalCode: postalCode,
+      );
+      if (!validation.isKnownCity) {
+        return 'Choisissez une ville dans la liste';
+      }
+      if (!validation.postalCodeMatches) {
+        return 'Le code postal ne correspond pas à la ville';
+      }
+      return null;
+    }
+
     const missionDelayOptions = <String>[
       'Immédiat',
       'Dans la journée',
@@ -2403,14 +2428,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                             children: [
                               Expanded(
                                 flex: 3,
-                                child: TextFormField(
-                                  controller: locationController,
+                                child: CityPostalAutocompleteField(
+                                  cityController: locationController,
+                                  postalCodeController: postalCodeController,
                                   decoration: buildDecoration('Ville / lieu *'),
-                                  validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return 'Ville obligatoire';
-                                    }
-                                    return null;
+                                  enabled: !isSaving,
+                                  validator: (_) {
+                                    return validateCanonicalLocation();
                                   },
                                 ),
                               ),
@@ -2420,6 +2444,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                   controller: postalCodeController,
                                   decoration: buildDecoration('Code postal'),
                                   keyboardType: TextInputType.number,
+                                  enabled: !isSaving,
                                 ),
                               ),
                             ],
@@ -2694,6 +2719,23 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                               locationController.text.trim();
                                           final trimmedPostalCode =
                                               postalCodeController.text.trim();
+                                            final resolvedLocation =
+                                              FrenchCityPostalValidator.instance
+                                                .resolveCanonicalCity(
+                                            city: trimmedLocation,
+                                            postalCode: trimmedPostalCode,
+                                            );
+                                            if (resolvedLocation == null) {
+                                            showErrorSnackBar(
+                                              context,
+                                              'Choisissez une ville et un code postal valides dans la liste',
+                                            );
+                                            return;
+                                            }
+                                            final canonicalLocation =
+                                              resolvedLocation.name;
+                                            final canonicalPostalCode =
+                                              resolvedLocation.cp;
                                           final trimmedMissionDelay =
                                               selectedMissionDelay.trim();
                                           final trimmedAverageDelay =
@@ -2723,8 +2765,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
                                           final indexed = buildOfferIndexFields(
                                             category: trimmedCategory,
-                                            city: trimmedLocation,
-                                            postalCode: trimmedPostalCode,
+                                            city: canonicalLocation,
+                                            postalCode: canonicalPostalCode,
                                             budget: effectiveBudget,
                                           );
 
@@ -2751,9 +2793,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                               'category': indexed['category'] ??
                                                   trimmedCategory,
                                               'location': indexed['location'] ??
-                                                  trimmedLocation,
+                                                  canonicalLocation,
                                               'city': indexed['city'] ??
-                                                  trimmedLocation,
+                                                  canonicalLocation,
                                               'budgetType': selectedBudgetType,
                                               'canTravel': canTravel,
                                               'urgent': isUrgent,
@@ -2761,12 +2803,12 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                               'updatedAt':
                                                   FieldValue.serverTimestamp(),
                                               'postalCode':
-                                                  trimmedPostalCode.isEmpty
+                                                  canonicalPostalCode.isEmpty
                                                       ? FieldValue.delete()
-                                                      : trimmedPostalCode,
-                                              'cp': trimmedPostalCode.isEmpty
+                                                    : canonicalPostalCode,
+                                                'cp': canonicalPostalCode.isEmpty
                                                   ? FieldValue.delete()
-                                                  : trimmedPostalCode,
+                                                  : canonicalPostalCode,
                                               'phone': fullPhone.isEmpty
                                                   ? FieldValue.delete()
                                                   : fullPhone,
@@ -2786,9 +2828,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                                       : trimmedAvailability,
                                               'serviceArea':
                                                   trimmedServiceArea.isEmpty
-                                                      ? (trimmedLocation.isEmpty
+                                                    ? (canonicalLocation.isEmpty
                                                           ? FieldValue.delete()
-                                                          : trimmedLocation)
+                                                      : canonicalLocation)
                                                       : trimmedServiceArea,
                                               'schedule':
                                                   trimmedSchedule.isEmpty

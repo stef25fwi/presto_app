@@ -30,12 +30,14 @@ import '../services/app_route_parser.dart';
 import '../services/conversation_service.dart';
 import '../services/city_search.dart';
 import '../services/firebase_functions_region.dart';
+import '../services/french_city_postal_validator.dart';
 import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
+import '../widgets/city_postal_autocomplete_field.dart';
 import '../widgets/home_interactions.dart';
 import '../widgets/listing_thumbnail_image.dart';
 import 'messages/messages_page_v2.dart';
@@ -2090,12 +2092,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   // Méthodes pour la gestion de l'autocomplétion de ville dans les filtres
   List<CityRecord> _searchCities(String q) {
-    final allowed = _allowedDeptCodesForCity;
-    return CitySearch.instance.search(
+    final allowed = _allowedDeptCodesForCity?.toSet();
+    final results = FrenchCityPostalValidator.instance.searchSuggestions(
       q,
-      limit: 20,
-      allowedDeptCodes: allowed,
+      postalCodeHint: _filterPostalCodeController.text,
+      limit: 50,
     );
+    final filtered = allowed == null || allowed.isEmpty
+        ? results
+        : results
+            .where((city) => allowed.contains(city.departmentCode.trim()))
+            .toList(growable: false);
+    if (filtered.length <= 20) {
+      return filtered;
+    }
+    return filtered.take(20).toList(growable: false);
   }
 
   Widget _buildFilterCityField() {
@@ -2150,25 +2161,34 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           ),
         );
       },
-      onSelected: (CityRecord c) {
-        final dept = (c.departmentCode.trim().isNotEmpty)
-            ? c.departmentCode.trim()
-            : _deptFromPostal(c.postalCode);
+      onSelected: (CityRecord c) async {
+        final selected = await pickCanonicalCity(
+          context,
+          _filterPostalCodeController,
+          c,
+        );
+        if (selected == null || !mounted) {
+          return;
+        }
+
+        final dept = (selected.departmentCode.trim().isNotEmpty)
+            ? selected.departmentCode.trim()
+            : _deptFromPostal(selected.postalCode);
 
         setState(() {
           // ✅ Ville
-          _filterCityController.text = c.name;
-          _filterCityName = c.name;
+          _filterCityController.text = selected.name;
+          _filterCityName = selected.name;
           _trackManualFilterCriterion('city', isActive: true);
 
           // ✅ CP
-          _filterPostalCodeController.text = c.postalCode;
+          _filterPostalCodeController.text = selected.postalCode;
 
           // ✅ Dept (ex: 971 au lieu de 97)
           _filterDepartmentCode = dept;
 
           // ✅ Région: prendre celle du record si dispo, sinon fallback via dept
-          final regionFromRecord = c.regionCode.trim();
+          final regionFromRecord = selected.regionCode.trim();
           if (regionFromRecord.isNotEmpty) {
             _filterRegionCode = regionFromRecord;
           } else {

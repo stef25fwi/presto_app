@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/french_city_postal_validator.dart';
+import '../widgets/city_postal_autocomplete_field.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
 import '../constants.dart';
@@ -31,6 +33,48 @@ class _ProProfilePageState extends State<ProProfilePage> {
   final _websiteCtrl = TextEditingController();
 
   bool _acceptTerms = false;
+
+  String? _validateOptionalCanonicalLocation() {
+    final city = _cityCtrl.text.trim();
+    final postalCode = _cpCtrl.text.trim();
+    if (city.isEmpty && postalCode.isEmpty) {
+      return null;
+    }
+    if (city.isEmpty) {
+      return 'Ville requise si un code postal est saisi';
+    }
+    if (postalCode.isEmpty) {
+      return 'Code postal requis si une ville est saisie';
+    }
+
+    final validation = FrenchCityPostalValidator.instance.validate(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (!validation.isKnownCity) {
+      return 'Choisissez une ville dans la liste';
+    }
+    if (!validation.postalCodeMatches) {
+      return 'Le code postal ne correspond pas à la ville';
+    }
+    return null;
+  }
+
+  ({String city, String postalCode})? _resolveOptionalCanonicalLocation() {
+    final city = _cityCtrl.text.trim();
+    final postalCode = _cpCtrl.text.trim();
+    if (city.isEmpty && postalCode.isEmpty) {
+      return null;
+    }
+    final resolved = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (resolved == null) {
+      return null;
+    }
+    return (city: resolved.name, postalCode: resolved.cp);
+  }
 
   @override
   void initState() {
@@ -73,6 +117,11 @@ class _ProProfilePageState extends State<ProProfilePage> {
       _addressCtrl.text = s(data['address']) ?? _addressCtrl.text;
       _cityCtrl.text = s(data['city']) ?? _cityCtrl.text;
       _cpCtrl.text = s(data['postalCode']) ?? _cpCtrl.text;
+      final resolvedLocation = _resolveOptionalCanonicalLocation();
+      if (resolvedLocation != null) {
+        _cityCtrl.text = resolvedLocation.city;
+        _cpCtrl.text = resolvedLocation.postalCode;
+      }
 
       final accepted = data['termsAccepted'];
       if (accepted is bool && mounted) {
@@ -114,6 +163,12 @@ class _ProProfilePageState extends State<ProProfilePage> {
       return;
     }
 
+    final resolvedLocation = _resolveOptionalCanonicalLocation();
+    if (_validateOptionalCanonicalLocation() != null && resolvedLocation == null) {
+      showErrorSnackBar(context, _validateOptionalCanonicalLocation()!);
+      return;
+    }
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       showErrorSnackBar(context, "Veuillez vous connecter avant.");
@@ -151,8 +206,9 @@ class _ProProfilePageState extends State<ProProfilePage> {
             _websiteCtrl.text.trim().isEmpty ? null : _websiteCtrl.text.trim(),
         'address':
             _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
-        'city': _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
-        'postalCode': _cpCtrl.text.trim().isEmpty ? null : _cpCtrl.text.trim(),
+        'city': resolvedLocation?.city,
+        'postalCode': resolvedLocation?.postalCode,
+        'cp': resolvedLocation?.postalCode,
       };
 
       profileData.removeWhere((_, v) => v == null);
@@ -285,8 +341,13 @@ class _ProProfilePageState extends State<ProProfilePage> {
               Row(
                 children: [
                   Expanded(
-                      child: TextFormField(
-                          controller: _cityCtrl, decoration: _dec("Ville"))),
+                    child: CityPostalAutocompleteField(
+                      cityController: _cityCtrl,
+                      postalCodeController: _cpCtrl,
+                      decoration: _dec("Ville"),
+                      validator: (_) => _validateOptionalCanonicalLocation(),
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   SizedBox(
                     width: 110,
@@ -294,6 +355,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
                       controller: _cpCtrl,
                       decoration: _dec("C/P"),
                       keyboardType: TextInputType.number,
+                      validator: (_) => _validateOptionalCanonicalLocation(),
                     ),
                   ),
                 ],
