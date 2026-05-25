@@ -204,6 +204,18 @@ class FrenchCityPostalValidator {
     }
 
     results.sort((left, right) {
+      final leftMatchPriority = _matchPriority(
+        left,
+        normalizedCity: normalizedQuery,
+      );
+      final rightMatchPriority = _matchPriority(
+        right,
+        normalizedCity: normalizedQuery,
+      );
+      if (leftMatchPriority != rightMatchPriority) {
+        return leftMatchPriority.compareTo(rightMatchPriority);
+      }
+
       final leftScore = _scoreCandidate(
         left,
         normalizedCity: normalizedQuery,
@@ -216,6 +228,17 @@ class FrenchCityPostalValidator {
       );
       if (leftScore != rightScore) {
         return rightScore.compareTo(leftScore);
+      }
+      final leftPrefixDistance = _prefixDistance(
+        left,
+        normalizedCity: normalizedQuery,
+      );
+      final rightPrefixDistance = _prefixDistance(
+        right,
+        normalizedCity: normalizedQuery,
+      );
+      if (leftPrefixDistance != rightPrefixDistance) {
+        return leftPrefixDistance.compareTo(rightPrefixDistance);
       }
       final leftName = normalizeCity(left.name);
       final rightName = normalizeCity(right.name);
@@ -517,6 +540,55 @@ class FrenchCityPostalValidator {
       }
     }
     return score;
+  }
+
+  static int _matchPriority(
+    CityRecord candidate, {
+    required String normalizedCity,
+  }) {
+    if (normalizedCity.isEmpty) {
+      return 99;
+    }
+
+    final names = _candidateNames(city: candidate.name);
+    if (names.contains(normalizedCity)) {
+      return 0;
+    }
+    if (names.any((name) => name.startsWith(normalizedCity))) {
+      return 1;
+    }
+    if (names.any(
+      (name) => name.split(' ').any((part) => part.startsWith(normalizedCity)),
+    )) {
+      return 2;
+    }
+    if (names.any((name) => name.contains(normalizedCity))) {
+      return 3;
+    }
+    if (names.any((name) => _isVeryCloseCityName(name, normalizedCity))) {
+      return 4;
+    }
+    return 5;
+  }
+
+  static int _prefixDistance(
+    CityRecord candidate, {
+    required String normalizedCity,
+  }) {
+    if (normalizedCity.isEmpty) {
+      return 1 << 20;
+    }
+
+    final names = _candidateNames(city: candidate.name)
+        .where((name) => name.startsWith(normalizedCity))
+        .toList(growable: false);
+    if (names.isEmpty) {
+      return 1 << 20;
+    }
+
+    return names
+        .map((name) => name.length - normalizedCity.length)
+      .reduce((best, value) => value < best ? value : best);
   }
 
   static List<CityRecord> _dedupeCandidates(List<CityRecord> candidates) {

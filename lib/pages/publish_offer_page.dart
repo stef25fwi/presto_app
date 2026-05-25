@@ -492,7 +492,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
   // Autocomplétion villes
-  static const int _cityAutocompleteMinChars = 3;
+  static const int _cityAutocompleteMinChars = 2;
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
 
@@ -4492,7 +4492,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       focusNode: _cityFocusNode,
                       decoration: InputDecoration(
                         label: _requiredLabel('Ville'),
-                        hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                        hintText:
+                            'Ex : Les Abymes, Baie-Mahault, Paris... (dès 2 lettres)',
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(

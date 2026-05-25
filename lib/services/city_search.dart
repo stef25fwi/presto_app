@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../constants.dart';
+
 /// Modèle ville minimal
 class CityRecord {
   final String name;
@@ -25,32 +27,71 @@ class CitySearch {
   CitySearch._internal();
   static final CitySearch instance = CitySearch._internal();
 
+  static const List<String> _overseasCityAssetSuffixes = <String>[
+    '971',
+    '972',
+    '973',
+    '974',
+    '975',
+    '976',
+    '980',
+    '986',
+    '987',
+    '988',
+  ];
+
+  static const Map<String, String> _extraRegionLabelsByDepartment =
+      <String, String>{
+        '975': 'Saint-Pierre-et-Miquelon',
+        '980': 'Monaco',
+        '986': 'Wallis-et-Futuna',
+        '987': 'Polynésie française',
+        '988': 'Nouvelle-Calédonie',
+      };
+
   bool _loaded = false;
   final List<CityRecord> _allCities = [];
+
+  List<String> _cityAssetPaths() {
+    final metro = <String>[
+      for (var dept = 1; dept <= 95; dept++)
+        if (dept != 20)
+          'assets/data/cities/cities_${dept.toString().padLeft(2, '0')}.json',
+    ];
+
+    return <String>[
+      ...metro,
+      'assets/data/cities/cities_2A.json',
+      'assets/data/cities/cities_2B.json',
+      ..._overseasCityAssetSuffixes
+          .map((suffix) => 'assets/data/cities/cities_$suffix.json'),
+    ];
+  }
+
+  String _resolveRegionLabel({
+    required String rawRegion,
+    required String departmentCode,
+  }) {
+    final trimmedRegion = rawRegion.trim();
+    if (trimmedRegion.isNotEmpty) {
+      return kRegions[trimmedRegion] ?? trimmedRegion;
+    }
+
+    for (final entry in kRegionDepartments.entries) {
+      if (entry.value.contains(departmentCode)) {
+        return kRegions[entry.key] ?? entry.key;
+      }
+    }
+
+    return _extraRegionLabelsByDepartment[departmentCode] ??
+        kDepartments[departmentCode] ??
+        '';
+  }
 
   /// ====== CHARGEMENT DES FICHIERS JSON ======
   Future<void> ensureLoaded() async {
     if (_loaded) return;
-    // même logique que ce qu'on avait déjà : boucle sur cities_XX.json
-    final List<String> files = [
-      'assets/data/cities/cities_01.json',
-      'assets/data/cities/cities_02.json',
-      'assets/data/cities/cities_03.json',
-      'assets/data/cities/cities_04.json',
-      'assets/data/cities/cities_05.json',
-      'assets/data/cities/cities_06.json',
-      'assets/data/cities/cities_07.json',
-      'assets/data/cities/cities_08.json',
-      'assets/data/cities/cities_09.json',
-      'assets/data/cities/cities_10.json',
-      // ...
-      // laisse ici tous tes fichiers jusqu'à 976
-      'assets/data/cities/cities_971.json',
-      'assets/data/cities/cities_972.json',
-      'assets/data/cities/cities_973.json',
-      'assets/data/cities/cities_974.json',
-      'assets/data/cities/cities_976.json',
-    ];
+    final files = _cityAssetPaths();
 
     for (final path in files) {
       try {
@@ -58,12 +99,16 @@ class CitySearch {
         final List<dynamic> list = jsonDecode(raw) as List<dynamic>;
         for (final row in list) {
           final map = row as Map<String, dynamic>;
+          final departmentCode = (map['dept'] ?? '').toString();
           _allCities.add(
             CityRecord(
-              name: map['name'] as String,
-              postalCode: map['cp'] as String,
-              departmentCode: map['dept'] as String,
-              regionCode: map['region'] as String,
+              name: (map['name'] ?? '').toString(),
+              postalCode: (map['cp'] ?? '').toString(),
+              departmentCode: departmentCode,
+              regionCode: _resolveRegionLabel(
+                rawRegion: (map['region'] ?? '').toString(),
+                departmentCode: departmentCode,
+              ),
             ),
           );
         }
