@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../services/city_search.dart';
@@ -43,6 +45,9 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
   final FocusNode _postalCodeFocusNode = FocusNode();
   List<CityRecord> _citySuggestions = const <CityRecord>[];
   CityRecord? _selectedCanonicalCity;
+  Timer? _suggestionsDebounce;
+  Timer? _phoneSyncDebounce;
+  String _lastSuggestionsKey = '';
 
   String _countryCodeForDept(String dept) {
     if (dept.startsWith('971')) return '+590';
@@ -55,19 +60,39 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
   }
 
   String? _extractPostalCodeFromCityValue(String value) {
+    final normalizedInputPostalCode =
+        FrenchCityPostalValidator.normalizePostalCode(
+      widget.postalCodeController.text,
+    );
+    if (RegExp(r'^(97\d{3}|98\d{3}|\d{5})$').hasMatch(
+      normalizedInputPostalCode,
+    )) {
+      return normalizedInputPostalCode;
+    }
+
+    final match = RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
+    if (match != null) {
+      return match.group(1);
+    }
+
+    final trimmedCity = value.trim();
+    if (trimmedCity.length < 4) {
+      return null;
+    }
+
     final resolution = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: value,
+      city: trimmedCity,
       postalCode: widget.postalCodeController.text,
     );
-    if (resolution != null) {
-      return resolution.cp;
-    }
-    final match = RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
-    return match?.group(1);
+    return resolution?.cp;
   }
 
   void _syncPhoneCountryCodeFromCityValue(String value) {
     final trimmed = value.trim();
+    if (trimmed.length < 2 && widget.postalCodeController.text.trim().isEmpty) {
+      return;
+    }
+
     String? dept;
 
     final postalCode = _extractPostalCodeFromCityValue(trimmed);
@@ -97,24 +122,67 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
 
   @override
   void dispose() {
+    _suggestionsDebounce?.cancel();
+    _phoneSyncDebounce?.cancel();
     _cityFocusNode.dispose();
     _postalCodeFocusNode.dispose();
     super.dispose();
   }
 
-  void _updateSuggestions(String value) {
+  void _queueSuggestionsUpdate(String value, {bool immediate = false}) {
+    _suggestionsDebounce?.cancel();
     final query = value.trim();
-    if (query.length < 2) {
-      setState(() => _citySuggestions = const <CityRecord>[]);
+    final postalHint = widget.postalCodeController.text.trim();
+    final key = '$query|$postalHint';
+
+    void run() {
+      if (!mounted) return;
+
+      if (query.length < 2) {
+        if (_citySuggestions.isNotEmpty) {
+          setState(() => _citySuggestions = const <CityRecord>[]);
+        }
+        _lastSuggestionsKey = key;
+        return;
+      }
+
+      if (_lastSuggestionsKey == key) {
+        return;
+      }
+
+      final results = FrenchCityPostalValidator.instance.searchSuggestions(
+        query,
+        postalCodeHint: postalHint,
+        limit: 8,
+      );
+      _lastSuggestionsKey = key;
+
+      if (!mounted) return;
+      setState(() => _citySuggestions = results);
+    }
+
+    if (immediate) {
+      run();
       return;
     }
 
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      query,
-      postalCodeHint: widget.postalCodeController.text,
-      limit: 8,
-    );
-    setState(() => _citySuggestions = results);
+    _suggestionsDebounce = Timer(const Duration(milliseconds: 180), run);
+  }
+
+  void _queuePhoneCountrySync(String value, {bool immediate = false}) {
+    _phoneSyncDebounce?.cancel();
+
+    void run() {
+      if (!mounted) return;
+      _syncPhoneCountryCodeFromCityValue(value);
+    }
+
+    if (immediate) {
+      run();
+      return;
+    }
+
+    _phoneSyncDebounce = Timer(const Duration(milliseconds: 220), run);
   }
 
   void _applyCanonicalCity(CityRecord city) {
@@ -133,6 +201,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
     );
     if (resolution.isResolved) {
       _applyCanonicalCity(resolution.selected!);
+      _queuePhoneCountrySync(widget.cityController.text, immediate: true);
       return;
     }
     setState(() {
@@ -241,10 +310,16 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                         ),
                         onChanged: (value) {
                           _selectedCanonicalCity = null;
-                          _updateSuggestions(value);
-                          _syncPhoneCountryCodeFromCityValue(value);
+                          _queueSuggestionsUpdate(value);
+                          _queuePhoneCountrySync(value);
                         },
-                        onEditingComplete: _canonicalizeLocationInputs,
+                        onEditingComplete: () {
+                          _canonicalizeLocationInputs();
+                          _queuePhoneCountrySync(
+                            widget.cityController.text,
+                            immediate: true,
+                          );
+                        },
                       ),
                       if (_citySuggestions.isNotEmpty) ...[
                         const SizedBox(height: 6),
@@ -303,9 +378,16 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                 ),
                 onChanged: (_) {
                   _selectedCanonicalCity = null;
-                  _updateSuggestions(widget.cityController.text);
+                  _queueSuggestionsUpdate(widget.cityController.text);
+                  _queuePhoneCountrySync(widget.cityController.text);
                 },
-                onEditingComplete: _canonicalizeLocationInputs,
+                onEditingComplete: () {
+                  _canonicalizeLocationInputs();
+                  _queuePhoneCountrySync(
+                    widget.cityController.text,
+                    immediate: true,
+                  );
+                },
               ),
               const SizedBox(height: 10),
               AbsorbPointer(

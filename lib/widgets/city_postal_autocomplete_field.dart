@@ -182,13 +182,7 @@ class _CityPostalAutocompleteFieldState
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, i) {
                   final c = list[i];
-                  final choices =
-                      FrenchCityPostalValidator.instance.postalCodesForCity(c.name);
-                  final cpLabel = choices.isEmpty
-                      ? c.cp
-                      : choices.length == 1
-                          ? choices.first.cp
-                          : '${choices.first.cp} … (+${choices.length - 1})';
+                  final cpLabel = c.cp;
                   return ListTile(
                     dense: true,
                     title: Text(cityDisplayName(c)),
