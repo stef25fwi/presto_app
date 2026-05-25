@@ -3,7 +3,10 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../constants.dart';
 
-/// Modèle ville minimal
+/// Modèle ville minimal.
+///
+/// [regionCode] est toujours le code officiel utilisé par l'app
+/// (ex: 971 -> 01, 75 -> 11, 2A/2B -> 94), pas un libellé affichable.
 class CityRecord {
   final String name;
   final String postalCode;
@@ -23,6 +26,85 @@ class CityRecord {
   String get region => regionCode;
 }
 
+const Map<String, String> _extraRegionLabelsByDepartment = <String, String>{
+  '975': 'Saint-Pierre-et-Miquelon',
+  '980': 'Monaco',
+  '986': 'Wallis-et-Futuna',
+  '987': 'Polynésie française',
+  '988': 'Nouvelle-Calédonie',
+};
+
+String regionCodeForDepartmentCode(String departmentCode) {
+  final dept = departmentCode.trim().toUpperCase();
+  if (dept.isEmpty) return '';
+
+  for (final entry in kRegionDepartments.entries) {
+    if (entry.value.contains(dept)) {
+      return entry.key;
+    }
+  }
+
+  // Collectivités hors table régionale standard : garder un code stable,
+  // jamais un libellé, pour éviter de mélanger les formats en Firestore.
+  if (_extraRegionLabelsByDepartment.containsKey(dept)) {
+    return dept;
+  }
+
+  return '';
+}
+
+String canonicalRegionCodeForCity({
+  required String rawRegion,
+  required String departmentCode,
+}) {
+  final trimmedRegion = rawRegion.trim();
+  if (trimmedRegion.isNotEmpty) {
+    if (kRegions.containsKey(trimmedRegion)) {
+      return trimmedRegion;
+    }
+
+    final normalizedLabel = trimmedRegion.toLowerCase();
+    for (final entry in kRegions.entries) {
+      if (entry.value.toLowerCase() == normalizedLabel) {
+        return entry.key;
+      }
+    }
+  }
+
+  final fromDepartment = regionCodeForDepartmentCode(departmentCode);
+  if (fromDepartment.isNotEmpty) {
+    return fromDepartment;
+  }
+
+  return trimmedRegion;
+}
+
+String regionLabelForCodeOrDepartment({
+  required String? regionCode,
+  required String? departmentCode,
+}) {
+  final code = (regionCode ?? '').trim();
+  final dept = (departmentCode ?? '').trim().toUpperCase();
+
+  if (code.isNotEmpty) {
+    final label = kRegions[code] ?? _extraRegionLabelsByDepartment[code];
+    if (label != null && label.isNotEmpty) {
+      return label;
+    }
+  }
+
+  if (dept.isNotEmpty) {
+    final codeFromDept = regionCodeForDepartmentCode(dept);
+    final label =
+        kRegions[codeFromDept] ?? _extraRegionLabelsByDepartment[dept];
+    if (label != null && label.isNotEmpty) {
+      return label;
+    }
+  }
+
+  return '';
+}
+
 class CitySearch {
   CitySearch._internal();
   static final CitySearch instance = CitySearch._internal();
@@ -40,15 +122,6 @@ class CitySearch {
     '988',
   ];
 
-  static const Map<String, String> _extraRegionLabelsByDepartment =
-      <String, String>{
-        '975': 'Saint-Pierre-et-Miquelon',
-        '980': 'Monaco',
-        '986': 'Wallis-et-Futuna',
-        '987': 'Polynésie française',
-        '988': 'Nouvelle-Calédonie',
-      };
-
   bool _loaded = false;
   final List<CityRecord> _allCities = [];
 
@@ -63,29 +136,10 @@ class CitySearch {
       ...metro,
       'assets/data/cities/cities_2A.json',
       'assets/data/cities/cities_2B.json',
-      ..._overseasCityAssetSuffixes
-          .map((suffix) => 'assets/data/cities/cities_$suffix.json'),
+      ..._overseasCityAssetSuffixes.map(
+        (suffix) => 'assets/data/cities/cities_$suffix.json',
+      ),
     ];
-  }
-
-  String _resolveRegionLabel({
-    required String rawRegion,
-    required String departmentCode,
-  }) {
-    final trimmedRegion = rawRegion.trim();
-    if (trimmedRegion.isNotEmpty) {
-      return kRegions[trimmedRegion] ?? trimmedRegion;
-    }
-
-    for (final entry in kRegionDepartments.entries) {
-      if (entry.value.contains(departmentCode)) {
-        return kRegions[entry.key] ?? entry.key;
-      }
-    }
-
-    return _extraRegionLabelsByDepartment[departmentCode] ??
-        kDepartments[departmentCode] ??
-        '';
   }
 
   /// ====== CHARGEMENT DES FICHIERS JSON ======
@@ -105,7 +159,7 @@ class CitySearch {
               name: (map['name'] ?? '').toString(),
               postalCode: (map['cp'] ?? '').toString(),
               departmentCode: departmentCode,
-              regionCode: _resolveRegionLabel(
+              regionCode: canonicalRegionCodeForCity(
                 rawRegion: (map['region'] ?? '').toString(),
                 departmentCode: departmentCode,
               ),
@@ -164,7 +218,9 @@ class CitySearch {
       return const <String>[];
     }
     if (trimmed.startsWith('97') || trimmed.startsWith('98')) {
-      return trimmed.length >= 3 ? <String>[trimmed.substring(0, 3)] : const <String>[];
+      return trimmed.length >= 3
+          ? <String>[trimmed.substring(0, 3)]
+          : const <String>[];
     }
     if (trimmed.startsWith('20')) {
       return const <String>['2A', '2B'];
@@ -192,7 +248,8 @@ class CitySearch {
       score += 12;
     } else if (normalizedName.startsWith(normalizedQuery)) {
       score += 8;
-    } else if (normalizedQuery.length < 5 && normalizedName.contains(normalizedQuery)) {
+    } else if (normalizedQuery.length < 5 &&
+        normalizedName.contains(normalizedQuery)) {
       score += 3;
     } else {
       final distance = _levenshteinDistance(normalizedQuery, normalizedName);
@@ -201,7 +258,8 @@ class CitySearch {
       }
     }
 
-    if (normalizedName.replaceAll(' ', '') == normalizedQuery.replaceAll(' ', '')) {
+    if (normalizedName.replaceAll(' ', '') ==
+        normalizedQuery.replaceAll(' ', '')) {
       score += 2;
     }
 
@@ -281,20 +339,26 @@ class CitySearch {
       }
     }
 
-    final sortedFuzzy = fuzzy
-        .where((entry) => !exact.contains(entry.city) && !prefix.contains(entry.city))
-        .toList()
-      ..sort((left, right) {
-        final byScore = right.score.compareTo(left.score);
-        if (byScore != 0) {
-          return byScore;
-        }
-        final byPostal = left.city.postalCode.compareTo(right.city.postalCode);
-        if (byPostal != 0) {
-          return byPostal;
-        }
-        return left.city.name.compareTo(right.city.name);
-      });
+    final sortedFuzzy =
+        fuzzy
+            .where(
+              (entry) =>
+                  !exact.contains(entry.city) && !prefix.contains(entry.city),
+            )
+            .toList()
+          ..sort((left, right) {
+            final byScore = right.score.compareTo(left.score);
+            if (byScore != 0) {
+              return byScore;
+            }
+            final byPostal = left.city.postalCode.compareTo(
+              right.city.postalCode,
+            );
+            if (byPostal != 0) {
+              return byPostal;
+            }
+            return left.city.name.compareTo(right.city.name);
+          });
 
     final ordered = <CityRecord>[
       ...exact,
@@ -308,8 +372,10 @@ class CitySearch {
   }
 
   /// Recherche par **nom de ville** (préfixe strict)
-  Future<List<CityRecord>> searchByNamePrefix(String rawQuery,
-      {int limit = 20}) async {
+  Future<List<CityRecord>> searchByNamePrefix(
+    String rawQuery, {
+    int limit = 20,
+  }) async {
     await ensureLoaded();
     final q = _normalize(rawQuery.trim());
     if (q.isEmpty) return const [];
@@ -324,8 +390,10 @@ class CitySearch {
   }
 
   /// Recherche par **code postal** (préfixe strict)
-  Future<List<CityRecord>> searchByPostalPrefix(String rawPostal,
-      {int limit = 20}) async {
+  Future<List<CityRecord>> searchByPostalPrefix(
+    String rawPostal, {
+    int limit = 20,
+  }) async {
     await ensureLoaded();
     final q = rawPostal.trim();
     if (q.isEmpty) return const [];
@@ -341,8 +409,10 @@ class CitySearch {
   }
 
   /// Entrée unique pour l'UI : on détecte si l'utilisateur tape un CP ou un nom
-  Future<List<CityRecord>> searchSuggestions(String input,
-      {int limit = 20}) async {
+  Future<List<CityRecord>> searchSuggestions(
+    String input, {
+    int limit = 20,
+  }) async {
     final q = input.trim();
     if (q.isEmpty) return const [];
 
@@ -359,18 +429,19 @@ class CitySearch {
     final query = postalCode.trim();
     if (query.isEmpty) return const [];
 
-    final results = _dedupe(
-        _allCities.where((c) => c.postalCode.startsWith(query)).toList())
-          ..sort((a, b) {
-            final aExact = a.postalCode == query;
-            final bExact = b.postalCode == query;
-            if (aExact != bExact) {
-              return aExact ? -1 : 1;
-            }
-            final cmp = a.postalCode.compareTo(b.postalCode);
-            if (cmp != 0) return cmp;
-            return a.name.compareTo(b.name);
-          });
+    final results =
+        _dedupe(
+          _allCities.where((c) => c.postalCode.startsWith(query)).toList(),
+        )..sort((a, b) {
+          final aExact = a.postalCode == query;
+          final bExact = b.postalCode == query;
+          if (aExact != bExact) {
+            return aExact ? -1 : 1;
+          }
+          final cmp = a.postalCode.compareTo(b.postalCode);
+          if (cmp != 0) return cmp;
+          return a.name.compareTo(b.name);
+        });
 
     return results.take(limit).toList();
   }
@@ -388,7 +459,8 @@ class CitySearch {
     final scored = <({CityRecord city, int distance})>[];
 
     for (final city in _allCities) {
-      if (normalizedPostalCode.isNotEmpty && city.postalCode != normalizedPostalCode) {
+      if (normalizedPostalCode.isNotEmpty &&
+          city.postalCode != normalizedPostalCode) {
         continue;
       }
 
@@ -411,7 +483,10 @@ class CitySearch {
       return left.city.name.compareTo(right.city.name);
     });
 
-    return scored.take(limit).map((entry) => entry.city).toList(growable: false);
+    return scored
+        .take(limit)
+        .map((entry) => entry.city)
+        .toList(growable: false);
   }
 
   /// Choisit la meilleure ville pour un CP : d'abord match exact, sinon le 1er résultat

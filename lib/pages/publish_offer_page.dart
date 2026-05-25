@@ -46,6 +46,8 @@ import '../utils/runtime_action_logger.dart';
 import '../utils/recording_path_web.dart'
     if (dart.library.io) '../utils/recording_path_io.dart';
 import '../widgets/ai_publish_control.dart';
+import '../widgets/city_postal_autocomplete_field.dart'
+    show cityDisplayName, pickCanonicalCity;
 import '../widgets/phone_input_field.dart';
 import '../widgets/photo_selector_tile.dart';
 
@@ -71,10 +73,7 @@ class PublishAiTraceEntry {
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
 
-  const PublishOfferPage({
-    super.key,
-    this.onScroll,
-  });
+  const PublishOfferPage({super.key, this.onScroll});
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
@@ -171,9 +170,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         debugPrint('[AppCheck] retry activation for $flow');
         final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
         if (siteKey.isEmpty) {
-          throw StateError(
-            'APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow',
-          );
+          throw StateError('APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow');
         }
         await FirebaseAppCheck.instance.activate(
           webProvider: ReCaptchaEnterpriseProvider(siteKey),
@@ -772,11 +769,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     } catch (error) {
       final message = _formatMicroIaRuntimeError(error);
-      _appendPublishAiTrace(
-        'auth',
-        message,
-        level: PublishAiTraceLevel.error,
-      );
+      _appendPublishAiTrace('auth', message, level: PublishAiTraceLevel.error);
       _logMicroIaDebug('AUTH', 'unexpected_error stage=$stage err=$message');
       if (showUserMessage && mounted) {
         showErrorSnackBar(context, message);
@@ -1062,8 +1055,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.75),
                     borderRadius: BorderRadius.circular(999),
@@ -1096,8 +1091,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               runSpacing: 8,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
@@ -1113,8 +1110,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
@@ -1157,8 +1156,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               insetPadding: const EdgeInsets.all(16),
               shape: overlayTheme.dialogShape,
               child: ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 760, maxHeight: 680),
+                constraints: const BoxConstraints(
+                  maxWidth: 760,
+                  maxHeight: 680,
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -1215,8 +1216,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             ),
                             child: Text(
                               'Entrees: ${entries.length}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -1280,11 +1282,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 2),
+                                          padding: const EdgeInsets.only(
+                                            top: 2,
+                                          ),
                                           child: Icon(
                                             _iconForPublishAiTraceLevel(
-                                                entry.level),
+                                              entry.level,
+                                            ),
                                             color: color,
                                             size: 18,
                                           ),
@@ -1412,8 +1416,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   bool _transcriptMentionsBudget(String transcript) {
     final lower = transcript.toLowerCase();
-    return RegExp(r'\b\d{2,5}(?:[.,]\d{1,2})?\s*(€|euros?)\b')
-            .hasMatch(lower) ||
+    return RegExp(
+          r'\b\d{2,5}(?:[.,]\d{1,2})?\s*(€|euros?)\b',
+        ).hasMatch(lower) ||
         lower.contains('budget') ||
         lower.contains('tarif') ||
         lower.contains('prix') ||
@@ -1560,10 +1565,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // user input. If the field is empty (user typed then cleared, or never
     // typed), we still apply the AI suggestion — otherwise the IA button
     // appears broken because it never updates anything.
-    bool canFillController(
-      TextEditingController controller,
-      bool editedFlag,
-    ) {
+    bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
 
@@ -1632,8 +1634,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
-  CityRecord? _extractCityRecordFromTranscript(String transcript,
-      {String? cp}) {
+  CityRecord? _extractCityRecordFromTranscript(
+    String transcript, {
+    String? cp,
+  }) {
     if (cp != null && cp.trim().isNotEmpty) {
       return FrenchCityPostalValidator.instance.resolveCanonicalCity(
         city: '',
@@ -1669,10 +1673,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
-  CityRecord? _resolveCanonicalCityRecord({
-    String? city,
-    String? postalCode,
-  }) {
+  CityRecord? _resolveCanonicalCityRecord({String? city, String? postalCode}) {
     return FrenchCityPostalValidator.instance.resolveCanonicalCity(
       city: city,
       postalCode: postalCode,
@@ -1693,10 +1694,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyCity(best, forceApply: true);
   }
 
-  void _applyDetectedCityData({
-    String? city,
-    String? postalCode,
-  }) {
+  void _applyDetectedCityData({String? city, String? postalCode}) {
     final rawCity = (city ?? '').trim();
     final rawPostalCode = (postalCode ?? '').trim();
 
@@ -1719,6 +1717,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final dept = departmentFromPostalCode(rawPostalCode);
         if (dept != null && dept.isNotEmpty) {
           _selectedDeptCode = dept;
+          _selectedRegionCode = regionCodeForDepartmentCode(dept);
           _selectedPhoneCountryCode = _countryCodeForDept(dept);
         }
       }
@@ -1774,10 +1773,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final t = transcript.trim();
     if (t.isEmpty) return;
 
-    bool canFillController(
-      TextEditingController controller,
-      bool editedFlag,
-    ) {
+    bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
 
@@ -1891,6 +1887,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _descriptionController.addListener(_handlePublishDescriptionChanged);
     _locationController.addListener(_recompute);
     _locationController.addListener(_handlePublishLocationChanged);
+    _postalCodeController.addListener(_recompute);
     _postalCodeController.addListener(_handlePublishPostalCodeChanged);
     _phoneController.addListener(_recompute);
     _budgetController.addListener(_recompute);
@@ -2147,12 +2144,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           changed = true;
         }
 
-        final dept = cityRecord?.dept ??
-            departmentFromPostalCode(
-              resolvedPostalCode,
-            );
+        final dept =
+            cityRecord?.dept ?? departmentFromPostalCode(resolvedPostalCode);
         if (dept != null && dept.isNotEmpty) {
           _selectedDeptCode = dept;
+          _selectedRegionCode = regionCodeForDepartmentCode(dept);
           _selectedPhoneCountryCode = _countryCodeForDept(dept);
         }
         final region = cityRecord?.region;
@@ -2172,6 +2168,70 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   double? _parseBudget(String raw) {
     final cleaned = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
     return double.tryParse(cleaned);
+  }
+
+  String _currentLocationRegionLabel() {
+    return regionLabelForCodeOrDepartment(
+      regionCode: _selectedRegionCode,
+      departmentCode: _selectedDeptCode,
+    );
+  }
+
+  String _locationMetaForCity(CityRecord city) {
+    final regionLabel = regionLabelForCodeOrDepartment(
+      regionCode: city.region,
+      departmentCode: city.dept,
+    );
+    if (regionLabel.isEmpty) {
+      return 'Département ${city.dept}';
+    }
+    return '$regionLabel — ${city.dept}';
+  }
+
+  Widget _buildResolvedLocationIndicator() {
+    final dept = (_selectedDeptCode ?? '').trim();
+    final regionLabel = _currentLocationRegionLabel();
+    if (dept.isEmpty && regionLabel.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final label = [
+      if (regionLabel.isNotEmpty) regionLabel,
+      if (dept.isNotEmpty) dept,
+    ].join(' — ');
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: kPrestoBlue.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: kPrestoBlue.withOpacity(0.14)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.location_on_outlined,
+              size: 16,
+              color: kPrestoBlue,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: kPrestoBlue,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _requiredLabel(String text) {
@@ -2269,6 +2329,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     if (!result.isKnownCity) {
       return 'Choisissez une ville dans la liste ou vérifiez l\'orthographe.';
+    }
+    if (_postalCodeController.text.trim().isEmpty &&
+        result.hasMultiplePostalCodesForCity) {
+      return 'Choisissez le code postal correspondant à cette ville.';
     }
     return null;
   }
@@ -2402,7 +2466,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final titleOk = _validatePublishTitle(_titleController.text) == null;
     final descOk =
         _validatePublishDescription(_descriptionController.text) == null;
-    final cityOk = _locationController.text.trim().isNotEmpty;
+    final cityOk = _validateCanonicalCity(_locationController.text) == null;
+    final postalCodeOk =
+        _validatePostalCode(_postalCodeController.text) == null;
     final catOk = (_category ?? '').trim().isNotEmpty;
     const subOk = true;
     final delayOk = (_missionDelay ?? '').trim().isNotEmpty;
@@ -2417,6 +2483,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return titleOk &&
         descOk &&
         cityOk &&
+        postalCodeOk &&
         catOk &&
         subOk &&
         delayOk &&
@@ -2464,7 +2531,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       case 'description':
         return 'description';
       case 'city':
-        return 'ville';
+        return 'ville/CP';
       case 'phone':
         return 'téléphone';
       case 'delay':
@@ -2485,7 +2552,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       case 'description':
         return _validatePublishDescription(_descriptionController.text) != null;
       case 'city':
-        return _validateCanonicalCity(_locationController.text) != null;
+        return _validateCanonicalCity(_locationController.text) != null ||
+            _validatePostalCode(_postalCodeController.text) != null;
       case 'phone':
         return !_isValidPhoneFR(_phoneController.text);
       case 'delay':
@@ -2555,10 +2623,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       builder: (context, value, animatedChild) {
         final dx =
             isShaking ? math.sin(value * math.pi * 6) * (1 - value) * 12 : 0.0;
-        return Transform.translate(
-          offset: Offset(dx, 0),
-          child: animatedChild,
-        );
+        return Transform.translate(offset: Offset(dx, 0), child: animatedChild);
       },
       child: AnimatedContainer(
         key: _publishFieldKeyFor(fieldId),
@@ -2793,9 +2858,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       logRuntimeAction(
         area: 'publish',
         action: 'blocked-validation',
-        details: <String, Object?>{
-          'category': _category ?? '',
-        },
+        details: <String, Object?>{'category': _category ?? ''},
       );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToFirstInvalidPublishField();
@@ -2805,10 +2868,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) {
-      logRuntimeAction(
-        area: 'publish',
-        action: 'blocked-auth',
-      );
+      logRuntimeAction(area: 'publish', action: 'blocked-auth');
       return;
     }
 
@@ -2850,9 +2910,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       unawaited(_refreshAdminAudioRuntimeAccess());
     }
     _resetPublishAiTrace(
-        kIsWeb ? 'micro web classique' : 'micro mobile classique');
+      kIsWeb ? 'micro web classique' : 'micro mobile classique',
+    );
     _appendPublishAiTrace(
-        'start_mic', 'Demande de démarrage du micro classique');
+      'start_mic',
+      'Demande de démarrage du micro classique',
+    );
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webMic' : 'mobileMic',
@@ -2892,11 +2955,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           st,
           reason: 'Web mic start failed',
           fatal: false,
-          keys: {
-            'component': 'Main',
-            'flow': 'webMic',
-            'step': 'start',
-          },
+          keys: {'component': 'Main', 'flow': 'webMic', 'step': 'start'},
         );
         if (!mounted) return;
         _appendPublishAiTrace(
@@ -2922,8 +2981,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (secureContext == null) return;
 
       if (await _recorder.hasPermission()) {
-        final filePath =
-            await createTempAudioPath(prefix: 'presto', extension: 'm4a');
+        final filePath = await createTempAudioPath(
+          prefix: 'presto',
+          extension: 'm4a',
+        );
         await _recorder.start(
           RecordConfig(
             encoder: AudioEncoder.aacLc,
@@ -3051,7 +3112,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (audioUpload.usedClientSideWavConversion &&
             audioUpload.bytes.length < 30000) {
           throw Exception(
-              'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
+            'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).',
+          );
         }
 
         final audioResult = await _transcribePublishAudio(
@@ -3073,11 +3135,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           st,
           reason: 'Web mic stop/process failed',
           fatal: false,
-          keys: {
-            'component': 'Main',
-            'flow': 'webMic',
-            'step': 'stop',
-          },
+          keys: {'component': 'Main', 'flow': 'webMic', 'step': 'stop'},
         );
         if (!mounted) return;
         _appendPublishAiTrace(
@@ -3424,7 +3482,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final best = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+    final resolution =
+        FrenchCityPostalValidator.instance.resolveCanonicalCityResolution(
       city: _locationController.text,
       postalCode: cp,
     );
@@ -3434,9 +3493,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _highlightedIndex = 0;
     });
 
-    if (best != null) {
-      _applyCity(best, forceApply: true);
+    final currentCityIsEmpty = _locationController.text.trim().isEmpty;
+    final canApplyWithoutCity = resolution.matches.length == 1;
+    if (resolution.selected != null &&
+        (!currentCityIsEmpty || canApplyWithoutCity)) {
+      _applyCity(resolution.selected!, forceApply: true);
     }
+  }
+
+  Future<void> _selectSuggestedCity(CityRecord city) async {
+    final selected = await pickCanonicalCity(
+      context,
+      _postalCodeController,
+      city,
+    );
+    if (selected == null || !mounted) {
+      return;
+    }
+
+    _applyCity(selected, markAsUserEdited: true);
   }
 
   void _applyCity(
@@ -3485,11 +3560,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         boxShadow: const [
-          BoxShadow(
-            blurRadius: 10,
-            spreadRadius: 1,
-            color: Colors.black12,
-          ),
+          BoxShadow(blurRadius: 10, spreadRadius: 1, color: Colors.black12),
         ],
       ),
       child: ListView.builder(
@@ -3500,7 +3571,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           final selected = index == _highlightedIndex;
 
           return InkWell(
-            onTap: () => _applyCity(city, markAsUserEdited: true),
+            onTap: () => _selectSuggestedCity(city),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               color: selected ? kPrestoBlue.withOpacity(0.08) : null,
@@ -3508,7 +3579,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      '${city.name} (${city.cp})',
+                      '${cityDisplayName(city)} (${city.cp})',
                       style: TextStyle(
                         fontWeight:
                             selected ? FontWeight.w600 : FontWeight.w400,
@@ -3517,11 +3588,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Dept ${city.dept}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    _locationMetaForCity(city),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -3534,8 +3602,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // --- GESTION DES PHOTOS ---
 
-  Future<void> _showPhotoPopup(
-      {required XFile file, required String label}) async {
+  Future<void> _showPhotoPopup({
+    required XFile file,
+    required String label,
+  }) async {
     final bytes = await file.readAsBytes();
     if (!mounted) return;
     final overlayTheme = context.prestoOverlayTheme;
@@ -3582,8 +3652,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   shape: const CircleBorder(),
                   child: IconButton(
                     tooltip: 'Fermer',
-                    icon:
-                        const Icon(Icons.close_rounded, color: Colors.black87),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.black87,
+                    ),
                     onPressed: () => Navigator.of(ctx).pop(),
                   ),
                 ),
@@ -3592,8 +3664,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 left: 12,
                 bottom: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
@@ -3899,11 +3973,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         barrierDismissible: false,
         barrierColor: Colors.black.withValues(alpha: 0.10),
         builder: (_) => const Center(
-          child: Icon(
-            Icons.check_circle,
-            color: kPrestoBlue,
-            size: 96,
-          ),
+          child: Icon(Icons.check_circle, color: kPrestoBlue, size: 96),
         ),
       );
 
@@ -3949,10 +4019,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       logRuntimeAction(
         area: 'publish',
         action: 'submit-failure',
-        details: <String, Object?>{
-          'errorType': e.runtimeType,
-          'message': e,
-        },
+        details: <String, Object?>{'errorType': e.runtimeType, 'message': e},
       );
       if (!mounted) return;
       final message = _formatPublishError(e);
@@ -4089,14 +4156,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
                       ),
                       items: _categories
                           .map(
-                            (cat) => DropdownMenuItem(
-                              value: cat,
-                              child: Text(cat),
-                            ),
+                            (cat) =>
+                                DropdownMenuItem(value: cat, child: Text(cat)),
                           )
                           .toList(),
                       onChanged: (value) {
@@ -4132,14 +4199,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                     ),
                     items: (kCategorySubcategories[_category] ?? [])
                         .map(
-                          (sub) => DropdownMenuItem(
-                            value: sub,
-                            child: Text(sub),
-                          ),
+                          (sub) =>
+                              DropdownMenuItem(value: sub, child: Text(sub)),
                         )
                         .toList(),
                     onChanged: (value) {
@@ -4160,8 +4227,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   builder: (context, _) => _withPublishFieldHighlight(
                     fieldId: 'description',
                     child: _withAiPendingOverlay(
-                      showPending:
-                          _showAiPendingForController(_descriptionController),
+                      showPending: _showAiPendingForController(
+                        _descriptionController,
+                      ),
                       alignment: Alignment.topRight,
                       padding: const EdgeInsets.only(top: 14, right: 42),
                       child: TextFormField(
@@ -4175,7 +4243,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
                           // Bouton IA textuel (✨) : visible dès que l'utilisateur
                           // a saisi du texte. Déclenche l'analyse IA sans micro.
                           suffixIcon:
@@ -4260,8 +4330,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 _withPublishFieldHighlight(
                   fieldId: 'city',
                   child: _withAiPendingOverlay(
-                    showPending:
-                        _showAiPendingForController(_locationController),
+                    showPending: _showAiPendingForController(
+                      _locationController,
+                    ),
                     child: TextFormField(
                       controller: _locationController,
                       decoration: InputDecoration(
@@ -4273,7 +4344,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
                       ),
                       onChanged: _onCityChanged,
                       onEditingComplete: _canonicalizeLocationInputs,
@@ -4283,8 +4356,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 const SizedBox(height: 8),
                 _withAiPendingOverlay(
-                  showPending:
-                      _showAiPendingForController(_postalCodeController),
+                  showPending: _showAiPendingForController(
+                    _postalCodeController,
+                  ),
                   child: TextFormField(
                     controller: _postalCodeController,
                     keyboardType: TextInputType.number,
@@ -4296,7 +4370,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                     ),
                     onChanged: _onPostalCodeChanged,
                     onEditingComplete: _canonicalizeLocationInputs,
@@ -4304,6 +4380,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
                 _buildCitySuggestionsOverlay(),
+                _buildResolvedLocationIndicator(),
                 const SizedBox(height: 16),
 
                 // TÉLÉPHONE avec sélection indicatif
@@ -4312,8 +4389,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: PhoneInputFieldCompact(
                     controller: _phoneController,
                     label: _requiredLabel('Téléphone (pour être rappelé)'),
-                    hintText:
-                        phoneHintForCountryCode(_selectedPhoneCountryCode),
+                    hintText: phoneHintForCountryCode(
+                      _selectedPhoneCountryCode,
+                    ),
                     initialCountryCode: _selectedPhoneCountryCode,
                     onCountryCodeChanged: (code) {
                       setState(() {
@@ -4345,7 +4423,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
                     ),
                     items: _missionDelayOptions
                         .map(
@@ -4390,7 +4470,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
                           ),
                           items: _budgetTypes
                               .map(
@@ -4428,7 +4510,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
                           ),
                           enabled: _budgetType == 'Fixe',
                           validator: (value) {
@@ -4611,9 +4695,10 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
       duration: const Duration(milliseconds: 900),
       vsync: this,
     );
-    _opacity = Tween<double>(begin: 0.25, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0.25,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     Future<void>.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {

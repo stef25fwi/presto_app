@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'app/presto_overlay_theme.dart';
 
-const String kPrestoCanonicalWebOrigin =
-  'https://ilipresto.fr';
+const String kPrestoCanonicalWebOrigin = 'https://ilipresto.fr';
 
 String prestoPublicAppOrigin() {
   if (!kIsWeb) {
@@ -32,11 +31,7 @@ const TextStyle kPrestoAppBarTitleStyle = TextStyle(
   height: 1.1,
   letterSpacing: 0.1,
   shadows: [
-    Shadow(
-      color: Color(0x36000000),
-      blurRadius: 5,
-      offset: Offset(0, 1.25),
-    ),
+    Shadow(color: Color(0x36000000), blurRadius: 5, offset: Offset(0, 1.25)),
   ],
 );
 
@@ -45,11 +40,7 @@ const TextStyle kPrestoSectionTitleStyle = TextStyle(
   fontWeight: FontWeight.w700,
   height: 1.2,
   shadows: [
-    Shadow(
-      color: Color(0x26000000),
-      blurRadius: 4,
-      offset: Offset(0, 1),
-    ),
+    Shadow(color: Color(0x26000000), blurRadius: 4, offset: Offset(0, 1)),
   ],
 );
 
@@ -149,21 +140,23 @@ Widget buildRegionDropdown({
       final drom = regions.where((r) => r.isDrom).toList();
 
       List<DropdownMenuItem<RegionItem>> header(String text) => [
-            DropdownMenuItem<RegionItem>(
-              enabled: false,
-              value: null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text(
-                  text,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
+        DropdownMenuItem<RegionItem>(
+          enabled: false,
+          value: null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Text(
+              text,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-          ];
+          ),
+        ),
+      ];
 
-      List<DropdownMenuItem<RegionItem>> itemsFor(List<RegionItem> list,
-          {bool tinted = false}) {
+      List<DropdownMenuItem<RegionItem>> itemsFor(
+        List<RegionItem> list, {
+        bool tinted = false,
+      }) {
         return list.map((r) {
           return DropdownMenuItem<RegionItem>(
             value: r,
@@ -216,7 +209,7 @@ const Map<String, List<String>> kRegionDepartments = {
     '70',
     '71',
     '89',
-    '90'
+    '90',
   ], // Bourgogne-Franche-Comté
   '28': ['14', '27', '50', '61', '76'], // Normandie
   '32': ['02', '59', '60', '62', '80'], // Hauts-de-France
@@ -230,7 +223,7 @@ const Map<String, List<String>> kRegionDepartments = {
     '57',
     '67',
     '68',
-    '88'
+    '88',
   ], // Grand Est
   '52': ['44', '49', '53', '72', '85'], // Pays de la Loire
   '53': ['22', '29', '35', '56'], // Bretagne
@@ -246,7 +239,7 @@ const Map<String, List<String>> kRegionDepartments = {
     '64',
     '79',
     '86',
-    '87'
+    '87',
   ], // N-A
   '76': [
     '09',
@@ -261,7 +254,7 @@ const Map<String, List<String>> kRegionDepartments = {
     '65',
     '66',
     '81',
-    '82'
+    '82',
   ], // Occitanie
   '84': [
     '01',
@@ -275,11 +268,10 @@ const Map<String, List<String>> kRegionDepartments = {
     '63',
     '69',
     '73',
-    '74'
+    '74',
   ], // ARA
   '93': ['04', '05', '06', '13', '83', '84'], // PACA
   '94': ['2A', '2B'], // Corse
-
   // DROM
   '01': ['971'], // Guadeloupe
   '02': ['972'], // Martinique
@@ -427,6 +419,7 @@ const Map<String, String> kRegions = {
   '02': 'Martinique',
   '03': 'Guyane',
   '04': 'La Réunion',
+  '06': 'Mayotte',
   '11': 'Île-de-France',
   '24': 'Centre-Val de Loire',
   '27': 'Bourgogne-Franche-Comté',

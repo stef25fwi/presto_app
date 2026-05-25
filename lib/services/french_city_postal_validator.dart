@@ -19,10 +19,7 @@ class FrenchCityPostalValidationResult {
 }
 
 class CanonicalCityResolution {
-  const CanonicalCityResolution({
-    required this.matches,
-    this.selected,
-  });
+  const CanonicalCityResolution({required this.matches, this.selected});
 
   final List<CityRecord> matches;
   final CityRecord? selected;
@@ -76,7 +73,7 @@ class FrenchCityPostalValidator {
       postalCode: '97180',
       department: '971',
       inseeCode: '97128',
-      region: 'Guadeloupe',
+      region: '01',
     ),
   ];
 
@@ -117,15 +114,15 @@ class FrenchCityPostalValidator {
     });
 
     value = value
-      .replaceAll(RegExp(r"[`´‘’‛ʻʼ]+"), "'")
-      .replaceAll(RegExp(r"[‐‑‒–—−]+"), '-')
-      .replaceAll(RegExp(r'\bste\b'), 'sainte')
-      .replaceAll(RegExp(r'\bst\b'), 'saint')
-      .replaceAll(RegExp(r'\bstes\b'), 'saintes')
-      .replaceAll(RegExp(r'\bsts\b'), 'saints');
+        .replaceAll(RegExp(r"[`´‘’‛ʻʼ]+"), "'")
+        .replaceAll(RegExp(r"[‐‑‒–—−]+"), '-')
+        .replaceAll(RegExp(r'\bste\b'), 'sainte')
+        .replaceAll(RegExp(r'\bst\b'), 'saint')
+        .replaceAll(RegExp(r'\bstes\b'), 'saintes')
+        .replaceAll(RegExp(r'\bsts\b'), 'saints');
 
     return value
-      .replaceAll(RegExp(r"[-'’]+"), ' ')
+        .replaceAll(RegExp(r"[-'’]+"), ' ')
         .replaceAll(RegExp(r'[^a-z0-9\s]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
@@ -151,7 +148,8 @@ class FrenchCityPostalValidator {
     final seen = <String>{};
 
     void addCandidate(CityRecord candidate) {
-      final key = '${candidate.name}|${candidate.postalCode}|${candidate.departmentCode}';
+      final key =
+          '${candidate.name}|${candidate.postalCode}|${candidate.departmentCode}';
       if (seen.add(key)) {
         results.add(candidate);
       }
@@ -162,11 +160,14 @@ class FrenchCityPostalValidator {
         city: known.city,
         aliases: known.aliases,
       );
-      final matchesCity = normalizedQuery.isEmpty ||
+      final matchesCity =
+          normalizedQuery.isEmpty ||
           aliasSet.any(
-            (alias) => alias == normalizedQuery || alias.startsWith(normalizedQuery),
+            (alias) =>
+                alias == normalizedQuery || alias.startsWith(normalizedQuery),
           );
-      final matchesPostal = normalizedPostalCode.isEmpty ||
+      final matchesPostal =
+          normalizedPostalCode.isEmpty ||
           known.postalCode == normalizedPostalCode;
       if (matchesCity && matchesPostal) {
         addCandidate(known.toCityRecord());
@@ -260,12 +261,11 @@ class FrenchCityPostalValidator {
     return results.take(limit).toList(growable: false);
   }
 
-  CityRecord? resolveCanonicalCity({
-    String? city,
-    String? postalCode,
-  }) {
-    return resolveCanonicalCityResolution(city: city, postalCode: postalCode)
-        .selected;
+  CityRecord? resolveCanonicalCity({String? city, String? postalCode}) {
+    return resolveCanonicalCityResolution(
+      city: city,
+      postalCode: postalCode,
+    ).selected;
   }
 
   CanonicalCityResolution resolveCanonicalCityResolution({
@@ -287,9 +287,12 @@ class FrenchCityPostalValidator {
     final dedupedCandidates = _dedupeCandidates(candidates);
 
     if (dedupedCandidates.isEmpty && normalizedPostalCode.isNotEmpty) {
-      final byPostal = CitySearch.instance.pickBestForPostalCode(normalizedPostalCode);
+      final byPostal = CitySearch.instance.pickBestForPostalCode(
+        normalizedPostalCode,
+      );
       if (byPostal != null &&
-          (normalizedCity.isEmpty || _matchesCandidateCity(byPostal, normalizedCity))) {
+          (normalizedCity.isEmpty ||
+              _matchesCandidateCity(byPostal, normalizedCity))) {
         return CanonicalCityResolution(
           matches: <CityRecord>[byPostal],
           selected: byPostal,
@@ -298,9 +301,11 @@ class FrenchCityPostalValidator {
     }
 
     for (final candidate in dedupedCandidates) {
-      final exactCity = normalizedCity.isEmpty ||
+      final exactCity =
+          normalizedCity.isEmpty ||
           _candidateNames(city: candidate.name).contains(normalizedCity);
-      final exactPostal = normalizedPostalCode.isEmpty ||
+      final exactPostal =
+          normalizedPostalCode.isEmpty ||
           candidate.postalCode == normalizedPostalCode;
       if (exactCity && exactPostal) {
         return CanonicalCityResolution(
@@ -438,7 +443,8 @@ class FrenchCityPostalValidator {
     final cityMatches = postalCodesForCity(city);
     final postalCodeCandidates = citiesForPostalCode(postalCode);
 
-    final knownCity = resolveExactTypedCity(city: city) ??
+    final knownCity =
+        resolveExactTypedCity(city: city) ??
         resolveCanonicalCity(city: city, postalCode: '');
     if (normalizedCity.isEmpty || knownCity == null) {
       return const FrenchCityPostalValidationResult(
@@ -460,7 +466,8 @@ class FrenchCityPostalValidator {
     }
 
     final resolved = resolveCanonicalCity(city: city, postalCode: postalCode);
-    final hasMatchingPostalCode = resolved != null &&
+    final hasMatchingPostalCode =
+        resolved != null &&
         resolved.postalCode == normalizedPostalCode &&
         _candidateNames(city: resolved.name).contains(normalizedCity);
 
@@ -495,7 +502,9 @@ class FrenchCityPostalValidator {
     }
     names.add(base.replaceAll(' ', ''));
 
-    final known = _knownCities.where((entry) => normalizeCity(entry.city) == base);
+    final known = _knownCities.where(
+      (entry) => normalizeCity(entry.city) == base,
+    );
     for (final entry in known) {
       for (final alias in entry.aliases) {
         names.add(normalizeCity(alias));
@@ -505,7 +514,10 @@ class FrenchCityPostalValidator {
     return names.where((value) => value.isNotEmpty).toSet();
   }
 
-  static bool _matchesCandidateCity(CityRecord candidate, String normalizedCity) {
+  static bool _matchesCandidateCity(
+    CityRecord candidate,
+    String normalizedCity,
+  ) {
     if (normalizedCity.isEmpty) {
       return true;
     }
@@ -525,7 +537,8 @@ class FrenchCityPostalValidator {
   }) {
     var score = 0;
     final names = _candidateNames(city: candidate.name);
-    if (normalizedPostalCode.isNotEmpty && candidate.postalCode == normalizedPostalCode) {
+    if (normalizedPostalCode.isNotEmpty &&
+        candidate.postalCode == normalizedPostalCode) {
       score += 8;
     }
     if (normalizedCity.isNotEmpty) {
@@ -535,7 +548,9 @@ class FrenchCityPostalValidator {
         score += 6;
       } else if (names.any((name) => name.contains(normalizedCity))) {
         score += 2;
-      } else if (names.any((name) => _isVeryCloseCityName(name, normalizedCity))) {
+      } else if (names.any(
+        (name) => _isVeryCloseCityName(name, normalizedCity),
+      )) {
         score += 3;
       }
     }
@@ -579,16 +594,16 @@ class FrenchCityPostalValidator {
       return 1 << 20;
     }
 
-    final names = _candidateNames(city: candidate.name)
-        .where((name) => name.startsWith(normalizedCity))
-        .toList(growable: false);
+    final names = _candidateNames(
+      city: candidate.name,
+    ).where((name) => name.startsWith(normalizedCity)).toList(growable: false);
     if (names.isEmpty) {
       return 1 << 20;
     }
 
     return names
         .map((name) => name.length - normalizedCity.length)
-      .reduce((best, value) => value < best ? value : best);
+        .reduce((best, value) => value < best ? value : best);
   }
 
   static List<CityRecord> _dedupeCandidates(List<CityRecord> candidates) {
@@ -611,7 +626,9 @@ class FrenchCityPostalValidator {
       return false;
     }
 
-    final maxDistance = _maxFuzzyDistanceFor(left.length > right.length ? left.length : right.length);
+    final maxDistance = _maxFuzzyDistanceFor(
+      left.length > right.length ? left.length : right.length,
+    );
     return _levenshteinDistance(left, right) <= maxDistance;
   }
 

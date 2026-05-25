@@ -12,6 +12,7 @@ void main() {
     expect(result.isValid, isTrue);
     expect(result.canonicalCity?.name, 'Sainte-Anne');
     expect(result.canonicalCity?.postalCode, '97180');
+    expect(result.canonicalCity?.regionCode, '01');
   });
 
   test('validate Sainte Anne 97180', () {
@@ -64,17 +65,21 @@ void main() {
     expect(result, isNotNull);
     expect(result?.name, 'ANSE BERTRAND');
     expect(result?.postalCode, '97121');
+    expect(result?.regionCode, '01');
   });
 
-  test('resolveCanonicalCity does not force distant invalid city names', () async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    await CitySearch.instance.ensureLoaded();
+  test(
+    'resolveCanonicalCity does not force distant invalid city names',
+    () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      await CitySearch.instance.ensureLoaded();
 
-    final result = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: 'zzzzzzzzzz',
-      postalCode: '97121',
-    );
+      final result = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+        city: 'zzzzzzzzzz',
+        postalCode: '97121',
+      );
 
-    expect(result, isNull);
-  });
+      expect(result, isNull);
+    },
+  );
 }
