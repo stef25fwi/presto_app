@@ -454,11 +454,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _regionController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
-  final FocusNode _cityFocusNode = FocusNode();
-  final FocusNode _postalCodeFocusNode = FocusNode();
 
   // Indicatif téléphonique sélectionné
   String _selectedPhoneCountryCode = '+33';
@@ -492,17 +489,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
   // Autocomplétion villes
-  static const int _cityAutocompleteMinChars = 2;
-  static const Duration _postalCodeInputDebounce = Duration(milliseconds: 120);
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
-  Timer? _postalCodeDebounceTimer;
 
   // Région / département (optionnel à exploiter dans le futur)
   String? _selectedRegionCode;
   String? _selectedDeptCode;
-  CityRecord? _selectedCanonicalCity;
-  bool _locationSelectionPending = false;
 
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
@@ -1380,20 +1372,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void _handlePublishLocationChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _locationEditedByUser = true;
-    _invalidateCanonicalLocationSelection();
   }
 
   void _handlePublishPostalCodeChanged() {
     if (_isApplyingProgrammaticPublishUpdate) return;
     _postalCodeEditedByUser = true;
-    _invalidateCanonicalLocationSelection();
-  }
-
-  void _handleLocationFocusChanged() {
-    if (_cityFocusNode.hasFocus || _postalCodeFocusNode.hasFocus) {
-      return;
-    }
-    _canonicalizeLocationInputs();
   }
 
   void _handlePublishBudgetChanged() {
@@ -1697,214 +1680,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _canonicalizeLocationInputs() {
-    final currentCity = _locationController.text.trim();
-    final currentPostalCode = _postalCodeController.text.trim();
-    if (currentCity.isEmpty && currentPostalCode.isEmpty) {
-      setState(() {
-        _selectedCanonicalCity = null;
-        _locationSelectionPending = false;
-        _selectedDeptCode = null;
-        _selectedRegionCode = null;
-        _setControllerText(_regionController, '');
-        _selectedPhoneCountryCode = '+33';
-        _citySuggestions = [];
-        _highlightedIndex = -1;
-      });
-      return;
-    }
-
-    final resolution = FrenchCityPostalValidator.instance
-        .resolveCanonicalCityResolution(
-      city: currentCity,
-      postalCode: currentPostalCode,
-    );
-    if (resolution.isResolved) {
-      _applyCity(resolution.selected!, forceApply: true);
-      return;
-    }
-
-    final suggestions = resolution.matches.take(10).toList(growable: false);
-    setState(() {
-      _selectedCanonicalCity = null;
-      _locationSelectionPending = suggestions.isNotEmpty;
-      _citySuggestions = suggestions;
-      _highlightedIndex = suggestions.isNotEmpty ? 0 : -1;
-    });
-  }
-
-  bool _matchesSelectedCanonicalCity() {
-    final selected = _selectedCanonicalCity;
-    if (selected == null) {
-      return false;
-    }
-    return _locationController.text.trim() == selected.name &&
-        _postalCodeController.text.trim() == selected.cp;
-  }
-
-  bool _matchesCanonicalLocationInputs() {
-    if (_matchesSelectedCanonicalCity()) {
-      return true;
-    }
-
-    final typedCity = _locationController.text.trim();
-    final typedPostalCode = _postalCodeController.text.trim();
-    if (typedCity.isEmpty) {
-      return false;
-    }
-
-    final result = FrenchCityPostalValidator.instance.validate(
-      city: typedCity,
-      postalCode: typedPostalCode,
-    );
-    final canonicalCity = result.canonicalCity;
-    if (!result.isKnownCity || canonicalCity == null) {
-      return false;
-    }
-    if (typedPostalCode.isNotEmpty && !result.postalCodeMatches) {
-      return false;
-    }
-    if (typedPostalCode.isEmpty && result.hasMultiplePostalCodesForCity) {
-      return false;
-    }
-
-    final exactTyped = FrenchCityPostalValidator.instance.resolveExactTypedCity(
-      city: typedCity,
-      postalCode: typedPostalCode,
-    );
-    if (exactTyped != null) {
-      return exactTyped.name == canonicalCity.name &&
-          exactTyped.cp == canonicalCity.cp;
-    }
-
-    final normalizedTypedCity = FrenchCityPostalValidator.normalizeCity(
-      typedCity,
-    );
-    final normalizedCanonicalCity = FrenchCityPostalValidator.normalizeCity(
-      canonicalCity.name,
-    );
-    return normalizedTypedCity == normalizedCanonicalCity &&
-        (typedPostalCode.isEmpty || typedPostalCode == canonicalCity.cp);
-  }
-
-  void _invalidateCanonicalLocationSelection() {
-    if (_matchesSelectedCanonicalCity()) {
-      return;
-    }
-    _selectedCanonicalCity = null;
-    _locationSelectionPending = false;
-    _selectedDeptCode = null;
-    _selectedRegionCode = null;
-    _setControllerText(_regionController, '');
-  }
-
-  void _syncDerivedLocationFields(CityRecord city) {
-    _selectedDeptCode = city.dept;
-    _selectedRegionCode = city.region;
-    _setControllerText(_regionController, city.region);
-    _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
-  }
-
-  void _syncLiveDerivedLocationFieldsFromInputs() {
-    final city = _locationController.text.trim();
-    final postalCode = _postalCodeController.text.trim();
-
-    String? dept;
-    String? region;
-
-    final resolved = _resolveCanonicalCityRecord(
-      city: city,
-      postalCode: postalCode,
-    );
-    if (resolved != null) {
-      dept = resolved.dept;
-      region = resolved.region;
-    }
-
-    if ((dept == null || dept.isEmpty) || (region == null || region.isEmpty)) {
-      final candidates = postalCode.isNotEmpty
-          ? FrenchCityPostalValidator.instance.citiesForPostalCode(postalCode)
-          : (city.isNotEmpty
-              ? FrenchCityPostalValidator.instance.postalCodesForCity(city)
-              : const <CityRecord>[]);
-      if (candidates.isNotEmpty) {
-        final depts = candidates
-            .map((candidate) => candidate.dept.trim())
-            .where((candidate) => candidate.isNotEmpty)
-            .toSet();
-        final regions = candidates
-            .map((candidate) => candidate.region.trim())
-            .where((candidate) => candidate.isNotEmpty)
-            .toSet();
-        if (depts.length == 1) {
-          dept = depts.first;
-        }
-        if (regions.length == 1) {
-          region = regions.first;
-        }
-      }
-    }
-
-    setState(() {
-      _selectedDeptCode = dept;
-      _selectedRegionCode = region;
-      _setControllerText(_regionController, region ?? '');
-      if (dept != null && dept.isNotEmpty) {
-        _selectedPhoneCountryCode = _countryCodeForDept(dept);
-      }
-    });
-  }
-
-  String? _validateRegionField(String? _) {
-    final city = _locationController.text.trim();
-    final postalCode = _postalCodeController.text.trim();
-    if (city.isEmpty && postalCode.isEmpty) {
-      return null;
-    }
-    if ((_selectedRegionCode ?? '').trim().isNotEmpty) {
-      return null;
-    }
-
-    final resolved = _resolveCanonicalCityRecord(
-      city: city,
-      postalCode: postalCode,
-    );
-    if (resolved == null || resolved.region.trim().isEmpty) {
-      return 'La region sera remplie apres selection d\'une ville valide';
-    }
-    return null;
-  }
-
-  bool _isExactTypedCanonicalSelection(CityRecord city, String typedCity) {
-    final exact = FrenchCityPostalValidator.instance.resolveExactTypedCity(
-      city: typedCity,
+    final best = _resolveCanonicalCityRecord(
+      city: _locationController.text,
       postalCode: _postalCodeController.text,
     );
-    return exact != null && exact.name == city.name && exact.cp == city.cp;
-  }
+    if (best == null) return;
 
-  void _updateLocationSuggestions({
-    required String cityQuery,
-    required String postalCode,
-  }) {
-    final query = cityQuery.trim();
-    final cp = postalCode.trim();
-    if (query.length < _cityAutocompleteMinChars && cp.length < 2) {
-      setState(() {
-        _citySuggestions = [];
-        _highlightedIndex = -1;
-      });
-      return;
-    }
+    final sameCity = _locationController.text.trim() == best.name;
+    final samePostalCode = _postalCodeController.text.trim() == best.cp;
+    if (sameCity && samePostalCode) return;
 
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      query,
-      postalCodeHint: cp,
-      limit: 10,
-    );
-    setState(() {
-      _citySuggestions = results;
-      _highlightedIndex = results.isNotEmpty ? 0 : -1;
-    });
+    _applyCity(best, forceApply: true);
   }
 
   void _applyDetectedCityData({
@@ -1924,14 +1710,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    // Ne jamais injecter une ville/CP IA non resolus dans le formulaire.
-    // Sinon l'utilisateur voit des champs remplis mais invalides, puis se
-    // retrouve bloque plus tard par la validation "ville/CP".
-    if (kDebugMode && (rawCity.isNotEmpty || rawPostalCode.isNotEmpty)) {
-      debugPrint(
-        '[Publish] IA location ignored: unresolved city="$rawCity" postalCode="$rawPostalCode"',
-      );
-    }
+    setState(() {
+      if (!_locationEditedByUser && rawCity.isNotEmpty) {
+        _setControllerText(_locationController, rawCity);
+      }
+      if (!_postalCodeEditedByUser && rawPostalCode.isNotEmpty) {
+        _setControllerText(_postalCodeController, rawPostalCode);
+        final dept = departmentFromPostalCode(rawPostalCode);
+        if (dept != null && dept.isNotEmpty) {
+          _selectedDeptCode = dept;
+          _selectedPhoneCountryCode = _countryCodeForDept(dept);
+        }
+      }
+    });
   }
 
   void _applyKeywordCategoryPairFromText(String text) {
@@ -2029,10 +1820,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _setControllerText(_postalCodeController, cityRec.cp);
         }
 
-        // bonus cohérence UI: region + dept + indicatif selon la ville détectée
+        // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
         if (!mounted) return;
         setState(() {
-          _syncDerivedLocationFields(cityRec);
+          _selectedDeptCode = cityRec.dept;
+          _selectedRegionCode = cityRec.region;
+          _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
         });
       }
     }
@@ -2099,8 +1892,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _locationController.addListener(_recompute);
     _locationController.addListener(_handlePublishLocationChanged);
     _postalCodeController.addListener(_handlePublishPostalCodeChanged);
-    _cityFocusNode.addListener(_handleLocationFocusChanged);
-    _postalCodeFocusNode.addListener(_handleLocationFocusChanged);
     _phoneController.addListener(_recompute);
     _budgetController.addListener(_recompute);
     _budgetController.addListener(_handlePublishBudgetChanged);
@@ -2226,39 +2017,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final userRef = firestore.collection('users').doc(user.uid);
 
     try {
-      try {
-        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-          user: user,
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: true,
-        );
-      } catch (error) {
-        debugPrint(
-          '[Publish] Préparation accès profil téléphone échouée, fallback cache/Auth: $error',
-        );
-      }
-
-      DocumentSnapshot<Map<String, dynamic>>? doc;
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+      DocumentSnapshot<Map<String, dynamic>> doc;
       try {
         doc = await userRef
             .get(const GetOptions(source: Source.server))
             .timeout(const Duration(seconds: 5));
-      } catch (serverError) {
-        debugPrint(
-          '[Publish] Lecture serveur téléphone profil impossible, fallback cache: $serverError',
-        );
-        try {
-          doc = await userRef
-              .get(const GetOptions(source: Source.cache))
-              .timeout(const Duration(seconds: 3));
-        } catch (cacheError) {
-          debugPrint(
-            '[Publish] Lecture cache téléphone profil impossible, fallback Auth: $cacheError',
-          );
-        }
+      } catch (_) {
+        doc = await userRef
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(seconds: 3));
       }
 
-      final data = doc?.data();
+      final data = doc.data();
       final rawPhone = _firstNonEmptyPublishPhone(
         data,
         const ['phone', 'phoneNumber', 'phone_number'],
@@ -2289,14 +2064,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final locationAlreadyFilled = _locationController.text.trim().isNotEmpty;
     final postalCodeAlreadyFilled =
         _postalCodeController.text.trim().isNotEmpty;
-    final locationHasUserInput = locationAlreadyFilled || _locationEditedByUser;
-    final postalCodeHasUserInput =
-        postalCodeAlreadyFilled || _postalCodeEditedByUser;
-
-    // Ne jamais compléter à moitié depuis le profil au moment de publier.
-    // Sinon une ville saisie manuellement peut être combinée avec un CP profil
-    // d'une autre commune, puis la validation bloque la publication.
-    if (locationHasUserInput || postalCodeHasUserInput) {
+    if ((locationAlreadyFilled || _locationEditedByUser) &&
+        (postalCodeAlreadyFilled || _postalCodeEditedByUser)) {
       return;
     }
 
@@ -2498,15 +2267,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       city: trimmed,
       postalCode: _postalCodeController.text,
     );
-    if (result.hasMultiplePostalCodesForCity &&
-        _postalCodeController.text.trim().isEmpty) {
-      return 'Choisissez le code postal correspondant à cette ville.';
-    }
     if (!result.isKnownCity) {
       return 'Choisissez une ville dans la liste ou vérifiez l\'orthographe.';
-    }
-    if (!_matchesCanonicalLocationInputs()) {
-      return 'Choisissez une ville valide dans la liste.';
     }
     return null;
   }
@@ -2514,13 +2276,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String? _validatePostalCode(String? value) {
     final trimmed = (value ?? '').trim();
     if (trimmed.isEmpty) {
-      final result = FrenchCityPostalValidator.instance.validate(
-        city: _locationController.text,
-        postalCode: trimmed,
-      );
-      if (result.hasMultiplePostalCodesForCity) {
-        return 'Choisissez le code postal correspondant à cette ville.';
-      }
       return null;
     }
     if (!RegExp(r'^(97\d{3}|98\d{3}|\d{5})$').hasMatch(trimmed)) {
@@ -2536,9 +2291,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     if (!result.postalCodeMatches) {
       return 'Le code postal ne correspond pas à cette ville.';
-    }
-    if (!_matchesCanonicalLocationInputs()) {
-      return 'Choisissez une ville et un code postal valides dans la liste.';
     }
     return null;
   }
@@ -3564,16 +3316,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
-    _postalCodeDebounceTimer?.cancel();
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
     _postalCodeController.dispose();
-    _regionController.dispose();
-    _cityFocusNode.dispose();
-    _postalCodeFocusNode.dispose();
     _phoneController.dispose();
     _budgetController.dispose();
     _scrollController.dispose();
@@ -3586,7 +3334,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _descriptionController.clear();
       _locationController.clear();
       _postalCodeController.clear();
-      _regionController.clear();
       _phoneController.clear();
       _budgetController.clear();
       _category = null;
@@ -3609,8 +3356,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _highlightedIndex = -1;
       _selectedRegionCode = null;
       _selectedDeptCode = null;
-      _selectedCanonicalCity = null;
-      _locationSelectionPending = false;
       _selectedPhoneCountryCode = '+33';
 
       _isUrgent = false;
@@ -3629,69 +3374,42 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   void _onCityChanged(String value) {
     final query = value.trim();
-    if (query.length < _cityAutocompleteMinChars) {
+    if (query.length < 2) {
       setState(() {
         _citySuggestions = [];
         _highlightedIndex = -1;
       });
-      _syncLiveDerivedLocationFieldsFromInputs();
       return;
     }
 
-    final resolution = FrenchCityPostalValidator.instance
-        .resolveCanonicalCityResolution(
+    final results = FrenchCityPostalValidator.instance.searchSuggestions(
+      query,
+      postalCodeHint: _postalCodeController.text,
+      limit: 10,
+    );
+    final exactMatch = FrenchCityPostalValidator.instance.resolveExactTypedCity(
       city: query,
       postalCode: _postalCodeController.text,
     );
-    final results = resolution.matches.isNotEmpty
-        ? resolution.matches.take(10).toList(growable: false)
-        : FrenchCityPostalValidator.instance.searchSuggestions(
-            query,
-            postalCodeHint: _postalCodeController.text,
-            limit: 10,
-          );
     setState(() {
       _citySuggestions = results;
       _highlightedIndex = results.isNotEmpty ? 0 : -1;
-      _locationSelectionPending = !resolution.isResolved && results.isNotEmpty;
     });
 
-    _syncLiveDerivedLocationFieldsFromInputs();
-
-    if (resolution.isResolved &&
-        _isExactTypedCanonicalSelection(resolution.selected!, query)) {
-      _applyCity(resolution.selected!, forceApply: true);
+    if (exactMatch != null) {
+      _applyCity(exactMatch, forceApply: true);
     }
   }
 
   void _onPostalCodeChanged(String value) {
-    _postalCodeDebounceTimer?.cancel();
-    _postalCodeDebounceTimer = Timer(
-      _postalCodeInputDebounce,
-      () => _handlePostalCodeChangedSettled(value),
-    );
-  }
-
-  void _handlePostalCodeChangedSettled(String value) {
-    if (!mounted) return;
-
     final cp = value.trim();
     if (cp.length < 2) {
-      _updateLocationSuggestions(
-        cityQuery: _locationController.text,
-        postalCode: cp,
-      );
-      _syncLiveDerivedLocationFieldsFromInputs();
+      // On ne spam pas si l'utilisateur tape juste "7"
       return;
     }
 
-    final resolution = FrenchCityPostalValidator.instance
-        .resolveCanonicalCityResolution(
-      city: _locationController.text,
-      postalCode: cp,
-    );
     final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      _locationController.text,
+      '',
       postalCodeHint: cp,
       limit: 10,
     );
@@ -3702,22 +3420,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       setState(() {
         _citySuggestions = [];
         _highlightedIndex = -1;
-        _locationSelectionPending = false;
       });
-      _syncLiveDerivedLocationFieldsFromInputs();
       return;
     }
+
+    final best = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: _locationController.text,
+      postalCode: cp,
+    );
 
     setState(() {
       _citySuggestions = results;
       _highlightedIndex = 0;
-      _locationSelectionPending = !resolution.isResolved && results.isNotEmpty;
     });
 
-    _syncLiveDerivedLocationFieldsFromInputs();
-
-    if (resolution.isResolved && _locationController.text.trim().isNotEmpty) {
-      _applyCity(resolution.selected!, forceApply: true);
+    if (best != null) {
+      _applyCity(best, forceApply: true);
     }
   }
 
@@ -3734,9 +3452,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _setControllerText(_postalCodeController, city.cp);
       }
 
-      _selectedCanonicalCity = city;
-      _locationSelectionPending = false;
-      _syncDerivedLocationFields(city);
+      _selectedDeptCode = city.dept;
+      _selectedRegionCode = city.region;
+      _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
       if (markAsUserEdited) {
         _locationEditedByUser = true;
         _postalCodeEditedByUser = true;
@@ -3974,8 +3692,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (source == null) return;
 
       final ImagePicker picker = ImagePicker();
-      // imageQuality forces HEIC→JPEG conversion on iOS so sharp can process it.
-      final XFile? image = await picker.pickImage(source: source, imageQuality: 88);
+      final XFile? image = await picker.pickImage(source: source);
 
       if (image == null) return;
 
@@ -4547,11 +4264,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         _showAiPendingForController(_locationController),
                     child: TextFormField(
                       controller: _locationController,
-                      focusNode: _cityFocusNode,
                       decoration: InputDecoration(
                         label: _requiredLabel('Ville'),
-                        hintText:
-                            'Ex : Les Abymes, Baie-Mahault, Paris... (dès 2 lettres)',
+                        hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -4572,7 +4287,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       _showAiPendingForController(_postalCodeController),
                   child: TextFormField(
                     controller: _postalCodeController,
-                    focusNode: _postalCodeFocusNode,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Code postal',
@@ -4588,24 +4302,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     onEditingComplete: _canonicalizeLocationInputs,
                     validator: _validatePostalCode,
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _regionController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: 'Region',
-                    hintText:
-                        'Remplie automatiquement depuis la ville et le code postal',
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                  ),
-                  validator: _validateRegionField,
                 ),
                 _buildCitySuggestionsOverlay(),
                 const SizedBox(height: 16),

@@ -4,15 +4,22 @@ import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
 
 import '../constants.dart';
 
+/// ==========================
+/// ROUTES (optionnel)
+/// ==========================
 class AppRoutes {
   static const toolboxHub = '/toolbox_hub';
   static const toolboxCurrent = '/toolbox_current';
   static const entrepreneurCalculator = '/entrepreneur_calculator';
 }
 
+/// ==========================
+/// PAGE HUB : Boîte à outils (2 cards)
+/// ==========================
 class ToolboxHubPage extends StatelessWidget {
   const ToolboxHubPage({super.key});
 
+  // Couleurs proches de la charte Prestō
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
 
@@ -34,7 +41,7 @@ class ToolboxHubPage extends StatelessWidget {
         'Statut juridique conseillé',
         'Coûts & démarches exactes',
         'Aides, subventions & organismes',
-        'Plan d’actions sur 30 jours',
+        "Plan d’actions sur 30 jours",
       ],
       buttonText: 'Démarrer mon projet',
       buttonGradient: const LinearGradient(
@@ -97,7 +104,9 @@ class ToolboxHubPage extends StatelessWidget {
             const cardSpacing = 12.0;
             const minPhoneTileHeight = 292.0;
             final availableHeight =
-                constraints.maxHeight - contentPadding.top - contentPadding.bottom;
+                constraints.maxHeight -
+                contentPadding.top -
+                contentPadding.bottom;
             final equalTileHeight = (availableHeight - cardSpacing) / 2;
 
             if (isPhone) {
@@ -278,7 +287,6 @@ class _ToolCard extends StatelessWidget {
 
 class _BulletsGrid extends StatelessWidget {
   const _BulletsGrid({required this.bullets});
-
   final List<String> bullets;
 
   @override
@@ -307,7 +315,6 @@ class _BulletsGrid extends StatelessWidget {
 
 class _BulletItem extends StatelessWidget {
   const _BulletItem({required this.text});
-
   final String text;
 
   @override
@@ -364,15 +371,22 @@ class _IconBadge extends StatelessWidget {
   }
 }
 
+/// ==========================
+/// PLACEHOLDERS : remplace par TES pages
+/// ==========================
+
+/// Page actuelle "boîte à outils" (réutilise la page réelle existante)
 class CurrentToolboxPage extends StatelessWidget {
   const CurrentToolboxPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // On réutilise la page existante pour conserver le comportement actuel.
     return const ToolboxJeMeLancePage();
   }
 }
 
+/// Future page calculatrice (placeholder)
 class EntrepreneurCalculatorPage extends StatelessWidget {
   const EntrepreneurCalculatorPage({super.key});
 

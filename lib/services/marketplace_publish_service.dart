@@ -232,13 +232,9 @@ class MarketplacePublishService {
       }
     }
 
-    // Le backend traite deja l'absence de verdict reCAPTCHA comme un cas
-    // non bloquant pour eviter qu'une indisponibilite client-side coupe toute
-    // la publication. On laisse donc passer une soumission sans token.
-    debugPrint(
-      '[MarketplacePublish] reCAPTCHA indisponible cote client, soumission sans token',
+    throw const MarketplaceHumanVerificationUnavailable(
+      'La vérification anti-abus est indisponible pour le moment. Recharge la page puis réessaie.',
     );
-    return '';
   }
 
   bool _isFirestorePermissionDenied(Object error) {
@@ -462,14 +458,13 @@ class MarketplacePublishService {
       ownerId: ownerId,
       stepLabel: 'brouillon Firestore',
       action: () => _listingRepository.createDraft(
-        MarketplaceListingDraft.fromCanonicalCity(
+        MarketplaceListingDraft(
           ownerId: ownerId,
           title: title,
           description: description,
           price: price,
           categoryId: categoryId,
           cityId: cityId,
-          canonicalCity: canonicalCity,
           media: const [], // vide pour l'instant
           phone: phone,
           budgetType: budgetType,
@@ -477,6 +472,12 @@ class MarketplacePublishService {
           isUrgent: isUrgent,
           subCategory: subCategory,
           category: resolvedCategory,
+          city: resolvedCity,
+          location: resolvedCity,
+          postalCode: resolvedPostalCode,
+          cp: resolvedPostalCode,
+          dept: canonicalCity.dept,
+          region: canonicalCity.region,
           cityCategoryKey: (indexed['cityCategoryKey'] ?? '').toString().trim(),
           budgetValue: price,
         ),

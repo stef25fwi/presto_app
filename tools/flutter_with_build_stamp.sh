@@ -79,6 +79,7 @@ hydrate_env_from_interactive_shell() {
 }
 
 hydrate_env_from_interactive_shell APPCHECK_RECAPTCHA_SITE_KEY
+hydrate_env_from_interactive_shell MARKETPLACE_RECAPTCHA_WEB_SITE_KEY
 hydrate_env_from_interactive_shell FCM_WEB_VAPID_KEY
 
 if [[ -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
@@ -87,16 +88,28 @@ if [[ -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   fi
 fi
 
+if [[ -z "${MARKETPLACE_RECAPTCHA_WEB_SITE_KEY:-}" ]]; then
+  if [[ -n "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" ]]; then
+    export MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$RECAPTCHA_ENTERPRISE_SITE_KEY"
+  elif [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
+    export MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY"
+  fi
+fi
+
 # Propage les secrets de build s'ils sont définis dans l'environnement.
 # Sans ça, un build web local active aucun App Check et Firestore (en mode
 # enforce) rejette toutes les lectures publiques avec PERMISSION_DENIED.
 # Conventions :
 #   - APPCHECK_RECAPTCHA_SITE_KEY      : reCAPTCHA Enterprise pour App Check Web
+#   - MARKETPLACE_RECAPTCHA_WEB_SITE_KEY : reCAPTCHA Enterprise pour anti-abus marketplace web
 #   - RECAPTCHA_ENTERPRISE_SITE_KEY    : même site key consommée côté Functions
 #   - FCM_WEB_VAPID_KEY                : VAPID key pour notifications web
 extra_defines=()
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   extra_defines+=(--dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY")
+fi
+if [[ -n "${MARKETPLACE_RECAPTCHA_WEB_SITE_KEY:-}" ]]; then
+  extra_defines+=(--dart-define=MARKETPLACE_RECAPTCHA_WEB_SITE_KEY="$MARKETPLACE_RECAPTCHA_WEB_SITE_KEY")
 fi
 if [[ -n "${FCM_WEB_VAPID_KEY:-}" ]]; then
   extra_defines+=(--dart-define=FCM_WEB_VAPID_KEY="$FCM_WEB_VAPID_KEY")

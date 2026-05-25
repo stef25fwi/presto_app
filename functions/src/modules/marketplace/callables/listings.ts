@@ -144,20 +144,6 @@ function collectListingImageUrls(media: ListingMedia[]): string[] {
   ));
 }
 
-export function buildAutoPublishAfterForSubmission({
-  mediaCount,
-  nowMs = Date.now(),
-}: {
-  mediaCount: number;
-  nowMs?: number;
-}): admin.firestore.Timestamp | null {
-  if (mediaCount <= 0) {
-    return null;
-  }
-
-  return admin.firestore.Timestamp.fromMillis(nowMs + 30 * 1000);
-}
-
 function departmentFromPostalCode(postalCode: string): string {
   const cp = postalCode.trim();
   if (cp.length < 2) return "";
@@ -588,11 +574,9 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
         lastRecaptchaScore: recaptcha.score,
       },
     });
-    // Keep photo listings in pending briefly so users see the validation step
-    // before the scheduler flips them to public/active.
-    const autoPublishAfter = buildAutoPublishAfterForSubmission({
-      mediaCount: normalizedMedia.length,
-    });
+    // Photos are processed synchronously above, so no need for deferred
+    // autoPublishAfter — publish immediately when approved.
+    const autoPublishAfter = null;
 
     const publication = await persistModerationResult({
       listingId,
