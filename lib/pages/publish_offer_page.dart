@@ -493,8 +493,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Autocomplétion villes
   static const int _cityAutocompleteMinChars = 2;
+  static const Duration _postalCodeInputDebounce = Duration(milliseconds: 120);
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
+  Timer? _postalCodeDebounceTimer;
 
   // Région / département (optionnel à exploiter dans le futur)
   String? _selectedRegionCode;
@@ -1739,6 +1741,51 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _postalCodeController.text.trim() == selected.cp;
   }
 
+  bool _matchesCanonicalLocationInputs() {
+    if (_matchesSelectedCanonicalCity()) {
+      return true;
+    }
+
+    final typedCity = _locationController.text.trim();
+    final typedPostalCode = _postalCodeController.text.trim();
+    if (typedCity.isEmpty) {
+      return false;
+    }
+
+    final result = FrenchCityPostalValidator.instance.validate(
+      city: typedCity,
+      postalCode: typedPostalCode,
+    );
+    final canonicalCity = result.canonicalCity;
+    if (!result.isKnownCity || canonicalCity == null) {
+      return false;
+    }
+    if (typedPostalCode.isNotEmpty && !result.postalCodeMatches) {
+      return false;
+    }
+    if (typedPostalCode.isEmpty && result.hasMultiplePostalCodesForCity) {
+      return false;
+    }
+
+    final exactTyped = FrenchCityPostalValidator.instance.resolveExactTypedCity(
+      city: typedCity,
+      postalCode: typedPostalCode,
+    );
+    if (exactTyped != null) {
+      return exactTyped.name == canonicalCity.name &&
+          exactTyped.cp == canonicalCity.cp;
+    }
+
+    final normalizedTypedCity = FrenchCityPostalValidator.normalizeCity(
+      typedCity,
+    );
+    final normalizedCanonicalCity = FrenchCityPostalValidator.normalizeCity(
+      canonicalCity.name,
+    );
+    return normalizedTypedCity == normalizedCanonicalCity &&
+        (typedPostalCode.isEmpty || typedPostalCode == canonicalCity.cp);
+  }
+
   void _invalidateCanonicalLocationSelection() {
     if (_matchesSelectedCanonicalCity()) {
       return;
@@ -2458,7 +2505,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!result.isKnownCity) {
       return 'Choisissez une ville dans la liste ou vérifiez l\'orthographe.';
     }
-    if (!_matchesSelectedCanonicalCity()) {
+    if (!_matchesCanonicalLocationInputs()) {
       return 'Choisissez une ville valide dans la liste.';
     }
     return null;
@@ -2490,7 +2537,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!result.postalCodeMatches) {
       return 'Le code postal ne correspond pas à cette ville.';
     }
-    if (!_matchesSelectedCanonicalCity()) {
+    if (!_matchesCanonicalLocationInputs()) {
       return 'Choisissez une ville et un code postal valides dans la liste.';
     }
     return null;
@@ -3517,6 +3564,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    _postalCodeDebounceTimer?.cancel();
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
@@ -3617,6 +3665,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _onPostalCodeChanged(String value) {
+    _postalCodeDebounceTimer?.cancel();
+    _postalCodeDebounceTimer = Timer(
+      _postalCodeInputDebounce,
+      () => _handlePostalCodeChangedSettled(value),
+    );
+  }
+
+  void _handlePostalCodeChangedSettled(String value) {
+    if (!mounted) return;
+
     final cp = value.trim();
     if (cp.length < 2) {
       _updateLocationSuggestions(
