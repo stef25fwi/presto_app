@@ -1,4 +1,5 @@
 import 'marketplace_enums.dart';
+import '../services/city_search.dart';
 
 class ListingMediaInput {
   final String storagePath;
@@ -82,6 +83,55 @@ class MarketplaceListingDraft {
     this.cityCategoryKey,
     this.budgetValue,
   });
+
+  factory MarketplaceListingDraft.fromCanonicalCity({
+    String? id,
+    required String ownerId,
+    required String title,
+    required String description,
+    required double price,
+    required String categoryId,
+    required String cityId,
+    required CityRecord canonicalCity,
+    required List<ListingMediaInput> media,
+    ListingStatus status = ListingStatus.draft,
+    String? phone,
+    String? budgetType,
+    String? missionDelay,
+    bool isUrgent = false,
+    String? subCategory,
+    String? category,
+    String? cityCategoryKey,
+    double? budgetValue,
+  }) {
+    final resolvedCity = canonicalCity.name.trim();
+    final resolvedPostalCode = canonicalCity.cp.trim();
+    return MarketplaceListingDraft(
+      id: id,
+      ownerId: ownerId,
+      title: title,
+      description: description,
+      price: price,
+      categoryId: categoryId,
+      cityId: cityId,
+      media: media,
+      status: status,
+      phone: phone,
+      budgetType: budgetType,
+      missionDelay: missionDelay,
+      isUrgent: isUrgent,
+      subCategory: subCategory,
+      category: category,
+      city: resolvedCity,
+      location: resolvedCity,
+      postalCode: resolvedPostalCode,
+      cp: resolvedPostalCode,
+      dept: canonicalCity.dept,
+      region: canonicalCity.region,
+      cityCategoryKey: cityCategoryKey,
+      budgetValue: budgetValue,
+    );
+  }
 
   Map<String, dynamic> toFirestore() {
     return <String, dynamic>{

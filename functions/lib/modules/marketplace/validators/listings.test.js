@@ -39,6 +39,8 @@ const listings_1 = require("./listings");
     strict_1.default.equal("sizeBytes" in payload.media[0], false);
     strict_1.default.equal(payload.city, "Les Abymes");
     strict_1.default.equal(payload.postalCode, "97139");
+    strict_1.default.equal(payload.cityId, "97139_les-abymes");
+    strict_1.default.equal(payload.cityCategoryKey, "97139_les-abymes_bricolage-travaux");
     strict_1.default.ok(payload.searchKeywords.includes("montage"));
     strict_1.default.ok(payload.searchKeywords.includes("bricolage"));
     strict_1.default.ok(payload.searchKeywords.includes("97139"));
@@ -50,12 +52,18 @@ const listings_1 = require("./listings");
         price: -1,
         categoryId: "",
         cityId: "",
+        city: "",
+        postalCode: "",
+        dept: "",
+        region: "",
         media: [],
     }, 4), (error) => {
         strict_1.default.ok(error instanceof errors_1.ValidationError);
         strict_1.default.ok(error.issues.includes("Title must contain at least 10 characters"));
         strict_1.default.ok(error.issues.includes("Description must contain at least 30 characters"));
         strict_1.default.ok(error.issues.includes("Price must be a positive number"));
+        strict_1.default.ok(error.issues.includes("city is required"));
+        strict_1.default.ok(error.issues.includes("postalCode is required"));
         return true;
     });
 });
@@ -65,7 +73,12 @@ const listings_1 = require("./listings");
         description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
         price: "95",
         categoryId: "bricolage-travaux",
-        cityId: "97139_les-abymes",
+        city: "Les Abymes",
+        location: "Les Abymes",
+        postalCode: "97139",
+        cp: "97139",
+        dept: "971",
+        region: "01",
         media: [],
     }, 10);
     strict_1.default.equal(payload.media.length, 0);
@@ -77,7 +90,12 @@ const listings_1 = require("./listings");
         description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
         price: "95",
         categoryId: "bricolage-travaux",
-        cityId: "97139_les-abymes",
+        city: "Les Abymes",
+        location: "Les Abymes",
+        postalCode: "97139",
+        cp: "97139",
+        dept: "971",
+        region: "01",
         media: [
             {
                 storagePath: "listingDrafts/u1/draft_1/photo.jpg",

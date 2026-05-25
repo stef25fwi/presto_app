@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'city_search.dart';
+import 'french_city_postal_validator.dart';
+
 class UserProfileSavePayload {
   const UserProfileSavePayload._();
 
@@ -35,6 +38,7 @@ class UserProfileSavePayload {
     required String accountType,
     required String phone,
     required String city,
+    String? postalCode,
     List<String> selectedFavoriteCategories = const <String>[],
     List<String> selectedFavoriteSubcategories = const <String>[],
   }) {
@@ -43,7 +47,10 @@ class UserProfileSavePayload {
     final normalizedAccountType =
         accountType.trim().isEmpty ? 'Particulier' : accountType.trim();
     final normalizedPhone = phone.trim();
-    final cityResolution = _resolveCityAndPostalCode(city);
+    final cityResolution = _resolveCanonicalLocation(
+      city: city,
+      postalCode: postalCode,
+    );
     final normalizedCity = cityResolution.city;
     final normalizedPostalCode = cityResolution.postalCode;
     final completeness = calculateCompleteness(
@@ -76,6 +83,27 @@ class UserProfileSavePayload {
     };
   }
 
+  static ({String city, String postalCode}) _resolveCanonicalLocation({
+    required String city,
+    String? postalCode,
+  }) {
+    final explicitPostalCode = (postalCode ?? '').trim();
+    final resolved = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: city,
+      postalCode: explicitPostalCode,
+    );
+    if (resolved != null) {
+      return (city: resolved.name.trim(), postalCode: resolved.cp.trim());
+    }
+
+    final explicitCity = city.trim();
+    if (explicitCity.isNotEmpty && explicitPostalCode.isNotEmpty) {
+      return (city: explicitCity, postalCode: explicitPostalCode);
+    }
+
+    return _resolveCityAndPostalCode(explicitCity);
+  }
+
   static ({String city, String postalCode}) _resolveCityAndPostalCode(
     String rawCity,
   ) {
@@ -89,8 +117,26 @@ class UserProfileSavePayload {
         .trim();
 
     return (
-      city: city.isEmpty ? trimmed : city,
+      city: _normalizeFallbackCity(city.isEmpty ? trimmed : city),
       postalCode: postalCode,
     );
+  }
+
+  static String _normalizeFallbackCity(String rawCity) {
+    final trimmed = rawCity.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    final normalizedPostalCode =
+        FrenchCityPostalValidator.normalizePostalCode(trimmed);
+    final candidates = normalizedPostalCode.isNotEmpty
+        ? FrenchCityPostalValidator.instance.citiesForPostalCode(
+            normalizedPostalCode,
+          )
+        : const <CityRecord>[];
+    if (candidates.length == 1) {
+      return candidates.first.name;
+    }
+    return trimmed;
   }
 }

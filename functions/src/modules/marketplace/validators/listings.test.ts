@@ -40,6 +40,8 @@ test("validateListingDraftPayload normalizes a valid listing draft", () => {
   assert.equal("sizeBytes" in payload.media[0]!, false);
   assert.equal(payload.city, "Les Abymes");
   assert.equal(payload.postalCode, "97139");
+  assert.equal(payload.cityId, "97139_les-abymes");
+  assert.equal(payload.cityCategoryKey, "97139_les-abymes_bricolage-travaux");
   assert.ok(payload.searchKeywords.includes("montage"));
   assert.ok(payload.searchKeywords.includes("bricolage"));
   assert.ok(payload.searchKeywords.includes("97139"));
@@ -53,6 +55,10 @@ test("validateListingDraftPayload reports aggregated issues", () => {
       price: -1,
       categoryId: "",
       cityId: "",
+      city: "",
+      postalCode: "",
+      dept: "",
+      region: "",
       media: [],
     }, 4),
     (error: unknown) => {
@@ -60,6 +66,8 @@ test("validateListingDraftPayload reports aggregated issues", () => {
       assert.ok(error.issues.includes("Title must contain at least 10 characters"));
       assert.ok(error.issues.includes("Description must contain at least 30 characters"));
       assert.ok(error.issues.includes("Price must be a positive number"));
+      assert.ok(error.issues.includes("city is required"));
+      assert.ok(error.issues.includes("postalCode is required"));
       return true;
     },
   );
@@ -71,7 +79,12 @@ test("validateListingDraftPayload allows publishing without photos", () => {
     description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
     price: "95",
     categoryId: "bricolage-travaux",
-    cityId: "97139_les-abymes",
+    city: "Les Abymes",
+    location: "Les Abymes",
+    postalCode: "97139",
+    cp: "97139",
+    dept: "971",
+    region: "01",
     media: [],
   }, 10);
 
@@ -85,7 +98,12 @@ test("validateListingDraftPayload accepts raw image formats for backend conversi
     description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
     price: "95",
     categoryId: "bricolage-travaux",
-    cityId: "97139_les-abymes",
+    city: "Les Abymes",
+    location: "Les Abymes",
+    postalCode: "97139",
+    cp: "97139",
+    dept: "971",
+    region: "01",
     media: [
       {
         storagePath: "listingDrafts/u1/draft_1/photo.jpg",

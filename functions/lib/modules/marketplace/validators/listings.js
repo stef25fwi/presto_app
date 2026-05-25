@@ -34,6 +34,43 @@ function inferImageMimeTypeFromPath(storagePath) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
+function slugify(value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[œ]/g, "oe")
+        .replace(/[/'’_-]+/g, " ")
+        .replace(/[^a-z0-9 ]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/ /g, "-");
+}
+function normalizePostalCode(value) {
+    return normalizeString(value);
+}
+function departmentFromPostalCode(postalCode) {
+    const cp = postalCode.trim();
+    if (cp.length < 2)
+        return "";
+    if (cp.startsWith("97") || cp.startsWith("98")) {
+        return cp.length >= 3 ? cp.slice(0, 3) : cp;
+    }
+    if (cp.startsWith("20")) {
+        if (cp.length < 5)
+            return "20";
+        return Number(cp) < 20200 ? "2A" : "2B";
+    }
+    return cp.slice(0, 2);
+}
+function buildCityId(city, postalCode) {
+    const safeCity = normalizeString(city);
+    const safePostalCode = normalizePostalCode(postalCode);
+    if (!safeCity || !safePostalCode)
+        return "";
+    return `${safePostalCode}_${slugify(safeCity)}`;
+}
 function assertCondition(condition, message, issues) {
     if (!condition) {
         issues.push(message);
@@ -92,14 +129,27 @@ function validateListingDraftPayload(rawDraft, maxMediaCount) {
     const title = normalizeString(rawDraft.title);
     const description = normalizeString(rawDraft.description);
     const categoryId = normalizeString(rawDraft.categoryId);
-    const cityId = normalizeString(rawDraft.cityId);
+    const rawCity = normalizeString(rawDraft.city || rawDraft.location);
+    const rawLocation = normalizeString(rawDraft.location || rawDraft.city);
+    const rawPostalCode = normalizePostalCode(rawDraft.postalCode || rawDraft.cp);
+    const rawDept = normalizeString(rawDraft.dept) || departmentFromPostalCode(rawPostalCode);
+    const rawRegion = normalizeString(rawDraft.region);
+    const computedCityId = buildCityId(rawCity, rawPostalCode);
+    const cityId = computedCityId || normalizeString(rawDraft.cityId);
     const price = Number(rawDraft.price ?? 0);
+    const cityCategoryKey = cityId && categoryId ? `${cityId}_${categoryId}` : "";
     assertCondition(title.length >= 10, "Title must contain at least 10 characters", issues);
     assertCondition(title.length <= 120, "Title must contain at most 120 characters", issues);
     assertCondition(description.length >= 30, "Description must contain at least 30 characters", issues);
     assertCondition(description.length <= 4000, "Description must contain at most 4000 characters", issues);
     assertCondition(Number.isFinite(price) && price >= 0, "Price must be a positive number", issues);
     assertCondition(categoryId.length >= 2, "categoryId is required", issues);
+    assertCondition(rawCity.length >= 2, "city is required", issues);
+    assertCondition(rawPostalCode.length >= 5, "postalCode is required", issues);
+    assertCondition(/^(97\d{3}|98\d{3}|\d{5})$/.test(rawPostalCode), "postalCode is invalid", issues);
+    assertCondition(rawDept.length >= 2, "dept is required", issues);
+    assertCondition(rawRegion.length >= 1, "region is required", issues);
+    assertCondition(rawDept === departmentFromPostalCode(rawPostalCode), "dept does not match postalCode", issues);
     assertCondition(cityId.length >= 2, "cityId is required", issues);
     let media = [];
     try {
@@ -131,13 +181,13 @@ function validateListingDraftPayload(rawDraft, maxMediaCount) {
         isUrgent: rawDraft.isUrgent === true,
         subCategory: normalizeString(rawDraft.subCategory),
         category: normalizeString(rawDraft.category),
-        city: normalizeString(rawDraft.city),
-        location: normalizeString(rawDraft.location),
-        postalCode: normalizeString(rawDraft.postalCode),
-        cp: normalizeString(rawDraft.cp),
-        dept: normalizeString(rawDraft.dept),
-        region: normalizeString(rawDraft.region),
-        cityCategoryKey: normalizeString(rawDraft.cityCategoryKey),
+        city: rawCity,
+        location: rawLocation || rawCity,
+        postalCode: rawPostalCode,
+        cp: rawPostalCode,
+        dept: rawDept,
+        region: rawRegion,
+        cityCategoryKey: cityCategoryKey,
         budgetValue: Number.isFinite(Number(rawDraft.budgetValue))
             ? Number(rawDraft.budgetValue)
             : undefined,

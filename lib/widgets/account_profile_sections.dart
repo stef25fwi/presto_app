@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/city_search.dart';
+import '../services/french_city_postal_validator.dart';
+import 'city_postal_autocomplete_field.dart';
 import 'phone_input_field.dart';
 
 const double _kAccountSectionTileHorizontalPadding = 10;
@@ -8,6 +10,7 @@ const double _kAccountSectionTileHorizontalPadding = 10;
 class AccountProfileFormSection extends StatefulWidget {
   final TextEditingController pseudoController;
   final TextEditingController cityController;
+  final TextEditingController postalCodeController;
   final TextEditingController phoneController;
   final String phoneCountryCode;
   final bool isEditing;
@@ -20,6 +23,7 @@ class AccountProfileFormSection extends StatefulWidget {
     super.key,
     required this.pseudoController,
     required this.cityController,
+    required this.postalCodeController,
     required this.phoneController,
     required this.phoneCountryCode,
     required this.isEditing,
@@ -35,6 +39,11 @@ class AccountProfileFormSection extends StatefulWidget {
 }
 
 class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
+  final FocusNode _cityFocusNode = FocusNode();
+  final FocusNode _postalCodeFocusNode = FocusNode();
+  List<CityRecord> _citySuggestions = const <CityRecord>[];
+  CityRecord? _selectedCanonicalCity;
+
   String _countryCodeForDept(String dept) {
     if (dept.startsWith('971')) return '+590';
     if (dept.startsWith('972')) return '+596';
@@ -46,6 +55,13 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
   }
 
   String? _extractPostalCodeFromCityValue(String value) {
+    final resolution = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: value,
+      postalCode: widget.postalCodeController.text,
+    );
+    if (resolution != null) {
+      return resolution.cp;
+    }
     final match = RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
     return match?.group(1);
   }
@@ -62,7 +78,11 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
     } else if (trimmed.length >= 2) {
       final sanitizedCity = trimmed.replaceAll(RegExp(r'\(.*?\)'), '').trim();
       if (sanitizedCity.length >= 2) {
-        final matches = CitySearch.instance.search(sanitizedCity, limit: 1);
+        final matches = FrenchCityPostalValidator.instance.searchSuggestions(
+          sanitizedCity,
+          postalCodeHint: widget.postalCodeController.text,
+          limit: 1,
+        );
         if (matches.isNotEmpty) {
           dept = matches.first.dept;
         }
@@ -73,6 +93,90 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
     if (nextCode != widget.phoneCountryCode) {
       widget.onPhoneCountryCodeChanged(nextCode);
     }
+  }
+
+  @override
+  void dispose() {
+    _cityFocusNode.dispose();
+    _postalCodeFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _updateSuggestions(String value) {
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() => _citySuggestions = const <CityRecord>[]);
+      return;
+    }
+
+    final results = FrenchCityPostalValidator.instance.searchSuggestions(
+      query,
+      postalCodeHint: widget.postalCodeController.text,
+      limit: 8,
+    );
+    setState(() => _citySuggestions = results);
+  }
+
+  void _applyCanonicalCity(CityRecord city) {
+    widget.cityController.text = city.name;
+    widget.postalCodeController.text = city.cp;
+    _selectedCanonicalCity = city;
+    _syncPhoneCountryCodeFromCityValue(city.name);
+    setState(() => _citySuggestions = const <CityRecord>[]);
+  }
+
+  void _canonicalizeLocationInputs() {
+    final resolution = FrenchCityPostalValidator.instance
+        .resolveCanonicalCityResolution(
+      city: widget.cityController.text,
+      postalCode: widget.postalCodeController.text,
+    );
+    if (resolution.isResolved) {
+      _applyCanonicalCity(resolution.selected!);
+      return;
+    }
+    setState(() {
+      _selectedCanonicalCity = null;
+      _citySuggestions = resolution.matches.take(8).toList(growable: false);
+    });
+  }
+
+  bool _matchesSelectedCanonicalCity() {
+    final selected = _selectedCanonicalCity;
+    if (selected != null) {
+      return widget.cityController.text.trim() == selected.name &&
+          widget.postalCodeController.text.trim() == selected.cp;
+    }
+    final resolved = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: widget.cityController.text,
+      postalCode: widget.postalCodeController.text,
+    );
+    return resolved != null;
+  }
+
+  String? _validateLocation() {
+    final city = widget.cityController.text.trim();
+    final postalCode = widget.postalCodeController.text.trim();
+    if (city.isEmpty) {
+      return 'Ville obligatoire';
+    }
+    final result = FrenchCityPostalValidator.instance.validate(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (result.hasMultiplePostalCodesForCity && postalCode.isEmpty) {
+      return 'Choisissez le code postal';
+    }
+    if (!result.isKnownCity) {
+      return 'Choisissez une ville dans la liste';
+    }
+    if (postalCode.isNotEmpty && !result.postalCodeMatches) {
+      return 'Le code postal ne correspond pas à la ville';
+    }
+    if (!_matchesSelectedCanonicalCity()) {
+      return 'Choisissez une ville valide dans la liste';
+    }
+    return null;
   }
 
   @override
@@ -121,41 +225,11 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                 absorbing: !widget.isEditing,
                 child: Opacity(
                   opacity: widget.isEditing ? 1.0 : 0.6,
-                  child: Autocomplete<CityRecord>(
-                    displayStringForOption: (city) =>
-                        '${city.name} (${city.cp})',
-                    optionsBuilder: (TextEditingValue value) {
-                      final query = value.text.trim();
-                      if (query.length < 2) {
-                        return const Iterable<CityRecord>.empty();
-                      }
-                      return CitySearch.instance.search(query, limit: 10);
-                    },
-                    onSelected: (CityRecord city) {
-                      final nextValue = '${city.name} (${city.cp})';
-                      widget.cityController.text = nextValue;
-                      _syncPhoneCountryCodeFromCityValue(nextValue);
-                    },
-                    fieldViewBuilder: (
-                      context,
-                      textController,
-                      focusNode,
-                      onFieldSubmitted,
-                    ) {
-                      if (widget.cityController.text.isNotEmpty &&
-                          textController.text != widget.cityController.text) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted) return;
-                          if (textController.text !=
-                              widget.cityController.text) {
-                            textController.text = widget.cityController.text;
-                          }
-                        });
-                      }
-
-                      return TextField(
-                        controller: textController,
-                        focusNode: focusNode,
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: widget.cityController,
+                        focusNode: _cityFocusNode,
                         enabled: widget.isEditing,
                         decoration: InputDecoration(
                           labelText: 'Ville',
@@ -163,41 +237,75 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                           filled: !widget.isEditing,
                           fillColor:
                               !widget.isEditing ? Colors.grey.shade100 : null,
+                          errorText: widget.isEditing ? _validateLocation() : null,
                         ),
                         onChanged: (value) {
-                          widget.cityController.text = value;
+                          _selectedCanonicalCity = null;
+                          _updateSuggestions(value);
                           _syncPhoneCountryCodeFromCityValue(value);
                         },
-                      );
-                    },
-                    optionsViewBuilder: (context, onSelected, options) {
-                      return Align(
-                        alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 4.0,
-                          child: Container(
-                            constraints: const BoxConstraints(maxHeight: 200),
-                            width: MediaQuery.of(context).size.width - 80,
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              itemBuilder: (context, index) {
-                                final city = options.elementAt(index);
-                                return ListTile(
-                                  dense: true,
-                                  title: Text('${city.name} (${city.cp})'),
-                                  subtitle: Text('Dept ${city.dept}'),
-                                  onTap: () => onSelected(city),
-                                );
-                              },
-                            ),
+                        onEditingComplete: _canonicalizeLocationInputs,
+                      ),
+                      if (_citySuggestions.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          constraints: const BoxConstraints(maxHeight: 180),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                                color: Colors.black12,
+                              ),
+                            ],
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _citySuggestions.length,
+                            itemBuilder: (context, index) {
+                              final city = _citySuggestions[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text('${city.name} (${city.cp})'),
+                                subtitle: Text('Dept ${city.dept}'),
+                                onTap: () async {
+                                  final picked = await pickCanonicalCity(
+                                    context,
+                                    widget.postalCodeController,
+                                    city,
+                                  );
+                                  if (picked != null) {
+                                    _applyCanonicalCity(picked);
+                                  }
+                                },
+                              );
+                            },
                           ),
                         ),
-                      );
-                    },
+                      ],
+                    ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: widget.postalCodeController,
+                focusNode: _postalCodeFocusNode,
+                enabled: widget.isEditing,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Code postal',
+                  hintText: 'Ex : 97122',
+                  filled: !widget.isEditing,
+                  fillColor: !widget.isEditing ? Colors.grey.shade100 : null,
+                ),
+                onChanged: (_) {
+                  _selectedCanonicalCity = null;
+                  _updateSuggestions(widget.cityController.text);
+                },
+                onEditingComplete: _canonicalizeLocationInputs,
               ),
               const SizedBox(height: 10),
               AbsorbPointer(

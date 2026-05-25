@@ -1,19 +1,23 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../services/city_repo_compact.dart';
+
+import '../services/city_search.dart';
+import '../services/french_city_postal_validator.dart';
+import 'city_postal_autocomplete_field.dart';
 
 class CityPostalAutocompleteCompact extends StatefulWidget {
-  final CityRepoCompact repo;
   final TextEditingController cityCtrl;
   final TextEditingController cpCtrl;
   final InputDecoration decoration;
+  final ValueChanged<CityRecord>? onSelectedCity;
 
   const CityPostalAutocompleteCompact({
     super.key,
-    required this.repo,
     required this.cityCtrl,
     required this.cpCtrl,
     required this.decoration,
+    this.onSelectedCity,
   });
 
   @override
@@ -24,86 +28,60 @@ class CityPostalAutocompleteCompact extends StatefulWidget {
 class _CityPostalAutocompleteCompactState
     extends State<CityPostalAutocompleteCompact> {
   Timer? _debounce;
-  List<CityEntry> _options = const [];
+  List<CityRecord> _options = const [];
 
   @override
   void initState() {
     super.initState();
-    widget.repo.init(); // fire & forget (le 1er search attendra _all dispo)
     widget.cityCtrl.addListener(_onChanged);
+    widget.cpCtrl.addListener(_onChanged);
   }
 
   @override
   void dispose() {
     widget.cityCtrl.removeListener(_onChanged);
+    widget.cpCtrl.removeListener(_onChanged);
     _debounce?.cancel();
     super.dispose();
   }
 
   void _onChanged() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 120), () async {
-      await widget.repo.init();
+    _debounce = Timer(const Duration(milliseconds: 100), () {
       final q = widget.cityCtrl.text.trim();
-      if (q.isEmpty) {
+      if (q.length < 2) {
         if (mounted) setState(() => _options = const []);
         return;
       }
-      final res = widget.repo.search(q, cpHint: widget.cpCtrl.text, limit: 15);
+      final res = FrenchCityPostalValidator.instance.searchSuggestions(
+        q,
+        postalCodeHint: widget.cpCtrl.text,
+        limit: 10,
+      );
       if (!mounted) return;
       setState(() => _options = res);
     });
   }
 
-  Future<void> _applySelection(CityEntry c) async {
-    widget.cityCtrl.text = c.name;
-
-    if (c.cps.isEmpty) return;
-
-    // Si 1 seul CP => auto
-    if (c.cps.length == 1) {
-      widget.cpCtrl.text = c.cps.first;
+  Future<void> _applySelection(CityRecord city) async {
+    final selected = await pickCanonicalCity(context, widget.cpCtrl, city);
+    if (selected == null) {
       return;
     }
 
-    // Si user a déjà tapé un CP qui match => on garde
-    final typed =
-        RegExp(r'\b(\d{5})\b').firstMatch(widget.cpCtrl.text)?.group(1);
-    if (typed != null && c.cps.contains(typed)) {
-      widget.cpCtrl.text = typed;
-      return;
-    }
+    widget.cityCtrl.text = selected.name;
+    widget.cpCtrl.text = selected.cp;
+    widget.onSelectedCity?.call(selected);
 
-    // Sinon: choix
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => ListView(
-        shrinkWrap: true,
-        children: [
-          const ListTile(
-            title: Text("Choisir le code postal",
-                style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-          ...c.cps.map((cp) => ListTile(
-                title: Text(cp),
-                onTap: () => Navigator.pop(context, cp),
-              )),
-          const SizedBox(height: 12),
-        ],
-      ),
-    );
-
-    if (picked != null) widget.cpCtrl.text = picked;
+    if (!mounted) return;
+    setState(() => _options = const []);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Autocomplete<CityEntry>(
+    return Autocomplete<CityRecord>(
       optionsBuilder: (_) => _options,
-      displayStringForOption: (c) => c.name,
+      displayStringForOption: cityDisplayName,
       fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
         controller.value = widget.cityCtrl.value;
         return TextFormField(
@@ -127,16 +105,18 @@ class _CityPostalAutocompleteCompactState
                 itemCount: options.length,
                 itemBuilder: (context, i) {
                   final c = options.elementAt(i);
-                  final cpLabel = c.cps.isEmpty
-                      ? ""
-                      : (c.cps.length == 1
-                          ? c.cps.first
-                          : "${c.cps.first} … (+${c.cps.length - 1})");
+                  final choices =
+                      FrenchCityPostalValidator.instance.postalCodesForCity(c.name);
+                  final cpLabel = choices.isEmpty
+                      ? c.cp
+                      : choices.length == 1
+                          ? choices.first.cp
+                          : '${choices.first.cp} … (+${choices.length - 1})';
                   return ListTile(
                     dense: true,
-                    title: Text(c.name),
+                    title: Text(cityDisplayName(c)),
                     subtitle: Text(
-                        "${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
+                        '${c.dept}${cpLabel.isNotEmpty ? ' • $cpLabel' : ''}'),
                     onTap: () => onSelected(c),
                   );
                 },

@@ -113,6 +113,69 @@ class CitySearch {
     return buffer.toString();
   }
 
+  List<String> _deptCandidatesFromPostalCode(String postalCode) {
+    final trimmed = postalCode.trim();
+    if (trimmed.length < 2) {
+      return const <String>[];
+    }
+    if (trimmed.startsWith('97') || trimmed.startsWith('98')) {
+      return trimmed.length >= 3 ? <String>[trimmed.substring(0, 3)] : const <String>[];
+    }
+    if (trimmed.startsWith('20')) {
+      return const <String>['2A', '2B'];
+    }
+    return <String>[trimmed.substring(0, 2)];
+  }
+
+  int _scoreCandidate(
+    CityRecord city, {
+    required String normalizedQuery,
+    required String postalCodeHint,
+  }) {
+    final normalizedName = _normalize(city.name);
+    var score = 0;
+
+    if (postalCodeHint.isNotEmpty) {
+      if (city.postalCode == postalCodeHint) {
+        score += 10;
+      } else if (city.postalCode.startsWith(postalCodeHint)) {
+        score += 4;
+      }
+    }
+
+    if (normalizedName == normalizedQuery) {
+      score += 12;
+    } else if (normalizedName.startsWith(normalizedQuery)) {
+      score += 8;
+    } else if (normalizedQuery.length < 5 && normalizedName.contains(normalizedQuery)) {
+      score += 3;
+    } else {
+      final distance = _levenshteinDistance(normalizedQuery, normalizedName);
+      if (distance <= _maxFuzzyDistanceFor(normalizedQuery.length)) {
+        score += 2;
+      }
+    }
+
+    if (normalizedName.replaceAll(' ', '') == normalizedQuery.replaceAll(' ', '')) {
+      score += 2;
+    }
+
+    return score;
+  }
+
+  List<CityRecord> _dedupe(List<CityRecord> cities) {
+    final seen = <String>{};
+    final results = <CityRecord>[];
+    for (final city in cities) {
+      final key =
+          '${_normalize(city.name)}|${city.postalCode}|${city.departmentCode}|${city.regionCode}';
+      if (seen.add(key)) {
+        results.add(city);
+      }
+    }
+    return results;
+  }
+
   /// Recherche par nom de ville (auto-complétion synchrone)
   /// ✅ + filtre optionnel par départements autorisés
   /// ✅ Alias pour "Paris" → tous les arrondissements
@@ -120,63 +183,83 @@ class CitySearch {
     String query, {
     int limit = 50, // Augmenté de 20 à 50
     List<String>? allowedDeptCodes, // ✅ AJOUT
+    String? postalCodeHint,
   }) {
     final q = _normalize(query);
     if (q.isEmpty) return const [];
 
+    final postalHint = postalCodeHint?.trim() ?? '';
+    final deptCandidates = postalHint.isEmpty
+        ? const <String>[]
+        : _deptCandidatesFromPostalCode(postalHint);
     final allowed = (allowedDeptCodes == null || allowedDeptCodes.isEmpty)
         ? null
-        : allowedDeptCodes.toSet();
+        : <String>{...allowedDeptCodes, ...deptCandidates};
 
-    final results = <CityRecord>[];
+    final exact = <CityRecord>[];
+    final prefix = <CityRecord>[];
+    final contains = <CityRecord>[];
+    final fuzzy = <({CityRecord city, int score})>[];
 
-    // 🔶 Alias spécial : si l'utilisateur tape "paris" (exact après normalisation),
-    // retourner TOUS les arrondissements de Paris
-    if (q == 'paris') {
-      for (final city in _allCities) {
-        if (allowed != null && !allowed.contains(city.departmentCode)) {
-          continue;
-        }
-        final nameNorm = _normalize(city.name);
-        if (nameNorm.startsWith('paris')) {
-          results.add(city);
-          if (results.length >= limit) break;
-        }
-      }
-      if (results.isNotEmpty) return results;
-    }
-
-    // Recherche normale : startsWith
     for (final city in _allCities) {
-      // ✅ Filtrage dept si fourni
       if (allowed != null && !allowed.contains(city.departmentCode)) {
+        continue;
+      }
+      if (postalHint.isNotEmpty &&
+          !city.postalCode.startsWith(postalHint) &&
+          deptCandidates.isNotEmpty &&
+          !deptCandidates.contains(city.departmentCode)) {
         continue;
       }
 
       final nameNorm = _normalize(city.name);
+      if (nameNorm == q) {
+        exact.add(city);
+        continue;
+      }
       if (nameNorm.startsWith(q)) {
-        results.add(city);
-        if (results.length >= limit) break;
+        prefix.add(city);
+        continue;
+      }
+      if (q.length < 5 && nameNorm.contains(q)) {
+        contains.add(city);
+        continue;
+      }
+
+      final score = _scoreCandidate(
+        city,
+        normalizedQuery: q,
+        postalCodeHint: postalHint,
+      );
+      if (score > 0) {
+        fuzzy.add((city: city, score: score));
       }
     }
 
-    // Optionnel: si pas assez de résultats, on élargit en contains
-    if (results.length < limit) {
-      for (final city in _allCities) {
-        if (results.length >= limit) break;
-
-        if (allowed != null && !allowed.contains(city.departmentCode)) {
-          continue;
+    final sortedFuzzy = fuzzy
+        .where((entry) => !exact.contains(entry.city) && !prefix.contains(entry.city))
+        .toList()
+      ..sort((left, right) {
+        final byScore = right.score.compareTo(left.score);
+        if (byScore != 0) {
+          return byScore;
         }
-
-        final nameNorm = _normalize(city.name);
-        if (!results.contains(city) && nameNorm.contains(q)) {
-          results.add(city);
+        final byPostal = left.city.postalCode.compareTo(right.city.postalCode);
+        if (byPostal != 0) {
+          return byPostal;
         }
-      }
-    }
+        return left.city.name.compareTo(right.city.name);
+      });
 
-    return results;
+    final ordered = <CityRecord>[
+      ...exact,
+      ...prefix,
+      ...contains,
+      ...sortedFuzzy.map((entry) => entry.city),
+    ];
+
+    final deduped = _dedupe(ordered);
+    return deduped.take(limit).toList(growable: false);
   }
 
   /// Recherche par **nom de ville** (préfixe strict)
@@ -231,10 +314,14 @@ class CitySearch {
     final query = postalCode.trim();
     if (query.isEmpty) return const [];
 
-    // On réutilise la méthode search() déjà existante
-    final results =
-        _allCities.where((c) => c.postalCode.startsWith(query)).toList()
+    final results = _dedupe(
+        _allCities.where((c) => c.postalCode.startsWith(query)).toList())
           ..sort((a, b) {
+            final aExact = a.postalCode == query;
+            final bExact = b.postalCode == query;
+            if (aExact != bExact) {
+              return aExact ? -1 : 1;
+            }
             final cmp = a.postalCode.compareTo(b.postalCode);
             if (cmp != 0) return cmp;
             return a.name.compareTo(b.name);

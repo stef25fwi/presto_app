@@ -6,12 +6,29 @@ class FrenchCityPostalValidationResult {
     required this.isKnownCity,
     required this.postalCodeMatches,
     required this.canonicalCity,
+    this.hasMultiplePostalCodesForCity = false,
+    this.hasMultipleCitiesForPostalCode = false,
   });
 
   final bool isValid;
   final bool isKnownCity;
   final bool postalCodeMatches;
   final CityRecord? canonicalCity;
+  final bool hasMultiplePostalCodesForCity;
+  final bool hasMultipleCitiesForPostalCode;
+}
+
+class CanonicalCityResolution {
+  const CanonicalCityResolution({
+    required this.matches,
+    this.selected,
+  });
+
+  final List<CityRecord> matches;
+  final CityRecord? selected;
+
+  bool get isResolved => selected != null;
+  bool get isAmbiguous => selected == null && matches.length > 1;
 }
 
 class _KnownFrenchCity {
@@ -99,11 +116,17 @@ class FrenchCityPostalValidator {
       value = value.replaceAll(key, replacement);
     });
 
+    value = value
+      .replaceAll(RegExp(r"[`´‘’‛ʻʼ]+"), "'")
+      .replaceAll(RegExp(r"[‐‑‒–—−]+"), '-')
+      .replaceAll(RegExp(r'\bste\b'), 'sainte')
+      .replaceAll(RegExp(r'\bst\b'), 'saint')
+      .replaceAll(RegExp(r'\bstes\b'), 'saintes')
+      .replaceAll(RegExp(r'\bsts\b'), 'saints');
+
     return value
-        .replaceAll(RegExp(r"[-'’]+"), ' ')
+      .replaceAll(RegExp(r"[-'’]+"), ' ')
         .replaceAll(RegExp(r'[^a-z0-9\s]+'), ' ')
-        .replaceAll(RegExp(r'\bste\b'), 'sainte')
-        .replaceAll(RegExp(r'\bst\b'), 'saint')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
@@ -194,6 +217,13 @@ class FrenchCityPostalValidator {
       if (leftScore != rightScore) {
         return rightScore.compareTo(leftScore);
       }
+      final leftName = normalizeCity(left.name);
+      final rightName = normalizeCity(right.name);
+      final leftExact = leftName == normalizedQuery;
+      final rightExact = rightName == normalizedQuery;
+      if (leftExact != rightExact) {
+        return leftExact ? -1 : 1;
+      }
       final postalCompare = left.postalCode.compareTo(right.postalCode);
       if (postalCompare != 0) {
         return postalCompare;
@@ -211,11 +241,19 @@ class FrenchCityPostalValidator {
     String? city,
     String? postalCode,
   }) {
+    return resolveCanonicalCityResolution(city: city, postalCode: postalCode)
+        .selected;
+  }
+
+  CanonicalCityResolution resolveCanonicalCityResolution({
+    String? city,
+    String? postalCode,
+  }) {
     final normalizedCity = normalizeCity(city ?? '');
     final normalizedPostalCode = normalizePostalCode(postalCode ?? '');
 
     if (normalizedCity.isEmpty && normalizedPostalCode.isEmpty) {
-      return null;
+      return const CanonicalCityResolution(matches: <CityRecord>[]);
     }
 
     final candidates = searchSuggestions(
@@ -223,42 +261,121 @@ class FrenchCityPostalValidator {
       postalCodeHint: normalizedPostalCode,
       limit: 50,
     );
+    final dedupedCandidates = _dedupeCandidates(candidates);
 
-    if (candidates.isEmpty && normalizedPostalCode.isNotEmpty) {
+    if (dedupedCandidates.isEmpty && normalizedPostalCode.isNotEmpty) {
       final byPostal = CitySearch.instance.pickBestForPostalCode(normalizedPostalCode);
       if (byPostal != null &&
           (normalizedCity.isEmpty || _matchesCandidateCity(byPostal, normalizedCity))) {
-        return byPostal;
+        return CanonicalCityResolution(
+          matches: <CityRecord>[byPostal],
+          selected: byPostal,
+        );
       }
     }
 
-    for (final candidate in candidates) {
+    for (final candidate in dedupedCandidates) {
       final exactCity = normalizedCity.isEmpty ||
           _candidateNames(city: candidate.name).contains(normalizedCity);
       final exactPostal = normalizedPostalCode.isEmpty ||
           candidate.postalCode == normalizedPostalCode;
       if (exactCity && exactPostal) {
-        return candidate;
+        return CanonicalCityResolution(
+          matches: dedupedCandidates,
+          selected: candidate,
+        );
       }
     }
 
     if (normalizedCity.isNotEmpty) {
-      for (final candidate in candidates) {
+      final exactCityMatches = dedupedCandidates
+          .where(
+            (candidate) =>
+                _candidateNames(city: candidate.name).contains(normalizedCity),
+          )
+          .toList(growable: false);
+      if (exactCityMatches.length == 1) {
+        return CanonicalCityResolution(
+          matches: exactCityMatches,
+          selected: exactCityMatches.first,
+        );
+      }
+      if (exactCityMatches.length > 1) {
+        return CanonicalCityResolution(matches: exactCityMatches);
+      }
+
+      for (final candidate in dedupedCandidates) {
         if (_candidateNames(city: candidate.name).contains(normalizedCity)) {
-          return candidate;
+          return CanonicalCityResolution(
+            matches: dedupedCandidates,
+            selected: candidate,
+          );
         }
       }
     }
 
     if (normalizedPostalCode.isNotEmpty) {
-      for (final candidate in candidates) {
+      final postalMatches = dedupedCandidates
+          .where((candidate) => candidate.postalCode == normalizedPostalCode)
+          .toList(growable: false);
+      if (postalMatches.length == 1) {
+        return CanonicalCityResolution(
+          matches: postalMatches,
+          selected: postalMatches.first,
+        );
+      }
+      if (postalMatches.length > 1) {
+        return CanonicalCityResolution(matches: postalMatches);
+      }
+
+      for (final candidate in dedupedCandidates) {
         if (candidate.postalCode == normalizedPostalCode) {
-          return candidate;
+          return CanonicalCityResolution(
+            matches: dedupedCandidates,
+            selected: candidate,
+          );
         }
       }
     }
 
-    return candidates.isEmpty ? null : candidates.first;
+    if (dedupedCandidates.length == 1) {
+      return CanonicalCityResolution(
+        matches: dedupedCandidates,
+        selected: dedupedCandidates.first,
+      );
+    }
+
+    return CanonicalCityResolution(matches: dedupedCandidates);
+  }
+
+  List<CityRecord> postalCodesForCity(String city) {
+    final normalizedCity = normalizeCity(city);
+    if (normalizedCity.isEmpty) {
+      return const <CityRecord>[];
+    }
+
+    final candidates = _dedupeCandidates(
+      searchSuggestions(city, limit: 50)
+          .where(
+            (candidate) =>
+                _candidateNames(city: candidate.name).contains(normalizedCity),
+          )
+          .toList(growable: false),
+    );
+    return candidates;
+  }
+
+  List<CityRecord> citiesForPostalCode(String postalCode) {
+    final normalizedPostalCode = normalizePostalCode(postalCode);
+    if (normalizedPostalCode.isEmpty) {
+      return const <CityRecord>[];
+    }
+
+    return _dedupeCandidates(
+      searchSuggestions('', postalCodeHint: normalizedPostalCode, limit: 50)
+          .where((candidate) => candidate.postalCode == normalizedPostalCode)
+          .toList(growable: false),
+    );
   }
 
   CityRecord? resolveExactTypedCity({
@@ -295,6 +412,8 @@ class FrenchCityPostalValidator {
   }) {
     final normalizedCity = normalizeCity(city);
     final normalizedPostalCode = normalizePostalCode(postalCode);
+    final cityMatches = postalCodesForCity(city);
+    final postalCodeCandidates = citiesForPostalCode(postalCode);
 
     final knownCity = resolveExactTypedCity(city: city) ??
         resolveCanonicalCity(city: city, postalCode: '');
@@ -309,23 +428,27 @@ class FrenchCityPostalValidator {
 
     if (normalizedPostalCode.isEmpty) {
       return FrenchCityPostalValidationResult(
-        isValid: true,
+        isValid: cityMatches.length <= 1,
         isKnownCity: true,
-        postalCodeMatches: true,
+        postalCodeMatches: cityMatches.length <= 1,
         canonicalCity: knownCity,
+        hasMultiplePostalCodesForCity: cityMatches.length > 1,
       );
     }
 
     final resolved = resolveCanonicalCity(city: city, postalCode: postalCode);
-    final postalMatches = resolved != null &&
+    final hasMatchingPostalCode = resolved != null &&
         resolved.postalCode == normalizedPostalCode &&
         _candidateNames(city: resolved.name).contains(normalizedCity);
 
     return FrenchCityPostalValidationResult(
-      isValid: postalMatches,
+      isValid: hasMatchingPostalCode,
       isKnownCity: true,
-      postalCodeMatches: postalMatches,
-      canonicalCity: postalMatches ? resolved : knownCity,
+      postalCodeMatches: hasMatchingPostalCode,
+      canonicalCity: hasMatchingPostalCode ? resolved : knownCity,
+      hasMultiplePostalCodesForCity: cityMatches.length > 1,
+      hasMultipleCitiesForPostalCode:
+          postalCodeCandidates.length > 1 && normalizedCity.isEmpty,
     );
   }
 
@@ -341,10 +464,13 @@ class FrenchCityPostalValidator {
     final base = normalizeCity(city);
     if (base.contains('sainte')) {
       names.add(base.replaceAll('sainte', 'ste'));
+      names.add(base.replaceAll('sainte', 'st '));
     }
     if (base.contains('saint')) {
       names.add(base.replaceAll('saint', 'st'));
+      names.add(base.replaceAll('saint', 'ste'));
     }
+    names.add(base.replaceAll(' ', ''));
 
     final known = _knownCities.where((entry) => normalizeCity(entry.city) == base);
     for (final entry in known) {
@@ -377,20 +503,33 @@ class FrenchCityPostalValidator {
     var score = 0;
     final names = _candidateNames(city: candidate.name);
     if (normalizedPostalCode.isNotEmpty && candidate.postalCode == normalizedPostalCode) {
-      score += 4;
+      score += 8;
     }
     if (normalizedCity.isNotEmpty) {
       if (names.contains(normalizedCity)) {
-        score += 4;
+        score += 10;
       } else if (names.any((name) => name.startsWith(normalizedCity))) {
-        score += 2;
+        score += 6;
       } else if (names.any((name) => name.contains(normalizedCity))) {
-        score += 1;
-      } else if (names.any((name) => _isVeryCloseCityName(name, normalizedCity))) {
         score += 2;
+      } else if (names.any((name) => _isVeryCloseCityName(name, normalizedCity))) {
+        score += 3;
       }
     }
     return score;
+  }
+
+  static List<CityRecord> _dedupeCandidates(List<CityRecord> candidates) {
+    final seen = <String>{};
+    final results = <CityRecord>[];
+    for (final candidate in candidates) {
+      final key =
+          '${normalizeCity(candidate.name)}|${candidate.postalCode}|${candidate.departmentCode}|${candidate.regionCode}';
+      if (seen.add(key)) {
+        results.add(candidate);
+      }
+    }
+    return results;
   }
 
   static bool _isVeryCloseCityName(String candidate, String query) {

@@ -19,6 +19,7 @@ import 'admin_space_page.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
+import '../services/french_city_postal_validator.dart';
 import '../services/notification_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../services/user_profile_save_payload.dart';
@@ -115,6 +116,8 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController _profilePseudoController =
       TextEditingController();
   final TextEditingController _profileCityController = TextEditingController();
+    final TextEditingController _profilePostalCodeController =
+      TextEditingController();
   final TextEditingController _profilePhoneController = TextEditingController();
   String _profilePhoneCountryCode = '+33';
   String _profileAccountType = 'Particulier';
@@ -145,6 +148,7 @@ class _AccountPageState extends State<AccountPage> {
   static const List<String> _requiredProfileFieldLabels = <String>[
     'Pseudo',
     'Ville',
+    'Code postal',
     'Numéro de téléphone',
   ];
 
@@ -780,6 +784,7 @@ class _AccountPageState extends State<AccountPage> {
     });
     _profilePseudoController.addListener(_handleProfileCompletenessChanged);
     _profileCityController.addListener(_handleProfileCompletenessChanged);
+    _profilePostalCodeController.addListener(_handleProfileCompletenessChanged);
     _profilePhoneController.addListener(_handleProfileCompletenessChanged);
     _profileAuthSub = _auth.idTokenChanges().listen((user) {
       if (!mounted) return;
@@ -827,6 +832,7 @@ class _AccountPageState extends State<AccountPage> {
     if (clearControllers) {
       _profilePseudoController.clear();
       _profileCityController.clear();
+      _profilePostalCodeController.clear();
       _profilePhoneController.clear();
     }
   }
@@ -956,9 +962,10 @@ class _AccountPageState extends State<AccountPage> {
     return '+$codeDigits$phoneDigits';
   }
 
-  String _inferPhoneCountryCodeFromCity(String cityValue) {
-    final match =
-        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(cityValue.trim());
+  String _inferPhoneCountryCodeFromPostalCode(String postalCode) {
+    final match = RegExp(r'^(97\d{3}|98\d{3}|\d{5})$').firstMatch(
+      postalCode.trim(),
+    );
     if (match == null) return '+33';
     final postal = match.group(1)!;
     final dept = (postal.startsWith('97') || postal.startsWith('98'))
@@ -970,6 +977,50 @@ class _AccountPageState extends State<AccountPage> {
     if (dept == '974' || dept == '976') return '+262'; // La Réunion / Mayotte
     if (dept == '987') return '+689'; // Polynésie française
     return '+33';
+  }
+
+  String _inferPhoneCountryCodeFromCity(String cityValue) {
+    final resolution = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: cityValue,
+      postalCode: _profilePostalCodeController.text,
+    );
+    if (resolution != null) {
+      return _inferPhoneCountryCodeFromPostalCode(resolution.cp);
+    }
+    final match =
+        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(cityValue.trim());
+    if (match != null) {
+      return _inferPhoneCountryCodeFromPostalCode(match.group(0)!);
+    }
+    return _inferPhoneCountryCodeFromPostalCode(
+      _profilePostalCodeController.text,
+    );
+  }
+
+  String _extractProfilePostalCode(Map<String, dynamic> data, String city) {
+    final postalCode = _firstNonEmptyProfileValue(
+      data,
+      const ['postalCode', 'codePostal', 'zipCode', 'cp'],
+    );
+    if (postalCode.isNotEmpty) {
+      return postalCode;
+    }
+    final match = RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(city);
+    return match?.group(0) ?? '';
+  }
+
+  ({String city, String postalCode}) _resolveProfileLocation(
+    String city,
+    String postalCode,
+  ) {
+    final resolved = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (resolved != null) {
+      return (city: resolved.name, postalCode: resolved.cp);
+    }
+    return (city: city.trim(), postalCode: postalCode.trim());
   }
 
   void _applyLoadedProfilePhone(String rawPhone) {
@@ -1219,8 +1270,13 @@ class _AccountPageState extends State<AccountPage> {
         ],
         fallbackValues: <String>[previousCity],
       );
+      final nextPostalCode = _extractProfilePostalCode(data, nextCity);
+      final normalizedLocation = _resolveProfileLocation(nextCity, nextPostalCode);
       if (_canHydrateProfileField(_profileCityController)) {
-        _profileCityController.text = nextCity;
+        _profileCityController.text = normalizedLocation.city;
+      }
+      if (_canHydrateProfileField(_profilePostalCodeController)) {
+        _profilePostalCodeController.text = normalizedLocation.postalCode;
       }
 
       final loadedPhone = _firstNonEmptyProfileValue(
@@ -1238,8 +1294,9 @@ class _AccountPageState extends State<AccountPage> {
       } else {
         if (_profilePhoneController.text.trim().isEmpty) {
           _applyLoadedProfilePhone('');
-          final inferred =
-              _inferPhoneCountryCodeFromCity(_profileCityController.text);
+          final inferred = _inferPhoneCountryCodeFromPostalCode(
+            _profilePostalCodeController.text,
+          );
           if (inferred != '+33') {
             _profilePhoneCountryCode = inferred;
           }
@@ -1305,14 +1362,18 @@ class _AccountPageState extends State<AccountPage> {
       if (_canHydrateProfileField(_profileCityController)) {
         _profileCityController.text = previousCity;
       }
+      if (_canHydrateProfileField(_profilePostalCodeController)) {
+        _profilePostalCodeController.text = '';
+      }
       if (previousPhone.isNotEmpty) {
         if (_canHydrateProfileField(_profilePhoneController)) {
           _profilePhoneCountryCode = previousPhoneCountryCode;
           _profilePhoneController.text = previousPhone;
         }
       } else {
-        final inferred =
-            _inferPhoneCountryCodeFromCity(_profileCityController.text);
+        final inferred = _inferPhoneCountryCodeFromPostalCode(
+          _profilePostalCodeController.text,
+        );
         if (inferred != '+33') {
           _profilePhoneCountryCode = inferred;
         }
@@ -1423,9 +1484,13 @@ class _AccountPageState extends State<AccountPage> {
     _profileDocSub?.cancel();
     _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
     _profileCityController.removeListener(_handleProfileCompletenessChanged);
+    _profilePostalCodeController.removeListener(
+      _handleProfileCompletenessChanged,
+    );
     _profilePhoneController.removeListener(_handleProfileCompletenessChanged);
     _profilePseudoController.dispose();
     _profileCityController.dispose();
+    _profilePostalCodeController.dispose();
     _profilePhoneController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -1438,6 +1503,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _validateProfile() {
     final pseudo = _profilePseudoController.text.trim();
     final city = _profileCityController.text.trim();
+    final postalCode = _profilePostalCodeController.text.trim();
     final phone = _profilePhoneController.text.trim();
     final normalizedPhone =
         _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
@@ -1469,6 +1535,27 @@ class _AccountPageState extends State<AccountPage> {
       return false;
     }
 
+    if (postalCode.isEmpty) {
+      showErrorSnackBar(context, "Le code postal est obligatoire");
+      return false;
+    }
+
+    final locationValidation = FrenchCityPostalValidator.instance.validate(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (!locationValidation.isKnownCity) {
+      showErrorSnackBar(context, "Choisissez une ville dans la liste");
+      return false;
+    }
+    if (!locationValidation.postalCodeMatches) {
+      showErrorSnackBar(
+        context,
+        "Le code postal ne correspond pas à la ville choisie",
+      );
+      return false;
+    }
+
     if (phone.isEmpty) {
       showErrorSnackBar(context, "Le numéro de téléphone est obligatoire");
       return false;
@@ -1491,6 +1578,9 @@ class _AccountPageState extends State<AccountPage> {
     }
     if (_profileCityController.text.trim().isEmpty) {
       missing.add('ville');
+    }
+    if (_profilePostalCodeController.text.trim().isEmpty) {
+      missing.add('code postal');
     }
     if (_profilePhoneController.text.trim().isEmpty) {
       missing.add('numéro de téléphone');
@@ -1518,7 +1608,10 @@ class _AccountPageState extends State<AccountPage> {
     setState(() => _isSavingProfile = true);
     try {
       final pseudo = _profilePseudoController.text.trim();
-      final city = _profileCityController.text.trim();
+      final location = _resolveProfileLocation(
+        _profileCityController.text,
+        _profilePostalCodeController.text,
+      );
       final phone = _profilePhoneController.text.trim();
       final normalizedPhone =
           _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
@@ -1529,7 +1622,8 @@ class _AccountPageState extends State<AccountPage> {
         displayName: pseudo,
         accountType: _profileAccountType,
         phone: normalizedPhone,
-        city: city,
+        city: location.city,
+        postalCode: location.postalCode,
         selectedFavoriteCategories: _selectedFavoriteCategories.toList(),
         selectedFavoriteSubcategories: _selectedFavoriteSubcategories.toList(),
       );
@@ -2308,6 +2402,7 @@ class _AccountPageState extends State<AccountPage> {
                     AccountProfileFormSection(
                       pseudoController: _profilePseudoController,
                       cityController: _profileCityController,
+                      postalCodeController: _profilePostalCodeController,
                       phoneController: _profilePhoneController,
                       phoneCountryCode: _profilePhoneCountryCode,
                       isEditing: _isEditingProfile,

@@ -462,13 +462,14 @@ class MarketplacePublishService {
       ownerId: ownerId,
       stepLabel: 'brouillon Firestore',
       action: () => _listingRepository.createDraft(
-        MarketplaceListingDraft(
+        MarketplaceListingDraft.fromCanonicalCity(
           ownerId: ownerId,
           title: title,
           description: description,
           price: price,
           categoryId: categoryId,
           cityId: cityId,
+          canonicalCity: canonicalCity,
           media: const [], // vide pour l'instant
           phone: phone,
           budgetType: budgetType,
@@ -476,12 +477,6 @@ class MarketplacePublishService {
           isUrgent: isUrgent,
           subCategory: subCategory,
           category: resolvedCategory,
-          city: resolvedCity,
-          location: resolvedCity,
-          postalCode: resolvedPostalCode,
-          cp: resolvedPostalCode,
-          dept: canonicalCity.dept,
-          region: canonicalCity.region,
           cityCategoryKey: (indexed['cityCategoryKey'] ?? '').toString().trim(),
           budgetValue: price,
         ),
