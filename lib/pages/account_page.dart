@@ -142,6 +142,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _profileLoadError = false;
   int _profileLoadRetries = 0;
   bool _profileSyncInProgress = false;
+  bool _hasHydratedPseudoFromUserDoc = false;
   static const int _maxProfileLoadRetries = 3;
   int _lastMissingRequiredCount = -1;
 
@@ -823,6 +824,7 @@ class _AccountPageState extends State<AccountPage> {
     _profileEmail = '';
     _profilePhotoUrl = null;
     _profileSyncInProgress = false;
+    _hasHydratedPseudoFromUserDoc = false;
     _favoriteCategories = <String>{};
     _selectedFavoriteCategories = <String>{};
     _selectedFavoriteSubcategories = <String>{};
@@ -1261,8 +1263,15 @@ class _AccountPageState extends State<AccountPage> {
         ],
         fallbackValues: <String>[user.displayName ?? '', previousPseudo],
       );
-      if (_canHydrateProfileField(_profilePseudoController)) {
+      final currentPseudo = _profilePseudoController.text.trim();
+      final shouldHydratePseudo =
+          _canHydrateProfileField(_profilePseudoController) &&
+          (currentPseudo.isEmpty || !_hasHydratedPseudoFromUserDoc);
+      if (shouldHydratePseudo) {
         _profilePseudoController.text = nextPseudo;
+        if (nextPseudo.trim().isNotEmpty) {
+          _hasHydratedPseudoFromUserDoc = true;
+        }
       }
 
       final nextCity = _firstNonEmptyProfileValue(

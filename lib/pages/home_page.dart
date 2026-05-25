@@ -153,6 +153,7 @@ class _HomePageState extends State<HomePage>
   bool _isLatestOffersLoading = true;
   Object? _latestOffersError;
   DateTime? _lastLatestOffersLoadedAt;
+  final Map<int, Widget> _tabPageCache = <int, Widget>{};
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -224,6 +225,9 @@ class _HomePageState extends State<HomePage>
     // ✅ Log la recherche
     _logSearch(q);
 
+    _tabPageCache.remove(1);
+    _ensureTabPageCached(1);
+
     setState(() {
       _consultCategoryFilter = null;
       _consultSearchQuery = q;
@@ -243,6 +247,9 @@ class _HomePageState extends State<HomePage>
       },
     );
 
+    _tabPageCache.remove(1);
+    _ensureTabPageCached(1);
+
     setState(() {
       _consultCategoryFilter = normalizedCategory;
       _consultSearchQuery = null;
@@ -257,6 +264,37 @@ class _HomePageState extends State<HomePage>
     } catch (e) {
       debugPrint('[Analytics] logSearch error: $e');
     }
+  }
+
+  Widget _buildTabPage(int index) {
+    switch (index) {
+      case 0:
+        return _buildHomeContent();
+      case 1:
+        return ConsultOffersPage(
+          key: ValueKey<String>(
+            'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
+          ),
+          onScroll: (_) {},
+          categoryFilter: _consultCategoryFilter,
+          searchQuery: _consultSearchQuery,
+        );
+      case 2:
+        return PublishOfferPage(onScroll: (_) {});
+      case 3:
+        return MessagesPageV2(
+          initialConversationId: widget.initialMessagesConversationId,
+          initialDraftText: widget.initialMessagesDraftText,
+        );
+      case 4:
+        return const AccountPage();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  void _ensureTabPageCached(int index) {
+    _tabPageCache[index] ??= _buildTabPage(index);
   }
 
   void _onBottomTap(int index) {
@@ -291,6 +329,7 @@ class _HomePageState extends State<HomePage>
     );
     */
 
+    _ensureTabPageCached(index);
     setState(() => _selectedIndex = index);
   }
 
@@ -305,6 +344,7 @@ class _HomePageState extends State<HomePage>
     _consultCategoryFilter = widget.initialConsultCategoryFilter;
     _consultSearchQuery = widget.initialConsultSearchQuery;
     _sessionStartTime = DateTime.now();
+    _ensureTabPageCached(_selectedIndex);
     WidgetsBinding.instance.addObserver(this);
 
     // ✅ Présence initiale avec statut "online"
@@ -470,6 +510,19 @@ class _HomePageState extends State<HomePage>
             oldWidget.initialConsultSearchQuery) {
       _consultCategoryFilter = widget.initialConsultCategoryFilter;
       _consultSearchQuery = widget.initialConsultSearchQuery;
+      _tabPageCache.remove(1);
+      if (_selectedIndex == 1) {
+        _ensureTabPageCached(1);
+      }
+    }
+
+    if (widget.initialMessagesConversationId !=
+            oldWidget.initialMessagesConversationId ||
+        widget.initialMessagesDraftText != oldWidget.initialMessagesDraftText) {
+      _tabPageCache.remove(3);
+      if (_selectedIndex == 3) {
+        _ensureTabPageCached(3);
+      }
     }
   }
 
@@ -1312,23 +1365,16 @@ class _HomePageState extends State<HomePage>
               data: mq,
               child: IndexedStack(
                 index: _selectedIndex,
-                children: [
-                  _buildHomeContent(),
-                  ConsultOffersPage(
-                    key: ValueKey<String>(
-                      'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                    ),
-                    onScroll: (_) {},
-                    categoryFilter: _consultCategoryFilter,
-                    searchQuery: _consultSearchQuery,
-                  ),
-                  PublishOfferPage(onScroll: (_) {}),
-                  MessagesPageV2(
-                    initialConversationId: widget.initialMessagesConversationId,
-                    initialDraftText: widget.initialMessagesDraftText,
-                  ),
-                  const AccountPage(),
-                ],
+                children: List<Widget>.generate(5, (index) {
+                  final page = _tabPageCache[index] ??
+                      (index == _selectedIndex
+                          ? (_tabPageCache[index] = _buildTabPage(index))
+                          : const SizedBox.shrink());
+                  return TickerMode(
+                    enabled: _selectedIndex == index,
+                    child: page,
+                  );
+                }),
               ),
             ),
             bottomNavigationBar: Container(
