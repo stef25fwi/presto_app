@@ -454,6 +454,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _regionController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   final FocusNode _cityFocusNode = FocusNode();
@@ -1742,12 +1743,36 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     _selectedCanonicalCity = null;
     _locationSelectionPending = false;
+    _selectedDeptCode = null;
+    _selectedRegionCode = null;
+    _setControllerText(_regionController, '');
   }
 
   void _syncDerivedLocationFields(CityRecord city) {
     _selectedDeptCode = city.dept;
     _selectedRegionCode = city.region;
+    _setControllerText(_regionController, city.region);
     _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
+  }
+
+  String? _validateRegionField(String? _) {
+    final city = _locationController.text.trim();
+    final postalCode = _postalCodeController.text.trim();
+    if (city.isEmpty && postalCode.isEmpty) {
+      return null;
+    }
+    if ((_selectedRegionCode ?? '').trim().isNotEmpty) {
+      return null;
+    }
+
+    final resolved = _resolveCanonicalCityRecord(
+      city: city,
+      postalCode: postalCode,
+    );
+    if (resolved == null || resolved.region.trim().isEmpty) {
+      return 'La region sera remplie apres selection d\'une ville valide';
+    }
+    return null;
   }
 
   bool _isExactTypedCanonicalSelection(CityRecord city, String typedCity) {
@@ -3448,6 +3473,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _descriptionController.dispose();
     _locationController.dispose();
     _postalCodeController.dispose();
+    _regionController.dispose();
     _cityFocusNode.dispose();
     _postalCodeFocusNode.dispose();
     _phoneController.dispose();
@@ -3462,6 +3488,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _descriptionController.clear();
       _locationController.clear();
       _postalCodeController.clear();
+      _regionController.clear();
       _phoneController.clear();
       _budgetController.clear();
       _category = null;
@@ -4445,6 +4472,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     onEditingComplete: _canonicalizeLocationInputs,
                     validator: _validatePostalCode,
                   ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _regionController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: 'Region',
+                    hintText:
+                        'Remplie automatiquement depuis la ville et le code postal',
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  validator: _validateRegionField,
                 ),
                 _buildCitySuggestionsOverlay(),
                 const SizedBox(height: 16),

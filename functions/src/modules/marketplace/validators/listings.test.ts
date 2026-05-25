@@ -92,6 +92,24 @@ test("validateListingDraftPayload allows publishing without photos", () => {
   assert.equal(payload.thumbnailUrl, "");
 });
 
+test("validateListingDraftPayload infers region from postalCode when missing", () => {
+  const payload = validateListingDraftPayload({
+    title: "Montage meuble cuisine complet",
+    description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
+    price: "95",
+    categoryId: "bricolage-travaux",
+    city: "Les Abymes",
+    location: "Les Abymes",
+    postalCode: "97139",
+    cp: "97139",
+    media: [],
+  }, 10);
+
+  assert.equal(payload.dept, "971");
+  assert.equal(payload.region, "01");
+  assert.equal(payload.cityId, "97139_les-abymes");
+});
+
 test("validateListingDraftPayload accepts raw image formats for backend conversion", () => {
   const payload = validateListingDraftPayload({
     title: "Montage meuble cuisine complet",
