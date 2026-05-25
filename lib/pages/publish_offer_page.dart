@@ -507,6 +507,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _attemptedSubmit = false; // affiche erreurs après tentative
   bool _publishLocked = false; // lock après tentative invalide
   bool _canPublish = false;
+  Timer? _recomputeDebounce;
+  Timer? _locationPredictionDebounce;
   String _latestRecognizedTranscript = '';
   bool _isApplyingProgrammaticPublishUpdate = false;
   bool _titleEditedByUser = false;
@@ -2698,6 +2700,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _recompute() {
+    _recomputeDebounce?.cancel();
+    _recomputeDebounce = Timer(const Duration(milliseconds: 120), () {
+      if (!mounted) return;
+      _recomputeNow();
+    });
+  }
+
+  void _recomputeNow() {
     final ok = _requiredOk();
     if (!mounted) return;
     if (_canPublish == ok && !(_publishLocked && ok)) return;
@@ -3309,10 +3319,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final appCheckReady = await _ensureAppCheckReady(flow: 'publishAiAnalyze');
-    if (!appCheckReady) return;
+    if (mounted && !_isAnalyzing) {
+      setState(() => _isAnalyzing = true);
+    }
 
-    setState(() => _isAnalyzing = true);
+    final appCheckReady = await _ensureAppCheckReady(flow: 'publishAiAnalyze');
+    if (!appCheckReady) {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+      }
+      return;
+    }
 
     try {
       _appendPublishAiTrace(
@@ -3383,6 +3400,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void dispose() {
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
+    _recomputeDebounce?.cancel();
+    _locationPredictionDebounce?.cancel();
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
@@ -3438,6 +3457,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
 
   void _onCityChanged(String value) {
+    _locationPredictionDebounce?.cancel();
     final query = value.trim();
     if (query.length < 2) {
       setState(() {
@@ -3447,65 +3467,72 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      query,
-      postalCodeHint: _postalCodeController.text,
-      limit: 10,
-    );
-    final exactMatch = FrenchCityPostalValidator.instance.resolveExactTypedCity(
-      city: query,
-      postalCode: _postalCodeController.text,
-    );
-    setState(() {
-      _citySuggestions = results;
-      _highlightedIndex = results.isNotEmpty ? 0 : -1;
-    });
+    _locationPredictionDebounce = Timer(const Duration(milliseconds: 140), () {
+      final results = FrenchCityPostalValidator.instance.searchSuggestions(
+        query,
+        postalCodeHint: _postalCodeController.text,
+        limit: 10,
+      );
+      final exactMatch =
+          FrenchCityPostalValidator.instance.resolveExactTypedCity(
+        city: query,
+        postalCode: _postalCodeController.text,
+      );
+      if (!mounted) return;
+      setState(() {
+        _citySuggestions = results;
+        _highlightedIndex = results.isNotEmpty ? 0 : -1;
+      });
 
-    if (exactMatch != null) {
-      _applyCity(exactMatch, forceApply: true);
-    }
+      if (exactMatch != null) {
+        _applyCity(exactMatch, forceApply: true);
+      }
+    });
   }
 
   void _onPostalCodeChanged(String value) {
+    _locationPredictionDebounce?.cancel();
     final cp = value.trim();
     if (cp.length < 2) {
       // On ne spam pas si l'utilisateur tape juste "7"
       return;
     }
 
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      '',
-      postalCodeHint: cp,
-      limit: 10,
-    );
+    _locationPredictionDebounce = Timer(const Duration(milliseconds: 140), () {
+      final results = FrenchCityPostalValidator.instance.searchSuggestions(
+        '',
+        postalCodeHint: cp,
+        limit: 10,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (results.isEmpty) {
+      if (results.isEmpty) {
+        setState(() {
+          _citySuggestions = [];
+          _highlightedIndex = -1;
+        });
+        return;
+      }
+
+      final resolution =
+          FrenchCityPostalValidator.instance.resolveCanonicalCityResolution(
+        city: _locationController.text,
+        postalCode: cp,
+      );
+
       setState(() {
-        _citySuggestions = [];
-        _highlightedIndex = -1;
+        _citySuggestions = results;
+        _highlightedIndex = 0;
       });
-      return;
-    }
 
-    final resolution =
-        FrenchCityPostalValidator.instance.resolveCanonicalCityResolution(
-      city: _locationController.text,
-      postalCode: cp,
-    );
-
-    setState(() {
-      _citySuggestions = results;
-      _highlightedIndex = 0;
+      final currentCityIsEmpty = _locationController.text.trim().isEmpty;
+      final canApplyWithoutCity = resolution.matches.length == 1;
+      if (resolution.selected != null &&
+          (!currentCityIsEmpty || canApplyWithoutCity)) {
+        _applyCity(resolution.selected!, forceApply: true);
+      }
     });
-
-    final currentCityIsEmpty = _locationController.text.trim().isEmpty;
-    final canApplyWithoutCity = resolution.matches.length == 1;
-    if (resolution.selected != null &&
-        (!currentCityIsEmpty || canApplyWithoutCity)) {
-      _applyCity(resolution.selected!, forceApply: true);
-    }
   }
 
   Future<void> _selectSuggestedCity(CityRecord city) async {
