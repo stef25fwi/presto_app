@@ -4536,7 +4536,7 @@ class _ListingReviewSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Annonce envoyée en revue',
+                  'Annonce en attente de validation',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -4546,7 +4546,7 @@ class _ListingReviewSuccessPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Elle apparaîtra dans le marketplace dès validation.',
+                  'Votre annonce a bien ete envoyee. Elle reste visible dans vos annonces en attente de validation avant publication.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,

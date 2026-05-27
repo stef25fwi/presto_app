@@ -611,13 +611,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final isPublished = data['isPublished'];
     if (isPublished is bool && isPublished) return true;
 
-    final moderation = data['moderation'];
-    if (moderation is Map) {
-      final moderationStatus =
-          (moderation['status'] ?? '').toString().trim().toLowerCase();
-      if (moderationStatus == 'approved') return true;
-    }
-
     final status = (data['status'] ?? '').toString().trim().toLowerCase();
     if (status == 'published' || status == 'active') return true;
 
@@ -857,8 +850,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   bool _canEditOffer(_OfferManagementSection section) {
-    return section == _OfferManagementSection.pending ||
-        section == _OfferManagementSection.rejected;
+    return section == _OfferManagementSection.rejected;
   }
 
   bool _canDeleteOffer(_OfferManagementSection section) {
@@ -2038,6 +2030,36 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 label: const Text('Voir le détail'),
               ),
             )
+          else if (item.section == _OfferManagementSection.pending)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFE5E7EB),
+                  disabledForegroundColor: const Color(0xFF6B7280),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                onPressed: canDelete ? () => _deleteOffer(item) : null,
+                icon: isBusy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.delete_outline, size: 18),
+                label: Text(isBusy ? 'Suppression...' : 'Supprimer'),
+              ),
+            )
           else
             Row(
               children: [
@@ -2088,6 +2110,18 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 ),
               ],
             ),
+          if (!canEdit &&
+              item.section == _OfferManagementSection.pending) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Pendant la validation, cette annonce ne peut pas etre modifiee. Vous pouvez uniquement la supprimer.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           if (!canEdit &&
               item.section == _OfferManagementSection.published) ...[
             const SizedBox(height: 8),
