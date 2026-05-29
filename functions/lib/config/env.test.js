@@ -56,4 +56,17 @@ function loadEnvModule(overrides) {
     strict_1.default.equal(env.IS_EMULATOR, true);
     strict_1.default.equal(env.ENFORCE_APP_CHECK, false);
 });
+(0, node_test_1.default)("APPCHECK_SAFE_MODE disables enforcement in production", () => {
+    const env = loadEnvModule({
+        GCLOUD_PROJECT: "presto-app-74abe",
+        GCP_PROJECT: undefined,
+        FUNCTIONS_EMULATOR: undefined,
+        FIREBASE_EMULATOR_HUB: undefined,
+        ENFORCE_APP_CHECK: "true",
+        APPCHECK_SAFE_MODE: "true",
+    });
+    strict_1.default.equal(env.IS_PROD, true);
+    strict_1.default.equal(env.IS_EMULATOR, false);
+    strict_1.default.equal(env.ENFORCE_APP_CHECK, false);
+});
 //# sourceMappingURL=env.test.js.map

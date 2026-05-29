@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  shouldHardRejectForRecaptcha,
   shouldRejectListingSubmissionForRecaptcha,
   type RecaptchaVerificationResult,
 } from "./recaptcha";
@@ -70,6 +71,36 @@ test("listing submission is not rejected when the assessment is unavailable", ()
       buildResult({
         allowed: false,
         reasons: ["MISSING_RECAPTCHA_CONFIGURATION"],
+        tokenValid: false,
+        actionMatches: false,
+        meetsScoreThreshold: false,
+        assessed: false,
+      }),
+    ),
+    false,
+  );
+});
+
+test("shared recaptcha gate rejects definitive invalid verdicts", () => {
+  assert.equal(
+    shouldHardRejectForRecaptcha(
+      buildResult({
+        allowed: false,
+        tokenValid: false,
+        actionMatches: false,
+        meetsScoreThreshold: false,
+      }),
+    ),
+    true,
+  );
+});
+
+test("shared recaptcha gate fails open when no assessment is available", () => {
+  assert.equal(
+    shouldHardRejectForRecaptcha(
+      buildResult({
+        allowed: false,
+        reasons: ["MISSING_TOKEN"],
         tokenValid: false,
         actionMatches: false,
         meetsScoreThreshold: false,

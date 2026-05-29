@@ -36,10 +36,16 @@ export interface RecaptchaVerificationResult {
 export function shouldRejectListingSubmissionForRecaptcha(
   result: RecaptchaVerificationResult,
 ): boolean {
+  return shouldHardRejectForRecaptcha(result);
+}
+
+export function shouldHardRejectForRecaptcha(
+  result: RecaptchaVerificationResult,
+): boolean {
   // Only hard-reject on a definitive negative verdict from a completed
   // assessment. A missing server configuration or an assessment error must
-  // not block publication — otherwise a single infra problem takes down the
-  // whole publish pipeline for every user. Those cases are surfaced via logs.
+  // not block user flows — otherwise a single infra problem takes down the
+  // marketplace for every user. Those cases are surfaced via logs.
   if (!result.assessed) {
     return false;
   }

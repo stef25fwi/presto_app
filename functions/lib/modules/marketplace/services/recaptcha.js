@@ -1,15 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.shouldRejectListingSubmissionForRecaptcha = shouldRejectListingSubmissionForRecaptcha;
+exports.shouldHardRejectForRecaptcha = shouldHardRejectForRecaptcha;
 exports.verifyRecaptchaAssessment = verifyRecaptchaAssessment;
 const logger_1 = require("../../../core/logger");
 const env_1 = require("../../../config/env");
 const google_api_1 = require("./google_api");
 function shouldRejectListingSubmissionForRecaptcha(result) {
+    return shouldHardRejectForRecaptcha(result);
+}
+function shouldHardRejectForRecaptcha(result) {
     // Only hard-reject on a definitive negative verdict from a completed
     // assessment. A missing server configuration or an assessment error must
-    // not block publication — otherwise a single infra problem takes down the
-    // whole publish pipeline for every user. Those cases are surfaced via logs.
+    // not block user flows — otherwise a single infra problem takes down the
+    // marketplace for every user. Those cases are surfaced via logs.
     if (!result.assessed) {
         return false;
     }
