@@ -25,7 +25,7 @@ class PrestoPriceCalculatorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Prestō – Calculatrice',
+      title: 'iliprestō – Calculatrice',
       theme: buildPrestoTheme().copyWith(
         scaffoldBackgroundColor: const Color(0xFFF5F6F8),
         colorScheme: ColorScheme.fromSeed(
@@ -135,9 +135,9 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _PrestoTopBar(
-        title: 'Prestō.',
+        title: 'iliprestō',
         background: kPrestoOrange,
-        showBack: false,
+        showBack: true,
       ),
       body: SafeArea(
         child: ListView(
@@ -430,7 +430,7 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _PrestoTopBar(
-        title: 'Prestō.',
+        title: 'iliprestō',
         background: kPrestoBlue,
         showBack: true,
       ),
@@ -696,7 +696,7 @@ class _ResultsPage extends StatelessWidget {
 
     return Scaffold(
       appBar: _PrestoTopBar(
-        title: 'Prestō.',
+        title: 'iliprestō',
         background: kPrestoBlue,
         showBack: true,
       ),
