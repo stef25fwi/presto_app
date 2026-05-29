@@ -5,5 +5,6 @@
     "github.copilot.enable": {
         "*": true
     },
-    "debug.toolbarLocation": "docked"
+    "debug.toolbarLocation": "docked",
+    "cmake.sourceDirectory": "/workspaces/presto_app/linux"
 }
