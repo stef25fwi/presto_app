@@ -532,14 +532,14 @@ class _HomePageState extends State<HomePage>
       }
       final results = await Future.wait(loaders);
       final listings = results[0];
-        final legacy = results.length > 1
+      final legacy = results.length > 1
           ? results[1]
           : listings.isEmpty
-            ? await loadLegacyPublicOffersOnDemand(
-              limit: 16,
-              source: 'home_latest_offers_legacy_fallback',
-            )
-            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+              ? await loadLegacyPublicOffersOnDemand(
+                  limit: 16,
+                  source: 'home_latest_offers_legacy_fallback',
+                )
+              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final mergedAll = mergeOfferDocsById(listings, legacy).toList();
       final merged = mergedAll
           .where(
@@ -1294,6 +1294,10 @@ class _HomePageState extends State<HomePage>
     final currentUser = FirebaseAuth.instance.currentUser;
     // Capture the full MediaQuery so child pages can still detect keyboard.
     final mq = MediaQuery.of(context);
+    final stableBottomBarMediaQuery = mq.copyWith(
+      viewInsets: EdgeInsets.zero,
+      padding: mq.padding.copyWith(bottom: mq.viewPadding.bottom),
+    );
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
@@ -1331,86 +1335,89 @@ class _HomePageState extends State<HomePage>
                 ],
               ),
             ),
-            bottomNavigationBar: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF1A73E8),
-                    Color(0xFF0D47A1),
-                  ],
+            bottomNavigationBar: MediaQuery(
+              data: stableBottomBarMediaQuery,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1A73E8),
+                      Color(0xFF0D47A1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-              child: SafeArea(
-                top: false,
-                maintainBottomViewPadding: false,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: HomeBottomNavItem(
-                        icon: Icons.home,
-                        label: "Accueil",
-                        selected: _selectedIndex == 0,
-                        onTap: () => _onBottomTap(0),
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                child: SafeArea(
+                  top: false,
+                  maintainBottomViewPadding: true,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: HomeBottomNavItem(
+                          icon: Icons.home,
+                          label: "Accueil",
+                          selected: _selectedIndex == 0,
+                          onTap: () => _onBottomTap(0),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: HomeBottomNavItem(
-                        icon: Icons.search,
-                        label: "Je consulte\nles offres",
-                        selected: _selectedIndex == 1,
-                        onTap: () => _onBottomTap(1),
+                      Expanded(
+                        child: HomeBottomNavItem(
+                          icon: Icons.search,
+                          label: "Je consulte\nles offres",
+                          selected: _selectedIndex == 1,
+                          onTap: () => _onBottomTap(1),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: HomeBottomNavItem(
-                        icon: Icons.add_circle_outline,
-                        label: "Publier\nune offre",
-                        isBig: true,
-                        selected: _selectedIndex == 2,
-                        onTap: () => _onBottomTap(2),
+                      Expanded(
+                        child: HomeBottomNavItem(
+                          icon: Icons.add_circle_outline,
+                          label: "Publier\nune offre",
+                          isBig: true,
+                          selected: _selectedIndex == 2,
+                          onTap: () => _onBottomTap(2),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: currentUser == null
-                          ? HomeBottomNavItem(
-                              icon: Icons.chat_bubble_outline,
-                              label: "Messages",
-                              selected: _selectedIndex == 3,
-                              onTap: () => _onBottomTap(3),
-                            )
-                          : UnreadInboxBell(
-                              userId: currentUser.uid,
-                              monitoringKeyPrefix: 'bottomBar.messages',
-                              countType: InboxCountType.unreadMessages,
-                              // ✅ Utilise uniquement le doc agrégé
-                              // users/{uid}/metadata/inbox: un seul snapshot
-                              // léger, pas de fusion de flux conversations +
-                              // messages + notifications.
-                              builder: (context, badgeCount) =>
-                                  HomeBottomNavItem(
+                      Expanded(
+                        child: currentUser == null
+                            ? HomeBottomNavItem(
                                 icon: Icons.chat_bubble_outline,
                                 label: "Messages",
-                                badgeCount: badgeCount,
                                 selected: _selectedIndex == 3,
                                 onTap: () => _onBottomTap(3),
+                              )
+                            : UnreadInboxBell(
+                                userId: currentUser.uid,
+                                monitoringKeyPrefix: 'bottomBar.messages',
+                                countType: InboxCountType.unreadMessages,
+                                // ✅ Utilise uniquement le doc agrégé
+                                // users/{uid}/metadata/inbox: un seul snapshot
+                                // léger, pas de fusion de flux conversations +
+                                // messages + notifications.
+                                builder: (context, badgeCount) =>
+                                    HomeBottomNavItem(
+                                  icon: Icons.chat_bubble_outline,
+                                  label: "Messages",
+                                  badgeCount: badgeCount,
+                                  selected: _selectedIndex == 3,
+                                  onTap: () => _onBottomTap(3),
+                                ),
                               ),
-                            ),
-                    ),
-                    Expanded(
-                      child: HomeBottomNavItem(
-                        icon: Icons.person_outline,
-                        label: "Compte",
-                        selected: _selectedIndex == 4,
-                        onTap: () => _onBottomTap(4),
                       ),
-                    ),
-                  ],
+                      Expanded(
+                        child: HomeBottomNavItem(
+                          icon: Icons.person_outline,
+                          label: "Compte",
+                          selected: _selectedIndex == 4,
+                          onTap: () => _onBottomTap(4),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
