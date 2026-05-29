@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
+import '../features/trust_score/trust_score_widgets.dart';
 import '../main.dart'
     show
         CardShell,
@@ -725,14 +726,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
       final results = await Future.wait(loads);
       final listings = results[0];
-        final legacy = results.length > 1
+      final legacy = results.length > 1
           ? results[1]
           : listings.isEmpty
-            ? await loadLegacyPublicOffersOnDemand(
-              limit: limit,
-              source: 'consult_legacy_warm_fallback',
-            )
-            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+              ? await loadLegacyPublicOffersOnDemand(
+                  limit: limit,
+                  source: 'consult_legacy_warm_fallback',
+                )
+              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final merged = mergeOfferDocsById(listings, legacy);
       final displayedCount = _buildDisplayedOfferDocs(merged).length;
 
@@ -1814,7 +1815,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   final isUrgent = data['urgent'] == true;
                                   final showJobDoneOverlay =
                                       isOfferJobDoneOverlayVisible(data);
-                                    final imageUrl =
+                                  final imageUrl =
                                       _primaryBrowseOfferImageUrl(data);
                                   final missionDelayLabel =
                                       _extractMissionDelayLabel(data);
@@ -2743,7 +2744,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                                       children: [
                                         Expanded(
                                           child: _OfferMissionDelayChip(
-                                            label: widget.data.missionDelayLabel,
+                                            label:
+                                                widget.data.missionDelayLabel,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
@@ -2832,9 +2834,8 @@ String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
     for (final entry in media) {
       if (entry is! Map) continue;
       final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
-      final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
-          .toString()
-          .trim();
+      final candidate =
+          ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '').toString().trim();
       if (candidate.isNotEmpty) return candidate;
     }
   }
@@ -3026,7 +3027,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     final listingsCol =
         FirebaseFirestore.instance.collection(kListingsCollection);
 
-    final results = await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
+    final results =
+        await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
       listingsCol
           .where('ownerId', isEqualTo: widget.userId)
           .where(publicListingsFilter())
@@ -3309,6 +3311,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                 );
               },
             ),
+            const SizedBox(height: 14),
+            TrustScoreCard(userId: widget.userId),
             const SizedBox(height: 14),
             CardShell(
               child: Column(

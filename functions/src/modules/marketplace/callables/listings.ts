@@ -772,20 +772,32 @@ function isJobDoneReason(reason: string | undefined, jobDone?: boolean): boolean
   return foundOnIliPresto || foundProvider;
 }
 
+function isFoundOnIliPrestoReason(reason: string | undefined): boolean {
+  if (!reason) return false;
+  const normalized = reason
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[']/g, "'")
+    .replace(/\s+/g, " ");
+  return normalized === "found_on_ilipresto" ||
+    (normalized.includes("trouve quelqu") && normalized.includes("ilipresto"));
+}
+
 const JOB_DONE_OVERLAY_HOURS = 10;
 
-export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
-  const ownerId = requireAuthUid(request);
-  const listingId = normalizeString(request.data?.listingId);
-  const reason = typeof request.data?.reason === "string"
-    ? request.data.reason.trim().slice(0, 500)
-    : undefined;
-
-  if (!listingId) {
-    throw new HttpsError("invalid-argument", "listingId is required");
-  }
-
-  try {
+async function closeOrDeleteListingForOwner({
+  ownerId,
+  listingId,
+  reason,
+  jobDone,
+}: {
+  ownerId: string;
+  listingId: string;
+  reason?: string;
+  jobDone?: boolean;
+}): Promise<Record<string, unknown>> {
     const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
     const listingSnap = await listingRef.get();
 
@@ -802,17 +814,23 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
     const previousStatus = normalizeString(listingData.status) || "unknown";
     const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
 
-    if (isJobDoneReason(reason, request.data?.jobDone === true)) {
+    if (isJobDoneReason(reason, jobDone === true)) {
       // Keep the listing public for 10h so browse queries can still fetch it
       // and render the job-done overlay before it disappears client-side.
       const visibleUntil = admin.firestore.Timestamp.fromDate(
         new Date(Date.now() + JOB_DONE_OVERLAY_HOURS * 60 * 60 * 1000),
       );
+      const reviewRequested = isFoundOnIliPrestoReason(reason);
       await listingRef.update({
         status: "active",
         visibility: "public",
         isActive: true,
         isPublished: true,
+        closedReason: reason,
+        closedAt: admin.firestore.FieldValue.serverTimestamp(),
+        selectedUserId: null,
+        reviewRequested,
+        reviewSubmitted: false,
         deletedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         deletedReason: reason,
@@ -869,7 +887,53 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
       ok: true,
       listingId,
     };
+}
+
+export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  const ownerId = requireAuthUid(request);
+  const listingId = normalizeString(request.data?.listingId);
+  const reason = typeof request.data?.reason === "string"
+    ? request.data.reason.trim().slice(0, 500)
+    : undefined;
+
+  if (!listingId) {
+    throw new HttpsError("invalid-argument", "listingId is required");
+  }
+
+  try {
+    return await closeOrDeleteListingForOwner({
+      ownerId,
+      listingId,
+      reason,
+      jobDone: request.data?.jobDone === true,
+    });
   } catch (error) {
     throw toHttpsError(error, "Unable to delete listing");
+  }
+});
+
+export const closeOfferWithReason = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  const ownerId = requireAuthUid(request);
+  const listingId = normalizeString(request.data?.offerId || request.data?.listingId);
+  const reason = typeof request.data?.reason === "string"
+    ? request.data.reason.trim().slice(0, 500)
+    : undefined;
+
+  if (!listingId) {
+    throw new HttpsError("invalid-argument", "offerId is required");
+  }
+  if (!reason) {
+    throw new HttpsError("invalid-argument", "reason is required");
+  }
+
+  try {
+    return await closeOrDeleteListingForOwner({
+      ownerId,
+      listingId,
+      reason,
+      jobDone: request.data?.jobDone === true,
+    });
+  } catch (error) {
+    throw toHttpsError(error, "Unable to close listing");
   }
 });

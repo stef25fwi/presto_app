@@ -142,6 +142,51 @@ export interface ListingReportDoc {
   resolution?: string;
 }
 
+export interface TrustScoreDoc {
+  average: number;
+  communicationAverage: number;
+  punctualityAverage: number;
+  qualityAverage: number;
+  reviewsCount: number;
+  publishedReviewsCount: number;
+  pendingReviewsCount: number;
+  firstReviewAt: FirestoreTimestamp;
+  lastReviewAt: FirestoreTimestamp;
+  freeFullDisplayUntil: FirestoreTimestamp;
+  paidShowcaseActive: boolean;
+  badges: string[];
+}
+
+export interface VerifiedReviewDoc {
+  reviewId: string;
+  offerId: string;
+  offerTitle: string;
+  offerOwnerId: string;
+  reviewerId: string;
+  reviewedUserId: string;
+  communicationRating: number;
+  punctualityRating: number;
+  qualityRating: number;
+  averageRating: number;
+  comment: string | null;
+  status: "published" | "pending_moderation" | "rejected" | "disputed" | "hidden";
+  isVerified: boolean;
+  verificationType: "offer_response_selected";
+  confirmationChecked: boolean;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+  publishedAt: FirestoreTimestamp;
+  moderationFlags: {
+    containsPersonalData: boolean;
+    containsInsult: boolean;
+    containsThreat: boolean;
+    containsSuspiciousContent: boolean;
+  };
+  reportCount: number;
+  disputeCount: number;
+  visibleOnProfile: boolean;
+}
+
 export interface FavoriteDoc {
   id: string;
   userId: string;

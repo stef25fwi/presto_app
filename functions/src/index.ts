@@ -40,9 +40,17 @@ export {
   submitListingDraft,
   incrementListingView,
   deleteListing,
+  closeOfferWithReason,
 } from "./modules/marketplace/callables/listings";
 export { processOfferPhoto } from "./modules/marketplace/callables/media";
 export { reportListing } from "./modules/marketplace/callables/reports";
+export {
+  getEligibleRespondersForReview,
+  submitVerifiedReview,
+  getUserTrustScore,
+  reportReview,
+  replyToReview,
+} from "./modules/marketplace/callables/reviews";
 export { toggleFavorite } from "./modules/marketplace/callables/favorites";
 export {
   createChatThreadFromListing,

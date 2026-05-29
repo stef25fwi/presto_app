@@ -196,7 +196,8 @@ service cloud.firestore {
         'isAdmin',
         'isModerator',
         'isSuperadmin',
-        'superAdmin'
+        'superAdmin',
+        'trustScore'
       ];
     }
 
@@ -302,6 +303,32 @@ service cloud.firestore {
     match /listingReports/{reportId} {
       allow read: if isMarketplaceModerator()
         || (hasAppCheck() && isSignedIn() && resource.data.reporterId == uid());
+      allow create, update, delete: if false;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isMarketplaceModerator()
+        || (hasAppCheck()
+          && resource.data.status == 'published'
+          && resource.data.visibleOnProfile == true
+          && resource.data.isVerified == true)
+        || (hasAppCheck()
+          && isSignedIn()
+          && (resource.data.reviewerId == uid()
+            || resource.data.reviewedUserId == uid()));
+      allow create, update, delete: if false;
+    }
+
+    match /review_reports/{reportId} {
+      allow read: if isMarketplaceModerator()
+        || (hasAppCheck() && isSignedIn() && resource.data.reportedBy == uid());
+      allow create, update, delete: if false;
+    }
+
+    match /review_replies/{replyId} {
+      allow read: if isMarketplaceModerator()
+        || (hasAppCheck() && isSignedIn() && resource.data.reviewedUserId == uid())
+        || (hasAppCheck() && resource.data.status == 'published');
       allow create, update, delete: if false;
     }
 
