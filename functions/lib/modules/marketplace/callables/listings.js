@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = void 0;
+exports.closeOfferWithReason = exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = void 0;
 exports.buildListingDraftDocumentPath = buildListingDraftDocumentPath;
 exports.buildListingDocumentPath = buildListingDocumentPath;
 exports.assertDraftOwnership = assertDraftOwnership;
@@ -645,7 +645,100 @@ function isJobDoneReason(reason, jobDone) {
     const foundProvider = normalized.includes("deja trouve") && normalized.includes("prestataire");
     return foundOnIliPresto || foundProvider;
 }
+function isFoundOnIliPrestoReason(reason) {
+    if (!reason)
+        return false;
+    const normalized = reason
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[']/g, "'")
+        .replace(/\s+/g, " ");
+    return normalized === "found_on_ilipresto" ||
+        (normalized.includes("trouve quelqu") && normalized.includes("ilipresto"));
+}
 const JOB_DONE_OVERLAY_HOURS = 10;
+async function closeOrDeleteListingForOwner({ ownerId, listingId, reason, jobDone, }) {
+    const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
+    const listingSnap = await listingRef.get();
+    if (!listingSnap.exists) {
+        throw new https_1.HttpsError("not-found", "Listing not found");
+    }
+    const listingData = (listingSnap.data() ?? {});
+    const listingOwnerId = readListingOwnerId(listingData);
+    if (listingOwnerId !== ownerId) {
+        throw new https_1.HttpsError("permission-denied", "You do not own this listing");
+    }
+    const previousStatus = normalizeString(listingData.status) || "unknown";
+    const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
+    if (isJobDoneReason(reason, jobDone === true)) {
+        // Keep the listing public for 10h so browse queries can still fetch it
+        // and render the job-done overlay before it disappears client-side.
+        const visibleUntil = firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + JOB_DONE_OVERLAY_HOURS * 60 * 60 * 1000));
+        const reviewRequested = isFoundOnIliPrestoReason(reason);
+        await listingRef.update({
+            status: "active",
+            visibility: "public",
+            isActive: true,
+            isPublished: true,
+            closedReason: reason,
+            closedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            selectedUserId: null,
+            reviewRequested,
+            reviewSubmitted: false,
+            deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            deletedReason: reason,
+            archiveReason: reason,
+            jobDoneOverlayVisible: true,
+            jobDoneOverlayVisibleUntil: visibleUntil,
+            removeFromBrowseAt: visibleUntil,
+        });
+        logger_1.logger.info("marketplace_listing_marked_job_done", {
+            listingId,
+            ownerId,
+            previousStatus,
+            reason,
+        });
+        return { ok: true, listingId, jobDone: true };
+    }
+    const bucket = firebase_admin_1.default.storage().bucket();
+    await Promise.all(mediaStoragePaths.map(async (storagePath) => {
+        try {
+            await bucket.file(storagePath).delete();
+        }
+        catch {
+            // Best effort: media cleanup must not block listing deletion.
+        }
+    }));
+    // Hard-delete the listing and related documents.
+    const batch = firestore_1.db.batch();
+    // Archive avant hard-delete (traçabilité modération, RGPD, analytics)
+    const archiveRef = firestore_1.db.collection('deletedListings').doc(listingId);
+    batch.set(archiveRef, {
+        ...listingData,
+        deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        deletedBy: ownerId,
+        deletedReason: reason || 'user_request',
+        originalListingId: listingId,
+    });
+    batch.delete(listingRef);
+    batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId));
+    batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc(listingId));
+    batch.delete(firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.listingDrafts).doc(listingId));
+    await batch.commit();
+    logger_1.logger.info("marketplace_listing_deleted", {
+        listingId,
+        ownerId,
+        previousStatus,
+        reason: reason || "none",
+    });
+    return {
+        ok: true,
+        listingId,
+    };
+}
 exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const ownerId = requireAuthUid(request);
     const listingId = normalizeString(request.data?.listingId);
@@ -656,81 +749,39 @@ exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enfo
         throw new https_1.HttpsError("invalid-argument", "listingId is required");
     }
     try {
-        const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
-        const listingSnap = await listingRef.get();
-        if (!listingSnap.exists) {
-            throw new https_1.HttpsError("not-found", "Listing not found");
-        }
-        const listingData = (listingSnap.data() ?? {});
-        const listingOwnerId = readListingOwnerId(listingData);
-        if (listingOwnerId !== ownerId) {
-            throw new https_1.HttpsError("permission-denied", "You do not own this listing");
-        }
-        const previousStatus = normalizeString(listingData.status) || "unknown";
-        const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
-        if (isJobDoneReason(reason, request.data?.jobDone === true)) {
-            // Keep the listing public for 10h so browse queries can still fetch it
-            // and render the job-done overlay before it disappears client-side.
-            const visibleUntil = firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + JOB_DONE_OVERLAY_HOURS * 60 * 60 * 1000));
-            await listingRef.update({
-                status: "active",
-                visibility: "public",
-                isActive: true,
-                isPublished: true,
-                deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-                deletedReason: reason,
-                archiveReason: reason,
-                jobDoneOverlayVisible: true,
-                jobDoneOverlayVisibleUntil: visibleUntil,
-                removeFromBrowseAt: visibleUntil,
-            });
-            logger_1.logger.info("marketplace_listing_marked_job_done", {
-                listingId,
-                ownerId,
-                previousStatus,
-                reason,
-            });
-            return { ok: true, listingId, jobDone: true };
-        }
-        const bucket = firebase_admin_1.default.storage().bucket();
-        await Promise.all(mediaStoragePaths.map(async (storagePath) => {
-            try {
-                await bucket.file(storagePath).delete();
-            }
-            catch {
-                // Best effort: media cleanup must not block listing deletion.
-            }
-        }));
-        // Hard-delete the listing and related documents.
-        const batch = firestore_1.db.batch();
-        // Archive avant hard-delete (traçabilité modération, RGPD, analytics)
-        const archiveRef = firestore_1.db.collection('deletedListings').doc(listingId);
-        batch.set(archiveRef, {
-            ...listingData,
-            deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-            deletedBy: ownerId,
-            deletedReason: reason || 'user_request',
-            originalListingId: listingId,
-        });
-        batch.delete(listingRef);
-        batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId));
-        batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc(listingId));
-        batch.delete(firestore_1.db.collection(constants_1.LEGACY_COLLECTIONS.listingDrafts).doc(listingId));
-        await batch.commit();
-        logger_1.logger.info("marketplace_listing_deleted", {
-            listingId,
+        return await closeOrDeleteListingForOwner({
             ownerId,
-            previousStatus,
-            reason: reason || "none",
-        });
-        return {
-            ok: true,
             listingId,
-        };
+            reason,
+            jobDone: request.data?.jobDone === true,
+        });
     }
     catch (error) {
         throw (0, errors_1.toHttpsError)(error, "Unable to delete listing");
+    }
+});
+exports.closeOfferWithReason = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const ownerId = requireAuthUid(request);
+    const listingId = normalizeString(request.data?.offerId || request.data?.listingId);
+    const reason = typeof request.data?.reason === "string"
+        ? request.data.reason.trim().slice(0, 500)
+        : undefined;
+    if (!listingId) {
+        throw new https_1.HttpsError("invalid-argument", "offerId is required");
+    }
+    if (!reason) {
+        throw new https_1.HttpsError("invalid-argument", "reason is required");
+    }
+    try {
+        return await closeOrDeleteListingForOwner({
+            ownerId,
+            listingId,
+            reason,
+            jobDone: request.data?.jobDone === true,
+        });
+    }
+    catch (error) {
+        throw (0, errors_1.toHttpsError)(error, "Unable to close listing");
     }
 });
 //# sourceMappingURL=listings.js.map

@@ -74,6 +74,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Flutter: Test Trust Score",
+      "type": "shell",
+      "command": "flutter test test/trust_score_models_test.dart",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Status Snapshot",
       "type": "shell",
       "command": "git status --short --branch",
@@ -847,7 +853,7 @@
       "id": "gitCommitMessage",
       "type": "promptString",
       "description": "Message du commit",
-      "default": "feat(ui): improve filters account phone and overlay theming"
+      "default": "feat(trust-score): add verified reviews flow and profile trust card"
     }
   ]
 }

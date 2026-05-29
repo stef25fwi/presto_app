@@ -11,6 +11,9 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../data/marketplace/favorite_repository.dart';
+import '../features/trust_score/trust_score_models.dart';
+import '../features/trust_score/trust_score_service.dart';
+import '../features/trust_score/trust_score_widgets.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/offer_indexing.dart';
@@ -21,10 +24,7 @@ import '../services/public_offers_query_helpers.dart';
 import '../widgets/phone_input_field.dart';
 
 import '../main.dart'
-    show
-        buildOfferDetailsOffer,
-        kOfferDeleteReasonFoundProvider,
-        kOfferDeleteReasonFoundOnIliPresto;
+    show buildOfferDetailsOffer, kOfferDeleteReasonFoundOnIliPresto;
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
 class UserOffersSection extends StatefulWidget {
@@ -139,10 +139,14 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return;
       }
 
-      final listingSnaps = await Future.wait<DocumentSnapshot<Map<String, dynamic>>?>(
+      final listingSnaps =
+          await Future.wait<DocumentSnapshot<Map<String, dynamic>>?>(
         favoriteIds.map((listingId) async {
           try {
-            return await fs.collection(kListingsCollection).doc(listingId).get();
+            return await fs
+                .collection(kListingsCollection)
+                .doc(listingId)
+                .get();
           } catch (error) {
             if (_isPermissionDeniedError(error)) {
               return null;
@@ -591,6 +595,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _publishedSectionExpanded = false;
   bool _rejectedSectionExpanded = false;
   bool _archivedSectionExpanded = false;
+  final TrustScoreService _trustScoreService = TrustScoreService();
   final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
       _offersWatchSubscriptions =
       <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
@@ -865,7 +870,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       // Prod marketplace contract:
       // listings est la source normale. offers legacy est un backfill lecture seule,
       // désactivé en prod par kEnableLegacyPublicOffersBackfill.
-      final futures = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> >[
+      final futures =
+          <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
         FirebaseFirestore.instance
             .collection(kListingsCollection)
             .where(field, isEqualTo: widget.userId)
@@ -2110,8 +2116,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 ),
               ],
             ),
-          if (!canEdit &&
-              item.section == _OfferManagementSection.pending) ...[
+          if (!canEdit && item.section == _OfferManagementSection.pending) ...[
             const SizedBox(height: 8),
             const Text(
               'Pendant la validation, cette annonce ne peut pas etre modifiee. Vous pouvez uniquement la supprimer.',
@@ -2948,6 +2953,16 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final reason = await _showDeleteOfferDialog(context);
     if (reason == null || !mounted) return;
 
+    if (reason == kOfferDeleteReasonFoundOnIliPresto) {
+      await _handleFoundOnIliPrestoReviewFlow(item, title, reason);
+      return;
+    }
+
+    if (reason == 'Je veux modifier l’annonce') {
+      await _showEditOfferDialog(context, item);
+      return;
+    }
+
     setState(() => _busyOfferId = item.offerId);
 
     try {
@@ -3013,106 +3028,124 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
   }
 
-  Future<String?> _showDeleteOfferDialog(BuildContext context) async {
-    String? selectedReason;
-    const reasons = [
-      'J’ai fait une erreur dans l’annonce',
-      kOfferDeleteReasonFoundProvider,
-      kOfferDeleteReasonFoundOnIliPresto,
-    ];
-    final overlayTheme = context.prestoOverlayTheme;
-
-    return showDialog<String>(
+  Future<void> _handleFoundOnIliPrestoReviewFlow(
+    _ManagedOfferItem item,
+    String title,
+    String reason,
+  ) async {
+    final action = await showDialog<FoundSomeoneOnIliPrestoAction>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            final canSubmit =
-                selectedReason != null && selectedReason!.trim().isNotEmpty;
+      builder: (_) => const FoundSomeoneOnIliPrestoDialog(),
+    );
+    if (action == null || !mounted) return;
 
-            return AlertDialog(
-              backgroundColor: overlayTheme.surfaceColor,
-              surfaceTintColor: overlayTheme.surfaceTintColor,
-              shape: overlayTheme.dialogShape,
-              title: const Text('Supprimer cette annonce ?'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Pour continuer, veuillez sélectionner le motif de suppression.',
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedReason,
-                    decoration: InputDecoration(
-                      labelText: 'Motif principal',
-                      border: OutlineInputBorder(
-                        borderRadius: overlayTheme.popupRadius,
-                      ),
-                    ),
-                    dropdownColor: overlayTheme.surfaceColor,
-                    borderRadius: overlayTheme.popupRadius,
-                    items: reasons
-                        .map(
-                          (reason) => DropdownMenuItem<String>(
-                            value: reason,
-                            child: Text(reason),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setDialogState(() => selectedReason = value);
-                    },
-                  ),
-                  if (!canSubmit) ...[
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Veuillez sélectionner les champs obligatoires.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFB91C1C),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Annuler'),
-                ),
-                ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor:
-                        MaterialStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(MaterialState.disabled)) {
-                        return const Color(0xFFE5E7EB);
-                      }
-                      return const Color(0xFFDC2626);
-                    }),
-                    foregroundColor:
-                        MaterialStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(MaterialState.disabled)) {
-                        return const Color(0xFF6B7280);
-                      }
-                      return Colors.white;
-                    }),
-                  ),
-                  onPressed: canSubmit
-                      ? () => Navigator.of(dialogContext).pop(selectedReason)
-                      : null,
-                  child: const Text('Supprimer'),
-                ),
-              ],
-            );
-          },
+    if (action == FoundSomeoneOnIliPrestoAction.searchUser) {
+      final responder = await showModalBottomSheet<EligibleResponderForReview>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (_) => EligibleResponderSearchSheet(
+          offerId: item.offerId,
+          service: _trustScoreService,
+        ),
+      );
+      if (responder == null || !mounted) return;
+
+      final result = await showDialog<SubmitReviewResult>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => ReviewFormDialog(
+          offerId: item.offerId,
+          offerTitle: title,
+          responder: responder,
+          service: _trustScoreService,
+        ),
+      );
+      if (result == null || !mounted) return;
+
+      if (result.isRateLater) {
+        await _closeFoundOnIliPrestoWithoutReview(
+          item: item,
+          title: title,
+          reason: reason,
+          successMessage:
+              'Annonce "$title" marquée comme réalisée. Vous pourrez noter plus tard.',
         );
-      },
+        return;
+      }
+
+      await _loadOffers();
+      if (!mounted) return;
+      showSuccessSnackBar(
+        context,
+        result.isPublished
+            ? 'Merci, votre avis a bien été enregistré.'
+            : 'Merci, votre avis a été envoyé en vérification avant publication.',
+      );
+      return;
+    }
+
+    final message = action == FoundSomeoneOnIliPrestoAction.rateLater
+        ? 'Annonce "$title" marquée comme réalisée. Vous pourrez noter plus tard.'
+        : 'Annonce "$title" supprimée sans avis.';
+    await _closeFoundOnIliPrestoWithoutReview(
+      item: item,
+      title: title,
+      reason: reason,
+      successMessage: message,
     );
   }
 
+  Future<void> _closeFoundOnIliPrestoWithoutReview({
+    required _ManagedOfferItem item,
+    required String title,
+    required String reason,
+    required String successMessage,
+  }) async {
+    setState(() => _busyOfferId = item.offerId);
+    try {
+      await _trustScoreService.closeOfferWithReason(
+        offerId: item.offerId,
+        reason: reason,
+        jobDone: true,
+      );
+      if (!mounted) return;
+      await _loadOffers();
+      if (!mounted) return;
+      showSuccessSnackBar(context, successMessage);
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      debugPrint(
+        'Erreur clôture offre ${item.offerId}: ${e.code} ${e.message}',
+      );
+      showErrorSnackBar(
+        context,
+        'Impossible de clôturer cette annonce pour le moment.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('Erreur clôture offre ${item.offerId}: $e');
+      showErrorSnackBar(
+        context,
+        'Impossible de clôturer cette annonce pour le moment.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busyOfferId = null);
+      }
+    }
+  }
+
+  Future<String?> _showDeleteOfferDialog(BuildContext context) async {
+    return showDialog<String>(
+      context: context,
+      builder: (_) => const CloseOfferReasonDialog(),
+    );
+  }
 }
 
 class _QuerySnapshotAdapter implements QuerySnapshot<Map<String, dynamic>> {
