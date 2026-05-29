@@ -38,8 +38,17 @@ exports.reportListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enfo
         expectedAction: "listing_report",
         userId: reporterId,
     });
-    if (!recaptcha.allowed) {
+    if ((0, recaptcha_1.shouldHardRejectForRecaptcha)(recaptcha)) {
         throw new https_1.HttpsError("permission-denied", "reCAPTCHA rejected the report");
+    }
+    if (!recaptcha.allowed) {
+        logger_1.logger.warn("marketplace_listing_report_recaptcha_non_blocking", {
+            reporterId,
+            score: recaptcha.score,
+            reasons: recaptcha.reasons,
+            action: recaptcha.action,
+            assessed: recaptcha.assessed,
+        });
     }
     try {
         const validated = (0, listings_1.validateListingReportPayload)((request.data ?? {}));

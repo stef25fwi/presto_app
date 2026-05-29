@@ -14,7 +14,7 @@ import { buildConversationMirrorFields, readConversationMirrorData } from "../..
 import { isConversationBlocked } from "../../messaging/state";
 import { trackProductEventBackend } from "../services/analytics";
 import { toHttpsError } from "../services/errors";
-import { verifyRecaptchaAssessment } from "../services/recaptcha";
+import { shouldHardRejectForRecaptcha, verifyRecaptchaAssessment } from "../services/recaptcha";
 import { validateChatMessageBody } from "../validators/listings";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
@@ -207,8 +207,18 @@ export const createChatThreadFromListing = onCall({ region: PROJECT_REGION, enfo
     expectedAction: "message_create",
     userId: senderId,
   });
-  if (!recaptcha.allowed) {
+  if (shouldHardRejectForRecaptcha(recaptcha)) {
     throw new HttpsError("permission-denied", "reCAPTCHA rejected the first message");
+  }
+  if (!recaptcha.allowed) {
+    logger.warn("marketplace_chat_thread_recaptcha_non_blocking", {
+      senderId,
+      listingId,
+      score: recaptcha.score,
+      reasons: recaptcha.reasons,
+      action: recaptcha.action,
+      assessed: recaptcha.assessed,
+    });
   }
 
   try {

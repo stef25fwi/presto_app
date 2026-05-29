@@ -8,7 +8,7 @@ import { COLLECTIONS } from "../../../shared/constants";
 import { createInAppNotification } from "../../notifications/push";
 import { trackProductEventBackend } from "../services/analytics";
 import { toHttpsError } from "../services/errors";
-import { verifyRecaptchaAssessment } from "../services/recaptcha";
+import { shouldHardRejectForRecaptcha, verifyRecaptchaAssessment } from "../services/recaptcha";
 import { validateListingReportPayload } from "../validators/listings";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
@@ -37,8 +37,17 @@ export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
     expectedAction: "listing_report",
     userId: reporterId,
   });
-  if (!recaptcha.allowed) {
+  if (shouldHardRejectForRecaptcha(recaptcha)) {
     throw new HttpsError("permission-denied", "reCAPTCHA rejected the report");
+  }
+  if (!recaptcha.allowed) {
+    logger.warn("marketplace_listing_report_recaptcha_non_blocking", {
+      reporterId,
+      score: recaptcha.score,
+      reasons: recaptcha.reasons,
+      action: recaptcha.action,
+      assessed: recaptcha.assessed,
+    });
   }
 
   try {

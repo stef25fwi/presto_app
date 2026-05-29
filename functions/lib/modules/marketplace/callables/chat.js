@@ -165,8 +165,18 @@ exports.createChatThreadFromListing = (0, https_1.onCall)({ region: env_1.PROJEC
         expectedAction: "message_create",
         userId: senderId,
     });
-    if (!recaptcha.allowed) {
+    if ((0, recaptcha_1.shouldHardRejectForRecaptcha)(recaptcha)) {
         throw new https_1.HttpsError("permission-denied", "reCAPTCHA rejected the first message");
+    }
+    if (!recaptcha.allowed) {
+        logger_1.logger.warn("marketplace_chat_thread_recaptcha_non_blocking", {
+            senderId,
+            listingId,
+            score: recaptcha.score,
+            reasons: recaptcha.reasons,
+            action: recaptcha.action,
+            assessed: recaptcha.assessed,
+        });
     }
     try {
         const body = (0, listings_1.validateChatMessageBody)(initialMessage);

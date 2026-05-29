@@ -53,4 +53,22 @@ function buildResult(overrides = {}) {
         assessed: false,
     })), false);
 });
+(0, node_test_1.default)("shared recaptcha gate rejects definitive invalid verdicts", () => {
+    strict_1.default.equal((0, recaptcha_1.shouldHardRejectForRecaptcha)(buildResult({
+        allowed: false,
+        tokenValid: false,
+        actionMatches: false,
+        meetsScoreThreshold: false,
+    })), true);
+});
+(0, node_test_1.default)("shared recaptcha gate fails open when no assessment is available", () => {
+    strict_1.default.equal((0, recaptcha_1.shouldHardRejectForRecaptcha)(buildResult({
+        allowed: false,
+        reasons: ["MISSING_TOKEN"],
+        tokenValid: false,
+        actionMatches: false,
+        meetsScoreThreshold: false,
+        assessed: false,
+    })), false);
+});
 //# sourceMappingURL=recaptcha.test.js.map
