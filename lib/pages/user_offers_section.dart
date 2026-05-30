@@ -21,6 +21,7 @@ import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../services/public_offers_query_helpers.dart';
+import '../widgets/offer_network_image.dart';
 import '../widgets/phone_input_field.dart';
 
 import '../main.dart'
@@ -385,15 +386,15 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
                   child: selectedDoc.imageUrl.isNotEmpty
-                      ? Image.network(
-                          selectedDoc.imageUrl,
+                      ? SizedBox(
                           width: 72,
                           height: 72,
-                          fit: BoxFit.cover,
-                          cacheWidth: 144,
-                          cacheHeight: 144,
-                          errorBuilder: (_, __, ___) =>
-                              _buildFavoritePlaceholder(),
+                          child: OfferNetworkImage(
+                            url: selectedDoc.imageUrl,
+                            fit: BoxFit.cover,
+                            errorChild: _buildFavoritePlaceholder(),
+                            loadingChild: _buildFavoritePlaceholder(),
+                          ),
                         )
                       : _buildFavoritePlaceholder(),
                 ),
@@ -1862,25 +1863,39 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
-      child: Image.network(
-        imageUrl,
+      child: SizedBox(
         width: 84,
         height: 84,
-        fit: BoxFit.cover,
-        cacheWidth: 168,
-        cacheHeight: 168,
-        errorBuilder: (_, __, ___) => Container(
-          width: 84,
-          height: 84,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F4F5),
-            borderRadius: BorderRadius.circular(14),
+        child: OfferNetworkImage(
+          url: imageUrl,
+          fit: BoxFit.cover,
+          errorChild: Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.broken_image_outlined,
+              color: Color(0xFF9CA3AF),
+              size: 28,
+            ),
           ),
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.broken_image_outlined,
-            color: Color(0xFF9CA3AF),
-            size: 28,
+          loadingChild: Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.image_outlined,
+              color: Color(0xFF9CA3AF),
+              size: 28,
+            ),
           ),
         ),
       ),
