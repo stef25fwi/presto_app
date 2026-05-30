@@ -128,4 +128,23 @@ const mirror_1 = require("./mirror");
         return true;
     });
 });
+(0, node_test_1.default)("buildProcessedConversationAttachmentPath keeps photos scoped and converts to webp", () => {
+    const path = (0, callables_1.buildProcessedConversationAttachmentPath)({
+        uid: "buyer_a",
+        conversationId: "conv_1",
+        storagePath: "messageAttachments/buyer_a/conv_1/123_photo.jpg",
+    });
+    strict_1.default.equal(path, "messageAttachments/buyer_a/conv_1/processed_123_photo.webp");
+});
+(0, node_test_1.default)("buildProcessedConversationAttachmentPath rejects another user path", () => {
+    strict_1.default.throws(() => (0, callables_1.buildProcessedConversationAttachmentPath)({
+        uid: "buyer_a",
+        conversationId: "conv_1",
+        storagePath: "messageAttachments/seller_b/conv_1/123_photo.jpg",
+    }), (error) => {
+        strict_1.default.ok(error instanceof https_1.HttpsError);
+        strict_1.default.equal(error.code, "permission-denied");
+        return true;
+    });
+});
 //# sourceMappingURL=callables.test.js.map

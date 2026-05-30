@@ -3,15 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
+exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.processConversationAttachmentPhoto = void 0;
 exports.assertConversationParticipantAccess = assertConversationParticipantAccess;
 exports.canonicalConversationId = canonicalConversationId;
 exports.resolveOfferLikeData = resolveOfferLikeData;
+exports.buildProcessedConversationAttachmentPath = buildProcessedConversationAttachmentPath;
 exports.sanitizeConversationAttachments = sanitizeConversationAttachments;
 exports.mergeConversationParticipants = mergeConversationParticipants;
 exports.computeUnreadCountAfterMessageDeletion = computeUnreadCountAfterMessageDeletion;
+const node_crypto_1 = require("node:crypto");
+const node_path_1 = require("node:path");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
+const sharp_1 = __importDefault(require("sharp"));
 const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
 const rate_limit_1 = require("../../core/rate_limit");
@@ -24,6 +28,7 @@ const mirror_1 = require("./mirror");
 const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
+const CONVERSATION_IMAGE_MAX_EDGE = 960;
 async function findConversationSnapshotsForParticipant(currentUserId, listingId) {
     const conversationCollection = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
     const listingFieldAliases = listingId ? ["listingId", "offerId", "offer_id"] : [null];
@@ -160,6 +165,95 @@ function isAllowedDocumentAttachmentMimeType(mimeType) {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ].includes(mimeType);
 }
+function buildProcessedConversationAttachmentPath({ uid, conversationId, storagePath, }) {
+    const expectedPrefix = `messageAttachments/${uid}/${conversationId}/`;
+    if (!storagePath.startsWith(expectedPrefix)) {
+        throw new https_1.HttpsError("permission-denied", "Unauthorized storage path");
+    }
+    if (storagePath.includes("..") || storagePath.includes("\\") || storagePath.startsWith("/")) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid storage path");
+    }
+    const baseName = node_path_1.posix.basename(storagePath).replace(/\.[^/.]+$/, "");
+    return `${expectedPrefix}processed_${baseName}.webp`;
+}
+exports.processConversationAttachmentPhoto = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const uid = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    const storagePath = String(request.data?.storagePath || "").trim();
+    if (!conversationId || !storagePath) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId and storagePath are required");
+    }
+    await loadConversationForParticipant(conversationId, uid);
+    const destinationPath = buildProcessedConversationAttachmentPath({
+        uid,
+        conversationId,
+        storagePath,
+    });
+    const bucket = firebase_admin_1.default.storage().bucket();
+    const sourceFile = bucket.file(storagePath);
+    let sourceBuffer;
+    try {
+        const [buffer] = await sourceFile.download();
+        sourceBuffer = buffer;
+    }
+    catch {
+        throw new https_1.HttpsError("not-found", "Source photo not found");
+    }
+    let outputBuffer;
+    let width = 0;
+    let height = 0;
+    try {
+        const processed = await (0, sharp_1.default)(sourceBuffer)
+            .rotate()
+            .resize({
+            width: CONVERSATION_IMAGE_MAX_EDGE,
+            height: CONVERSATION_IMAGE_MAX_EDGE,
+            fit: "inside",
+            withoutEnlargement: true,
+        })
+            .webp({ quality: 82, effort: 5 })
+            .toBuffer({ resolveWithObject: true });
+        outputBuffer = processed.data;
+        width = processed.info.width ?? 0;
+        height = processed.info.height ?? 0;
+    }
+    catch {
+        throw new https_1.HttpsError("internal", "Image processing failed");
+    }
+    const token = (0, node_crypto_1.randomUUID)();
+    try {
+        await bucket.file(destinationPath).save(outputBuffer, {
+            contentType: "image/webp",
+            resumable: false,
+            metadata: {
+                cacheControl: "public,max-age=31536000",
+                metadata: {
+                    firebaseStorageDownloadTokens: token,
+                },
+            },
+        });
+    }
+    catch {
+        throw new https_1.HttpsError("internal", "Image upload failed");
+    }
+    try {
+        await sourceFile.delete();
+    }
+    catch {
+        // best effort
+    }
+    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(destinationPath)}?alt=media&token=${token}`;
+    return {
+        ok: true,
+        storagePath: destinationPath,
+        downloadUrl,
+        thumbnailUrl: downloadUrl,
+        mimeType: "image/webp",
+        width,
+        height,
+        sizeBytes: outputBuffer.length,
+    };
+});
 function sanitizeConversationAttachments(value, currentUserId, conversationId) {
     if (value == null)
         return [];
