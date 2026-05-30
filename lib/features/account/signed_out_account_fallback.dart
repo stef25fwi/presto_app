@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../services/account_social_auth_actions.dart';
@@ -8,6 +9,7 @@ import '../../services/google_auth_service.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import '../../utils/runtime_action_logger.dart';
+import '../../pages/pro_profile_page.dart';
 
 class SignedOutAccountFallback extends StatefulWidget {
   const SignedOutAccountFallback({
@@ -81,7 +83,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
     return null;
   }
 
-  Future<void> _submitEmailAuth() async {
+  Future<void> _submitEmailAuth({bool openProProfile = false}) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
@@ -117,8 +119,20 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       if (!mounted) return;
       showSuccessSnackBar(
         context,
-        _isSignup ? 'Compte cree. Verifiez votre e-mail.' : 'Connexion reussie',
+        openProProfile
+            ? 'Compte pro cree. Completez votre profil.'
+            : _isSignup
+                ? 'Compte cree. Verifiez votre e-mail.'
+                : 'Connexion reussie',
       );
+      if (openProProfile && _isSignup) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => const ProProfilePage(),
+          ),
+        );
+      }
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
       showErrorSnackBar(
@@ -166,10 +180,21 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       });
     }
 
+    const proOrange = Color(0xFFFF6600);
+    const proBeige = Color(0xFFFCEEE2);
+    const statusBlue = Color(0xFF1A73E8);
+
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: statusBlue,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         title: const Text('Mon compte'),
         automaticallyImplyLeading: false,
+        backgroundColor: proOrange,
+        foregroundColor: Colors.white,
       ),
       body: Center(
         child: ConstrainedBox(
@@ -217,7 +242,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                       prefixIcon: Icon(Icons.lock_outline),
                     ),
                     validator: _validatePassword,
-                    onFieldSubmitted: (_) => _isLoading ? null : _submitEmailAuth(),
+                    onFieldSubmitted: (_) =>
+                        _isLoading ? null : _submitEmailAuth(),
                   ),
                   if (_isSignup) ...[
                     const SizedBox(height: 12),
@@ -245,6 +271,25 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                         : const Icon(Icons.login_rounded),
                     label: Text(_isSignup ? 'Creer le compte' : 'Se connecter'),
                   ),
+                  if (_isSignup) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _isLoading
+                          ? null
+                          : () => _submitEmailAuth(openProProfile: true),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: proOrange,
+                        backgroundColor: proBeige,
+                        side: const BorderSide(color: proOrange, width: 1.4),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      icon: const Icon(Icons.business_center_outlined),
+                      label: const Text('Creer un compte pro'),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: _isLoading ? null : _signInWithGoogle,
