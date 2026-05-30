@@ -104,6 +104,15 @@ service firebase.storage {
         || isMarketplaceModerator();
     }
 
+    match /profilePhotos/{uid}/{fileName} {
+      allow write: if isSignedIn()
+        && uid == request.auth.uid
+        && request.resource != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 10 * 1024 * 1024;
+      allow read: if isSignedIn();
+    }
+
     match /messageAttachments/{uid}/{conversationId}/{fileName} {
       allow write: if isSignedIn()
         && uid == request.auth.uid

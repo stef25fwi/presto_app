@@ -1,6 +1,7 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
@@ -119,8 +122,7 @@ class _AccountPageState extends State<AccountPage> {
   String _profilePhoneCountryCode = '+33';
   String _profileAccountType = 'Particulier';
   StreamSubscription<User?>? _profileAuthSub;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-      _profileDocSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileDocSub;
   String? _activeProfileUid;
   String _profileEmail = '';
   String? _profilePhotoUrl;
@@ -132,6 +134,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _profileLoaded = false;
   bool _profileLoadRequested = false;
   bool _isSavingProfile = false;
+  bool _isUploadingProfilePhoto = false;
   bool _isSigningOut = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
   bool _isPublishedOffersExpanded = false;
@@ -872,7 +875,8 @@ class _AccountPageState extends State<AccountPage> {
       if (error.code == 'permission-denied' ||
           error.code == 'unauthenticated') {
         // Token may be stale — force one refresh and retry.
-        debugPrint('[Profile] Auth error, forcing token refresh: ${error.code}');
+        debugPrint(
+            '[Profile] Auth error, forcing token refresh: ${error.code}');
         await FirebaseAuth.instance.currentUser
             ?.getIdToken(true)
             .timeout(const Duration(seconds: 8));
@@ -893,7 +897,8 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<DocumentSnapshot<Map<String, dynamic>>?> _fetchCachedUserProfileDocument(
+  Future<DocumentSnapshot<Map<String, dynamic>>?>
+      _fetchCachedUserProfileDocument(
     String uid,
   ) async {
     try {
@@ -1032,12 +1037,14 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _deriveImmediatePseudo(user);
-    if (pseudo.isNotEmpty && _canHydrateProfileField(_profilePseudoController)) {
+    if (pseudo.isNotEmpty &&
+        _canHydrateProfileField(_profilePseudoController)) {
       _profilePseudoController.text = pseudo;
     }
 
     final authPhone = user.phoneNumber?.trim() ?? '';
-    if (authPhone.isNotEmpty && _canHydrateProfileField(_profilePhoneController)) {
+    if (authPhone.isNotEmpty &&
+        _canHydrateProfileField(_profilePhoneController)) {
       _applyLoadedProfilePhone(authPhone);
     }
   }
@@ -1048,6 +1055,117 @@ class _AccountPageState extends State<AccountPage> {
       const ['photoUrl', 'photoURL', 'avatarUrl', 'avatarURL', 'imageUrl'],
       fallbackValues: <String>[_profilePhotoUrl ?? ''],
     );
+  }
+
+  String _safeProfilePhotoName(String name, String fallback) {
+    final cleaned = name.trim().isEmpty ? fallback : name.trim();
+    final sanitized = cleaned
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    if (sanitized.isNotEmpty) return sanitized;
+    return fallback;
+  }
+
+  String _profilePhotoContentType(String name, String fallback) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) {
+      return 'image/jpeg';
+    }
+    if (lowerName.endsWith('.png')) return 'image/png';
+    if (lowerName.endsWith('.webp')) return 'image/webp';
+    if (lowerName.endsWith('.gif')) return 'image/gif';
+    return fallback;
+  }
+
+  Future<void> _pickAndUploadProfilePhoto(User user) async {
+    if (_isUploadingProfilePhoto) return;
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 86,
+      maxWidth: 1200,
+    );
+    if (picked == null) return;
+
+    Uint8List bytes;
+    try {
+      bytes = await picked.readAsBytes();
+    } catch (error) {
+      debugPrint('[ProfilePhoto] read failed: $error');
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Cette photo ne peut pas être lue.');
+      return;
+    }
+
+    if (bytes.lengthInBytes > 10 * 1024 * 1024) {
+      showErrorSnackBar(context, 'La photo dépasse 10 Mo.');
+      return;
+    }
+
+    setState(() => _isUploadingProfilePhoto = true);
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = _safeProfilePhotoName(picked.name, 'profil.jpg');
+      final path = 'profilePhotos/${user.uid}/${timestamp}_$fileName';
+      final contentType =
+          picked.mimeType ?? _profilePhotoContentType(fileName, 'image/jpeg');
+      final ref = FirebaseStorage.instance.ref().child(path);
+
+      await ref.putData(bytes, SettableMetadata(contentType: contentType));
+      final downloadUrl = await ref.getDownloadURL();
+      if (downloadUrl.trim().isEmpty) {
+        throw StateError('URL photo profil vide');
+      }
+
+      final profilePhotoPayload = <String, dynamic>{
+        'photoUrl': downloadUrl,
+        'photoURL': downloadUrl,
+        'avatarUrl': downloadUrl,
+        'imageUrl': downloadUrl,
+        'profilePhotoPath': path,
+        'profilePhotoMimeType': contentType,
+        'profilePhotoUpdatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(profilePhotoPayload, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 12));
+
+      try {
+        await user
+            .updatePhotoURL(downloadUrl)
+            .timeout(const Duration(seconds: 5));
+        await user.reload().timeout(const Duration(seconds: 5));
+      } catch (error) {
+        debugPrint('[ProfilePhoto] auth photoURL sync failed: $error');
+      }
+
+      if (!mounted || _activeProfileUid != user.uid) return;
+      setState(() => _profilePhotoUrl = downloadUrl);
+      showSuccessSnackBar(context, 'Photo de profil mise à jour');
+    } on FirebaseException catch (error) {
+      debugPrint(
+        '[ProfilePhoto] Firebase error code=${error.code} message=${error.message}',
+      );
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        error.code == 'permission-denied'
+            ? 'Upload refusé. Vérifiez votre connexion et réessayez.'
+            : 'La photo de profil n’a pas pu être envoyée.',
+      );
+    } catch (error) {
+      debugPrint('[ProfilePhoto] upload failed: $error');
+      if (!mounted) return;
+      showErrorSnackBar(context, 'La photo de profil n’a pas pu être envoyée.');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingProfilePhoto = false);
+      }
+    }
   }
 
   Future<void> _startInstantProfileHydration(User user) async {
@@ -1107,75 +1225,72 @@ class _AccountPageState extends State<AccountPage> {
     }));
 
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    _profileDocSub = userRef
-        .snapshots(includeMetadataChanges: true)
-        .listen((snapshot) {
-          if (!mounted || _activeProfileUid != uid) {
-            return;
-          }
+    _profileDocSub =
+        userRef.snapshots(includeMetadataChanges: true).listen((snapshot) {
+      if (!mounted || _activeProfileUid != uid) {
+        return;
+      }
 
-          final previousPseudo = _profilePseudoController.text.trim();
-          final previousCity = _profileCityController.text.trim();
-          final previousPhoneCountryCode = _profilePhoneCountryCode;
-          final previousPhone = _profilePhoneController.text.trim();
-          final previousFavoriteCategories = _favoriteCategories.toSet();
-          final previousSelectedFavoriteCategories =
-              _selectedFavoriteCategories.toSet();
-          final previousSelectedFavoriteSubcategories =
-              _selectedFavoriteSubcategories.toSet();
-          final previousDraftFavoriteSelections =
-              _draftFavoriteSelections.toSet();
+      final previousPseudo = _profilePseudoController.text.trim();
+      final previousCity = _profileCityController.text.trim();
+      final previousPhoneCountryCode = _profilePhoneCountryCode;
+      final previousPhone = _profilePhoneController.text.trim();
+      final previousFavoriteCategories = _favoriteCategories.toSet();
+      final previousSelectedFavoriteCategories =
+          _selectedFavoriteCategories.toSet();
+      final previousSelectedFavoriteSubcategories =
+          _selectedFavoriteSubcategories.toSet();
+      final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
 
-          setState(() {
-            _applyImmediateAuthProfile(user);
-            final data = snapshot.data();
-            if (data != null) {
-              _applyUserProfileDocument(
-                user,
-                data: data,
-                previousPseudo: previousPseudo,
-                previousCity: previousCity,
-                previousPhoneCountryCode: previousPhoneCountryCode,
-                previousPhone: previousPhone,
-                previousFavoriteCategories: previousFavoriteCategories,
-                previousSelectedFavoriteCategories:
-                    previousSelectedFavoriteCategories,
-                previousSelectedFavoriteSubcategories:
-                    previousSelectedFavoriteSubcategories,
-                previousDraftFavoriteSelections:
-                    previousDraftFavoriteSelections,
-              );
-              final hydratedEmail = _firstNonEmptyProfileValue(
-                data,
-                const ['email'],
-                fallbackValues: <String>[_profileEmail, user.email ?? ''],
-              );
-              if (hydratedEmail.isNotEmpty) {
-                _profileEmail = hydratedEmail;
-              }
-              final hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
-              if (hydratedPhotoUrl.isNotEmpty) {
-                _profilePhotoUrl = hydratedPhotoUrl;
-              }
-            }
-            _profileLoadError = false;
-            _profileLoaded = true;
-            _profileLoadRequested = true;
-            _profileSyncInProgress = false;
-            _lastMissingRequiredCount = _missingRequiredProfileFields().length;
-          });
-        }, onError: (Object error) {
-          if (!mounted || _activeProfileUid != uid) {
-            return;
+      setState(() {
+        _applyImmediateAuthProfile(user);
+        final data = snapshot.data();
+        if (data != null) {
+          _applyUserProfileDocument(
+            user,
+            data: data,
+            previousPseudo: previousPseudo,
+            previousCity: previousCity,
+            previousPhoneCountryCode: previousPhoneCountryCode,
+            previousPhone: previousPhone,
+            previousFavoriteCategories: previousFavoriteCategories,
+            previousSelectedFavoriteCategories:
+                previousSelectedFavoriteCategories,
+            previousSelectedFavoriteSubcategories:
+                previousSelectedFavoriteSubcategories,
+            previousDraftFavoriteSelections: previousDraftFavoriteSelections,
+          );
+          final hydratedEmail = _firstNonEmptyProfileValue(
+            data,
+            const ['email'],
+            fallbackValues: <String>[_profileEmail, user.email ?? ''],
+          );
+          if (hydratedEmail.isNotEmpty) {
+            _profileEmail = hydratedEmail;
           }
-          debugPrint('[Profile] snapshot users/$uid failed: $error');
-          setState(() {
-            _profileLoadError = true;
-            _profileLoaded = true;
-            _profileLoadRequested = true;
-            _profileSyncInProgress = false;
-          });
-        });
+          final hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+          if (hydratedPhotoUrl.isNotEmpty) {
+            _profilePhotoUrl = hydratedPhotoUrl;
+          }
+        }
+        _profileLoadError = false;
+        _profileLoaded = true;
+        _profileLoadRequested = true;
+        _profileSyncInProgress = false;
+        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
+      });
+    }, onError: (Object error) {
+      if (!mounted || _activeProfileUid != uid) {
+        return;
+      }
+      debugPrint('[Profile] snapshot users/$uid failed: $error');
+      setState(() {
+        _profileLoadError = true;
+        _profileLoaded = true;
+        _profileLoadRequested = true;
+        _profileSyncInProgress = false;
+      });
+    });
   }
 
   void _applyUserProfileDocument(
@@ -1250,9 +1365,8 @@ class _AccountPageState extends State<AccountPage> {
           .map((e) => e.toString())
           .toList();
       final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
-      _favoriteCategories = hasFavoriteCategoriesKey
-          ? favs.toSet()
-          : previousFavoriteCategories;
+      _favoriteCategories =
+          hasFavoriteCategoriesKey ? favs.toSet() : previousFavoriteCategories;
       _draftFavoriteSelections = hasFavoriteCategoriesKey
           ? _favoriteCategories.toSet()
           : previousDraftFavoriteSelections;
@@ -1599,7 +1713,9 @@ class _AccountPageState extends State<AccountPage> {
     // Update Auth display name (best effort).
     if (pseudo.isNotEmpty) {
       try {
-        await user.updateDisplayName(pseudo).timeout(const Duration(seconds: 5));
+        await user
+            .updateDisplayName(pseudo)
+            .timeout(const Duration(seconds: 5));
         await user.reload().timeout(const Duration(seconds: 5));
       } catch (e) {
         debugPrint('[ProfileSave] displayName update failed (ignored): $e');
@@ -2094,9 +2210,8 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _profilePseudoController.text.trim();
-    final displayName = pseudo.isNotEmpty
-        ? pseudo
-        : _deriveImmediatePseudo(user);
+    final displayName =
+        pseudo.isNotEmpty ? pseudo : _deriveImmediatePseudo(user);
     final visibleEmail = _profileEmail.trim().isNotEmpty
         ? _profileEmail.trim()
         : (user.email ?? '');
@@ -2139,14 +2254,63 @@ class _AccountPageState extends State<AccountPage> {
                     Center(
                       child: Column(
                         children: [
-                          CircleAvatar(
-                            radius: 42,
-                            backgroundColor: Colors.white,
-                            backgroundImage: visiblePhotoUrl.isNotEmpty
-                                ? NetworkImage(visiblePhotoUrl)
-                                : const AssetImage(
-                                    'assets/images/logowebp.webp',
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              CircleAvatar(
+                                radius: 42,
+                                backgroundColor: Colors.white,
+                                backgroundImage: visiblePhotoUrl.isNotEmpty
+                                    ? NetworkImage(visiblePhotoUrl)
+                                    : const AssetImage(
+                                        'assets/images/logowebp.webp',
+                                      ),
+                                child: _isUploadingProfilePhoto
+                                    ? Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.35),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              Positioned(
+                                right: -2,
+                                bottom: -2,
+                                child: Material(
+                                  color: kPrestoBlue,
+                                  shape: const CircleBorder(),
+                                  elevation: 4,
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: _isUploadingProfilePhoto
+                                        ? null
+                                        : () => unawaited(
+                                              _pickAndUploadProfilePhoto(user),
+                                            ),
+                                    child: const SizedBox(
+                                      width: 30,
+                                      height: 30,
+                                      child: Icon(
+                                        Icons.add_a_photo_rounded,
+                                        color: Colors.white,
+                                        size: 17,
+                                      ),
+                                    ),
                                   ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 10),
                           const Text(
