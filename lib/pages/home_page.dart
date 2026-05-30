@@ -867,10 +867,9 @@ class _HomePageState extends State<HomePage>
 
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue value) {
-        // ✅ Ne pas afficher les suggestions quand le clavier est visible (Android fix)
-        final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-        if (!_showSearchSuggestions || isKeyboardVisible)
+        if (!_showSearchSuggestions) {
           return const Iterable<String>.empty();
+        }
         return _buildSearchSuggestions(value);
       },
       onSelected: selectSuggestion,
@@ -1302,6 +1301,7 @@ class _HomePageState extends State<HomePage>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
         // Strip viewInsets from the Scaffold so the bottomNavigationBar is
         // never pushed up by the software keyboard. The original MediaQuery
