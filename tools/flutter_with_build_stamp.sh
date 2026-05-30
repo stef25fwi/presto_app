@@ -92,6 +92,14 @@ if [[ -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   fi
 fi
 
+if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" &&
+      -n "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" &&
+      "$APPCHECK_RECAPTCHA_SITE_KEY" != "$RECAPTCHA_ENTERPRISE_SITE_KEY" ]]; then
+  echo "[flutter_with_build_stamp] ERROR: APPCHECK_RECAPTCHA_SITE_KEY and RECAPTCHA_ENTERPRISE_SITE_KEY differ." >&2
+  echo "[flutter_with_build_stamp] Unset the stale shell value or align .env.local before building web." >&2
+  exit 3
+fi
+
 # Propage les secrets de build s'ils sont définis dans l'environnement.
 # Sans ça, un build web local active aucun App Check et Firestore (en mode
 # enforce) rejette toutes les lectures publiques avec PERMISSION_DENIED.
