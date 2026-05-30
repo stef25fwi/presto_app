@@ -1,17 +1,4 @@
-bash -lc '
-cd /workspaces/presto_app
-set -euo pipefail
-
-git add -A
-if ! git diff --cached --quiet; then
-  git commit -m "chore(release): apply latest ui and gallery fixes"
-fi
-
-./tools/flutter_with_build_stamp.sh
-git push origin main
-firebase deploy --project presto-app-74abe --only hosting
-git --no-pager status --short --branch
-'import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
