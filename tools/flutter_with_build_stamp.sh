@@ -108,6 +108,17 @@ if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
 fi
 echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_SITE_KEY=$appcheck_status" >&2
 
+is_web_release_build=false
+if [[ "$*" == *"build web"* && "$*" == *"--release"* ]]; then
+  is_web_release_build=true
+fi
+
+if [[ "$is_web_release_build" == "true" && -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
+  echo "[flutter_with_build_stamp] ERROR: APPCHECK_RECAPTCHA_SITE_KEY is required for web release builds." >&2
+  echo "[flutter_with_build_stamp] Define it in the environment or .env.local before deploying hosting." >&2
+  exit 2
+fi
+
 exec flutter "$@" \
   --dart-define=APP_VERSION="$app_version" \
   --dart-define=APP_BUILD_NUMBER="$app_build_number" \
