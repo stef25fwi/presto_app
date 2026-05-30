@@ -1078,6 +1078,12 @@ class _AccountPageState extends State<AccountPage> {
     return fallback;
   }
 
+  bool _isProfilePhotoUploadAuthFailure(FirebaseException error) {
+    return error.code == 'permission-denied' ||
+        error.code == 'unauthorized' ||
+        error.code == 'unauthenticated';
+  }
+
   Future<void> _pickAndUploadProfilePhoto(User user) async {
     if (_isUploadingProfilePhoto) return;
 
@@ -1112,7 +1118,26 @@ class _AccountPageState extends State<AccountPage> {
           picked.mimeType ?? _profilePhotoContentType(fileName, 'image/jpeg');
       final ref = FirebaseStorage.instance.ref().child(path);
 
-      await ref.putData(bytes, SettableMetadata(contentType: contentType));
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: false,
+        forceRefreshAppCheckToken: false,
+      );
+      try {
+        await ref
+            .putData(bytes, SettableMetadata(contentType: contentType))
+            .timeout(const Duration(seconds: 30));
+      } on FirebaseException catch (error) {
+        if (!_isProfilePhotoUploadAuthFailure(error)) rethrow;
+        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+          user: user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+        await ref
+            .putData(bytes, SettableMetadata(contentType: contentType))
+            .timeout(const Duration(seconds: 30));
+      }
       final downloadUrl = await ref.getDownloadURL();
       if (downloadUrl.trim().isEmpty) {
         throw StateError('URL photo profil vide');
