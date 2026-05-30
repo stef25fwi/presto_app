@@ -2531,96 +2531,80 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context).size;
-    final popupHeight = media.height * 0.88;
-    final popupWidth = media.width * 0.94;
-
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: popupWidth > 1100 ? 1100 : popupWidth,
-            maxHeight: popupHeight,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Material(
-              color: Colors.black,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: widget.imageUrls.length,
-                      onPageChanged: (index) =>
-                          setState(() => _currentPage = index),
-                      itemBuilder: (context, index) {
-                        return InteractiveViewer(
-                          minScale: 0.5,
-                          maxScale: 4.0,
-                          child: Center(
-                            child: _OfferImage(
-                              rawUrl: widget.imageUrls[index],
-                              fit: BoxFit.contain,
-                              errorChild: const Icon(
-                                Icons.broken_image_outlined,
-                                color: Colors.white54,
-                                size: 64,
-                              ),
-                              loadingChild: const SizedBox(
-                                width: 32,
-                                height: 32,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
+    return Material(
+      color: Colors.black,
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: widget.imageUrls.length,
+                onPageChanged: (index) => setState(() => _currentPage = index),
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: _OfferImage(
+                        rawUrl: widget.imageUrls[index],
+                        fit: BoxFit.contain,
+                        errorChild: const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white54,
+                          size: 64,
+                        ),
+                        loadingChild: const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white70,
                           ),
-                        );
-                      },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned(
+              top: 10,
+              left: 10,
+              right: 10,
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${_currentPage + 1} / ${widget.imageUrls.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    right: 10,
-                    child: Row(
-                      children: [
-                        IconButton.filledTonal(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.black45,
-                            foregroundColor: Colors.white,
-                          ),
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            '${_currentPage + 1} / ${widget.imageUrls.length}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
+                  const Spacer(),
+                  IconButton.filledTonal(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black45,
+                      foregroundColor: Colors.white,
                     ),
+                    icon: const Icon(Icons.close_rounded),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -3264,14 +3248,20 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
               Flexible(
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    displayedValue,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: navy,
-                      fontSize: widget.compact ? 15 : 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.15,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      displayedValue,
+                      maxLines: 1,
+                      softWrap: false,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: navy,
+                        fontSize: widget.compact ? 15 : 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.15,
+                      ),
                     ),
                   ),
                 ),
