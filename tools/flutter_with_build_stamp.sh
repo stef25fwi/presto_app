@@ -59,6 +59,11 @@ fi
 
 app_build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+flutter_args=("$@")
+if [[ ${#flutter_args[@]} -eq 0 ]]; then
+  flutter_args=(build web --release)
+fi
+
 # Les tâches VS Code n'héritent pas toujours des exports ajoutés dans ~/.bashrc.
 # Si une clé manque, on tente de la relire depuis un shell interactif pour
 # éviter de produire un bundle web sans App Check.
@@ -109,7 +114,7 @@ fi
 echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_SITE_KEY=$appcheck_status" >&2
 
 is_web_release_build=false
-if [[ "$*" == *"build web"* && "$*" == *"--release"* ]]; then
+if [[ " ${flutter_args[*]} " == *" build web "* && " ${flutter_args[*]} " == *" --release "* ]]; then
   is_web_release_build=true
 fi
 
@@ -119,7 +124,7 @@ if [[ "$is_web_release_build" == "true" && -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}"
   exit 2
 fi
 
-exec flutter "$@" \
+exec flutter "${flutter_args[@]}" \
   --dart-define=APP_VERSION="$app_version" \
   --dart-define=APP_BUILD_NUMBER="$app_build_number" \
   --dart-define=APP_REPOSITORY="$app_repository" \
