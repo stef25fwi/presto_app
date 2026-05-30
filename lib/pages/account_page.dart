@@ -2298,13 +2298,27 @@ class _AccountPageState extends State<AccountPage> {
                                         : () => unawaited(
                                               _pickAndUploadProfilePhoto(user),
                                             ),
-                                    child: const SizedBox(
-                                      width: 30,
-                                      height: 30,
-                                      child: Icon(
-                                        Icons.add_a_photo_rounded,
-                                        color: Colors.white,
-                                        size: 17,
+                                    child: SizedBox(
+                                      width: 34,
+                                      height: 34,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: const [
+                                          Icon(
+                                            Icons.photo_camera_outlined,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                          Positioned(
+                                            right: 4,
+                                            bottom: 4,
+                                            child: Icon(
+                                              Icons.add_circle,
+                                              color: Colors.white,
+                                              size: 11,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
