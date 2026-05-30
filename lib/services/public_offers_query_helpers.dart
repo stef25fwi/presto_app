@@ -159,6 +159,9 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
 }) async {
   if (!kIsWeb || appCheckActivationSucceeded) return;
 
+  // Public listings/offers are allowed by Firestore rules without App Check.
+  // Try to refresh App Check for protected follow-up calls, but never block
+  // public browsing when reCAPTCHA is unavailable on a browser/domain.
   final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
   appCheckActivationAttempted = true;
   if (siteKey.isEmpty) {
@@ -166,7 +169,10 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
     appCheckActivationSucceeded = false;
     appCheckActivationError = error;
     appCheckActivationStackTrace = StackTrace.current;
-    throw error;
+    if (kDebugMode) {
+      debugPrint('[PUBLIC_OFFERS][$source] appcheck_skipped=$error');
+    }
+    return;
   }
 
   try {
@@ -189,7 +195,6 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
     if (kDebugMode) {
       debugPrint('[PUBLIC_OFFERS][$source] appcheck_ready_failed=$error');
     }
-    Error.throwWithStackTrace(error, stackTrace);
   }
 }
 
