@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/app_check_state.dart';
@@ -151,6 +152,45 @@ void logPublicOffersReadErrorWithAppCheck(
     appCheckState: publicOffersAppCheckStateLabel(),
     stackTrace: stackTrace,
   );
+}
+
+Future<void> ensureAppCheckReadyForPublicFirestoreRead({
+  required String source,
+}) async {
+  if (!kIsWeb || appCheckActivationSucceeded) return;
+
+  final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+  appCheckActivationAttempted = true;
+  if (siteKey.isEmpty) {
+    final error = StateError('APPCHECK_RECAPTCHA_SITE_KEY absente.');
+    appCheckActivationSucceeded = false;
+    appCheckActivationError = error;
+    appCheckActivationStackTrace = StackTrace.current;
+    throw error;
+  }
+
+  try {
+    await FirebaseAppCheck.instance.activate(
+      webProvider: ReCaptchaEnterpriseProvider(siteKey),
+    );
+    final token = await FirebaseAppCheck.instance
+        .getToken(true)
+        .timeout(const Duration(seconds: 8));
+    if ((token ?? '').trim().isEmpty) {
+      throw StateError('Jeton App Check vide avant lecture annonces.');
+    }
+    appCheckActivationSucceeded = true;
+    appCheckActivationError = null;
+    appCheckActivationStackTrace = null;
+  } catch (error, stackTrace) {
+    appCheckActivationSucceeded = false;
+    appCheckActivationError = error;
+    appCheckActivationStackTrace = stackTrace;
+    if (kDebugMode) {
+      debugPrint('[PUBLIC_OFFERS][$source] appcheck_ready_failed=$error');
+    }
+    Error.throwWithStackTrace(error, stackTrace);
+  }
 }
 
 Widget buildPublicOffersDebugCardWithAppCheck(
@@ -343,6 +383,8 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
   required List<Query<Map<String, dynamic>>> queries,
   required String source,
 }) async {
+  await ensureAppCheckReadyForPublicFirestoreRead(source: source);
+
   final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
   Object? firstError;
   StackTrace? firstStackTrace;
