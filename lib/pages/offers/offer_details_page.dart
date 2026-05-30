@@ -2042,6 +2042,7 @@ class _HeroCard extends StatelessWidget {
           // ── Photo principale ──
           if (hasPhotos)
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => _openGallery(context, 0),
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(
@@ -2091,6 +2092,7 @@ class _HeroCard extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final isSelected = index == 0;
                     return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () => _openGallery(context, index),
                       child: Container(
                         width: compact ? 56 : 64,
@@ -2405,6 +2407,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           return GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () => _openFullScreenGallery(context, index),
             child: Container(
               width: thumbSize,
@@ -2473,8 +2476,10 @@ Future<void> _showPhotoGalleryPopup(
   required int initialIndex,
 }) {
   if (imageUrls.isEmpty) return Future<void>.value();
+  final safeIndex = initialIndex.clamp(0, imageUrls.length - 1);
   return showGeneralDialog<void>(
     context: context,
+    useRootNavigator: true,
     barrierDismissible: true,
     barrierLabel: 'Fermer',
     barrierColor: Colors.black87,
@@ -2482,7 +2487,7 @@ Future<void> _showPhotoGalleryPopup(
     pageBuilder: (context, _, __) {
       return _PhotoGalleryPopup(
         imageUrls: imageUrls,
-        initialIndex: initialIndex,
+        initialIndex: safeIndex,
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
