@@ -80,4 +80,52 @@ const mirror_1 = require("./mirror");
         return true;
     });
 });
+(0, node_test_1.default)("sanitizeConversationAttachments accepts current conversation storage path", () => {
+    const attachments = (0, callables_1.sanitizeConversationAttachments)([
+        {
+            type: "image",
+            name: "photo.jpg",
+            url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fphoto.jpg",
+            storagePath: "messageAttachments/buyer_a/conv_1/photo.jpg",
+            mimeType: "image/jpeg",
+            sizeBytes: 1200,
+        },
+    ], "buyer_a", "conv_1");
+    strict_1.default.equal(attachments.length, 1);
+    const firstAttachment = attachments[0];
+    strict_1.default.ok(firstAttachment);
+    strict_1.default.equal(firstAttachment.type, "image");
+});
+(0, node_test_1.default)("sanitizeConversationAttachments rejects another conversation storage path", () => {
+    strict_1.default.throws(() => (0, callables_1.sanitizeConversationAttachments)([
+        {
+            type: "document",
+            name: "devis.pdf",
+            url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_2%2Fdevis.pdf",
+            storagePath: "messageAttachments/buyer_a/conv_2/devis.pdf",
+            mimeType: "application/pdf",
+            sizeBytes: 1200,
+        },
+    ], "buyer_a", "conv_1"), (error) => {
+        strict_1.default.ok(error instanceof https_1.HttpsError);
+        strict_1.default.equal(error.code, "invalid-argument");
+        return true;
+    });
+});
+(0, node_test_1.default)("sanitizeConversationAttachments rejects unsupported document mime type", () => {
+    strict_1.default.throws(() => (0, callables_1.sanitizeConversationAttachments)([
+        {
+            type: "document",
+            name: "archive.zip",
+            url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Farchive.zip",
+            storagePath: "messageAttachments/buyer_a/conv_1/archive.zip",
+            mimeType: "application/zip",
+            sizeBytes: 1200,
+        },
+    ], "buyer_a", "conv_1"), (error) => {
+        strict_1.default.ok(error instanceof https_1.HttpsError);
+        strict_1.default.equal(error.code, "invalid-argument");
+        return true;
+    });
+});
 //# sourceMappingURL=callables.test.js.map
