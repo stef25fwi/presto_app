@@ -91,6 +91,7 @@ export {
   unblockConversation,
   deleteConversation,
   deleteConversationMessage,
+  processConversationAttachmentPhoto,
 } from "./modules/messaging/callables";
 export { registerPushToken, unregisterPushToken } from "./modules/notifications/callables";
 export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";

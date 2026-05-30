@@ -17,6 +17,7 @@ import '../../services/conversation_state.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
+import '../../widgets/offer_network_image.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -1294,14 +1295,33 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           '${timestamp}_${_safeAttachmentName(name, 'piece-jointe')}';
       final ref = FirebaseStorage.instance.ref().child(path);
       await ref.putData(bytes, SettableMetadata(contentType: mimeType));
-      final url = await ref.getDownloadURL();
+      var attachmentName = name;
+      var attachmentPath = path;
+      var attachmentMimeType = mimeType;
+      var attachmentSizeBytes = bytes.lengthInBytes;
+      var url = await ref.getDownloadURL();
+
+      if (type == 'image') {
+        final processed = await ConversationService.processConversationPhoto(
+          conversationId: widget.conversationId,
+          storagePath: path,
+        );
+        attachmentName = name.replaceFirst(RegExp(r'\.[^/.]+$'), '.webp');
+        attachmentPath = processed.storagePath;
+        attachmentMimeType = processed.mimeType;
+        attachmentSizeBytes = processed.sizeBytes;
+        url = processed.thumbnailUrl.trim().isNotEmpty
+            ? processed.thumbnailUrl
+            : processed.downloadUrl;
+      }
+
       final attachment = _MessageAttachment(
         type: type,
-        name: name,
+        name: attachmentName,
         url: url,
-        storagePath: path,
-        mimeType: mimeType,
-        sizeBytes: bytes.lengthInBytes,
+        storagePath: attachmentPath,
+        mimeType: attachmentMimeType,
+        sizeBytes: attachmentSizeBytes,
       );
       await _sendAttachmentMessage(attachment);
     } catch (error) {
@@ -1425,17 +1445,26 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         borderRadius: BorderRadius.circular(14),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: Image.network(
-            attachment.url,
+          child: SizedBox(
             width: 240,
             height: 170,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: 240,
-              height: 120,
-              color: const Color(0xFFF3F4F6),
-              alignment: Alignment.center,
-              child: const Icon(Icons.broken_image_outlined),
+            child: OfferNetworkImage(
+              url: attachment.thumbnailUrl,
+              fit: BoxFit.cover,
+              loadingChild: Container(
+                color: const Color(0xFFF3F4F6),
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorChild: Container(
+                color: const Color(0xFFF3F4F6),
+                alignment: Alignment.center,
+                child: const Icon(Icons.broken_image_outlined),
+              ),
             ),
           ),
         ),
@@ -2158,6 +2187,7 @@ class _MessageAttachment {
   final String type;
   final String name;
   final String url;
+  final String thumbnailUrl;
   final String storagePath;
   final String mimeType;
   final int sizeBytes;
@@ -2166,10 +2196,11 @@ class _MessageAttachment {
     required this.type,
     required this.name,
     required this.url,
+    String? thumbnailUrl,
     required this.storagePath,
     required this.mimeType,
     required this.sizeBytes,
-  });
+  }) : thumbnailUrl = thumbnailUrl ?? url;
 
   static List<_MessageAttachment> fromList(Object? value) {
     if (value is! List) return const [];
@@ -2183,7 +2214,10 @@ class _MessageAttachment {
   static _MessageAttachment? fromMap(Map<dynamic, dynamic> data) {
     final type = (data['type'] ?? '').toString();
     final name = (data['name'] ?? '').toString();
-    final url = (data['url'] ?? '').toString();
+    final url = (data['url'] ?? data['downloadUrl'] ?? '').toString();
+    final thumbnailUrl =
+        (data['thumbnailUrl'] ?? data['url'] ?? data['downloadUrl'] ?? '')
+            .toString();
     final storagePath = (data['storagePath'] ?? '').toString();
     final mimeType = (data['mimeType'] ?? '').toString();
     final sizeBytes = (data['sizeBytes'] is num)
@@ -2197,6 +2231,7 @@ class _MessageAttachment {
       name:
           name.trim().isEmpty ? (type == 'image' ? 'Photo' : 'Document') : name,
       url: url,
+      thumbnailUrl: thumbnailUrl.trim().isEmpty ? url : thumbnailUrl,
       storagePath: storagePath,
       mimeType: mimeType,
       sizeBytes: sizeBytes,

@@ -31,6 +31,35 @@ class ConversationAttachmentInput {
   }
 }
 
+class ProcessedConversationPhoto {
+  final String storagePath;
+  final String downloadUrl;
+  final String thumbnailUrl;
+  final String mimeType;
+  final int sizeBytes;
+
+  const ProcessedConversationPhoto({
+    required this.storagePath,
+    required this.downloadUrl,
+    required this.thumbnailUrl,
+    required this.mimeType,
+    required this.sizeBytes,
+  });
+
+  factory ProcessedConversationPhoto.fromMap(Map<String, dynamic> data) {
+    return ProcessedConversationPhoto(
+      storagePath: (data['storagePath'] ?? '').toString(),
+      downloadUrl: (data['downloadUrl'] ?? '').toString(),
+      thumbnailUrl:
+          (data['thumbnailUrl'] ?? data['downloadUrl'] ?? '').toString(),
+      mimeType: (data['mimeType'] ?? 'image/webp').toString(),
+      sizeBytes: (data['sizeBytes'] is num)
+          ? (data['sizeBytes'] as num).round()
+          : int.tryParse((data['sizeBytes'] ?? '').toString()) ?? 0,
+    );
+  }
+}
+
 class ConversationService {
   static final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
@@ -80,6 +109,29 @@ class ConversationService {
       if (attachments.isNotEmpty)
         'attachments': attachments.map((entry) => entry.toJson()).toList(),
     });
+  }
+
+  static Future<ProcessedConversationPhoto> processConversationPhoto({
+    required String conversationId,
+    required String storagePath,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'processConversationAttachmentPhoto',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
+    );
+    final response = await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+      'storagePath': storagePath,
+    });
+    final data = Map<String, dynamic>.from(
+      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
+    );
+    final processed = ProcessedConversationPhoto.fromMap(data);
+    if (processed.storagePath.trim().isEmpty ||
+        processed.downloadUrl.trim().isEmpty) {
+      throw StateError('Photo de conversation non traitee.');
+    }
+    return processed;
   }
 
   static Future<void> markAsRead({

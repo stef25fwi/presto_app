@@ -1,5 +1,9 @@
+import { randomUUID } from "node:crypto";
+import { posix as pathPosix } from "node:path";
+
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import sharp from "sharp";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";
@@ -24,6 +28,7 @@ import {
 const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
+const CONVERSATION_IMAGE_MAX_EDGE = 960;
 
 async function findConversationSnapshotsForParticipant(
   currentUserId: string,
@@ -233,6 +238,113 @@ function isAllowedDocumentAttachmentMimeType(mimeType: string): boolean {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ].includes(mimeType);
 }
+
+export function buildProcessedConversationAttachmentPath({
+  uid,
+  conversationId,
+  storagePath,
+}: {
+  uid: string;
+  conversationId: string;
+  storagePath: string;
+}): string {
+  const expectedPrefix = `messageAttachments/${uid}/${conversationId}/`;
+  if (!storagePath.startsWith(expectedPrefix)) {
+    throw new HttpsError("permission-denied", "Unauthorized storage path");
+  }
+  if (storagePath.includes("..") || storagePath.includes("\\") || storagePath.startsWith("/")) {
+    throw new HttpsError("invalid-argument", "Invalid storage path");
+  }
+
+  const baseName = pathPosix.basename(storagePath).replace(/\.[^/.]+$/, "");
+  return `${expectedPrefix}processed_${baseName}.webp`;
+}
+
+export const processConversationAttachmentPhoto = onCall(
+  { region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK },
+  async (request) => {
+    const uid = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    const storagePath = String(request.data?.storagePath || "").trim();
+
+    if (!conversationId || !storagePath) {
+      throw new HttpsError("invalid-argument", "conversationId and storagePath are required");
+    }
+
+    await loadConversationForParticipant(conversationId, uid);
+
+    const destinationPath = buildProcessedConversationAttachmentPath({
+      uid,
+      conversationId,
+      storagePath,
+    });
+    const bucket = admin.storage().bucket();
+    const sourceFile = bucket.file(storagePath);
+
+    let sourceBuffer: Buffer;
+    try {
+      const [buffer] = await sourceFile.download();
+      sourceBuffer = buffer;
+    } catch {
+      throw new HttpsError("not-found", "Source photo not found");
+    }
+
+    let outputBuffer: Buffer;
+    let width = 0;
+    let height = 0;
+    try {
+      const processed = await sharp(sourceBuffer)
+        .rotate()
+        .resize({
+          width: CONVERSATION_IMAGE_MAX_EDGE,
+          height: CONVERSATION_IMAGE_MAX_EDGE,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 82, effort: 5 })
+        .toBuffer({ resolveWithObject: true });
+      outputBuffer = processed.data;
+      width = processed.info.width ?? 0;
+      height = processed.info.height ?? 0;
+    } catch {
+      throw new HttpsError("internal", "Image processing failed");
+    }
+
+    const token = randomUUID();
+    try {
+      await bucket.file(destinationPath).save(outputBuffer, {
+        contentType: "image/webp",
+        resumable: false,
+        metadata: {
+          cacheControl: "public,max-age=31536000",
+          metadata: {
+            firebaseStorageDownloadTokens: token,
+          },
+        },
+      });
+    } catch {
+      throw new HttpsError("internal", "Image upload failed");
+    }
+
+    try {
+      await sourceFile.delete();
+    } catch {
+      // best effort
+    }
+
+    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(destinationPath)}?alt=media&token=${token}`;
+    return {
+      ok: true,
+      storagePath: destinationPath,
+      downloadUrl,
+      thumbnailUrl: downloadUrl,
+      mimeType: "image/webp",
+      width,
+      height,
+      sizeBytes: outputBuffer.length,
+    };
+  },
+);
 
 export function sanitizeConversationAttachments(
   value: unknown,

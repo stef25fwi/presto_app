@@ -3,6 +3,7 @@ import test from "node:test";
 import { HttpsError } from "firebase-functions/v2/https";
 import {
   assertConversationParticipantAccess,
+  buildProcessedConversationAttachmentPath,
   canonicalConversationId,
   computeUnreadCountAfterMessageDeletion,
   mergeConversationParticipants,
@@ -162,6 +163,31 @@ test("sanitizeConversationAttachments rejects unsupported document mime type", (
     (error: unknown) => {
       assert.ok(error instanceof HttpsError);
       assert.equal(error.code, "invalid-argument");
+      return true;
+    },
+  );
+});
+
+test("buildProcessedConversationAttachmentPath keeps photos scoped and converts to webp", () => {
+  const path = buildProcessedConversationAttachmentPath({
+    uid: "buyer_a",
+    conversationId: "conv_1",
+    storagePath: "messageAttachments/buyer_a/conv_1/123_photo.jpg",
+  });
+
+  assert.equal(path, "messageAttachments/buyer_a/conv_1/processed_123_photo.webp");
+});
+
+test("buildProcessedConversationAttachmentPath rejects another user path", () => {
+  assert.throws(
+    () => buildProcessedConversationAttachmentPath({
+      uid: "buyer_a",
+      conversationId: "conv_1",
+      storagePath: "messageAttachments/seller_b/conv_1/123_photo.jpg",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpsError);
+      assert.equal(error.code, "permission-denied");
       return true;
     },
   );
