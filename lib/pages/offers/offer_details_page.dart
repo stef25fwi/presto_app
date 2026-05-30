@@ -659,8 +659,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final overlayTheme = context.prestoOverlayTheme;
     final messenger = ScaffoldMessenger.maybeOf(context);
     final detailPath = data.isMarketplace ? 'listings' : 'offers';
-    final offerUrl =
-      '${prestoPublicAppOrigin()}/#/$detailPath/${data.offerId}';
+    final offerUrl = '${prestoPublicAppOrigin()}/#/$detailPath/${data.offerId}';
     final shareText = '${data.title} - ${data.city}\n$offerUrl';
 
     await showModalBottomSheet<void>(
@@ -1998,13 +1997,10 @@ class _HeroCard extends StatelessWidget {
 
   void _openGallery(BuildContext context, int initialIndex) {
     if (data.imageUrls.isEmpty) return;
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => _FullScreenGalleryPage(
-          imageUrls: data.imageUrls,
-          initialIndex: initialIndex,
-        ),
-      ),
+    _showPhotoGalleryPopup(
+      context,
+      imageUrls: data.imageUrls,
+      initialIndex: initialIndex,
     );
   }
 
@@ -2463,31 +2459,60 @@ class _PhotoThumbnailStrip extends StatelessWidget {
   }
 
   void _openFullScreenGallery(BuildContext context, int initialIndex) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => _FullScreenGalleryPage(
-          imageUrls: imageUrls,
-          initialIndex: initialIndex,
-        ),
-      ),
+    _showPhotoGalleryPopup(
+      context,
+      imageUrls: imageUrls,
+      initialIndex: initialIndex,
     );
   }
 }
 
-class _FullScreenGalleryPage extends StatefulWidget {
+Future<void> _showPhotoGalleryPopup(
+  BuildContext context, {
+  required List<String> imageUrls,
+  required int initialIndex,
+}) {
+  if (imageUrls.isEmpty) return Future<void>.value();
+  return showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'Fermer',
+    barrierColor: Colors.black87,
+    transitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, _, __) {
+      return _PhotoGalleryPopup(
+        imageUrls: imageUrls,
+        initialIndex: initialIndex,
+      );
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: animation,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.96, end: 1).animate(
+            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          ),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+class _PhotoGalleryPopup extends StatefulWidget {
   final List<String> imageUrls;
   final int initialIndex;
 
-  const _FullScreenGalleryPage({
+  const _PhotoGalleryPopup({
     required this.imageUrls,
     required this.initialIndex,
   });
 
   @override
-  State<_FullScreenGalleryPage> createState() => _FullScreenGalleryPageState();
+  State<_PhotoGalleryPopup> createState() => _PhotoGalleryPopupState();
 }
 
-class _FullScreenGalleryPageState extends State<_FullScreenGalleryPage> {
+class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
   late final PageController _pageController;
   late int _currentPage;
 
@@ -2506,47 +2531,97 @@ class _FullScreenGalleryPageState extends State<_FullScreenGalleryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          '${_currentPage + 1} / ${widget.imageUrls.length}',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        centerTitle: true,
-      ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: widget.imageUrls.length,
-        onPageChanged: (index) => setState(() => _currentPage = index),
-        itemBuilder: (context, index) {
-          return InteractiveViewer(
-            minScale: 0.5,
-            maxScale: 4.0,
-            child: Center(
-              child: _OfferImage(
-                rawUrl: widget.imageUrls[index],
-                fit: BoxFit.contain,
-                errorChild: const Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.white54,
-                  size: 64,
-                ),
-                loadingChild: const SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.white70,
+    final media = MediaQuery.of(context).size;
+    final popupHeight = media.height * 0.88;
+    final popupWidth = media.width * 0.94;
+
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: popupWidth > 1100 ? 1100 : popupWidth,
+            maxHeight: popupHeight,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Material(
+              color: Colors.black,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: widget.imageUrls.length,
+                      onPageChanged: (index) =>
+                          setState(() => _currentPage = index),
+                      itemBuilder: (context, index) {
+                        return InteractiveViewer(
+                          minScale: 0.5,
+                          maxScale: 4.0,
+                          child: Center(
+                            child: _OfferImage(
+                              rawUrl: widget.imageUrls[index],
+                              fit: BoxFit.contain,
+                              errorChild: const Icon(
+                                Icons.broken_image_outlined,
+                                color: Colors.white54,
+                                size: 64,
+                              ),
+                              loadingChild: const SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    right: 10,
+                    child: Row(
+                      children: [
+                        IconButton.filledTonal(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black45,
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black45,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '${_currentPage + 1} / ${widget.imageUrls.length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
