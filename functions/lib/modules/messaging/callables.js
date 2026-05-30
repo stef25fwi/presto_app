@@ -7,6 +7,7 @@ exports.deleteConversationMessage = exports.deleteConversation = exports.unblock
 exports.assertConversationParticipantAccess = assertConversationParticipantAccess;
 exports.canonicalConversationId = canonicalConversationId;
 exports.resolveOfferLikeData = resolveOfferLikeData;
+exports.sanitizeConversationAttachments = sanitizeConversationAttachments;
 exports.mergeConversationParticipants = mergeConversationParticipants;
 exports.computeUnreadCountAfterMessageDeletion = computeUnreadCountAfterMessageDeletion;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
@@ -148,6 +149,73 @@ function sanitizeMessageText(value) {
         .map((line) => line.replace(/\s+$/g, ""))
         .join("\n")
         .trim();
+}
+function sanitizeAttachmentText(value, maxLength) {
+    return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+function isAllowedDocumentAttachmentMimeType(mimeType) {
+    return mimeType.startsWith("text/") || [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ].includes(mimeType);
+}
+function sanitizeConversationAttachments(value, currentUserId, conversationId) {
+    if (value == null)
+        return [];
+    if (!Array.isArray(value)) {
+        throw new https_1.HttpsError("invalid-argument", "attachments must be an array");
+    }
+    if (value.length > 4) {
+        throw new https_1.HttpsError("invalid-argument", "too many attachments");
+    }
+    return value.map((entry, index) => {
+        if (!entry || typeof entry !== "object") {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} is invalid`);
+        }
+        const raw = entry;
+        const type = sanitizeAttachmentText(raw.type, 24);
+        if (type !== "image" && type !== "document") {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} type is invalid`);
+        }
+        const name = sanitizeAttachmentText(raw.name, 140) || (type === "image" ? "Photo" : "Document");
+        const url = String(raw.url ?? "").trim();
+        const storagePath = String(raw.storagePath ?? "").trim();
+        const mimeType = sanitizeAttachmentText(raw.mimeType, 120);
+        const sizeBytes = Number(raw.sizeBytes || 0);
+        let parsedUrl;
+        try {
+            parsedUrl = new URL(url);
+        }
+        catch (_) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} url is invalid`);
+        }
+        if (parsedUrl.protocol !== "https:" ||
+            !["firebasestorage.googleapis.com", "storage.googleapis.com"].includes(parsedUrl.hostname) ||
+            !storagePath.startsWith(`messageAttachments/${currentUserId}/${conversationId}/`)) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} storage is invalid`);
+        }
+        if (storagePath.includes("..") || storagePath.includes("\\") || storagePath.startsWith("/")) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} storage path is invalid`);
+        }
+        if (!mimeType || !Number.isFinite(sizeBytes) || sizeBytes <= 0 || sizeBytes > 20 * 1024 * 1024) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} metadata is invalid`);
+        }
+        if (type === "image" && !mimeType.startsWith("image/")) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} must be an image`);
+        }
+        if (type === "document" && !isAllowedDocumentAttachmentMimeType(mimeType)) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} document type is invalid`);
+        }
+        return {
+            type,
+            name,
+            url,
+            storagePath,
+            mimeType,
+            sizeBytes: Math.round(sizeBytes),
+        };
+    });
 }
 function mergeConversationParticipants(existingParticipants, requiredParticipants) {
     return [...existingParticipants, ...requiredParticipants]
@@ -336,10 +404,15 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const text = sanitizeMessageText(request.data?.text);
-    if (!conversationId || !text) {
-        throw new https_1.HttpsError("invalid-argument", "conversationId and text are required");
+    const attachments = sanitizeConversationAttachments(request.data?.attachments, currentUserId, conversationId);
+    const firstAttachment = attachments[0];
+    const messageText = text || (firstAttachment
+        ? (firstAttachment.type === "image" ? `Photo : ${firstAttachment.name}` : `Document : ${firstAttachment.name}`)
+        : "");
+    if (!conversationId || !messageText) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId and text or attachment are required");
     }
-    if (text.length > 4000) {
+    if (messageText.length > 4000) {
         throw new https_1.HttpsError("invalid-argument", "message is too long");
     }
     const canSend = await (0, rate_limit_1.canProceedRateLimited)("msg_send", `${currentUserId}:${conversationId}`, MESSAGE_SEND_LIMIT, MESSAGE_SEND_WINDOW_MS);
@@ -358,8 +431,9 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         const latestSenderId = String(latestData.senderId || "").trim();
         const latestText = sanitizeMessageText(latestData.text);
         const latestCreatedAt = toDateOrNull(latestData.createdAt);
-        if (latestSenderId === currentUserId &&
-            latestText === text &&
+        if (attachments.length === 0 &&
+            latestSenderId === currentUserId &&
+            latestText === messageText &&
             latestCreatedAt != null &&
             Date.now() - latestCreatedAt.getTime() <= DUPLICATE_MESSAGE_WINDOW_MS) {
             return {
@@ -387,8 +461,9 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         }
         const isFirstMessage = (0, mirror_1.readConversationMessageCount)(data) === 0;
         transaction.set(messageRef, {
-            text,
-            body: text,
+            text: messageText,
+            body: messageText,
+            attachments,
             senderId: currentUserId,
             sender_id: currentUserId,
             senderName,
@@ -418,7 +493,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             },
             archivedBy,
             unreadCount,
-            lastMessage: text,
+            lastMessage: messageText,
             lastSenderId: currentUserId,
             lastSenderName: senderName,
             status: "open",

@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onListingPublished = exports.onOfferUpdated = exports.onOfferCreated = void 0;
 exports.buildListingRouteUrl = buildListingRouteUrl;
+exports.getSubCategory = getSubCategory;
+exports.shouldNotifyUserForFavoriteListing = shouldNotifyUserForFavoriteListing;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const firestore_2 = require("../../core/firestore");
 const env_1 = require("../../config/env");
@@ -25,10 +27,76 @@ function buildListingRouteUrl(sourceCollection, sourceId) {
 function getCategory(data) {
     return String(data?.category || "").trim();
 }
+function getSubCategory(data) {
+    return String(data?.subCategory || data?.subcategory || "").trim();
+}
+function normalizeAlertToken(value) {
+    return String(value || "").trim().toLowerCase();
+}
+function splitFavoriteSubcategoryLabel(value) {
+    const raw = String(value || "").trim();
+    if (!raw)
+        return null;
+    const separator = raw.includes(" — ")
+        ? " — "
+        : raw.includes(" - ")
+            ? " - "
+            : raw.includes("/")
+                ? "/"
+                : "";
+    if (!separator)
+        return null;
+    const [left, ...rest] = raw.split(separator);
+    if (!left || rest.length === 0)
+        return null;
+    const right = rest.join(separator).trim();
+    const category = left.trim();
+    if (!category || !right)
+        return null;
+    return { category, subcategory: right };
+}
+function normalizeStringList(value) {
+    if (!Array.isArray(value))
+        return [];
+    return value
+        .map((entry) => String(entry || "").trim())
+        .filter((entry) => entry.length > 0);
+}
+function shouldNotifyUserForFavoriteListing({ userData, listingCategory, listingSubCategory, }) {
+    const normalizedCategory = normalizeAlertToken(listingCategory);
+    if (!normalizedCategory)
+        return false;
+    const selectedCategories = normalizeStringList(userData.selectedFavoriteCategories);
+    const legacyFavorites = normalizeStringList(userData.favoriteCategories);
+    const hasCategorySelection = [...selectedCategories, ...legacyFavorites]
+        .map((entry) => normalizeAlertToken(entry))
+        .includes(normalizedCategory);
+    if (!hasCategorySelection) {
+        return false;
+    }
+    // Sans sous-catégorie sur l'annonce, on notifie tous les abonnés à la catégorie.
+    const normalizedListingSubCategory = normalizeAlertToken(listingSubCategory);
+    if (!normalizedListingSubCategory) {
+        return true;
+    }
+    const selectedSubcategories = normalizeStringList(userData.selectedFavoriteSubcategories);
+    const categoryScopedSubcategories = selectedSubcategories
+        .map(splitFavoriteSubcategoryLabel)
+        .filter((entry) => entry != null)
+        .filter((entry) => normalizeAlertToken(entry.category) === normalizedCategory)
+        .map((entry) => normalizeAlertToken(entry.subcategory));
+    // Si l'utilisateur n'a pas restreint la catégorie par sous-catégorie,
+    // on conserve le comportement historique (alerte catégorie).
+    if (categoryScopedSubcategories.length === 0) {
+        return true;
+    }
+    return categoryScopedSubcategories.includes(normalizedListingSubCategory);
+}
 async function notifyFavoriteCategoryUsers({ offerId, offerData, ownerId, }) {
     const category = getCategory(offerData);
     if (!category)
         return;
+    const subCategory = getSubCategory(offerData);
     const [selectedSnap, legacySnap] = await Promise.all([
         firestore_2.db.collection(constants_1.COLLECTIONS.users)
             .where("selectedFavoriteCategories", "array-contains", category)
@@ -41,7 +109,14 @@ async function notifyFavoriteCategoryUsers({ offerId, offerData, ownerId, }) {
     ]);
     const recipients = new Set();
     for (const doc of [...selectedSnap.docs, ...legacySnap.docs]) {
-        if (doc.id && doc.id !== ownerId) {
+        if (!doc.id || doc.id === ownerId)
+            continue;
+        const userData = (doc.data() ?? {});
+        if (shouldNotifyUserForFavoriteListing({
+            userData,
+            listingCategory: category,
+            listingSubCategory: subCategory,
+        })) {
             recipients.add(doc.id);
         }
     }
