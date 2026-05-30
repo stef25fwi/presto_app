@@ -94,7 +94,7 @@ export function shouldNotifyUserForFavoriteListing({
   const selectedSubcategories = normalizeStringList(userData.selectedFavoriteSubcategories);
   const categoryScopedSubcategories = selectedSubcategories
     .map(splitFavoriteSubcategoryLabel)
-    .where((entry): entry is { category: string; subcategory: string } => entry != null)
+    .filter((entry): entry is { category: string; subcategory: string } => entry != null)
     .filter((entry) => normalizeAlertToken(entry.category) === normalizedCategory)
     .map((entry) => normalizeAlertToken(entry.subcategory));
 

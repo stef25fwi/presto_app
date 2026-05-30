@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
@@ -48,26 +53,46 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final List<_OptimisticMessage> _optimisticMessages = <_OptimisticMessage>[];
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _conversationSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _presenceSubscription;
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> _olderMessageDocs =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  Timer? _typingStopTimer;
   QueryDocumentSnapshot<Map<String, dynamic>>? _paginationAnchorDoc;
+  Future<_OfferPreview?>? _offerPreviewFuture;
+  String? _offerPreviewFutureId;
   late Stream<QuerySnapshot<Map<String, dynamic>>> _messageStream;
   bool _isSending = false;
+  bool _hasDraftText = false;
   bool _isMarkingRead = false;
   bool _hasAttemptedOlderPagination = false;
   bool _isLoadingMoreMessages = false;
   bool _hasMoreMessages = true;
   List<String> _participants = const [];
+  Map<String, String> _participantNames = const {};
   Map<String, dynamic> _lastReadAt = const {};
   bool _metaLoaded = false;
   bool _didApplyInitialDraft = false;
-  bool _didShowNewConversationSafetyDialog = false;
+  bool _showSafetyReminder = true;
+  bool _isOfferCardExpanded = true;
+  bool _showEmojiStrip = false;
+  bool _isOtherTyping = false;
+  bool _showNewMessagesButton = false;
+  bool _isUploadingAttachment = false;
+  String? _newestLiveMessageId;
   bool _isBlocked = false;
   bool _isBlockedForCurrentUser = false;
   bool _isArchivedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
+  String _offerId = '';
+  String _conversationOfferTitle = '';
+  String _otherParticipantId = '';
+  String _otherParticipantName = '';
+  String _otherPresenceStatus = '';
+  DateTime? _otherLastSeenAt;
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
@@ -97,6 +122,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   @override
   void initState() {
     super.initState();
+    _controller.addListener(_handleDraftChanged);
     _messageStream = _buildLiveStream();
     _bindConversationListener();
   }
@@ -104,9 +130,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   @override
   void dispose() {
     _conversationSubscription?.cancel();
+    _presenceSubscription?.cancel();
+    _typingStopTimer?.cancel();
+    unawaited(_publishTyping(false));
+    _controller.removeListener(_handleDraftChanged);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _handleDraftChanged() {
+    final nextHasDraftText = _controller.text.trim().isNotEmpty;
+    if (nextHasDraftText == _hasDraftText) return;
+    setState(() {
+      _hasDraftText = nextHasDraftText;
+    });
+    _scheduleTypingUpdate(nextHasDraftText);
   }
 
   bool _isPermissionDenied(Object? error) {
@@ -116,28 +155,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildWatermark() {
-    return IgnorePointer(
-      child: Center(
-        child: Transform.rotate(
-          angle: -0.16,
-          child: Text(
-            'iliprestō',
-            style: TextStyle(
-              fontSize: 70,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
-              color: Colors.grey.withOpacity(0.06),
-            ),
-          ),
-        ),
-      ),
-    );
+    return const _ConversationPatternBackground();
   }
 
   Widget _buildThreadDateChip(DateTime? date) {
-    final label = date != null
-        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}'
-        : '--/--/----';
+    final label = _formatThreadDateLabel(date);
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Center(
@@ -167,14 +189,150 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   String _conversationInitial() {
-    final raw = widget.offerTitle.trim();
+    final raw = _headerDisplayName.trim();
     if (raw.isEmpty) return '?';
     return raw.characters.first.toUpperCase();
   }
 
   String get _headerOfferTitle {
-    final normalized = widget.offerTitle.trim();
+    final normalized = _conversationOfferTitle.trim().isNotEmpty
+        ? _conversationOfferTitle.trim()
+        : widget.offerTitle.trim();
     return normalized.isEmpty ? 'Annonce' : normalized;
+  }
+
+  String get _headerDisplayName {
+    final normalized = _otherParticipantName.trim();
+    return normalized.isEmpty ? _headerOfferTitle : normalized;
+  }
+
+  String get _headerSubtitle {
+    if (_isOtherTyping) return '$_headerDisplayName écrit…';
+    final status = _otherPresenceStatus.trim().toLowerCase();
+    if (status == 'online' && _isRecentlySeen(_otherLastSeenAt)) {
+      return 'en ligne';
+    }
+    if (_otherLastSeenAt != null) {
+      return 'vu ${_formatPresenceSeenAt(_otherLastSeenAt!)}';
+    }
+    return _headerOfferTitle;
+  }
+
+  bool _isRecentlySeen(DateTime? value) {
+    if (value == null) return true;
+    return DateTime.now().difference(value.toLocal()) <
+        const Duration(minutes: 4);
+  }
+
+  String _readText(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key]?.toString().trim() ?? '';
+      if (value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  Map<String, String> _readStringMap(
+    Map<String, dynamic> data,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final raw = data[key];
+      if (raw is! Map) continue;
+      final result = <String, String>{};
+      for (final entry in raw.entries) {
+        final mapKey = entry.key.toString().trim();
+        final mapValue = entry.value?.toString().trim() ?? '';
+        if (mapKey.isEmpty || mapValue.isEmpty) continue;
+        result[mapKey] = mapValue;
+      }
+      return result;
+    }
+    return const <String, String>{};
+  }
+
+  void _bindPresenceListener(String participantId) {
+    if (participantId.trim().isEmpty || participantId == _otherParticipantId) {
+      return;
+    }
+    _presenceSubscription?.cancel();
+    _presenceSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(participantId)
+        .snapshots()
+        .listen((snapshot) {
+      final data = snapshot.data();
+      if (data == null || !mounted) return;
+      setState(() {
+        _otherPresenceStatus =
+            (data['status'] ?? '').toString().trim().toLowerCase();
+        _otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
+      });
+    });
+  }
+
+  void _scheduleTypingUpdate(bool isTyping) {
+    _typingStopTimer?.cancel();
+    unawaited(_publishTyping(isTyping));
+    if (!isTyping) return;
+    _typingStopTimer = Timer(const Duration(seconds: 5), () {
+      unawaited(_publishTyping(false));
+    });
+  }
+
+  Future<void> _publishTyping(bool isTyping) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(widget.conversationId)
+          .update(<String, Object?>{
+        'typing.${widget.currentUserId}': isTyping,
+        'typingUpdatedAt.${widget.currentUserId}': FieldValue.serverTimestamp(),
+      });
+    } catch (error) {
+      debugPrint('[ConversationThread] typing update skipped: $error');
+    }
+  }
+
+  Future<_OfferPreview?> _offerPreviewFor(String offerId) {
+    final normalizedOfferId = offerId.trim();
+    if (normalizedOfferId.isEmpty) return Future.value(null);
+    if (_offerPreviewFutureId == normalizedOfferId &&
+        _offerPreviewFuture != null) {
+      return _offerPreviewFuture!;
+    }
+    _offerPreviewFutureId = normalizedOfferId;
+    _offerPreviewFuture = _loadOfferPreview(normalizedOfferId);
+    return _offerPreviewFuture!;
+  }
+
+  Future<_OfferPreview?> _loadOfferPreview(String offerId) async {
+    for (final collectionName in const ['listings', 'offers']) {
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collection(collectionName)
+            .doc(offerId)
+            .get();
+        final data = snapshot.data();
+        if (data != null) {
+          return _OfferPreview.fromMap(offerId, data);
+        }
+      } on FirebaseException catch (error) {
+        if (error.code == 'permission-denied' ||
+            error.code == 'unauthenticated') {
+          continue;
+        }
+        rethrow;
+      }
+    }
+    return null;
+  }
+
+  void _openLinkedOffer() {
+    final normalizedOfferId = _offerId.trim();
+    if (normalizedOfferId.isEmpty) return;
+    Navigator.of(context)
+        .pushNamed('/offers/${Uri.encodeComponent(normalizedOfferId)}');
   }
 
   Widget _buildThreadAppBarTitle() {
@@ -194,11 +352,28 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            _headerOfferTitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: kPrestoAppBarTitleStyle,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _headerDisplayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: kPrestoAppBarTitleStyle,
+              ),
+              const SizedBox(height: 1),
+              Text(
+                _metaLoaded ? _headerSubtitle : 'Chargement...',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -206,69 +381,145 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildOfferContextBanner() {
+    final normalizedOfferId = _offerId.trim();
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.92),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFFE5E7EB),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: FutureBuilder<_OfferPreview?>(
+        future: _offerPreviewFor(normalizedOfferId),
+        builder: (context, snapshot) {
+          final preview = snapshot.data ??
+              _OfferPreview(
+                id: normalizedOfferId,
+                title: _headerOfferTitle,
+                priceLabel: '',
+                imageUrl: '',
+              );
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF2FF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.lock_outline_rounded,
-                color: Color(0xFF1A73E8),
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.offerTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: kPrestoBodyTextStyle.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
-                    ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 42,
+                    height: 42,
+                    child: preview.imageUrl.isEmpty
+                        ? Container(
+                            color: const Color(0xFFEAF2FF),
+                            child: const Icon(
+                              Icons.work_outline_rounded,
+                              color: kPrestoBlue,
+                              size: 20,
+                            ),
+                          )
+                        : Image.network(
+                            preview.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: const Color(0xFFEAF2FF),
+                              child: const Icon(
+                                Icons.image_not_supported_outlined,
+                                color: kPrestoBlue,
+                                size: 18,
+                              ),
+                            ),
+                          ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Discussion liee a cette annonce',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: kPrestoMetaTextStyle.copyWith(
-                      color: const Color(0xFF6B7280),
-                      fontWeight: FontWeight.w600,
-                    ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        preview.title.isEmpty
+                            ? _headerOfferTitle
+                            : preview.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: kPrestoBodyTextStyle.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF111827),
+                        ),
+                      ),
+                      if (_isOfferCardExpanded) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                preview.priceLabel.isEmpty
+                                    ? 'Annonce liée à la conversation'
+                                    : preview.priceLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: kPrestoMetaTextStyle.copyWith(
+                                  color: const Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (normalizedOfferId.isNotEmpty)
+                              TextButton(
+                                onPressed: _openLinkedOffer,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  'Voir',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    color: kPrestoBlue,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
+                ),
+                IconButton(
+                  tooltip: _isOfferCardExpanded ? 'Réduire' : 'Déplier',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => setState(
+                    () => _isOfferCardExpanded = !_isOfferCardExpanded,
+                  ),
+                  icon: Icon(
+                    _isOfferCardExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: const Color(0xFF6B7280),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -292,6 +543,44 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         data,
         conversationId: widget.conversationId,
       );
+      final participantNames = _readStringMap(
+        data,
+        const ['participantNames', 'participant_names'],
+      );
+      final otherParticipantId = participants.firstWhere(
+        (participantId) => participantId != widget.currentUserId,
+        orElse: () => '',
+      );
+      final otherParticipantName =
+          (participantNames[otherParticipantId] ?? '').trim().isNotEmpty
+              ? participantNames[otherParticipantId]!.trim()
+              : _readText(
+                  data,
+                  const ['otherUserName', 'other_user_name'],
+                );
+      final offerId = _readText(
+        data,
+        const ['listingId', 'offerId', 'offer_id'],
+      );
+      final offerTitle = _readText(
+        data,
+        const ['listingTitle', 'offerTitle', 'offer_title'],
+      );
+      final typingMap = _conversationValue(data, const ['typing']);
+      final typingUpdatedAtMap =
+          _conversationValue(data, const ['typingUpdatedAt']);
+      var isOtherTyping = false;
+      if (typingMap is Map) {
+        final rawTyping = typingMap[otherParticipantId] == true;
+        final updatedAt = typingUpdatedAtMap is Map
+            ? parseFirestoreDateTime(typingUpdatedAtMap[otherParticipantId])
+            : null;
+        isOtherTyping = rawTyping &&
+            (updatedAt == null ||
+                DateTime.now().difference(updatedAt.toLocal()) <
+                    const Duration(seconds: 8));
+      }
+      _bindPresenceListener(otherParticipantId);
       final unreadMap = _conversationValue(
         data,
         const ['unreadCount', 'unread_count'],
@@ -305,6 +594,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (mounted) {
         setState(() {
           _participants = participants;
+          _participantNames = participantNames;
+          _otherParticipantId = otherParticipantId;
+          _otherParticipantName = otherParticipantName;
+          _offerId = offerId;
+          _conversationOfferTitle = offerTitle;
+          _isOtherTyping = isOtherTyping;
           final lastReadAt = _conversationValue(
             data,
             const ['lastReadAt', 'last_read_at'],
@@ -468,9 +763,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return;
     }
 
+    final optimisticMessage = _OptimisticMessage(
+      id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+      text: text,
+      sentAt: DateTime.now(),
+      senderName: authUser.displayName?.trim() ?? '',
+      status: _OptimisticMessageStatus.sending,
+    );
+
     setState(() {
       _isSending = true;
+      _hasDraftText = false;
+      _optimisticMessages.insert(0, optimisticMessage);
     });
+    _controller.clear();
+
+    _scrollToLatestMessage(force: true);
 
     try {
       await ConversationService.sendMessage(
@@ -478,25 +786,129 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         text: text,
       );
 
-      _controller.clear();
       unawaited(_markAsRead());
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-        );
-      }
+      _removeOptimisticMessage(optimisticMessage.id);
+      _scrollToLatestMessage(force: true);
     } catch (error) {
       debugPrint('[ConversationThread] _sendMessage error: $error');
       if (!mounted) return;
-      _controller.value = TextEditingValue(
-        text: rawDraft,
-        selection: TextSelection.collapsed(offset: rawDraft.length),
-      );
+      _markOptimisticMessageFailed(optimisticMessage.id);
+      if (_controller.text.trim().isEmpty) {
+        _controller.value = TextEditingValue(
+          text: rawDraft,
+          selection: TextSelection.collapsed(offset: rawDraft.length),
+        );
+      }
       showErrorSnackBar(
         context,
         'L envoi du message a echoue. Reessayez dans un instant.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  bool _isNearLatestMessage() {
+    if (!_scrollController.hasClients) return true;
+    return _scrollController.offset <= 96;
+  }
+
+  void _scrollToLatestMessage({bool force = false}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      if (!force && !_isNearLatestMessage()) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+      if (mounted && _showNewMessagesButton) {
+        setState(() => _showNewMessagesButton = false);
+      }
+    });
+  }
+
+  void _handleLiveMessageDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> liveDocs,
+  ) {
+    if (liveDocs.isEmpty) return;
+    final newestDoc = liveDocs.first;
+    if (_newestLiveMessageId == null) {
+      _newestLiveMessageId = newestDoc.id;
+      return;
+    }
+    if (_newestLiveMessageId == newestDoc.id) return;
+
+    _newestLiveMessageId = newestDoc.id;
+    final data = newestDoc.data();
+    final senderId = ((data['senderId'] ?? data['sender_id']) ?? '').toString();
+    if (senderId == widget.currentUserId || _isNearLatestMessage()) {
+      _scrollToLatestMessage();
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _showNewMessagesButton = true);
+    });
+  }
+
+  void _removeOptimisticMessage(String id) {
+    if (!mounted) return;
+    setState(() {
+      _optimisticMessages.removeWhere((message) => message.id == id);
+    });
+  }
+
+  void _markOptimisticMessageFailed(String id) {
+    if (!mounted) return;
+    setState(() {
+      final index =
+          _optimisticMessages.indexWhere((message) => message.id == id);
+      if (index < 0) return;
+      _optimisticMessages[index] = _optimisticMessages[index].copyWith(
+        status: _OptimisticMessageStatus.failed,
+      );
+    });
+  }
+
+  Future<void> _retryOptimisticMessage(_OptimisticMessage message) async {
+    if (_isSending || _isBlocked) return;
+
+    setState(() {
+      _isSending = true;
+      final index = _optimisticMessages.indexWhere(
+        (item) => item.id == message.id,
+      );
+      if (index >= 0) {
+        _optimisticMessages[index] = message.copyWith(
+          status: _OptimisticMessageStatus.sending,
+        );
+      }
+    });
+
+    try {
+      await ConversationService.sendMessage(
+        conversationId: widget.conversationId,
+        text: message.text,
+        attachments: message.attachments
+            .map((attachment) => attachment.toInput())
+            .toList(),
+      );
+      unawaited(_markAsRead());
+      _removeOptimisticMessage(message.id);
+      _scrollToLatestMessage(force: true);
+    } catch (error) {
+      debugPrint('[ConversationThread] retry send error: $error');
+      _markOptimisticMessageFailed(message.id);
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Le message n’a pas pu être renvoyé.',
       );
     } finally {
       if (mounted) {
@@ -631,116 +1043,578 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     });
   }
 
-  void _showNewConversationSafetyDialogIfNeeded(bool hasMessages) {
-    if (_didShowNewConversationSafetyDialog || hasMessages) return;
+  Widget _buildSafetyReminderBanner() {
+    if (!_showSafetyReminder) return const SizedBox.shrink();
 
-    _didShowNewConversationSafetyDialog = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          final overlayTheme = dialogContext.prestoOverlayTheme;
-          return Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 24,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7ED),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFD7AE)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.shield_outlined,
+              color: kPrestoOrange,
+              size: 20,
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: overlayTheme.surfaceColor,
-                borderRadius: overlayTheme.dialogRadius,
-                border: Border.all(color: overlayTheme.borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: overlayTheme.shadowColor,
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Ne partagez jamais de codes, mots de passe ou informations bancaires.',
+                style: kPrestoMetaTextStyle.copyWith(
+                  color: const Color(0xFF92400E),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF4EC),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.shield_outlined,
-                          color: kPrestoOrange,
+            ),
+            IconButton(
+              tooltip: 'Masquer',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => setState(() => _showSafetyReminder = false),
+              icon: const Icon(
+                Icons.close_rounded,
+                size: 18,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTypingIndicator() {
+    if (!_isOtherTyping) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 6, 18, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.94),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Text(
+            '$_headerDisplayName écrit…',
+            style: kPrestoMetaTextStyle.copyWith(
+              color: kWhatsappGreen,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmojiStrip() {
+    if (!_showEmojiStrip || _isBlocked) return const SizedBox.shrink();
+
+    const emojis = ['👍', '🙏', '😊', '👌', '🔥', '💬'];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final emoji in emojis)
+                InkWell(
+                  onTap: () => _insertEmoji(emoji),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 19),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _insertEmoji(String emoji) {
+    final selection = _controller.selection;
+    final text = _controller.text;
+    final start = selection.start >= 0 ? selection.start : text.length;
+    final end = selection.end >= 0 ? selection.end : text.length;
+    final next = text.replaceRange(start, end, emoji);
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + emoji.length),
+    );
+  }
+
+  String _safeAttachmentName(String name, String fallback) {
+    final cleaned = name.trim().isEmpty ? fallback : name.trim();
+    final sanitized = cleaned
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    if (sanitized.isNotEmpty) return sanitized;
+    return fallback
+        .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), 'piece-jointe');
+  }
+
+  String _mimeTypeForName(String name, String fallback) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) {
+      return 'image/jpeg';
+    }
+    if (lowerName.endsWith('.png')) return 'image/png';
+    if (lowerName.endsWith('.webp')) return 'image/webp';
+    if (lowerName.endsWith('.gif')) return 'image/gif';
+    if (lowerName.endsWith('.pdf')) return 'application/pdf';
+    if (lowerName.endsWith('.txt')) return 'text/plain';
+    if (lowerName.endsWith('.doc')) return 'application/msword';
+    if (lowerName.endsWith('.docx')) {
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+    return fallback;
+  }
+
+  String _attachmentMessageText(_MessageAttachment attachment) {
+    return attachment.type == 'image'
+        ? 'Photo : ${attachment.name}'
+        : 'Document : ${attachment.name}';
+  }
+
+  Future<void> _pickAndSendPhoto() async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) {
+      showErrorSnackBar(context, 'Connectez-vous pour envoyer une photo.');
+      return;
+    }
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 86,
+      maxWidth: 1920,
+    );
+    if (picked == null) return;
+
+    final bytes = await picked.readAsBytes();
+    final name = _safeAttachmentName(picked.name, 'photo.jpg');
+    await _uploadAndSendAttachment(
+      uid: authUser.uid,
+      type: 'image',
+      name: name,
+      bytes: bytes,
+      mimeType: picked.mimeType ?? _mimeTypeForName(name, 'image/jpeg'),
+    );
+  }
+
+  Future<void> _pickAndSendDocument() async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) {
+      showErrorSnackBar(context, 'Connectez-vous pour envoyer un document.');
+      return;
+    }
+
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.single;
+    final bytes = file.bytes;
+    if (bytes == null) {
+      showErrorSnackBar(context, 'Ce fichier ne peut pas être lu.');
+      return;
+    }
+
+    final name = _safeAttachmentName(file.name, 'document.pdf');
+    await _uploadAndSendAttachment(
+      uid: authUser.uid,
+      type: 'document',
+      name: name,
+      bytes: bytes,
+      mimeType: _mimeTypeForName(name, 'application/pdf'),
+    );
+  }
+
+  Future<void> _uploadAndSendAttachment({
+    required String uid,
+    required String type,
+    required String name,
+    required Uint8List bytes,
+    required String mimeType,
+  }) async {
+    if (_isUploadingAttachment || _isSending) return;
+    if (_isBlocked) {
+      showErrorSnackBar(
+        context,
+        'L envoi est indisponible tant que cette conversation est bloquee.',
+      );
+      return;
+    }
+    if (bytes.lengthInBytes > 20 * 1024 * 1024) {
+      showErrorSnackBar(context, 'La pièce jointe dépasse 20 Mo.');
+      return;
+    }
+
+    setState(() => _isUploadingAttachment = true);
+
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final path = 'messageAttachments/$uid/${widget.conversationId}/'
+          '${timestamp}_${_safeAttachmentName(name, 'piece-jointe')}';
+      final ref = FirebaseStorage.instance.ref().child(path);
+      await ref.putData(bytes, SettableMetadata(contentType: mimeType));
+      final url = await ref.getDownloadURL();
+      final attachment = _MessageAttachment(
+        type: type,
+        name: name,
+        url: url,
+        storagePath: path,
+        mimeType: mimeType,
+        sizeBytes: bytes.lengthInBytes,
+      );
+      await _sendAttachmentMessage(attachment);
+    } catch (error) {
+      debugPrint('[ConversationThread] attachment upload error: $error');
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'La pièce jointe n’a pas pu être envoyée.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingAttachment = false);
+      }
+    }
+  }
+
+  Future<void> _sendAttachmentMessage(_MessageAttachment attachment) async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) return;
+
+    final draftText = _controller.text.trim();
+    final text =
+        draftText.isEmpty ? _attachmentMessageText(attachment) : draftText;
+    final optimisticMessage = _OptimisticMessage(
+      id: 'local-attachment-${DateTime.now().microsecondsSinceEpoch}',
+      text: text,
+      attachments: [attachment],
+      sentAt: DateTime.now(),
+      senderName: authUser.displayName?.trim() ?? '',
+      status: _OptimisticMessageStatus.sending,
+    );
+
+    setState(() {
+      _isSending = true;
+      if (draftText.isNotEmpty) {
+        _controller.clear();
+        _hasDraftText = false;
+      }
+      _optimisticMessages.insert(0, optimisticMessage);
+    });
+    _scrollToLatestMessage(force: true);
+
+    try {
+      await ConversationService.sendMessage(
+        conversationId: widget.conversationId,
+        text: text,
+        attachments: [attachment.toInput()],
+      );
+      unawaited(_markAsRead());
+      _removeOptimisticMessage(optimisticMessage.id);
+      _scrollToLatestMessage(force: true);
+    } catch (error) {
+      debugPrint('[ConversationThread] send attachment error: $error');
+      _markOptimisticMessageFailed(optimisticMessage.id);
+      if (!mounted) return;
+      showErrorSnackBar(
+          context, 'La pièce jointe est prête mais l’envoi a échoué.');
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  void _showAttachmentSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_outlined, color: kPrestoBlue),
+                title: const Text('Photo'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  unawaited(_pickAndSendPhoto());
+                },
+              ),
+              ListTile(
+                leading:
+                    const Icon(Icons.description_outlined, color: kPrestoBlue),
+                title: const Text('Document'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  unawaited(_pickAndSendDocument());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showVoiceNotePlaceholder() {
+    showSuccessSnackBar(
+      context,
+      'Les notes vocales seront activées dans la prochaine étape.',
+    );
+  }
+
+  Future<void> _openAttachment(_MessageAttachment attachment) async {
+    final uri = Uri.tryParse(attachment.url);
+    if (uri == null) {
+      showErrorSnackBar(context, 'Lien de pièce jointe invalide.');
+      return;
+    }
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && mounted) {
+      showErrorSnackBar(context, 'Impossible d’ouvrir cette pièce jointe.');
+    }
+  }
+
+  Widget _buildAttachmentPreview(_MessageAttachment attachment) {
+    if (attachment.type == 'image') {
+      return InkWell(
+        onTap: () => unawaited(_openAttachment(attachment)),
+        borderRadius: BorderRadius.circular(14),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.network(
+            attachment.url,
+            width: 240,
+            height: 170,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 240,
+              height: 120,
+              color: const Color(0xFFF3F4F6),
+              alignment: Alignment.center,
+              child: const Icon(Icons.broken_image_outlined),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return InkWell(
+      onTap: () => unawaited(_openAttachment(attachment)),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 240,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.description_outlined, color: kPrestoBlue),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                attachment.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: kPrestoBodyTextStyle.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.open_in_new_rounded, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentPreviews(List<_MessageAttachment> attachments) {
+    if (attachments.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final attachment in attachments) ...[
+          _buildAttachmentPreview(attachment),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMessageBubble({
+    required String text,
+    required bool isMine,
+    required String senderName,
+    required DateTime? sentAt,
+    List<_MessageAttachment> attachments = const [],
+    String? readReceipt,
+    String? statusLabel,
+    bool failed = false,
+    bool groupedWithOlder = false,
+    bool groupedWithNewer = false,
+    VoidCallback? onRetry,
+    Future<void> Function()? onLongPress,
+  }) {
+    final labelParts = <String>[
+      _formatMessageTimestamp(sentAt),
+      if (readReceipt != null) readReceipt,
+      if (statusLabel != null) statusLabel,
+    ];
+
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: Align(
+        alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Container(
+            margin: EdgeInsets.only(
+              top: groupedWithNewer ? 1 : 4,
+              bottom: groupedWithOlder ? 1 : 4,
+            ),
+            padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
+            decoration: BoxDecoration(
+              color: failed
+                  ? const Color(0xFFFFE4E6)
+                  : isMine
+                      ? kThreadMineColor
+                      : kThreadOtherColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(!isMine && groupedWithNewer ? 8 : 18),
+                topRight: Radius.circular(isMine && groupedWithNewer ? 8 : 18),
+                bottomLeft: Radius.circular(!isMine && groupedWithOlder
+                    ? 8
+                    : isMine
+                        ? 18
+                        : 4),
+                bottomRight: Radius.circular(isMine && groupedWithOlder
+                    ? 8
+                    : isMine
+                        ? 4
+                        : 18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 7,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment:
+                  isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                if (!isMine && senderName.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Text(
+                      senderName,
+                      style: kPrestoMetaTextStyle.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                _buildAttachmentPreviews(attachments),
+                if (text.isNotEmpty)
+                  Text(
+                    text,
+                    style: kPrestoBodyTextStyle.copyWith(
+                      color: const Color(0xFF111827),
+                      height: 1.3,
+                      fontSize: 15,
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        labelParts.join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: kPrestoMetaTextStyle.copyWith(
+                          fontSize: 11,
+                          color: failed
+                              ? const Color(0xFFB91C1C)
+                              : const Color(0xFF6B7280),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Sécurité',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF111827),
+                    ),
+                    if (failed && onRetry != null) ...[
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: onRetry,
+                        borderRadius: BorderRadius.circular(999),
+                        child: const Padding(
+                          padding: EdgeInsets.all(2),
+                          child: Icon(
+                            Icons.refresh_rounded,
+                            size: 15,
+                            color: Color(0xFFB91C1C),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Ne partagez jamais vos coordonnées bancaires, codes, mots de passe ou informations sensibles dans cette conversation.',
-                    style: kPrestoBodyTextStyle.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF374151),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Signalez tout comportement suspect.',
-                    style: kPrestoBodyTextStyle.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFB91C1C),
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrestoOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        'J\'ai compris',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
-          );
-        },
-      );
-    });
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -789,6 +1663,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             children: [
               _buildOfferContextBanner(),
               _buildStateBanner(),
+              _buildSafetyReminderBanner(),
+              _buildTypingIndicator(),
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messageStream,
@@ -822,17 +1698,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     }
 
                     final liveDocs = snapshot.data?.docs ?? const [];
+                    _handleLiveMessageDocs(liveDocs);
                     _applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
-                    _showNewConversationSafetyDialogIfNeeded(
-                      liveDocs.isNotEmpty,
-                    );
                     final docs = _mergeMessageDocs(liveDocs);
+                    final visibleItemCount =
+                        docs.length + _optimisticMessages.length;
                     final canLoadMore = docs.isNotEmpty &&
                         (_hasAttemptedOlderPagination
                             ? _hasMoreMessages
                             : liveDocs.length >= _messagePageSize);
 
-                    if (docs.isEmpty) {
+                    if (visibleItemCount == 0) {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -848,221 +1724,264 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       );
                     }
 
-                    return ListView.builder(
-                      controller: _scrollController,
-                      reverse: true,
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                      itemCount: docs.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == docs.length) {
-                          // Dernier item (visuellement en haut) : bouton charger plus
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (canLoadMore)
-                                TextButton.icon(
-                                  onPressed: _isLoadingMoreMessages
-                                      ? null
-                                      : () => _loadMoreMessages(liveDocs),
-                                  icon: _isLoadingMoreMessages
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.history_rounded,
-                                          size: 16),
-                                  label: Text(
-                                    _isLoadingMoreMessages
-                                        ? 'Chargement...'
-                                        : 'Charger les messages plus anciens',
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF6B7280),
-                                    textStyle: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          );
-                        }
-
-                        final data = docs[index].data();
-                        final text =
-                            ((data['text'] ?? data['body']) ?? '').toString();
-                        final senderId =
-                            ((data['senderId'] ?? data['sender_id']) ?? '')
-                                .toString();
-                        final senderName =
-                            ((data['senderName'] ?? data['sender_name']) ?? '')
-                                .toString();
-                        final sentAt = parseFirestoreDateTime(
-                          (data['createdAt'] ?? data['created_at']),
-                        );
-                        final olderMessageDate = index + 1 < docs.length
-                            ? parseFirestoreDateTime(
-                                (docs[index + 1].data()['createdAt'] ??
-                                    docs[index + 1].data()['created_at']),
-                              )
-                            : null;
-                        final showDateChip = sentAt != null &&
-                            (olderMessageDate == null ||
-                                !_isSameCalendarDay(sentAt, olderMessageDate));
-                        final isMine = senderId == widget.currentUserId;
-                        final readReceipt =
-                            isMine ? _readReceiptLabel(sentAt) : null;
-                        final messageDocId = docs[index].id;
-
-                        final messageBubble = GestureDetector(
-                          onLongPress: isMine
-                              ? () async {
-                                  final scaffoldMessenger =
-                                      ScaffoldMessenger.of(context);
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) {
-                                      final overlayTheme =
-                                          ctx.prestoOverlayTheme;
-                                      return AlertDialog(
-                                        backgroundColor:
-                                            overlayTheme.surfaceColor,
-                                        surfaceTintColor:
-                                            overlayTheme.surfaceTintColor,
-                                        shape: overlayTheme.dialogShape,
-                                        title:
-                                            const Text('Supprimer ce message'),
-                                        content: const Text(
-                                          'Ce message sera definitivement supprime.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(ctx).pop(false),
-                                            child: const Text('Annuler'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(ctx).pop(true),
-                                            style: TextButton.styleFrom(
-                                              foregroundColor: Colors.red,
-                                            ),
-                                            child: const Text('Supprimer'),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                  if (confirmed != true || !mounted) return;
-                                  try {
-                                    await ConversationService.deleteMessage(
-                                      conversationId: widget.conversationId,
-                                      messageId: messageDocId,
-                                    );
-                                    if (!mounted) return;
-                                    scaffoldMessenger.showSnackBar(
-                                      const SnackBar(
-                                          content: Text('Message supprime.')),
-                                    );
-                                  } catch (error) {
-                                    if (!mounted) return;
-                                    scaffoldMessenger.showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Impossible de supprimer ce message : $error'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              : null,
-                          child: Align(
-                            alignment: isMine
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 320),
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(vertical: 4),
-                                padding:
-                                    const EdgeInsets.fromLTRB(12, 9, 12, 8),
-                                decoration: BoxDecoration(
-                                  color: isMine
-                                      ? kThreadMineColor
-                                      : kThreadOtherColor,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: const Radius.circular(18),
-                                    topRight: const Radius.circular(18),
-                                    bottomLeft:
-                                        Radius.circular(isMine ? 18 : 4),
-                                    bottomRight:
-                                        Radius.circular(isMine ? 4 : 18),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: isMine
-                                      ? CrossAxisAlignment.end
-                                      : CrossAxisAlignment.start,
+                    return Stack(
+                      children: [
+                        NotificationListener<ScrollNotification>(
+                          onNotification: (_) {
+                            if (_showNewMessagesButton &&
+                                _isNearLatestMessage()) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!mounted) return;
+                                setState(() => _showNewMessagesButton = false);
+                              });
+                            }
+                            return false;
+                          },
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            reverse: true,
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                            itemCount: visibleItemCount + 1,
+                            itemBuilder: (context, index) {
+                              if (index == visibleItemCount) {
+                                // Dernier item (visuellement en haut) : bouton charger plus
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (!isMine && senderName.isNotEmpty)
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 3),
-                                        child: Text(
-                                          senderName,
-                                          style: kPrestoMetaTextStyle.copyWith(
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF2563EB),
+                                    if (canLoadMore)
+                                      TextButton.icon(
+                                        onPressed: _isLoadingMoreMessages
+                                            ? null
+                                            : () => _loadMoreMessages(liveDocs),
+                                        icon: _isLoadingMoreMessages
+                                            ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              )
+                                            : const Icon(Icons.history_rounded,
+                                                size: 16),
+                                        label: Text(
+                                          _isLoadingMoreMessages
+                                              ? 'Chargement...'
+                                              : 'Charger les messages plus anciens',
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor:
+                                              const Color(0xFF6B7280),
+                                          textStyle: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
-                                    Text(
-                                      text,
-                                      style: kPrestoBodyTextStyle.copyWith(
-                                        color: const Color(0xFF111827),
-                                        height: 1.3,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      [
-                                        _formatMessageTimestamp(sentAt),
-                                        if (readReceipt != null) readReceipt,
-                                      ].join(' · '),
-                                      style: kPrestoMetaTextStyle.copyWith(
-                                        fontSize: 11,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
                                   ],
+                                );
+                              }
+
+                              if (index < _optimisticMessages.length) {
+                                final optimisticMessage =
+                                    _optimisticMessages[index];
+                                return _buildMessageBubble(
+                                  text: optimisticMessage.text,
+                                  isMine: true,
+                                  senderName: optimisticMessage.senderName,
+                                  sentAt: optimisticMessage.sentAt,
+                                  attachments: optimisticMessage.attachments,
+                                  statusLabel: optimisticMessage.status ==
+                                          _OptimisticMessageStatus.failed
+                                      ? 'Non envoyé'
+                                      : 'Envoi...',
+                                  failed: optimisticMessage.status ==
+                                      _OptimisticMessageStatus.failed,
+                                  onRetry: optimisticMessage.status ==
+                                          _OptimisticMessageStatus.failed
+                                      ? () => _retryOptimisticMessage(
+                                            optimisticMessage,
+                                          )
+                                      : null,
+                                );
+                              }
+
+                              final docIndex =
+                                  index - _optimisticMessages.length;
+                              final data = docs[docIndex].data();
+                              final text =
+                                  ((data['text'] ?? data['body']) ?? '')
+                                      .toString();
+                              final senderId =
+                                  ((data['senderId'] ?? data['sender_id']) ??
+                                          '')
+                                      .toString();
+                              final senderName = ((data['senderName'] ??
+                                          data['sender_name']) ??
+                                      '')
+                                  .toString();
+                              final sentAt = parseFirestoreDateTime(
+                                (data['createdAt'] ?? data['created_at']),
+                              );
+                              final olderMessageDate = docIndex + 1 <
+                                      docs.length
+                                  ? parseFirestoreDateTime(
+                                      (docs[docIndex + 1].data()['createdAt'] ??
+                                          docs[docIndex + 1]
+                                              .data()['created_at']),
+                                    )
+                                  : null;
+                              final showDateChip = sentAt != null &&
+                                  (olderMessageDate == null ||
+                                      !_isSameCalendarDay(
+                                          sentAt, olderMessageDate));
+                              final isMine = senderId == widget.currentUserId;
+                              final readReceipt =
+                                  isMine ? _readReceiptLabel(sentAt) : null;
+                              final messageDocId = docs[docIndex].id;
+                              final attachments = _MessageAttachment.fromList(
+                                data['attachments'],
+                              );
+                              final newerSenderId = docIndex > 0
+                                  ? ((docs[docIndex - 1].data()['senderId'] ??
+                                              docs[docIndex - 1]
+                                                  .data()['sender_id']) ??
+                                          '')
+                                      .toString()
+                                  : '';
+                              final olderSenderId = docIndex + 1 < docs.length
+                                  ? ((docs[docIndex + 1].data()['senderId'] ??
+                                              docs[docIndex + 1]
+                                                  .data()['sender_id']) ??
+                                          '')
+                                      .toString()
+                                  : '';
+                              final groupedWithNewer =
+                                  newerSenderId == senderId &&
+                                      newerSenderId.isNotEmpty &&
+                                      !showDateChip;
+                              final groupedWithOlder =
+                                  olderSenderId == senderId &&
+                                      olderSenderId.isNotEmpty &&
+                                      !showDateChip;
+
+                              final messageBubble = _buildMessageBubble(
+                                text: text,
+                                isMine: isMine,
+                                senderName: senderName,
+                                sentAt: sentAt,
+                                attachments: attachments,
+                                readReceipt: readReceipt,
+                                statusLabel: isMine && readReceipt == null
+                                    ? 'Envoyé'
+                                    : null,
+                                groupedWithNewer: groupedWithNewer,
+                                groupedWithOlder: groupedWithOlder,
+                                onLongPress: isMine
+                                    ? () async {
+                                        final scaffoldMessenger =
+                                            ScaffoldMessenger.of(context);
+                                        final confirmed =
+                                            await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) {
+                                            final overlayTheme =
+                                                ctx.prestoOverlayTheme;
+                                            return AlertDialog(
+                                              backgroundColor:
+                                                  overlayTheme.surfaceColor,
+                                              surfaceTintColor:
+                                                  overlayTheme.surfaceTintColor,
+                                              shape: overlayTheme.dialogShape,
+                                              title: const Text(
+                                                  'Supprimer ce message'),
+                                              content: const Text(
+                                                'Ce message sera definitivement supprime.',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(ctx)
+                                                          .pop(false),
+                                                  child: const Text('Annuler'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(ctx)
+                                                          .pop(true),
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: Colors.red,
+                                                  ),
+                                                  child:
+                                                      const Text('Supprimer'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                        if (confirmed != true || !mounted)
+                                          return;
+                                        try {
+                                          await ConversationService
+                                              .deleteMessage(
+                                            conversationId:
+                                                widget.conversationId,
+                                            messageId: messageDocId,
+                                          );
+                                          if (!mounted) return;
+                                          scaffoldMessenger.showSnackBar(
+                                            const SnackBar(
+                                                content:
+                                                    Text('Message supprime.')),
+                                          );
+                                        } catch (error) {
+                                          if (!mounted) return;
+                                          scaffoldMessenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  'Impossible de supprimer ce message : $error'),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : null,
+                              );
+
+                              if (!showDateChip) {
+                                return messageBubble;
+                              }
+
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildThreadDateChip(sentAt),
+                                  messageBubble,
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                        if (_showNewMessagesButton)
+                          Positioned(
+                            right: 18,
+                            bottom: 18,
+                            child: FilledButton.icon(
+                              onPressed: () =>
+                                  _scrollToLatestMessage(force: true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: kPrestoBlue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 9,
                                 ),
                               ),
+                              icon:
+                                  const Icon(Icons.keyboard_arrow_down_rounded),
+                              label: const Text('Nouveaux messages'),
                             ),
                           ),
-                        );
-
-                        if (!showDateChip) {
-                          return messageBubble;
-                        }
-
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildThreadDateChip(sentAt),
-                            messageBubble,
-                          ],
-                        );
-                      },
+                      ],
                     );
                   },
                 ),
@@ -1071,64 +1990,124 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: const Color(0xFFE5E7EB),
+                      _buildEmojiStrip(),
+                      if (_isUploadingAttachment) ...[
+                        Row(
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            controller: _controller,
-                            textInputAction: TextInputAction.send,
-                            enabled: !_isBlocked,
-                            minLines: 1,
-                            maxLines: 4,
-                            onSubmitted: (_) => _sendMessage(),
-                            decoration: InputDecoration(
-                              hintText: _isBlocked
-                                  ? 'Envoi indisponible : conversation bloquee'
-                                  : 'Votre message...',
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 13,
+                            const SizedBox(width: 8),
+                            Text(
+                              'Envoi de la pièce jointe...',
+                              style: kPrestoMetaTextStyle.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          IconButton.filledTonal(
+                            tooltip: 'Ajouter une pièce jointe',
+                            onPressed: (_isBlocked ||
+                                    _isUploadingAttachment ||
+                                    _isSending)
+                                ? null
+                                : _showAttachmentSheet,
+                            icon: const Icon(Icons.add_rounded),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed:
-                            (_isSending || _isBlocked) ? null : _sendMessage,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: kWhatsappGreen,
-                          foregroundColor: Colors.white,
-                          shape: const CircleBorder(),
-                          padding: const EdgeInsets.all(14),
-                        ),
-                        child: _isSending
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
                                 ),
-                              )
-                            : const Icon(Icons.send_rounded),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: TextField(
+                                controller: _controller,
+                                textInputAction: TextInputAction.send,
+                                enabled: !_isBlocked,
+                                minLines: 1,
+                                maxLines: 4,
+                                onSubmitted: (_) => _sendMessage(),
+                                decoration: InputDecoration(
+                                  hintText: _isBlocked
+                                      ? 'Envoi indisponible : conversation bloquee'
+                                      : 'Votre message...',
+                                  prefixIcon: IconButton(
+                                    tooltip: 'Emoji',
+                                    onPressed: _isBlocked
+                                        ? null
+                                        : () => setState(
+                                              () => _showEmojiStrip =
+                                                  !_showEmojiStrip,
+                                            ),
+                                    icon: Icon(
+                                      _showEmojiStrip
+                                          ? Icons.keyboard_rounded
+                                          : Icons.emoji_emotions_outlined,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 13,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: (_isSending ||
+                                    _isUploadingAttachment ||
+                                    _isBlocked)
+                                ? null
+                                : _hasDraftText
+                                    ? _sendMessage
+                                    : _showVoiceNotePlaceholder,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: kWhatsappGreen,
+                              foregroundColor: Colors.white,
+                              shape: const CircleBorder(),
+                              padding: const EdgeInsets.all(14),
+                            ),
+                            child: (_isSending || _isUploadingAttachment)
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(
+                                    _hasDraftText
+                                        ? Icons.send_rounded
+                                        : Icons.mic_none_rounded,
+                                  ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1139,6 +2118,191 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         ],
       ),
     );
+  }
+}
+
+enum _OptimisticMessageStatus { sending, failed }
+
+class _OptimisticMessage {
+  final String id;
+  final String text;
+  final List<_MessageAttachment> attachments;
+  final DateTime sentAt;
+  final String senderName;
+  final _OptimisticMessageStatus status;
+
+  const _OptimisticMessage({
+    required this.id,
+    required this.text,
+    this.attachments = const [],
+    required this.sentAt,
+    required this.senderName,
+    required this.status,
+  });
+
+  _OptimisticMessage copyWith({
+    _OptimisticMessageStatus? status,
+  }) {
+    return _OptimisticMessage(
+      id: id,
+      text: text,
+      attachments: attachments,
+      sentAt: sentAt,
+      senderName: senderName,
+      status: status ?? this.status,
+    );
+  }
+}
+
+class _MessageAttachment {
+  final String type;
+  final String name;
+  final String url;
+  final String storagePath;
+  final String mimeType;
+  final int sizeBytes;
+
+  const _MessageAttachment({
+    required this.type,
+    required this.name,
+    required this.url,
+    required this.storagePath,
+    required this.mimeType,
+    required this.sizeBytes,
+  });
+
+  static List<_MessageAttachment> fromList(Object? value) {
+    if (value is! List) return const [];
+    return value
+        .whereType<Map>()
+        .map((entry) => _MessageAttachment.fromMap(entry))
+        .whereType<_MessageAttachment>()
+        .toList(growable: false);
+  }
+
+  static _MessageAttachment? fromMap(Map<dynamic, dynamic> data) {
+    final type = (data['type'] ?? '').toString();
+    final name = (data['name'] ?? '').toString();
+    final url = (data['url'] ?? '').toString();
+    final storagePath = (data['storagePath'] ?? '').toString();
+    final mimeType = (data['mimeType'] ?? '').toString();
+    final sizeBytes = (data['sizeBytes'] is num)
+        ? (data['sizeBytes'] as num).round()
+        : int.tryParse((data['sizeBytes'] ?? '').toString()) ?? 0;
+    if ((type != 'image' && type != 'document') || url.trim().isEmpty) {
+      return null;
+    }
+    return _MessageAttachment(
+      type: type,
+      name:
+          name.trim().isEmpty ? (type == 'image' ? 'Photo' : 'Document') : name,
+      url: url,
+      storagePath: storagePath,
+      mimeType: mimeType,
+      sizeBytes: sizeBytes,
+    );
+  }
+
+  ConversationAttachmentInput toInput() {
+    return ConversationAttachmentInput(
+      type: type,
+      name: name,
+      url: url,
+      storagePath: storagePath,
+      mimeType: mimeType,
+      sizeBytes: sizeBytes,
+    );
+  }
+}
+
+class _OfferPreview {
+  final String id;
+  final String title;
+  final String priceLabel;
+  final String imageUrl;
+
+  const _OfferPreview({
+    required this.id,
+    required this.title,
+    required this.priceLabel,
+    required this.imageUrl,
+  });
+
+  factory _OfferPreview.fromMap(String id, Map<String, dynamic> data) {
+    final title =
+        _firstText(data, const ['title', 'listingTitle', 'offerTitle']);
+    final priceValue = _firstValue(data, const [
+      'price',
+      'budget',
+      'amount',
+      'salary',
+      'dailyRate',
+    ]);
+    final priceLabel = _formatOfferPrice(priceValue);
+    final imageUrl = _firstImageUrl(data);
+
+    return _OfferPreview(
+      id: id,
+      title: title,
+      priceLabel: priceLabel,
+      imageUrl: imageUrl,
+    );
+  }
+
+  static Object? _firstValue(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      if (!data.containsKey(key)) continue;
+      final value = data[key];
+      if (value != null && value.toString().trim().isNotEmpty) return value;
+    }
+    return null;
+  }
+
+  static String _firstText(Map<String, dynamic> data, List<String> keys) {
+    final value = _firstValue(data, keys);
+    return value?.toString().trim() ?? '';
+  }
+
+  static String _firstImageUrl(Map<String, dynamic> data) {
+    final direct =
+        _firstText(data, const ['thumbnailUrl', 'imageUrl', 'photoUrl']);
+    if (direct.isNotEmpty) return direct;
+
+    final imageUrls = data['imageUrls'];
+    if (imageUrls is Iterable) {
+      for (final entry in imageUrls) {
+        final value = entry?.toString().trim() ?? '';
+        if (value.isNotEmpty) return value;
+      }
+    }
+
+    final media = data['media'];
+    if (media is Iterable) {
+      for (final entry in media) {
+        if (entry is! Map) continue;
+        final value =
+            (entry['url'] ?? entry['downloadUrl'] ?? '').toString().trim();
+        if (value.isNotEmpty) return value;
+      }
+    }
+    return '';
+  }
+
+  static String _formatOfferPrice(Object? value) {
+    if (value == null) return '';
+    if (value is num) {
+      if (value <= 0) return '';
+      final rounded = value == value.roundToDouble()
+          ? value.toInt().toString()
+          : value
+              .toStringAsFixed(2)
+              .replaceAll(RegExp(r'0+$'), '')
+              .replaceAll(RegExp(r'\.$'), '');
+      return '$rounded €';
+    }
+    final text = value.toString().trim();
+    if (text.isEmpty || text == '0') return '';
+    return text.contains('€') ? text : '$text €';
   }
 }
 
@@ -1190,8 +2354,69 @@ class _ConversationBanner extends StatelessWidget {
   }
 }
 
+class _ConversationPatternBackground extends StatelessWidget {
+  const _ConversationPatternBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: _ConversationPatternPainter(),
+        size: Size.infinite,
+      ),
+    );
+  }
+}
+
+class _ConversationPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFFFFFEFE),
+    );
+
+    final dotPaint = Paint()..color = const Color(0xFFEAF2FF).withOpacity(0.55);
+    const spacing = 34.0;
+    for (var y = 18.0; y < size.height; y += spacing) {
+      for (var x = 18.0; x < size.width; x += spacing) {
+        final offset = ((y / spacing).floor().isEven) ? 0.0 : spacing / 2;
+        canvas.drawCircle(Offset(x + offset, y), 1.1, dotPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 String _formatMessageTimestamp(DateTime? date) {
   if (date == null) return 'Envoi...';
   return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} '
       '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+}
+
+String _formatThreadDateLabel(DateTime? date) {
+  if (date == null) return '--/--/----';
+
+  final local = date.toLocal();
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final value = DateTime(local.year, local.month, local.day);
+  final diff = today.difference(value).inDays;
+
+  if (diff == 0) return 'Aujourd’hui';
+  if (diff == 1) return 'Hier';
+  return '${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}/${local.year}';
+}
+
+String _formatPresenceSeenAt(DateTime date) {
+  final local = date.toLocal();
+  final now = DateTime.now();
+  final diff = now.difference(local);
+  if (diff.inMinutes < 1) return 'à l’instant';
+  if (diff.inMinutes < 60) return 'il y a ${diff.inMinutes} min';
+  if (diff.inHours < 24) return 'il y a ${diff.inHours} h';
+  if (diff.inDays == 1) return 'hier';
+  return 'le ${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}';
 }

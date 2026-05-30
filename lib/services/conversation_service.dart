@@ -2,9 +2,37 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import 'firebase_functions_region.dart';
 
+class ConversationAttachmentInput {
+  final String type;
+  final String name;
+  final String url;
+  final String storagePath;
+  final String mimeType;
+  final int sizeBytes;
+
+  const ConversationAttachmentInput({
+    required this.type,
+    required this.name,
+    required this.url,
+    required this.storagePath,
+    required this.mimeType,
+    required this.sizeBytes,
+  });
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'type': type,
+      'name': name,
+      'url': url,
+      'storagePath': storagePath,
+      'mimeType': mimeType,
+      'sizeBytes': sizeBytes,
+    };
+  }
+}
+
 class ConversationService {
-  static final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  static final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   static Future<String> ensureConversation({
     required String offerId,
@@ -39,7 +67,8 @@ class ConversationService {
 
   static Future<void> sendMessage({
     required String conversationId,
-    required String text,
+    String text = '',
+    List<ConversationAttachmentInput> attachments = const [],
   }) async {
     final callable = _functions.httpsCallable(
       'sendConversationMessage',
@@ -48,6 +77,8 @@ class ConversationService {
     await callable.call(<String, dynamic>{
       'conversationId': conversationId,
       'text': text,
+      if (attachments.isNotEmpty)
+        'attachments': attachments.map((entry) => entry.toJson()).toList(),
     });
   }
 
