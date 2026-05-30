@@ -7,6 +7,7 @@ import {
   computeUnreadCountAfterMessageDeletion,
   mergeConversationParticipants,
   resolveOfferLikeData,
+  sanitizeConversationAttachments,
 } from "./callables";
 import { readConversationMessageCount } from "./mirror";
 
@@ -103,6 +104,64 @@ test("sendConversationMessage refuses non participant access", () => {
       assert.ok(error instanceof HttpsError);
       assert.equal(error.code, "permission-denied");
       assert.equal(error.message, "not allowed to access this conversation");
+      return true;
+    },
+  );
+});
+
+test("sanitizeConversationAttachments accepts current conversation storage path", () => {
+  const attachments = sanitizeConversationAttachments([
+    {
+      type: "image",
+      name: "photo.jpg",
+      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fphoto.jpg",
+      storagePath: "messageAttachments/buyer_a/conv_1/photo.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1200,
+    },
+  ], "buyer_a", "conv_1");
+
+  assert.equal(attachments.length, 1);
+  const firstAttachment = attachments[0];
+  assert.ok(firstAttachment);
+  assert.equal(firstAttachment.type, "image");
+});
+
+test("sanitizeConversationAttachments rejects another conversation storage path", () => {
+  assert.throws(
+    () => sanitizeConversationAttachments([
+      {
+        type: "document",
+        name: "devis.pdf",
+        url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_2%2Fdevis.pdf",
+        storagePath: "messageAttachments/buyer_a/conv_2/devis.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 1200,
+      },
+    ], "buyer_a", "conv_1"),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpsError);
+      assert.equal(error.code, "invalid-argument");
+      return true;
+    },
+  );
+});
+
+test("sanitizeConversationAttachments rejects unsupported document mime type", () => {
+  assert.throws(
+    () => sanitizeConversationAttachments([
+      {
+        type: "document",
+        name: "archive.zip",
+        url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Farchive.zip",
+        storagePath: "messageAttachments/buyer_a/conv_1/archive.zip",
+        mimeType: "application/zip",
+        sizeBytes: 1200,
+      },
+    ], "buyer_a", "conv_1"),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpsError);
+      assert.equal(error.code, "invalid-argument");
       return true;
     },
   );

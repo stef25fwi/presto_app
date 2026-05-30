@@ -61,6 +61,32 @@ service firebase.storage {
         && firestore.get(listingPath).data.visibility == 'public';
     }
 
+    function isConversationParticipant(conversationId) {
+      let conversationPath = /databases/(default)/documents/conversations/$(conversationId);
+      let conversationData = firestore.get(conversationPath).data;
+      return isSignedIn()
+        && firestore.exists(conversationPath)
+        && (
+          ((conversationData.participantIds is list) && conversationData.participantIds.hasAny([request.auth.uid]))
+          || ((conversationData.participants is list) && conversationData.participants.hasAny([request.auth.uid]))
+          || ((conversationData.participant_ids is list) && conversationData.participant_ids.hasAny([request.auth.uid]))
+          || ((conversationData.userIds is list) && conversationData.userIds.hasAny([request.auth.uid]))
+          || ((conversationData.memberIds is list) && conversationData.memberIds.hasAny([request.auth.uid]))
+        );
+    }
+
+    function isMessageAttachmentUpload() {
+      return request.resource != null
+        && request.resource.size < 20 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+          || request.resource.contentType.matches('text/.*')
+          || request.resource.contentType == 'application/msword'
+          || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+    }
+
     // Note: hasAppCheck() retiré (comme pour /stt) car le SDK Flutter web
     // n'attache pas le token App Check aux requêtes Storage (uniquement aux
     // Cloud Callables) : l'exiger ici bloquait l'upload des photos de
@@ -76,6 +102,14 @@ service firebase.storage {
       allow read: if (hasAppCheck() && isSignedIn() && uid == request.auth.uid)
         || isPublicListingMedia(listingId)
         || isMarketplaceModerator();
+    }
+
+    match /messageAttachments/{uid}/{conversationId}/{fileName} {
+      allow write: if isSignedIn()
+        && uid == request.auth.uid
+        && isConversationParticipant(conversationId)
+        && isMessageAttachmentUpload();
+      allow read: if isConversationParticipant(conversationId) || isMarketplaceModerator();
     }
 
     // LEGACY RAW MEDIA - READ-ONLY / MIGRATION ONLY.
