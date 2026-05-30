@@ -38,6 +38,7 @@ import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
 import '../widgets/home_interactions.dart';
+import '../widgets/offer_network_image.dart';
 import 'messages/messages_page_v2.dart';
 
 class ConsultOffersPage extends StatefulWidget {
@@ -2582,14 +2583,15 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
-      child: Image.network(
-        imageUrl,
+      child: SizedBox(
         width: 92,
         height: 92,
-        fit: BoxFit.cover,
-        cacheWidth: 184,
-        cacheHeight: 184,
-        errorBuilder: (_, __, ___) => _buildFallbackPhoto(),
+        child: OfferNetworkImage(
+          url: imageUrl,
+          fit: BoxFit.cover,
+          errorChild: _buildFallbackPhoto(),
+          loadingChild: _buildFallbackPhoto(),
+        ),
       ),
     );
   }
