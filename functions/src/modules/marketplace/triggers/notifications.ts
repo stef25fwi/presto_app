@@ -60,12 +60,19 @@ export const notifyListingRejected = onDocumentUpdated("listings/{listingId}", a
 
   const ownerId = normalizeString(after.ownerId);
   if (!ownerId) return;
+  const moderation = after.moderation && typeof after.moderation === "object"
+    ? after.moderation as Record<string, unknown>
+    : {};
+  const rejectionMessage = normalizeString(after.rejectionReason) ||
+    normalizeString(moderation.userMessage) ||
+    normalizeString(after.moderationReason) ||
+    "Votre annonce a ete rejetee.";
 
   await createInAppNotification({
     notificationId: `listing_rejected_trigger_${listingId}`,
     userId: ownerId,
     title: "Annonce rejetee",
-    message: normalizeString(after.moderationReason) || "Votre annonce a ete rejetee.",
+    message: rejectionMessage,
     type: "listing_rejected",
     routeName: `/listings/${encodeURIComponent(listingId)}`,
     offerId: listingId,

@@ -7,6 +7,7 @@ exports.loadModerationConfig = loadModerationConfig;
 exports.moderateListingMedia = moderateListingMedia;
 exports.evaluateListingText = evaluateListingText;
 exports.computeModerationDecision = computeModerationDecision;
+exports.buildModerationUserMessage = buildModerationUserMessage;
 exports.evaluateListingRisk = evaluateListingRisk;
 exports.finalizeListingPublication = finalizeListingPublication;
 exports.persistModerationResult = persistModerationResult;
@@ -26,6 +27,7 @@ const SAFE_SEARCH_SCORES = {
 };
 const DEFAULT_BANNED_TERMS = ["escort", "arme", "fausse carte", "crypto miracle"];
 const DEFAULT_RISKY_TERMS = ["telegram", "whatsapp", "paiement avance", "urgent cash"];
+const DEFAULT_CONTENT_REJECTION_MESSAGE = "Votre annonce a ete refusee car son contenu ne semble pas conforme aux CGU. Merci de verifier le texte et les images de votre annonce avant de la republier.";
 function normalizeTerms(values, fallback) {
     if (!Array.isArray(values)) {
         return fallback;
@@ -196,7 +198,7 @@ async function evaluateListingText({ title, description, ownerSignals, config, }
 }
 function computeModerationDecision({ riskScore, autoFlags, }) {
     const severeFlags = new Set(["adult_content", "violent_content", "banned_term"]);
-    if (autoFlags.some((flag) => severeFlags.has(flag)) && riskScore >= 70) {
+    if (autoFlags.some((flag) => severeFlags.has(flag))) {
         return {
             moderationDecision: "blocked",
             moderationReason: "high_risk_content_detected",
@@ -218,6 +220,24 @@ function computeModerationDecision({ riskScore, autoFlags, }) {
         moderationDecision: "approved",
         moderationReason: "approved_automatically",
     };
+}
+function buildModerationUserMessage({ autoFlags, moderationReason, }) {
+    if (autoFlags.includes("banned_term")) {
+        return "Votre annonce a ete refusee car le texte contient des termes non conformes aux CGU. Merci de verifier le contenu de votre annonce avant de la republier.";
+    }
+    if (autoFlags.includes("adult_content")) {
+        return "Votre annonce a ete refusee car une image semble contenir un contenu reserve aux adultes. Merci de verifier que le texte et les images de votre annonce sont conformes aux CGU avant de la republier.";
+    }
+    if (autoFlags.includes("violent_content")) {
+        return "Votre annonce a ete refusee car une image semble contenir un contenu violent ou sensible. Merci de verifier que le texte et les images de votre annonce sont conformes aux CGU avant de la republier.";
+    }
+    if (moderationReason === "manual_review_required") {
+        return "Votre annonce est en attente de verification par l'equipe ilipresto avant publication.";
+    }
+    if (moderationReason === "auto_flags_detected") {
+        return "Votre annonce necessite une verification complementaire avant publication.";
+    }
+    return DEFAULT_CONTENT_REJECTION_MESSAGE;
 }
 async function evaluateListingRisk(input) {
     const config = await loadModerationConfig();
@@ -247,6 +267,10 @@ async function evaluateListingRisk(input) {
         textScanStatus: textReview.textScanStatus,
         moderationDecision: decision.moderationDecision,
         moderationReason: decision.moderationReason,
+        moderationUserMessage: buildModerationUserMessage({
+            autoFlags: Array.from(flagSet),
+            moderationReason: decision.moderationReason,
+        }),
     };
 }
 function finalizeListingPublication({ evaluation, now, autoApproveEnabled, autoPublishAfter, }) {
@@ -313,6 +337,10 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
         autoApproveEnabled,
         autoPublishAfter,
     });
+    const moderationUserMessage = evaluation.moderationUserMessage ?? buildModerationUserMessage({
+        autoFlags: evaluation.autoFlags,
+        moderationReason: evaluation.moderationReason,
+    });
     await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId).set({
             id: listingId,
@@ -322,6 +350,7 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
             autoFlags: evaluation.autoFlags,
             moderationDecision: evaluation.moderationDecision,
             moderationReason: evaluation.moderationReason,
+            userMessage: moderationUserMessage,
             source: "automatic",
             imageScanStatus: evaluation.imageScanStatus,
             textScanStatus: evaluation.textScanStatus,
@@ -336,6 +365,16 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
             publishedAt: listingPatch.publishedAt,
             autoPublishAfter: listingPatch.autoPublishAfter ?? null,
             riskScore: listingPatch.riskScore,
+            moderationReason: evaluation.moderationReason,
+            rejectionReason: listingPatch.status === "rejected" ? moderationUserMessage : null,
+            moderation: {
+                status: listingPatch.moderationStatus,
+                reason: evaluation.moderationReason,
+                userMessage: moderationUserMessage,
+                autoFlags: evaluation.autoFlags,
+                source: "automatic",
+                updatedAt: now,
+            },
             updatedAt: now,
         }, { merge: true }),
     ]);

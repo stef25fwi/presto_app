@@ -55,11 +55,18 @@ exports.notifyListingRejected = (0, firestore_1.onDocumentUpdated)("listings/{li
     const ownerId = normalizeString(after.ownerId);
     if (!ownerId)
         return;
+    const moderation = after.moderation && typeof after.moderation === "object"
+        ? after.moderation
+        : {};
+    const rejectionMessage = normalizeString(after.rejectionReason) ||
+        normalizeString(moderation.userMessage) ||
+        normalizeString(after.moderationReason) ||
+        "Votre annonce a ete rejetee.";
     await (0, push_1.createInAppNotification)({
         notificationId: `listing_rejected_trigger_${listingId}`,
         userId: ownerId,
         title: "Annonce rejetee",
-        message: normalizeString(after.moderationReason) || "Votre annonce a ete rejetee.",
+        message: rejectionMessage,
         type: "listing_rejected",
         routeName: `/listings/${encodeURIComponent(listingId)}`,
         offerId: listingId,

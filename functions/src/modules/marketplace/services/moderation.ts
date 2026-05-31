@@ -28,6 +28,8 @@ const SAFE_SEARCH_SCORES: Record<string, number> = {
 
 const DEFAULT_BANNED_TERMS = ["escort", "arme", "fausse carte", "crypto miracle"];
 const DEFAULT_RISKY_TERMS = ["telegram", "whatsapp", "paiement avance", "urgent cash"];
+const DEFAULT_CONTENT_REJECTION_MESSAGE =
+  "Votre annonce a ete refusee car son contenu ne semble pas conforme aux CGU. Merci de verifier le texte et les images de votre annonce avant de la republier.";
 
 export interface ModerationConfig {
   bannedTerms: string[];
@@ -59,6 +61,7 @@ export interface ListingRiskEvaluation {
   textScanStatus: "pending" | "completed" | "failed";
   moderationDecision: ModerationStatus;
   moderationReason: string;
+  moderationUserMessage?: string;
 }
 
 interface VisionAnnotateResponse {
@@ -300,7 +303,7 @@ export function computeModerationDecision({
   moderationReason: string;
 } {
   const severeFlags = new Set<ModerationAutoFlag>(["adult_content", "violent_content", "banned_term"]);
-  if (autoFlags.some((flag) => severeFlags.has(flag)) && riskScore >= 70) {
+  if (autoFlags.some((flag) => severeFlags.has(flag))) {
     return {
       moderationDecision: "blocked",
       moderationReason: "high_risk_content_detected",
@@ -325,6 +328,36 @@ export function computeModerationDecision({
     moderationDecision: "approved",
     moderationReason: "approved_automatically",
   };
+}
+
+export function buildModerationUserMessage({
+  autoFlags,
+  moderationReason,
+}: {
+  autoFlags: ModerationAutoFlag[];
+  moderationReason: string;
+}): string {
+  if (autoFlags.includes("banned_term")) {
+    return "Votre annonce a ete refusee car le texte contient des termes non conformes aux CGU. Merci de verifier le contenu de votre annonce avant de la republier.";
+  }
+
+  if (autoFlags.includes("adult_content")) {
+    return "Votre annonce a ete refusee car une image semble contenir un contenu reserve aux adultes. Merci de verifier que le texte et les images de votre annonce sont conformes aux CGU avant de la republier.";
+  }
+
+  if (autoFlags.includes("violent_content")) {
+    return "Votre annonce a ete refusee car une image semble contenir un contenu violent ou sensible. Merci de verifier que le texte et les images de votre annonce sont conformes aux CGU avant de la republier.";
+  }
+
+  if (moderationReason === "manual_review_required") {
+    return "Votre annonce est en attente de verification par l'equipe ilipresto avant publication.";
+  }
+
+  if (moderationReason === "auto_flags_detected") {
+    return "Votre annonce necessite une verification complementaire avant publication.";
+  }
+
+  return DEFAULT_CONTENT_REJECTION_MESSAGE;
 }
 
 export async function evaluateListingRisk(input: ListingRiskInput): Promise<ListingRiskEvaluation> {
@@ -357,6 +390,10 @@ export async function evaluateListingRisk(input: ListingRiskInput): Promise<List
     textScanStatus: textReview.textScanStatus,
     moderationDecision: decision.moderationDecision,
     moderationReason: decision.moderationReason,
+    moderationUserMessage: buildModerationUserMessage({
+      autoFlags: Array.from(flagSet),
+      moderationReason: decision.moderationReason,
+    }),
   };
 }
 
@@ -453,6 +490,10 @@ export async function persistModerationResult({
     autoApproveEnabled,
     autoPublishAfter,
   });
+  const moderationUserMessage = evaluation.moderationUserMessage ?? buildModerationUserMessage({
+    autoFlags: evaluation.autoFlags,
+    moderationReason: evaluation.moderationReason,
+  });
 
   await Promise.all([
     db.collection(COLLECTIONS.listingModeration).doc(listingId).set({
@@ -463,6 +504,7 @@ export async function persistModerationResult({
       autoFlags: evaluation.autoFlags,
       moderationDecision: evaluation.moderationDecision,
       moderationReason: evaluation.moderationReason,
+      userMessage: moderationUserMessage,
       source: "automatic",
       imageScanStatus: evaluation.imageScanStatus,
       textScanStatus: evaluation.textScanStatus,
@@ -477,6 +519,16 @@ export async function persistModerationResult({
       publishedAt: listingPatch.publishedAt,
       autoPublishAfter: listingPatch.autoPublishAfter ?? null,
       riskScore: listingPatch.riskScore,
+      moderationReason: evaluation.moderationReason,
+      rejectionReason: listingPatch.status === "rejected" ? moderationUserMessage : null,
+      moderation: {
+        status: listingPatch.moderationStatus,
+        reason: evaluation.moderationReason,
+        userMessage: moderationUserMessage,
+        autoFlags: evaluation.autoFlags,
+        source: "automatic",
+        updatedAt: now,
+      },
       updatedAt: now,
     }, { merge: true }),
   ]);

@@ -16,6 +16,25 @@ const moderation_1 = require("./moderation");
         moderationReason: "high_risk_content_detected",
     });
 });
+(0, node_test_1.default)("computeModerationDecision blocks severe content even before publication", () => {
+    const decision = (0, moderation_1.computeModerationDecision)({
+        riskScore: 25,
+        autoFlags: ["banned_term"],
+    });
+    strict_1.default.deepEqual(decision, {
+        moderationDecision: "blocked",
+        moderationReason: "high_risk_content_detected",
+    });
+});
+(0, node_test_1.default)("buildModerationUserMessage asks the user to check CGU compliance", () => {
+    const message = (0, moderation_1.buildModerationUserMessage)({
+        autoFlags: ["adult_content"],
+        moderationReason: "high_risk_content_detected",
+    });
+    strict_1.default.match(message, /refusee/);
+    strict_1.default.match(message, /CGU/);
+    strict_1.default.match(message, /texte et les images/);
+});
 (0, node_test_1.default)("computeModerationDecision sends duplicates to manual review", () => {
     const decision = (0, moderation_1.computeModerationDecision)({
         riskScore: 24,

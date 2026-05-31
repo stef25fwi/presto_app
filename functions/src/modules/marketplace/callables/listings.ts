@@ -634,7 +634,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
         notificationId: `listing_rejected_${listingId}`,
         userId: ownerId,
         title: "Annonce rejetee",
-        message: evaluation.moderationReason,
+        message: evaluation.moderationUserMessage || evaluation.moderationReason,
         type: "listing_rejected",
         routeName,
         offerId: listingId,
