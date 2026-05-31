@@ -1118,22 +1118,14 @@ class _AccountPageState extends State<AccountPage> {
           picked.mimeType ?? _profilePhotoContentType(fileName, 'image/jpeg');
       final ref = FirebaseStorage.instance.ref().child(path);
 
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: false,
-        forceRefreshAppCheckToken: false,
-      );
+      await user.getIdToken(false).timeout(const Duration(seconds: 12));
       try {
         await ref
             .putData(bytes, SettableMetadata(contentType: contentType))
             .timeout(const Duration(seconds: 30));
       } on FirebaseException catch (error) {
         if (!_isProfilePhotoUploadAuthFailure(error)) rethrow;
-        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-          user: user,
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: true,
-        );
+        await user.getIdToken(true).timeout(const Duration(seconds: 12));
         await ref
             .putData(bytes, SettableMetadata(contentType: contentType))
             .timeout(const Duration(seconds: 30));
@@ -1153,11 +1145,30 @@ class _AccountPageState extends State<AccountPage> {
         'profilePhotoUpdatedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(profilePhotoPayload, SetOptions(merge: true))
-          .timeout(const Duration(seconds: 12));
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: false,
+        forceRefreshAppCheckToken: false,
+      );
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set(profilePhotoPayload, SetOptions(merge: true))
+            .timeout(const Duration(seconds: 12));
+      } on FirebaseException catch (error) {
+        if (!_isProfilePhotoUploadAuthFailure(error)) rethrow;
+        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+          user: user,
+          forceRefreshToken: true,
+          forceRefreshAppCheckToken: true,
+        );
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .set(profilePhotoPayload, SetOptions(merge: true))
+            .timeout(const Duration(seconds: 12));
+      }
 
       try {
         await user
