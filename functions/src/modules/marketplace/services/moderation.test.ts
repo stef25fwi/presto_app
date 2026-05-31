@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildModerationUserMessage,
   computeModerationDecision,
   finalizeListingPublication,
 } from "./moderation";
@@ -16,6 +17,29 @@ test("computeModerationDecision blocks severe high-risk content", () => {
     moderationDecision: "blocked",
     moderationReason: "high_risk_content_detected",
   });
+});
+
+test("computeModerationDecision blocks severe content even before publication", () => {
+  const decision = computeModerationDecision({
+    riskScore: 25,
+    autoFlags: ["banned_term"],
+  });
+
+  assert.deepEqual(decision, {
+    moderationDecision: "blocked",
+    moderationReason: "high_risk_content_detected",
+  });
+});
+
+test("buildModerationUserMessage asks the user to check CGU compliance", () => {
+  const message = buildModerationUserMessage({
+    autoFlags: ["adult_content"],
+    moderationReason: "high_risk_content_detected",
+  });
+
+  assert.match(message, /refusee/);
+  assert.match(message, /CGU/);
+  assert.match(message, /texte et les images/);
 });
 
 test("computeModerationDecision sends duplicates to manual review", () => {
