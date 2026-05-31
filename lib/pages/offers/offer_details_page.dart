@@ -2041,40 +2041,43 @@ class _HeroCard extends StatelessWidget {
         children: [
           // ── Photo principale ──
           if (hasPhotos)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _openGallery(context, 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(compact ? 20 : 24),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: compact ? 180 : 220,
-                  child: _OfferImage(
-                    rawUrl: mainPhotoUrl,
-                    fit: BoxFit.cover,
-                    loadingChild: Container(
-                      color: const Color(0xFFF3F4F6),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Color(0xFFFF6A00),
+            ClipRRect(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(compact ? 20 : 24),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: compact ? 180 : 220,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _OfferImage(
+                      rawUrl: mainPhotoUrl,
+                      fit: BoxFit.cover,
+                      loadingChild: Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFFFF6A00),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    errorChild: Container(
-                      color: const Color(0xFFF3F4F6),
-                      child: const Center(
-                        child: Icon(Icons.image_outlined,
-                            size: 48, color: Color(0xFF9CA3AF)),
+                      errorChild: Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: Icon(Icons.image_outlined,
+                              size: 48, color: Color(0xFF9CA3AF)),
+                        ),
                       ),
                     ),
-                  ),
+                    _PhotoGalleryTapOverlay(
+                        onTap: () => _openGallery(context, 0)),
+                  ],
                 ),
               ),
             ),
@@ -2091,37 +2094,40 @@ class _HeroCard extends StatelessWidget {
                   separatorBuilder: (_, __) => SizedBox(width: compact ? 6 : 8),
                   itemBuilder: (context, index) {
                     final isSelected = index == 0;
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _openGallery(context, index),
-                      child: Container(
-                        width: compact ? 56 : 64,
-                        height: compact ? 56 : 64,
-                        decoration: BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(compact ? 10 : 12),
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color(0xFFFF6A00)
-                                : const Color(0xFFE5E7EB),
-                            width: isSelected ? 2.5 : 1.5,
-                          ),
+                    return Container(
+                      width: compact ? 56 : 64,
+                      height: compact ? 56 : 64,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFFFF6A00)
+                              : const Color(0xFFE5E7EB),
+                          width: isSelected ? 2.5 : 1.5,
                         ),
-                        child: ClipRRect(
-                          borderRadius:
-                              BorderRadius.circular((compact ? 10 : 12) - 1),
-                          child: _OfferImage(
-                            rawUrl: data.imageUrls[index],
-                            fit: BoxFit.cover,
-                            errorChild: Container(
-                              color: const Color(0xFFF3F4F6),
-                              child: const Icon(
-                                Icons.broken_image_outlined,
-                                color: Color(0xFF9CA3AF),
-                                size: 20,
+                      ),
+                      child: ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular((compact ? 10 : 12) - 1),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _OfferImage(
+                              rawUrl: data.imageUrls[index],
+                              fit: BoxFit.cover,
+                              errorChild: Container(
+                                color: const Color(0xFFF3F4F6),
+                                child: const Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Color(0xFF9CA3AF),
+                                  size: 20,
+                                ),
                               ),
                             ),
-                          ),
+                            _PhotoGalleryTapOverlay(
+                              onTap: () => _openGallery(context, index),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -2382,6 +2388,26 @@ class _HeroInfoChip extends StatelessWidget {
   }
 }
 
+class _PhotoGalleryTapOverlay extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _PhotoGalleryTapOverlay({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: Colors.white.withOpacity(0.08),
+          highlightColor: Colors.white.withOpacity(0.04),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Photo gallery ───────────────────────────────────────────────────────────
 
 class _PhotoThumbnailStrip extends StatelessWidget {
@@ -2406,53 +2432,57 @@ class _PhotoThumbnailStrip extends StatelessWidget {
         itemCount: imageUrls.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          return GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _openFullScreenGallery(context, index),
-            child: Container(
-              width: thumbSize,
-              height: thumbSize,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(borderRadius),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+          return Container(
+            width: thumbSize,
+            height: thumbSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: const Color(0xFFE5E7EB),
+                width: 1.5,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(borderRadius - 1),
-                child: _OfferImage(
-                  rawUrl: imageUrls[index],
-                  fit: BoxFit.cover,
-                  errorChild: Container(
-                    color: const Color(0xFFF3F4F6),
-                    child: const Icon(
-                      Icons.broken_image_outlined,
-                      color: Color(0xFF9CA3AF),
-                      size: 28,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius - 1),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _OfferImage(
+                    rawUrl: imageUrls[index],
+                    fit: BoxFit.cover,
+                    errorChild: Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Icon(
+                        Icons.broken_image_outlined,
+                        color: Color(0xFF9CA3AF),
+                        size: 28,
+                      ),
                     ),
-                  ),
-                  loadingChild: Container(
-                    color: const Color(0xFFF3F4F6),
-                    child: const Center(
-                      child: SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFFFF6A00),
+                    loadingChild: Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFFF6A00),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                  _PhotoGalleryTapOverlay(
+                    onTap: () => _openFullScreenGallery(context, index),
+                  ),
+                ],
               ),
             ),
           );
