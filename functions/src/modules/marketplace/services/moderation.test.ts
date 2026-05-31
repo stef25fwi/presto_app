@@ -42,6 +42,15 @@ test("buildModerationUserMessage asks the user to check CGU compliance", () => {
   assert.match(message, /texte et les images/);
 });
 
+test("buildModerationUserMessage stays empty for approved listings", () => {
+  const message = buildModerationUserMessage({
+    autoFlags: [],
+    moderationReason: "approved_automatically",
+  });
+
+  assert.equal(message, "");
+});
+
 test("computeModerationDecision sends duplicates to manual review", () => {
   const decision = computeModerationDecision({
     riskScore: 24,
