@@ -30,6 +30,7 @@ export type TemplateCode =
   | "tpl_transactional_support_reply_v1"
   | "tpl_transactional_moderation_report_received_v1"
   | "tpl_transactional_moderation_report_resolved_v1"
+  | "tpl_transactional_moderation_listing_report_admin_alert_v1"
   | "tpl_transactional_legal_terms_updated_v1"
   | "tpl_transactional_legal_privacy_updated_v1"
   | "tpl_marketing_onboarding_d1_v1"
