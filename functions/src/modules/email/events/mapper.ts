@@ -69,6 +69,8 @@ export function mapEventToTemplate(eventName: EventName): TemplateCode | null {
       return "tpl_transactional_moderation_report_received_v1";
     case "report.resolved":
       return "tpl_transactional_moderation_report_resolved_v1";
+    case "listing.reported.admin_alert":
+      return "tpl_transactional_moderation_listing_report_admin_alert_v1";
 
     // ── Légal ─────────────────────────────────────────────────────────────
     case "legal.terms.updated":

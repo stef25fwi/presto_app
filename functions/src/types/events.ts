@@ -27,6 +27,7 @@ export type EventName =
   | "support.ticket.replied"
   | "report.created"
   | "report.resolved"
+  | "listing.reported.admin_alert"
   | "legal.terms.updated"
   | "legal.privacy.updated"
   | "marketing.onboarding.d1_due"

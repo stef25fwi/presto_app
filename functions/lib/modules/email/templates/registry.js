@@ -156,6 +156,14 @@ exports.templateRegistry = [
         default_subject_fr: "Votre signalement a été traité",
         default_preheader_fr: "Consultez la décision de notre équipe",
     },
+    {
+        template_code: "tpl_transactional_moderation_listing_report_admin_alert_v1",
+        channel: "transactionnel",
+        category: "moderation",
+        required_variables: ["listingTitle", "reportReason", "listingUrl", "reportUrl"],
+        default_subject_fr: "Alerte moderation: nouveau signalement annonce",
+        default_preheader_fr: "Un signalement annonce nécessite une vérification",
+    },
     // ── Légal ─────────────────────────────────────────────────────────────────
     {
         template_code: "tpl_transactional_legal_terms_updated_v1",
@@ -340,6 +348,10 @@ function getDefaultTemplateContent(templateCode, locale) {
         tpl_transactional_moderation_report_resolved_v1: {
             html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre signalement a été traité.</p><p>{{resolutionSummary}}</p><p><a href="{{reportUrl}}">Consulter le suivi</a></p>`),
             text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre signalement a été traité.\n{{resolutionSummary}}\n{{reportUrl}}`),
+        },
+        tpl_transactional_moderation_listing_report_admin_alert_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour,</p><p>Un nouveau signalement a été reçu pour l'annonce <strong>{{listingTitle}}</strong>.</p><p>Motif: <strong>{{reportReason}}</strong></p><p>Détails: {{reportReasonText}}</p><p>Signalé par: {{reporterName}} ({{reporterEmail}})</p><p><a href="{{listingUrl}}">Voir l'annonce</a> · <a href="{{reportUrl}}">Voir le signalement</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour,\n\nNouveau signalement pour l'annonce: {{listingTitle}}\nMotif: {{reportReason}}\nDétails: {{reportReasonText}}\nSignalé par: {{reporterName}} ({{reporterEmail}})\nAnnonce: {{listingUrl}}\nSignalement: {{reportUrl}}`),
         },
         tpl_transactional_legal_terms_updated_v1: {
             html: wrapDefaultHtml(subject, preheader, `<p>Nos conditions changent à partir du {{effectiveDate}}.</p><p><a href="{{termsUrl}}">Consulter les conditions</a></p>`),

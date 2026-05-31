@@ -5,6 +5,7 @@ import { db } from "../../../core/firestore";
 import { canProceedRateLimited } from "../../../core/rate_limit";
 import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
+import { sha256 } from "../../../utils/hash";
 import { createInAppNotification } from "../../notifications/push";
 import { trackProductEventBackend } from "../services/analytics";
 import { toHttpsError } from "../services/errors";
@@ -21,6 +22,135 @@ function requireAuthUid(request: { auth?: { uid?: string } }): string {
 
 function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
+}
+
+function firstNameFromDisplayName(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.split(/\s+/)[0] || "";
+}
+
+interface AdminRecipient {
+  userId: string;
+  email: string;
+  firstName: string;
+}
+
+async function queryUsersSafely(
+  queryFactory: () => FirebaseFirestore.Query<FirebaseFirestore.DocumentData>,
+): Promise<FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[]> {
+  try {
+    const snap = await queryFactory().limit(200).get();
+    return snap.docs;
+  } catch (error) {
+    logger.warn("marketplace_report_admin_query_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}
+
+async function findModerationRecipients(): Promise<AdminRecipient[]> {
+  const [roleArrayDocs, roleFieldDocs, adminDocs, isAdminDocs, superAdminDocs] = await Promise.all([
+    queryUsersSafely(() => db.collection(COLLECTIONS.users).where("roles", "array-contains-any", ["moderator", "admin", "superadmin"])),
+    queryUsersSafely(() => db.collection(COLLECTIONS.users).where("role", "in", ["moderator", "admin", "superadmin"])),
+    queryUsersSafely(() => db.collection(COLLECTIONS.users).where("admin", "==", true)),
+    queryUsersSafely(() => db.collection(COLLECTIONS.users).where("isAdmin", "==", true)),
+    queryUsersSafely(() => db.collection(COLLECTIONS.users).where("superadmin", "==", true)),
+  ]);
+
+  const byId = new Map<string, AdminRecipient>();
+  for (const snap of [
+    ...roleArrayDocs,
+    ...roleFieldDocs,
+    ...adminDocs,
+    ...isAdminDocs,
+    ...superAdminDocs,
+  ]) {
+    const userId = snap.id;
+    const data = (snap.data() ?? {}) as Record<string, unknown>;
+    const email = normalizeString(data.email);
+    if (!email) {
+      continue;
+    }
+
+    const displayName = normalizeString(
+      data.displayName || data.display_name || data.userName || data.name,
+    );
+    byId.set(userId, {
+      userId,
+      email,
+      firstName: firstNameFromDisplayName(displayName),
+    });
+  }
+
+  return Array.from(byId.values());
+}
+
+async function enqueueAdminReportAlertEmails({
+  listingId,
+  listingTitle,
+  reportId,
+  reasonCode,
+  reasonText,
+  reporterId,
+}: {
+  listingId: string;
+  listingTitle: string;
+  reportId: string;
+  reasonCode: string;
+  reasonText: string;
+  reporterId: string;
+}): Promise<number> {
+  const [recipients, reporterSnap] = await Promise.all([
+    findModerationRecipients(),
+    db.collection(COLLECTIONS.users).doc(reporterId).get().catch(() => null),
+  ]);
+
+  if (recipients.length === 0) {
+    return 0;
+  }
+
+  const reporterData = (reporterSnap?.data() ?? {}) as Record<string, unknown>;
+  const reporterName = normalizeString(
+    reporterData.displayName || reporterData.display_name || reporterData.userName || reporterData.name,
+  ) || "Utilisateur PRESTO";
+  const reporterEmail = normalizeString(reporterData.email);
+
+  const now = Date.now();
+  const listingUrl = `https://presto.app/listings/${encodeURIComponent(listingId)}`;
+  const reportUrl = `https://presto.app/admin/reports/${encodeURIComponent(reportId)}`;
+
+  await Promise.all(recipients.map((recipient) => {
+    const eventId = `evt_listing_report_admin_alert_${reportId}_${recipient.userId}`;
+    return db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
+      event_id: eventId,
+      event_name: "listing.reported.admin_alert",
+      source_collection: COLLECTIONS.listingReports,
+      source_id: reportId,
+      actor_user_id: reporterId,
+      recipient_user_id: recipient.userId,
+      dedupe_key: sha256(`listing.reported.admin_alert:${reportId}:${recipient.userId}`),
+      occurred_at: now,
+      payload: {
+        recipient_email: recipient.email,
+        firstName: recipient.firstName,
+        listingId,
+        listingTitle: listingTitle || listingId,
+        reportId,
+        reportReason: reasonCode,
+        reportReasonText: reasonText || "(aucun detail fourni)",
+        reporterId,
+        reporterName,
+        reporterEmail,
+        listingUrl,
+        reportUrl,
+      },
+      status: "created",
+    }, { merge: true });
+  }));
+
+  return recipients.length;
 }
 
 export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
@@ -59,6 +189,7 @@ export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
 
     let reviewTriggered = false;
     let ownerId = "";
+    let listingTitle = "";
 
     await db.runTransaction(async (transaction) => {
       const [listingSnap, reportSnap, moderationSnap] = await Promise.all([
@@ -76,6 +207,7 @@ export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
 
       const listingData = (listingSnap.data() ?? {}) as Record<string, unknown>;
       ownerId = normalizeString(listingData.ownerId);
+      listingTitle = normalizeString(listingData.title);
       if (ownerId === reporterId) {
         throw new HttpsError("failed-precondition", "You cannot report your own listing");
       }
@@ -134,6 +266,22 @@ export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
       });
     }
 
+    const adminAlertRecipients = await enqueueAdminReportAlertEmails({
+      listingId: validated.listingId,
+      listingTitle,
+      reportId,
+      reasonCode: validated.reasonCode,
+      reasonText: validated.reasonText || "",
+      reporterId,
+    }).catch((error) => {
+      logger.warn("marketplace_listing_report_admin_alert_failed", {
+        listingId: validated.listingId,
+        reportId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return 0;
+    });
+
     await trackProductEventBackend({
       eventName: "listing_reported",
       userId: reporterId,
@@ -149,6 +297,7 @@ export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
       reporterId,
       reasonCode: validated.reasonCode,
       reviewTriggered,
+      adminAlertRecipients,
     });
 
     return {
