@@ -2789,26 +2789,54 @@ class _PracticalInfoCard extends StatelessWidget {
   }
 
   Widget _paymentInfoPill(BuildContext context) {
-    return TextButton.icon(
-      onPressed: () => _showPaymentInfoPopup(context),
-      style: TextButton.styleFrom(
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        foregroundColor: const Color(0xFF1A73E8),
-        backgroundColor: const Color(0xFFEAF2FF),
-        shape: RoundedRectangleBorder(
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF1A73E8),
+              Color(0xFF1565D8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(999),
-          side: const BorderSide(color: Color(0xFFD7E6FF)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1A73E8).withOpacity(0.20),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-      ),
-      icon: const Icon(Icons.info_outline_rounded, size: 15),
-      label: const Text(
-        'Infos',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () => _showPaymentInfoPopup(context),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 15,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Infos',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
