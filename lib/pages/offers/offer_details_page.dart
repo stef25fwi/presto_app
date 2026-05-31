@@ -2815,26 +2815,21 @@ class _PracticalInfoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           onTap: () => _showPaymentInfoPopup(context),
           child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 15,
-                  color: Colors.white,
-                ),
-                SizedBox(width: 4),
-                Text(
+            padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+            child: SizedBox(
+              width: 44,
+              child: Center(
+                child: Text(
                   'Infos',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: 0,
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
