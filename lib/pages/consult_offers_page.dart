@@ -2854,49 +2854,47 @@ class _OfferMissionDelayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxWidth = (MediaQuery.sizeOf(context).width * 0.34).clamp(
-      112.0,
-      148.0,
-    );
-
-    return Container(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color(0xFFFFC04A),
-            Color(0xFFFF7A00),
+    return SizedBox(
+      width: 132,
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          gradient: const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: [
+              Color(0xFFFFC04A),
+              Color(0xFFFF7A00),
+            ],
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.65),
+            width: kMarketplaceOutlineWidth,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color:
+                  _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
           ],
         ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.65),
-          width: kMarketplaceOutlineWidth,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          label,
-          maxLines: 1,
-          softWrap: false,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            height: 1,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              height: 1,
+            ),
           ),
         ),
       ),
