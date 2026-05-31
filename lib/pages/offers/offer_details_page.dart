@@ -3273,13 +3273,30 @@ class _AdvertiserMetaLine extends StatelessWidget {
                   ),
                 ),
               ] else ...[
-                Text(
-                  'Nouveau',
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: compact ? 14 : 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.1,
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 9 : 11,
+                    vertical: compact ? 4 : 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: green,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: green.withOpacity(0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    'Nouveau',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: compact ? 12.5 : 13.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
                   ),
                 ),
               ],
