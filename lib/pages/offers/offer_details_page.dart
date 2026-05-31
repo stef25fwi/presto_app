@@ -2763,6 +2763,57 @@ class _PracticalInfoCard extends StatelessWidget {
     required this.onContactTap,
   });
 
+  void _showPaymentInfoPopup(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final overlayTheme = dialogContext.prestoOverlayTheme;
+        return AlertDialog(
+          backgroundColor: overlayTheme.surfaceColor,
+          surfaceTintColor: overlayTheme.surfaceTintColor,
+          shape: overlayTheme.dialogShape,
+          title: const Text('Infos paiement'),
+          content: const Text(
+            'Le mode de paiement est convenu directement entre le client et le prestataire. '
+            'IliPresto ne collecte pas le paiement sur cette annonce.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _paymentInfoPill(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () => _showPaymentInfoPopup(context),
+      style: TextButton.styleFrom(
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        foregroundColor: const Color(0xFF1A73E8),
+        backgroundColor: const Color(0xFFEAF2FF),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+          side: const BorderSide(color: Color(0xFFD7E6FF)),
+        ),
+      ),
+      icon: const Icon(Icons.info_outline_rounded, size: 15),
+      label: const Text(
+        'Infos',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
@@ -2842,6 +2893,7 @@ class _PracticalInfoCard extends StatelessWidget {
                     label: 'Mode de paiement',
                     value: 'À convenir',
                     compact: compact,
+                    trailing: _paymentInfoPill(context),
                   ),
                   _InfoLine(
                     icon: Icons.work_outline_rounded,
@@ -3041,12 +3093,14 @@ class _InfoLine extends StatelessWidget {
   final String label;
   final String value;
   final bool compact;
+  final Widget? trailing;
 
   const _InfoLine({
     required this.icon,
     required this.label,
     required this.value,
     this.compact = false,
+    this.trailing,
   });
 
   @override
@@ -3095,6 +3149,10 @@ class _InfoLine extends StatelessWidget {
                   ),
                 ),
               ),
+              if (trailing != null) ...[
+                SizedBox(width: compact ? 6 : 8),
+                trailing!,
+              ],
             ],
           ),
         ),
