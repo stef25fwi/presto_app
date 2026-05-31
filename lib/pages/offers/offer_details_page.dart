@@ -232,6 +232,12 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   final VoidCallback? onBackToConsult;
 
   static const Color _headerOrange = Color(0xFFFF6600);
+  static const Color _statusBarBlue = Color(0xFF1A73E8);
+  static const SystemUiOverlayStyle _statusBarStyle = SystemUiOverlayStyle(
+    statusBarColor: _statusBarBlue,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+  );
   static final FavoriteRepository _favoriteRepository = FavoriteRepository();
   static final ReportRepository _reportRepository = ReportRepository();
   static const MarketplaceHumanVerification _verification =
@@ -1341,6 +1347,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       return Scaffold(
         backgroundColor: bg,
         appBar: AppBar(
+          systemOverlayStyle: _statusBarStyle,
           leading: IconButton(
             tooltip: 'Retour',
             onPressed: () {
