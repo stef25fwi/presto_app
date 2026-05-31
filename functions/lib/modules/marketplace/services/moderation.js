@@ -222,6 +222,9 @@ function computeModerationDecision({ riskScore, autoFlags, }) {
     };
 }
 function buildModerationUserMessage({ autoFlags, moderationReason, }) {
+    if (moderationReason === "approved_automatically") {
+        return "";
+    }
     if (autoFlags.includes("banned_term")) {
         return "Votre annonce a ete refusee car le texte contient des termes non conformes aux CGU. Merci de verifier le contenu de votre annonce avant de la republier.";
     }

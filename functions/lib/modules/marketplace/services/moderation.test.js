@@ -35,6 +35,13 @@ const moderation_1 = require("./moderation");
     strict_1.default.match(message, /CGU/);
     strict_1.default.match(message, /texte et les images/);
 });
+(0, node_test_1.default)("buildModerationUserMessage stays empty for approved listings", () => {
+    const message = (0, moderation_1.buildModerationUserMessage)({
+        autoFlags: [],
+        moderationReason: "approved_automatically",
+    });
+    strict_1.default.equal(message, "");
+});
 (0, node_test_1.default)("computeModerationDecision sends duplicates to manual review", () => {
     const decision = (0, moderation_1.computeModerationDecision)({
         riskScore: 24,
