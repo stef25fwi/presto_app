@@ -2255,7 +2255,7 @@ class _AccountPageState extends State<AccountPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
             "Mon compte iliprestō",
             style: kPrestoAppBarTitleStyle,
