@@ -81,13 +81,12 @@ align_appcheck_keys_from_local_env() {
 
   if [[ -n "$local_appcheck" &&
         -n "$local_recaptcha" &&
-        "$local_appcheck" == "$local_recaptcha" ]]; then
-    if [[ "${APPCHECK_RECAPTCHA_SITE_KEY:-}" != "$local_appcheck" ||
-          "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" != "$local_recaptcha" ]]; then
-      export APPCHECK_RECAPTCHA_SITE_KEY="$local_appcheck"
-      export RECAPTCHA_ENTERPRISE_SITE_KEY="$local_recaptcha"
-      echo "[flutter_with_build_stamp] App Check keys aligned from .env.local" >&2
-    fi
+        "$local_appcheck" == "$local_recaptcha" &&
+        ( "${APPCHECK_RECAPTCHA_SITE_KEY:-}" != "$local_appcheck" ||
+          "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" != "$local_recaptcha" ) ]]; then
+    export APPCHECK_RECAPTCHA_SITE_KEY="$local_appcheck"
+    export RECAPTCHA_ENTERPRISE_SITE_KEY="$local_recaptcha"
+    echo "[flutter_with_build_stamp] App Check keys aligned from .env.local" >&2
   fi
 }
 
