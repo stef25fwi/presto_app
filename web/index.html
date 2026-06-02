@@ -18,7 +18,14 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content">
+  <!--
+    NE PAS forcer interactive-widget=overlays-content : cela empeche Flutter de
+    calculer viewInsets.bottom quand le clavier s'ouvre. On laisse la valeur par
+    defaut (resizes-visual) pour que Flutter recoive l'inset du clavier et que la
+    mise en page (champs + bottom bar) se redimensionne puis se restaure
+    correctement a la fermeture du clavier.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="A new Flutter project.">
 
   <!-- iOS meta tags & icons -->
