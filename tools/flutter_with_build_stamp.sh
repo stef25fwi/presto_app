@@ -30,7 +30,9 @@ load_local_env_file() {
       value="${value:1:${#value}-2}"
     fi
 
-    if [[ -z "${!key:-}" ]]; then
+    if [[ -z "${!key:-}" ||
+          "$key" == "APPCHECK_RECAPTCHA_SITE_KEY" ||
+          "$key" == "RECAPTCHA_ENTERPRISE_SITE_KEY" ]]; then
       printf -v "$key" '%s' "$value"
       export "$key"
     fi
