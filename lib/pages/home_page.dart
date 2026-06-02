@@ -1291,137 +1291,133 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    // Capture the full MediaQuery so child pages can still detect keyboard.
     final mq = MediaQuery.of(context);
-    final stableBottomBarMediaQuery = mq.copyWith(
-      viewInsets: EdgeInsets.zero,
-      padding: mq.padding.copyWith(bottom: mq.viewPadding.bottom),
-    );
+    // Le clavier (mobile natif comme web) est detecte via viewInsets.bottom.
+    // Quand il est ouvert, on masque la bottom bar pour qu'elle ne flotte pas a
+    // mi-hauteur ; le body se redimensionne pour garder les champs visibles.
+    // A la fermeture du clavier, la barre reapparait normalement en bas.
+    final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
-        // Strip viewInsets from the Scaffold so the bottomNavigationBar is
-        // never pushed up by the software keyboard. The original MediaQuery
-        // is restored inside the body so child pages still resize correctly.
-        child: MediaQuery(
-          data: mq.copyWith(viewInsets: EdgeInsets.zero),
-          child: Scaffold(
-            resizeToAvoidBottomInset: false,
-            extendBody: false,
-            backgroundColor: Colors.white,
-            body: MediaQuery(
-              data: mq,
-              child: IndexedStack(
-                index: _selectedIndex,
-                children: [
-                  _buildHomeContent(),
-                  ConsultOffersPage(
-                    key: ValueKey<String>(
-                      'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                    ),
-                    onScroll: (_) {},
-                    categoryFilter: _consultCategoryFilter,
-                    searchQuery: _consultSearchQuery,
-                  ),
-                  PublishOfferPage(onScroll: (_) {}),
-                  MessagesPageV2(
-                    initialConversationId: widget.initialMessagesConversationId,
-                    initialDraftText: widget.initialMessagesDraftText,
-                  ),
-                  const AccountPage(),
-                ],
-              ),
-            ),
-            bottomNavigationBar: MediaQuery(
-              data: stableBottomBarMediaQuery,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF1A73E8),
-                      Color(0xFF0D47A1),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        child: Scaffold(
+          // Laisse Flutter appliquer l'inset du clavier : le body se
+          // redimensionne et la mise en page se restaure proprement a la
+          // fermeture (corrige la bottom bar bloquee a mi-ecran sur web).
+          resizeToAvoidBottomInset: true,
+          extendBody: false,
+          backgroundColor: Colors.white,
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              _buildHomeContent(),
+              ConsultOffersPage(
+                key: ValueKey<String>(
+                  'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
                 ),
-                padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                child: SafeArea(
-                  top: false,
-                  maintainBottomViewPadding: true,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: HomeBottomNavItem(
-                          icon: Icons.home,
-                          label: "Accueil",
-                          selected: _selectedIndex == 0,
-                          onTap: () => _onBottomTap(0),
+                onScroll: (_) {},
+                categoryFilter: _consultCategoryFilter,
+                searchQuery: _consultSearchQuery,
+              ),
+              PublishOfferPage(onScroll: (_) {}),
+              MessagesPageV2(
+                initialConversationId: widget.initialMessagesConversationId,
+                initialDraftText: widget.initialMessagesDraftText,
+              ),
+              const AccountPage(),
+            ],
+          ),
+          // Masquee tant que le clavier est ouvert : elle ne flotte plus a
+          // mi-ecran et revient en bas des que le clavier se ferme.
+          bottomNavigationBar: isKeyboardOpen
+              ? null
+              : Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF1A73E8),
+                        Color(0xFF0D47A1),
+                      ],
+                    ),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                  child: SafeArea(
+                    top: false,
+                    maintainBottomViewPadding: true,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: HomeBottomNavItem(
+                            icon: Icons.home,
+                            label: "Accueil",
+                            selected: _selectedIndex == 0,
+                            onTap: () => _onBottomTap(0),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: HomeBottomNavItem(
-                          icon: Icons.search,
-                          label: "Je consulte\nles offres",
-                          selected: _selectedIndex == 1,
-                          onTap: () => _onBottomTap(1),
+                        Expanded(
+                          child: HomeBottomNavItem(
+                            icon: Icons.search,
+                            label: "Je consulte\nles offres",
+                            selected: _selectedIndex == 1,
+                            onTap: () => _onBottomTap(1),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: HomeBottomNavItem(
-                          icon: Icons.add_circle_outline,
-                          label: "Publier\nune offre",
-                          isBig: true,
-                          selected: _selectedIndex == 2,
-                          onTap: () => _onBottomTap(2),
+                        Expanded(
+                          child: HomeBottomNavItem(
+                            icon: Icons.add_circle_outline,
+                            label: "Publier\nune offre",
+                            isBig: true,
+                            selected: _selectedIndex == 2,
+                            onTap: () => _onBottomTap(2),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: currentUser == null
-                            ? HomeBottomNavItem(
-                                icon: Icons.chat_bubble_outline,
-                                label: "Messages",
-                                selected: _selectedIndex == 3,
-                                onTap: () => _onBottomTap(3),
-                              )
-                            : UnreadInboxBell(
-                                userId: currentUser.uid,
-                                monitoringKeyPrefix: 'bottomBar.messages',
-                                countType: InboxCountType.unreadMessages,
-                                // ✅ Utilise uniquement le doc agrégé
-                                // users/{uid}/metadata/inbox: un seul snapshot
-                                // léger, pas de fusion de flux conversations +
-                                // messages + notifications.
-                                builder: (context, badgeCount) =>
-                                    HomeBottomNavItem(
+                        Expanded(
+                          child: currentUser == null
+                              ? HomeBottomNavItem(
                                   icon: Icons.chat_bubble_outline,
                                   label: "Messages",
-                                  badgeCount: badgeCount,
                                   selected: _selectedIndex == 3,
                                   onTap: () => _onBottomTap(3),
+                                )
+                              : UnreadInboxBell(
+                                  userId: currentUser.uid,
+                                  monitoringKeyPrefix: 'bottomBar.messages',
+                                  countType: InboxCountType.unreadMessages,
+                                  // ✅ Utilise uniquement le doc agrégé
+                                  // users/{uid}/metadata/inbox: un seul snapshot
+                                  // léger, pas de fusion de flux conversations +
+                                  // messages + notifications.
+                                  builder: (context, badgeCount) =>
+                                      HomeBottomNavItem(
+                                    icon: Icons.chat_bubble_outline,
+                                    label: "Messages",
+                                    badgeCount: badgeCount,
+                                    selected: _selectedIndex == 3,
+                                    onTap: () => _onBottomTap(3),
+                                  ),
                                 ),
-                              ),
-                      ),
-                      Expanded(
-                        child: HomeBottomNavItem(
-                          icon: Icons.person_outline,
-                          label: "Compte",
-                          selected: _selectedIndex == 4,
-                          onTap: () => _onBottomTap(4),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: HomeBottomNavItem(
+                            icon: Icons.person_outline,
+                            label: "Compte",
+                            selected: _selectedIndex == 4,
+                            onTap: () => _onBottomTap(4),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
         ),
       ),
     );
