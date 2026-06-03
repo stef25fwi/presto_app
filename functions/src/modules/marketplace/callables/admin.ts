@@ -69,6 +69,9 @@ export function buildListingPatchForPhotoReview({
   const approvedImageUrls = readStringList(listingData.approvedImageUrls);
   const rejectedImages = readStringList(listingData.rejectedImages);
   const textStatus = normalizeString(moderation.textStatus);
+  // Treat missing or "pending" textStatus as approved: text scan may not have
+  // run yet (e.g. text-only listing) and should not block photo review publication.
+  const textStatusOk = textStatus === "" || textStatus === "approved" || textStatus === "pending";
 
   if (decision === "approved") {
     const nextApprovedImageUrls = imageUrl
@@ -79,7 +82,7 @@ export function buildListingPatchForPhotoReview({
     const canPublish = nextPendingCount === 0 &&
       rejectedImageCount === 0 &&
       (imageCount === 0 || nextApprovedImageCount >= imageCount) &&
-      textStatus === "approved";
+      textStatusOk;
 
     return {
       approvedImageCount: nextApprovedImageCount,
