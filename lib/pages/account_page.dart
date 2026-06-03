@@ -1136,6 +1136,14 @@ class _AccountPageState extends State<AccountPage> {
     return fallback;
   }
 
+  String _normalizedProfilePhotoContentType(XFile picked, String fileName) {
+    final pickedMimeType = picked.mimeType?.trim().toLowerCase() ?? '';
+    if (pickedMimeType.startsWith('image/')) {
+      return pickedMimeType;
+    }
+    return _profilePhotoContentType(fileName, 'image/jpeg');
+  }
+
   bool _isProfilePhotoUploadAuthFailure(FirebaseException error) {
     return error.code == 'permission-denied' ||
         error.code == 'unauthorized' ||
@@ -1173,8 +1181,7 @@ class _AccountPageState extends State<AccountPage> {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = _safeProfilePhotoName(picked.name, 'profil.jpg');
       final path = 'profilePhotos/${user.uid}/${timestamp}_$fileName';
-      final contentType =
-          picked.mimeType ?? _profilePhotoContentType(fileName, 'image/jpeg');
+      final contentType = _normalizedProfilePhotoContentType(picked, fileName);
       final ref = FirebaseStorage.instance.ref().child(path);
 
       await user.getIdToken(false).timeout(const Duration(seconds: 12));
