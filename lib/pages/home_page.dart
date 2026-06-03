@@ -14,16 +14,19 @@ import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../constants.dart';
 import '../features/offers/public_offers_read_diagnostics.dart';
+import '../models/hero_slide.dart';
 import '../utils/friendly_snackbar.dart';
 import '../dev/seed_offers.dart' hide kOffersCollection;
 import 'legal_info_page.dart';
 
 import '../services/app_route_parser.dart';
+import '../services/hero_slides_service.dart';
 import '../services/inbox_counts.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
 import '../widgets/entrepreneur_toolbox_slide.dart';
+import '../widgets/hero_media_slider.dart';
 import '../widgets/home_bottom_nav_item.dart';
 import '../widgets/home_interactions.dart';
 import '../widgets/presto_info_icon_animated.dart';
@@ -130,6 +133,7 @@ class _HomePageState extends State<HomePage>
   String? _consultSearchQuery;
   final PageController _carouselController = PageController();
   final ScrollController _scrollController = ScrollController();
+  final HeroSlidesService _heroSlidesService = HeroSlidesService();
   int _currentSlide = 0;
 
   Timer? _homeAutoSlideTimer;
@@ -1288,6 +1292,266 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  Widget _buildDynamicHeroOverlay(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            "Trouvez immédiatement quelqu'un pour faire le job !",
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              height: 1.18,
+              shadows: [
+                Shadow(
+                  color: Color(0x66000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 1.5),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Une personne près de chez vous, en quelques minutes.',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+              shadows: [
+                Shadow(
+                  color: Color(0x59000000),
+                  blurRadius: 5,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFallbackHomeHeroSlider() {
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _carouselController,
+          itemCount: _slides.length,
+          onPageChanged: (index) {
+            setState(() {
+              _currentSlide = index;
+            });
+          },
+          itemBuilder: (context, index) {
+            final slideIndex = index;
+            final slide = _slides[slideIndex];
+
+            // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
+            if (slideIndex == 0) {
+              const String bigText =
+                  "Trouvez immédiatement quelqu'un pour faire le job !";
+
+              return Container(
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  color: kPrestoOrange,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 18,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      // ✅ Phrase principale en très gros sur toute la largeur
+                      Text(
+                        bigText,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          height: 1.18,
+                          shadows: [
+                            Shadow(
+                              color: Color(0x4D000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 1.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        "Une personne près de chez vous, en quelques minutes.",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          height: 1.3,
+                          shadows: [
+                            Shadow(
+                              color: Color(0x40000000),
+                              blurRadius: 4,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
+            if (slideIndex == 1) {
+              return const EntrepreneurToolboxSlide();
+            }
+
+            // 🔁 Slides texte restants : layout texte + icône / image
+            final VoidCallback? onSlideTap = slideIndex == (_slides.length - 1)
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LegalInfoPage(),
+                      ),
+                    );
+                  }
+                : null;
+
+            final slideBody = Container(
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                color: kPrestoOrange,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    // Texte
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            slide.badge.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            slide.title,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: _homeSlideTitleFontSize,
+                              fontWeight: FontWeight.w900,
+                              height: 1.25,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x4D000000),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 1.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            slide.subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x40000000),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 👉 Illustration (icône) sur les slides texte
+                    if (slideIndex != 0) ...[
+                      const SizedBox(width: 8),
+                      _buildSlideIllustration(
+                        slide,
+                        index,
+                        onTap: onSlideTap,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+
+            if (onSlideTap == null) return slideBody;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onSlideTap,
+              child: slideBody,
+            );
+          },
+        ),
+        // Indicateurs
+        Positioned(
+          bottom: 8,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              _slides.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _currentSlide == index ? 16 : 8,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: _currentSlide == index
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -1535,220 +1799,22 @@ class _HomePageState extends State<HomePage>
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
-                      child: Stack(
-                        children: [
-                          PageView.builder(
-                            controller: _carouselController,
-                            itemCount: _slides.length,
-                            onPageChanged: (index) {
-                              setState(() {
-                                _currentSlide = index;
-                              });
-                            },
-                            itemBuilder: (context, index) {
-                              final slideIndex = index;
-                              final slide = _slides[slideIndex];
+                      child: StreamBuilder<List<HeroSlide>>(
+                        stream: _heroSlidesService.watchActiveSlides(),
+                        builder: (context, snapshot) {
+                          final fallback = _buildFallbackHomeHeroSlider();
+                          final slides = snapshot.data ?? const <HeroSlide>[];
+                          if (snapshot.hasError || slides.isEmpty) {
+                            return fallback;
+                          }
 
-                              // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-                              if (slideIndex == 0) {
-                                const String bigText =
-                                    "Trouvez immédiatement quelqu'un pour faire le job !";
-
-                                return Container(
-                                  height: double.infinity,
-                                  decoration: const BoxDecoration(
-                                    color: kPrestoOrange,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 18,
-                                      vertical: 18,
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: const [
-                                        // ✅ Phrase principale en très gros sur toute la largeur
-                                        Text(
-                                          bigText,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 26,
-                                            fontWeight: FontWeight.w900,
-                                            height: 1.18,
-                                            shadows: [
-                                              Shadow(
-                                                color: Color(0x4D000000),
-                                                blurRadius: 6,
-                                                offset: Offset(0, 1.5),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          "Une personne près de chez vous, en quelques minutes.",
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.3,
-                                            shadows: [
-                                              Shadow(
-                                                color: Color(0x40000000),
-                                                blurRadius: 4,
-                                                offset: Offset(0, 1),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
-                              if (slideIndex == 1) {
-                                return const EntrepreneurToolboxSlide();
-                              }
-
-                              // 🔁 Slides texte restants : layout texte + icône / image
-                              final VoidCallback? onSlideTap = slideIndex ==
-                                      (_slides.length - 1)
-                                  ? () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => const LegalInfoPage(),
-                                        ),
-                                      );
-                                    }
-                                  : null;
-
-                              final slideBody = Container(
-                                height: double.infinity,
-                                decoration: const BoxDecoration(
-                                  color: kPrestoOrange,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      // Texte
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              slide.badge.toUpperCase(),
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              slide.title,
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize:
-                                                    _homeSlideTitleFontSize,
-                                                fontWeight: FontWeight.w900,
-                                                height: 1.25,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: Color(0x4D000000),
-                                                    blurRadius: 6,
-                                                    offset: Offset(0, 1.5),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              slide.subtitle,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: Color(0x40000000),
-                                                    blurRadius: 4,
-                                                    offset: Offset(0, 1),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      // 👉 Illustration (icône) sur les slides texte
-                                      if (slideIndex != 0) ...[
-                                        const SizedBox(width: 8),
-                                        _buildSlideIllustration(
-                                          slide,
-                                          index,
-                                          onTap: onSlideTap,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              );
-
-                              if (onSlideTap == null) return slideBody;
-                              return GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: onSlideTap,
-                                child: slideBody,
-                              );
-                            },
-                          ),
-                          // Indicateurs
-                          Positioned(
-                            bottom: 8,
-                            left: 0,
-                            right: 0,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                _slides.length,
-                                (index) => AnimatedContainer(
-                                  duration: const Duration(milliseconds: 250),
-                                  margin:
-                                      const EdgeInsets.symmetric(horizontal: 3),
-                                  width: _currentSlide == index ? 16 : 8,
-                                  height: 7,
-                                  decoration: BoxDecoration(
-                                    color: _currentSlide == index
-                                        ? Colors.white
-                                        : Colors.white.withOpacity(0.4),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                          return HeroMediaSlider(
+                            slides: slides,
+                            fallback: fallback,
+                            borderRadius: 0,
+                            overlayBuilder: _buildDynamicHeroOverlay,
+                          );
+                        },
                       ),
                     ),
                   ),

@@ -230,6 +230,53 @@ service cloud.firestore {
         || (resource.data.visibility is map && resource.data.visibility.get('isPublic', false) == true);
     }
 
+    function isValidHeroSlide(data) {
+      return data.keys().hasOnly([
+          'title',
+          'mediaUrl',
+          'storagePath',
+          'mediaType',
+          'durationSeconds',
+          'order',
+          'isActive',
+          'isFirst',
+          'createdAt',
+          'updatedAt',
+          'createdBy'
+        ])
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 80
+        && data.mediaUrl is string
+        && data.mediaUrl.size() > 0
+        && data.mediaUrl.size() <= 2048
+        && data.storagePath is string
+        && data.storagePath.matches('^hero_slides/.+')
+        && data.mediaType in ['image', 'video']
+        && data.durationSeconds is int
+        && data.durationSeconds >= 3
+        && data.durationSeconds <= 30
+        && data.order is int
+        && data.order >= 0
+        && data.order <= 1000
+        && data.isActive is bool
+        && data.isFirst is bool
+        && data.createdBy is string
+        && data.createdBy.size() > 0
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /heroSlides/{slideId} {
+      allow read: if true;
+      allow create: if isMarketplaceAdmin()
+        && request.resource.data.createdBy == uid()
+        && isValidHeroSlide(request.resource.data);
+      allow update: if isMarketplaceAdmin()
+        && isValidHeroSlide(request.resource.data);
+      allow delete: if isMarketplaceAdmin();
+    }
+
     // ⛔ [REFUSÉ] Rate limits — server-only (Functions)
     match /_rate_limits/{docId} {
       allow read, write: if false;

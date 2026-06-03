@@ -48,10 +48,27 @@ service firebase.storage {
         || hasAdminDocAccess();
     }
 
+    function isMarketplaceAdmin() {
+      return hasClaimRole('admin')
+        || hasUserDocRole('admin')
+        || hasClaimRole('superadmin')
+        || hasUserDocRole('superadmin')
+        || hasAdminDocAccess();
+    }
+
     function isImageUpload() {
       return request.resource != null
         && request.resource.contentType.matches('image/.*')
         && request.resource.size < 15 * 1024 * 1024;
+    }
+
+    function isHeroMediaUpload() {
+      return request.resource != null
+        && request.resource.size < 50 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType.matches('video/.*')
+        );
     }
 
     function isPublicListingMedia(listingId) {
@@ -92,6 +109,11 @@ service firebase.storage {
     // Cloud Callables) : l'exiger ici bloquait l'upload des photos de
     // publication sur le web. Sécurité maintenue par : auth + propriété du
     // chemin (uid) + contentType image + taille max (isImageUpload()).
+    match /hero_slides/{fileName} {
+      allow read: if true;
+      allow write: if isMarketplaceAdmin() && isHeroMediaUpload();
+    }
+
     match /listingDrafts/{uid}/{draftId}/{fileName} {
       allow write: if isSignedIn() && uid == request.auth.uid && isImageUpload();
       allow read: if isSignedIn() && uid == request.auth.uid;
