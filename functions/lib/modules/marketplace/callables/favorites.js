@@ -33,12 +33,30 @@ exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enf
         const favoriteId = `${userId}__${listingId}`;
         const favoriteRef = firestore_1.db.collection(constants_1.COLLECTIONS.favorites).doc(favoriteId);
         const userRef = firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId);
+        const userFavoriteRef = userRef.collection("favorites").doc(listingId);
         let active = false;
         await firestore_1.db.runTransaction(async (transaction) => {
-            const [listingSnap, favoriteSnap] = await Promise.all([
+            const [listingSnap, favoriteSnap, userFavoriteSnap] = await Promise.all([
                 transaction.get(listingRef),
                 transaction.get(favoriteRef),
+                transaction.get(userFavoriteRef),
             ]);
+            const alreadyFavorite = favoriteSnap.exists || userFavoriteSnap.exists;
+            if (alreadyFavorite) {
+                active = false;
+                transaction.delete(favoriteRef);
+                transaction.delete(userFavoriteRef);
+                if (listingSnap.exists) {
+                    transaction.set(listingRef, {
+                        favoriteCount: firebase_admin_1.default.firestore.FieldValue.increment(-1),
+                        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                }
+                transaction.set(userRef, {
+                    favoriteOffersUpdatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+                return;
+            }
             if (!listingSnap.exists) {
                 throw new https_1.HttpsError("not-found", "Listing not found");
             }
@@ -46,27 +64,23 @@ exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enf
             if (normalizeString(listingData.status) !== "active" || normalizeString(listingData.visibility) !== "public") {
                 throw new https_1.HttpsError("failed-precondition", "Only public active listings can be favorited");
             }
-            if (favoriteSnap.exists) {
-                active = false;
-                transaction.delete(favoriteRef);
-                transaction.set(listingRef, {
-                    favoriteCount: firebase_admin_1.default.firestore.FieldValue.increment(-1),
-                    updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
-            }
-            else {
-                active = true;
-                transaction.set(favoriteRef, {
-                    id: favoriteId,
-                    userId,
-                    listingId,
-                    createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-                });
-                transaction.set(listingRef, {
-                    favoriteCount: firebase_admin_1.default.firestore.FieldValue.increment(1),
-                    updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
-            }
+            active = true;
+            transaction.set(favoriteRef, {
+                id: favoriteId,
+                userId,
+                listingId,
+                offerId: listingId,
+                createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            });
+            transaction.set(userFavoriteRef, {
+                offerId: listingId,
+                listingId,
+                createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            transaction.set(listingRef, {
+                favoriteCount: firebase_admin_1.default.firestore.FieldValue.increment(1),
+                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
             transaction.set(userRef, {
                 favoriteOffersUpdatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             }, { merge: true });
