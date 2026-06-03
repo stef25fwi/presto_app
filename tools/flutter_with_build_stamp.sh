@@ -30,16 +30,67 @@ load_local_env_file() {
       value="${value:1:${#value}-2}"
     fi
 
-    if [[ -z "${!key:-}" ||
-          "$key" == "APPCHECK_RECAPTCHA_SITE_KEY" ||
-          "$key" == "RECAPTCHA_ENTERPRISE_SITE_KEY" ]]; then
+    if [[ -z "${!key:-}" ]]; then
       printf -v "$key" '%s' "$value"
       export "$key"
     fi
   done < "$env_file"
 }
 
+read_local_env_value() {
+  local env_file="$1"
+  local expected_key="$2"
+
+  if [[ ! -f "$env_file" ]]; then
+    return 0
+  fi
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" != *=* ]] && continue
+
+    local key="${line%%=*}"
+    local value="${line#*=}"
+
+    key="${key#${key%%[![:space:]]*}}"
+    key="${key%${key##*[![:space:]]}}"
+    [[ "$key" != "$expected_key" ]] && continue
+
+    value="${value#${value%%[![:space:]]*}}"
+    value="${value%${value##*[![:space:]]}}"
+
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "$value" == \'.*\' && "$value" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+
+    printf '%s' "$value"
+    return 0
+  done < "$env_file"
+}
+
+prefer_local_appcheck_keys() {
+  local env_file="$1"
+  local local_appcheck=""
+  local local_recaptcha=""
+
+  local_appcheck="$(read_local_env_value "$env_file" APPCHECK_RECAPTCHA_SITE_KEY || true)"
+  local_recaptcha="$(read_local_env_value "$env_file" RECAPTCHA_ENTERPRISE_SITE_KEY || true)"
+
+  if [[ -n "$local_appcheck" && -n "$local_recaptcha" && "$local_appcheck" == "$local_recaptcha" ]]; then
+    if [[ "${APPCHECK_RECAPTCHA_SITE_KEY:-}" != "$local_appcheck" ||
+          "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" != "$local_recaptcha" ]]; then
+      echo "[flutter_with_build_stamp] Using aligned App Check keys from .env.local (shell values ignored)." >&2
+    fi
+    export APPCHECK_RECAPTCHA_SITE_KEY="$local_appcheck"
+    export RECAPTCHA_ENTERPRISE_SITE_KEY="$local_recaptcha"
+  fi
+}
+
 load_local_env_file ".env.local"
+prefer_local_appcheck_keys ".env.local"
 
 version_line="$(grep -E '^version:' pubspec.yaml | head -n 1 | sed -E 's/^version:[[:space:]]*//')"
 app_version="${version_line%%+*}"
