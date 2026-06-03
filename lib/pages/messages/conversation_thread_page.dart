@@ -91,6 +91,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   String _conversationOfferTitle = '';
   String _otherParticipantId = '';
   String _otherParticipantName = '';
+  String _otherParticipantPhotoSource = '';
+  String _otherParticipantPhotoUrl = '';
   String _otherPresenceStatus = '';
   DateTime? _otherLastSeenAt;
 
@@ -251,6 +253,79 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return const <String, String>{};
   }
 
+  String _firstProfilePhotoValue(Map<String, dynamic> data) {
+    for (final key in const [
+      'photoUrl',
+      'photoURL',
+      'profilePhotoUrl',
+      'avatarUrl',
+      'avatarURL',
+      'imageUrl',
+    ]) {
+      final value = (data[key] ?? '').toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  String _firstStoredProfilePhotoPath(Map<String, dynamic> data) {
+    return (data['profilePhotoPath'] ?? '').toString().trim();
+  }
+
+  bool _isResolvableStorageProfilePhoto(String value) {
+    final trimmed = value.trim();
+    return trimmed.startsWith('gs://') || trimmed.startsWith('profilePhotos/');
+  }
+
+  bool _isNetworkProfilePhoto(String value) {
+    final trimmed = value.trim().toLowerCase();
+    return trimmed.startsWith('https://') || trimmed.startsWith('http://');
+  }
+
+  Future<void> _resolveOtherParticipantPhoto({
+    required String participantId,
+    required String storedPath,
+    required String currentPhotoValue,
+  }) async {
+    final source = storedPath.isNotEmpty ? storedPath : currentPhotoValue.trim();
+    if (source.isEmpty || source == _otherParticipantPhotoSource) {
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _otherParticipantPhotoSource = source;
+        _otherParticipantPhotoUrl = '';
+      });
+    }
+
+    try {
+      final ref = storedPath.isNotEmpty
+          ? FirebaseStorage.instance.ref().child(storedPath)
+          : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
+      final downloadUrl =
+          await ref.getDownloadURL().timeout(const Duration(seconds: 12));
+      final normalizedUrl = downloadUrl.trim();
+      if (!mounted ||
+          normalizedUrl.isEmpty ||
+          _otherParticipantId != participantId ||
+          _otherParticipantPhotoSource != source) {
+        return;
+      }
+      setState(() {
+        _otherParticipantPhotoUrl = normalizedUrl;
+      });
+    } catch (error) {
+      debugPrint(
+        '[ConversationThread] legacy header photo hydration failed '
+        'participantId=$participantId path=$storedPath value=$currentPhotoValue '
+        'error=$error',
+      );
+    }
+  }
+
   void _bindPresenceListener(String participantId) {
     if (participantId.trim().isEmpty || participantId == _otherParticipantId) {
       return;
@@ -263,11 +338,32 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         .listen((snapshot) {
       final data = snapshot.data();
       if (data == null || !mounted) return;
+      final rawPhotoValue = _firstProfilePhotoValue(data);
+      final storedPath = _firstStoredProfilePhotoPath(data);
+      final needsStorageResolution =
+          (rawPhotoValue.isEmpty && storedPath.isNotEmpty) ||
+              _isResolvableStorageProfilePhoto(rawPhotoValue);
+      final networkPhotoUrl = _isNetworkProfilePhoto(rawPhotoValue)
+          ? rawPhotoValue.trim()
+          : '';
       setState(() {
         _otherPresenceStatus =
             (data['status'] ?? '').toString().trim().toLowerCase();
         _otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
+        if (!needsStorageResolution) {
+          _otherParticipantPhotoSource = networkPhotoUrl;
+          _otherParticipantPhotoUrl = networkPhotoUrl;
+        }
       });
+      if (needsStorageResolution) {
+        unawaited(
+          _resolveOtherParticipantPhoto(
+            participantId: participantId,
+            storedPath: storedPath,
+            currentPhotoValue: rawPhotoValue,
+          ),
+        );
+      }
     });
   }
 
@@ -342,13 +438,25 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           radius: 18,
           backgroundColor: Colors.white.withValues(alpha: 0.18),
           foregroundColor: Colors.white,
-          child: Text(
-            _conversationInitial(),
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-            ),
-          ),
+          foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
+              ? NetworkImage(_otherParticipantPhotoUrl)
+              : null,
+          onForegroundImageError: (error, stackTrace) {
+            debugPrint(
+              '[ConversationThread] header avatar load failed '
+              'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+              'error=$error',
+            );
+          },
+          child: _otherParticipantPhotoUrl.isEmpty
+              ? Text(
+                  _conversationInitial(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                )
+              : null,
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -590,6 +698,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           : unreadMap is Map
               ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
               : 0;
+      final participantChanged = otherParticipantId != _otherParticipantId;
 
       if (mounted) {
         setState(() {
@@ -597,6 +706,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           _participantNames = participantNames;
           _otherParticipantId = otherParticipantId;
           _otherParticipantName = otherParticipantName;
+          if (participantChanged) {
+            _otherParticipantPhotoSource = '';
+            _otherParticipantPhotoUrl = '';
+          }
           _offerId = offerId;
           _conversationOfferTitle = offerTitle;
           _isOtherTyping = isOtherTyping;
@@ -1519,6 +1632,33 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
+  Widget _buildOtherParticipantMessageAvatar() {
+    return CircleAvatar(
+      radius: 14,
+      backgroundColor: const Color(0xFFEAF2FF),
+      foregroundColor: kPrestoBlue,
+      foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
+          ? NetworkImage(_otherParticipantPhotoUrl)
+          : null,
+      onForegroundImageError: (error, stackTrace) {
+        debugPrint(
+          '[ConversationThread] bubble avatar load failed '
+          'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+          'error=$error',
+        );
+      },
+      child: _otherParticipantPhotoUrl.isEmpty
+          ? Text(
+              _conversationInitial(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+            )
+          : null,
+    );
+  }
+
   Widget _buildMessageBubble({
     required String text,
     required bool isMine,
@@ -1539,109 +1679,121 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (statusLabel != null) statusLabel,
     ];
 
+    final bubbleContent = ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: isMine ? 320 : 288),
+      child: Container(
+        margin: EdgeInsets.only(
+          top: groupedWithNewer ? 1 : 4,
+          bottom: groupedWithOlder ? 1 : 4,
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
+        decoration: BoxDecoration(
+          color: failed
+              ? const Color(0xFFFFE4E6)
+              : isMine
+                  ? kThreadMineColor
+                  : kThreadOtherColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(!isMine && groupedWithNewer ? 8 : 18),
+            topRight: Radius.circular(isMine && groupedWithNewer ? 8 : 18),
+            bottomLeft: Radius.circular(!isMine && groupedWithOlder
+                ? 8
+                : isMine
+                    ? 18
+                    : 4),
+            bottomRight: Radius.circular(isMine && groupedWithOlder
+                ? 8
+                : isMine
+                    ? 4
+                    : 18),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 7,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (!isMine && senderName.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Text(
+                  senderName,
+                  style: kPrestoMetaTextStyle.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            _buildAttachmentPreviews(attachments),
+            if (text.isNotEmpty)
+              Text(
+                text,
+                style: kPrestoBodyTextStyle.copyWith(
+                  color: const Color(0xFF111827),
+                  height: 1.3,
+                  fontSize: 15,
+                ),
+              ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    labelParts.join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: kPrestoMetaTextStyle.copyWith(
+                      fontSize: 11,
+                      color: failed
+                          ? const Color(0xFFB91C1C)
+                          : const Color(0xFF6B7280),
+                    ),
+                  ),
+                ),
+                if (failed && onRetry != null) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: onRetry,
+                    borderRadius: BorderRadius.circular(999),
+                    child: const Padding(
+                      padding: EdgeInsets.all(2),
+                      child: Icon(
+                        Icons.refresh_rounded,
+                        size: 15,
+                        color: Color(0xFFB91C1C),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
     return GestureDetector(
       onLongPress: onLongPress,
       child: Align(
         alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 320),
-          child: Container(
-            margin: EdgeInsets.only(
-              top: groupedWithNewer ? 1 : 4,
-              bottom: groupedWithOlder ? 1 : 4,
-            ),
-            padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
-            decoration: BoxDecoration(
-              color: failed
-                  ? const Color(0xFFFFE4E6)
-                  : isMine
-                      ? kThreadMineColor
-                      : kThreadOtherColor,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(!isMine && groupedWithNewer ? 8 : 18),
-                topRight: Radius.circular(isMine && groupedWithNewer ? 8 : 18),
-                bottomLeft: Radius.circular(!isMine && groupedWithOlder
-                    ? 8
-                    : isMine
-                        ? 18
-                        : 4),
-                bottomRight: Radius.circular(isMine && groupedWithOlder
-                    ? 8
-                    : isMine
-                        ? 4
-                        : 18),
+        child: isMine
+            ? bubbleContent
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildOtherParticipantMessageAvatar(),
+                  const SizedBox(width: 8),
+                  Flexible(child: bubbleContent),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 7,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment:
-                  isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                if (!isMine && senderName.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 3),
-                    child: Text(
-                      senderName,
-                      style: kPrestoMetaTextStyle.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                  ),
-                _buildAttachmentPreviews(attachments),
-                if (text.isNotEmpty)
-                  Text(
-                    text,
-                    style: kPrestoBodyTextStyle.copyWith(
-                      color: const Color(0xFF111827),
-                      height: 1.3,
-                      fontSize: 15,
-                    ),
-                  ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        labelParts.join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: kPrestoMetaTextStyle.copyWith(
-                          fontSize: 11,
-                          color: failed
-                              ? const Color(0xFFB91C1C)
-                              : const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ),
-                    if (failed && onRetry != null) ...[
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: onRetry,
-                        borderRadius: BorderRadius.circular(999),
-                        child: const Padding(
-                          padding: EdgeInsets.all(2),
-                          child: Icon(
-                            Icons.refresh_rounded,
-                            size: 15,
-                            color: Color(0xFFB91C1C),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -20,11 +20,33 @@ class EligibleResponderForReview {
       userId: _stringValue(data['userId']),
       pseudo: _stringValue(data['pseudo'], fallback: 'Utilisateur iliprestō'),
       city: _stringValue(data['city']),
-      photoUrl: _nullableString(data['photoUrl']),
+      photoUrl: _firstNonEmptyNullableString(
+        data,
+        const [
+          'photoUrl',
+          'photoURL',
+          'profilePhotoUrl',
+          'avatarUrl',
+          'imageUrl',
+        ],
+      ),
       responseAt: _dateFromMillis(data['responseAtMillis']),
       conversationId: _stringValue(data['conversationId']),
     );
   }
+}
+
+String? _firstNonEmptyNullableString(
+  Map<String, dynamic> data,
+  List<String> keys,
+) {
+  for (final key in keys) {
+    final value = _nullableString(data[key]);
+    if (value != null && value.isNotEmpty) {
+      return value;
+    }
+  }
+  return null;
 }
 
 class TrustScoreSummary {
