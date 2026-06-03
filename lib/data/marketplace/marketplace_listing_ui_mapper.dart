@@ -26,6 +26,15 @@ Map<String, dynamic> mapMarketplaceListingToOfferUi({
           'Annonceur ilipresto')
       .toString()
       .trim();
+    final ownerAvatarUrl = (data['ownerAvatarUrl'] ??
+        data['avatarUrl'] ??
+        data['photoUrl'] ??
+        data['photoURL'] ??
+        data['profilePhotoUrl'] ??
+        data['imageUrl'] ??
+        '')
+      .toString()
+      .trim();
   final publishedAt = data['publishedAt'];
 
   return <String, dynamic>{
@@ -64,7 +73,7 @@ Map<String, dynamic> mapMarketplaceListingToOfferUi({
       'id': ownerId,
       'name': ownerName.isEmpty ? 'Annonceur ilipresto' : ownerName,
       'verified': data['ownerVerified'] == true,
-      'avatarUrl': (data['ownerAvatarUrl'] ?? '').toString().trim(),
+      'avatarUrl': ownerAvatarUrl,
     },
   };
 }

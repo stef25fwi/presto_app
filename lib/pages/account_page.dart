@@ -1051,9 +1051,68 @@ class _AccountPageState extends State<AccountPage> {
   String _firstNonEmptyProfilePhoto(Map<String, dynamic>? data) {
     return _firstNonEmptyProfileValue(
       data,
-      const ['photoUrl', 'photoURL', 'avatarUrl', 'avatarURL', 'imageUrl'],
+      const [
+        'photoUrl',
+        'photoURL',
+        'profilePhotoUrl',
+        'avatarUrl',
+        'avatarURL',
+        'imageUrl',
+      ],
       fallbackValues: <String>[_profilePhotoUrl ?? ''],
     );
+  }
+
+  String _firstStoredProfilePhotoPath(Map<String, dynamic>? data) {
+    return _firstNonEmptyProfileValue(
+      data,
+      const ['profilePhotoPath'],
+    );
+  }
+
+  bool _isResolvableStorageProfilePhoto(String value) {
+    final trimmed = value.trim();
+    return trimmed.startsWith('gs://') || trimmed.startsWith('profilePhotos/');
+  }
+
+  Future<void> _hydrateProfilePhotoFromStorage(
+    User user,
+    Map<String, dynamic> data,
+  ) async {
+    final storedPath = _firstStoredProfilePhotoPath(data);
+    final currentPhotoValue = _firstNonEmptyProfilePhoto(data);
+
+    if (storedPath.isEmpty && !_isResolvableStorageProfilePhoto(currentPhotoValue)) {
+      return;
+    }
+
+    try {
+      final ref = storedPath.isNotEmpty
+          ? FirebaseStorage.instance.ref().child(storedPath)
+          : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
+      final downloadUrl =
+          await ref.getDownloadURL().timeout(const Duration(seconds: 12));
+      final normalizedUrl = downloadUrl.trim();
+      if (normalizedUrl.isEmpty || !mounted || _activeProfileUid != user.uid) {
+        return;
+      }
+
+      setState(() => _profilePhotoUrl = normalizedUrl);
+
+      final profilePhotoPayload = <String, dynamic>{
+        'photoUrl': normalizedUrl,
+        'photoURL': normalizedUrl,
+        'profilePhotoUrl': normalizedUrl,
+        'avatarUrl': normalizedUrl,
+        'imageUrl': normalizedUrl,
+      };
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(profilePhotoPayload, SetOptions(merge: true));
+    } catch (error) {
+      debugPrint('[ProfilePhoto] storage hydration failed uid=${user.uid}: $error');
+    }
   }
 
   String _safeProfilePhotoName(String name, String fallback) {
@@ -1138,6 +1197,7 @@ class _AccountPageState extends State<AccountPage> {
       final profilePhotoPayload = <String, dynamic>{
         'photoUrl': downloadUrl,
         'photoURL': downloadUrl,
+        'profilePhotoUrl': downloadUrl,
         'avatarUrl': downloadUrl,
         'imageUrl': downloadUrl,
         'profilePhotoPath': path,
@@ -1278,9 +1338,11 @@ class _AccountPageState extends State<AccountPage> {
           _selectedFavoriteSubcategories.toSet();
       final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
 
+      final data = snapshot.data();
+      var hydratedPhotoUrl = '';
+
       setState(() {
         _applyImmediateAuthProfile(user);
-        final data = snapshot.data();
         if (data != null) {
           _applyUserProfileDocument(
             user,
@@ -1304,7 +1366,7 @@ class _AccountPageState extends State<AccountPage> {
           if (hydratedEmail.isNotEmpty) {
             _profileEmail = hydratedEmail;
           }
-          final hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+          hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
           if (hydratedPhotoUrl.isNotEmpty) {
             _profilePhotoUrl = hydratedPhotoUrl;
           }
@@ -1315,6 +1377,12 @@ class _AccountPageState extends State<AccountPage> {
         _profileSyncInProgress = false;
         _lastMissingRequiredCount = _missingRequiredProfileFields().length;
       });
+
+      if (data != null &&
+          (hydratedPhotoUrl.isEmpty ||
+              _isResolvableStorageProfilePhoto(hydratedPhotoUrl))) {
+        unawaited(_hydrateProfilePhotoFromStorage(user, data));
+      }
     }, onError: (Object error) {
       if (!mounted || _activeProfileUid != uid) {
         return;
@@ -2296,11 +2364,18 @@ class _AccountPageState extends State<AccountPage> {
                               CircleAvatar(
                                 radius: 42,
                                 backgroundColor: Colors.white,
-                                backgroundImage: visiblePhotoUrl.isNotEmpty
+                                backgroundImage: const AssetImage(
+                                  'assets/images/logowebp.webp',
+                                ),
+                                foregroundImage: visiblePhotoUrl.isNotEmpty
                                     ? NetworkImage(visiblePhotoUrl)
-                                    : const AssetImage(
-                                        'assets/images/logowebp.webp',
-                                      ),
+                                    : null,
+                                onForegroundImageError: (error, stackTrace) {
+                                  debugPrint(
+                                    '[ProfilePhoto] avatar render failed '
+                                    'uid=${user.uid} url=$visiblePhotoUrl error=$error',
+                                  );
+                                },
                                 child: _isUploadingProfilePhoto
                                     ? Container(
                                         decoration: BoxDecoration(

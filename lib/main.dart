@@ -406,7 +406,13 @@ Offer buildOfferDetailsOffer({
       seniorityLabel: (data['seniorityLabel'] ?? 'Membre Presto').toString(),
       city: location.isEmpty ? 'Ville non precisee' : location,
       bio: (data['bio'] ?? '').toString(),
-      avatarUrl: (data['avatarUrl'] ?? '').toString(),
+        avatarUrl: ((data['avatarUrl'] ??
+              data['photoUrl'] ??
+              data['photoURL'] ??
+              data['profilePhotoUrl'] ??
+              data['imageUrl']) ??
+            '')
+          .toString(),
       isOnline: ((data['status'] ?? '').toString().toLowerCase() == 'online'),
       lastSeenLabel: 'Activite recente',
     ),

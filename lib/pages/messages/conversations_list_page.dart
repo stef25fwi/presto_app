@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -1874,7 +1875,7 @@ class _ConversationAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (userId.trim().isEmpty) {
-      return _buildAvatar(isOnline: false);
+      return _buildAvatar(isOnline: false, photoUrl: '');
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -1886,29 +1887,109 @@ class _ConversationAvatar extends StatelessWidget {
         final data = snapshot.data?.data() ?? const <String, dynamic>{};
         final status = (data['status'] ?? '').toString().trim().toLowerCase();
         final lastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
+        final photoUrl = _firstProfilePhotoUrl(data);
+        final storedPath = _firstStoredProfilePhotoPath(data);
         final isOnline = status == 'online' &&
             (lastSeenAt == null ||
                 DateTime.now().difference(lastSeenAt.toLocal()) <
                     const Duration(minutes: 4));
-        return _buildAvatar(isOnline: isOnline);
+        final needsStorageResolution =
+            (photoUrl.isEmpty && storedPath.isNotEmpty) ||
+                _isResolvableStorageProfilePhoto(photoUrl);
+
+        if (!needsStorageResolution) {
+          return _buildAvatar(isOnline: isOnline, photoUrl: photoUrl);
+        }
+
+        return FutureBuilder<String>(
+          future: _resolveLegacyStorageProfilePhoto(
+            storedPath: storedPath,
+            currentPhotoValue: photoUrl,
+          ),
+          builder: (context, legacySnapshot) {
+            final resolvedPhotoUrl = (legacySnapshot.data ?? '').trim();
+            return _buildAvatar(
+              isOnline: isOnline,
+              photoUrl: resolvedPhotoUrl,
+            );
+          },
+        );
       },
     );
   }
 
-  Widget _buildAvatar({required bool isOnline}) {
+  String _firstProfilePhotoUrl(Map<String, dynamic> data) {
+    for (final key in const [
+      'avatarUrl',
+      'photoUrl',
+      'photoURL',
+      'profilePhotoUrl',
+      'imageUrl',
+    ]) {
+      final value = (data[key] ?? '').toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  String _firstStoredProfilePhotoPath(Map<String, dynamic> data) {
+    return (data['profilePhotoPath'] ?? '').toString().trim();
+  }
+
+  bool _isResolvableStorageProfilePhoto(String value) {
+    final trimmed = value.trim();
+    return trimmed.startsWith('gs://') || trimmed.startsWith('profilePhotos/');
+  }
+
+  Future<String> _resolveLegacyStorageProfilePhoto({
+    required String storedPath,
+    required String currentPhotoValue,
+  }) async {
+    if (storedPath.isEmpty && !_isResolvableStorageProfilePhoto(currentPhotoValue)) {
+      return '';
+    }
+
+    try {
+      final ref = storedPath.isNotEmpty
+          ? FirebaseStorage.instance.ref().child(storedPath)
+          : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
+      return (await ref.getDownloadURL().timeout(const Duration(seconds: 12)))
+          .trim();
+    } catch (error) {
+      debugPrint(
+        '[ConversationAvatar] legacy storage hydration failed '
+        'userId=$userId path=$storedPath value=$currentPhotoValue error=$error',
+      );
+      return '';
+    }
+  }
+
+  Widget _buildAvatar({required bool isOnline, required String photoUrl}) {
     return Stack(
       children: [
         CircleAvatar(
           radius: 27,
           backgroundColor: fallbackColor,
           foregroundColor: Colors.white,
-          child: Text(
-            title.trim().isNotEmpty ? title.trim()[0].toUpperCase() : '?',
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-            ),
-          ),
+          foregroundImage:
+              photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+          onForegroundImageError: (error, stackTrace) {
+            debugPrint(
+              '[ConversationAvatar] image load failed '
+              'userId=$userId url=$photoUrl error=$error',
+            );
+          },
+          child: photoUrl.isEmpty
+              ? Text(
+                  title.trim().isNotEmpty ? title.trim()[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
+                )
+              : null,
         ),
         Positioned(
           right: 1,

@@ -650,8 +650,13 @@ bool _isCompleteAdminUser(Map<String, dynamic> data) {
     data['cp'],
     data['companyName'],
   ].any((value) => value != null && value.toString().trim().isNotEmpty);
-  final hasAvatar = data['avatarUrl'] != null &&
-      data['avatarUrl'].toString().trim().isNotEmpty;
+  final hasAvatar = [
+    data['avatarUrl'],
+    data['photoUrl'],
+    data['photoURL'],
+    data['profilePhotoUrl'],
+    data['imageUrl'],
+  ].any((value) => value != null && value.toString().trim().isNotEmpty);
   final score = [hasIdentity, hasPhone, hasLocation, hasAvatar]
       .where((value) => value)
       .length;

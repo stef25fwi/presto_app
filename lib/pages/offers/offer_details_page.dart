@@ -49,6 +49,17 @@ String _extractOfferDetailImageUrl(dynamic entry) {
   return entry.toString().trim();
 }
 
+String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
+  if (data is! Map) return '';
+  for (final key in keys) {
+    final value = (data[key] ?? '').toString().trim();
+    if (value.isNotEmpty) {
+      return value;
+    }
+  }
+  return '';
+}
+
 List<String> _collectOfferDetailImageUrls({
   dynamic imageUrls,
   dynamic media,
@@ -1716,7 +1727,15 @@ class _OfferUiData {
     );
     final advertiserAvatarUrl = _asString(
       readNestedValue(advertiser, 'avatarUrl', () => advertiser.avatarUrl) ??
-          readValue('avatarUrl'),
+          readNestedValue(advertiser, 'photoUrl') ??
+          readNestedValue(advertiser, 'photoURL') ??
+          readNestedValue(advertiser, 'profilePhotoUrl') ??
+          readNestedValue(advertiser, 'imageUrl') ??
+          readValue('avatarUrl') ??
+          readValue('photoUrl') ??
+          readValue('photoURL') ??
+          readValue('profilePhotoUrl') ??
+          readValue('imageUrl'),
       fallback: '',
     );
     final advertiserRating = _asDouble(
