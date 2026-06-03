@@ -5,6 +5,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'admin_photo_reviews_page.dart';
 import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 
@@ -2739,6 +2740,20 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     subtitle: '—',
                     badge: null,
                     iconColor: prestoBlue,
+                  ),
+                  _KpiTile(
+                    icon: Icons.photo_library_outlined,
+                    title: 'Photos à valider',
+                    subtitle: 'Swipe gauche / droite',
+                    badge: null,
+                    iconColor: prestoOrange,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const AdminPhotoReviewsPage(),
+                        ),
+                      );
+                    },
                   ),
                   const _KpiTile(
                     icon: Icons.workspace_premium_rounded,

@@ -13,6 +13,7 @@ import {
   loadModerationConfig,
   persistModerationResult,
 } from "../services/moderation";
+import { sendListingModerationSystemMessage } from "../services/system_messages";
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
 import { shouldRejectListingSubmissionForRecaptcha } from "../services/recaptcha";
 import { toHttpsError } from "../services/errors";
@@ -596,7 +597,9 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
 
     const publication = await persistModerationResult({
       listingId,
+      listingTitle: validated.title,
       ownerId,
+      media: normalizedMedia,
       evaluation,
       autoApproveEnabled: config.autoApproveEnabled,
       autoPublishAfter,
@@ -630,6 +633,14 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
         },
       });
     } else if (publication.status === "rejected") {
+      await sendListingModerationSystemMessage({
+        ownerId,
+        listingId,
+        listingTitle: validated.title,
+        body: evaluation.autoFlags.includes("banned_term")
+          ? "Bonjour, votre annonce contient un texte qui ne respecte pas nos règles de publication. Merci de modifier le titre ou la description avant de la soumettre à nouveau."
+          : "Bonjour, votre annonce n’a pas pu être publiée car une image ajoutée ne respecte pas nos règles de modération. Merci de remplacer cette photo par une image claire, conforme et sans contenu sensible. Votre annonce pourra ensuite être soumise à nouveau.",
+      });
       await createInAppNotification({
         notificationId: `listing_rejected_${listingId}`,
         userId: ownerId,

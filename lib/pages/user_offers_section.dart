@@ -793,14 +793,44 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return _isOfferPending(data) && _offerHasPhotos(data);
   }
 
+  int? _offerPendingCountdownSeconds(Map<String, dynamic> data) {
+    if (!_isOfferPending(data)) {
+      return null;
+    }
+
+    final submittedAt = _dateFromDynamic(
+      data['submittedAt'] ?? data['updatedAt'] ?? data['createdAt'],
+    );
+    if (submittedAt == null) {
+      return null;
+    }
+
+    final elapsed = DateTime.now().difference(submittedAt).inSeconds;
+    if (elapsed < 0 || elapsed >= 30) {
+      return null;
+    }
+
+    return 30 - elapsed;
+  }
+
   String? _offerPendingPhotoNotice(Map<String, dynamic> data) {
     if (!_isOfferPending(data) || !_offerHasPhotos(data)) {
       return null;
     }
+    final moderationStatus =
+        (data['moderationStatus'] ?? '').toString().trim().toLowerCase();
+    final pendingHumanReviewCount =
+        (data['pendingHumanReviewCount'] is num)
+            ? (data['pendingHumanReviewCount'] as num).toInt()
+            : 0;
+
+    if (moderationStatus == 'manual_review' || pendingHumanReviewCount > 0) {
+      return 'En attente de validation admin. Une ou plusieurs photos nécessitent une vérification manuelle avant publication.';
+    }
     if (_offerMediaStillProcessing(data)) {
       return 'Vérification du texte et conversion des images en cours. L’annonce sera publiée automatiquement dès que tout est prêt.';
     }
-    return 'Annonce en cours de vérification avant publication automatique.';
+    return 'Annonce en cours de vérification avant publication. Le délai de 30 secondes est indicatif et la publication reste pilotée par la modération.';
   }
 
   String _sectionTitle(_OfferManagementSection section) {
@@ -1912,6 +1942,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final details = _offerStatusDetails(data);
     final pendingPhotoNotice = _offerPendingPhotoNotice(data);
     final mediaIsProcessing = _offerMediaStillProcessing(data);
+    final pendingCountdown = _offerPendingCountdownSeconds(data);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -2010,6 +2041,26 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                       ),
                     ),
                   ),
+                  if (pendingCountdown != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: const Color(0xFFFFC78F)),
+                      ),
+                      child: Text(
+                        '${pendingCountdown}s',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

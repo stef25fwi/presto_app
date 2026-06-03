@@ -104,6 +104,18 @@ service firebase.storage {
         || isMarketplaceModerator();
     }
 
+    // Backend moderation quarantine only. Client apps must never write here.
+    match /moderation_review/{listingId}/{fileName} {
+      allow write: if false;
+      allow read: if isMarketplaceModerator();
+    }
+
+    // Backend rejected listing media only. Client apps must never write here.
+    match /rejected_ad_images/{listingId}/{fileName} {
+      allow write: if false;
+      allow read: if isMarketplaceModerator();
+    }
+
     match /profilePhotos/{uid}/{fileName} {
       allow write: if isSignedIn()
         && uid == request.auth.uid
