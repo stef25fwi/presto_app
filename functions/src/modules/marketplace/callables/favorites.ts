@@ -31,13 +31,35 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
     const favoriteId = `${userId}__${listingId}`;
     const favoriteRef = db.collection(COLLECTIONS.favorites).doc(favoriteId);
     const userRef = db.collection(COLLECTIONS.users).doc(userId);
+    const userFavoriteRef = userRef.collection("favorites").doc(listingId);
 
     let active = false;
     await db.runTransaction(async (transaction) => {
-      const [listingSnap, favoriteSnap] = await Promise.all([
+      const [listingSnap, favoriteSnap, userFavoriteSnap] = await Promise.all([
         transaction.get(listingRef),
         transaction.get(favoriteRef),
+        transaction.get(userFavoriteRef),
       ]);
+
+      const alreadyFavorite = favoriteSnap.exists || userFavoriteSnap.exists;
+
+      if (alreadyFavorite) {
+        active = false;
+        transaction.delete(favoriteRef);
+        transaction.delete(userFavoriteRef);
+
+        if (listingSnap.exists) {
+          transaction.set(listingRef, {
+            favoriteCount: admin.firestore.FieldValue.increment(-1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+
+        transaction.set(userRef, {
+          favoriteOffersUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return;
+      }
 
       if (!listingSnap.exists) {
         throw new HttpsError("not-found", "Listing not found");
@@ -48,26 +70,23 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
         throw new HttpsError("failed-precondition", "Only public active listings can be favorited");
       }
 
-      if (favoriteSnap.exists) {
-        active = false;
-        transaction.delete(favoriteRef);
-        transaction.set(listingRef, {
-          favoriteCount: admin.firestore.FieldValue.increment(-1),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-      } else {
-        active = true;
-        transaction.set(favoriteRef, {
-          id: favoriteId,
-          userId,
-          listingId,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        transaction.set(listingRef, {
-          favoriteCount: admin.firestore.FieldValue.increment(1),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-      }
+      active = true;
+      transaction.set(favoriteRef, {
+        id: favoriteId,
+        userId,
+        listingId,
+        offerId: listingId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      transaction.set(userFavoriteRef, {
+        offerId: listingId,
+        listingId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      transaction.set(listingRef, {
+        favoriteCount: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
 
       transaction.set(userRef, {
         favoriteOffersUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),

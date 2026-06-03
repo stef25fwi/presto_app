@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -58,6 +59,8 @@ class FavoriteOffersSection extends StatefulWidget {
 
 class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   static final FavoriteRepository _favoriteRepository = FavoriteRepository();
+  static const String _kFavoriteLoadErrorMessage =
+      'Impossible de charger vos favoris pour le moment. Reessayez dans quelques instants.';
 
   List<_FavoriteOfferItem> _offers = const [];
   bool _isLoading = true;
@@ -73,6 +76,12 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     final text = error.toString().toLowerCase();
     return text.contains('permission-denied') ||
         text.contains('permission denied');
+  }
+
+  void _debugFavoriteLog(String message) {
+    if (kDebugMode) {
+      debugPrint(message);
+    }
   }
 
   @override
@@ -114,59 +123,114 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   }
 
   Future<void> _loadFavorites() async {
-    if (widget.userId.isEmpty) {
+    final userId = widget.userId.trim();
+    if (userId.isEmpty) {
       if (!mounted) return;
       setState(() {
         _offers = const [];
         _isLoading = false;
+        _error = null;
+        _selectedOfferId = null;
       });
       return;
     }
 
     try {
       final fs = FirebaseFirestore.instance;
+      _debugFavoriteLog('[Favorites] uid: $userId');
       final favorites = await _favoriteRepository
-          .loadFavoriteListingIdsWithLegacyFallback(widget.userId);
+          .loadFavoriteListingIdsWithLegacyFallback(userId);
       final favoriteIds = favorites.listingIds;
       final favoriteDates = favorites.favoriteDates;
+      _debugFavoriteLog(
+        '[Favorites] favoriteIds count: ${favoriteIds.length}',
+      );
 
       if (favoriteIds.isEmpty) {
         if (!mounted) return;
         setState(() {
           _offers = const [];
           _isLoading = false;
+          _error = null;
           _selectedOfferId = null;
         });
         return;
       }
 
-      final listingSnaps =
-          await Future.wait<DocumentSnapshot<Map<String, dynamic>>?>(
-        favoriteIds.map((listingId) async {
-          try {
-            return await fs
-                .collection(kListingsCollection)
-                .doc(listingId)
-                .get();
-          } catch (error) {
-            if (_isPermissionDeniedError(error)) {
-              return null;
-            }
-            rethrow;
-          }
-        }),
-      );
-
       final items = <_FavoriteOfferItem>[];
-      for (final doc in listingSnaps) {
-        if (doc == null) continue;
-        if (!doc.exists) continue;
-        final data = doc.data() ?? const <String, dynamic>{};
-        final status = (data['status'] ?? '').toString().trim();
-        final visibility = (data['visibility'] ?? '').toString().trim();
-        if (status != 'active' || visibility != 'public') continue;
-        items.add(_FavoriteOfferItem(
-          offerId: doc.id,
+      final orphanFavoriteIds = <String>[];
+      for (final favoriteId in favoriteIds) {
+        final item = await _loadFavoriteOfferItem(
+          fs,
+          offerId: favoriteId,
+          addedAt: favoriteDates[favoriteId],
+        );
+        if (item == null) {
+          orphanFavoriteIds.add(favoriteId);
+          continue;
+        }
+        items.add(item);
+      }
+
+      for (final orphanFavoriteId in orphanFavoriteIds) {
+        unawaited(_favoriteRepository.removeFavorite(userId, orphanFavoriteId));
+      }
+
+      _debugFavoriteLog('[Favorites] loaded offers count: ${items.length}');
+
+      if (!mounted) return;
+      setState(() {
+        _offers = items;
+        _isLoading = false;
+        _error = null;
+
+        final ids = items.map((item) => item.offerId).toSet();
+        if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
+          _selectedOfferId = items.isNotEmpty ? items.first.offerId : null;
+        }
+      });
+    } catch (error) {
+      _debugFavoriteLog('[Favorites] error: $error');
+      if (!mounted) return;
+      setState(() {
+        _error = _kFavoriteLoadErrorMessage;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<_FavoriteOfferItem?> _loadFavoriteOfferItem(
+    FirebaseFirestore firestore, {
+    required String offerId,
+    required Timestamp? addedAt,
+  }) async {
+    final normalizedOfferId = offerId.trim();
+    if (normalizedOfferId.isEmpty) {
+      return null;
+    }
+
+    for (final collectionName in const <String>[kListingsCollection, 'offers']) {
+      try {
+        final snapshot = await firestore
+            .collection(collectionName)
+            .doc(normalizedOfferId)
+            .get();
+        if (!snapshot.exists) {
+          continue;
+        }
+
+        final data = snapshot.data() ?? const <String, dynamic>{};
+        final isMarketplace = collectionName == kListingsCollection;
+        final status = (data['status'] ?? '').toString().trim().toLowerCase();
+        final visibility =
+            (data['visibility'] ?? '').toString().trim().toLowerCase();
+
+        if (isMarketplace && (status != 'active' || visibility != 'public')) {
+          return null;
+        }
+
+        return _FavoriteOfferItem(
+          offerId: snapshot.id,
           title: (data['title'] ?? 'Sans titre').toString().trim(),
           city: (data['location'] ?? data['city'] ?? 'Lieu non précisé')
               .toString()
@@ -175,29 +239,22 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
               (data['category'] ?? 'Catégorie non précisée').toString().trim(),
           price: (data['budget'] as num?)?.toDouble(),
           imageUrl: _primaryOfferImageUrl(data),
-          addedAt: favoriteDates[doc.id],
+          addedAt: addedAt,
           rawData: data,
-          isMarketplace: true,
-        ));
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _offers = items;
-        _isLoading = false;
-
-        final ids = items.map((item) => item.offerId).toSet();
-        if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
-          _selectedOfferId = items.isNotEmpty ? items.first.offerId : null;
+          isMarketplace: isMarketplace,
+        );
+      } catch (error) {
+        if (_isPermissionDeniedError(error)) {
+          continue;
         }
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+        _debugFavoriteLog(
+          '[Favorites] load offer failed offerId=$normalizedOfferId collection=$collectionName error: $error',
+        );
+        return null;
+      }
     }
+
+    return null;
   }
 
   Future<void> _removeFavorite(String offerId) async {
@@ -214,12 +271,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       },
     );
     try {
-      final item = _offers.where((o) => o.offerId == offerId).firstOrNull;
-
-      if (item?.isMarketplace != true) {
-        throw StateError('Ce favori legacy doit être migré avant suppression.');
-      }
-      await FavoriteRepository().toggleFavorite(offerId);
+      await _favoriteRepository.removeFavorite(widget.userId, offerId);
 
       if (!mounted) return;
       showSuccessSnackBar(context, 'Annonce retirée des favoris');
@@ -240,63 +292,45 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         },
       );
       if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur lors du retrait du favori : $e');
+      showErrorSnackBar(
+        context,
+        'Impossible de retirer ce favori pour le moment.',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.userId.isEmpty) {
-      return const SizedBox.shrink();
+    final userId = widget.userId.trim();
+    if (userId.isEmpty) {
+      return _buildFavoriteInfoCard(
+        icon: Icons.favorite_border_rounded,
+        message: 'Connectez-vous pour voir vos favoris.',
+      );
     }
 
     if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-          ),
-        ),
-      );
+      return _buildFavoriteLoadingCard();
     }
 
     if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          "Erreur lors du chargement de vos favoris.\n$_error",
-          style: const TextStyle(
-            color: Colors.red,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
+      return _buildFavoriteErrorCard();
     }
 
     final docs = _offers;
-
     if (docs.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          "Tu n’as encore aucune annonce favorite.",
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.black54,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+      return _buildFavoriteInfoCard(
+        icon: Icons.favorite_border_rounded,
+        message: 'Vous n’avez pas encore ajoute d’annonces favorites.',
       );
     }
 
     final selectedId = _selectedOfferId;
     final selectedDoc = (selectedId == null)
         ? docs.first
-        : (docs.where((doc) => doc.offerId == selectedId).isNotEmpty
+        : docs.where((doc) => doc.offerId == selectedId).isNotEmpty
             ? docs.firstWhere((doc) => doc.offerId == selectedId)
-            : docs.first);
+            : docs.first;
 
     final selectedData = selectedDoc.rawData;
     final selectedTitle = selectedDoc.title;
@@ -304,9 +338,9 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     final selectedCategory = selectedDoc.category;
     final selectedBudget = selectedDoc.price;
 
-    String subtitle = "$selectedLocation · $selectedCategory";
+    String subtitle = '$selectedLocation · $selectedCategory';
     if (selectedBudget != null) {
-      subtitle += " · ${selectedBudget.toStringAsFixed(0)} €";
+      subtitle += ' · ${selectedBudget.toStringAsFixed(0)} €';
     }
 
     return Column(
@@ -317,12 +351,24 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
             children: [
               const Expanded(
                 child: Text(
-                  "Mes annonces favorites",
+                  'Mes annonces favorites',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: 'Actualiser',
+                visualDensity: VisualDensity.compact,
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _error = null;
+                  });
+                  unawaited(_loadFavorites());
+                },
+                icon: const Icon(Icons.refresh_rounded),
               ),
               Container(
                 padding:
@@ -485,19 +531,6 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     );
   }
 
-  Widget _buildFavoritePlaceholder() {
-    return Container(
-      width: 72,
-      height: 72,
-      color: const Color(0xFFFFEDF1),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.favorite,
-        color: Colors.redAccent,
-      ),
-    );
-  }
-
   String _favoriteAddedLabel(Timestamp? addedAt) {
     if (addedAt == null) return 'Favori enregistré';
 
@@ -511,6 +544,136 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return 'Ajouté le $day/$month/${date.year}';
+  }
+
+  Widget _buildFavoriteLoadingCard() {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 112, maxHeight: 140),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFavoritePlaceholder() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        color: Colors.black38,
+      ),
+    );
+  }
+
+  Widget _buildFavoriteErrorCard() {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 132, maxHeight: 180),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF5F5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF1C0C0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.favorite_border_rounded, color: Color(0xFFD14343)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Mes annonces favorites',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _error ?? _kFavoriteLoadErrorMessage,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF8A1F1F),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _error = null;
+                  });
+                  unawaited(_loadFavorites());
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavoriteInfoCard({
+    required IconData icon,
+    required String message,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 112, maxHeight: 140),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEDF1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, color: const Color(0xFFE53935)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _primaryOfferImageUrl(Map<String, dynamic> data) {

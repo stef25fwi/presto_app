@@ -27,6 +27,7 @@ import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'services/city_search.dart';
 import 'services/app_check_bootstrap.dart';
 import 'services/app_route_parser.dart';
+import 'services/firestore_bootstrap.dart';
 import 'services/notification_service.dart';
 import 'services/admin_audio_runtime_store.dart';
 import 'services/post_auth_navigation_intent_service.dart';
@@ -497,6 +498,7 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     await ensureFirebaseInitialized(source: 'main');
+    await bootstrapFirestore();
 
     // 📋 Diagnostics
     if (kDebugMode) {

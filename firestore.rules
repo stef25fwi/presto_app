@@ -273,6 +273,10 @@ service cloud.firestore {
         allow read: if isSignedIn() && userId == uid();
         allow create, update, delete: if false; // LEGACY READ-ONLY UNTIL MIGRATION COMPLETE.
       }
+
+      match /favorites/{offerId} {
+        allow read, write: if isSignedIn() && userId == uid();
+      }
     }
 
     // 🔒 [SÉCURITÉ] Profiles — lecture restreinte au propriétaire ou modérateur
