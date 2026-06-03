@@ -2294,42 +2294,8 @@ class _AutoScrollingOffersCarouselState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.flash_on_outlined,
-                    color: kPrestoOrange,
-                    size: 24,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8FF),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    whenLabel,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: kPrestoBlue,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
             Expanded(
+              flex: 3,
               child: Text(
                 displayTitle,
                 maxLines: 3,
@@ -2340,6 +2306,47 @@ class _AutoScrollingOffersCarouselState
                   height: 1.15,
                   color: Colors.black87,
                 ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 44,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.flash_on_outlined,
+                      color: kPrestoOrange,
+                      size: 24,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F8FF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      whenLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: kPrestoBlue,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 10),
