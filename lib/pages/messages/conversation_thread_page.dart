@@ -341,7 +341,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       children: [
         CircleAvatar(
           radius: 18,
-          backgroundColor: Colors.white.withOpacity(0.18),
+          backgroundColor: Colors.white.withValues(alpha: 0.18),
           foregroundColor: Colors.white,
           child: Text(
             _conversationInitial(),
@@ -403,12 +403,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.95),
+              color: Colors.white.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: const Color(0xFFE5E7EB)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -1100,7 +1100,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.94),
+            color: Colors.white.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
@@ -1132,7 +1132,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             border: Border.all(color: const Color(0xFFE5E7EB)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -1573,7 +1573,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 7,
                   offset: const Offset(0, 2),
                 ),
@@ -2065,7 +2065,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
+                                    color: Colors.black.withValues(alpha: 0.06),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
@@ -2366,9 +2366,9 @@ class _ConversationBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.20)),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Row(
         children: [
@@ -2411,7 +2411,8 @@ class _ConversationPatternPainter extends CustomPainter {
       Paint()..color = const Color(0xFFFFFEFE),
     );
 
-    final dotPaint = Paint()..color = const Color(0xFFEAF2FF).withOpacity(0.55);
+    final dotPaint = Paint()
+      ..color = const Color(0xFFEAF2FF).withValues(alpha: 0.55);
     const spacing = 34.0;
     for (var y = 18.0; y < size.height; y += spacing) {
       for (var x = 18.0; x < size.width; x += spacing) {
