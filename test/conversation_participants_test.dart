@@ -5,13 +5,23 @@ void main() {
   test('expose tous les alias de requete participants attendus', () {
     expect(
       conversationParticipantQueryFieldAliases,
-      <String>['participantIds'],
+      <String>[
+        'participantIds',
+        'participants',
+        'participant_ids',
+        'userIds',
+        'memberIds',
+      ],
     );
   });
 
   test('lit les participants depuis les listes et les maps legacy', () {
     final data = <String, dynamic>{
       'participantIds': <String>['alice'],
+      'participants': <String>['diane'],
+      'participant_ids': <String>['eric'],
+      'userIds': <String>['fatou'],
+      'memberIds': <String>['georges'],
       'participant_names': <String, dynamic>{
         'bob': 'Bob',
       },
@@ -20,7 +30,10 @@ void main() {
       },
     };
 
-    expect(readConversationParticipants(data), <String>['alice', 'bob', 'carol']);
+    expect(
+      readConversationParticipants(data),
+      <String>['alice', 'bob', 'carol', 'diane', 'eric', 'fatou', 'georges'],
+    );
   });
 
   test('verifie explicitement la presence de l utilisateur courant', () {

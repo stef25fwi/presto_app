@@ -12,8 +12,10 @@ import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../core/firebase_contract.dart';
 import '../../models/conversation_summary.dart';
+import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
+import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
 
@@ -363,78 +365,167 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
     final isAdminMode = _isAdminViewer;
-    final mode = isAdminMode ? 'admin_global' : 'user_participantIds';
+    final mode = isAdminMode ? 'admin_global' : 'user_participant_aliases';
     final controller = StreamController<_ConversationQueryState>();
     final queryShape = ConversationsQueryContract.shape(
       isAdminMode: isAdminMode,
       userId: userId,
     );
+    final snapshotsByField = <String, List<ConversationSummary>>{};
+    final errorsByField = <String, Object>{};
+    final subscriptions =
+        <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+    var isCancelled = false;
+    var didRetryAfterPermissionDenied = false;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
       debugPrint('[MessagesList] mode=$mode user=$userId');
     }
 
-    final query = isAdminMode
-        ? FirebaseFirestore.instance
-            .collection(queryShape['collection']! as String)
-            .orderBy(queryShape['orderBy']! as String,
-                descending: queryShape['descending']! as bool)
-            .limit(queryShape['limit']! as int)
-        : FirebaseFirestore.instance
-            .collection(queryShape['collection']! as String)
-            .where(queryShape['participantField']! as String,
-                arrayContains: queryShape['participantValue'])
-            .orderBy(queryShape['orderBy']! as String,
-                descending: queryShape['descending']! as bool);
+    List<ConversationSummary> mergedDocs() {
+      final byId = <String, ConversationSummary>{};
+      for (final docs in snapshotsByField.values) {
+        for (final doc in docs) {
+          final existing = byId[doc.id];
+          byId[doc.id] = existing == null ? doc : existing.mergeWith(doc);
+        }
+      }
 
-    late final StreamSubscription<QuerySnapshot<Map<String, dynamic>>>
-        subscription;
-    subscription = query.snapshots().listen(
-      (snapshot) {
-        final docs = snapshot.docs
-            .map(ConversationSummary.fromFirestore)
-            .toList(growable: false);
+      final docs = byId.values.toList(growable: false)
+        ..sort((left, right) {
+          final leftDate = left.sortDate;
+          final rightDate = right.sortDate;
+          if (leftDate == null && rightDate == null) {
+            return left.id.compareTo(right.id);
+          }
+          if (leftDate == null) return 1;
+          if (rightDate == null) return -1;
+          return rightDate.compareTo(leftDate);
+        });
+      return docs;
+    }
+
+    void emitState() {
+      if (controller.isClosed) return;
+      controller.add(
+        _ConversationQueryState(
+          docs: mergedDocs(),
+          errorsByField: Map<String, Object>.unmodifiable(errorsByField),
+          isLoading: false,
+        ),
+      );
+    }
+
+    Future<void> cancelSubscriptions() async {
+      final activeSubscriptions =
+          List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>.from(
+              subscriptions);
+      subscriptions.clear();
+      for (final subscription in activeSubscriptions) {
+        await subscription.cancel();
+      }
+    }
+
+    Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
+      try {
+        if (!isAdminMode) {
+          await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+            user: FirebaseAuth.instance.currentUser,
+            forceRefreshToken: forceRefreshTokens,
+            forceRefreshAppCheckToken: forceRefreshTokens,
+          );
+        }
+      } catch (error) {
+        errorsByField['app_check'] = error;
+        emitState();
+        return;
+      }
+
+      if (isCancelled || controller.isClosed) return;
+
+      void handleSnapshot(
+        String field,
+        QuerySnapshot<Map<String, dynamic>> snapshot,
+      ) {
+        final docs = snapshot.docs.map((doc) {
+          return ConversationSummary.fromFirestore(
+            doc,
+            assumedParticipants: field == conversationPrimaryParticipantField
+                ? const <String>[]
+                : <String>[userId],
+          );
+        }).toList(growable: false);
+        snapshotsByField[field] = docs;
+        errorsByField.remove(field);
         _appendAdminConversationLog(
-          'mode=$mode conversations_count=${docs.length}',
+          'mode=$mode field=$field conversations_count=${docs.length}',
         );
         if (kDebugMode) {
           debugPrint(
-            '[MessagesList] mode=$mode conversations_count=${docs.length} user=$userId',
+            '[MessagesList] mode=$mode field=$field conversations_count=${docs.length} user=$userId',
           );
         }
-        if (!controller.isClosed) {
-          controller.add(
-            _ConversationQueryState(
-              docs: docs,
-              errorsByField: const <String, Object>{},
-              isLoading: false,
-            ),
-          );
-        }
-      },
-      onError: (error, stackTrace) {
-        _appendAdminConversationLog('mode=$mode erreur=$error');
+        emitState();
+      }
+
+      void handleError(String field, Object error) {
+        _appendAdminConversationLog('mode=$mode field=$field erreur=$error');
         if (kDebugMode) {
           debugPrint(
-            '[MessagesList] mode=$mode error user=$userId error=$error',
+            '[MessagesList] mode=$mode field=$field error user=$userId error=$error',
           );
         }
-        if (!controller.isClosed) {
-          controller.add(
-            _ConversationQueryState(
-              docs: const <ConversationSummary>[],
-              errorsByField: <String, Object>{mode: error},
-              isLoading: false,
-            ),
+
+        if (_isPermissionDenied(error) && !didRetryAfterPermissionDenied) {
+          didRetryAfterPermissionDenied = true;
+          unawaited(() async {
+            await cancelSubscriptions();
+            snapshotsByField.clear();
+            errorsByField.clear();
+            await startSubscriptions(forceRefreshTokens: true);
+          }());
+          return;
+        }
+
+        errorsByField[field] = error;
+        emitState();
+      }
+
+      if (isAdminMode) {
+        final query = FirebaseFirestore.instance
+            .collection(queryShape['collection']! as String)
+            .orderBy(queryShape['orderBy']! as String,
+                descending: queryShape['descending']! as bool)
+            .limit(queryShape['limit']! as int);
+        subscriptions.add(
+          query.snapshots().listen(
+                (snapshot) => handleSnapshot('admin_global', snapshot),
+                onError: (error, stackTrace) =>
+                    handleError('admin_global', error),
+              ),
+        );
+      } else {
+        for (final field in conversationParticipantQueryFieldAliases) {
+          final query = FirebaseFirestore.instance
+              .collection(queryShape['collection']! as String)
+              .where(field, arrayContains: userId);
+          subscriptions.add(
+            query.snapshots().listen(
+                  (snapshot) => handleSnapshot(field, snapshot),
+                  onError: (error, stackTrace) => handleError(field, error),
+                ),
           );
         }
-      },
-    );
+      }
+    }
+
+    unawaited(startSubscriptions(forceRefreshTokens: false));
 
     controller.onCancel = () async {
       _appendAdminConversationLog('mode=$mode arret_abonnement');
-      await subscription.cancel();
+      isCancelled = true;
+      await cancelSubscriptions();
     };
 
     return controller.stream;
@@ -787,6 +878,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     _initialConversationResolveAttempts += 1;
 
     try {
+      final forceRefreshTokens = _initialConversationResolveAttempts > 1;
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: FirebaseAuth.instance.currentUser,
+        forceRefreshToken: forceRefreshTokens,
+        forceRefreshAppCheckToken: forceRefreshTokens,
+      );
       final snapshot = await FirebaseFirestore.instance
           .collection('conversations')
           .doc(conversationId)
@@ -830,6 +927,55 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           },
         );
         return;
+      }
+
+      _didHandleInitialConversation = true;
+      if (!context.mounted) return;
+      showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
+    } on FirebaseException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          '[MessagesList] initial conversation resolve failed '
+          'id=$conversationId attempt=$_initialConversationResolveAttempts '
+          'code=${error.code} message=${error.message}',
+        );
+      }
+
+      if (_isPermissionDenied(error) &&
+          _initialConversationResolveAttempts < 3 &&
+          mounted) {
+        _initialConversationRetryTimer?.cancel();
+        _initialConversationRetryTimer = Timer(
+          const Duration(milliseconds: 450),
+          () {
+            if (!mounted) return;
+            unawaited(
+              _resolveInitialConversationById(
+                context,
+                userId: userId,
+                conversationId: conversationId,
+              ),
+            );
+          },
+        );
+        return;
+      }
+
+      _didHandleInitialConversation = true;
+      if (!context.mounted) return;
+      showErrorSnackBar(
+        context,
+        _isPermissionDenied(error)
+            ? 'Acces refuse a cette conversation. Verifiez les regles Firestore et les participants enregistres.'
+            : 'Conversation introuvable ou inaccessible.',
+      );
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          '[MessagesList] initial conversation resolve failed '
+          'id=$conversationId attempt=$_initialConversationResolveAttempts '
+          'error=$error',
+        );
       }
 
       _didHandleInitialConversation = true;
@@ -1947,7 +2093,8 @@ class _ConversationAvatar extends StatelessWidget {
     required String storedPath,
     required String currentPhotoValue,
   }) async {
-    if (storedPath.isEmpty && !_isResolvableStorageProfilePhoto(currentPhotoValue)) {
+    if (storedPath.isEmpty &&
+        !_isResolvableStorageProfilePhoto(currentPhotoValue)) {
       return '';
     }
 
@@ -1973,8 +2120,7 @@ class _ConversationAvatar extends StatelessWidget {
           radius: 27,
           backgroundColor: fallbackColor,
           foregroundColor: Colors.white,
-          foregroundImage:
-              photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+          foregroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
           onForegroundImageError: (error, stackTrace) {
             debugPrint(
               '[ConversationAvatar] image load failed '
