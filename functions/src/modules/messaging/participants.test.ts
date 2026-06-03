@@ -2,9 +2,20 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildConversationParticipantFields,
+  CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
   readConversationParticipantIdsFromCanonicalId,
   readConversationParticipants,
 } from "./participants";
+
+test("participant query aliases cover all mirrored array fields", () => {
+  assert.deepEqual(CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES, [
+    "participantIds",
+    "participants",
+    "participant_ids",
+    "userIds",
+    "memberIds",
+  ]);
+});
 
 test("readConversationParticipants merges current and legacy participant fields", () => {
   const participants = readConversationParticipants({

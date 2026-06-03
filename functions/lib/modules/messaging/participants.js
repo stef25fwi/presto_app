@@ -6,13 +6,13 @@ exports.readConversationParticipants = readConversationParticipants;
 exports.buildConversationParticipantFields = buildConversationParticipantFields;
 exports.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES = [
     "participantIds",
-];
-exports.CONVERSATION_PARTICIPANT_FIELD_ALIASES = [
-    ...exports.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
     "participants",
     "participant_ids",
     "userIds",
     "memberIds",
+];
+exports.CONVERSATION_PARTICIPANT_FIELD_ALIASES = [
+    ...exports.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
 ];
 exports.CONVERSATION_PARTICIPANT_MAP_ALIASES = [
     "participantNames",
