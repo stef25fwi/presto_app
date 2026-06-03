@@ -71,14 +71,18 @@ exports.onUserCreated = (0, firestore_1.onDocumentCreated)(`${constants_1.COLLEC
         return;
     const userId = event.params.userId;
     const now = Date.now();
-    await event.data?.ref.set({
+    const initialInboxCounts = {
         inboxCounts: {
             unreadMessages: 0,
             unreadNotifications: 0,
             totalUnread: 0,
             updatedAt: now,
         },
-    }, { merge: true });
+    };
+    await Promise.all([
+        event.data?.ref.set(initialInboxCounts, { merge: true }),
+        event.data?.ref.collection("metadata").doc("inbox").set(initialInboxCounts, { merge: true }),
+    ]);
     const email = String(data.email || "").trim();
     if (!email)
         return;

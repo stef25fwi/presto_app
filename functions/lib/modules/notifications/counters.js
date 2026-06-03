@@ -9,6 +9,8 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("../../core/firestore");
 const constants_1 = require("../../shared/constants");
 const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participantIds";
+const INBOX_METADATA_COLLECTION = "metadata";
+const INBOX_METADATA_DOC = "inbox";
 function safeNumber(value) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -22,15 +24,34 @@ function readBoolMap(value) {
     }
     return out;
 }
+function readInboxCounts(data) {
+    return (data?.inboxCounts || {});
+}
+async function readCurrentInboxCounts(userId) {
+    const userRef = firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId);
+    const [userSnap, metadataSnap] = await Promise.all([
+        userRef.get(),
+        userRef.collection(INBOX_METADATA_COLLECTION).doc(INBOX_METADATA_DOC).get(),
+    ]);
+    return {
+        ...readInboxCounts(userSnap.data()),
+        ...readInboxCounts(metadataSnap.data()),
+    };
+}
 async function setInboxCounts(userId, unreadMessages, unreadNotifications) {
-    await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId).set({
+    const inboxCounts = {
         inboxCounts: {
             unreadMessages: Math.max(0, unreadMessages),
             unreadNotifications: Math.max(0, unreadNotifications),
             totalUnread: Math.max(0, unreadMessages) + Math.max(0, unreadNotifications),
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
         },
-    }, { merge: true });
+    };
+    const userRef = firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId);
+    const batch = firestore_1.db.batch();
+    batch.set(userRef, inboxCounts, { merge: true });
+    batch.set(userRef.collection(INBOX_METADATA_COLLECTION).doc(INBOX_METADATA_DOC), inboxCounts, { merge: true });
+    await batch.commit();
 }
 async function refreshUnreadMessageCount(userId) {
     const snapshot = await firestore_1.db.collection(constants_1.COLLECTIONS.conversations)
@@ -49,8 +70,7 @@ async function refreshUnreadMessageCount(userId) {
         const unreadMap = (data.unreadCount || data.unread_count || {});
         unreadMessages += safeNumber(unreadMap[userId]);
     }
-    const userSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId).get();
-    const inboxCounts = (userSnap.data()?.inboxCounts || {});
+    const inboxCounts = await readCurrentInboxCounts(userId);
     const unreadNotifications = safeNumber(inboxCounts.unreadNotifications);
     await setInboxCounts(userId, unreadMessages, unreadNotifications);
 }
@@ -61,8 +81,7 @@ async function refreshUnreadNotificationCount(userId) {
         .where("read", "==", false)
         .get();
     const unreadNotifications = notificationsSnap.size;
-    const userSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId).get();
-    const inboxCounts = (userSnap.data()?.inboxCounts || {});
+    const inboxCounts = await readCurrentInboxCounts(userId);
     const unreadMessages = safeNumber(inboxCounts.unreadMessages);
     await setInboxCounts(userId, unreadMessages, unreadNotifications);
 }

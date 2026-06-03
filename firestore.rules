@@ -310,6 +310,11 @@ service cloud.firestore {
         allow read, create, update, delete: if false;
       }
 
+      match /metadata/{metadataId} {
+        allow read: if isSignedIn() && userId == uid();
+        allow create, update, delete: if false;
+      }
+
       // ℹ️ [INFO] Sous-collection notifications — réservée pour usage futur
       match /notifications/{notifId} {
         allow read, update, delete: if hasAppCheck() && isSignedIn() && userId == uid();
