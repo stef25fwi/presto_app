@@ -45,6 +45,7 @@ dependencies:
   cross_file: ^0.3.4+2
   firebase_ai: ^3.11.0
   google_sign_in: ^7.2.0
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
