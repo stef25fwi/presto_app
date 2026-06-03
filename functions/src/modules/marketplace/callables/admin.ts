@@ -49,7 +49,7 @@ function removeFromList(values: string[], target: string): string[] {
   return values.filter((value) => value !== target);
 }
 
-function buildListingPatchForPhotoReview({
+export function buildListingPatchForPhotoReview({
   decision,
   listingData,
   imageUrl,
