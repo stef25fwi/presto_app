@@ -1226,11 +1226,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       ),
       labelStyle: const TextStyle(
         fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF474D70),
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF1F4E95),
       ),
-      backgroundColor: Colors.white,
-      side: const BorderSide(color: Color(0xFFE4D8DA)),
+      backgroundColor: const Color(0xFFF4F8FF),
+      side: const BorderSide(color: Color(0xFFBED5F8)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
+      ),
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
@@ -1462,11 +1465,33 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          gradient: _showFilters
+                              ? const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Color(0xFF1A73E8),
+                                    Color(0xFF0D47A1),
+                                  ],
+                                )
+                              : null,
+                          color: _showFilters ? null : Colors.white,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
-                            color: const Color(0xFFE4D8DA),
+                            color: _showFilters
+                                ? Colors.white.withValues(alpha: 0.28)
+                                : const Color(0xFFE4D8DA),
                           ),
+                          boxShadow: _showFilters
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF1A73E8)
+                                        .withValues(alpha: 0.20),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1474,15 +1499,19 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                             Icon(
                               _showFilters ? Icons.tune : Icons.tune_rounded,
                               size: 18,
-                              color: const Color(0xFF585D7C),
+                              color: _showFilters
+                                  ? Colors.white
+                                  : const Color(0xFF585D7C),
                             ),
                             const SizedBox(width: 7),
-                            const Text(
+                            Text(
                               'Filtres',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF474D70),
+                                color: _showFilters
+                                    ? Colors.white
+                                    : const Color(0xFF474D70),
                                 letterSpacing: -0.1,
                               ),
                             ),
@@ -1492,7 +1521,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   ? Icons.keyboard_arrow_up_rounded
                                   : Icons.keyboard_arrow_down_rounded,
                               size: 18,
-                              color: const Color(0xFF777B97),
+                              color: _showFilters
+                                  ? Colors.white70
+                                  : const Color(0xFF777B97),
                             ),
                           ],
                         ),
@@ -1518,8 +1549,25 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       height: 28,
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
-                        color: _offersOrange,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFFFFC04A),
+                            Color(0xFFFF7A00),
+                          ],
+                        ),
                         borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.75),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _offersOrange.withValues(alpha: 0.22),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -1548,13 +1596,19 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                   icon: const Icon(Icons.restart_alt_rounded, size: 18),
                   label: const Text('Réinitialiser'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _offersOrange,
-                    side: const BorderSide(color: Color(0xFFD9C5C8)),
-                    backgroundColor: Colors.white,
+                    foregroundColor: kPrestoBlue,
+                    side: const BorderSide(color: Color(0xFFBED5F8)),
+                    backgroundColor: const Color(0xFFF4F8FF),
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -1893,53 +1947,132 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Widget _buildFilterPanel() {
+    final panelFieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: Colors.white.withValues(alpha: 0.72),
+      ),
+    );
+
     return AnimatedCrossFade(
-      duration: const Duration(milliseconds: 220),
+      duration: const Duration(milliseconds: 320),
+      firstCurve: Curves.easeOutCubic,
+      secondCurve: Curves.easeInCubic,
+      sizeCurve: Curves.easeInOutCubicEmphasized,
+      alignment: Alignment.topCenter,
       crossFadeState:
           _showFilters ? CrossFadeState.showFirst : CrossFadeState.showSecond,
       firstChild: Form(
         key: ValueKey(_filterPanelKey),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(12),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            inputDecorationTheme: InputDecorationTheme(
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.97),
+              labelStyle: const TextStyle(
+                color: Color(0xFF345286),
+                fontWeight: FontWeight.w700,
+              ),
+              hintStyle: const TextStyle(
+                color: Color(0xFF7183A6),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              enabledBorder: panelFieldBorder,
+              border: panelFieldBorder,
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFFC04A),
+                  width: 1.6,
+                ),
+              ),
+            ),
           ),
-          clipBehavior: Clip.antiAlias,
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildCategoryDropdown(),
-              const SizedBox(height: 12),
-              _buildRegionDropdown(),
-              const SizedBox(height: 12),
-              _buildDepartmentDropdown(),
-              const SizedBox(height: 12),
-              _buildFilterCityField(),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _resetFilters,
-                      child: const Text('Réinitialiser'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _applyFiltersOrSearch,
-                      icon: const Icon(Icons.search),
-                      label: const Text('Rechercher'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrestoBlue,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1A73E8),
+                  Color(0xFF0D47A1),
                 ],
               ),
-            ],
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.18),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildCategoryDropdown(),
+                const SizedBox(height: 12),
+                _buildRegionDropdown(),
+                const SizedBox(height: 12),
+                _buildDepartmentDropdown(),
+                const SizedBox(height: 12),
+                _buildFilterCityField(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _resetFilters,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: kPrestoBlue,
+                          backgroundColor: Colors.white.withValues(alpha: 0.97),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.74),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text('Réinitialiser'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _applyFiltersOrSearch,
+                        icon: const Icon(Icons.search),
+                        label: const Text('Rechercher'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _offersOrange,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1953,8 +2086,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       child: DropdownButtonFormField<String?>(
         value: _filterRegionCode,
         isDense: true,
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        dropdownColor: const Color(0xFFF4F8FF),
+        borderRadius: BorderRadius.circular(16),
         decoration: const InputDecoration(
           labelText: "Région",
           isDense: true,
@@ -2038,8 +2171,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       child: DropdownButtonFormField<String?>(
         value: safeValue,
         isDense: true,
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        dropdownColor: const Color(0xFFF4F8FF),
+        borderRadius: BorderRadius.circular(16),
         decoration: InputDecoration(
           labelText: 'Département',
           border: OutlineInputBorder(
@@ -2108,44 +2241,52 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         return _searchCities(q);
       },
       optionsViewBuilder: (context, onSelected, options) {
-        final surface = Theme.of(context).colorScheme.surface;
-
         return Align(
           alignment: Alignment.topLeft,
           child: Material(
-            color: surface,
-            elevation: 4,
+            color: const Color(0xFFF4F8FF),
+            elevation: 8,
             borderRadius: BorderRadius.circular(16),
             clipBehavior: Clip.antiAlias,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 220),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, index) {
-                  final option = options.elementAt(index);
-                  final highlightedIndex =
-                      AutocompleteHighlightedOption.of(context);
-                  final isHighlighted = index == highlightedIndex;
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFBED5F8)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options.elementAt(index);
+                    final highlightedIndex =
+                        AutocompleteHighlightedOption.of(context);
+                    final isHighlighted = index == highlightedIndex;
 
-                  return ListTile(
-                    dense: true,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    title: Text(
-                      '${option.name} (${option.cp})',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                    return ListTile(
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    tileColor:
-                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
-                    onTap: () => onSelected(option),
-                  );
-                },
+                      title: Text(
+                        '${option.name} (${option.cp})',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isHighlighted
+                              ? const Color(0xFF0D47A1)
+                              : const Color(0xFF1E2554),
+                        ),
+                      ),
+                      tileColor: isHighlighted
+                          ? const Color(0xFFDDEBFF)
+                          : Colors.transparent,
+                      onTap: () => onSelected(option),
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -2230,8 +2371,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return DropdownButtonFormField<String>(
       value: _filterCategory,
       isDense: true,
-      dropdownColor: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      dropdownColor: const Color(0xFFF4F8FF),
+      borderRadius: BorderRadius.circular(16),
       decoration: const InputDecoration(
         labelText: 'Catégorie',
         isDense: true,
