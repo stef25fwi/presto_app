@@ -58,8 +58,10 @@ class HeroSlidesService {
       contentType: contentType,
       onProgress: onUploadProgress,
     );
+    _verifyHeroMediaUpload(uploadResult);
     final docRef = _slidesCollection.doc();
     final batch = _firestore.batch();
+    final normalizedTitle = _normalizeTitle(title, fileName: fileName);
 
     if (shouldBeFirst) {
       for (final slide in slides.where((slide) => slide.isFirst)) {
@@ -72,7 +74,7 @@ class HeroSlidesService {
 
     batch.set(docRef, <String, dynamic>{
       'id': docRef.id,
-      'title': title.trim(),
+      'title': normalizedTitle,
       'mediaUrl': uploadResult.mediaUrl,
       'storagePath': uploadResult.storagePath,
       'mediaType': normalizedMediaType,
@@ -122,6 +124,7 @@ class HeroSlidesService {
         contentType: replacementContentType,
         onProgress: onUploadProgress,
       );
+      _verifyHeroMediaUpload(uploadResult);
       previousStoragePath = slide.storagePath;
       nextMediaUrl = uploadResult.mediaUrl;
       nextStoragePath = uploadResult.storagePath;
@@ -135,7 +138,8 @@ class HeroSlidesService {
     final batch = _firestore.batch();
 
     if (shouldBeFirst) {
-      for (final other in slides.where((entry) => entry.id != slide.id && entry.isFirst)) {
+      for (final other
+          in slides.where((entry) => entry.id != slide.id && entry.isFirst)) {
         batch.update(_slidesCollection.doc(other.id), <String, dynamic>{
           'isFirst': false,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -144,8 +148,12 @@ class HeroSlidesService {
     }
 
     final nextOrder = order ?? slide.order;
+    final normalizedTitle = _normalizeTitle(
+      title ?? slide.title,
+      fileName: replacementFileName ?? slide.title,
+    );
     batch.update(docRef, <String, dynamic>{
-      'title': (title ?? slide.title).trim(),
+      'title': normalizedTitle,
       'mediaUrl': nextMediaUrl,
       'storagePath': nextStoragePath,
       'mediaType': nextMediaType,
@@ -300,9 +308,8 @@ class HeroSlidesService {
   }
 
   List<HeroSlide> _mapSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    final slides = snapshot.docs
-        .map(HeroSlide.fromFirestore)
-        .toList(growable: false);
+    final slides =
+        snapshot.docs.map(HeroSlide.fromFirestore).toList(growable: false);
     slides.sort(HeroSlide.compareDisplayOrder);
     return slides;
   }
@@ -346,6 +353,27 @@ class HeroSlidesService {
         .replaceAll(RegExp(r'_+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
     return sanitized.isEmpty ? fallback : sanitized;
+  }
+
+  String _normalizeTitle(String value, {required String fileName}) {
+    final trimmed = value.trim();
+    if (trimmed.isNotEmpty) {
+      return trimmed.length > 80 ? trimmed.substring(0, 80) : trimmed;
+    }
+
+    final withoutExtension = fileName.trim().replaceFirst(
+          RegExp(r'\.[^.]+$'),
+          '',
+        );
+    final fallback = withoutExtension.isEmpty ? 'Slide Hero' : withoutExtension;
+    return fallback.length > 80 ? fallback.substring(0, 80) : fallback;
+  }
+
+  void _verifyHeroMediaUpload(HeroMediaUploadResult uploadResult) {
+    if (uploadResult.mediaUrl.trim().isEmpty ||
+        !uploadResult.storagePath.startsWith('hero_slides/')) {
+      throw StateError('Hero media upload did not return a Firebase URL/path.');
+    }
   }
 
   String _fileExtension(String fileName) {

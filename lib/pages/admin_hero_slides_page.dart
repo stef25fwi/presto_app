@@ -85,7 +85,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
               }
 
               final mediaType = _mediaTypeFromName(file.name);
-              final byteLimit = mediaType == 'video' ? _maxVideoBytes : _maxImageBytes;
+              final byteLimit =
+                  mediaType == 'video' ? _maxVideoBytes : _maxImageBytes;
               if (bytes.lengthInBytes > byteLimit) {
                 setSheetState(() {
                   localError = mediaType == 'video'
@@ -101,7 +102,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 selectedMediaType = mediaType;
                 selectedContentType = _contentTypeForName(file.name, mediaType);
                 localError = '';
-                if (existing == null && durationController.text.trim().isEmpty) {
+                if (existing == null &&
+                    durationController.text.trim().isEmpty) {
                   durationController.text = mediaType == 'video' ? '10' : '5';
                 }
               });
@@ -121,7 +123,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        existing == null ? 'Ajouter un slide' : 'Modifier le slide',
+                        existing == null
+                            ? 'Ajouter un slide'
+                            : 'Modifier le slide',
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
@@ -204,6 +208,15 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                           ),
                         ),
                       ),
+                      if (selectedBytes.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _SelectedHeroMediaPreview(
+                          fileBytes: selectedBytes,
+                          fileName: selectedFileName,
+                          mediaType: selectedMediaType,
+                          contentType: selectedContentType,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       TextField(
                         controller: titleController,
@@ -242,7 +255,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Slide actif'),
-                        subtitle: const Text('Désactivez temporairement sans supprimer le slide.'),
+                        subtitle: const Text(
+                            'Désactivez temporairement sans supprimer le slide.'),
                         value: isActive,
                         activeColor: _kAdminHeroOrange,
                         onChanged: _isSubmitting
@@ -254,7 +268,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Définir comme premier slide'),
-                        subtitle: const Text('Tous les autres slides perdront ce statut.'),
+                        subtitle: const Text(
+                            'Tous les autres slides perdront ce statut.'),
                         value: isFirst,
                         activeColor: _kAdminHeroBlue,
                         onChanged: _isSubmitting
@@ -312,9 +327,11 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                               onPressed: _isSubmitting
                                   ? null
                                   : () async {
-                                      if (existing == null && selectedBytes.isEmpty) {
+                                      if (existing == null &&
+                                          selectedBytes.isEmpty) {
                                         setSheetState(() {
-                                          localError = 'Ajoutez un fichier image ou vidéo.';
+                                          localError =
+                                              'Ajoutez un fichier image ou vidéo.';
                                         });
                                         return;
                                       }
@@ -322,18 +339,24 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                       final parsedDuration = int.tryParse(
                                         durationController.text.trim(),
                                       );
-                                      final parsedOrder = orderController.text.trim().isEmpty
-                                          ? null
-                                          : int.tryParse(orderController.text.trim());
-                                      if (parsedDuration == null || parsedDuration < 1) {
+                                      final parsedOrder =
+                                          orderController.text.trim().isEmpty
+                                              ? null
+                                              : int.tryParse(
+                                                  orderController.text.trim());
+                                      if (parsedDuration == null ||
+                                          parsedDuration < 1) {
                                         setSheetState(() {
-                                          localError = 'La durée doit être un nombre supérieur à 0.';
+                                          localError =
+                                              'La durée doit être un nombre supérieur à 0.';
                                         });
                                         return;
                                       }
-                                      if (parsedOrder != null && parsedOrder < 0) {
+                                      if (parsedOrder != null &&
+                                          parsedOrder < 0) {
                                         setSheetState(() {
-                                          localError = 'L\'ordre doit être positif.';
+                                          localError =
+                                              'L\'ordre doit être positif.';
                                         });
                                         return;
                                       }
@@ -349,7 +372,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                       try {
                                         if (existing == null) {
                                           await _heroSlidesService.addSlide(
-                                            fileBytes: Uint8List.fromList(selectedBytes),
+                                            fileBytes: Uint8List.fromList(
+                                                selectedBytes),
                                             fileName: selectedFileName,
                                             mediaType: selectedMediaType,
                                             contentType: selectedContentType,
@@ -362,7 +386,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                               if (!mounted) {
                                                 return;
                                               }
-                                              setState(() => _uploadProgress = progress);
+                                              setState(() =>
+                                                  _uploadProgress = progress);
                                             },
                                           );
                                           if (!mounted) {
@@ -383,21 +408,29 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             order: parsedOrder,
                                             isActive: isActive,
                                             isFirst: isFirst,
-                                            replacementFileBytes: selectedBytes.isEmpty
-                                                ? null
-                                                : Uint8List.fromList(selectedBytes),
-                                            replacementFileName: selectedFileName.isEmpty
-                                                ? null
-                                                : selectedFileName,
+                                            replacementFileBytes:
+                                                selectedBytes.isEmpty
+                                                    ? null
+                                                    : Uint8List.fromList(
+                                                        selectedBytes),
+                                            replacementFileName:
+                                                selectedFileName.isEmpty
+                                                    ? null
+                                                    : selectedFileName,
                                             replacementMediaType:
-                                                selectedFileName.isEmpty ? null : selectedMediaType,
+                                                selectedFileName.isEmpty
+                                                    ? null
+                                                    : selectedMediaType,
                                             replacementContentType:
-                                                selectedFileName.isEmpty ? null : selectedContentType,
+                                                selectedFileName.isEmpty
+                                                    ? null
+                                                    : selectedContentType,
                                             onUploadProgress: (progress) {
                                               if (!mounted) {
                                                 return;
                                               }
-                                              setState(() => _uploadProgress = progress);
+                                              setState(() =>
+                                                  _uploadProgress = progress);
                                             },
                                           );
                                           if (!mounted) {
@@ -639,8 +672,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
         stream: _heroSlidesService.watchAllSlidesForAdmin(),
         builder: (context, snapshot) {
           final slides = snapshot.data ?? const <HeroSlide>[];
-          final isLoading = snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData;
+          final isLoading =
+              snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData;
 
           return Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
@@ -690,7 +724,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   children: [
                     _StatChip(
                       color: _kAdminHeroBlue,
-                      label: '${slides.where((slide) => slide.isActive).length} actifs',
+                      label:
+                          '${slides.where((slide) => slide.isActive).length} actifs',
                     ),
                     const SizedBox(width: 8),
                     _StatChip(
@@ -700,11 +735,19 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   ],
                 ),
                 const SizedBox(height: 16),
+                if (!isLoading && slides.isNotEmpty) ...[
+                  _HeroSlidesThumbnailCarousel(
+                    slides: slides,
+                    onSlideTap: (slide) => _openSlideEditor(existing: slide),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 Expanded(
                   child: isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : slides.isEmpty
-                          ? _EmptyHeroSlidesState(onAddPressed: _openSlideEditor)
+                          ? _EmptyHeroSlidesState(
+                              onAddPressed: _openSlideEditor)
                           : ReorderableListView.builder(
                               itemCount: slides.length,
                               onReorder: (oldIndex, newIndex) =>
@@ -713,7 +756,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                               itemBuilder: (context, index) {
                                 final slide = slides[index];
                                 final isBusy =
-                                    _busySlideIds.contains(slide.id) || _isSubmitting;
+                                    _busySlideIds.contains(slide.id) ||
+                                        _isSubmitting;
                                 return Card(
                                   key: ValueKey(slide.id),
                                   elevation: 0,
@@ -727,16 +771,19 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             _SlideMediaPreview(slide: slide),
                                             const SizedBox(width: 14),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
                                                   Wrap(
                                                     spacing: 8,
@@ -746,18 +793,26 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                         color: slide.isVideo
                                                             ? _kAdminHeroBlue
                                                             : _kAdminHeroOrange,
-                                                        label: slide.isVideo ? 'Vidéo' : 'Image',
+                                                        label: slide.isVideo
+                                                            ? 'Vidéo'
+                                                            : 'Image',
                                                       ),
                                                       if (slide.isFirst)
                                                         const _TypeBadge(
-                                                          color: Color(0xFF047857),
-                                                          label: 'Premier slide',
+                                                          color:
+                                                              Color(0xFF047857),
+                                                          label:
+                                                              'Premier slide',
                                                         ),
                                                       _TypeBadge(
                                                         color: slide.isActive
-                                                            ? const Color(0xFF2563EB)
-                                                            : const Color(0xFF9CA3AF),
-                                                        label: slide.isActive ? 'Actif' : 'Inactif',
+                                                            ? const Color(
+                                                                0xFF2563EB)
+                                                            : const Color(
+                                                                0xFF9CA3AF),
+                                                        label: slide.isActive
+                                                            ? 'Actif'
+                                                            : 'Inactif',
                                                       ),
                                                     ],
                                                   ),
@@ -768,7 +823,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                         : slide.title,
                                                     style: const TextStyle(
                                                       fontSize: 17,
-                                                      fontWeight: FontWeight.w900,
+                                                      fontWeight:
+                                                          FontWeight.w900,
                                                       color: Color(0xFF111827),
                                                     ),
                                                   ),
@@ -777,14 +833,16 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                     'Durée: ${slide.durationSeconds}s · Ordre: ${slide.order}',
                                                     style: const TextStyle(
                                                       color: Color(0xFF6B7280),
-                                                      fontWeight: FontWeight.w700,
+                                                      fontWeight:
+                                                          FontWeight.w700,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 2),
                                                   Text(
                                                     slide.mediaUrl,
                                                     maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                     style: const TextStyle(
                                                       color: Color(0xFF9CA3AF),
                                                       fontSize: 12,
@@ -814,7 +872,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                 onChanged: isBusy
                                                     ? null
                                                     : (value) =>
-                                                        _toggleSlideActive(slide, value),
+                                                        _toggleSlideActive(
+                                                            slide, value),
                                               ),
                                             ),
                                           ],
@@ -826,23 +885,31 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             OutlinedButton.icon(
                                               onPressed: isBusy
                                                   ? null
-                                                  : () => _openSlideEditor(existing: slide),
-                                              icon: const Icon(Icons.edit_outlined),
+                                                  : () => _openSlideEditor(
+                                                      existing: slide),
+                                              icon: const Icon(
+                                                  Icons.edit_outlined),
                                               label: const Text('Modifier'),
                                             ),
                                             OutlinedButton.icon(
                                               onPressed: isBusy || slide.isFirst
                                                   ? null
                                                   : () => _setFirstSlide(slide),
-                                              icon: const Icon(Icons.vertical_align_top_rounded),
-                                              label: const Text('Définir en premier'),
+                                              icon: const Icon(Icons
+                                                  .vertical_align_top_rounded),
+                                              label: const Text(
+                                                  'Définir en premier'),
                                             ),
                                             OutlinedButton.icon(
-                                              onPressed: isBusy ? null : () => _deleteSlide(slide),
+                                              onPressed: isBusy
+                                                  ? null
+                                                  : () => _deleteSlide(slide),
                                               style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFFB91C1C),
+                                                foregroundColor:
+                                                    const Color(0xFFB91C1C),
                                               ),
-                                              icon: const Icon(Icons.delete_outline_rounded),
+                                              icon: const Icon(
+                                                  Icons.delete_outline_rounded),
                                               label: const Text('Supprimer'),
                                             ),
                                           ],
@@ -897,6 +964,299 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
       return '';
     }
     return name.substring(dotIndex + 1).toLowerCase();
+  }
+}
+
+class _SelectedHeroMediaPreview extends StatelessWidget {
+  final List<int> fileBytes;
+  final String fileName;
+  final String mediaType;
+  final String contentType;
+
+  const _SelectedHeroMediaPreview({
+    required this.fileBytes,
+    required this.fileName,
+    required this.mediaType,
+    required this.contentType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isVideo = mediaType == 'video';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: 96,
+              height: 68,
+              child: isVideo
+                  ? Container(
+                      color: const Color(0xFF111827),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.play_circle_fill_rounded,
+                        color: Colors.white,
+                        size: 34,
+                      ),
+                    )
+                  : Image.memory(
+                      Uint8List.fromList(fileBytes),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFFFFF1E8),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.broken_image_outlined,
+                          color: _kAdminHeroOrange,
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${isVideo ? 'Vidéo' : 'Image'} · $contentType',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 16,
+                      color: _kAdminHeroBlue,
+                    ),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Upload Firebase Storage: hero_slides/',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: _kAdminHeroBlue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroSlidesThumbnailCarousel extends StatelessWidget {
+  final List<HeroSlide> slides;
+  final void Function(HeroSlide slide) onSlideTap;
+
+  const _HeroSlidesThumbnailCarousel({
+    required this.slides,
+    required this.onSlideTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.view_carousel_outlined, color: _kAdminHeroBlue),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Prévisualisation des slides Hero',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 124,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: slides.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final slide = slides[index];
+                return _HeroSlideThumbnail(
+                  slide: slide,
+                  position: index + 1,
+                  onTap: () => onSlideTap(slide),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroSlideThumbnail extends StatelessWidget {
+  final HeroSlide slide;
+  final int position;
+  final VoidCallback onTap;
+
+  const _HeroSlideThumbnail({
+    required this.slide,
+    required this.position,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        width: 148,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: slide.isFirst
+                ? const Color(0xFF047857)
+                : const Color(0xFFE5E7EB),
+            width: slide.isFirst ? 1.6 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(17),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 74,
+                child: slide.isVideo
+                    ? Container(
+                        color: const Color(0xFF111827),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.play_circle_fill_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      )
+                    : Image.network(
+                        slide.mediaUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: const Color(0xFFFFF1E8),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.broken_image_outlined,
+                            color: _kAdminHeroOrange,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(9, 7, 9, 0),
+              child: Row(
+                children: [
+                  Text(
+                    '#$position',
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      slide.title.trim().isEmpty ? 'Slide Hero' : slide.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF111827),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(9, 3, 9, 0),
+              child: Text(
+                '${slide.isVideo ? 'Vidéo' : 'Image'} · ${slide.durationSeconds}s${slide.isFirst ? ' · premier' : ''}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: slide.isActive
+                      ? _kAdminHeroBlue
+                      : const Color(0xFF9CA3AF),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

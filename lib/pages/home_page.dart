@@ -2354,43 +2354,40 @@ class _AutoScrollingOffersCarouselState
           ),
         ),
         padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
+          horizontal: 12,
+          vertical: 10,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 3,
-              child: Text(
-                displayTitle,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                  color: Colors.black87,
-                ),
+            Text(
+              displayTitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                height: 1.12,
+                color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 8),
+            const Spacer(),
             SizedBox(
-              height: 44,
+              height: 32,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFF3E0),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(11),
                     ),
                     child: const Icon(
                       Icons.flash_on_outlined,
                       color: kPrestoOrange,
-                      size: 24,
+                      size: 20,
                     ),
                   ),
                   const Spacer(),
@@ -2415,7 +2412,7 @@ class _AutoScrollingOffersCarouselState
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
             Row(
               children: [
                 Expanded(
@@ -2461,7 +2458,7 @@ class _AutoScrollingOffersCarouselState
         return false;
       },
       child: SizedBox(
-        height: 156,
+        height: 104,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
