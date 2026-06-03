@@ -734,7 +734,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       Color(0xFF5D4037),
     ];
     final source = key.trim().isEmpty ? 'conversation' : key.trim();
-    final index = source.codeUnits.fold<int>(0, (sum, unit) => sum + unit) %
+    final index = source.codeUnits.fold<int>(0, (acc, unit) => acc + unit) %
         colors.length;
     return colors[index];
   }

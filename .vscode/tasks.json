@@ -581,6 +581,34 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Export reviewListingPhoto",
+      "type": "shell",
+      "command": "git commit -m \"fix(moderation): export reviewListingPhoto callable from Functions entrypoint\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Export reviewListingPhoto",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Export reviewListingPhoto",
+        "Git: Push Main",
+        "Firebase: Deploy Functions + Hosting"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "add commit push build deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Release: Export reviewListingPhoto"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "ADDCOMMIT PUSH BUIL DEPLOY A CLQIUER",
       "dependsOrder": "sequence",
       "dependsOn": [

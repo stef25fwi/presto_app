@@ -61,10 +61,11 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
         'Impossible de traiter cette photo pour le moment.',
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _busyReviewIds.remove(reviewId);
-      });
+      if (mounted) {
+        setState(() {
+          _busyReviewIds.remove(reviewId);
+        });
+      }
     }
   }
 

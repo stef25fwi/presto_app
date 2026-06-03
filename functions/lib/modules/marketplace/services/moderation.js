@@ -3,6 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildListingMediaModerationState = buildListingMediaModerationState;
+exports.buildListingPhotoReviewDocs = buildListingPhotoReviewDocs;
 exports.loadModerationConfig = loadModerationConfig;
 exports.moderateListingMedia = moderateListingMedia;
 exports.evaluateListingText = evaluateListingText;
@@ -16,6 +18,7 @@ const firestore_1 = require("../../../core/firestore");
 const logger_1 = require("../../../core/logger");
 const env_1 = require("../../../config/env");
 const constants_1 = require("../../../shared/constants");
+const push_1 = require("../../notifications/push");
 const google_api_1 = require("./google_api");
 const SAFE_SEARCH_SCORES = {
     UNKNOWN: 0,
@@ -42,6 +45,145 @@ function normalizeText(value) {
 }
 function includesAnyTerm(source, terms) {
     return terms.some((term) => source.includes(term));
+}
+function listingMediaUrl(entry) {
+    return entry.downloadUrl || entry.thumbnailUrl || "";
+}
+function normalizeString(value) {
+    return String(value ?? "").trim();
+}
+async function queryModerationUsersByField(field, operator, value) {
+    try {
+        const snap = await firestore_1.db.collection(constants_1.COLLECTIONS.users).where(field, operator, value).limit(200).get();
+        return snap.docs;
+    }
+    catch (error) {
+        logger_1.logger.warn("marketplace_manual_review_admin_query_failed", {
+            field,
+            error: error instanceof Error ? error.message : String(error),
+        });
+        return [];
+    }
+}
+async function findModerationRecipientIds() {
+    const snapshots = await Promise.all([
+        queryModerationUsersByField("roles", "array-contains-any", ["moderator", "admin", "superadmin"]),
+        queryModerationUsersByField("role", "in", ["moderator", "admin", "superadmin"]),
+        queryModerationUsersByField("admin", "==", true),
+        queryModerationUsersByField("superadmin", "==", true),
+    ]);
+    return Array.from(new Set(snapshots
+        .flat()
+        .map((doc) => normalizeString(doc.id))
+        .filter(Boolean)));
+}
+async function notifyAdminsForManualReview({ listingId, listingTitle, photoReviewDocs, }) {
+    if (photoReviewDocs.length === 0) {
+        return;
+    }
+    const recipientIds = await findModerationRecipientIds();
+    if (recipientIds.length === 0) {
+        return;
+    }
+    const reviewId = photoReviewDocs[0]?.id || "";
+    const resolvedTitle = normalizeString(listingTitle) || listingId;
+    await Promise.all(recipientIds.map(async (userId) => {
+        const notificationId = `listing_photo_review_${reviewId}_${userId}`;
+        await (0, push_1.createInAppNotification)({
+            notificationId,
+            userId,
+            title: "Nouvelle photo a valider",
+            message: `L'annonce \"${resolvedTitle}\" necessite une verification manuelle.`,
+            type: "manual_review_required",
+            routeName: "/admin",
+            offerId: listingId,
+            data: {
+                reviewId,
+                listingId,
+            },
+        });
+        await (0, push_1.sendPushToUser)({
+            userId,
+            topic: "listings",
+            title: "Nouvelle photo a valider",
+            body: "Une photo d'annonce necessite une validation manuelle.",
+            routeName: "/admin",
+            channelId: "ilipresto_activity",
+            collapseKey: `listing_photo_review_${listingId}`,
+            data: {
+                type: "admin_photo_review",
+                reviewId,
+                listingId,
+            },
+        });
+    }));
+}
+function buildListingMediaModerationState({ media, evaluation, }) {
+    const imageUrls = media.map(listingMediaUrl).filter(Boolean);
+    const imageCount = imageUrls.length;
+    if (evaluation.moderationDecision === "approved") {
+        return {
+            imageCount,
+            approvedImageCount: imageCount,
+            rejectedImageCount: 0,
+            pendingHumanReviewCount: 0,
+            approvedImageUrls: imageUrls,
+            rejectedImages: [],
+            pendingReviewImages: [],
+        };
+    }
+    if (evaluation.moderationDecision === "blocked" || evaluation.moderationDecision === "rejected") {
+        return {
+            imageCount,
+            approvedImageCount: 0,
+            rejectedImageCount: imageCount,
+            pendingHumanReviewCount: 0,
+            approvedImageUrls: [],
+            rejectedImages: imageUrls,
+            pendingReviewImages: [],
+        };
+    }
+    if (evaluation.moderationDecision === "manual_review" && imageCount > 0) {
+        return {
+            imageCount,
+            approvedImageCount: 0,
+            rejectedImageCount: 0,
+            pendingHumanReviewCount: imageCount,
+            approvedImageUrls: [],
+            rejectedImages: [],
+            pendingReviewImages: imageUrls,
+        };
+    }
+    return {
+        imageCount,
+        approvedImageCount: 0,
+        rejectedImageCount: 0,
+        pendingHumanReviewCount: 0,
+        approvedImageUrls: [],
+        rejectedImages: [],
+        pendingReviewImages: [],
+    };
+}
+function buildListingPhotoReviewDocs({ listingId, listingTitle, ownerId, media, evaluation, }) {
+    if (evaluation.moderationDecision !== "manual_review" || media.length === 0) {
+        return [];
+    }
+    return media.map((entry, index) => ({
+        id: `${listingId}_${index + 1}`,
+        listingId,
+        listingTitle,
+        ownerId,
+        storagePath: entry.storagePath,
+        imageUrl: listingMediaUrl(entry),
+        thumbnailUrl: entry.thumbnailUrl,
+        status: "pending",
+        reason: evaluation.moderationUserMessage || buildModerationUserMessage({
+            autoFlags: evaluation.autoFlags,
+            moderationReason: evaluation.moderationReason,
+        }),
+        riskScore: evaluation.riskScore,
+        safeSearch: evaluation.safeSearchResult,
+    }));
 }
 function computeSafeSearchRisk(annotation) {
     const autoFlags = new Set();
@@ -332,7 +474,7 @@ function finalizeListingPublication({ evaluation, now, autoApproveEnabled, autoP
         riskScore: evaluation.riskScore,
     };
 }
-async function persistModerationResult({ listingId, ownerId, evaluation, autoApproveEnabled, autoPublishAfter, }) {
+async function persistModerationResult({ listingId, listingTitle, ownerId, media = [], evaluation, autoApproveEnabled, autoPublishAfter, }) {
     const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
     const listingPatch = finalizeListingPublication({
         evaluation,
@@ -344,7 +486,21 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
         autoFlags: evaluation.autoFlags,
         moderationReason: evaluation.moderationReason,
     });
-    await Promise.all([
+    const mediaModerationState = buildListingMediaModerationState({
+        media,
+        evaluation,
+    });
+    const photoReviewDocs = buildListingPhotoReviewDocs({
+        listingId,
+        listingTitle,
+        ownerId,
+        media,
+        evaluation: {
+            ...evaluation,
+            moderationUserMessage,
+        },
+    });
+    const writes = [
         firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId).set({
             id: listingId,
             listingId,
@@ -358,6 +514,10 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
             imageScanStatus: evaluation.imageScanStatus,
             textScanStatus: evaluation.textScanStatus,
             riskScore: evaluation.riskScore,
+            imageCount: mediaModerationState.imageCount,
+            approvedImageCount: mediaModerationState.approvedImageCount,
+            rejectedImageCount: mediaModerationState.rejectedImageCount,
+            pendingHumanReviewCount: mediaModerationState.pendingHumanReviewCount,
             createdAt: now,
             updatedAt: now,
         }, { merge: true }),
@@ -370,17 +530,61 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
             riskScore: listingPatch.riskScore,
             moderationReason: evaluation.moderationReason,
             rejectionReason: listingPatch.status === "rejected" ? moderationUserMessage : null,
+            imageCount: mediaModerationState.imageCount,
+            approvedImageCount: mediaModerationState.approvedImageCount,
+            rejectedImageCount: mediaModerationState.rejectedImageCount,
+            pendingHumanReviewCount: mediaModerationState.pendingHumanReviewCount,
+            pendingReviewImages: mediaModerationState.pendingReviewImages,
+            rejectedImages: mediaModerationState.rejectedImages,
+            approvedImageUrls: mediaModerationState.approvedImageUrls,
             moderation: {
                 status: listingPatch.moderationStatus,
                 reason: evaluation.moderationReason,
                 userMessage: moderationUserMessage,
                 autoFlags: evaluation.autoFlags,
                 source: "automatic",
+                imageStatus: evaluation.imageScanStatus === "failed"
+                    ? "needs_review"
+                    : listingPatch.moderationStatus === "approved"
+                        ? "approved"
+                        : listingPatch.moderationStatus === "blocked"
+                            ? "rejected"
+                            : listingPatch.moderationStatus === "manual_review"
+                                ? "needs_review"
+                                : "pending",
+                textStatus: evaluation.textScanStatus === "failed"
+                    ? "needs_review"
+                    : evaluation.moderationDecision === "blocked" && evaluation.autoFlags.includes("banned_term")
+                        ? "rejected"
+                        : "approved",
+                finalDecision: listingPatch.status === "active"
+                    ? "approved"
+                    : listingPatch.status === "rejected"
+                        ? "rejected"
+                        : listingPatch.moderationStatus === "manual_review"
+                            ? "needs_review"
+                            : "pending",
+                checkedAt: now,
                 updatedAt: now,
             },
             updatedAt: now,
         }, { merge: true }),
-    ]);
+    ];
+    for (const reviewDoc of photoReviewDocs) {
+        writes.push(firestore_1.db.collection(constants_1.COLLECTIONS.listingPhotoReviews).doc(reviewDoc.id).set({
+            ...reviewDoc,
+            createdAt: now,
+            updatedAt: now,
+            reviewedAt: null,
+            reviewedBy: null,
+        }, { merge: true }));
+    }
+    await Promise.all(writes);
+    await notifyAdminsForManualReview({
+        listingId,
+        listingTitle,
+        photoReviewDocs,
+    });
     return listingPatch;
 }
 //# sourceMappingURL=moderation.js.map

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1253,6 +1252,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final file = result.files.single;
     final bytes = file.bytes;
     if (bytes == null) {
+      if (!mounted) return;
       showErrorSnackBar(context, 'Ce fichier ne peut pas être lu.');
       return;
     }
