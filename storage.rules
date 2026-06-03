@@ -64,10 +64,11 @@ service firebase.storage {
 
     function isHeroMediaUpload() {
       return request.resource != null
-        && request.resource.size < 50 * 1024 * 1024
         && (
-          request.resource.contentType.matches('image/.*')
-          || request.resource.contentType.matches('video/.*')
+          (request.resource.contentType.matches('image/.*')
+            && request.resource.size < 8 * 1024 * 1024)
+          || (request.resource.contentType.matches('video/.*')
+            && request.resource.size < 50 * 1024 * 1024)
         );
     }
 

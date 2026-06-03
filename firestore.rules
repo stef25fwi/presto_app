@@ -232,6 +232,7 @@ service cloud.firestore {
 
     function isValidHeroSlide(data) {
       return data.keys().hasOnly([
+          'id',
           'title',
           'mediaUrl',
           'storagePath',
@@ -244,6 +245,9 @@ service cloud.firestore {
           'updatedAt',
           'createdBy'
         ])
+        && data.id is string
+        && data.id.size() > 0
+        && data.id.size() <= 128
         && data.title is string
         && data.title.size() > 0
         && data.title.size() <= 80
@@ -255,7 +259,7 @@ service cloud.firestore {
         && data.mediaType in ['image', 'video']
         && data.durationSeconds is int
         && data.durationSeconds >= 3
-        && data.durationSeconds <= 30
+        && data.durationSeconds <= 60
         && data.order is int
         && data.order >= 0
         && data.order <= 1000
@@ -268,8 +272,9 @@ service cloud.firestore {
     }
 
     match /heroSlides/{slideId} {
-      allow read: if true;
+      allow read: if resource.data.isActive == true || isMarketplaceAdmin();
       allow create: if isMarketplaceAdmin()
+        && request.resource.data.id == slideId
         && request.resource.data.createdBy == uid()
         && isValidHeroSlide(request.resource.data);
       allow update: if isMarketplaceAdmin()

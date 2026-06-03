@@ -88,7 +88,6 @@ class HeroSlidesService {
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'createdBy': _auth.currentUser?.uid,
-      'updatedBy': _auth.currentUser?.uid,
     });
 
     await batch.commit();
@@ -165,7 +164,6 @@ class HeroSlidesService {
       'isActive': nextIsActive,
       'isFirst': shouldBeFirst,
       'updatedAt': FieldValue.serverTimestamp(),
-      'updatedBy': _auth.currentUser?.uid,
     });
 
     if (slide.isFirst && !shouldBeFirst) {
@@ -338,7 +336,7 @@ class HeroSlidesService {
     if (value == null) {
       return fallback;
     }
-    return value < 1 ? fallback : value;
+    return value.clamp(3, 60).toInt();
   }
 
   String _normalizeMediaType(String value) {
