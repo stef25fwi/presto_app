@@ -20,6 +20,7 @@ const push_1 = require("../../notifications/push");
 const analytics_1 = require("../services/analytics");
 const media_1 = require("./media");
 const moderation_1 = require("../services/moderation");
+const system_messages_1 = require("../services/system_messages");
 const recaptcha_1 = require("../services/recaptcha");
 const recaptcha_2 = require("../services/recaptcha");
 const errors_1 = require("../services/errors");
@@ -486,7 +487,9 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
         });
         const publication = await (0, moderation_1.persistModerationResult)({
             listingId,
+            listingTitle: validated.title,
             ownerId,
+            media: normalizedMedia,
             evaluation,
             autoApproveEnabled: config.autoApproveEnabled,
             autoPublishAfter,
@@ -519,6 +522,14 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
             });
         }
         else if (publication.status === "rejected") {
+            await (0, system_messages_1.sendListingModerationSystemMessage)({
+                ownerId,
+                listingId,
+                listingTitle: validated.title,
+                body: evaluation.autoFlags.includes("banned_term")
+                    ? "Bonjour, votre annonce contient un texte qui ne respecte pas nos règles de publication. Merci de modifier le titre ou la description avant de la soumettre à nouveau."
+                    : "Bonjour, votre annonce n’a pas pu être publiée car une image ajoutée ne respecte pas nos règles de modération. Merci de remplacer cette photo par une image claire, conforme et sans contenu sensible. Votre annonce pourra ensuite être soumise à nouveau.",
+            });
             await (0, push_1.createInAppNotification)({
                 notificationId: `listing_rejected_${listingId}`,
                 userId: ownerId,

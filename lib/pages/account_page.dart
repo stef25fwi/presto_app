@@ -1,7 +1,6 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1105,6 +1104,7 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     if (bytes.lengthInBytes > 10 * 1024 * 1024) {
+      if (!mounted) return;
       showErrorSnackBar(context, 'La photo dépasse 10 Mo.');
       return;
     }

@@ -59,6 +59,7 @@ export {
 export {
   applyUserRoleClaims,
   logAdminAction,
+  reviewListingPhoto,
 } from "./modules/marketplace/callables/admin";
 export {
   notifyListingApproved,
