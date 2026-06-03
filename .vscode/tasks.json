@@ -148,7 +148,7 @@
     {
       "label": "Git: Commit Prompt",
       "type": "shell",
-      "command": "git -c user.name=\"stef25fwi\" -c user.email=\"stef25fwi@users.noreply.github.com\" -c commit.gpgsign=false commit -m \"feat(home): refine latest offers carousel cards\"",
+      "command": "git commit -m \"${input:gitCommitMessage}\"",
       "problemMatcher": []
     },
     {
