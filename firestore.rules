@@ -270,7 +270,7 @@ service cloud.firestore {
       }
 
       match /favoriteOffers/{offerId} {
-        allow read: if hasAppCheck() && isSignedIn() && userId == uid();
+        allow read: if isSignedIn() && userId == uid();
         allow create, update, delete: if false; // LEGACY READ-ONLY UNTIL MIGRATION COMPLETE.
       }
     }
@@ -289,7 +289,7 @@ service cloud.firestore {
 
     match /listings/{listingId} {
       allow read: if isPublicListingData(resource.data)
-        || (hasAppCheck() && isListingOwner(resource.data))
+        || isListingOwner(resource.data)
         || isMarketplaceModerator();
       allow create, update, delete: if false;
     }
