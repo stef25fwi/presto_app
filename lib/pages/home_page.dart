@@ -2288,58 +2288,82 @@ class _AutoScrollingOffersCarouselState
           ),
         ),
         padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
+          horizontal: 14,
+          vertical: 14,
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.flash_on_outlined,
-                color: kPrestoOrange,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.flash_on_outlined,
+                    color: kPrestoOrange,
+                    size: 24,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F8FF),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    whenLabel,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      height: 1.1,
+                      color: kPrestoBlue,
                     ),
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    "$location — $whenLabel",
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Text(
+                displayTitle,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    location,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: Colors.black54,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: Colors.black38,
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.black38,
+                ),
+              ],
             ),
           ],
         ),
@@ -2364,7 +2388,7 @@ class _AutoScrollingOffersCarouselState
         return false;
       },
       child: SizedBox(
-        height: 52,
+        height: 156,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
