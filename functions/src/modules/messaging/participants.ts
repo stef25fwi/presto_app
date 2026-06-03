@@ -1,13 +1,13 @@
 export const CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES = [
   "participantIds",
-] as const;
-
-export const CONVERSATION_PARTICIPANT_FIELD_ALIASES = [
-  ...CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
   "participants",
   "participant_ids",
   "userIds",
   "memberIds",
+] as const;
+
+export const CONVERSATION_PARTICIPANT_FIELD_ALIASES = [
+  ...CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
 ] as const;
 
 export const CONVERSATION_PARTICIPANT_MAP_ALIASES = [

@@ -6,6 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const strict_1 = __importDefault(require("node:assert/strict"));
 const node_test_1 = __importDefault(require("node:test"));
 const participants_1 = require("./participants");
+(0, node_test_1.default)("participant query aliases cover all mirrored array fields", () => {
+    strict_1.default.deepEqual(participants_1.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES, [
+        "participantIds",
+        "participants",
+        "participant_ids",
+        "userIds",
+        "memberIds",
+    ]);
+});
 (0, node_test_1.default)("readConversationParticipants merges current and legacy participant fields", () => {
     const participants = (0, participants_1.readConversationParticipants)({
         participants: ["user_a", "user_b", ""],

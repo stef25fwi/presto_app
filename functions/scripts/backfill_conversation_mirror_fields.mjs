@@ -2,14 +2,36 @@
 
 import admin from 'firebase-admin';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
+
+function resolveDefaultProjectId() {
+  const envProjectId = process.env.GCLOUD_PROJECT
+    || process.env.GOOGLE_CLOUD_PROJECT
+    || process.env.GCP_PROJECT
+    || '';
+  if (envProjectId.trim().length > 0) {
+    return envProjectId.trim();
+  }
+
+  try {
+    const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+    const firebaseRcPath = path.resolve(scriptDir, '..', '..', '.firebaserc');
+    const firebaseRc = JSON.parse(readFileSync(firebaseRcPath, 'utf8'));
+    return String(firebaseRc?.projects?.default || '').trim();
+  } catch {
+    return '';
+  }
+}
 
 function parseArgs(argv) {
   const opts = {
     dryRun: false,
     limit: 0,
-    projectId: process.env.GCLOUD_PROJECT || '',
+    projectId: resolveDefaultProjectId(),
   };
 
   for (let i = 2; i < argv.length; i++) {

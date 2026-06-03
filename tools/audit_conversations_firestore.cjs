@@ -1,6 +1,24 @@
 const admin = require('../functions/node_modules/firebase-admin');
+const fs = require('fs');
+const path = require('path');
 
-const PROJECT_ID = process.env.GCLOUD_PROJECT || 'presto-app-74abe';
+function resolveDefaultProjectId() {
+  const envProjectId = process.env.GCLOUD_PROJECT ||
+    process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.GCP_PROJECT ||
+    '';
+  if (envProjectId.trim()) return envProjectId.trim();
+
+  try {
+    const firebaseRcPath = path.resolve(__dirname, '..', '.firebaserc');
+    const firebaseRc = JSON.parse(fs.readFileSync(firebaseRcPath, 'utf8'));
+    return String(firebaseRc?.projects?.default || '').trim();
+  } catch (_) {
+    return 'presto-app-74abe';
+  }
+}
+
+let PROJECT_ID = resolveDefaultProjectId();
 const PARTICIPANT_QUERY_FIELDS = [
   'participants',
   'participant_ids',
@@ -19,15 +37,6 @@ const PARTICIPANT_MAP_FIELDS = [
   'blockedBy',
 ];
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: PROJECT_ID,
-    serviceAccountId: `${PROJECT_ID}@appspot.gserviceaccount.com`,
-  });
-}
-
-const db = admin.firestore();
-
 function normalizeString(value) {
   return String(value ?? '').trim();
 }
@@ -36,10 +45,14 @@ function parseArgs(argv) {
   const options = {
     limit: 0,
     sampleSize: 15,
+    projectId: PROJECT_ID,
   };
 
   for (let index = 2; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg.startsWith('--project=')) {
+      options.projectId = arg.slice('--project='.length).trim() || options.projectId;
+    }
     if (arg.startsWith('--limit=')) {
       const value = Number(arg.slice('--limit='.length));
       if (!Number.isNaN(value) && value > 0) options.limit = Math.floor(value);
@@ -52,6 +65,18 @@ function parseArgs(argv) {
 
   return options;
 }
+
+const parsedOptions = parseArgs(process.argv);
+PROJECT_ID = parsedOptions.projectId;
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: PROJECT_ID,
+    serviceAccountId: `${PROJECT_ID}@appspot.gserviceaccount.com`,
+  });
+}
+
+const db = admin.firestore();
 
 function readArray(data, field) {
   const raw = data[field];
@@ -124,7 +149,7 @@ function pushSample(samples, limit, entry) {
 }
 
 async function main() {
-  const options = parseArgs(process.argv);
+  const options = parsedOptions;
   const summary = {
     scanned: 0,
     missingPrimaryParticipants: 0,
