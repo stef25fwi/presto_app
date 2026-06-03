@@ -3909,39 +3909,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (!mounted) return;
 
-      // ✅ Checkmark bleu au milieu de l'écran.
-      showDialog<void>(
-        context: context,
-        useRootNavigator: true,
-        barrierDismissible: false,
-        barrierColor: Colors.black.withValues(alpha: 0.10),
-        builder: (_) => const Center(
-          child: Icon(
-            Icons.check_circle,
-            color: kPrestoBlue,
-            size: 96,
-          ),
-        ),
-      );
-
-      await Future.delayed(const Duration(milliseconds: 700));
-      if (!mounted) return;
-
-      // Fermer le checkmark puis aller au détail.
-      Navigator.of(context, rootNavigator: true).pop();
-      if (!mounted) return;
       if (!publishResult.isPubliclyVisible) {
-        Navigator.of(context).pushReplacement(
+        await showModerationPendingDialog(context);
+        if (!mounted) return;
+        appNavigatorKey.currentState?.pushReplacement(
           MaterialPageRoute(
-            builder: (_) => _ListingReviewSuccessPage(
-              onViewMyListings: () {
-                appNavigatorKey.currentState?.pushReplacement(
-                  MaterialPageRoute(
-                    builder: (_) => const HomePage(initialIndex: 4),
-                  ),
-                );
-              },
-            ),
+            builder: (_) => const HomePage(initialIndex: 4),
           ),
         );
         return;
@@ -4506,69 +4479,83 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 }
 
-class _ListingReviewSuccessPage extends StatelessWidget {
-  const _ListingReviewSuccessPage({required this.onViewMyListings});
+Future<void> showModerationPendingDialog(BuildContext context) async {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  showDialog<void>(
+    context: context,
+    useRootNavigator: true,
+    barrierDismissible: false,
+    barrierColor: Colors.black.withValues(alpha: 0.18),
+    builder: (_) => const _ModerationPendingDialog(),
+  );
 
-  final VoidCallback onViewMyListings;
+  await Future.delayed(const Duration(seconds: 2));
+  if (navigator.canPop()) {
+    navigator.pop();
+  }
+}
+
+class _ModerationPendingDialog extends StatelessWidget {
+  const _ModerationPendingDialog();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF7),
-      appBar: AppBar(
-        title: const Text('Annonce envoyée'),
-        backgroundColor: Colors.white,
-        foregroundColor: kPrestoBlue,
-        elevation: 0,
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.92, end: 1),
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutBack,
+            builder: (context, scale, child) {
+              return Transform.scale(
+                scale: scale,
+                child: Opacity(
+                  opacity: scale.clamp(0, 1),
+                  child: child,
+                ),
+              );
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.rate_review_outlined,
-                  color: kPrestoOrange,
-                  size: 72,
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1A73E8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Colors.white,
+                    size: 36,
+                  ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 const Text(
                   'Annonce en attente de validation',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: kPrestoBlue,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 const Text(
-                  'Votre annonce a bien ete envoyee. Elle reste visible dans vos annonces en attente de validation avant publication.',
+                  'Votre annonce est en cours de vérification. Elle sera publiée si elle respecte les règles de modération.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
-                    height: 1.35,
+                    height: 1.4,
                     color: Color(0xFF4B5563),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: onViewMyListings,
-                    icon: const Icon(Icons.list_alt_outlined),
-                    label: const Text('Voir mes annonces'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrestoOrange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
                   ),
                 ),
               ],

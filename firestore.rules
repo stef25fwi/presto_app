@@ -306,6 +306,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /listingPhotoReviews/{reviewId} {
+      allow read: if isMarketplaceModerator();
+      allow create, update, delete: if false;
+    }
+
     match /reviews/{reviewId} {
       allow read: if isMarketplaceModerator()
         || (hasAppCheck()

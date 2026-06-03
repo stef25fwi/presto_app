@@ -560,6 +560,27 @@
       "problemMatcher": []
     },
     {
+      "label": "Release: Marketplace Moderation Workflow",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Test",
+        "Functions: Build",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Marketplace Moderation Workflow",
+        "Git: Push Main",
+        "Firebase: Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Commit Marketplace Moderation Workflow",
+      "type": "shell",
+      "command": "git commit -m \"feat(moderation): add manual marketplace review workflow\"",
+      "problemMatcher": []
+    },
+    {
       "label": "ADDCOMMIT PUSH BUIL DEPLOY A CLQIUER",
       "dependsOrder": "sequence",
       "dependsOn": [

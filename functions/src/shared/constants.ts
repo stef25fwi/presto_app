@@ -2,6 +2,7 @@ export const COLLECTIONS = {
   users: "users",
   listings: "listings",
   listingDrafts: "listingDrafts",
+  listingPhotoReviews: "listingPhotoReviews",
   conversations: "conversations",
   favorites: "favorites",
   listingReports: "listingReports",

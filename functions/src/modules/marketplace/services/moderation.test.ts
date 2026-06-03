@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildListingMediaModerationState,
+  buildListingPhotoReviewDocs,
   buildModerationUserMessage,
   computeModerationDecision,
   finalizeListingPublication,
@@ -225,4 +227,66 @@ test("finalizeListingPublication keeps manual-review listings private even with 
   assert.equal(publication.visibility, "private");
   assert.equal(publication.publishedAt, null);
   assert.equal(publication.autoPublishAfter, null);
+});
+
+test("buildListingMediaModerationState tracks pending human review images", () => {
+  const state = buildListingMediaModerationState({
+    media: [
+      {
+        storagePath: "listingDrafts/u1/d1/photo-1.jpg",
+        downloadUrl: "https://cdn.example/photo-1.jpg",
+      },
+      {
+        storagePath: "listingDrafts/u1/d1/photo-2.jpg",
+        downloadUrl: "https://cdn.example/photo-2.jpg",
+      },
+    ],
+    evaluation: {
+      safeSearchResult: { provider: "google_vision_safe_search" },
+      autoFlags: ["suspicious_text"],
+      riskScore: 61,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "manual_review",
+      moderationReason: "manual_review_required",
+      moderationUserMessage: "Votre annonce est en attente de verification par l'equipe ilipresto avant publication.",
+    },
+  });
+
+  assert.equal(state.imageCount, 2);
+  assert.equal(state.pendingHumanReviewCount, 2);
+  assert.deepEqual(state.pendingReviewImages, [
+    "https://cdn.example/photo-1.jpg",
+    "https://cdn.example/photo-2.jpg",
+  ]);
+});
+
+test("buildListingPhotoReviewDocs creates one pending review per image", () => {
+  const docs = buildListingPhotoReviewDocs({
+    listingId: "listing_123",
+    ownerId: "user_123",
+    media: [
+      {
+        storagePath: "listingDrafts/user_123/draft_123/photo-1.jpg",
+        downloadUrl: "https://cdn.example/photo-1.jpg",
+        thumbnailUrl: "https://cdn.example/photo-1-thumb.jpg",
+      },
+    ],
+    evaluation: {
+      safeSearchResult: { provider: "google_vision_safe_search", summary: { adult: "POSSIBLE" } },
+      autoFlags: ["suspicious_text"],
+      riskScore: 58,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "manual_review",
+      moderationReason: "manual_review_required",
+      moderationUserMessage: "Votre annonce est en attente de verification par l'equipe ilipresto avant publication.",
+    },
+  });
+
+  assert.equal(docs.length, 1);
+  assert.equal(docs[0]?.id, "listing_123_1");
+  assert.equal(docs[0]?.status, "pending");
+  assert.equal(docs[0]?.storagePath, "listingDrafts/user_123/draft_123/photo-1.jpg");
+  assert.equal(docs[0]?.imageUrl, "https://cdn.example/photo-1.jpg");
 });
