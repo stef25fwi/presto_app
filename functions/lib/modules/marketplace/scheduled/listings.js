@@ -23,7 +23,8 @@ function isListingReadyForScheduledPublication(data, now) {
     const moderationStatus = normalizeString(data.moderationStatus);
     const mediaProcessingStatus = normalizeString(data.mediaProcessingStatus);
     const moderationStatusAllowed = moderationStatus === "" ||
-        moderationStatus === "approved";
+        moderationStatus === "approved" ||
+        moderationStatus === "auto_flagged";
     const mediaStatusAllowed = mediaProcessingStatus === "" ||
         mediaProcessingStatus === "completed";
     return normalizeString(data.status) === "pending" &&
