@@ -6,9 +6,11 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import sharp from "sharp";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
+import { logger } from "../../core/logger";
 import { canProceedRateLimited } from "../../core/rate_limit";
 import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { extractRolesFromAuthToken } from "../marketplace/services/roles";
 import { refreshUnreadMessageCount, refreshUnreadNotificationCount } from "../notifications/counters";
 import {
   computeConversationStatus,
@@ -471,7 +473,71 @@ export function computeUnreadCountAfterMessageDeletion({
   return result;
 }
 
-async function loadConversationForParticipant(conversationId: string, currentUserId: string) {
+type ConversationAccessResult = {
+  allowed: boolean;
+  reason: string;
+  detectedFields: string[];
+};
+
+function canAccessConversation(
+  data: Record<string, unknown>,
+  uid: string,
+  participants: string[],
+  options: { isAdmin?: boolean } = {},
+): ConversationAccessResult {
+  const detectedFields: string[] = [];
+
+  // (a) uid présent dans les participants canoniques (couvre participants, participantIds,
+  //     participant_ids, userIds, memberIds, et les clés des maps participantNames, unreadCount, etc.)
+  if (participants.includes(uid)) {
+    detectedFields.push("participants");
+    return { allowed: true, reason: "participants", detectedFields };
+  }
+
+  // Champs tableau supplémentaires non couverts par readConversationParticipants
+  for (const field of ["users"] as const) {
+    const raw = data[field];
+    if (Array.isArray(raw)) {
+      detectedFields.push(field);
+      if (raw.some((v) => String(v || "").trim() === uid)) {
+        return { allowed: true, reason: field, detectedFields };
+      }
+    }
+  }
+
+  // Map participantsMap: { [uid]: true }
+  const participantsMap = data["participantsMap"];
+  if (participantsMap && typeof participantsMap === "object") {
+    detectedFields.push("participantsMap");
+    if ((participantsMap as Record<string, unknown>)[uid] === true) {
+      return { allowed: true, reason: "participantsMap", detectedFields };
+    }
+  }
+
+  // (b) Champs scalaires owner / assignee
+  for (const field of ["createdBy", "ownerId", "requesterId", "userId", "adminId", "assigneeId"] as const) {
+    const value = String(data[field] || "").trim();
+    if (value) {
+      detectedFields.push(field);
+      if (value === uid) {
+        return { allowed: true, reason: field, detectedFields };
+      }
+    }
+  }
+
+  // (c) Accès admin global (support / modération)
+  if (options.isAdmin === true) {
+    return { allowed: true, reason: "admin", detectedFields };
+  }
+
+  return { allowed: false, reason: "none", detectedFields };
+}
+
+async function loadConversationForParticipant(
+  conversationId: string,
+  currentUserId: string,
+  options: { isAdmin?: boolean } = {},
+) {
   const convRef = db.collection(COLLECTIONS.conversations).doc(conversationId);
   const convSnap = await convRef.get();
 
@@ -482,7 +548,20 @@ async function loadConversationForParticipant(conversationId: string, currentUse
   const data = (convSnap.data() ?? {}) as Record<string, unknown>;
   const conversation = readConversationMirrorData(data, { conversationId });
   const participants = conversation.participants;
-  assertConversationParticipantAccess(participants, currentUserId);
+
+  const access = canAccessConversation(data, currentUserId, participants, { isAdmin: options.isAdmin });
+
+  logger.info("conversation_access_check", {
+    conversationId_len: conversationId.length,
+    uid_len: currentUserId.length,
+    isAdmin: options.isAdmin ?? false,
+    detectedFields: access.detectedFields,
+    allowedReason: access.reason,
+  });
+
+  if (!access.allowed) {
+    throw new HttpsError("permission-denied", "not allowed to access this conversation");
+  }
 
   return { convRef, data, participants, conversation };
 }
@@ -823,7 +902,10 @@ export const markConversationRead = onCall({ region: PROJECT_REGION, enforceAppC
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
+  const roles = extractRolesFromAuthToken(request.auth?.token as Record<string, unknown> | undefined);
+  const isAdmin = roles.includes("admin") || roles.includes("superadmin");
+
+  const { convRef, conversation } = await loadConversationForParticipant(conversationId, currentUserId, { isAdmin });
   await convRef.update(
     buildConversationMirrorFields({
       ...conversation,
