@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import '../models/hero_slide.dart';
 import '../services/hero_slides_service.dart';
 import '../utils/friendly_snackbar.dart';
+import '../utils/runtime_action_logger.dart';
+import '../widgets/hero_local_video_preview.dart';
 
 const _kAdminHeroOrange = Color(0xFFFF6600);
 const _kAdminHeroBlue = Color(0xFF1A73E8);
@@ -50,6 +52,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     String selectedContentType = '';
     bool isActive = existing?.isActive ?? true;
     bool isFirst = existing?.isFirst ?? false;
+    String previewWarning = '';
     String localError = '';
 
     final saved = await showModalBottomSheet<bool>(
@@ -107,6 +110,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 selectedFileName = file.name;
                 selectedMediaType = mediaType;
                 selectedContentType = _contentTypeForName(file.name, mediaType);
+                previewWarning = '';
                 localError = '';
                 if (existing == null) {
                   durationController.text = mediaType == 'video' ? '10' : '5';
@@ -220,7 +224,51 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                           fileName: selectedFileName,
                           mediaType: selectedMediaType,
                           contentType: selectedContentType,
+                          onClear: _isSubmitting
+                              ? null
+                              : () {
+                                  setSheetState(() {
+                                    selectedBytes = <int>[];
+                                    selectedFileName = '';
+                                    selectedMediaType =
+                                        existing?.mediaType ?? 'image';
+                                    selectedContentType = '';
+                                    previewWarning = '';
+                                  });
+                                },
+                          onPreviewError: (message) {
+                            setSheetState(() {
+                              previewWarning = message;
+                            });
+                            logRuntimeAction(
+                              area: 'admin-hero',
+                              action: 'selected-preview-error',
+                              details: <String, Object?>{
+                                'fileName': selectedFileName,
+                                'mediaType': selectedMediaType,
+                                'contentType': selectedContentType,
+                              },
+                            );
+                          },
+                          onPreviewReady: () {
+                            if (previewWarning.isEmpty) {
+                              return;
+                            }
+                            setSheetState(() {
+                              previewWarning = '';
+                            });
+                          },
                         ),
+                        if (previewWarning.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            previewWarning,
+                            style: const TextStyle(
+                              color: Color(0xFF92400E),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ],
                       const SizedBox(height: 16),
                       TextField(
@@ -1248,12 +1296,18 @@ class _SelectedHeroMediaPreview extends StatelessWidget {
   final String fileName;
   final String mediaType;
   final String contentType;
+  final VoidCallback? onClear;
+  final ValueChanged<String>? onPreviewError;
+  final VoidCallback? onPreviewReady;
 
   const _SelectedHeroMediaPreview({
     required this.fileBytes,
     required this.fileName,
     required this.mediaType,
     required this.contentType,
+    this.onClear,
+    this.onPreviewError,
+    this.onPreviewReady,
   });
 
   @override
@@ -1276,14 +1330,11 @@ class _SelectedHeroMediaPreview extends StatelessWidget {
               width: 96,
               height: 68,
               child: isVideo
-                  ? Container(
-                      color: const Color(0xFF111827),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.play_circle_fill_rounded,
-                        color: Colors.white,
-                        size: 34,
-                      ),
+                  ? HeroLocalVideoPreview(
+                      bytes: Uint8List.fromList(fileBytes),
+                      contentType: contentType,
+                      onPreviewError: onPreviewError,
+                      onPreviewReady: onPreviewReady,
                     )
                   : Image.memory(
                       Uint8List.fromList(fileBytes),
@@ -1325,20 +1376,22 @@ class _SelectedHeroMediaPreview extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Row(
+                Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.cloud_upload_outlined,
                       size: 16,
                       color: _kAdminHeroBlue,
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'Upload Firebase Storage: hero_slides/',
+                        isVideo
+                            ? 'Prévisualisation locale avant upload Firebase Storage'
+                            : 'Upload Firebase Storage: hero_slides/',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: _kAdminHeroBlue,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -1350,6 +1403,17 @@ class _SelectedHeroMediaPreview extends StatelessWidget {
               ],
             ),
           ),
+          if (onClear != null) ...[
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Retirer ce fichier',
+              onPressed: onClear,
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ],
         ],
       ),
     );
