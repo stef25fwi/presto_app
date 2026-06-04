@@ -176,9 +176,7 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
   }
 
   try {
-    await FirebaseAppCheck.instance.activate(
-      webProvider: ReCaptchaEnterpriseProvider(siteKey),
-    );
+    await activateAppCheckWeb(siteKey);
     final token = await FirebaseAppCheck.instance
         .getToken(true)
         .timeout(const Duration(seconds: 8));

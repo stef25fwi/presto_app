@@ -80,8 +80,24 @@ const mirror_1 = require("./mirror");
         return true;
     });
 });
-(0, node_test_1.default)("sanitizeConversationAttachments accepts current conversation storage path", () => {
+(0, node_test_1.default)("sanitizeConversationAttachments accepts processed webp image for current conversation", () => {
     const attachments = (0, callables_1.sanitizeConversationAttachments)([
+        {
+            type: "image",
+            name: "photo.webp",
+            url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fprocessed_photo.webp",
+            storagePath: "messageAttachments/buyer_a/conv_1/processed_photo.webp",
+            mimeType: "image/webp",
+            sizeBytes: 1200,
+        },
+    ], "buyer_a", "conv_1");
+    strict_1.default.equal(attachments.length, 1);
+    const firstAttachment = attachments[0];
+    strict_1.default.ok(firstAttachment);
+    strict_1.default.equal(firstAttachment.type, "image");
+});
+(0, node_test_1.default)("sanitizeConversationAttachments rejects raw non-webp image uploads", () => {
+    strict_1.default.throws(() => (0, callables_1.sanitizeConversationAttachments)([
         {
             type: "image",
             name: "photo.jpg",
@@ -90,11 +106,12 @@ const mirror_1 = require("./mirror");
             mimeType: "image/jpeg",
             sizeBytes: 1200,
         },
-    ], "buyer_a", "conv_1");
-    strict_1.default.equal(attachments.length, 1);
-    const firstAttachment = attachments[0];
-    strict_1.default.ok(firstAttachment);
-    strict_1.default.equal(firstAttachment.type, "image");
+    ], "buyer_a", "conv_1"), (error) => {
+        strict_1.default.ok(error instanceof https_1.HttpsError);
+        strict_1.default.equal(error.code, "invalid-argument");
+        strict_1.default.match(error.message, /processed as WebP/i);
+        return true;
+    });
 });
 (0, node_test_1.default)("sanitizeConversationAttachments rejects another conversation storage path", () => {
     strict_1.default.throws(() => (0, callables_1.sanitizeConversationAttachments)([
