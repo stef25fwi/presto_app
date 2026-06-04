@@ -35,6 +35,7 @@ self.addEventListener('notificationclick', (event) => {
     (data.conversationId ? `/messages/${encodeURIComponent(data.conversationId)}` : '') ||
     (data.offerId ? `/offers/${encodeURIComponent(data.offerId)}` : '') ||
     '/';
+  const targetUrl = new URL(routeName, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({
@@ -42,6 +43,15 @@ self.addEventListener('notificationclick', (event) => {
       includeUncontrolled: true,
     }).then((clientsArr) => {
       for (const client of clientsArr) {
+        if ('navigate' in client) {
+          return client.navigate(targetUrl).then((navigatedClient) => {
+            const nextClient = navigatedClient || client;
+            if ('focus' in nextClient) {
+              return nextClient.focus();
+            }
+            return nextClient;
+          });
+        }
         if ('focus' in client) {
           client.postMessage({ routeName });
           return client.focus();
@@ -49,7 +59,7 @@ self.addEventListener('notificationclick', (event) => {
       }
 
       if (self.clients.openWindow) {
-        return self.clients.openWindow(routeName);
+        return self.clients.openWindow(targetUrl);
       }
 
       return undefined;

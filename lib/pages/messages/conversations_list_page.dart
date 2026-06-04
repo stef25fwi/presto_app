@@ -13,6 +13,7 @@ import '../../constants.dart';
 import '../../core/firebase_contract.dart';
 import '../../models/conversation_summary.dart';
 import '../../config/app_check_state.dart';
+import '../../services/admin_access_resolver.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
@@ -84,6 +85,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   ConversationSummary? _wideSelectedConversation;
   String? _wideSelectedUserId;
   String? _wideSelectedDraftText;
+  final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
   void _appendAdminConversationLog(String message) {
     if (!_isAdminViewer || !mounted) return;
@@ -144,6 +146,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         isAdmin = _hasAdminAccess(data) || _isEnabledAdminGrant(data);
         if (isAdmin) {
           adminSource = 'adminUsers/${user.uid}';
+        }
+      }
+
+      if (!isAdmin) {
+        final resolverState = await _adminAccessResolver.resolveAdminAccess(
+          forceRefresh: true,
+          returnOnLocalAdminEvidence: true,
+        );
+        isAdmin = resolverState.effectiveIsAdmin;
+        if (isAdmin) {
+          adminSource = resolverState.sourceOfTruth;
         }
       }
     } catch (error) {

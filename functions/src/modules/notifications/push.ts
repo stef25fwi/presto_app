@@ -57,6 +57,10 @@ async function cleanupInvalidTokens(userId: string, docIds: string[]): Promise<v
     );
   }
   await batch.commit();
+  logger.info("push_invalid_tokens_cleaned", {
+    userId,
+    count: docIds.length,
+  });
 }
 
 export async function createInAppNotification({
@@ -124,10 +128,16 @@ export async function sendPushToUser({
   data?: Record<string, unknown>;
 }): Promise<void> {
   const enabled = await isPushEnabledForUser(userId, topic);
-  if (!enabled) return;
+  if (!enabled) {
+    logger.info("push_skipped_preferences_disabled", { userId, topic });
+    return;
+  }
 
   const tokenEntries = await listPushTokens(userId);
-  if (tokenEntries.length === 0) return;
+  if (tokenEntries.length === 0) {
+    logger.info("push_skipped_no_tokens", { userId, topic });
+    return;
+  }
   const invalidDocIds = new Set<string>();
 
   for (let index = 0; index < tokenEntries.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
@@ -168,10 +178,24 @@ export async function sendPushToUser({
 
     try {
       const response = await admin.messaging().sendEachForMulticast(multicast);
+      logger.info("push_batch_sent", {
+        userId,
+        topic,
+        tokenCount: batchEntries.length,
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+      });
       response.responses.forEach((result, responseIndex) => {
         if (result.success) return;
 
         const code = result.error?.code || "";
+        logger.warn("push_token_send_failed", {
+          userId,
+          topic,
+          tokenDocId: batchEntries[responseIndex]!.docId,
+          code,
+          message: result.error?.message || "",
+        });
         if (
           code === "messaging/registration-token-not-registered" ||
           code === "messaging/invalid-registration-token"

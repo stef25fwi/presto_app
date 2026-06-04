@@ -2,6 +2,7 @@ import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
+import { logger } from "../../core/logger";
 import { COLLECTIONS } from "../../shared/constants";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
@@ -26,18 +27,31 @@ export const registerPushToken = onCall({ region: PROJECT_REGION, enforceAppChec
   }
 
   const docId = sanitizeTokenDocId(token);
-  await db
+  const tokenRef = db
     .collection(COLLECTIONS.users)
     .doc(userId)
     .collection(COLLECTIONS.pushTokens)
-    .doc(docId)
-    .set({
+    .doc(docId);
+
+  await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(tokenRef);
+    transaction.set(tokenRef, {
       token,
+      uid: userId,
+      userId,
       platform,
       enabled: true,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...(snap.exists ? {} : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
+  });
+
+  logger.info("push_token_registered", {
+    userId,
+    tokenId: docId,
+    platform,
+    appCheck: request.app != null,
+  });
 
   return { ok: true, tokenId: docId };
 });
