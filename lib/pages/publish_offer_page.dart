@@ -157,7 +157,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) async {
     if (!_useCloudStt) return true;
 
-    if (!appCheckActivationAttempted || appCheckActivationSucceeded) {
+    if (appCheckActivationSucceeded) {
       _appendPublishAiTrace(
         'appcheck',
         'App Check OK pour $flow',
@@ -167,22 +167,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     try {
-      if (kIsWeb) {
-        debugPrint('[AppCheck] retry activation for $flow');
-        final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
-        if (siteKey.isEmpty) {
-          throw StateError(
-            'APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow',
-          );
-        }
-        await activateAppCheckWeb(siteKey);
-      } else {
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider:
-              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+      if (!appCheckActivationAttempted) {
+        throw StateError(
+          'App Check non initialise par le bootstrap pour $flow',
         );
       }
       final appCheckToken = await FirebaseAppCheck.instance
@@ -197,7 +184,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appCheckActivationStackTrace = null;
       _appendPublishAiTrace(
         'appcheck',
-        'App Check reactive avec succes pour $flow, token=ok',
+        'App Check token OK pour $flow',
         level: PublishAiTraceLevel.success,
       );
       return true;
