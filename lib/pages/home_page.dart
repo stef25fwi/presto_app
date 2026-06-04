@@ -531,6 +531,7 @@ class _HomePageState extends State<HomePage>
     if (granted) {
       await notificationService
           .clearMessagingPermissionPromptDismissed(user.uid);
+      if (!mounted) return;
       showSuccessSnackBar(
         context,
         'Notifications activées: vous recevrez les nouveaux messages même quand l’application est fermée.',
@@ -539,6 +540,7 @@ class _HomePageState extends State<HomePage>
     }
 
     await notificationService.markMessagingPermissionPromptDismissed(user.uid);
+    if (!mounted) return;
     showErrorSnackBar(
       context,
       notificationService.pushActivationFailureMessage(),
