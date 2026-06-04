@@ -194,6 +194,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Responsive Admin Panel",
+      "type": "shell",
+      "command": "git -c commit.gpgsign=false commit -m \"feat(admin): make debug panel responsive for smartphone screens\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Stash And Pull Rebase",
       "type": "shell",
       "command": "git stash && git pull --rebase origin main && git stash pop",
@@ -365,6 +371,20 @@
         "Git: Add All",
         "Functions: Build",
         "Git: Commit Listings imageUrls",
+        "Git: Push Main",
+        "Firebase: Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Responsive Admin Panel",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Responsive Admin Panel",
         "Git: Push Main",
         "Firebase: Deploy"
       ],

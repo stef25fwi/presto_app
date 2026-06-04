@@ -145,20 +145,27 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
           });
         }
 
+        final screenWidth = MediaQuery.of(context).size.width;
+        final panelWidth = screenWidth < 500
+            ? (screenWidth * 0.9).clamp(280.0, 380.0)
+            : 440.0;
+        final isSmallScreen = screenWidth < 500;
+
         return Stack(
           children: [
             widget.child,
             Positioned(
-              right: 12,
-              bottom: 12,
+              right: isSmallScreen ? 8 : 12,
+              bottom: isSmallScreen ? 8 : 12,
+              left: isSmallScreen ? 8 : null,
               child: SafeArea(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
+                  constraints: BoxConstraints(maxWidth: panelWidth),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_isExpanded) _buildExpandedPanel(context, adminState),
+                      if (_isExpanded) _buildExpandedPanel(context, adminState, isSmallScreen),
                       const SizedBox(height: 8),
                       FilledButton.icon(
                         onPressed: () {
@@ -169,20 +176,22 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF111827),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 10 : 14,
+                            vertical: isSmallScreen ? 10 : 12,
                           ),
                         ),
                         icon: Icon(
                           _isExpanded
                               ? Icons.bug_report_outlined
                               : Icons.monitor_heart_outlined,
+                          size: isSmallScreen ? 18 : 20,
                         ),
                         label: Text(
                           _isExpanded
                               ? 'Masquer debug admin'
                               : 'Debug admin web',
+                          style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
                         ),
                       ),
                     ],
@@ -196,7 +205,7 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
     );
   }
 
-  Widget _buildExpandedPanel(BuildContext context, AdminAccessState adminState) {
+  Widget _buildExpandedPanel(BuildContext context, AdminAccessState adminState, bool isSmallScreen) {
     final host = currentAppCheckWebHost();
     final hostClass = appCheckWebHostClass(host);
     final activationError = appCheckActivationError?.toString().trim() ?? '';
@@ -217,8 +226,7 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
     return Material(
       color: Colors.transparent,
       child: Container(
-        width: 440,
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(18),
@@ -232,9 +240,9 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
           ],
         ),
         child: DefaultTextStyle(
-          style: const TextStyle(
-            color: Color(0xFF111827),
-            fontSize: 12,
+          style: TextStyle(
+            color: const Color(0xFF111827),
+            fontSize: isSmallScreen ? 11 : 12,
             height: 1.35,
           ),
           child: Column(
@@ -247,33 +255,105 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                     child: Text(
                       'Diagnostic admin web',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'Rafraichir droits admin',
-                    onPressed: _refreshAdminAccess,
-                    icon: const Icon(Icons.refresh_rounded),
-                  ),
-                  IconButton(
-                    tooltip: 'Vider les evenements',
-                    onPressed: _debugStore.clear,
-                    icon: const Icon(Icons.delete_sweep_outlined),
-                  ),
-                  IconButton(
-                    tooltip: 'Copier le diagnostic',
-                    onPressed: () => _copyReport(context),
-                    icon: const Icon(Icons.copy_all_rounded),
-                  ),
-                  IconButton(
-                    tooltip: 'Copier le diagnostic JSON',
-                    onPressed: () => _copyJsonReport(context),
-                    icon: const Icon(Icons.data_object_rounded),
-                  ),
+                  if (!isSmallScreen) ...[
+                    IconButton(
+                      tooltip: 'Rafraichir droits admin',
+                      onPressed: _refreshAdminAccess,
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.refresh_rounded),
+                    ),
+                    IconButton(
+                      tooltip: 'Vider les evenements',
+                      onPressed: _debugStore.clear,
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.delete_sweep_outlined),
+                    ),
+                    IconButton(
+                      tooltip: 'Copier le diagnostic',
+                      onPressed: () => _copyReport(context),
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.copy_all_rounded),
+                    ),
+                    IconButton(
+                      tooltip: 'Copier le diagnostic JSON',
+                      onPressed: () => _copyJsonReport(context),
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.data_object_rounded),
+                    ),
+                  ] else ...[
+                    SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert_rounded, size: 18),
+                        onSelected: (action) {
+                          if (action == 'refresh') {
+                            _refreshAdminAccess();
+                          } else if (action == 'clear') {
+                            _debugStore.clear();
+                          } else if (action == 'copy') {
+                            _copyReport(context);
+                          } else if (action == 'copy-json') {
+                            _copyJsonReport(context);
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          const PopupMenuItem(
+                            value: 'refresh',
+                            child: Row(
+                              children: [
+                                Icon(Icons.refresh_rounded, size: 16),
+                                SizedBox(width: 8),
+                                Text('Rafraichir', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'clear',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_sweep_outlined, size: 16),
+                                SizedBox(width: 8),
+                                Text('Vider', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'copy',
+                            child: Row(
+                              children: [
+                                Icon(Icons.copy_all_rounded, size: 16),
+                                SizedBox(width: 8),
+                                Text('Copier', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'copy-json',
+                            child: Row(
+                              children: [
+                                Icon(Icons.data_object_rounded, size: 16),
+                                SizedBox(width: 8),
+                                Text('JSON', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
+              SizedBox(height: isSmallScreen ? 6 : 8),
               _buildSection(
                 'Contexte',
                 <String>[
@@ -312,15 +392,18 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                     'latest=${latestAudio.flowKey} ${latestAudio.status} #${latestAudio.attemptNumber}',
                 ],
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: isSmallScreen ? 6 : 8),
+              Text(
                 'Timeline',
-                style: TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: isSmallScreen ? 11 : 12,
+                ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: isSmallScreen ? 4 : 6),
               Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: isSmallScreen ? 4 : 6,
+                runSpacing: isSmallScreen ? 4 : 6,
                 children: [
                   for (final area in areaOptions)
                     ChoiceChip(
@@ -331,42 +414,46 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                           _selectedArea = area;
                         });
                       },
+                      labelStyle: TextStyle(fontSize: isSmallScreen ? 10 : 11),
+                      materialTapTargetSize: isSmallScreen ? MaterialTapTargetSize.shrinkWrap : MaterialTapTargetSize.padded,
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isSmallScreen ? 6 : 8),
               Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: isSmallScreen ? 4 : 6,
+                runSpacing: isSmallScreen ? 4 : 6,
                 children: [
                   FilterChip(
                     label: Text(
                       _callableOnly
                           ? 'Callables uniquement'
-                          : 'Tous evenements + callables',
+                          : 'Tous evenements',
+                      style: TextStyle(fontSize: isSmallScreen ? 10 : 11),
                     ),
-                    avatar: const Icon(Icons.cloud_done_outlined, size: 18),
+                    avatar: Icon(Icons.cloud_done_outlined, size: isSmallScreen ? 14 : 18),
                     selected: _callableOnly,
                     onSelected: (selected) {
                       setState(() {
                         _callableOnly = selected;
                       });
                     },
+                    materialTapTargetSize: isSmallScreen ? MaterialTapTargetSize.shrinkWrap : MaterialTapTargetSize.padded,
                   ),
                   if (_callableOnly)
                     Text(
-                      '${events.length} evenement(s) affiché(s)',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6B7280),
+                      '${events.length} evt',
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 9 : 11,
+                        color: const Color(0xFF6B7280),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isSmallScreen ? 6 : 8),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 260),
+                constraints: BoxConstraints(maxHeight: isSmallScreen ? 200 : 260),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -375,31 +462,31 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
                     itemCount: events.length,
-                    separatorBuilder: (_, __) => const Divider(height: 12),
+                    separatorBuilder: (_, __) => const Divider(height: 10),
                     itemBuilder: (context, index) {
                       final event = events[index];
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            width: 8,
-                            height: 8,
+                            margin: const EdgeInsets.only(top: 3),
+                            width: 6,
+                            height: 6,
                             decoration: BoxDecoration(
                               color: _colorForLevel(event.level),
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: isSmallScreen ? 6 : 8),
                           Expanded(
                             child: Text(
                               '[${_formatTime(event.timestamp)}] '
                               '${event.area}/${event.level} ${event.message}'
                               '${event.detail == null || event.detail!.isEmpty ? '' : '\n${event.detail}'}',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: isSmallScreen ? 10 : 11,
                                 color: event.level == 'error'
                                     ? const Color(0xFF991B1B)
                                     : const Color(0xFF111827),
