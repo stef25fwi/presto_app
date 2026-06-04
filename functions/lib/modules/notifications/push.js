@@ -54,6 +54,10 @@ async function cleanupInvalidTokens(userId, docIds) {
             .doc(docId));
     }
     await batch.commit();
+    logger_1.logger.info("push_invalid_tokens_cleaned", {
+        userId,
+        count: docIds.length,
+    });
 }
 async function createInAppNotification({ notificationId, userId, title, message, type, routeName, conversationId, offerId, data = {}, }) {
     try {
@@ -82,11 +86,15 @@ async function createInAppNotification({ notificationId, userId, title, message,
 }
 async function sendPushToUser({ userId, topic, title, body, routeName, channelId, collapseKey, data = {}, }) {
     const enabled = await isPushEnabledForUser(userId, topic);
-    if (!enabled)
+    if (!enabled) {
+        logger_1.logger.info("push_skipped_preferences_disabled", { userId, topic });
         return;
+    }
     const tokenEntries = await listPushTokens(userId);
-    if (tokenEntries.length === 0)
+    if (tokenEntries.length === 0) {
+        logger_1.logger.info("push_skipped_no_tokens", { userId, topic });
         return;
+    }
     const invalidDocIds = new Set();
     for (let index = 0; index < tokenEntries.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
         const batchEntries = tokenEntries.slice(index, index + FCM_MULTICAST_TOKEN_LIMIT);
@@ -125,10 +133,24 @@ async function sendPushToUser({ userId, topic, title, body, routeName, channelId
         };
         try {
             const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
+            logger_1.logger.info("push_batch_sent", {
+                userId,
+                topic,
+                tokenCount: batchEntries.length,
+                successCount: response.successCount,
+                failureCount: response.failureCount,
+            });
             response.responses.forEach((result, responseIndex) => {
                 if (result.success)
                     return;
                 const code = result.error?.code || "";
+                logger_1.logger.warn("push_token_send_failed", {
+                    userId,
+                    topic,
+                    tokenDocId: batchEntries[responseIndex].docId,
+                    code,
+                    message: result.error?.message || "",
+                });
                 if (code === "messaging/registration-token-not-registered" ||
                     code === "messaging/invalid-registration-token") {
                     invalidDocIds.add(batchEntries[responseIndex].docId);

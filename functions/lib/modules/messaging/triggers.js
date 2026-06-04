@@ -71,9 +71,20 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
     const conversation = (0, mirror_1.readConversationMirrorData)(conversationData, { conversationId });
     const normalizedParticipants = (0, participants_1.readConversationParticipants)(conversationData, { conversationId });
     const normalizedMessageText = String(message.text || message.body || "").trim();
+    const isClientFirestoreFallback = message.createdVia === "client_firestore_fallback";
     if (normalizedParticipants.length > 0) {
         const archivedBy = conversation.archivedBy;
         const blockedBy = conversation.blockedBy;
+        const unreadCount = {
+            ...conversation.unreadCount,
+        };
+        if (isClientFirestoreFallback) {
+            for (const participantId of normalizedParticipants) {
+                unreadCount[participantId] = participantId === senderId
+                    ? 0
+                    : firebase_admin_1.default.firestore.FieldValue.increment(1);
+            }
+        }
         const participantNames = {
             ...conversation.participantNames,
         };
@@ -87,7 +98,10 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
             lastMessage: normalizedMessageText || conversation.lastMessage,
             lastSenderId: senderId || conversation.lastSenderId,
             lastSenderName: senderName || conversation.lastSenderName,
-            messageCount: conversation.messageCount > 0 ? conversation.messageCount : 1,
+            unreadCount,
+            messageCount: isClientFirestoreFallback
+                ? firebase_admin_1.default.firestore.FieldValue.increment(1)
+                : (conversation.messageCount > 0 ? conversation.messageCount : 1),
             status: (0, state_1.computeConversationStatus)(normalizedParticipants, archivedBy, blockedBy),
             lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),

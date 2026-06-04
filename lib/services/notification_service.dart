@@ -62,6 +62,7 @@ class NotificationService {
   String? _lastHandledMessageId;
   String? _lastOpenedRouteName;
   DateTime? _lastOpenedRouteAt;
+  AuthorizationStatus? _lastAuthorizationStatus;
   bool _initialized = false;
   bool _localNotificationsReady = false;
   bool _navigatorReady = false;
@@ -85,6 +86,7 @@ class NotificationService {
     }
 
     final settings = await _messaging.getNotificationSettings();
+    _lastAuthorizationStatus = settings.authorizationStatus;
 
     debugPrint(
         '[Notifications] Permission status: ${settings.authorizationStatus}');
@@ -156,7 +158,10 @@ class NotificationService {
   }
 
   Future<NotificationSettings> getPermissionSettings() {
-    return _messaging.getNotificationSettings();
+    return _messaging.getNotificationSettings().then((settings) {
+      _lastAuthorizationStatus = settings.authorizationStatus;
+      return settings;
+    });
   }
 
   Future<bool> hasPushPermission() async {
@@ -175,6 +180,7 @@ class NotificationService {
       sound: true,
     );
     final granted = _isAuthorizedStatus(settings.authorizationStatus);
+    _lastAuthorizationStatus = settings.authorizationStatus;
     debugPrint(
       '[Notifications] request permission status=${settings.authorizationStatus}',
     );
@@ -197,6 +203,9 @@ class NotificationService {
   }
 
   String pushActivationFailureMessage() {
+    if (_lastAuthorizationStatus == AuthorizationStatus.denied) {
+      return 'Les notifications sont bloquées dans ce navigateur. Autorisez-les dans les réglages du site puis réessayez.';
+    }
     if (kIsWeb && _webVapidKey.isEmpty) {
       return 'Les notifications web ne peuvent pas être activées tant que FCM_WEB_VAPID_KEY n’est pas configurée au build.';
     }
@@ -436,7 +445,9 @@ class NotificationService {
       );
       await callable.call(<String, dynamic>{
         'token': token,
-        'platform': defaultTargetPlatform.name,
+        'platform': kIsWeb
+            ? 'web-${defaultTargetPlatform.name}'
+            : defaultTargetPlatform.name,
       });
     } catch (error) {
       debugPrint('[Notifications] register push token error: $error');
@@ -452,7 +463,13 @@ class NotificationService {
           );
           return null;
         }
-        return await _messaging.getToken(vapidKey: _webVapidKey);
+        final token = await _messaging.getToken(vapidKey: _webVapidKey);
+        if (token == null) {
+          debugPrint(
+            '[Notifications] Web FCM token null: permission=${_lastAuthorizationStatus ?? 'unknown'} vapidConfigured=${_webVapidKey.isNotEmpty}',
+          );
+        }
+        return token;
       }
 
       return await _messaging.getToken();

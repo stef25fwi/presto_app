@@ -584,6 +584,36 @@ service cloud.firestore {
         return hasAppCheck() && isParticipantInConversationData(data);
       }
 
+      function isValidClientMessageCreate() {
+        return request.resource.data.keys().hasOnly([
+            'text',
+            'body',
+            'attachments',
+            'senderId',
+            'sender_id',
+            'senderName',
+            'sender_name',
+            'isFirstMessage',
+            'createdAt',
+            'created_at',
+            'createdVia',
+            'clientMutationId'
+          ])
+          && request.resource.data.senderId == uid()
+          && request.resource.data.sender_id == uid()
+          && request.resource.data.createdVia == 'client_firestore_fallback'
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.created_at == request.time
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 4000
+          && request.resource.data.body == request.resource.data.text
+          && (!('senderName' in request.resource.data) || request.resource.data.senderName is string)
+          && (!('sender_name' in request.resource.data) || request.resource.data.sender_name is string)
+          && (!('isFirstMessage' in request.resource.data) || request.resource.data.isFirstMessage is bool)
+          && (!('clientMutationId' in request.resource.data) || request.resource.data.clientMutationId is string);
+      }
+
       allow get: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
       allow list: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
       allow create, update, delete: if false;
@@ -595,7 +625,10 @@ service cloud.firestore {
               isParentConversationParticipant()
               || hasParticipantAccess(resource.data)
             ));
-        allow create, update, delete: if false;
+        allow create: if hasAppCheck()
+          && isParentConversationParticipant()
+          && isValidClientMessageCreate();
+        allow update, delete: if false;
       }
     }
 

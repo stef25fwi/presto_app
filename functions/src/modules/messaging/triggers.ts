@@ -93,10 +93,21 @@ export const onConversationSubMessageCreated = onDocumentCreated(
     const conversation = readConversationMirrorData(conversationData, { conversationId });
     const normalizedParticipants = readConversationParticipants(conversationData, { conversationId });
     const normalizedMessageText = String(message.text || message.body || "").trim();
+    const isClientFirestoreFallback = message.createdVia === "client_firestore_fallback";
 
     if (normalizedParticipants.length > 0) {
       const archivedBy = conversation.archivedBy;
       const blockedBy = conversation.blockedBy;
+      const unreadCount = {
+        ...conversation.unreadCount,
+      };
+      if (isClientFirestoreFallback) {
+        for (const participantId of normalizedParticipants) {
+          unreadCount[participantId] = participantId === senderId
+            ? 0
+            : admin.firestore.FieldValue.increment(1);
+        }
+      }
       const participantNames = {
         ...conversation.participantNames,
       };
@@ -112,7 +123,10 @@ export const onConversationSubMessageCreated = onDocumentCreated(
           lastMessage: normalizedMessageText || conversation.lastMessage,
           lastSenderId: senderId || conversation.lastSenderId,
           lastSenderName: senderName || conversation.lastSenderName,
-          messageCount: conversation.messageCount > 0 ? conversation.messageCount : 1,
+          unreadCount,
+          messageCount: isClientFirestoreFallback
+            ? admin.firestore.FieldValue.increment(1)
+            : (conversation.messageCount > 0 ? conversation.messageCount : 1),
           status: computeConversationStatus(normalizedParticipants, archivedBy, blockedBy),
           lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),

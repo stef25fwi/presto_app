@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -91,6 +93,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isBlockedForCurrentUser = false;
   bool _isArchivedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
+  bool _hasRetriedMessageStreamAccess = false;
   String _offerId = '';
   String _conversationOfferTitle = '';
   String _otherParticipantId = '';
@@ -109,9 +112,108 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return null;
   }
 
+  void _debugMessagingAccess(
+    String reason, {
+    Object? error,
+    List<String>? participants,
+    String? firestorePath,
+  }) {
+    if (!kDebugMode) return;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'null';
+    debugPrint(
+      '[ConversationThread][access] reason=$reason '
+      'currentUser.uid=$currentUid '
+      'widget.currentUserId=${widget.currentUserId} '
+      'conversationId=${widget.conversationId} '
+      'path=${firestorePath ?? 'conversations/${widget.conversationId}'} '
+      'participants=${participants ?? _participants} '
+      'error=$error',
+    );
+  }
+
+  String _messagingErrorCode(Object? error) {
+    if (error is FirebaseException) return error.code;
+    if (error is FirebaseFunctionsException) return error.code;
+    final text = (error ?? '').toString().toLowerCase();
+    for (final code in const <String>[
+      'permission-denied',
+      'not-found',
+      'unauthenticated',
+      'failed-precondition',
+    ]) {
+      if (text.contains(code)) return code;
+    }
+    return '';
+  }
+
+  String _messageStreamErrorMessage(Object? error) {
+    final code = _messagingErrorCode(error);
+    final isCurrentUserParticipant =
+        _participants.contains(widget.currentUserId);
+    switch (code) {
+      case 'permission-denied':
+        if (isCurrentUserParticipant) {
+          return 'Accès refusé par Firestore malgré votre présence dans les participants. Vérifiez App Check ou les règles de lecture.';
+        }
+        return 'Cette conversation n’est pas disponible pour ce compte.';
+      case 'unauthenticated':
+        return 'Connectez-vous pour lire cette conversation.';
+      case 'not-found':
+        return 'Cette conversation n’existe pas encore ou a été supprimée.';
+      case 'failed-precondition':
+        return 'Cette conversation ne peut pas être chargée dans son état actuel.';
+      default:
+        return 'Les messages sont temporairement indisponibles. Réessayez dans un instant.';
+    }
+  }
+
+  String _sendMessageErrorMessage(Object? error) {
+    final code = _messagingErrorCode(error);
+    switch (code) {
+      case 'not-found':
+        return 'La conversation n’existe pas encore. Revenez depuis l’annonce pour la créer avant d’envoyer le premier message.';
+      case 'permission-denied':
+        return 'Envoi refusé : ce compte n’est pas reconnu comme participant de la conversation.';
+      case 'unauthenticated':
+        return 'Connectez-vous pour envoyer un message.';
+      case 'failed-precondition':
+        return 'L’envoi est indisponible car la conversation est bloquée ou incomplète.';
+      default:
+        return 'L’envoi du message a échoué. Réessayez dans un instant.';
+    }
+  }
+
+  void _retryMessageStreamAccessAfterDenied(Object? error) {
+    if (_hasRetriedMessageStreamAccess ||
+        !_participants.contains(widget.currentUserId)) {
+      return;
+    }
+    _hasRetriedMessageStreamAccess = true;
+    unawaited(() async {
+      _debugMessagingAccess(
+        'messages-permission-denied-participant-retry-access',
+        error: error,
+        firestorePath: 'conversations/${widget.conversationId}/messages',
+      );
+      final ready = await _ensureMessagingAccess(
+        interactive: false,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+      if (!ready || !mounted) return;
+      setState(() {
+        _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
+      });
+    }());
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> _buildLiveStream({
     QueryDocumentSnapshot<Map<String, dynamic>>? anchorDoc,
   }) {
+    _debugMessagingAccess(
+      'build-message-stream',
+      firestorePath: 'conversations/${widget.conversationId}/messages',
+    );
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('conversations')
         .doc(widget.conversationId)
@@ -169,9 +271,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       return true;
     } catch (error) {
-      debugPrint(
-        '[ConversationThread] messaging access preparation failed '
-        'conversationId=${widget.conversationId} error=$error',
+      _debugMessagingAccess(
+        'prepare-profile-firestore-access-failed',
+        error: error,
+        firestorePath: 'conversations/${widget.conversationId}',
       );
       if (interactive && mounted) {
         showErrorSnackBar(
@@ -236,12 +339,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         'uid=${currentUser.uid} error=$error',
       );
     }
-  }
-
-  bool _isPermissionDenied(Object? error) {
-    final text = (error ?? '').toString().toLowerCase();
-    return text.contains('permission-denied') ||
-        text.contains('permission denied');
   }
 
   Widget _buildWatermark() {
@@ -377,7 +474,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     required String storedPath,
     required String currentPhotoValue,
   }) async {
-    final source = storedPath.isNotEmpty ? storedPath : currentPhotoValue.trim();
+    final source =
+        storedPath.isNotEmpty ? storedPath : currentPhotoValue.trim();
     if (source.isEmpty || source == _otherParticipantPhotoSource) {
       return;
     }
@@ -436,9 +534,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final needsStorageResolution =
           (rawPhotoValue.isEmpty && storedPath.isNotEmpty) ||
               _isResolvableStorageProfilePhoto(rawPhotoValue);
-      final networkPhotoUrl = _isNetworkProfilePhoto(rawPhotoValue)
-          ? rawPhotoValue.trim()
-          : '';
+      final networkPhotoUrl =
+          _isNetworkProfilePhoto(rawPhotoValue) ? rawPhotoValue.trim() : '';
       setState(() {
         _otherPresenceStatus =
             (data['status'] ?? '').toString().trim().toLowerCase();
@@ -733,6 +830,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         .snapshots()
         .listen((snapshot) {
       if (!snapshot.exists) {
+        _debugMessagingAccess(
+          'conversation-document-not-found',
+          firestorePath: 'conversations/${widget.conversationId}',
+        );
         _handleConversationRemoved(showMessage: true);
         return;
       }
@@ -743,6 +844,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final participants = readConversationParticipants(
         data,
         conversationId: widget.conversationId,
+      );
+      final isCurrentUserParticipant =
+          participants.contains(widget.currentUserId);
+      _debugMessagingAccess(
+        isCurrentUserParticipant
+            ? 'conversation-document-loaded-participant-ok'
+            : 'conversation-document-loaded-current-user-missing',
+        participants: participants,
+        firestorePath: 'conversations/${widget.conversationId}',
       );
       final participantNames = _readStringMap(
         data,
@@ -827,6 +937,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (unreadCount > 0) {
         _markAsRead();
       }
+    }, onError: (error, stackTrace) {
+      _debugMessagingAccess(
+        'conversation-document-listen-error',
+        error: error,
+        firestorePath: 'conversations/${widget.conversationId}',
+      );
     });
   }
 
@@ -834,7 +950,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (_hasHandledConversationRemoval || !mounted) return;
     _hasHandledConversationRemoval = true;
     if (showMessage) {
-      showSuccessSnackBar(context, 'Conversation supprimee.');
+      showErrorSnackBar(context, 'Conversation introuvable ou supprimée.');
     }
     Navigator.of(context).maybePop();
   }
@@ -1011,7 +1127,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _removeOptimisticMessage(optimisticMessage.id);
       _scrollToLatestMessage(force: true);
     } catch (error) {
-      debugPrint('[ConversationThread] _sendMessage error: $error');
+      _debugMessagingAccess(
+        'send-message-failed',
+        error: error,
+        firestorePath: 'conversations/${widget.conversationId}',
+      );
       if (!mounted) return;
       _markOptimisticMessageFailed(optimisticMessage.id);
       if (_controller.text.trim().isEmpty) {
@@ -1022,7 +1142,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       }
       showErrorSnackBar(
         context,
-        'L envoi du message a echoue. Reessayez dans un instant.',
+        _sendMessageErrorMessage(error),
       );
     } finally {
       if (mounted) {
@@ -1977,9 +2097,18 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     }
 
                     if (snapshot.hasError) {
-                      final message = _isPermissionDenied(snapshot.error)
-                          ? 'Cette conversation n est pas disponible pour ce compte.'
-                          : 'Les messages sont temporairement indisponibles. Reessayez dans un instant.';
+                      _debugMessagingAccess(
+                        'messages-subcollection-stream-error',
+                        error: snapshot.error,
+                        firestorePath:
+                            'conversations/${widget.conversationId}/messages',
+                      );
+                      if (_messagingErrorCode(snapshot.error) ==
+                          'permission-denied') {
+                        _retryMessageStreamAccessAfterDenied(snapshot.error);
+                      }
+                      final message =
+                          _messageStreamErrorMessage(snapshot.error);
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
