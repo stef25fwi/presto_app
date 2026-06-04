@@ -43,7 +43,12 @@ Future<void> bootstrapAppCheck() async {
       }
 
       final preview = siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
-      if (kDebugMode) debugPrint('[APPCHECK] siteKey=$preview...');
+      if (kDebugMode) {
+        debugPrint(
+          '[APPCHECK] provider=$kAppCheckWebRecaptchaProviderLabel '
+          'siteKey=$preview...',
+        );
+      }
       appCheckActivationAttempted = true;
       await activateAppCheckWeb(siteKey);
       final token = await FirebaseAppCheck.instance

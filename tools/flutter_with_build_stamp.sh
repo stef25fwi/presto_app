@@ -137,12 +137,41 @@ hydrate_env_from_interactive_shell() {
 }
 
 hydrate_env_from_interactive_shell APPCHECK_RECAPTCHA_SITE_KEY
+hydrate_env_from_interactive_shell APPCHECK_RECAPTCHA_PROVIDER
 hydrate_env_from_interactive_shell FCM_WEB_VAPID_KEY
 
 if [[ -z "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   if [[ -n "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" ]]; then
     export APPCHECK_RECAPTCHA_SITE_KEY="$RECAPTCHA_ENTERPRISE_SITE_KEY"
+    if [[ -z "${APPCHECK_RECAPTCHA_PROVIDER:-}" ]]; then
+      export APPCHECK_RECAPTCHA_PROVIDER="enterprise"
+    fi
   fi
+fi
+
+if [[ -z "${APPCHECK_RECAPTCHA_PROVIDER:-}" ]]; then
+  export APPCHECK_RECAPTCHA_PROVIDER="enterprise"
+fi
+
+normalized_appcheck_provider="$(printf '%s' "$APPCHECK_RECAPTCHA_PROVIDER" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+case "$normalized_appcheck_provider" in
+  enterprise|recaptchaenterprise)
+    export APPCHECK_RECAPTCHA_PROVIDER="enterprise"
+    ;;
+  v3|classic|recaptchav3|recaptcha_v3|recaptcha-v3)
+    export APPCHECK_RECAPTCHA_PROVIDER="v3"
+    ;;
+  *)
+    echo "[flutter_with_build_stamp] ERROR: unsupported APPCHECK_RECAPTCHA_PROVIDER='$APPCHECK_RECAPTCHA_PROVIDER'." >&2
+    echo "[flutter_with_build_stamp] Use 'enterprise' for reCAPTCHA Enterprise keys or 'v3' for classic reCAPTCHA v3 keys." >&2
+    exit 4
+    ;;
+esac
+
+if [[ "${APPCHECK_RECAPTCHA_PROVIDER:-}" != "enterprise" && -n "${RECAPTCHA_ENTERPRISE_SITE_KEY:-}" ]]; then
+  echo "[flutter_with_build_stamp] ERROR: RECAPTCHA_ENTERPRISE_SITE_KEY is set but APPCHECK_RECAPTCHA_PROVIDER='$APPCHECK_RECAPTCHA_PROVIDER'." >&2
+  echo "[flutter_with_build_stamp] Remove RECAPTCHA_ENTERPRISE_SITE_KEY for v3 builds or set APPCHECK_RECAPTCHA_PROVIDER=enterprise." >&2
+  exit 5
 fi
 
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" &&
@@ -164,6 +193,7 @@ extra_defines=()
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   extra_defines+=(--dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY")
 fi
+extra_defines+=(--dart-define=APPCHECK_RECAPTCHA_PROVIDER="$APPCHECK_RECAPTCHA_PROVIDER")
 if [[ -n "${FCM_WEB_VAPID_KEY:-}" ]]; then
   extra_defines+=(--dart-define=FCM_WEB_VAPID_KEY="$FCM_WEB_VAPID_KEY")
 fi
@@ -173,6 +203,7 @@ if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   appcheck_status="present(${#APPCHECK_RECAPTCHA_SITE_KEY} chars)"
 fi
 echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_SITE_KEY=$appcheck_status" >&2
+echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_PROVIDER=$APPCHECK_RECAPTCHA_PROVIDER" >&2
 
 is_web_release_build=false
 if [[ " ${flutter_args[*]} " == *" build web "* && " ${flutter_args[*]} " == *" --release "* ]]; then

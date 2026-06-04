@@ -28,15 +28,29 @@ const String kAppCheckWebRecaptchaProvider = String.fromEnvironment(
   defaultValue: 'enterprise',
 );
 
-/// `true` lorsque la configuration demande explicitement une clé reCAPTCHA v3
-/// classique plutôt qu'une clé Enterprise.
-bool get kAppCheckWebUsesRecaptchaV3 {
+String get kAppCheckWebRecaptchaProviderLabel {
   final normalized = kAppCheckWebRecaptchaProvider.trim().toLowerCase();
-  return normalized == 'v3' ||
+  if (normalized == 'enterprise' || normalized == 'recaptchaenterprise') {
+    return 'enterprise';
+  }
+  if (normalized == 'v3' ||
       normalized == 'classic' ||
       normalized == 'recaptchav3' ||
       normalized == 'recaptcha_v3' ||
-      normalized == 'recaptcha-v3';
+      normalized == 'recaptcha-v3') {
+    return 'v3';
+  }
+  return 'unsupported:$normalized';
+}
+
+bool get kAppCheckWebRecaptchaProviderIsSupported =>
+    kAppCheckWebRecaptchaProviderLabel == 'enterprise' ||
+    kAppCheckWebRecaptchaProviderLabel == 'v3';
+
+/// `true` lorsque la configuration demande explicitement une clé reCAPTCHA v3
+/// classique plutôt qu'une clé Enterprise.
+bool get kAppCheckWebUsesRecaptchaV3 {
+  return kAppCheckWebRecaptchaProviderLabel == 'v3';
 }
 
 /// Active App Check pour le web en alignant le provider reCAPTCHA sur le type
@@ -48,6 +62,12 @@ bool get kAppCheckWebUsesRecaptchaV3 {
 /// qui ne correspond pas au type réel de la clé fait rejeter le jeton côté
 /// backend et renvoie `permission-denied` sur toutes les lectures Firestore.
 Future<void> activateAppCheckWeb(String siteKey) {
+  if (!kAppCheckWebRecaptchaProviderIsSupported) {
+    throw StateError(
+      'unsupported_app_check_recaptcha_provider: '
+      '$kAppCheckWebRecaptchaProvider',
+    );
+  }
   return FirebaseAppCheck.instance.activate(
     webProvider: kAppCheckWebUsesRecaptchaV3
         ? ReCaptchaV3Provider(siteKey)
