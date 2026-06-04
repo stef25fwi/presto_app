@@ -300,10 +300,6 @@ class MarketplacePublishService {
     required String draftId,
     required List<XFile> photos,
   }) async {
-    final processOfferPhotoCallable = _functions.httpsCallable(
-      'processOfferPhoto',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
-    );
     final media = <ListingMediaInput>[];
     for (var index = 0; index < photos.length; index += 1) {
       final photo = photos[index];
@@ -342,11 +338,16 @@ class MarketplacePublishService {
         final processedResponse =
             await _runWithChannelRetry<HttpsCallableResult<dynamic>>(
           stepLabel: 'traitement photo',
-          action: () => processOfferPhotoCallable.call(<String, dynamic>{
-            'draftId': draftId,
-            'listingId': draftId,
-            'storagePath': rawPath,
-          }),
+          action: () => callPrestoFunction<dynamic>(
+            functions: _functions,
+            name: 'processOfferPhoto',
+            timeout: const Duration(seconds: 60),
+            parameters: <String, dynamic>{
+              'draftId': draftId,
+              'listingId': draftId,
+              'storagePath': rawPath,
+            },
+          ),
         );
 
         final processedData = Map<String, dynamic>.from(

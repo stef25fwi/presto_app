@@ -24,16 +24,17 @@ class AiDraftService {
   }) async {
     try {
       await _prepareAuthenticatedCallableSession();
-      final callable = _functions.httpsCallable(
-        'generateOfferDraft',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
-      );
       final res = await retry(
-        () => callable.call<dynamic>(<String, dynamic>{
-          'hint': text,
-          if (city != null) 'city': city,
-          if (category != null) 'category': category,
-        }),
+        () => callPrestoFunction<dynamic>(
+          functions: _functions,
+          name: 'generateOfferDraft',
+          timeout: const Duration(seconds: 45),
+          parameters: <String, dynamic>{
+            'hint': text,
+            if (city != null) 'city': city,
+            if (category != null) 'category': category,
+          },
+        ),
         maxAttempts: 3,
         retryIf: (e) {
           if (e is FirebaseFunctionsException) {

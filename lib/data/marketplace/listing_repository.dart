@@ -33,13 +33,15 @@ class ListingRepository {
       'city_id': draft.cityId,
     });
 
-    final callable = _functions.httpsCallable(
-      'createListingDraft',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
-    final response = await callable.call(<String, dynamic>{
+    final payload = <String, dynamic>{
       'draft': draft.toFirestore(),
-    });
+    };
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'createListingDraft',
+      timeout: const Duration(seconds: 30),
+      parameters: payload,
+    );
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ??
           const <String, dynamic>{},
@@ -71,28 +73,30 @@ class ListingRepository {
     required String draftId,
     required List<ListingMediaInput> media,
   }) async {
-    final callable = _functions.httpsCallable(
-      'updateListingDraftMedia',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'updateListingDraftMedia',
+      timeout: const Duration(seconds: 30),
+      parameters: <String, dynamic>{
       'draftId': draftId,
       'media': media.map((e) => e.toMap()).toList(growable: false),
-    });
+      },
+    );
   }
 
   Future<ListingSubmissionResult> submitDraft({
     required String draftId,
     required String recaptchaToken,
   }) async {
-    final callable = _functions.httpsCallable(
-      'submitListingDraft',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
-    );
-    final response = await callable.call(<String, dynamic>{
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'submitListingDraft',
+      timeout: const Duration(seconds: 45),
+      parameters: <String, dynamic>{
       'draftId': draftId,
       'recaptchaToken': recaptchaToken,
-    });
+      },
+    );
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ??
           const <String, dynamic>{},
@@ -147,14 +151,15 @@ class ListingRepository {
     required String viewerKey,
     String source = 'listing_detail',
   }) async {
-    final callable = _functions.httpsCallable(
-      'incrementListingView',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'incrementListingView',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'listingId': listingId,
       'viewerKey': viewerKey,
       'source': source,
-    });
+      },
+    );
   }
 }

@@ -319,13 +319,14 @@ class FavoriteRepository {
       );
     }
 
-    final callable = _functions.httpsCallable(
-      'toggleFavorite',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'toggleFavorite',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
+        'listingId': normalizedListingId,
+      },
     );
-    final response = await callable.call(<String, dynamic>{
-      'listingId': normalizedListingId,
-    });
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ??
           const <String, dynamic>{},

@@ -19,14 +19,15 @@ class ReportRepository {
     ListingReportDraft draft, {
     required String recaptchaToken,
   }) async {
-    final callable = _functions.httpsCallable(
-      'reportListing',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    final response = await callable.call(<String, dynamic>{
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'reportListing',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       ...draft.toMap(),
       'recaptchaToken': recaptchaToken,
-    });
+      },
+    );
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
     );

@@ -207,19 +207,18 @@ class AiOfferService {
     required String currentCategory,
     FirebaseFunctions? functions,
   }) async {
-    final callable =
-        (functions ?? prestoFirebaseFunctions)
-            .httpsCallable(
-      'generateOfferDraft',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
     final res = await retry(
-      () => callable.call({
-        'hint': hint,
-        'city': currentCity,
-        'category': currentCategory,
-        'lang': 'fr',
-      }),
+      () => callPrestoFunction<dynamic>(
+        functions: functions ?? prestoFirebaseFunctions,
+        name: 'generateOfferDraft',
+        timeout: const Duration(seconds: 30),
+        parameters: <String, dynamic>{
+          'hint': hint,
+          'city': currentCity,
+          'category': currentCategory,
+          'lang': 'fr',
+        },
+      ),
       maxAttempts: 2,
       retryIf: (e) {
         if (e is TimeoutException) return true;

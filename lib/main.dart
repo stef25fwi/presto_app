@@ -30,12 +30,15 @@ import 'services/app_route_parser.dart';
 import 'services/firestore_bootstrap.dart';
 import 'services/notification_service.dart';
 import 'services/admin_audio_runtime_store.dart';
+import 'services/admin_web_debug_store.dart';
 import 'services/post_auth_navigation_intent_service.dart';
+import 'widgets/admin_web_debug_panel.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
 final AdminAudioRuntimeStore adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
+final AdminWebDebugStore adminWebDebugStore = AdminWebDebugStore.instance;
 
 /// Résultat de `FirebaseAuth.getRedirectResult()` capturé une seule fois au
 /// démarrage (web). Permet aux pages compte/profil de récupérer le retour
@@ -60,6 +63,11 @@ class PrestoMonitoring {
     if (kDebugMode) {
       debugPrint('[monitoring] stream=$key count=$docsCount');
     }
+    adminWebDebugStore.recordEvent(
+      area: 'monitoring',
+      message: 'stream',
+      detail: 'key=$key count=$docsCount',
+    );
   }
 
   void trackOffersSnapshot(int docsCount) {
@@ -70,12 +78,22 @@ class PrestoMonitoring {
     if (kDebugMode) {
       debugPrint('[monitoring] function=$name ms=$ms');
     }
+    adminWebDebugStore.recordEvent(
+      area: 'monitoring',
+      message: 'function',
+      detail: 'name=$name ms=$ms',
+    );
   }
 
   void trackError(String key, Object error) {
     if (kDebugMode) {
       debugPrint('[monitoring] error=$key $error');
     }
+    adminWebDebugStore.recordError(
+      'monitoring',
+      error,
+      message: key,
+    );
   }
 }
 
@@ -502,9 +520,16 @@ class CardShell extends StatelessWidget {
 Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    adminWebDebugStore.recordEvent(
+      area: 'app',
+      message: 'startup',
+      detail: 'platform=${kIsWeb ? 'web' : defaultTargetPlatform.name}',
+    );
 
     await ensureFirebaseInitialized(source: 'main');
+    adminWebDebugStore.recordEvent(area: 'firebase', message: 'initialized');
     await bootstrapFirestore();
+    adminWebDebugStore.recordEvent(area: 'firestore', message: 'bootstrapped');
 
     // 📋 Diagnostics
     if (kDebugMode) {
@@ -543,6 +568,11 @@ Future<void> main() async {
     // ✅ Remote Config: charger le pipeline audio
     await PrestoRemoteConfig.init();
     if (kDebugMode) debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
+    adminWebDebugStore.recordEvent(
+      area: 'remote-config',
+      message: 'initialized',
+      detail: 'audio_pipeline=${PrestoRemoteConfig.audioPipeline}',
+    );
 
     await bootstrapAppCheck();
 
@@ -614,9 +644,11 @@ Future<void> main() async {
       // (couvre sign-in/sign-out depuis n'importe quelle page).
       FirebaseAuth.instance.authStateChanges().listen((User? user) {
         SessionState.userId = user?.uid;
+        adminWebDebugStore.updateAuth(user);
         if (kDebugMode) debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
       });
     } catch (e) {
+      adminWebDebugStore.recordError('auth', e, message: 'startup-check-failed');
       if (kDebugMode) debugPrint('[Auth] check failed: $e');
     }
 
@@ -625,19 +657,36 @@ Future<void> main() async {
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
     // Crashlytics n'est pas supporté sur le web
+    final previousFlutterOnError = FlutterError.onError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      previousFlutterOnError?.call(details);
+      adminWebDebugStore.recordError(
+        'flutter',
+        details.exception,
+        stackTrace: details.stack,
+        message: details.library ?? 'flutter-error',
+      );
+      if (!kIsWeb) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      }
+    };
+
+    PlatformDispatcher.instance.onError = (error, stack) {
+      adminWebDebugStore.recordError(
+        'platform',
+        error,
+        stackTrace: stack,
+        message: 'platform-dispatcher',
+      );
+      if (!kIsWeb) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      }
+      return true;
+    };
+
     if (!kIsWeb) {
       await FirebaseCrashlytics.instance
           .setCrashlyticsCollectionEnabled(!kDebugMode);
-
-      FlutterError.onError = (FlutterErrorDetails details) {
-        FlutterError.presentError(details);
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-      };
-
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
     }
 
     await CitySearch.instance.ensureLoaded();
@@ -648,12 +697,23 @@ Future<void> main() async {
       await NotificationService().initialize(
         navigatorKey: appNavigatorKey,
       );
+      adminWebDebugStore.recordEvent(
+        area: 'notifications',
+        message: 'initialized',
+      );
     } catch (e) {
+      adminWebDebugStore.recordError('notifications', e, message: 'init-failed');
       if (kDebugMode) debugPrint('[Notifications] init error: $e');
     }
 
     runApp(const PrestoApp());
   }, (error, stack) {
+    adminWebDebugStore.recordError(
+      'zone',
+      error,
+      stackTrace: stack,
+      message: 'runZonedGuarded',
+    );
     if (!kIsWeb) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     }
@@ -685,6 +745,10 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
+    adminWebDebugStore.recordEvent(
+      area: 'lifecycle',
+      message: 'resumed',
+    );
     unawaited(
       refreshAppCheckToken(reason: 'app-resumed').catchError((Object error) {
         if (kDebugMode) {
@@ -777,7 +841,9 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           if (!mounted) return;
           _signalNavigatorReady();
         });
-        return child ?? const SizedBox.shrink();
+        return AdminWebDebugPanel(
+          child: child ?? const SizedBox.shrink(),
+        );
       },
       onGenerateRoute: _onGenerateRoute,
       routes: {

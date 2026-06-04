@@ -261,32 +261,32 @@ class MicroIaService {
         );
       }
 
-      final callable = _functions.httpsCallable(
-        'microIaProcessAudio',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
-      );
-
       _log(
         'PROCESS',
         'calling backend label=${debugLabel ?? 'default'} uid=${secureContext.uid} authSource=${secureContext.authSource}',
       );
 
       final res = await retry(
-        () => callable.call(<String, dynamic>{
-          'storagePath': storagePath,
-          if (languageCode != null) 'languageCode': languageCode,
-          if (generateDraft) 'generateDraft': true,
-          if (generateDraft && draftCity != null) 'draftCity': draftCity,
-          if (generateDraft && draftCategory != null)
-            'draftCategory': draftCategory,
-          'clientRequestId': clientRequestId,
-          'clientDebugLabel': debugLabel ?? '',
-          'clientAuthUid': secureContext.uid,
-          'clientAuthEmail': secureContext.email ?? '',
-          'clientAuthSource': secureContext.authSource,
-          'clientTokenPresent': secureContext.idToken.isNotEmpty,
-          'clientAppCheckTokenPresent': secureContext.hasAppCheckToken,
-        }),
+        () => callPrestoFunction<dynamic>(
+          functions: _functions,
+          name: 'microIaProcessAudio',
+          timeout: const Duration(seconds: 75),
+          parameters: <String, dynamic>{
+            'storagePath': storagePath,
+            if (languageCode != null) 'languageCode': languageCode,
+            if (generateDraft) 'generateDraft': true,
+            if (generateDraft && draftCity != null) 'draftCity': draftCity,
+            if (generateDraft && draftCategory != null)
+              'draftCategory': draftCategory,
+            'clientRequestId': clientRequestId,
+            'clientDebugLabel': debugLabel ?? '',
+            'clientAuthUid': secureContext.uid,
+            'clientAuthEmail': secureContext.email ?? '',
+            'clientAuthSource': secureContext.authSource,
+            'clientTokenPresent': secureContext.idToken.isNotEmpty,
+            'clientAppCheckTokenPresent': secureContext.hasAppCheckToken,
+          },
+        ),
         maxAttempts: 3,
         retryIf: (e) {
           if (e is TimeoutException) return true;

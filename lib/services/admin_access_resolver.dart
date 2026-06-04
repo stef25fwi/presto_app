@@ -380,11 +380,6 @@ class AdminAccessResolver {
       'region=$kFirebaseFunctionsRegion uid=${callableUser.uid}',
     );
 
-    final callable = _functions.httpsCallable(
-      _adminAccessCallableName,
-      options: HttpsCallableOptions(timeout: _serverTimeout),
-    );
-
     Future<AdminAccessState> runAttempt(bool retrying) async {
       try {
         try {
@@ -401,7 +396,12 @@ class AdminAccessResolver {
           );
         }
 
-        final response = await callable.call<dynamic>({});
+        final response = await callPrestoFunction<dynamic>(
+          functions: _functions,
+          name: _adminAccessCallableName,
+          timeout: _serverTimeout,
+          parameters: const <String, dynamic>{},
+        );
         final data = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
             : <String, dynamic>{};

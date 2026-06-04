@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../config/app_check_state.dart';
 import '../../utils/crashlytics_context.dart';
 
 class PublicOffersReadIssue {
@@ -43,6 +44,10 @@ class PublicOffersReadIssue {
     ];
     return parts.join(' ');
   }
+}
+
+String _appCheckHostHintSuffix() {
+  return kIsWeb ? appCheckWebHostHint() : '';
 }
 
 class PublicOffersReadException implements Exception {
@@ -183,7 +188,8 @@ PublicOffersReadIssue diagnosePublicOffersReadIssue(
       kind: 'app_check',
       code: code ?? 'app-check',
       releaseMessage:
-          'Lecture bloquée par la sécurité de l\'application. Vérifie App Check.',
+          'Lecture bloquée par la sécurité de l\'application. Vérifie App Check.'
+          '${_appCheckHostHintSuffix()}',
       rawMessage: rawMessage,
       hasAuthenticatedUser: effectiveHasAuthenticatedUser,
       appCheckState: appCheckState,
@@ -206,7 +212,8 @@ PublicOffersReadIssue diagnosePublicOffersReadIssue(
         releaseMessage:
             'Lecture bloquée par la sécurité de l\'application (App Check). '
             'Si tu es en local ou en preview, vérifie l\'enregistrement du '
-            'domaine et la clé reCAPTCHA, ou bascule App Check en monitoring.',
+            'domaine et la clé reCAPTCHA, ou bascule App Check en monitoring.'
+            '${_appCheckHostHintSuffix()}',
         rawMessage: rawMessage,
         hasAuthenticatedUser: effectiveHasAuthenticatedUser,
         appCheckState: appCheckState,

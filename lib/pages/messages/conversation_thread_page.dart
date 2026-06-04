@@ -16,6 +16,7 @@ import '../../constants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
 import '../../services/admin_access_resolver.dart';
+import '../../services/admin_web_debug_store.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../services/user_profile_bootstrap_service.dart';
@@ -118,16 +119,41 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     List<String>? participants,
     String? firestorePath,
   }) {
-    if (!kDebugMode) return;
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'null';
+    final detail =
+        'currentUser.uid=$currentUid '
+        'widget.currentUserId=${widget.currentUserId} '
+        'conversationId=${widget.conversationId} '
+        'path=${firestorePath ?? 'conversations/${widget.conversationId}'} '
+        'participants=${participants ?? _participants} '
+        'error=$error';
+    if (error != null) {
+      AdminWebDebugStore.instance.recordError(
+        'messages-thread',
+        error,
+        message: reason,
+      );
+      AdminWebDebugStore.instance.recordEvent(
+        area: 'messages-thread',
+        message: reason,
+        level: 'error',
+        detail: detail,
+      );
+    } else {
+      AdminWebDebugStore.instance.recordEvent(
+        area: 'messages-thread',
+        message: reason,
+        level: reason.contains('retry') ||
+                reason.contains('missing') ||
+                reason.contains('not-found')
+            ? 'warn'
+            : 'info',
+        detail: detail,
+      );
+    }
+    if (!kDebugMode) return;
     debugPrint(
-      '[ConversationThread][access] reason=$reason '
-      'currentUser.uid=$currentUid '
-      'widget.currentUserId=${widget.currentUserId} '
-      'conversationId=${widget.conversationId} '
-      'path=${firestorePath ?? 'conversations/${widget.conversationId}'} '
-      'participants=${participants ?? _participants} '
-      'error=$error',
+      '[ConversationThread][access] reason=$reason $detail',
     );
   }
 

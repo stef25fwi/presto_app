@@ -71,18 +71,19 @@ class ConversationService {
     String? currentUserName,
     String? otherUserName,
   }) async {
-    final callable = _functions.httpsCallable(
-      'ensureOfferConversation',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    final response = await callable.call(<String, dynamic>{
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'ensureOfferConversation',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       'offerId': offerId,
       'offerTitle': offerTitle,
       'currentUserId': currentUserId,
       'otherUserId': otherUserId,
       'currentUserName': currentUserName,
       'otherUserName': otherUserName,
-    });
+      },
+    );
 
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ?? const {},
@@ -99,30 +100,32 @@ class ConversationService {
     String text = '',
     List<ConversationAttachmentInput> attachments = const [],
   }) async {
-    final callable = _functions.httpsCallable(
-      'sendConversationMessage',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'sendConversationMessage',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
       'text': text,
       if (attachments.isNotEmpty)
         'attachments': attachments.map((entry) => entry.toJson()).toList(),
-    });
+      },
+    );
   }
 
   static Future<ProcessedConversationPhoto> processConversationPhoto({
     required String conversationId,
     required String storagePath,
   }) async {
-    final callable = _functions.httpsCallable(
-      'processConversationAttachmentPhoto',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
-    );
-    final response = await callable.call(<String, dynamic>{
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'processConversationAttachmentPhoto',
+      timeout: const Duration(seconds: 60),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
       'storagePath': storagePath,
-    });
+      },
+    );
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ?? const {},
     );
@@ -137,86 +140,93 @@ class ConversationService {
   static Future<void> markAsRead({
     required String conversationId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'markConversationRead',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'markConversationRead',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
-    });
+      },
+    );
   }
 
   static Future<void> archiveConversation({
     required String conversationId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'archiveConversation',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'archiveConversation',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
-    });
+      },
+    );
   }
 
   static Future<void> unarchiveConversation({
     required String conversationId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'unarchiveConversation',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'unarchiveConversation',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
-    });
+      },
+    );
   }
 
   static Future<void> blockConversation({
     required String conversationId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'blockConversation',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'blockConversation',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
-    });
+      },
+    );
   }
 
   static Future<void> unblockConversation({
     required String conversationId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'unblockConversation',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'unblockConversation',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
-    });
+      },
+    );
   }
 
   static Future<void> deleteConversation({
     required String conversationId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'deleteConversation',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'deleteConversation',
+      timeout: const Duration(seconds: 30),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
-    });
+      },
+    );
   }
 
   static Future<void> deleteMessage({
     required String conversationId,
     required String messageId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'deleteConversationMessage',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'deleteConversationMessage',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
       'conversationId': conversationId,
       'messageId': messageId,
-    });
+      },
+    );
   }
 }
