@@ -48,7 +48,6 @@ class HeroSlidesService {
   }) async {
     final normalizedMediaType = _normalizeMediaType(mediaType);
     final slides = await _fetchAllSlides();
-    final now = DateTime.now();
     final nextOrder = order ?? _nextOrder(slides);
     final shouldBeFirst = isFirst || slides.isEmpty;
     final uploadResult = await uploadHeroMedia(
@@ -90,7 +89,12 @@ class HeroSlidesService {
       'createdBy': _auth.currentUser?.uid,
     });
 
-    await batch.commit();
+    try {
+      await batch.commit();
+    } catch (error) {
+      await _cleanupUploadedHeroMedia(uploadResult.storagePath);
+      rethrow;
+    }
   }
 
   Future<void> updateSlide(
@@ -112,6 +116,7 @@ class HeroSlidesService {
     var nextStoragePath = slide.storagePath;
     var nextMediaType = slide.mediaType;
     String? previousStoragePath;
+    String? uploadedReplacementStoragePath;
 
     if (replacementFileBytes != null &&
         replacementFileName != null &&
@@ -127,6 +132,7 @@ class HeroSlidesService {
       previousStoragePath = slide.storagePath;
       nextMediaUrl = uploadResult.mediaUrl;
       nextStoragePath = uploadResult.storagePath;
+      uploadedReplacementStoragePath = uploadResult.storagePath;
       nextMediaType =
           _normalizeMediaType(replacementMediaType ?? slide.mediaType);
     }
@@ -178,7 +184,15 @@ class HeroSlidesService {
       }
     }
 
-    await batch.commit();
+    try {
+      await batch.commit();
+    } catch (error) {
+      if (uploadedReplacementStoragePath != null &&
+          uploadedReplacementStoragePath != slide.storagePath) {
+        await _cleanupUploadedHeroMedia(uploadedReplacementStoragePath);
+      }
+      rethrow;
+    }
 
     if (previousStoragePath != null &&
         previousStoragePath.isNotEmpty &&
@@ -263,19 +277,22 @@ class HeroSlidesService {
     );
 
     StreamSubscription<TaskSnapshot>? progressSubscription;
-    if (onProgress != null) {
-      progressSubscription = uploadTask.snapshotEvents.listen((snapshot) {
-        final totalBytes = snapshot.totalBytes;
-        if (totalBytes <= 0) {
-          return;
-        }
-        onProgress(snapshot.bytesTransferred / totalBytes);
-      });
-    }
+    try {
+      if (onProgress != null) {
+        progressSubscription = uploadTask.snapshotEvents.listen((snapshot) {
+          final totalBytes = snapshot.totalBytes;
+          if (totalBytes <= 0) {
+            return;
+          }
+          onProgress(snapshot.bytesTransferred / totalBytes);
+        });
+      }
 
-    await uploadTask;
-    await progressSubscription?.cancel();
-    onProgress?.call(1);
+      await uploadTask;
+      onProgress?.call(1);
+    } finally {
+      await progressSubscription?.cancel();
+    }
 
     final mediaUrl = await ref.getDownloadURL();
     return HeroMediaUploadResult(
@@ -371,6 +388,19 @@ class HeroSlidesService {
     if (uploadResult.mediaUrl.trim().isEmpty ||
         !uploadResult.storagePath.startsWith('hero_slides/')) {
       throw StateError('Hero media upload did not return a Firebase URL/path.');
+    }
+  }
+
+  Future<void> _cleanupUploadedHeroMedia(String? storagePath) async {
+    final normalizedPath = storagePath?.trim() ?? '';
+    if (normalizedPath.isEmpty) {
+      return;
+    }
+
+    try {
+      await deleteHeroMedia(normalizedPath);
+    } catch (_) {
+      // Best effort cleanup: preserve the original Firestore failure.
     }
   }
 
