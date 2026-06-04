@@ -66,6 +66,9 @@ jobs:
       
       - name: Build Web for Firebase Hosting
         env:
+          # GitHub stores this as an Actions secret, but the value must be the
+          # public reCAPTCHA Enterprise site key. Never put a reCAPTCHA secret
+          # key in a Flutter Web build variable.
           APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
         run: |
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
