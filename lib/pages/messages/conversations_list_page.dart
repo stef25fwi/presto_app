@@ -9,6 +9,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/presto_overlay_theme.dart';
+import '../../app/app_globals.dart';
 import '../../constants.dart';
 import '../../core/firebase_contract.dart';
 import '../../models/conversation_summary.dart';
@@ -791,29 +792,53 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final title = conversation.titleFor(userId);
     final offerTitle = conversation.offerTitle.trim();
 
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'messages-list',
+      message: 'conversation-open-tap',
+      detail:
+          'conversationId=${conversation.id} userId=$userId wide=${_isWideLayout(context)}',
+    );
+
     // Fire-and-forget : ne pas bloquer la navigation sur le réseau
     _markConversationRead(conversation.id, userId);
     if (!context.mounted) return;
 
-    if (_isWideLayout(context)) {
-      setState(() {
-        _wideSelectedConversation = conversation;
-        _wideSelectedUserId = userId;
-        _wideSelectedDraftText = initialDraftText;
-      });
-      return;
-    }
+    try {
+      if (_isWideLayout(context)) {
+        setState(() {
+          _wideSelectedConversation = conversation;
+          _wideSelectedUserId = userId;
+          _wideSelectedDraftText = initialDraftText;
+        });
+        return;
+      }
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
+      final route = MaterialPageRoute(
         builder: (_) => ConversationThreadPage(
           conversationId: conversation.id,
           offerTitle: offerTitle.isEmpty ? title : offerTitle,
           currentUserId: userId,
           initialDraftText: initialDraftText,
         ),
-      ),
-    );
+      );
+      final navigator = Navigator.maybeOf(context) ?? appNavigatorKey.currentState;
+      if (navigator == null) {
+        throw StateError('Navigator indisponible pour ouvrir la conversation.');
+      }
+      await navigator.push(route);
+    } catch (error, stackTrace) {
+      AdminWebDebugStore.instance.recordError(
+        'messages-list',
+        error,
+        stackTrace: stackTrace,
+        message: 'conversation-open-failed',
+      );
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Impossible d ouvrir cette conversation pour le moment.',
+      );
+    }
   }
 
   bool _isWideLayout(BuildContext context) {
@@ -1668,6 +1693,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 6),
                                       child: Slidable(
+                                        enabled: !kIsWeb,
                                         key: ValueKey<String>(
                                             'conversation-${conversation.id}'),
                                         startActionPane: ActionPane(
@@ -1740,7 +1766,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           child: InkWell(
                                             borderRadius:
                                                 BorderRadius.circular(16),
-                                            onTap: openConversation,
+                                            onTap: () => unawaited(openConversation()),
                                             child: AnimatedContainer(
                                               duration: const Duration(
                                                   milliseconds: 220),
@@ -1770,7 +1796,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   GestureDetector(
-                                                    onTap: openConversation,
+                                                    onTap: () => unawaited(openConversation()),
                                                     child: _ConversationAvatar(
                                                       title: title,
                                                       userId:

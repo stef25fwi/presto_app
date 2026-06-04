@@ -147,6 +147,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     );
   }
 
+  void _logConsultOffersFetch(
+    String action, {
+    Map<String, Object?> details = const <String, Object?>{},
+  }) {
+    logRuntimeAction(
+      area: 'consult_offers',
+      action: 'fetch.$action',
+      details: details,
+    );
+  }
+
   // --- Normalisation (réduction index) ---
   String _slugId(String input) {
     final s = input
@@ -806,36 +817,65 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final cityId = _effectiveListingsCityId();
 
     Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> loadOnce() async {
-      final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        loadMergedPublicOfferQueryVariants(
-          queries: buildMarketplaceListingsBrowseQueries(
-            limit: limit,
-            latestFirst: true,
-            categoryId: categoryId,
-            cityId: cityId,
-          ),
-          source: 'consult_listings_fetch',
-        ),
-      ];
-      if (kEnableLegacyPublicOffersBackfill) {
-        loads.add(
+      _logConsultOffersFetch(
+        'start',
+        details: <String, Object?>{
+          'limit': limit,
+          'categoryId': categoryId ?? '',
+          'cityId': cityId ?? '',
+          'hasActiveClientFilters': _hasActiveClientFilters,
+        },
+      );
+      try {
+        final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
           loadMergedPublicOfferQueryVariants(
-            queries: buildLatestPublicOffersQueryVariants(limit: limit),
-            source: 'consult_legacy_fetch',
+            queries: buildMarketplaceListingsBrowseQueries(
+              limit: limit,
+              latestFirst: true,
+              categoryId: categoryId,
+              cityId: cityId,
+            ),
+            source: 'consult_listings_fetch',
           ),
+        ];
+        if (kEnableLegacyPublicOffersBackfill) {
+          loads.add(
+            loadMergedPublicOfferQueryVariants(
+              queries: buildLatestPublicOffersQueryVariants(limit: limit),
+              source: 'consult_legacy_fetch',
+            ),
+          );
+        }
+        final results = await Future.wait(loads);
+        final listings = results[0];
+        final legacy = results.length > 1
+            ? results[1]
+            : listings.isEmpty
+                ? await loadLegacyPublicOffersOnDemand(
+                    limit: limit,
+                    source: 'consult_legacy_fetch_fallback',
+                  )
+                : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        final merged = mergeOfferDocsById(listings, legacy);
+        _logConsultOffersFetch(
+          'success',
+          details: <String, Object?>{
+            'listingsCount': listings.length,
+            'legacyCount': legacy.length,
+            'mergedCount': merged.length,
+          },
         );
+        return merged;
+      } catch (error) {
+        _logConsultOffersFetch(
+          'error',
+          details: <String, Object?>{
+            'errorType': error.runtimeType.toString(),
+            'message': error.toString(),
+          },
+        );
+        rethrow;
       }
-      final results = await Future.wait(loads);
-      final listings = results[0];
-      final legacy = results.length > 1
-          ? results[1]
-          : listings.isEmpty
-              ? await loadLegacyPublicOffersOnDemand(
-                  limit: limit,
-                  source: 'consult_legacy_fetch_fallback',
-                )
-              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-      return mergeOfferDocsById(listings, legacy);
     }
 
     return loadOnce().asStream();
@@ -1680,7 +1720,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                         final err = snapshot.error;
                         if (err != null) {
                           PrestoMonitoring.I
-                              .trackError('offers.snapshots', err);
+                          .trackError('consult_offers.fetch', err);
                         }
 
                         final friendly = err == null

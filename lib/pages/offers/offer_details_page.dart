@@ -299,17 +299,17 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
   Object? _mergeMarketplaceOffer(
     Object? source,
-    Map<String, dynamic>? liveData,
+    Map<String, dynamic>? fetchedData,
     String listingId,
   ) {
-    if (liveData == null || liveData.isEmpty) {
+    if (fetchedData == null || fetchedData.isEmpty) {
       return source;
     }
 
     final merged = <String, dynamic>{
       if (source is Map)
         ...Map<String, dynamic>.from(source.cast<dynamic, dynamic>()),
-      ...liveData,
+      ...fetchedData,
       'id': listingId,
       'offerId': listingId,
       'listingId': listingId,
@@ -365,6 +365,18 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         description.isEmpty ||
         advertiserId.isEmpty ||
         imageUrls.isEmpty;
+  }
+
+  Future<Map<String, dynamic>?> _fetchMarketplaceOffer(String listingId) async {
+    if (listingId.isEmpty) {
+      return null;
+    }
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('listings')
+        .doc(listingId)
+        .get();
+    return snapshot.data();
   }
 
   String _toE164Like(String raw) {
@@ -1473,15 +1485,12 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       return buildPage(offer);
     }
 
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('listings')
-          .doc(listingId)
-          .snapshots(),
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _fetchMarketplaceOffer(listingId),
       builder: (context, snapshot) {
         final mergedOffer = _mergeMarketplaceOffer(
           offer,
-          snapshot.data?.data(),
+          snapshot.data,
           listingId,
         );
         return buildPage(mergedOffer);
