@@ -142,8 +142,11 @@ class UserProfileBootstrapService {
   static Future<void> _ensureAppCheckTokenAvailable({
     required bool forceRefreshToken,
   }) async {
-    if (kIsWeb && appCheckActivationAttempted && !appCheckActivationSucceeded) {
-      await _retryWebAppCheckActivation();
+    if (kIsWeb && !appCheckActivationAttempted) {
+      throw UserProfileBootstrapException(
+        'app-check-unavailable',
+        'App Check Web n\'a pas ete initialise par le bootstrap.',
+      );
     }
 
     final retryDelays = kIsWeb
@@ -169,6 +172,9 @@ class UserProfileBootstrapService {
             'Jeton App Check absent pour Firestore profil.',
           );
         }
+        appCheckActivationSucceeded = true;
+        appCheckActivationError = null;
+        appCheckActivationStackTrace = null;
         return;
       } catch (error, stackTrace) {
         lastError = error;
@@ -180,39 +186,6 @@ class UserProfileBootstrapService {
     }
 
     throw _normalizeBootstrapError(lastError, lastStackTrace);
-  }
-
-  static Future<void> _retryWebAppCheckActivation() async {
-    final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
-    if (siteKey.isEmpty) {
-      throw UserProfileBootstrapException(
-        'app-check-unavailable',
-        'App Check Web indisponible pour la synchronisation du profil.',
-        cause: appCheckActivationError ??
-            StateError('APPCHECK_RECAPTCHA_SITE_KEY absente.'),
-        stackTrace: appCheckActivationStackTrace,
-      );
-    }
-
-    try {
-      debugPrint('[ProfileFirestore] Retrying App Check web activation');
-      await activateAppCheckWeb(siteKey);
-      appCheckActivationAttempted = true;
-      appCheckActivationSucceeded = true;
-      appCheckActivationError = null;
-      appCheckActivationStackTrace = null;
-    } catch (error, stackTrace) {
-      appCheckActivationAttempted = true;
-      appCheckActivationSucceeded = false;
-      appCheckActivationError = error;
-      appCheckActivationStackTrace = stackTrace;
-      throw UserProfileBootstrapException(
-        'app-check-unavailable',
-        'App Check Web indisponible pour la synchronisation du profil.',
-        cause: error,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   static UserProfileBootstrapException _normalizeBootstrapError(

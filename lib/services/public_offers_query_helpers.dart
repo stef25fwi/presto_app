@@ -160,12 +160,10 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
   if (!kIsWeb || appCheckActivationSucceeded) return;
 
   // Public listings/offers are allowed by Firestore rules without App Check.
-  // Try to refresh App Check for protected follow-up calls, but never block
-  // public browsing when reCAPTCHA is unavailable on a browser/domain.
-  final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
-  appCheckActivationAttempted = true;
-  if (siteKey.isEmpty) {
-    final error = StateError('APPCHECK_RECAPTCHA_SITE_KEY absente.');
+  // App Check must be activated once from bootstrapAppCheck(); this helper only
+  // asks for a token and never re-runs activate().
+  if (!appCheckActivationAttempted) {
+    final error = StateError('App Check non initialise par le bootstrap.');
     appCheckActivationSucceeded = false;
     appCheckActivationError = error;
     appCheckActivationStackTrace = StackTrace.current;
@@ -176,7 +174,6 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
   }
 
   try {
-    await activateAppCheckWeb(siteKey);
     final token = await FirebaseAppCheck.instance
         .getToken(true)
         .timeout(const Duration(seconds: 8));
