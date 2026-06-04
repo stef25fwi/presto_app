@@ -667,8 +667,32 @@ class PrestoApp extends StatefulWidget {
   State<PrestoApp> createState() => _PrestoAppState();
 }
 
-class _PrestoAppState extends State<PrestoApp> {
+class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
   bool _navigatorReadySignaled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    unawaited(
+      refreshAppCheckToken(reason: 'app-resumed').catchError((Object error) {
+        if (kDebugMode) {
+          debugPrint('[AppCheck] resume refresh skipped: $error');
+        }
+      }),
+    );
+  }
 
   Widget _buildInitialHome() {
     if (kIsWeb) {

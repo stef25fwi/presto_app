@@ -5,11 +5,60 @@ import 'package:flutter/foundation.dart';
 import '../config/app_check_state.dart';
 import '../firebase_init.dart';
 
+Future<void>? _appCheckTokenRefreshInFlight;
+
+Future<void> refreshAppCheckToken({
+  required String reason,
+  bool forceRefresh = false,
+}) {
+  final inFlight = _appCheckTokenRefreshInFlight;
+  if (inFlight != null) return inFlight;
+
+  final refresh = () async {
+    if (!appCheckActivationAttempted) {
+      throw StateError('app_check_not_activated_for_token_refresh:$reason');
+    }
+
+    try {
+      final token = await FirebaseAppCheck.instance
+          .getToken(forceRefresh)
+          .timeout(const Duration(seconds: 8));
+      if ((token ?? '').trim().isEmpty) {
+        throw StateError('Jeton App Check vide pendant refresh: $reason');
+      }
+      appCheckActivationSucceeded = true;
+      appCheckActivationError = null;
+      appCheckActivationStackTrace = null;
+      appCheckLastTokenRefreshAt = DateTime.now();
+      appCheckLastTokenRefreshError = null;
+      if (kDebugMode) {
+        debugPrint('[AppCheck] token refresh ok reason=$reason');
+      }
+    } catch (error, stackTrace) {
+      appCheckActivationSucceeded = false;
+      appCheckActivationError = error;
+      appCheckActivationStackTrace = stackTrace;
+      appCheckLastTokenRefreshError = error;
+      if (kDebugMode) {
+        debugPrint('[AppCheck] token refresh failed reason=$reason error=$error');
+      }
+      rethrow;
+    } finally {
+      _appCheckTokenRefreshInFlight = null;
+    }
+  }();
+
+  _appCheckTokenRefreshInFlight = refresh;
+  return refresh;
+}
+
 Future<void> bootstrapAppCheck() async {
   appCheckActivationAttempted = false;
   appCheckActivationSucceeded = false;
   appCheckActivationError = null;
   appCheckActivationStackTrace = null;
+  appCheckLastTokenRefreshAt = null;
+  appCheckLastTokenRefreshError = null;
 
   if (kDebugMode) {
     debugPrint(
@@ -51,13 +100,8 @@ Future<void> bootstrapAppCheck() async {
       }
       appCheckActivationAttempted = true;
       await activateAppCheckWeb(siteKey);
-      final token = await FirebaseAppCheck.instance
-          .getToken(true)
-          .timeout(const Duration(seconds: 8));
-      if ((token ?? '').trim().isEmpty) {
-        throw StateError('Jeton App Check vide apres activation');
-      }
-      appCheckActivationSucceeded = true;
+      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+      await refreshAppCheckToken(reason: 'bootstrap-web', forceRefresh: true);
       return;
     }
 
@@ -67,13 +111,8 @@ Future<void> bootstrapAppCheck() async {
           kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
       appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
     );
-    final token = await FirebaseAppCheck.instance
-        .getToken(true)
-        .timeout(const Duration(seconds: 8));
-    if ((token ?? '').trim().isEmpty) {
-      throw StateError('Jeton App Check vide apres activation');
-    }
-    appCheckActivationSucceeded = true;
+    await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+    await refreshAppCheckToken(reason: 'bootstrap-native', forceRefresh: true);
   } catch (error, stackTrace) {
     appCheckActivationAttempted = true;
     appCheckActivationSucceeded = false;

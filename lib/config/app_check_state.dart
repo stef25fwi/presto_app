@@ -7,6 +7,8 @@ bool appCheckActivationAttempted = false;
 bool appCheckActivationSucceeded = false;
 Object? appCheckActivationError;
 StackTrace? appCheckActivationStackTrace;
+DateTime? appCheckLastTokenRefreshAt;
+Object? appCheckLastTokenRefreshError;
 
 const String kAppCheckWebRecaptchaSiteKey = String.fromEnvironment(
   'APPCHECK_RECAPTCHA_SITE_KEY',
