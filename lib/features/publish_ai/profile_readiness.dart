@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../app_core.dart';
+import '../../services/user_profile_bootstrap_service.dart';
 
 /// Reasons a user is not allowed to start the AI publishing flow.
 enum ProfileReadinessGate {
@@ -31,6 +32,7 @@ class ProfileReadinessResult {
     this.missingFields = const <String>[],
     this.user,
     this.errorDetail,
+    this.messageOverride,
   });
 
   /// All requirements are satisfied — the caller may start the AI flow.
@@ -43,6 +45,7 @@ class ProfileReadinessResult {
     List<String> missingFields = const <String>[],
     User? user,
     Object? errorDetail,
+    String? messageOverride,
   }) =>
       ProfileReadinessResult._(
         isReady: false,
@@ -50,6 +53,7 @@ class ProfileReadinessResult {
         missingFields: missingFields,
         user: user,
         errorDetail: errorDetail?.toString(),
+        messageOverride: messageOverride,
       );
 
   final bool isReady;
@@ -57,9 +61,12 @@ class ProfileReadinessResult {
   final List<String> missingFields;
   final User? user;
   final String? errorDetail;
+  final String? messageOverride;
 
   /// Short, user-facing message for the blocked case.
   String describe() {
+    final override = messageOverride?.trim();
+    if (override != null && override.isNotEmpty) return override;
     switch (gate) {
       case ProfileReadinessGate.signedOut:
         return "Connecte-toi pour utiliser la dictée IA.";
@@ -146,10 +153,31 @@ class ProfileReadinessChecker {
   /// fallback so the AI button stays responsive even when the network is
   /// flaky. Never throws — failures are mapped to [ProfileReadinessGate].
   Future<ProfileReadinessResult> check() async {
-    final user = _auth.currentUser;
+    var user = _auth.currentUser;
     if (user == null) {
       return ProfileReadinessResult.blocked(
         gate: ProfileReadinessGate.signedOut,
+      );
+    }
+
+    try {
+      user = await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+            user: user,
+            forceRefreshAppCheckToken: true,
+          ) ??
+          _auth.currentUser ??
+          user;
+    } catch (error) {
+      debugPrint(
+        '[ProfileReadiness] profile access preparation failed '
+        'uid=${user?.uid ?? 'null'} err=$error',
+      );
+      return ProfileReadinessResult.blocked(
+        gate: ProfileReadinessGate.readFailed,
+        user: user,
+        errorDetail: error,
+        messageOverride:
+            UserProfileBootstrapService.userFacingProfileSyncMessage(error),
       );
     }
 

@@ -1269,6 +1269,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _ConversationThreadAction action) async {
     try {
       final ready = await _ensureMessagingAccess(interactive: true);
+      if (!mounted) return;
       if (!ready) return;
       switch (action) {
         case _ConversationThreadAction.archive:
