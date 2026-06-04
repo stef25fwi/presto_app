@@ -149,9 +149,17 @@ class UserProfileBootstrapService {
       );
     }
 
+    // reCAPTCHA Enterprise (web) can take 2–5 s on first call. Three attempts
+    // with exponential spacing let the token arrive without blocking the UI.
+    // Native providers (Play Integrity / App Attest) are faster; one retry at
+    // 1 s covers transient first-call delays.
     final retryDelays = kIsWeb
-        ? const <Duration>[Duration.zero, Duration(milliseconds: 1200)]
-        : const <Duration>[Duration.zero];
+        ? const <Duration>[
+            Duration.zero,
+            Duration(milliseconds: 2000),
+            Duration(milliseconds: 4500),
+          ]
+        : const <Duration>[Duration.zero, Duration(seconds: 1)];
 
     Object? lastError;
     StackTrace? lastStackTrace;
@@ -291,7 +299,13 @@ class UserProfileBootstrapService {
         if (attempt == _maxAttempts - 1) {
           rethrow;
         }
-        final backoff = _baseBackoff * math.pow(2, attempt).toInt();
+        // App Check failures (reCAPTCHA still warming up) need a longer pause
+        // so the background token fetch can complete before the next attempt.
+        final isAppCheck = error is UserProfileBootstrapException &&
+            error.isAppCheckFailure;
+        final backoff = isAppCheck
+            ? Duration(seconds: 3 * (attempt + 1))
+            : _baseBackoff * math.pow(2, attempt).toInt();
         debugPrint(
           '[AuthBootstrap] retry ${attempt + 1}/$_maxAttempts after $backoff '
           'due to $error',

@@ -23,7 +23,7 @@ Future<void> refreshAppCheckToken({
     try {
       final token = await FirebaseAppCheck.instance
           .getToken(forceRefresh)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
       if ((token ?? '').trim().isEmpty) {
         throw StateError('Jeton App Check vide pendant refresh: $reason');
       }
