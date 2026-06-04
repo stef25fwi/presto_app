@@ -13,8 +13,10 @@ import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
+import '../../services/admin_access_resolver.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/firestore_date_parser.dart';
+import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import '../../widgets/offer_network_image.dart';
 
@@ -50,6 +52,7 @@ class ConversationThreadPage extends StatefulWidget {
 
 class _ConversationThreadPageState extends State<ConversationThreadPage> {
   static const int _messagePageSize = 50;
+  final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -82,6 +85,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isOtherTyping = false;
   bool _showNewMessagesButton = false;
   bool _isUploadingAttachment = false;
+  bool _canLookupOtherParticipantProfile = false;
   String? _newestLiveMessageId;
   bool _isBlocked = false;
   bool _isBlockedForCurrentUser = false;
@@ -127,6 +131,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _controller.addListener(_handleDraftChanged);
     _messageStream = _buildLiveStream();
     _bindConversationListener();
+    unawaited(_warmMessagingAccess());
+    unawaited(_resolveParticipantProfileLookupAccess());
   }
 
   @override
@@ -148,6 +154,88 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _hasDraftText = nextHasDraftText;
     });
     _scheduleTypingUpdate(nextHasDraftText);
+  }
+
+  Future<bool> _ensureMessagingAccess({
+    required bool interactive,
+    bool forceRefreshToken = false,
+    bool forceRefreshAppCheckToken = false,
+  }) async {
+    try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: FirebaseAuth.instance.currentUser,
+        forceRefreshToken: forceRefreshToken,
+        forceRefreshAppCheckToken: forceRefreshAppCheckToken,
+      );
+      return true;
+    } catch (error) {
+      debugPrint(
+        '[ConversationThread] messaging access preparation failed '
+        'conversationId=${widget.conversationId} error=$error',
+      );
+      if (interactive && mounted) {
+        showErrorSnackBar(
+          context,
+          UserProfileBootstrapService.userFacingProfileSyncMessage(error),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<void> _warmMessagingAccess() async {
+    final ready = await _ensureMessagingAccess(
+      interactive: false,
+      forceRefreshAppCheckToken: true,
+    );
+    if (!ready || !mounted) return;
+
+    _bindConversationListener();
+    setState(() {
+      _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
+    });
+  }
+
+  Future<void> _resolveParticipantProfileLookupAccess() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      final accessState = await _adminAccessResolver.resolveAdminAccess(
+        returnOnLocalAdminEvidence: true,
+      );
+      final canLookup = accessState.hasConfirmedAdminAccess;
+      if (!mounted) return;
+
+      if (_canLookupOtherParticipantProfile == canLookup) {
+        if (canLookup && _otherParticipantId.trim().isNotEmpty) {
+          _bindPresenceListener(_otherParticipantId);
+        }
+        return;
+      }
+
+      setState(() {
+        _canLookupOtherParticipantProfile = canLookup;
+        if (!canLookup) {
+          _otherPresenceStatus = '';
+          _otherLastSeenAt = null;
+          _otherParticipantPhotoSource = '';
+          _otherParticipantPhotoUrl = '';
+        }
+      });
+
+      if (canLookup && _otherParticipantId.trim().isNotEmpty) {
+        _bindPresenceListener(_otherParticipantId);
+      } else {
+        await _presenceSubscription?.cancel();
+        _presenceSubscription = null;
+      }
+    } catch (error) {
+      debugPrint(
+        '[ConversationThread] participant profile lookup access check failed '
+        'uid=${currentUser.uid} error=$error',
+      );
+    }
   }
 
   bool _isPermissionDenied(Object? error) {
@@ -327,6 +415,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   void _bindPresenceListener(String participantId) {
+    if (!_canLookupOtherParticipantProfile) {
+      _presenceSubscription?.cancel();
+      _presenceSubscription = null;
+      return;
+    }
     if (participantId.trim().isEmpty || participantId == _otherParticipantId) {
       return;
     }
@@ -765,6 +858,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (_isMarkingRead) return;
     _isMarkingRead = true;
     try {
+      final ready = await _ensureMessagingAccess(interactive: false);
+      if (!ready) return;
       await ConversationService.markAsRead(
         conversationId: widget.conversationId,
       );
@@ -794,6 +889,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     List<QueryDocumentSnapshot<Map<String, dynamic>>> liveDocs,
   ) async {
     if (_isLoadingMoreMessages) return;
+    final ready = await _ensureMessagingAccess(interactive: true);
+    if (!ready) return;
 
     // Cursor : oldest doc in older pages already loaded, or oldest live doc.
     final cursor = _olderMessageDocs.isNotEmpty
@@ -894,6 +991,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _scrollToLatestMessage(force: true);
 
     try {
+      final ready = await _ensureMessagingAccess(interactive: true);
+      if (!ready) {
+        _markOptimisticMessageFailed(optimisticMessage.id);
+        if (_controller.text.trim().isEmpty) {
+          _controller.value = TextEditingValue(
+            text: rawDraft,
+            selection: TextSelection.collapsed(offset: rawDraft.length),
+          );
+        }
+        return;
+      }
       await ConversationService.sendMessage(
         conversationId: widget.conversationId,
         text: text,
@@ -1005,6 +1113,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     });
 
     try {
+      final ready = await _ensureMessagingAccess(interactive: true);
+      if (!ready) {
+        _markOptimisticMessageFailed(message.id);
+        return;
+      }
       await ConversationService.sendMessage(
         conversationId: widget.conversationId,
         text: message.text,
@@ -1035,6 +1148,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _handleConversationAction(
       _ConversationThreadAction action) async {
     try {
+      final ready = await _ensureMessagingAccess(interactive: true);
+      if (!ready) return;
       switch (action) {
         case _ConversationThreadAction.archive:
           await ConversationService.archiveConversation(
@@ -1403,6 +1518,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     setState(() => _isUploadingAttachment = true);
 
     try {
+      final ready = await _ensureMessagingAccess(interactive: true);
+      if (!ready) return;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final path = 'messageAttachments/$uid/${widget.conversationId}/'
           '${timestamp}_${_safeAttachmentName(name, 'piece-jointe')}';

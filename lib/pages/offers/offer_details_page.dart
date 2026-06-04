@@ -16,6 +16,7 @@ import 'package:presto_app/models/marketplace_report.dart';
 import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
+import 'package:presto_app/services/user_profile_bootstrap_service.dart';
 import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
 
@@ -601,6 +602,31 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         : (authUser?.email ?? 'Utilisateur');
     final initialDraftText =
         'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
+
+    try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: authUser,
+        forceRefreshAppCheckToken: true,
+      );
+    } catch (error) {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'blocked-app-check-before-open',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'error': error,
+        },
+      );
+      if (!context.mounted) return;
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            UserProfileBootstrapService.userFacingProfileSyncMessage(error),
+          ),
+        ),
+      );
+      return;
+    }
 
     final resolvedConversationId = await ConversationService.ensureConversation(
       offerId: data.offerId,

@@ -110,14 +110,14 @@ test("sendConversationMessage refuses non participant access", () => {
   );
 });
 
-test("sanitizeConversationAttachments accepts current conversation storage path", () => {
+test("sanitizeConversationAttachments accepts processed webp image for current conversation", () => {
   const attachments = sanitizeConversationAttachments([
     {
       type: "image",
-      name: "photo.jpg",
-      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fphoto.jpg",
-      storagePath: "messageAttachments/buyer_a/conv_1/photo.jpg",
-      mimeType: "image/jpeg",
+      name: "photo.webp",
+      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fprocessed_photo.webp",
+      storagePath: "messageAttachments/buyer_a/conv_1/processed_photo.webp",
+      mimeType: "image/webp",
       sizeBytes: 1200,
     },
   ], "buyer_a", "conv_1");
@@ -126,6 +126,27 @@ test("sanitizeConversationAttachments accepts current conversation storage path"
   const firstAttachment = attachments[0];
   assert.ok(firstAttachment);
   assert.equal(firstAttachment.type, "image");
+});
+
+test("sanitizeConversationAttachments rejects raw non-webp image uploads", () => {
+  assert.throws(
+    () => sanitizeConversationAttachments([
+      {
+        type: "image",
+        name: "photo.jpg",
+        url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fphoto.jpg",
+        storagePath: "messageAttachments/buyer_a/conv_1/photo.jpg",
+        mimeType: "image/jpeg",
+        sizeBytes: 1200,
+      },
+    ], "buyer_a", "conv_1"),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpsError);
+      assert.equal(error.code, "invalid-argument");
+      assert.match(error.message, /processed as WebP/i);
+      return true;
+    },
+  );
 });
 
 test("sanitizeConversationAttachments rejects another conversation storage path", () => {
