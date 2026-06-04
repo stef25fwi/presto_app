@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase_init.dart';
 import '../utils/runtime_action_logger.dart';
@@ -23,7 +24,10 @@ Future<void> prestoFirebaseMessagingBackgroundHandler(
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   // Must be injected at build time via --dart-define=FCM_WEB_VAPID_KEY=<key>
-  static const String _webVapidKey = String.fromEnvironment('FCM_WEB_VAPID_KEY');
+  static const String _webVapidKey =
+      String.fromEnvironment('FCM_WEB_VAPID_KEY');
+  static const String _messagingPromptDismissedAtKeyPrefix =
+      'notifications.messaging_prompt.dismissed_at';
   static const AndroidNotificationChannel _messagesChannel =
       AndroidNotificationChannel(
     'ilipresto_messages',
@@ -80,16 +84,7 @@ class NotificationService {
       return;
     }
 
-    // Demander les permissions
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    final settings = await _messaging.getNotificationSettings();
 
     debugPrint(
         '[Notifications] Permission status: ${settings.authorizationStatus}');
@@ -130,11 +125,7 @@ class NotificationService {
     _authSubscription ??=
         FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (user == null) return;
-      final token = await _fetchMessagingToken();
-      if (token != null) {
-        _lastRegisteredToken = token;
-        await _registerPushToken(token);
-      }
+      await syncPushRegistrationIfAuthorized();
     });
 
     // Récupérer le message initial (si l'app a été lancée depuis une notification)
@@ -144,22 +135,116 @@ class NotificationService {
     }
 
     // Récupérer et afficher le token FCM
-    final token = await _fetchMessagingToken();
-    debugPrint('[Notifications] FCM Token: $token');
-    if (token != null) {
-      _lastRegisteredToken = token;
-      await _registerPushToken(token);
-    }
+    await syncPushRegistrationIfAuthorized();
 
     // S'abonner aux mises à jour du token
     _messaging.onTokenRefresh.listen((newToken) async {
       debugPrint('[Notifications] Nouveau token FCM: $newToken');
       _lastRegisteredToken = newToken;
-      await _registerPushToken(newToken);
+      if (await hasPushPermission()) {
+        await _registerPushToken(newToken);
+      }
     });
 
     _initialized = true;
     _schedulePendingRouteFlush();
+  }
+
+  bool _isAuthorizedStatus(AuthorizationStatus status) {
+    return status == AuthorizationStatus.authorized ||
+        status == AuthorizationStatus.provisional;
+  }
+
+  Future<NotificationSettings> getPermissionSettings() {
+    return _messaging.getNotificationSettings();
+  }
+
+  Future<bool> hasPushPermission() async {
+    final settings = await getPermissionSettings();
+    return _isAuthorizedStatus(settings.authorizationStatus);
+  }
+
+  Future<bool> requestPushPermission() async {
+    final settings = await _messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    final granted = _isAuthorizedStatus(settings.authorizationStatus);
+    debugPrint(
+      '[Notifications] request permission status=${settings.authorizationStatus}',
+    );
+    if (granted) {
+      return await syncPushRegistrationIfAuthorized();
+    }
+    return granted;
+  }
+
+  Future<bool> syncPushRegistrationIfAuthorized() async {
+    if (!await hasPushPermission()) return false;
+
+    final token = await _fetchMessagingToken();
+    debugPrint('[Notifications] FCM Token: $token');
+    if (token == null) return false;
+
+    _lastRegisteredToken = token;
+    await _registerPushToken(token);
+    return true;
+  }
+
+  String pushActivationFailureMessage() {
+    if (kIsWeb && _webVapidKey.isEmpty) {
+      return 'Les notifications web ne peuvent pas être activées tant que FCM_WEB_VAPID_KEY n’est pas configurée au build.';
+    }
+    return 'La permission a été accordée, mais le canal push n’a pas pu être finalisé. Réessayez ou vérifiez la configuration FCM.';
+  }
+
+  Future<bool> shouldPromptForMessagingPermission(String userId) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) return false;
+
+    final settings = await getPermissionSettings();
+    if (_isAuthorizedStatus(settings.authorizationStatus)) {
+      return false;
+    }
+    if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      return false;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final dismissedAt =
+        prefs.getInt(_messagingPromptDismissedAtKey(normalizedUserId)) ?? 0;
+    if (dismissedAt <= 0) return true;
+
+    final elapsed = DateTime.now().difference(
+      DateTime.fromMillisecondsSinceEpoch(dismissedAt),
+    );
+    return elapsed >= const Duration(days: 3);
+  }
+
+  Future<void> markMessagingPermissionPromptDismissed(String userId) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      _messagingPromptDismissedAtKey(normalizedUserId),
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  Future<void> clearMessagingPermissionPromptDismissed(String userId) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_messagingPromptDismissedAtKey(normalizedUserId));
+  }
+
+  String _messagingPromptDismissedAtKey(String userId) {
+    return '$_messagingPromptDismissedAtKeyPrefix.$userId';
   }
 
   void markNavigatorReady() {

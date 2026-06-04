@@ -22,6 +22,7 @@ import 'legal_info_page.dart';
 import '../services/app_route_parser.dart';
 import '../services/hero_slides_service.dart';
 import '../services/inbox_counts.dart';
+import '../services/notification_service.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../utils/offer_helpers.dart';
 import '../utils/runtime_action_logger.dart';
@@ -140,6 +141,7 @@ class _HomePageState extends State<HomePage>
   Timer? _presenceTimer;
   DateTime? _lastPresenceUpdate;
   DateTime? _sessionStartTime;
+  bool _isMessagingPermissionPromptVisible = false;
   // Bottom bar désormais fixe (ne se masque plus au scroll/clavier)
 
   late final AnimationController _categoryController;
@@ -296,6 +298,10 @@ class _HomePageState extends State<HomePage>
     */
 
     setState(() => _selectedIndex = index);
+
+    if (index == 3) {
+      unawaited(_maybePromptMessagingNotifications());
+    }
   }
 
   @override
@@ -348,6 +354,13 @@ class _HomePageState extends State<HomePage>
     _listenDynamicKeywords();
 
     unawaited(_refreshLatestOffers());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_selectedIndex == 3) {
+        unawaited(_maybePromptMessagingNotifications());
+      }
+    });
   }
 
   Future<void> _touchPresence({String? status}) async {
@@ -395,6 +408,7 @@ class _HomePageState extends State<HomePage>
       case AppLifecycleState.resumed:
         // ✅ App reprend → online
         _touchPresence(status: 'online');
+        unawaited(NotificationService().syncPushRegistrationIfAuthorized());
         // Refetch only if the cached list is stale (>5 min) to avoid unnecessary
         // network round-trips when the user toggles between apps.
         final last = _lastLatestOffersLoadedAt;
@@ -462,6 +476,73 @@ class _HomePageState extends State<HomePage>
       if (!mounted) return;
       unawaited(loadKeywords());
     });
+  }
+
+  Future<void> _maybePromptMessagingNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || _isMessagingPermissionPromptVisible || !mounted) {
+      return;
+    }
+
+    final notificationService = NotificationService();
+    final shouldPrompt =
+        await notificationService.shouldPromptForMessagingPermission(user.uid);
+    if (!shouldPrompt || !mounted) return;
+
+    _isMessagingPermissionPromptVisible = true;
+    final shouldEnable = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final overlayTheme = dialogContext.prestoOverlayTheme;
+        return AlertDialog(
+          backgroundColor: overlayTheme.surfaceColor,
+          surfaceTintColor: overlayTheme.surfaceTintColor,
+          shape: overlayTheme.dialogShape,
+          title: const Text('Recevoir les nouveaux messages'),
+          content: const Text(
+            'Activez les notifications pour être averti immédiatement quand un nouveau message arrive, même si l’application est fermée.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Plus tard'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Activer les notifications'),
+            ),
+          ],
+        );
+      },
+    );
+
+    _isMessagingPermissionPromptVisible = false;
+    if (!mounted) return;
+
+    if (shouldEnable != true) {
+      await notificationService
+          .markMessagingPermissionPromptDismissed(user.uid);
+      return;
+    }
+
+    final granted = await notificationService.requestPushPermission();
+    if (!mounted) return;
+
+    if (granted) {
+      await notificationService
+          .clearMessagingPermissionPromptDismissed(user.uid);
+      showSuccessSnackBar(
+        context,
+        'Notifications activées: vous recevrez les nouveaux messages même quand l’application est fermée.',
+      );
+      return;
+    }
+
+    await notificationService.markMessagingPermissionPromptDismissed(user.uid);
+    showErrorSnackBar(
+      context,
+      notificationService.pushActivationFailureMessage(),
+    );
   }
 
   @override
@@ -1894,7 +1975,7 @@ class _PulsingDotState extends State<_PulsingDot>
 }
 
 class _PulseWaveLayer extends StatefulWidget {
-  final double width;
+ et appcheckidth;
   final int delay;
 
   const _PulseWaveLayer({

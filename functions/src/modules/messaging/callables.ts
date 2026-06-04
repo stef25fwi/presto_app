@@ -395,6 +395,19 @@ export function sanitizeConversationAttachments(
     if (type === "image" && !mimeType.startsWith("image/")) {
       throw new HttpsError("invalid-argument", `attachment #${index + 1} must be an image`);
     }
+    if (
+      type === "image" &&
+      (
+        mimeType !== "image/webp" ||
+        !storagePath.toLowerCase().endsWith(".webp") ||
+        !name.toLowerCase().endsWith(".webp")
+      )
+    ) {
+      throw new HttpsError(
+        "invalid-argument",
+        `attachment #${index + 1} image must be processed as WebP before sending`,
+      );
+    }
     if (type === "document" && !isAllowedDocumentAttachmentMimeType(mimeType)) {
       throw new HttpsError("invalid-argument", `attachment #${index + 1} document type is invalid`);
     }

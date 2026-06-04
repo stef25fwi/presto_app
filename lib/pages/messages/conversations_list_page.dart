@@ -12,6 +12,7 @@ import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../core/firebase_contract.dart';
 import '../../models/conversation_summary.dart';
+import '../../config/app_check_state.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
@@ -255,6 +256,32 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         text.contains('permission denied');
   }
 
+  Duration _permissionDeniedRetryDelay(int attempt) {
+    switch (attempt) {
+      case 1:
+        return const Duration(milliseconds: 450);
+      case 2:
+        return const Duration(milliseconds: 900);
+      case 3:
+        return const Duration(milliseconds: 1400);
+      default:
+        return const Duration(milliseconds: 1800);
+    }
+  }
+
+  String _conversationAccessErrorMessage(Object? error) {
+    if (UserProfileBootstrapService.isAppCheckFailure(error) ||
+        (kIsWeb &&
+            appCheckActivationAttempted &&
+            !appCheckActivationSucceeded)) {
+      return 'La verification de securite web est indisponible pour la messagerie. Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et rechargez la page.';
+    }
+    if (_isPermissionDenied(error)) {
+      return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
+    }
+    return 'Erreur de chargement des conversations. Consultez les logs de debug.';
+  }
+
   String _conversationTitle(Map<String, dynamic> data, String userId) {
     final participantNames = _conversationValue(
       data,
@@ -376,7 +403,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final subscriptions =
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
-    var didRetryAfterPermissionDenied = false;
+    var permissionDeniedRetryCount = 0;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -477,12 +504,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
 
-        if (_isPermissionDenied(error) && !didRetryAfterPermissionDenied) {
-          didRetryAfterPermissionDenied = true;
+        if (_isPermissionDenied(error) && permissionDeniedRetryCount < 3) {
+          permissionDeniedRetryCount += 1;
           unawaited(() async {
+            final delay =
+                _permissionDeniedRetryDelay(permissionDeniedRetryCount);
             await cancelSubscriptions();
             snapshotsByField.clear();
             errorsByField.clear();
+            if (delay > Duration.zero) {
+              await Future<void>.delayed(delay);
+            }
             await startSubscriptions(forceRefreshTokens: true);
           }());
           return;
@@ -914,39 +946,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (_initialConversationResolveAttempts < 8 && mounted) {
         _initialConversationRetryTimer?.cancel();
         _initialConversationRetryTimer = Timer(
-          const Duration(milliseconds: 350),
-          () {
-            if (!mounted) return;
-            unawaited(
-              _resolveInitialConversationById(
-                context,
-                userId: userId,
-                conversationId: conversationId,
-              ),
-            );
-          },
-        );
-        return;
-      }
-
-      _didHandleInitialConversation = true;
-      if (!context.mounted) return;
-      showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
-    } on FirebaseException catch (error) {
-      if (kDebugMode) {
-        debugPrint(
-          '[MessagesList] initial conversation resolve failed '
-          'id=$conversationId attempt=$_initialConversationResolveAttempts '
-          'code=${error.code} message=${error.message}',
-        );
-      }
-
-      if (_isPermissionDenied(error) &&
-          _initialConversationResolveAttempts < 3 &&
-          mounted) {
-        _initialConversationRetryTimer?.cancel();
-        _initialConversationRetryTimer = Timer(
-          const Duration(milliseconds: 450),
+          _permissionDeniedRetryDelay(_initialConversationResolveAttempts),
           () {
             if (!mounted) return;
             unawaited(
@@ -965,10 +965,40 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (!context.mounted) return;
       showErrorSnackBar(
         context,
-        _isPermissionDenied(error)
-            ? 'Acces refuse a cette conversation. Verifiez les regles Firestore et les participants enregistres.'
-            : 'Conversation introuvable ou inaccessible.',
+        _conversationAccessErrorMessage(null),
       );
+    } on FirebaseException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          '[MessagesList] initial conversation resolve failed '
+          'id=$conversationId attempt=$_initialConversationResolveAttempts '
+          'code=${error.code} message=${error.message}',
+        );
+      }
+
+      if (_isPermissionDenied(error) &&
+          _initialConversationResolveAttempts < 6 &&
+          mounted) {
+        _initialConversationRetryTimer?.cancel();
+        _initialConversationRetryTimer = Timer(
+          _permissionDeniedRetryDelay(_initialConversationResolveAttempts),
+          () {
+            if (!mounted) return;
+            unawaited(
+              _resolveInitialConversationById(
+                context,
+                userId: userId,
+                conversationId: conversationId,
+              ),
+            );
+          },
+        );
+        return;
+      }
+
+      _didHandleInitialConversation = true;
+      if (!context.mounted) return;
+      showErrorSnackBar(context, _conversationAccessErrorMessage(error));
     } catch (error) {
       if (kDebugMode) {
         debugPrint(
@@ -980,7 +1010,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
       _didHandleInitialConversation = true;
       if (!context.mounted) return;
-      showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
+      showErrorSnackBar(context, _conversationAccessErrorMessage(error));
     } finally {
       _isResolvingInitialConversation = false;
     }
@@ -1487,9 +1517,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         if (filteredConversations.isEmpty) {
                           final message = errorsByField.isNotEmpty &&
                                   docs.isEmpty
-                              ? (_isPermissionDenied(errorsByField.values.first)
-                                  ? 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.'
-                                  : 'Erreur de chargement des conversations. Consultez les logs de debug.')
+                              ? _conversationAccessErrorMessage(
+                                  errorsByField.values.first,
+                                )
                               : query.isNotEmpty
                                   ? 'Aucune conversation ne correspond a votre recherche.'
                                   : _activeFilter ==
@@ -1680,6 +1710,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                       title: title,
                                                       userId:
                                                           otherParticipantId,
+                                                      enableUserLookup:
+                                                          _isAdminViewer,
                                                       fallbackColor:
                                                           _avatarColorForKey(
                                                         otherParticipantId
@@ -2008,19 +2040,21 @@ enum _ConversationMenuAction { archive, unarchive, block, unblock, delete }
 class _ConversationAvatar extends StatelessWidget {
   final String title;
   final String userId;
+  final bool enableUserLookup;
   final Color fallbackColor;
   final int unreadCount;
 
   const _ConversationAvatar({
     required this.title,
     required this.userId,
+    required this.enableUserLookup,
     required this.fallbackColor,
     required this.unreadCount,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (userId.trim().isEmpty) {
+    if (userId.trim().isEmpty || !enableUserLookup) {
       return _buildAvatar(isOnline: false, photoUrl: '');
     }
 
