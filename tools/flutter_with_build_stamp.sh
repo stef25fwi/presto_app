@@ -117,6 +117,13 @@ if [[ ${#flutter_args[@]} -eq 0 ]]; then
   flutter_args=(build web --release)
 fi
 
+is_web_command=false
+if [[ " ${flutter_args[*]} " == *" build web "* ||
+      " ${flutter_args[*]} " == *" run -d chrome "* ||
+      " ${flutter_args[*]} " == *" run -d web-server "* ]]; then
+  is_web_command=true
+fi
+
 # Les tâches VS Code n'héritent pas toujours des exports ajoutés dans ~/.bashrc.
 # Si une clé manque, on tente de la relire depuis un shell interactif pour
 # éviter de produire un bundle web sans App Check.
@@ -153,13 +160,30 @@ if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" &&
   exit 3
 fi
 
-# Propage les secrets de build s'ils sont définis dans l'environnement.
-# Sans ça, un build web local active aucun App Check et Firestore (en mode
-# enforce) rejette toutes les lectures publiques avec PERMISSION_DENIED.
+if [[ "$is_web_command" == "true" && -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
+  for secret_var in \
+    APPCHECK_RECAPTCHA_SECRET_KEY \
+    RECAPTCHA_SECRET_KEY \
+    RECAPTCHA_ENTERPRISE_SECRET_KEY \
+    GOOGLE_RECAPTCHA_SECRET_KEY \
+    MARKETPLACE_RECAPTCHA_SECRET_KEY; do
+    if [[ -n "${!secret_var:-}" && "$APPCHECK_RECAPTCHA_SITE_KEY" == "${!secret_var}" ]]; then
+      echo "[flutter_with_build_stamp] ERROR: APPCHECK_RECAPTCHA_SITE_KEY matches $secret_var." >&2
+      echo "[flutter_with_build_stamp] Web builds must receive only the public reCAPTCHA site key, never a secret key." >&2
+      exit 4
+    fi
+  done
+fi
+
+# Propage uniquement les valeurs publiques necessaires au bundle Flutter Web.
+# Sans la site key App Check, Firestore (en mode enforce) rejette toutes les
+# lectures publiques avec PERMISSION_DENIED.
 # Conventions :
-#   - APPCHECK_RECAPTCHA_SITE_KEY      : reCAPTCHA Enterprise pour App Check Web
-#   - RECAPTCHA_ENTERPRISE_SITE_KEY    : même site key consommée côté Functions
-#   - FCM_WEB_VAPID_KEY                : VAPID key pour notifications web
+#   - APPCHECK_RECAPTCHA_SITE_KEY      : site key reCAPTCHA Enterprise publique
+#   - RECAPTCHA_ENTERPRISE_SITE_KEY    : meme site key publique cote Functions
+#   - FCM_WEB_VAPID_KEY                : VAPID key publique pour notifications web
+# Ne jamais ajouter de secret reCAPTCHA dans extra_defines : tout dart-define web
+# devient lisible dans build/web/main.dart.js.
 extra_defines=()
 if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
   extra_defines+=(--dart-define=APPCHECK_RECAPTCHA_SITE_KEY="$APPCHECK_RECAPTCHA_SITE_KEY")
@@ -176,7 +200,7 @@ echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_SITE_KEY=$appcheck_status" >
 echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_PROVIDER=enterprise" >&2
 
 is_web_release_build=false
-if [[ " ${flutter_args[*]} " == *" build web "* && " ${flutter_args[*]} " == *" --release "* ]]; then
+if [[ "$is_web_command" == "true" && " ${flutter_args[*]} " == *" build web "* && " ${flutter_args[*]} " == *" --release "* ]]; then
   is_web_release_build=true
 fi
 

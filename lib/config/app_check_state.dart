@@ -17,8 +17,11 @@ const String kAppCheckWebRecaptchaSiteKey = String.fromEnvironment(
 
 const String kAppCheckWebRecaptchaProviderLabel = 'enterprise';
 
-/// Active App Check pour le web avec la clé reCAPTCHA Enterprise configurée
-/// dans Firebase Console > App Check > app Web.
+/// Active App Check pour le web avec la site key reCAPTCHA Enterprise publique
+/// configuree dans Firebase Console > App Check > app Web.
+///
+/// Ne jamais fournir de secret key ici : toute valeur injectee par
+/// `--dart-define` dans Flutter Web est lisible dans le bundle frontend.
 ///
 /// La clé de production confirmée (`presto-web-appcheck-prod`) est une clé
 /// reCAPTCHA Enterprise avec `integrationType: SCORE`; Flutter doit donc
