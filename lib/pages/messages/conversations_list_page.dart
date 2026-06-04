@@ -446,6 +446,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
     var permissionDeniedRetryCount = 0;
+    var appCheckPrefixRetryCount = 0;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -506,6 +507,28 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
       } catch (error) {
+        // Retry preflight AppCheck failures: reCAPTCHA may still be warming up
+        // in the background. Allow up to 3 retries with growing delays before
+        // surfacing the error to the UI.
+        if (UserProfileBootstrapService.isAppCheckFailure(error) &&
+            appCheckPrefixRetryCount < 3) {
+          appCheckPrefixRetryCount += 1;
+          final appCheckDelay =
+              Duration(seconds: appCheckPrefixRetryCount * 2);
+          unawaited(() async {
+            if (kDebugMode) {
+              debugPrint(
+                '[MessagesList] appcheck preflight retry '
+                '$appCheckPrefixRetryCount/3 in $appCheckDelay',
+              );
+            }
+            await Future<void>.delayed(appCheckDelay);
+            if (!isCancelled && !controller.isClosed) {
+              await startSubscriptions(forceRefreshTokens: true);
+            }
+          }());
+          return;
+        }
         errorsByField['app_check'] = error;
         emitState();
         return;
