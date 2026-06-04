@@ -16,25 +16,27 @@ class TrustScoreService {
     required String reason,
     bool jobDone = false,
   }) async {
-    final callable = _functions.httpsCallable(
-      'closeOfferWithReason',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
-    await callable.call<dynamic>({
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'closeOfferWithReason',
+      timeout: const Duration(seconds: 30),
+      parameters: <String, dynamic>{
       'offerId': offerId,
       'reason': reason,
       'jobDone': jobDone,
-    });
+      },
+    );
   }
 
   Future<List<EligibleResponderForReview>> getEligibleRespondersForReview({
     required String offerId,
   }) async {
-    final callable = _functions.httpsCallable(
-      'getEligibleRespondersForReview',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'getEligibleRespondersForReview',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{'offerId': offerId},
     );
-    final result = await callable.call<dynamic>({'offerId': offerId});
     final data = trustScoreStringMap(result.data);
     final rawResponders = data['responders'];
     if (rawResponders is! List) return const <EligibleResponderForReview>[];
@@ -54,11 +56,11 @@ class TrustScoreService {
     required String comment,
     required bool confirmationChecked,
   }) async {
-    final callable = _functions.httpsCallable(
-      'submitVerifiedReview',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-    );
-    final result = await callable.call<dynamic>({
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'submitVerifiedReview',
+      timeout: const Duration(seconds: 30),
+      parameters: <String, dynamic>{
       'offerId': offerId,
       'reviewedUserId': reviewedUserId,
       'communicationRating': communicationRating,
@@ -66,16 +68,18 @@ class TrustScoreService {
       'qualityRating': qualityRating,
       'comment': comment.trim().isEmpty ? null : comment.trim(),
       'confirmationChecked': confirmationChecked,
-    });
+      },
+    );
     return SubmitReviewResult.fromMap(trustScoreStringMap(result.data));
   }
 
   Future<TrustScoreProfile> getUserTrustScore({required String userId}) async {
-    final callable = _functions.httpsCallable(
-      'getUserTrustScore',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'getUserTrustScore',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{'userId': userId},
     );
-    final result = await callable.call<dynamic>({'userId': userId});
     return TrustScoreProfile.fromMap(trustScoreStringMap(result.data));
   }
 
@@ -84,29 +88,31 @@ class TrustScoreService {
     required String reason,
     String details = '',
   }) async {
-    final callable = _functions.httpsCallable(
-      'reportReview',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    await callable.call<dynamic>({
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'reportReview',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       'reviewId': reviewId,
       'reason': reason,
       'details': details.trim().isEmpty ? null : details.trim(),
-    });
+      },
+    );
   }
 
   Future<String> replyToReview({
     required String reviewId,
     required String replyText,
   }) async {
-    final callable = _functions.httpsCallable(
-      'replyToReview',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    final result = await callable.call<dynamic>({
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'replyToReview',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       'reviewId': reviewId,
       'replyText': replyText.trim(),
-    });
+      },
+    );
     return trustScoreStringMap(result.data)['status']?.toString() ??
         'pending_moderation';
   }

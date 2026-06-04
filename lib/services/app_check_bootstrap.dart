@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../config/app_check_state.dart';
 import '../firebase_init.dart';
+import 'admin_web_debug_store.dart';
 
 Future<void>? _appCheckTokenRefreshInFlight;
 
@@ -31,6 +32,11 @@ Future<void> refreshAppCheckToken({
       appCheckActivationStackTrace = null;
       appCheckLastTokenRefreshAt = DateTime.now();
       appCheckLastTokenRefreshError = null;
+      AdminWebDebugStore.instance.recordEvent(
+        area: 'appcheck',
+        message: 'token-refresh-ok',
+        detail: 'reason=$reason forceRefresh=$forceRefresh',
+      );
       if (kDebugMode) {
         debugPrint('[AppCheck] token refresh ok reason=$reason');
       }
@@ -39,6 +45,12 @@ Future<void> refreshAppCheckToken({
       appCheckActivationError = error;
       appCheckActivationStackTrace = stackTrace;
       appCheckLastTokenRefreshError = error;
+      AdminWebDebugStore.instance.recordError(
+        'appcheck',
+        error,
+        stackTrace: stackTrace,
+        message: 'token-refresh-failed',
+      );
       if (kDebugMode) {
         debugPrint('[AppCheck] token refresh failed reason=$reason error=$error');
       }
@@ -65,10 +77,17 @@ Future<void> bootstrapAppCheck() async {
       '[AppCheck] initializing platform=${firebaseInitPlatformLabel()}',
     );
   }
+  AdminWebDebugStore.instance.recordEvent(
+    area: 'appcheck',
+    message: 'bootstrap-start',
+    detail: 'platform=${firebaseInitPlatformLabel()}',
+  );
 
   try {
     if (kIsWeb) {
       final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+      final host = currentAppCheckWebHost();
+      final hostClass = appCheckWebHostClass(host);
       if (siteKey.isEmpty) {
         final error = StateError(
           'missing_app_check_recaptcha_site_key',
@@ -77,6 +96,12 @@ Future<void> bootstrapAppCheck() async {
         appCheckActivationSucceeded = false;
         appCheckActivationError = error;
         appCheckActivationStackTrace = StackTrace.current;
+        AdminWebDebugStore.instance.recordError(
+          'appcheck',
+          error,
+          stackTrace: appCheckActivationStackTrace,
+          message: 'missing-site-key',
+        );
         if (kDebugMode) {
           debugPrint('[AppCheck] missing_app_check_recaptcha_site_key');
         }
@@ -95,9 +120,18 @@ Future<void> bootstrapAppCheck() async {
       if (kDebugMode) {
         debugPrint(
           '[APPCHECK] provider=$kAppCheckWebRecaptchaProviderLabel '
-          'siteKey=$preview...',
+          'siteKey=$preview... host=$host hostClass=$hostClass',
         );
+        final hostHint = appCheckWebHostHint();
+        if (hostHint.isNotEmpty) {
+          debugPrint('[APPCHECK] host-warning:$hostHint');
+        }
       }
+      AdminWebDebugStore.instance.recordEvent(
+        area: 'appcheck',
+        message: 'activate-web',
+        detail: 'host=$host hostClass=$hostClass provider=$kAppCheckWebRecaptchaProviderLabel',
+      );
       appCheckActivationAttempted = true;
       await activateAppCheckWeb(siteKey);
       await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
@@ -106,6 +140,11 @@ Future<void> bootstrapAppCheck() async {
     }
 
     appCheckActivationAttempted = true;
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'appcheck',
+      message: 'activate-native',
+      detail: 'platform=${firebaseInitPlatformLabel()}',
+    );
     await FirebaseAppCheck.instance.activate(
       androidProvider:
           kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
@@ -118,6 +157,12 @@ Future<void> bootstrapAppCheck() async {
     appCheckActivationSucceeded = false;
     appCheckActivationError = error;
     appCheckActivationStackTrace = stackTrace;
+    AdminWebDebugStore.instance.recordError(
+      'appcheck',
+      error,
+      stackTrace: stackTrace,
+      message: 'activation-failed',
+    );
     if (kDebugMode) {
       debugPrint('[AppCheck] activation failed: $error');
     }

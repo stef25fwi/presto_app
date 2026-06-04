@@ -14,6 +14,7 @@ import '../../core/firebase_contract.dart';
 import '../../models/conversation_summary.dart';
 import '../../config/app_check_state.dart';
 import '../../services/admin_access_resolver.dart';
+import '../../services/admin_web_debug_store.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
@@ -88,6 +89,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
   void _appendAdminConversationLog(String message) {
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'messages-list',
+      message: 'admin-log',
+      detail: message,
+    );
     if (!_isAdminViewer || !mounted) return;
 
     final now = DateTime.now();
@@ -160,6 +166,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
       }
     } catch (error) {
+      AdminWebDebugStore.instance.recordError(
+        'messages-list',
+        error,
+        message: 'admin-status-check-failed',
+      );
       if (kDebugMode) {
         debugPrint(
             '[MessagesList] admin status check failed uid=${user.uid} error=$error');
@@ -191,6 +202,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         'source=$adminSource claimsKeys=${detectedClaims.keys.toList()..sort()}',
       );
     }
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'messages-list',
+      message: 'admin-viewer-status',
+      level: isAdmin ? 'info' : 'warn',
+      detail: 'uid=${user.uid} isAdmin=$isAdmin source=$adminSource',
+    );
   }
 
   bool _hasAdminAccess(Map<String, dynamic> data) {
@@ -287,7 +304,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         (kIsWeb &&
             appCheckActivationAttempted &&
             !appCheckActivationSucceeded)) {
-      return 'La verification de securite web est indisponible pour la messagerie. Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et rechargez la page.';
+      return 'La verification de securite web est indisponible pour la messagerie. '
+          'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et rechargez la page.'
+          '${appCheckWebHostHint()}';
     }
     if (_isPermissionDenied(error)) {
       // Toutes les requetes participants (participantIds, participants, ...)
@@ -297,7 +316,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       // (cle reCAPTCHA invalide ou domaine non autorise), pas des regles.
       if (kIsWeb) {
         return 'Acces refuse a la messagerie : la verification de securite App Check a ete rejetee. '
-            'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et que le domaine est autorise dans la console Firebase, puis rechargez la page.';
+        'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et que le domaine est autorise dans la console Firebase, puis rechargez la page.'
+        '${appCheckWebHostHint()}';
       }
       return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
     }

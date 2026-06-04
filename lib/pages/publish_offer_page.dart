@@ -31,6 +31,7 @@ import '../features/micro_ia/web_audio_recorder_stub.dart'
 import '../models/admin_access_state.dart';
 import '../pages/offers/offer_details_page.dart';
 import '../services/admin_access_resolver.dart';
+import '../services/admin_web_debug_store.dart';
 import '../services/ai/listing_audio_ai_service.dart';
 import '../services/city_search.dart';
 import '../services/firebase_functions_region.dart';
@@ -594,6 +595,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         detail: detail,
       ),
     );
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'publish-ai',
+      message: stage,
+      level: switch (level) {
+        PublishAiTraceLevel.error => 'error',
+        PublishAiTraceLevel.warning => 'warn',
+        PublishAiTraceLevel.success => 'success',
+        PublishAiTraceLevel.info => 'info',
+      },
+      detail: detail,
+    );
     _notifyPublishAiTraceChanged();
   }
 
@@ -716,6 +728,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _logMicroIaDebug(String stage, String message) {
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'publish-ai',
+      message: stage,
+      detail: message,
+    );
     debugPrint('[MICIA][$stage] $message');
   }
 

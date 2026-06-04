@@ -23,15 +23,16 @@ class ChatRepository {
         : await _verification.obtainToken(
             MarketplaceHumanVerificationAction.chatFirstMessage,
           );
-    final callable = _functions.httpsCallable(
-      'createChatThreadFromListing',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    final response = await callable.call(<String, dynamic>{
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'createChatThreadFromListing',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       'listingId': listingId,
       'message': firstMessage,
       'recaptchaToken': token,
-    });
+      },
+    );
     final data = Map<String, dynamic>.from(
       (response.data as Map?)?.cast<String, dynamic>() ??
           const <String, dynamic>{},
@@ -43,13 +44,14 @@ class ChatRepository {
     required String threadId,
     required String message,
   }) async {
-    final callable = _functions.httpsCallable(
-      'sendChatMessage',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
-    );
-    await callable.call(<String, dynamic>{
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'sendChatMessage',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
       'threadId': threadId,
       'message': message,
-    });
+      },
+    );
   }
 }

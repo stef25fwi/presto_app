@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../config/app_check_state.dart';
 import '../features/offers/public_offers_read_diagnostics.dart';
-import 'package:flutter/material.dart';
+import 'admin_web_debug_store.dart';
 
 const String kListingsCollection = 'listings';
 
@@ -87,6 +88,11 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
 
   try {
     final snapshot = await query.get();
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'public-offers',
+      message: 'legacy-backfill',
+      detail: 'source=$source docs=${snapshot.docs.length}',
+    );
     if (kDebugMode) {
       debugPrint(
         '[PUBLIC_OFFERS][$source] legacy_backfill=${snapshot.docs.length}',
@@ -146,6 +152,12 @@ void logPublicOffersReadErrorWithAppCheck(
   Object error, [
   StackTrace? stackTrace,
 ]) {
+  AdminWebDebugStore.instance.recordError(
+    'public-offers',
+    error,
+    stackTrace: stackTrace,
+    message: 'read-error:$source',
+  );
   logPublicOffersReadError(
     source,
     error,
@@ -167,6 +179,12 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
     appCheckActivationSucceeded = false;
     appCheckActivationError = error;
     appCheckActivationStackTrace = StackTrace.current;
+    AdminWebDebugStore.instance.recordError(
+      'public-offers',
+      error,
+      stackTrace: appCheckActivationStackTrace,
+      message: 'appcheck-skipped:$source',
+    );
     if (kDebugMode) {
       debugPrint('[PUBLIC_OFFERS][$source] appcheck_skipped=$error');
     }
@@ -183,10 +201,21 @@ Future<void> ensureAppCheckReadyForPublicFirestoreRead({
     appCheckActivationSucceeded = true;
     appCheckActivationError = null;
     appCheckActivationStackTrace = null;
+    AdminWebDebugStore.instance.recordEvent(
+      area: 'public-offers',
+      message: 'appcheck-ready',
+      detail: 'source=$source',
+    );
   } catch (error, stackTrace) {
     appCheckActivationSucceeded = false;
     appCheckActivationError = error;
     appCheckActivationStackTrace = stackTrace;
+    AdminWebDebugStore.instance.recordError(
+      'public-offers',
+      error,
+      stackTrace: stackTrace,
+      message: 'appcheck-ready-failed:$source',
+    );
     if (kDebugMode) {
       debugPrint('[PUBLIC_OFFERS][$source] appcheck_ready_failed=$error');
     }
