@@ -18,9 +18,11 @@ const https_1 = require("firebase-functions/v2/https");
 const sharp_1 = __importDefault(require("sharp"));
 const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
+const logger_1 = require("../../core/logger");
 const rate_limit_1 = require("../../core/rate_limit");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
+const roles_1 = require("../marketplace/services/roles");
 const counters_1 = require("../notifications/counters");
 const state_1 = require("./state");
 const participants_1 = require("./participants");
@@ -347,7 +349,49 @@ function computeUnreadCountAfterMessageDeletion({ participants, unreadCount, las
     }
     return result;
 }
-async function loadConversationForParticipant(conversationId, currentUserId) {
+function canAccessConversation(data, uid, participants, options = {}) {
+    const detectedFields = [];
+    // (a) uid présent dans les participants canoniques (couvre participants, participantIds,
+    //     participant_ids, userIds, memberIds, et les clés des maps participantNames, unreadCount, etc.)
+    if (participants.includes(uid)) {
+        detectedFields.push("participants");
+        return { allowed: true, reason: "participants", detectedFields };
+    }
+    // Champs tableau supplémentaires non couverts par readConversationParticipants
+    for (const field of ["users"]) {
+        const raw = data[field];
+        if (Array.isArray(raw)) {
+            detectedFields.push(field);
+            if (raw.some((v) => String(v || "").trim() === uid)) {
+                return { allowed: true, reason: field, detectedFields };
+            }
+        }
+    }
+    // Map participantsMap: { [uid]: true }
+    const participantsMap = data["participantsMap"];
+    if (participantsMap && typeof participantsMap === "object") {
+        detectedFields.push("participantsMap");
+        if (participantsMap[uid] === true) {
+            return { allowed: true, reason: "participantsMap", detectedFields };
+        }
+    }
+    // (b) Champs scalaires owner / assignee
+    for (const field of ["createdBy", "ownerId", "requesterId", "userId", "adminId", "assigneeId"]) {
+        const value = String(data[field] || "").trim();
+        if (value) {
+            detectedFields.push(field);
+            if (value === uid) {
+                return { allowed: true, reason: field, detectedFields };
+            }
+        }
+    }
+    // (c) Accès admin global (support / modération)
+    if (options.isAdmin === true) {
+        return { allowed: true, reason: "admin", detectedFields };
+    }
+    return { allowed: false, reason: "none", detectedFields };
+}
+async function loadConversationForParticipant(conversationId, currentUserId, options = {}) {
     const convRef = firestore_1.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId);
     const convSnap = await convRef.get();
     if (!convSnap.exists) {
@@ -356,7 +400,17 @@ async function loadConversationForParticipant(conversationId, currentUserId) {
     const data = (convSnap.data() ?? {});
     const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId });
     const participants = conversation.participants;
-    assertConversationParticipantAccess(participants, currentUserId);
+    const access = canAccessConversation(data, currentUserId, participants, { isAdmin: options.isAdmin });
+    logger_1.logger.info("conversation_access_check", {
+        conversationId_len: conversationId.length,
+        uid_len: currentUserId.length,
+        isAdmin: options.isAdmin ?? false,
+        detectedFields: access.detectedFields,
+        allowedReason: access.reason,
+    });
+    if (!access.allowed) {
+        throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
+    }
     return { convRef, data, participants, conversation };
 }
 exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
@@ -615,7 +669,9 @@ exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
+    const roles = (0, roles_1.extractRolesFromAuthToken)(request.auth?.token);
+    const isAdmin = roles.includes("admin") || roles.includes("superadmin");
+    const { convRef, conversation } = await loadConversationForParticipant(conversationId, currentUserId, { isAdmin });
     await convRef.update((0, mirror_1.buildConversationMirrorFields)({
         ...conversation,
         unreadCount: {
