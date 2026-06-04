@@ -67,7 +67,6 @@ jobs:
       - name: Build Web for Firebase Hosting
         env:
           APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
-          APPCHECK_RECAPTCHA_PROVIDER: ${{ vars.APPCHECK_RECAPTCHA_PROVIDER }}
         run: |
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
