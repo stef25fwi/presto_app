@@ -277,6 +277,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return 'La verification de securite web est indisponible pour la messagerie. Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et rechargez la page.';
     }
     if (_isPermissionDenied(error)) {
+      // Toutes les requetes participants (participantIds, participants, ...)
+      // ont ete refusees ensemble alors que la donnee, la requete et les
+      // regles Firestore sont alignees sur participantIds. Sur web, ce blocage
+      // global des lectures vient quasi toujours d'un jeton App Check rejete
+      // (cle reCAPTCHA invalide ou domaine non autorise), pas des regles.
+      if (kIsWeb) {
+        return 'Acces refuse a la messagerie : la verification de securite App Check a ete rejetee. '
+            'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et que le domaine est autorise dans la console Firebase, puis rechargez la page.';
+      }
       return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
     }
     return 'Erreur de chargement des conversations. Consultez les logs de debug.';

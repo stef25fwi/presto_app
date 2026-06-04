@@ -196,9 +196,7 @@ class UserProfileBootstrapService {
 
     try {
       debugPrint('[ProfileFirestore] Retrying App Check web activation');
-      await FirebaseAppCheck.instance.activate(
-        webProvider: ReCaptchaEnterpriseProvider(siteKey),
-      );
+      await activateAppCheckWeb(siteKey);
       appCheckActivationAttempted = true;
       appCheckActivationSucceeded = true;
       appCheckActivationError = null;

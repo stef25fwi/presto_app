@@ -175,9 +175,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             'APPCHECK_RECAPTCHA_SITE_KEY manquante pour $flow',
           );
         }
-        await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaEnterpriseProvider(siteKey),
-        );
+        await activateAppCheckWeb(siteKey);
       } else {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode

@@ -298,6 +298,12 @@ function sanitizeConversationAttachments(value, currentUserId, conversationId) {
         if (type === "image" && !mimeType.startsWith("image/")) {
             throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} must be an image`);
         }
+        if (type === "image" &&
+            (mimeType !== "image/webp" ||
+                !storagePath.toLowerCase().endsWith(".webp") ||
+                !name.toLowerCase().endsWith(".webp"))) {
+            throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} image must be processed as WebP before sending`);
+        }
         if (type === "document" && !isAllowedDocumentAttachmentMimeType(mimeType)) {
             throw new https_1.HttpsError("invalid-argument", `attachment #${index + 1} document type is invalid`);
         }
