@@ -1975,7 +1975,7 @@ class _PulsingDotState extends State<_PulsingDot>
 }
 
 class _PulseWaveLayer extends StatefulWidget {
- et appcheckidth;
+  final double width;
   final int delay;
 
   const _PulseWaveLayer({
