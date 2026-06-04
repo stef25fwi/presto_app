@@ -760,9 +760,17 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _rejectedSectionExpanded = false;
   bool _archivedSectionExpanded = false;
   final TrustScoreService _trustScoreService = TrustScoreService();
-  final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>
-      _offersWatchSubscriptions =
-      <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+
+  void _logUserOffersLoad(
+    String action, {
+    Map<String, Object?> details = const <String, Object?>{},
+  }) {
+    logRuntimeAction(
+      area: 'user_offers',
+      action: 'load.$action',
+      details: details,
+    );
+  }
 
   bool _isPermissionDeniedError(Object error) {
     if (error is FirebaseException) {
@@ -1104,8 +1112,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   @override
   void initState() {
     super.initState();
-    _bindOffersWatcher();
-    _loadOffers();
+    unawaited(_loadOffers());
   }
 
   @override
@@ -1114,51 +1121,28 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (oldWidget.userId == widget.userId) {
       return;
     }
-    _bindOffersWatcher();
-    _loadOffers();
-  }
-
-  @override
-  void dispose() {
-    for (final subscription in _offersWatchSubscriptions) {
-      subscription.cancel();
-    }
-    super.dispose();
-  }
-
-  void _bindOffersWatcher() {
-    for (final subscription in _offersWatchSubscriptions) {
-      subscription.cancel();
-    }
-    _offersWatchSubscriptions.clear();
-
-    final userId = widget.userId.trim();
-    if (userId.isEmpty) {
-      return;
-    }
-
-    for (final field in const <String>['userId', 'uid', 'ownerId']) {
-      final subscription = FirebaseFirestore.instance
-          .collection(kListingsCollection)
-          .where(field, isEqualTo: userId)
-          .limit(120)
-          .snapshots()
-          .listen((_) {
-        if (!mounted) return;
-        unawaited(_loadOffers());
-      });
-      _offersWatchSubscriptions.add(subscription);
-    }
+    unawaited(_loadOffers());
   }
 
   Future<void> _loadOffers() async {
-    if (widget.userId.isEmpty) {
+    final userId = widget.userId.trim();
+    _logUserOffersLoad(
+      'start',
+      details: <String, Object?>{'userId': userId},
+    );
+
+    if (userId.isEmpty) {
       if (mounted) {
         setState(() {
           _isLoading = false;
           _offers = [];
+          _error = null;
         });
       }
+      _logUserOffersLoad(
+        'success',
+        details: const <String, Object?>{'count': 0, 'reason': 'empty-user'},
+      );
       return;
     }
 
@@ -1194,8 +1178,24 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       setState(() {
         _offers = docs;
         _isLoading = false;
+        _error = null;
       });
+      _logUserOffersLoad(
+        'success',
+        details: <String, Object?>{
+          'count': docs.length,
+          'userId': userId,
+        },
+      );
     } catch (e) {
+      _logUserOffersLoad(
+        'error',
+        details: <String, Object?>{
+          'userId': userId,
+          'errorType': e.runtimeType.toString(),
+          'message': e.toString(),
+        },
+      );
       if (!mounted) return;
       setState(() {
         _error = _isPermissionDeniedError(e)
@@ -1257,7 +1257,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                   _isLoading = true;
                   _error = null;
                 });
-                _loadOffers();
+                unawaited(_loadOffers());
               },
               child: const Text('Réessayer'),
             ),

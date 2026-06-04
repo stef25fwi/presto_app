@@ -146,6 +146,30 @@ class ListingRepository {
         );
   }
 
+  Future<List<MarketplaceListing>> fetchPublicListings({
+    String? categoryId,
+    String? cityId,
+    int limit = 50,
+  }) async {
+    Query<Map<String, dynamic>> query = _listings
+        .where('status', isEqualTo: 'active')
+        .where('visibility', isEqualTo: 'public');
+    if (categoryId != null && categoryId.trim().isNotEmpty) {
+      query = query.where('categoryId', isEqualTo: categoryId.trim());
+    }
+    if (cityId != null && cityId.trim().isNotEmpty) {
+      query = query.where('cityId', isEqualTo: cityId.trim());
+    }
+
+    final snapshot = await query
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs
+        .map(MarketplaceListing.fromFirestore)
+        .toList(growable: false);
+  }
+
   Future<void> incrementView({
     required String listingId,
     required String viewerKey,

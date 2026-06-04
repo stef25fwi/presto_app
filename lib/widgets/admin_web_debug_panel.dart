@@ -100,6 +100,38 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
     );
   }
 
+  Future<void> _copyLogContent(BuildContext context) async {
+    final logs = _debugStore.filteredEvents(
+      area: _selectedArea == 'all' ? null : _selectedArea,
+      callableOnly: _callableOnly,
+    );
+    final text = _buildLogClipboardText(logs);
+    await _copyToClipboard(
+      context,
+      text: text,
+      successMessage: 'Logs copies dans le presse-papiers.',
+    );
+  }
+
+  String _buildLogClipboardText(List<AdminWebDebugEvent> logs) {
+    if (logs.isEmpty) {
+      return 'Aucun log pour le filtre actif.';
+    }
+
+    final lines = <String>[];
+    for (final event in logs) {
+      lines.add(
+        '[${event.timestamp.toIso8601String()}] '
+        '${event.area}/${event.level}${event.isCallable ? '/callable' : ''} ${event.message}',
+      );
+      final detail = (event.detail ?? '').toString().trim();
+      if (detail.isNotEmpty) {
+        lines.add('  $detail');
+      }
+    }
+    return lines.join('\n');
+  }
+
   Future<void> _copyToClipboard(
     BuildContext context, {
     required String text,
@@ -289,6 +321,13 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                       visualDensity: VisualDensity.compact,
                       icon: const Icon(Icons.data_object_rounded),
                     ),
+                    IconButton(
+                      tooltip: 'Copier le contenu des logs',
+                      onPressed: () => _copyLogContent(context),
+                      iconSize: 18,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.content_copy_rounded),
+                    ),
                   ] else ...[
                     SizedBox(
                       width: 28,
@@ -304,6 +343,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                             _copyReport(context);
                           } else if (action == 'copy-json') {
                             _copyJsonReport(context);
+                          } else if (action == 'copy-logs') {
+                            _copyLogContent(context);
                           }
                         },
                         itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -344,6 +385,16 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                                 Icon(Icons.data_object_rounded, size: 16),
                                 SizedBox(width: 8),
                                 Text('JSON', style: TextStyle(fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'copy-logs',
+                            child: Row(
+                              children: [
+                                Icon(Icons.content_copy_rounded, size: 16),
+                                SizedBox(width: 8),
+                                Text('Logs', style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           ),
