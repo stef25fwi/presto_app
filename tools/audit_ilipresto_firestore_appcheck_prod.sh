@@ -248,7 +248,7 @@ run_firestore_sections() {
 
 run_appcheck_sections() {
   echo "===== 10. FIREBASE APP CHECK - CODE FLUTTER / WEB / NATIF ====="
-  grep_project_e "FirebaseAppCheck|activate|ReCaptcha|ReCaptchaV3Provider|ReCaptchaEnterpriseProvider|AndroidProvider|AppleProvider|PlayIntegrity|AppAttest|debugProvider|X-Firebase-AppCheck|appCheckToken" \
+  grep_project_e "FirebaseAppCheck|activate|ReCaptcha|ReCaptchaEnterpriseProvider|AndroidProvider|AppleProvider|PlayIntegrity|AppAttest|debugProvider|X-Firebase-AppCheck|appCheckToken" \
   lib web android ios functions 2>/dev/null || true
   echo ""
   echo "===== 11. FIREBASE APP CHECK - APPS DECLAREES COTE FIREBASE ====="
