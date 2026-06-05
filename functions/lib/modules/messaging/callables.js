@@ -31,6 +31,13 @@ const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
 const CONVERSATION_IMAGE_MAX_EDGE = 960;
+// Messaging is protected by Firebase Auth, participant checks, strict input
+// validation and rate limits. Keeping App Check non-blocking here prevents a
+// broken/rotating web reCAPTCHA domain from taking the whole inbox offline.
+const MESSAGING_CALLABLE_OPTIONS = {
+    region: env_1.PROJECT_REGION,
+    enforceAppCheck: false,
+};
 async function findConversationSnapshotsForParticipant(currentUserId, listingId) {
     const conversationCollection = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
     const listingFieldAliases = listingId ? ["listingId", "offerId", "offer_id"] : [null];
@@ -177,6 +184,10 @@ function sanitizeMessageText(value) {
         .join("\n")
         .trim();
 }
+const ADMIN_MESSAGING_CALLABLE_OPTIONS = {
+    ...MESSAGING_CALLABLE_OPTIONS,
+    enforceAppCheck: false,
+};
 function sanitizeAttachmentText(value, maxLength) {
     return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, maxLength);
 }
@@ -198,7 +209,7 @@ function buildProcessedConversationAttachmentPath({ uid, conversationId, storage
     const baseName = node_path_1.posix.basename(storagePath).replace(/\.[^/.]+$/, "");
     return `${expectedPrefix}processed_${baseName}.webp`;
 }
-exports.processConversationAttachmentPhoto = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.processConversationAttachmentPhoto = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const uid = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const storagePath = String(request.data?.storagePath || "").trim();
@@ -433,7 +444,7 @@ async function loadConversationForParticipant(conversationId, currentUserId, opt
     }
     return { convRef, data, participants, conversation };
 }
-exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.ensureOfferConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const listingId = String(request.data?.listingId || request.data?.offerId || "").trim();
     const otherUserId = String(request.data?.otherUserId || "").trim();
@@ -574,7 +585,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         offerTitle,
     };
 });
-exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.sendConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const text = sanitizeMessageText(request.data?.text);
@@ -683,7 +694,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         messageId: messageRef.id,
     };
 });
-exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.markConversationRead = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -707,7 +718,7 @@ exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
     return { ok: true };
 });
-exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.archiveConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -729,7 +740,7 @@ exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
     }));
     return { ok: true };
 });
-exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.unarchiveConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -751,7 +762,7 @@ exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGI
     }));
     return { ok: true };
 });
-exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.blockConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -773,7 +784,7 @@ exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, 
     }));
     return { ok: true };
 });
-exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.unblockConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -798,7 +809,7 @@ exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
     }));
     return { ok: true };
 });
-exports.adminUnblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.adminUnblockConversation = (0, https_1.onCall)(ADMIN_MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     requireAdminAccess(request);
     const conversationId = String(request.data?.conversationId || "").trim();
@@ -826,7 +837,7 @@ exports.adminUnblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_R
     });
     return { ok: true };
 });
-exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.deleteConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -872,7 +883,7 @@ exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
     await Promise.all(Array.from(notificationUserIds, (userId) => (0, counters_1.refreshUnreadNotificationCount)(userId)));
     return { ok: true };
 });
-exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const messageId = String(request.data?.messageId || "").trim();

@@ -1420,6 +1420,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           await ConversationService.adminUnblockConversation(
               conversationId: widget.conversationId);
           if (!mounted) return;
+            setState(() {
+              _isBlocked = false;
+              _isBlockedForCurrentUser = false;
+              _isBlockedByAnotherParticipant = false;
+            });
           showSuccessSnackBar(context, 'Conversation debloquee par admin.');
           return;
         case _ConversationThreadAction.delete:

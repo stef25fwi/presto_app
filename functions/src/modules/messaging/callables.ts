@@ -209,6 +209,8 @@ export function resolveOfferLikeData({
 } {
   if (listingData != null) {
     return {data: listingData, source: "listings"};
+
+
   }
 
   if (offerData != null) {
@@ -266,6 +268,11 @@ type ConversationAttachment = {
   storagePath: string;
   mimeType: string;
   sizeBytes: number;
+};
+
+const ADMIN_MESSAGING_CALLABLE_OPTIONS = {
+  ...MESSAGING_CALLABLE_OPTIONS,
+  enforceAppCheck: false,
 };
 
 function sanitizeAttachmentText(value: unknown, maxLength: number): string {
@@ -1085,7 +1092,7 @@ export const unblockConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (req
   return { ok: true };
 });
 
-export const adminUnblockConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
+export const adminUnblockConversation = onCall(ADMIN_MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   requireAdminAccess(request);
 
