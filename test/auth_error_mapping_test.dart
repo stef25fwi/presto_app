@@ -10,13 +10,13 @@ void main() {
       );
       expect(
         friendlyEmailAuthErrorMessage('credential-already-in-use'),
-        'Un compte existe deja avec cet e-mail.',
+        'Un compte existe déjà avec cet e-mail.',
       );
       expect(
         friendlyEmailAuthErrorMessage(
           'account-exists-with-different-credential',
         ),
-        'Un compte existe deja avec cet e-mail.',
+        'Un compte existe déjà avec cet e-mail.',
       );
       expect(
         friendlyEmailAuthErrorMessage('requires-recent-login'),
