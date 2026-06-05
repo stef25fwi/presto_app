@@ -664,12 +664,44 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Log admin - chargement conversations',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1E5E28),
-              ),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Log admin - chargement conversations',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E5E28),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    tooltip: 'Copier les logs',
+                    padding: EdgeInsets.zero,
+                    iconSize: 16,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(
+                      Icons.content_copy_rounded,
+                      color: Color(0xFF2F6C38),
+                    ),
+                    onPressed: () {
+                      final text = _adminConversationLoadLogs.isEmpty
+                          ? 'Aucun log.'
+                          : _adminConversationLoadLogs.join('\n');
+                      Clipboard.setData(ClipboardData(text: text));
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(
+                          content: Text('Logs copiés dans le presse-papiers.'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             if (_adminConversationLoadLogs.isEmpty)
