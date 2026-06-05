@@ -448,6 +448,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     var isCancelled = false;
     var permissionDeniedRetryCount = 0;
     var appCheckPrefixRetryCount = 0;
+    var _subscriptionGeneration = 0;
+    var _isRetryingPermissionDenied = false;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -499,6 +501,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
+      final myGeneration = ++_subscriptionGeneration;
+
       try {
         if (!isAdminMode) {
           await UserProfileBootstrapService.prepareProfileFirestoreAccess(
@@ -508,6 +512,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
       } catch (error) {
+        if (myGeneration != _subscriptionGeneration ||
+            isCancelled ||
+            controller.isClosed) return;
         // Retry preflight AppCheck failures: reCAPTCHA may still be warming up
         // in the background. Allow up to 3 retries with growing delays before
         // surfacing the error to the UI.
@@ -530,12 +537,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           }());
           return;
         }
+        _appendAdminConversationLog(
+            'mode=$mode startSubscriptions error app_check=$error');
         errorsByField['app_check'] = error;
         emitState();
         return;
       }
 
-      if (isCancelled || controller.isClosed) return;
+      if (myGeneration != _subscriptionGeneration ||
+          isCancelled ||
+          controller.isClosed) return;
 
       void handleSnapshot(
         String field,
@@ -570,7 +581,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
 
-        if (_isPermissionDenied(error) && permissionDeniedRetryCount < 3) {
+        if (_isPermissionDenied(error) &&
+            permissionDeniedRetryCount < 3 &&
+            !_isRetryingPermissionDenied) {
+          _isRetryingPermissionDenied = true;
           permissionDeniedRetryCount += 1;
           unawaited(() async {
             final delay =
@@ -581,11 +595,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             if (delay > Duration.zero) {
               await Future<void>.delayed(delay);
             }
-            await startSubscriptions(forceRefreshTokens: true);
+            _isRetryingPermissionDenied = false;
+            if (!isCancelled && !controller.isClosed) {
+              await startSubscriptions(forceRefreshTokens: true);
+            }
           }());
           return;
         }
 
+        _appendAdminConversationLog(
+            'mode=$mode field=$field stream-error=$error');
         errorsByField[field] = error;
         emitState();
       }
@@ -645,12 +664,44 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Log admin - chargement conversations',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1E5E28),
-              ),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Log admin - chargement conversations',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E5E28),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    tooltip: 'Copier les logs',
+                    padding: EdgeInsets.zero,
+                    iconSize: 16,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(
+                      Icons.content_copy_rounded,
+                      color: Color(0xFF2F6C38),
+                    ),
+                    onPressed: () {
+                      final text = _adminConversationLoadLogs.isEmpty
+                          ? 'Aucun log.'
+                          : _adminConversationLoadLogs.join('\n');
+                      Clipboard.setData(ClipboardData(text: text));
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(
+                          content: Text('Logs copiés dans le presse-papiers.'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             if (_adminConversationLoadLogs.isEmpty)

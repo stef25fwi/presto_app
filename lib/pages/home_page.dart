@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage>
     ),
   ];
 
-  late int _selectedIndex;
+  int _selectedIndex = 0;
   String? _consultCategoryFilter;
   String? _consultSearchQuery;
   final PageController _carouselController = PageController();
