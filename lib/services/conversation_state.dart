@@ -14,14 +14,11 @@ bool isConversationArchivedForUser(Map<String, dynamic> data, String userId) {
 
 bool isConversationBlocked(Map<String, dynamic> data) {
   final raw = data['blockedBy'];
-  if (raw is Map) {
-    for (final value in raw.values) {
-      if (value == true) return true;
-    }
+  if (raw is! Map) return false;
+  for (final value in raw.values) {
+    if (value == true) return true;
   }
-
-  final status = (data['status'] ?? '').toString().trim().toLowerCase();
-  return status == 'closed';
+  return false;
 }
 
 bool isConversationBlockedForUser(Map<String, dynamic> data, String userId) {
