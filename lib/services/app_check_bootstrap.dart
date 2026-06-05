@@ -52,7 +52,8 @@ Future<void> refreshAppCheckToken({
         message: 'token-refresh-failed',
       );
       if (kDebugMode) {
-        debugPrint('[AppCheck] token refresh failed reason=$reason error=$error');
+        debugPrint(
+            '[AppCheck] token refresh failed reason=$reason error=$error');
       }
       rethrow;
     } finally {
@@ -130,10 +131,17 @@ Future<void> bootstrapAppCheck() async {
       AdminWebDebugStore.instance.recordEvent(
         area: 'appcheck',
         message: 'activate-web',
-        detail: 'host=$host hostClass=$hostClass provider=$kAppCheckWebRecaptchaProviderLabel',
+        detail:
+            'host=$host hostClass=$hostClass provider=$kAppCheckWebRecaptchaProviderLabel',
       );
       appCheckActivationAttempted = true;
-      await activateAppCheckWeb(siteKey);
+      await FirebaseAppCheck.instance.activate(
+        webProvider: ReCaptchaEnterpriseProvider(siteKey),
+        androidProvider:
+            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider:
+            kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+      );
       await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
       await refreshAppCheckToken(reason: 'bootstrap-web', forceRefresh: true);
       return;
