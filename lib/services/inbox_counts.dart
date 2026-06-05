@@ -3,11 +3,26 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/conversation_summary.dart';
+import 'firestore_web_safe_reads.dart';
 
 enum InboxCountType {
   totalUnread,
   unreadMessages,
   unreadNotifications,
+}
+
+Stream<DocumentSnapshot<Map<String, dynamic>>> _pollInboxDocument(
+  String userId,
+) async* {
+  final document = FirebaseFirestore.instance
+      .collection('users')
+      .doc(userId)
+      .collection('metadata')
+      .doc('inbox');
+  while (true) {
+    yield await document.get();
+    await Future<void>.delayed(const Duration(seconds: 8));
+  }
 }
 
 Stream<int> streamInboxCount({
@@ -24,7 +39,7 @@ Stream<int> streamInboxCount({
       .doc(normalizedUserId)
       .collection('metadata')
       .doc('inbox')
-      .snapshots()
+      .webSafeSnapshots(debugKey: 'bottomBar.messages.badge')
       .map((snapshot) {
     final data = snapshot.data() ?? const <String, dynamic>{};
     final inboxCounts = (data['inboxCounts'] as Map<String, dynamic>?) ??
