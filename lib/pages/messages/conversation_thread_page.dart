@@ -572,7 +572,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         .snapshots()
         .listen((snapshot) {
       final data = snapshot.data();
-      if (data == null || !mounted) return;
+      if (data == null) return;
       final rawPhotoValue = _firstProfilePhotoValue(data);
       final storedPath = _firstStoredProfilePhotoPath(data);
       final needsStorageResolution =
@@ -580,6 +580,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               _isResolvableStorageProfilePhoto(rawPhotoValue);
       final networkPhotoUrl =
           _isNetworkProfilePhoto(rawPhotoValue) ? rawPhotoValue.trim() : '';
+      if (!mounted) return;
       setState(() {
         _otherPresenceStatus =
             (data['status'] ?? '').toString().trim().toLowerCase();
@@ -598,6 +599,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ),
         );
       }
+    }, onError: (Object error, StackTrace stackTrace) {
+      _debugMessagingAccess(
+        'presence-listen-error',
+        error: error,
+        firestorePath: 'users/$participantId',
+      );
     });
   }
 
