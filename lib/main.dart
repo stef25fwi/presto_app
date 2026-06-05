@@ -526,19 +526,7 @@ Future<void> main() async {
 
     await ensureFirebaseInitialized(source: 'main');
 
-    await bootstrapAppCheck().timeout(
-      const Duration(seconds: 5),
-      onTimeout: () {
-        adminWebDebugStore.recordEvent(
-          area: 'appcheck',
-          message: 'bootstrap-timeout',
-          detail: 'forced-continue after 5s',
-        );
-      },
-    ).catchError((Object e) {
-      adminWebDebugStore.recordError('appcheck', e,
-          message: 'bootstrap-error-ignored');
-    });
+    await bootstrapAppCheck();
 
     adminWebDebugStore.recordEvent(area: 'firebase', message: 'initialized');
     await bootstrapFirestore();
