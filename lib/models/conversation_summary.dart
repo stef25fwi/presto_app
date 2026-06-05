@@ -152,8 +152,7 @@ class ConversationSummary {
   }
 
   bool get isBlocked {
-    return blockedBy.values.any((value) => value) ||
-        status.trim().toLowerCase() == 'closed';
+    return blockedBy.values.any((value) => value);
   }
 
   bool get hasRenderableContent {

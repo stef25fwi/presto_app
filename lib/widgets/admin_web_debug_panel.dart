@@ -444,12 +444,29 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                 ],
               ),
               SizedBox(height: isSmallScreen ? 6 : 8),
-              Text(
-                'Timeline',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: isSmallScreen ? 11 : 12,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'Timeline',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: isSmallScreen ? 11 : 12,
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: IconButton(
+                      tooltip: 'Copier les logs',
+                      padding: EdgeInsets.zero,
+                      iconSize: 15,
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.content_copy_rounded),
+                      onPressed: () => _copyLogContent(context),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: isSmallScreen ? 4 : 6),
               Wrap(
