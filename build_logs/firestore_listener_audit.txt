@@ -1,0 +1,172 @@
+=== FIREBASE / FIRESTORE VERSIONS ===
+pubspec.yaml:14:  firebase_auth: ^6.1.0
+pubspec.yaml:22:  firebase_core: ^4.3.0
+pubspec.yaml:23:  firebase_analytics: ^12.0.1
+pubspec.yaml:24:  firebase_crashlytics: ^5.0.0
+pubspec.yaml:29:  firebase_storage: ^13.0.5
+pubspec.yaml:30:  firebase_messaging: ^16.1.0
+pubspec.yaml:31:  firebase_performance: ^0.11.0+1
+pubspec.yaml:32:  firebase_remote_config: ^6.1.1
+pubspec.yaml:34:  firebase_app_check: ^0.4.1+3
+pubspec.yaml:46:  firebase_ai: ^3.11.0
+pubspec.yaml:53:  firebase_core_platform_interface: ^6.0.3
+functions/package.json:26:    "test:firestore:public-listings": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_public_listings_rules.mjs\"",
+functions/package.json:27:    "test:firestore:canonical-rules": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_canonical_marketplace_rules.mjs\"",
+functions/package.json:35:    "serve": "npm run build && firebase emulators:start --only functions",
+functions/package.json:36:    "shell": "firebase functions:shell",
+functions/package.json:38:    "deploy": "npm run build && firebase deploy --only functions",
+functions/package.json:39:    "logs": "firebase functions:log"
+functions/package.json:45:    "firebase-admin": "^13.6.0",
+functions/package.json:46:    "firebase-functions": "^7.2.5",
+functions/package.json:54:    "@firebase/rules-unit-testing": "^4.0.1",
+functions/package.json:56:    "firebase": "^11.10.0",
+package.json:6:    "firebase-admin": "^13.10.0",
+package.json:7:    "firebase-functions": "^7.2.5",
+
+=== FIRESTORE SNAPSHOTS / LISTENERS ===
+lib/data/marketplace/favorite_repository.dart:202:          .snapshots()) {
+lib/data/marketplace/listing_repository.dart:120:        .snapshots()
+lib/data/marketplace/listing_repository.dart:142:    return query.orderBy('createdAt', descending: true).snapshots().map(
+lib/services/admin_audio_runtime_store.dart:114:    _cloudSubscription = docRef.snapshots().listen(
+lib/services/inbox_counts.dart:27:      .snapshots()
+lib/services/hero_slides_service.dart:29:        .snapshots()
+lib/services/hero_slides_service.dart:34:    return _slidesCollection.snapshots().map(_mapSnapshot);
+lib/pages/admin_space_page.dart:1501:        .snapshots();
+lib/pages/admin_space_page.dart:1507:        .snapshots();
+lib/pages/admin_space_page.dart:1512:        .snapshots();
+lib/pages/admin_space_page.dart:2980:        .snapshots();
+lib/pages/admin_space_page.dart:2984:        .snapshots();
+lib/pages/admin_space_page.dart:2988:        .snapshots();
+lib/pages/admin_space_page.dart:2992:        .snapshots();
+lib/pages/admin_space_page.dart:2996:        .snapshots();
+lib/pages/admin_space_page.dart:3000:        .snapshots();
+lib/pages/admin_space_page.dart:3940:        .snapshots();
+lib/pages/consult_offers_page.dart:809:    // ✅ Fetch-once (get) au lieu d'un snapshots() permanent: la consultation
+lib/pages/admin_photo_reviews_page.dart:191:            .snapshots(),
+lib/pages/messages/conversation_thread_page.dart:254:    return query.snapshots();
+lib/pages/messages/conversation_thread_page.dart:572:        .snapshots()
+lib/pages/messages/conversation_thread_page.dart:874:        .snapshots()
+lib/pages/messages/conversations_list_page.dart:600:          query.snapshots().listen(
+lib/pages/messages/conversations_list_page.dart:612:            query.snapshots().listen(
+lib/pages/messages/conversations_list_page.dart:2156:          .snapshots(),
+
+=== STREAM SUBSCRIPTIONS ===
+lib/main.dart:656:      FirebaseAuth.instance.authStateChanges().listen((User? user) {
+lib/widgets/admin_web_debug_panel.dart:31:  StreamSubscription<User?>? _authSubscription;
+lib/widgets/admin_web_debug_panel.dart:42:    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+lib/debug_auth.dart:6:    FirebaseAuth.instance.authStateChanges().listen((user) {
+lib/debug_auth.dart:14:    FirebaseAuth.instance.idTokenChanges().listen((user) async {
+lib/services/admin_audio_runtime_store.dart:83:  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _cloudSubscription;
+lib/services/admin_audio_runtime_store.dart:114:    _cloudSubscription = docRef.snapshots().listen(
+lib/services/notification_service.dart:57:  StreamSubscription<User?>? _authSubscription;
+lib/services/notification_service.dart:110:    FirebaseMessaging.onMessage.listen((message) async {
+lib/services/notification_service.dart:125:    FirebaseMessaging.onMessageOpenedApp.listen(_messageOpenedHandler);
+lib/services/notification_service.dart:128:        FirebaseAuth.instance.authStateChanges().listen((user) async {
+lib/services/notification_service.dart:143:    _messaging.onTokenRefresh.listen((newToken) async {
+lib/services/hero_slides_service.dart:279:    StreamSubscription<TaskSnapshot>? progressSubscription;
+lib/services/hero_slides_service.dart:282:        progressSubscription = uploadTask.snapshotEvents.listen((snapshot) {
+lib/pages/account_page.dart:123:  StreamSubscription<User?>? _profileAuthSub;
+lib/pages/account_page.dart:124:  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileDocSub;
+lib/pages/account_page.dart:786:    _profileAuthSub = _auth.idTokenChanges().listen((user) {
+lib/pages/account_page.dart:1332:        userRef.snapshots(includeMetadataChanges: true).listen((snapshot) {
+lib/pages/consult_offers_page.dart:589:        .listen((List<ConnectivityResult> results) {
+lib/pages/user_offers_section.dart:69:  StreamSubscription<Set<String>>? _favoritesSubscription;
+lib/pages/user_offers_section.dart:119:        _favoriteRepository.watchFavoriteListingIds(userId).listen((_) {
+lib/pages/home_page.dart:190:  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+lib/pages/messages/conversation_thread_page.dart:63:  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+lib/pages/messages/conversation_thread_page.dart:65:  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+lib/pages/messages/conversation_thread_page.dart:573:        .listen((snapshot) {
+lib/pages/messages/conversation_thread_page.dart:875:        .listen((snapshot) {
+lib/pages/messages/conversations_list_page.dart:447:        <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+lib/pages/messages/conversations_list_page.dart:493:          List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>.from(
+lib/pages/messages/conversations_list_page.dart:600:          query.snapshots().listen(
+lib/pages/messages/conversations_list_page.dart:612:            query.snapshots().listen(
+lib/main.dart.bak_firestore_assertion:656:      FirebaseAuth.instance.authStateChanges().listen((User? user) {
+
+=== LATE VARIABLES ===
+lib/main.dart:886:  late final AnimationController _controller;
+lib/main.dart:887:  late final Animation<double> _scaleAnimation;
+lib/widgets/cache_metrics_dashboard.dart:14:  late Future<Map<String, dynamic>?> _stats24h;
+lib/widgets/hero_local_video_preview_web.dart:34:  late String _viewType;
+lib/widgets/presto_info_icon_animated.dart:25:  late final AnimationController _c;
+lib/widgets/presto_info_icon_animated.dart:26:  late final Animation<double> _scale;
+lib/widgets/presto_info_icon_animated.dart:27:  late final AnimationController _vibrationController;
+lib/widgets/presto_info_icon_animated.dart:28:  late final Animation<double> _rotation;
+lib/widgets/ilipresto_splash_screen_classic.dart:26:  late final AnimationController _textController;
+lib/widgets/ilipresto_splash_screen_classic.dart:27:  late final AnimationController _logoController;
+lib/widgets/ilipresto_splash_screen_classic.dart:28:  late final Animation<double> _textScale;
+lib/widgets/ilipresto_splash_screen_classic.dart:29:  late final Animation<double> _textOpacity;
+lib/widgets/ilipresto_splash_screen_classic.dart:30:  late final Animation<double> _logoScale;
+lib/widgets/ilipresto_splash_screen_classic.dart:31:  late final Animation<double> _logoOpacity;
+lib/widgets/progressive_ai_results.dart:447:  late AnimationController _controller;
+lib/widgets/progressive_ai_results.dart:448:  late Animation<double> _animation;
+lib/widgets/premium_info_button.dart:26:  late final AnimationController _rot;
+lib/widgets/ai_publish_control.dart:344:  late final AnimationController _controller;
+lib/widgets/ai_publish_control.dart:776:  late final AnimationController _controller;
+lib/widgets/ai_publish_control.dart:846:  late final AnimationController _controller;
+lib/widgets/ai_publish_control.dart:904:  late final AnimationController _controller;
+lib/widgets/home_bottom_nav_item.dart:29:  late final AnimationController _controller;
+lib/widgets/home_bottom_nav_item.dart:30:  late final Animation<double> _scaleAnimation;
+lib/widgets/offer_card.dart:179:  late final AnimationController _c;
+lib/widgets/offer_card.dart:180:  late final Animation<double> _opacity;
+lib/widgets/offer_card.dart:181:  late final Animation<double> _scale;
+lib/widgets/keyboard_autocomplete_field.dart:54:  late final FocusNode _focusNode = widget.focusNode ?? FocusNode();
+lib/widgets/phone_input_field.dart:206:  late CountryCode _selectedCountry;
+lib/widgets/phone_input_field.dart:301:  late CountryCode _selectedCountry;
+lib/config/ai_prompts.dart:91:  static const String extractListingFieldsUserPromptTemplate =
+lib/config/ai_prompts.dart:124:  static const String generateOfferDraftUserPromptTemplate =
+lib/config/ai_prompts.dart:130:  static const String transcriptionUserPromptTemplate =
+lib/pages/admin_space_page.dart:1371:    final byTemplate = <String, Map<String, int>>{};
+lib/pages/admin_space_page.dart:1395:      final template = (data['template_code'] ?? 'unknown').toString().trim();
+lib/pages/admin_space_page.dart:1806:                          message: 'Aucun template remonté sur cette fenêtre.',
+lib/pages/offers/offer_details_page.dart:2612:  late final PageController _pageController;
+lib/pages/offers/offer_details_page.dart:2613:  late int _currentPage;
+lib/pages/consult_offers_page.dart:293:  late final Map<String, String> _deptToRegion = _buildDeptToRegion();
+lib/pages/consult_offers_page.dart:639:  /// ✅ Cache les résultats Firestore pour éviter les re-queries inutiles (template pour utilisation future)
+lib/pages/consult_offers_page.dart:3198:  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+lib/pages/home_page.dart:132:  late int _selectedIndex;
+lib/pages/home_page.dart:147:  late final AnimationController _categoryController;
+lib/pages/home_page.dart:224:  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+lib/pages/home_page.dart:438:        // 60 docs is enough to populate the keyword chips; 200 was wasteful and
+lib/pages/home_page.dart:1935:  late AnimationController _controller;
+lib/pages/home_page.dart:1936:  late Animation<double> _animation;
+lib/pages/home_page.dart:1994:  late final AnimationController _controller;
+lib/pages/home_page.dart:1995:  late final Animation<double> _scale;
+lib/pages/home_page.dart:1996:  late final Animation<double> _opacity;
+lib/pages/home_page.dart:2330:  late final ScrollController _scrollController;
+lib/pages/home_page.dart:2331:  late final Ticker _ticker;
+lib/pages/publish_offer_page.dart:389:  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+lib/pages/publish_offer_page.dart:4610:  late final AnimationController _controller;
+lib/pages/publish_offer_page.dart:4611:  late final Animation<double> _opacity;
+lib/features/trust_score/trust_score_widgets.dart:139:  late final Future<List<EligibleResponderForReview>> _respondersFuture;
+lib/features/trust_score/trust_score_widgets.dart:513:  late TrustScoreService _service;
+lib/features/trust_score/trust_score_widgets.dart:514:  late Future<TrustScoreProfile> _profileFuture;
+lib/features/publish_ai/publish_ai_state.dart:4:/// translate events into UI updates (snackbars, busy indicators, form
+lib/main.dart.bak_firestore_assertion:886:  late final AnimationController _controller;
+lib/main.dart.bak_firestore_assertion:887:  late final Animation<double> _scaleAnimation;
+
+=== RUNZONEDGUARDED / ERROR HANDLING ===
+lib/main.dart:521:  runZonedGuarded(() async {
+lib/main.dart:671:    final previousFlutterOnError = FlutterError.onError;
+lib/main.dart:672:    FlutterError.onError = (FlutterErrorDetails details) {
+lib/main.dart:685:    PlatformDispatcher.instance.onError = (error, stack) {
+lib/main.dart:726:      message: 'runZonedGuarded',
+lib/main.dart.bak_firestore_assertion:521:  runZonedGuarded(() async {
+lib/main.dart.bak_firestore_assertion:671:    final previousFlutterOnError = FlutterError.onError;
+lib/main.dart.bak_firestore_assertion:672:    FlutterError.onError = (FlutterErrorDetails details) {
+lib/main.dart.bak_firestore_assertion:685:    PlatformDispatcher.instance.onError = (error, stack) {
+lib/main.dart.bak_firestore_assertion:726:      message: 'runZonedGuarded',
+
+=== FIRESTORE SETTINGS / PERSISTENCE / CACHE ===
+lib/services/firestore_bootstrap.dart:15:      firestore.settings = const Settings(persistenceEnabled: false);
+
+=== ADMIN DIAGNOSTIC FILES ===
+lib/main.dart:521:  runZonedGuarded(() async {
+lib/main.dart:726:      message: 'runZonedGuarded',
+lib/widgets/admin_web_debug_panel.dart:224:                              ? 'Masquer debug admin'
+lib/widgets/admin_web_debug_panel.dart:288:                      'Diagnostic admin web',
+lib/widgets/admin_web_debug_panel.dart:448:                'Timeline',
+lib/services/admin_web_debug_store.dart:187:      'Diagnostic admin web',
+lib/services/admin_web_debug_store.dart:196:      'Timeline',
+lib/main.dart.bak_firestore_assertion:521:  runZonedGuarded(() async {
+lib/main.dart.bak_firestore_assertion:726:      message: 'runZonedGuarded',
