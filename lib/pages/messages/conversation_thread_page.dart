@@ -1138,6 +1138,38 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
+  Future<void> _sendMessageCf({
+    required String text,
+    List<ConversationAttachmentInput> attachments = const [],
+  }) async {
+    Object? firstError;
+    try {
+      await ConversationService.sendMessage(
+        conversationId: widget.conversationId,
+        text: text,
+        attachments: attachments,
+      );
+      return;
+    } catch (error) {
+      final code = _messagingErrorCode(error);
+      if (code != 'permission-denied' && code != 'unauthenticated') rethrow;
+      firstError = error;
+    }
+    // Token may have expired — refresh and retry once
+    final retryReady = await _ensureMessagingAccess(
+      interactive: false,
+      forceRefreshToken: true,
+      forceRefreshAppCheckToken: true,
+    );
+    if (!retryReady) throw firstError!;
+    if (!mounted) return;
+    await ConversationService.sendMessage(
+      conversationId: widget.conversationId,
+      text: text,
+      attachments: attachments,
+    );
+  }
+
   Future<void> _sendMessage() async {
     final rawDraft = _controller.text;
     final text = rawDraft.trim();
@@ -1185,10 +1217,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         }
         return;
       }
-      await ConversationService.sendMessage(
-        conversationId: widget.conversationId,
-        text: text,
-      );
+      await _sendMessageCf(text: text);
 
       unawaited(_markAsRead());
       _removeOptimisticMessage(optimisticMessage.id);
@@ -1305,8 +1334,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         _markOptimisticMessageFailed(message.id);
         return;
       }
-      await ConversationService.sendMessage(
-        conversationId: widget.conversationId,
+      await _sendMessageCf(
         text: message.text,
         attachments: message.attachments
             .map((attachment) => attachment.toInput())
