@@ -32,7 +32,7 @@ void main() {
       );
       expect(
         friendlyEmailAuthErrorMessage('app-check-token-is-invalid'),
-        "Verification de securite echouee. Actualisez l'application et reessayez.",
+        "Vérification de sécurité échouée. Actualisez l'application et réessayez.",
       );
     });
 
