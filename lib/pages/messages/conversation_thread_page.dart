@@ -1161,7 +1161,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       forceRefreshToken: true,
       forceRefreshAppCheckToken: true,
     );
-    if (!retryReady) throw firstError!;
+    if (!retryReady) throw firstError;
     if (!mounted) return;
     await ConversationService.sendMessage(
       conversationId: widget.conversationId,
