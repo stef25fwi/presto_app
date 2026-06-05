@@ -347,7 +347,7 @@ Offer buildOfferDetailsOffer({
   final categoryId = (data['categoryId'] ?? '').toString().trim();
   final cityId = (data['cityId'] ?? '').toString().trim();
   final isMarketplaceValue = data['isMarketplace'];
-    final inferredMarketplace = categoryId.isNotEmpty ||
+  final inferredMarketplace = categoryId.isNotEmpty ||
       cityId.isNotEmpty ||
       listingStatus.isNotEmpty ||
       visibility.isNotEmpty ||
@@ -357,7 +357,7 @@ Offer buildOfferDetailsOffer({
   final isMarketplace = isMarketplaceValue is bool
       ? isMarketplaceValue
       : isMarketplaceValue.toString().trim().toLowerCase() == 'true' ||
-        inferredMarketplace;
+          inferredMarketplace;
 
   return Offer(
     id: offerId,
@@ -424,12 +424,12 @@ Offer buildOfferDetailsOffer({
       seniorityLabel: (data['seniorityLabel'] ?? 'Membre Presto').toString(),
       city: location.isEmpty ? 'Ville non precisee' : location,
       bio: (data['bio'] ?? '').toString(),
-        avatarUrl: ((data['avatarUrl'] ??
-              data['photoUrl'] ??
-              data['photoURL'] ??
-              data['profilePhotoUrl'] ??
-              data['imageUrl']) ??
-            '')
+      avatarUrl: ((data['avatarUrl'] ??
+                  data['photoUrl'] ??
+                  data['photoURL'] ??
+                  data['profilePhotoUrl'] ??
+                  data['imageUrl']) ??
+              '')
           .toString(),
       isOnline: ((data['status'] ?? '').toString().toLowerCase() == 'online'),
       lastSeenLabel: 'Activite recente',
@@ -490,7 +490,6 @@ class AudioPipelineBadge extends StatelessWidget {
   }
 }
 
-
 class CardShell extends StatelessWidget {
   final Widget child;
   const CardShell({Key? key, required this.child}) : super(key: key);
@@ -516,7 +515,6 @@ class CardShell extends StatelessWidget {
   }
 }
 
-
 Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
@@ -527,6 +525,21 @@ Future<void> main() async {
     );
 
     await ensureFirebaseInitialized(source: 'main');
+
+    await bootstrapAppCheck().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        adminWebDebugStore.recordEvent(
+          area: 'appcheck',
+          message: 'bootstrap-timeout',
+          detail: 'forced-continue after 5s',
+        );
+      },
+    ).catchError((Object e) {
+      adminWebDebugStore.recordError('appcheck', e,
+          message: 'bootstrap-error-ignored');
+    });
+
     adminWebDebugStore.recordEvent(area: 'firebase', message: 'initialized');
     await bootstrapFirestore();
     adminWebDebugStore.recordEvent(area: 'firestore', message: 'bootstrapped');
@@ -534,7 +547,8 @@ Future<void> main() async {
     // 📋 Diagnostics
     if (kDebugMode) {
       debugPrint('=== Firebase Initialization ===');
-      debugPrint('[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');
+      debugPrint(
+          '[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');
       debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
       debugPrint(
           '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
@@ -559,7 +573,8 @@ Future<void> main() async {
       }
     } else {
       // Web: persistance auto si IndexedDB disponible
-      if (kDebugMode) debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
+      if (kDebugMode)
+        debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
     }
 
     // ✅ Initialiser le service Firebase centralisé avec optimisations
@@ -567,25 +582,13 @@ Future<void> main() async {
 
     // ✅ Remote Config: charger le pipeline audio
     await PrestoRemoteConfig.init();
-    if (kDebugMode) debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
+    if (kDebugMode)
+      debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
     adminWebDebugStore.recordEvent(
       area: 'remote-config',
       message: 'initialized',
       detail: 'audio_pipeline=${PrestoRemoteConfig.audioPipeline}',
     );
-
-    await bootstrapAppCheck().timeout(
-      const Duration(seconds: 5),
-      onTimeout: () {
-        adminWebDebugStore.recordEvent(
-          area: 'appcheck',
-          message: 'bootstrap-timeout',
-          detail: 'forced-continue after 5s',
-        );
-      },
-    ).catchError((Object e) {
-      adminWebDebugStore.recordError('appcheck', e, message: 'bootstrap-error-ignored');
-    });
 
     // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
     // Supprimé : on n'impose plus de connexion automatique au démarrage
@@ -626,13 +629,14 @@ Future<void> main() async {
 
         final shouldRestorePostAuthRoute =
             pendingRedirectAuthResult?.user != null ||
-            pendingRedirectAuthError != null;
+                pendingRedirectAuthError != null;
         if (shouldRestorePostAuthRoute) {
           try {
             pendingPostAuthRoute =
                 await PostAuthNavigationIntentService.takePendingRoute();
             if (kDebugMode && pendingPostAuthRoute != null) {
-              debugPrint('[Auth] pending post-auth route=$pendingPostAuthRoute');
+              debugPrint(
+                  '[Auth] pending post-auth route=$pendingPostAuthRoute');
             }
           } catch (e) {
             if (kDebugMode) {
@@ -644,7 +648,8 @@ Future<void> main() async {
 
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
-        if (kDebugMode) debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+        if (kDebugMode)
+          debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
         SessionState.userId = auth.currentUser!.uid;
       } else {
         if (kDebugMode) debugPrint('[Auth] No user signed in at startup (OK)');
@@ -656,10 +661,12 @@ Future<void> main() async {
       FirebaseAuth.instance.authStateChanges().listen((User? user) {
         SessionState.userId = user?.uid;
         adminWebDebugStore.updateAuth(user);
-        if (kDebugMode) debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
+        if (kDebugMode)
+          debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
       });
     } catch (e) {
-      adminWebDebugStore.recordError('auth', e, message: 'startup-check-failed');
+      adminWebDebugStore.recordError('auth', e,
+          message: 'startup-check-failed');
       if (kDebugMode) debugPrint('[Auth] check failed: $e');
     }
 
@@ -713,7 +720,8 @@ Future<void> main() async {
         message: 'initialized',
       );
     } catch (e) {
-      adminWebDebugStore.recordError('notifications', e, message: 'init-failed');
+      adminWebDebugStore.recordError('notifications', e,
+          message: 'init-failed');
       if (kDebugMode) debugPrint('[Notifications] init error: $e');
     }
 
@@ -772,10 +780,9 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
   Widget _buildInitialHome() {
     if (kIsWeb) {
       final rawPath = Uri.base.path.trim();
-      final normalizedPath =
-          rawPath.endsWith('/') && rawPath.length > 1
-              ? rawPath.substring(0, rawPath.length - 1)
-              : rawPath;
+      final normalizedPath = rawPath.endsWith('/') && rawPath.length > 1
+          ? rawPath.substring(0, rawPath.length - 1)
+          : rawPath;
       if (!kReleaseMode && normalizedPath == '/page-catalog') {
         return const PageCaptureCatalogPage();
       }
@@ -793,7 +800,9 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     final routeName = settings.name ?? '';
     final parsedRoute = Uri.tryParse(routeName);
-    if (!kReleaseMode && parsedRoute != null && parsedRoute.path == '/page-catalog') {
+    if (!kReleaseMode &&
+        parsedRoute != null &&
+        parsedRoute.path == '/page-catalog') {
       return MaterialPageRoute(
         settings: settings,
         builder: (_) => const PageCaptureCatalogPage(),
@@ -863,7 +872,8 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         '/messages-2': (_) => const MessagesPageV2(),
         '/account': (_) => const AccountPage(),
         '/admin': (_) => const AdminSpacePage(),
-        if (!kReleaseMode) '/page-catalog': (_) => const PageCaptureCatalogPage(),
+        if (!kReleaseMode)
+          '/page-catalog': (_) => const PageCaptureCatalogPage(),
         ...buildSecondaryNamedRoutes(),
       },
       theme: buildPrestoTheme(),
@@ -1198,4 +1208,3 @@ class _SplashBuildStamp extends StatelessWidget {
     );
   }
 }
-
