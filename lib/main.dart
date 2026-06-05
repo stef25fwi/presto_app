@@ -574,7 +574,18 @@ Future<void> main() async {
       detail: 'audio_pipeline=${PrestoRemoteConfig.audioPipeline}',
     );
 
-    await bootstrapAppCheck();
+    await bootstrapAppCheck().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () {
+        adminWebDebugStore.recordEvent(
+          area: 'appcheck',
+          message: 'bootstrap-timeout',
+          detail: 'forced-continue after 5s',
+        );
+      },
+    ).catchError((Object e) {
+      adminWebDebugStore.recordError('appcheck', e, message: 'bootstrap-error-ignored');
+    });
 
     // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
     // Supprimé : on n'impose plus de connexion automatique au démarrage
@@ -972,7 +983,14 @@ class _SplashScreenState extends State<SplashScreen>
   void _scheduleNavigation(Duration duration) {
     _navTimer?.cancel();
     _navTimer = Timer(duration, () {
-      _navigateTo(_destinationForCurrentLocation());
+      try {
+        _navigateTo(_destinationForCurrentLocation());
+      } catch (e) {
+        // Navigation principale a échoué — forcer HomePage comme fallback.
+        try {
+          _navigateTo(const HomePage());
+        } catch (_) {}
+      }
     });
   }
 
