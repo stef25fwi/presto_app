@@ -202,6 +202,19 @@ class ConversationService {
     );
   }
 
+  static Future<void> adminUnblockConversation({
+    required String conversationId,
+  }) async {
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'adminUnblockConversation',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{
+      'conversationId': conversationId,
+      },
+    );
+  }
+
   static Future<void> deleteConversation({
     required String conversationId,
   }) async {
