@@ -33,6 +33,27 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
+Stream<QuerySnapshot<Map<String, dynamic>>> _pollConversationQuerySnapshots(
+  Query<Map<String, dynamic>> query, {
+  Duration interval = const Duration(seconds: 5),
+}) async* {
+  while (true) {
+    yield await query.get();
+    await Future<void>.delayed(interval);
+  }
+}
+
+Stream<DocumentSnapshot<Map<String, dynamic>>>
+    _pollConversationDocumentSnapshot(
+  DocumentReference<Map<String, dynamic>> document, {
+  Duration interval = const Duration(seconds: 15),
+}) async* {
+  while (true) {
+    yield await document.get();
+    await Future<void>.delayed(interval);
+  }
+}
+
 class ConversationsQueryContract {
   const ConversationsQueryContract._();
 
@@ -616,11 +637,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 descending: queryShape['descending']! as bool)
             .limit(queryShape['limit']! as int);
         subscriptions.add(
-          query.snapshots().listen(
-                (snapshot) => handleSnapshot('admin_global', snapshot),
-                onError: (error, stackTrace) =>
-                    handleError('admin_global', error),
-              ),
+          _pollConversationQuerySnapshots(
+            query,
+            interval: const Duration(seconds: 8),
+          ).listen(
+            (snapshot) => handleSnapshot('admin_global', snapshot),
+            onError: (error, stackTrace) => handleError('admin_global', error),
+          ),
         );
       } else {
         for (final field in conversationParticipantQueryFieldAliases) {
@@ -628,10 +651,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               .collection(queryShape['collection']! as String)
               .where(field, arrayContains: userId);
           subscriptions.add(
-            query.snapshots().listen(
-                  (snapshot) => handleSnapshot(field, snapshot),
-                  onError: (error, stackTrace) => handleError(field, error),
-                ),
+            _pollConversationQuerySnapshots(query).listen(
+              (snapshot) => handleSnapshot(field, snapshot),
+              onError: (error, stackTrace) => handleError(field, error),
+            ),
           );
         }
       }
@@ -2205,10 +2228,9 @@ class _ConversationAvatar extends StatelessWidget {
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .snapshots(),
+      stream: _pollConversationDocumentSnapshot(
+        FirebaseFirestore.instance.collection('users').doc(userId),
+      ),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? const <String, dynamic>{};
         final status = (data['status'] ?? '').toString().trim().toLowerCase();

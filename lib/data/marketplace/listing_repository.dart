@@ -6,6 +6,7 @@ import '../../models/marketplace_listing.dart';
 import '../../models/marketplace_listing_draft.dart';
 import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
+import '../../services/firestore_web_safe_reads.dart';
 
 class ListingRepository {
   ListingRepository({
@@ -78,8 +79,8 @@ class ListingRepository {
       name: 'updateListingDraftMedia',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
-      'draftId': draftId,
-      'media': media.map((e) => e.toMap()).toList(growable: false),
+        'draftId': draftId,
+        'media': media.map((e) => e.toMap()).toList(growable: false),
       },
     );
   }
@@ -93,8 +94,8 @@ class ListingRepository {
       name: 'submitListingDraft',
       timeout: const Duration(seconds: 45),
       parameters: <String, dynamic>{
-      'draftId': draftId,
-      'recaptchaToken': recaptchaToken,
+        'draftId': draftId,
+        'recaptchaToken': recaptchaToken,
       },
     );
     final data = Map<String, dynamic>.from(
@@ -117,7 +118,7 @@ class ListingRepository {
         .where('ownerId', isEqualTo: userId)
         .orderBy('updatedAt', descending: true)
         .limit(500)
-        .snapshots()
+        .webSafeSnapshots(debugKey: 'home.latestOffers')
         .map(
           (snapshot) => snapshot.docs
               .map(MarketplaceListing.fromFirestore)
@@ -139,7 +140,10 @@ class ListingRepository {
       query = query.where('cityId', isEqualTo: cityId.trim());
     }
 
-    return query.orderBy('createdAt', descending: true).snapshots().map(
+    return query
+        .orderBy('createdAt', descending: true)
+        .webSafeSnapshots(debugKey: 'home.latestOffers')
+        .map(
           (snapshot) => snapshot.docs
               .map(MarketplaceListing.fromFirestore)
               .toList(growable: false),
@@ -161,10 +165,8 @@ class ListingRepository {
       query = query.where('cityId', isEqualTo: cityId.trim());
     }
 
-    final snapshot = await query
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
+    final snapshot =
+        await query.orderBy('createdAt', descending: true).limit(limit).get();
     return snapshot.docs
         .map(MarketplaceListing.fromFirestore)
         .toList(growable: false);
@@ -180,9 +182,9 @@ class ListingRepository {
       name: 'incrementListingView',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'listingId': listingId,
-      'viewerKey': viewerKey,
-      'source': source,
+        'listingId': listingId,
+        'viewerKey': viewerKey,
+        'source': source,
       },
     );
   }
