@@ -14,7 +14,7 @@ void main() {
     expect(isConversationArchivedForUser(data, 'bob'), isFalse);
   });
 
-  test('detecte une conversation bloquee via blockedBy ou status', () {
+  test('detecte une conversation bloquee via blockedBy uniquement', () {
     final blocked = <String, dynamic>{
       'blockedBy': <String, dynamic>{
         'alice': false,
@@ -24,7 +24,17 @@ void main() {
 
     expect(isConversationBlocked(blocked), isTrue);
     expect(isConversationBlockedForUser(blocked, 'bob'), isTrue);
-    expect(isConversationBlocked(<String, dynamic>{'status': 'closed'}), isTrue);
+    expect(
+      isConversationBlocked(<String, dynamic>{'status': 'closed'}),
+      isFalse,
+    );
+    expect(
+      isConversationBlocked(<String, dynamic>{
+        'status': 'closed',
+        'blockedBy': <String, dynamic>{'alice': true},
+      }),
+      isTrue,
+    );
   });
 
   test('filtre la visibilite archivee ou principale', () {
