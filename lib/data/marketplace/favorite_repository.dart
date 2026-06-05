@@ -5,6 +5,15 @@ import 'package:flutter/foundation.dart';
 import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
 
+Stream<QuerySnapshot<Map<String, dynamic>>> _pollFavoriteQuerySnapshots(
+  Query<Map<String, dynamic>> query,
+) async* {
+  while (true) {
+    yield await query.get();
+    await Future<void>.delayed(const Duration(seconds: 10));
+  }
+}
+
 class FavoriteOfferRef {
   const FavoriteOfferRef({
     required this.offerId,
@@ -196,10 +205,10 @@ class FavoriteRepository {
     yield await _loadFavoriteRefs(normalizedUserId);
 
     try {
-      await for (final snapshot in _canonicalFavoritesRef(normalizedUserId)
+      final query = _canonicalFavoritesRef(normalizedUserId)
           .orderBy('createdAt', descending: true)
-          .limit(200)
-          .snapshots()) {
+          .limit(200);
+      await for (final snapshot in _pollFavoriteQuerySnapshots(query)) {
         final canonicalRefs = _refsFromQuerySnapshot(snapshot);
         if (canonicalRefs.isNotEmpty) {
           yield canonicalRefs;

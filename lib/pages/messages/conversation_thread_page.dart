@@ -35,6 +35,26 @@ const kConversationThreadStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
+Stream<QuerySnapshot<Map<String, dynamic>>> _pollFirestoreQuerySnapshots(
+  Query<Map<String, dynamic>> query, {
+  Duration interval = const Duration(seconds: 4),
+}) async* {
+  while (true) {
+    yield await query.get();
+    await Future<void>.delayed(interval);
+  }
+}
+
+Stream<DocumentSnapshot<Map<String, dynamic>>> _pollFirestoreDocumentSnapshot(
+  DocumentReference<Map<String, dynamic>> document, {
+  Duration interval = const Duration(seconds: 6),
+}) async* {
+  while (true) {
+    yield await document.get();
+    await Future<void>.delayed(interval);
+  }
+}
+
 class ConversationThreadPage extends StatefulWidget {
   final String conversationId;
   final String offerTitle;
@@ -254,7 +274,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     } else {
       query = query.limit(_messagePageSize);
     }
-    return query.snapshots();
+    return _pollFirestoreQuerySnapshots(query);
   }
 
   @override
@@ -583,11 +603,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return;
     }
     _presenceSubscription?.cancel();
-    _presenceSubscription = FirebaseFirestore.instance
-        .collection('users')
-        .doc(participantId)
-        .snapshots()
-        .listen((snapshot) {
+    final userDocument =
+        FirebaseFirestore.instance.collection('users').doc(participantId);
+    _presenceSubscription = _pollFirestoreDocumentSnapshot(
+      userDocument,
+      interval: const Duration(seconds: 12),
+    ).listen((snapshot) {
       final data = snapshot.data();
       if (data == null) return;
       final rawPhotoValue = _firstProfilePhotoValue(data);
@@ -892,11 +913,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   void _bindConversationListener() {
     _conversationSubscription?.cancel();
-    _conversationSubscription = FirebaseFirestore.instance
+    final conversationDocument = FirebaseFirestore.instance
         .collection('conversations')
-        .doc(widget.conversationId)
-        .snapshots()
-        .listen((snapshot) {
+        .doc(widget.conversationId);
+    _conversationSubscription = _pollFirestoreDocumentSnapshot(
+      conversationDocument,
+      interval: const Duration(seconds: 4),
+    ).listen((snapshot) {
       if (!snapshot.exists) {
         _debugMessagingAccess(
           'conversation-document-not-found',
