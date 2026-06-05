@@ -4,7 +4,7 @@ import { posix as pathPosix } from "node:path";
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import sharp from "sharp";
-import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
+import { PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { canProceedRateLimited } from "../../core/rate_limit";
@@ -31,6 +31,14 @@ const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
 const CONVERSATION_IMAGE_MAX_EDGE = 960;
+
+// Messaging is protected by Firebase Auth, participant checks, strict input
+// validation and rate limits. Keeping App Check non-blocking here prevents a
+// broken/rotating web reCAPTCHA domain from taking the whole inbox offline.
+const MESSAGING_CALLABLE_OPTIONS = {
+  region: PROJECT_REGION,
+  enforceAppCheck: false,
+} as const;
 
 async function findConversationSnapshotsForParticipant(
   currentUserId: string,
@@ -294,7 +302,7 @@ export function buildProcessedConversationAttachmentPath({
 }
 
 export const processConversationAttachmentPhoto = onCall(
-  { region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK },
+  MESSAGING_CALLABLE_OPTIONS,
   async (request) => {
     const uid = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
@@ -597,7 +605,7 @@ async function loadConversationForParticipant(
   return { convRef, data, participants, conversation };
 }
 
-export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const ensureOfferConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const listingId = String(request.data?.listingId || request.data?.offerId || "").trim();
   const otherUserId = String(request.data?.otherUserId || "").trim();
@@ -782,7 +790,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceA
   };
 });
 
-export const sendConversationMessage = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const sendConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
   const text = sanitizeMessageText(request.data?.text);
@@ -925,7 +933,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION, enforceA
   };
 });
 
-export const markConversationRead = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const markConversationRead = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -957,7 +965,7 @@ export const markConversationRead = onCall({ region: PROJECT_REGION, enforceAppC
   return { ok: true };
 });
 
-export const archiveConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const archiveConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -986,7 +994,7 @@ export const archiveConversation = onCall({ region: PROJECT_REGION, enforceAppCh
   return { ok: true };
 });
 
-export const unarchiveConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const unarchiveConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -1015,7 +1023,7 @@ export const unarchiveConversation = onCall({ region: PROJECT_REGION, enforceApp
   return { ok: true };
 });
 
-export const blockConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const blockConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -1044,7 +1052,7 @@ export const blockConversation = onCall({ region: PROJECT_REGION, enforceAppChec
   return { ok: true };
 });
 
-export const unblockConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const unblockConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -1077,7 +1085,7 @@ export const unblockConversation = onCall({ region: PROJECT_REGION, enforceAppCh
   return { ok: true };
 });
 
-export const adminUnblockConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const adminUnblockConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   requireAdminAccess(request);
 
@@ -1117,7 +1125,7 @@ export const adminUnblockConversation = onCall({ region: PROJECT_REGION, enforce
   return { ok: true };
 });
 
-export const deleteConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const deleteConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -1174,7 +1182,7 @@ export const deleteConversation = onCall({ region: PROJECT_REGION, enforceAppChe
   return { ok: true };
 });
 
-export const deleteConversationMessage = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
   const messageId = String(request.data?.messageId || "").trim();
