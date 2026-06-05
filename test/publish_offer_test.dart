@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:presto_app/main.dart' as app;
 import 'package:presto_app/widgets/photo_selector_tile.dart';
-import 'package:presto_app/widgets/premium_ai_button.dart';
+import 'package:presto_app/widgets/ai_publish_control.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -82,8 +82,8 @@ void main() {
       (WidgetTester tester) async {
     await pumpPublishPage(tester);
 
-    // Le PremiumAiButton principal (dictée vocale) doit être présent.
-    expect(find.byType(PremiumAiButton), findsOneWidget);
+    // Le AiPublishControl principal (dictée vocale) doit être présent.
+    expect(find.byType(AiPublishControl), findsOneWidget);
     expect(find.text('Décrire mon besoin (IA)'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -289,7 +289,7 @@ void main() {
     expect(find.text('Publier mon offre'), findsOneWidget);
 
     // Bouton IA dictée
-    expect(find.byType(PremiumAiButton), findsOneWidget);
+    expect(find.byType(AiPublishControl), findsOneWidget);
     expect(find.text('Décrire mon besoin (IA)'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
