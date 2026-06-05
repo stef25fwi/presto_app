@@ -448,6 +448,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     var isCancelled = false;
     var permissionDeniedRetryCount = 0;
     var appCheckPrefixRetryCount = 0;
+    var _subscriptionGeneration = 0;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -499,6 +500,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
+      final myGeneration = ++_subscriptionGeneration;
+
       try {
         if (!isAdminMode) {
           await UserProfileBootstrapService.prepareProfileFirestoreAccess(
@@ -508,6 +511,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
       } catch (error) {
+        if (myGeneration != _subscriptionGeneration ||
+            isCancelled ||
+            controller.isClosed) return;
         // Retry preflight AppCheck failures: reCAPTCHA may still be warming up
         // in the background. Allow up to 3 retries with growing delays before
         // surfacing the error to the UI.
@@ -530,12 +536,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           }());
           return;
         }
+        _appendAdminConversationLog(
+            'mode=$mode startSubscriptions error app_check=$error');
         errorsByField['app_check'] = error;
         emitState();
         return;
       }
 
-      if (isCancelled || controller.isClosed) return;
+      if (myGeneration != _subscriptionGeneration ||
+          isCancelled ||
+          controller.isClosed) return;
 
       void handleSnapshot(
         String field,
@@ -581,11 +591,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             if (delay > Duration.zero) {
               await Future<void>.delayed(delay);
             }
-            await startSubscriptions(forceRefreshTokens: true);
+            if (!isCancelled && !controller.isClosed) {
+              await startSubscriptions(forceRefreshTokens: true);
+            }
           }());
           return;
         }
 
+        _appendAdminConversationLog(
+            'mode=$mode field=$field stream-error=$error');
         errorsByField[field] = error;
         emitState();
       }

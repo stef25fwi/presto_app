@@ -1283,8 +1283,9 @@ class _AccountPageState extends State<AccountPage> {
       return;
     }
 
-    await _profileDocSub?.cancel();
+    final _oldSub = _profileDocSub;
     _profileDocSub = null;
+    await _oldSub?.cancel();
     if (!mounted) return;
 
     setState(() {
