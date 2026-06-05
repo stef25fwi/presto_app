@@ -97,7 +97,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isBlockedByAnotherParticipant = false;
   bool _isArchivedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
-  bool _hasRetriedMessageStreamAccess = false;
+  int _messageStreamRetryCount = 0;
   String _offerId = '';
   String _conversationOfferTitle = '';
   String _otherParticipantId = '';
@@ -213,14 +213,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   void _retryMessageStreamAccessAfterDenied(Object? error) {
-    if (_hasRetriedMessageStreamAccess) return;
-    _hasRetriedMessageStreamAccess = true;
+    if (_messageStreamRetryCount >= 3) return;
+    final attempt = ++_messageStreamRetryCount;
     unawaited(() async {
       _debugMessagingAccess(
         'messages-permission-denied-retry-access',
         error: error,
         firestorePath: 'conversations/${widget.conversationId}/messages',
       );
+      final delay = Duration(milliseconds: attempt * 600);
+      if (delay > Duration.zero) await Future<void>.delayed(delay);
+      if (!mounted) return;
       final ready = await _ensureMessagingAccess(
         interactive: false,
         forceRefreshToken: true,
@@ -318,10 +321,21 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       });
     }
 
-    final ready = await _ensureMessagingAccess(
-      interactive: false,
-      forceRefreshAppCheckToken: true,
-    );
+    var accessAttempt = 0;
+    var ready = false;
+    while (accessAttempt < 3) {
+      ready = await _ensureMessagingAccess(
+        interactive: false,
+        forceRefreshToken: accessAttempt > 0,
+        forceRefreshAppCheckToken: true,
+      );
+      if (ready || !mounted) break;
+      accessAttempt++;
+      if (accessAttempt < 3) {
+        await Future<void>.delayed(Duration(seconds: accessAttempt * 2));
+        if (!mounted) return;
+      }
+    }
     if (!mounted) return;
 
     if (!ready) {
@@ -334,7 +348,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
     _bindConversationListener();
     setState(() {
-      _hasRetriedMessageStreamAccess = false;
+      _messageStreamRetryCount = 0;
       _isPreparingMessageStream = false;
       _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
     });
@@ -1679,6 +1693,28 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
+  Future<ProcessedConversationPhoto> _processPhotoWithRetry(
+      String storagePath) async {
+    try {
+      return await ConversationService.processConversationPhoto(
+        conversationId: widget.conversationId,
+        storagePath: storagePath,
+      );
+    } catch (_) {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (!mounted) rethrow;
+      await _ensureMessagingAccess(
+        interactive: false,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: true,
+      );
+      return ConversationService.processConversationPhoto(
+        conversationId: widget.conversationId,
+        storagePath: storagePath,
+      );
+    }
+  }
+
   Future<void> _uploadAndSendAttachment({
     required String uid,
     required String type,
@@ -1716,10 +1752,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       var url = await ref.getDownloadURL();
 
       if (type == 'image') {
-        final processed = await ConversationService.processConversationPhoto(
-          conversationId: widget.conversationId,
-          storagePath: path,
-        );
+        final processed = await _processPhotoWithRetry(path);
         attachmentName = name.replaceFirst(RegExp(r'\.[^/.]+$'), '.webp');
         attachmentPath = processed.storagePath;
         attachmentMimeType = processed.mimeType;
@@ -2235,13 +2268,24 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
-                          child: Text(
-                            message,
-                            textAlign: TextAlign.center,
-                            style: kPrestoBodyTextStyle.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4B5563),
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                message,
+                                textAlign: TextAlign.center,
+                                style: kPrestoBodyTextStyle.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF4B5563),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              FilledButton.icon(
+                                onPressed: _warmMessagingAccess,
+                                icon: const Icon(Icons.refresh_rounded),
+                                label: const Text('Réessayer'),
+                              ),
+                            ],
                           ),
                         ),
                       );
