@@ -123,8 +123,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     String? firestorePath,
   }) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'null';
-    final detail =
-        'currentUser.uid=$currentUid '
+    final detail = 'currentUser.uid=$currentUid '
         'widget.currentUserId=${widget.currentUserId} '
         'conversationId=${widget.conversationId} '
         'path=${firestorePath ?? 'conversations/${widget.conversationId}'} '
@@ -228,6 +227,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         interactive: false,
         forceRefreshToken: true,
         forceRefreshAppCheckToken: true,
+        requireAppCheckToken: false,
       );
       if (!ready || !mounted) return;
       setState(() {
@@ -290,12 +290,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     required bool interactive,
     bool forceRefreshToken = false,
     bool forceRefreshAppCheckToken = false,
+    bool requireAppCheckToken = false,
   }) async {
     try {
       await UserProfileBootstrapService.prepareProfileFirestoreAccess(
         user: FirebaseAuth.instance.currentUser,
         forceRefreshToken: forceRefreshToken,
         forceRefreshAppCheckToken: forceRefreshAppCheckToken,
+        requireAppCheckToken: requireAppCheckToken,
       );
       return true;
     } catch (error) {
@@ -328,6 +330,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         interactive: false,
         forceRefreshToken: accessAttempt > 0,
         forceRefreshAppCheckToken: true,
+        requireAppCheckToken: false,
       );
       if (ready || !mounted) break;
       accessAttempt++;
@@ -1734,6 +1737,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         interactive: false,
         forceRefreshToken: true,
         forceRefreshAppCheckToken: true,
+        requireAppCheckToken: false,
       );
       return ConversationService.processConversationPhoto(
         conversationId: widget.conversationId,
@@ -2268,344 +2272,366 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 child: _isPreparingMessageStream || _messageStream == null
                     ? _buildMessagesAccessGate()
                     : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _messageStream!,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      _debugMessagingAccess(
-                        'messages-subcollection-stream-error',
-                        error: snapshot.error,
-                        firestorePath:
-                            'conversations/${widget.conversationId}/messages',
-                      );
-                      if (_messagingErrorCode(snapshot.error) ==
-                          'permission-denied') {
-                        _retryMessageStreamAccessAfterDenied(snapshot.error);
-                      }
-                      final message =
-                          _messageStreamErrorMessage(snapshot.error);
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                message,
-                                textAlign: TextAlign.center,
-                                style: kPrestoBodyTextStyle.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF4B5563),
-                                ),
+                        stream: _messageStream!,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    kPrestoOrange),
                               ),
-                              const SizedBox(height: 12),
-                              FilledButton.icon(
-                                onPressed: _warmMessagingAccess,
-                                icon: const Icon(Icons.refresh_rounded),
-                                label: const Text('Réessayer'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
+                            );
+                          }
 
-                    final liveDocs = snapshot.data?.docs ?? const [];
-                    _handleLiveMessageDocs(liveDocs);
-                    _applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
-                    final docs = _mergeMessageDocs(liveDocs);
-                    final visibleItemCount =
-                        docs.length + _optimisticMessages.length;
-                    final canLoadMore = docs.isNotEmpty &&
-                        (_hasAttemptedOlderPagination
-                            ? _hasMoreMessages
-                            : liveDocs.length >= _messagePageSize);
-
-                    if (visibleItemCount == 0) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'Aucun message pour le moment.\nVous pouvez lancer la conversation.',
-                            textAlign: TextAlign.center,
-                            style: kPrestoBodyTextStyle.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4B5563),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Stack(
-                      children: [
-                        NotificationListener<ScrollNotification>(
-                          onNotification: (_) {
-                            if (_showNewMessagesButton &&
-                                _isNearLatestMessage()) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (!mounted) return;
-                                setState(() => _showNewMessagesButton = false);
-                              });
+                          if (snapshot.hasError) {
+                            _debugMessagingAccess(
+                              'messages-subcollection-stream-error',
+                              error: snapshot.error,
+                              firestorePath:
+                                  'conversations/${widget.conversationId}/messages',
+                            );
+                            if (_messagingErrorCode(snapshot.error) ==
+                                'permission-denied') {
+                              _retryMessageStreamAccessAfterDenied(
+                                  snapshot.error);
                             }
-                            return false;
-                          },
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            reverse: true,
-                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                            itemCount: visibleItemCount + 1,
-                            itemBuilder: (context, index) {
-                              if (index == visibleItemCount) {
-                                // Dernier item (visuellement en haut) : bouton charger plus
-                                return Column(
+                            final message =
+                                _messageStreamErrorMessage(snapshot.error);
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    if (canLoadMore)
-                                      TextButton.icon(
-                                        onPressed: _isLoadingMoreMessages
-                                            ? null
-                                            : () => _loadMoreMessages(liveDocs),
-                                        icon: _isLoadingMoreMessages
-                                            ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : const Icon(Icons.history_rounded,
-                                                size: 16),
-                                        label: Text(
-                                          _isLoadingMoreMessages
-                                              ? 'Chargement...'
-                                              : 'Charger les messages plus anciens',
-                                        ),
-                                        style: TextButton.styleFrom(
-                                          foregroundColor:
-                                              const Color(0xFF6B7280),
-                                          textStyle: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
+                                    Text(
+                                      message,
+                                      textAlign: TextAlign.center,
+                                      style: kPrestoBodyTextStyle.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF4B5563),
                                       ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    FilledButton.icon(
+                                      onPressed: _warmMessagingAccess,
+                                      icon: const Icon(Icons.refresh_rounded),
+                                      label: const Text('Réessayer'),
+                                    ),
                                   ],
-                                );
-                              }
-
-                              if (index < _optimisticMessages.length) {
-                                final optimisticMessage =
-                                    _optimisticMessages[index];
-                                return _buildMessageBubble(
-                                  text: optimisticMessage.text,
-                                  isMine: true,
-                                  senderName: optimisticMessage.senderName,
-                                  sentAt: optimisticMessage.sentAt,
-                                  attachments: optimisticMessage.attachments,
-                                  statusLabel: optimisticMessage.status ==
-                                          _OptimisticMessageStatus.failed
-                                      ? 'Non envoyé'
-                                      : 'Envoi...',
-                                  failed: optimisticMessage.status ==
-                                      _OptimisticMessageStatus.failed,
-                                  onRetry: optimisticMessage.status ==
-                                          _OptimisticMessageStatus.failed
-                                      ? () => _retryOptimisticMessage(
-                                            optimisticMessage,
-                                          )
-                                      : null,
-                                );
-                              }
-
-                              final docIndex =
-                                  index - _optimisticMessages.length;
-                              final data = docs[docIndex].data();
-                              final text =
-                                  ((data['text'] ?? data['body']) ?? '')
-                                      .toString();
-                              final senderId =
-                                  ((data['senderId'] ?? data['sender_id']) ??
-                                          '')
-                                      .toString();
-                              final senderName = ((data['senderName'] ??
-                                          data['sender_name']) ??
-                                      '')
-                                  .toString();
-                              final sentAt = parseFirestoreDateTime(
-                                (data['createdAt'] ?? data['created_at']),
-                              );
-                              final olderMessageDate = docIndex + 1 <
-                                      docs.length
-                                  ? parseFirestoreDateTime(
-                                      (docs[docIndex + 1].data()['createdAt'] ??
-                                          docs[docIndex + 1]
-                                              .data()['created_at']),
-                                    )
-                                  : null;
-                              final showDateChip = sentAt != null &&
-                                  (olderMessageDate == null ||
-                                      !_isSameCalendarDay(
-                                          sentAt, olderMessageDate));
-                              final isMine = senderId == widget.currentUserId;
-                              final readReceipt =
-                                  isMine ? _readReceiptLabel(sentAt) : null;
-                              final messageDocId = docs[docIndex].id;
-                              final attachments = _MessageAttachment.fromList(
-                                data['attachments'],
-                              );
-                              final newerSenderId = docIndex > 0
-                                  ? ((docs[docIndex - 1].data()['senderId'] ??
-                                              docs[docIndex - 1]
-                                                  .data()['sender_id']) ??
-                                          '')
-                                      .toString()
-                                  : '';
-                              final olderSenderId = docIndex + 1 < docs.length
-                                  ? ((docs[docIndex + 1].data()['senderId'] ??
-                                              docs[docIndex + 1]
-                                                  .data()['sender_id']) ??
-                                          '')
-                                      .toString()
-                                  : '';
-                              final groupedWithNewer =
-                                  newerSenderId == senderId &&
-                                      newerSenderId.isNotEmpty &&
-                                      !showDateChip;
-                              final groupedWithOlder =
-                                  olderSenderId == senderId &&
-                                      olderSenderId.isNotEmpty &&
-                                      !showDateChip;
-
-                              final messageBubble = _buildMessageBubble(
-                                text: text,
-                                isMine: isMine,
-                                senderName: senderName,
-                                sentAt: sentAt,
-                                attachments: attachments,
-                                readReceipt: readReceipt,
-                                statusLabel: isMine && readReceipt == null
-                                    ? 'Envoyé'
-                                    : null,
-                                groupedWithNewer: groupedWithNewer,
-                                groupedWithOlder: groupedWithOlder,
-                                onLongPress: isMine
-                                    ? () async {
-                                        final scaffoldMessenger =
-                                            ScaffoldMessenger.of(context);
-                                        final confirmed =
-                                            await showDialog<bool>(
-                                          context: context,
-                                          builder: (ctx) {
-                                            final overlayTheme =
-                                                ctx.prestoOverlayTheme;
-                                            return AlertDialog(
-                                              backgroundColor:
-                                                  overlayTheme.surfaceColor,
-                                              surfaceTintColor:
-                                                  overlayTheme.surfaceTintColor,
-                                              shape: overlayTheme.dialogShape,
-                                              title: const Text(
-                                                  'Supprimer ce message'),
-                                              content: const Text(
-                                                'Ce message sera definitivement supprime.',
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(false),
-                                                  child: const Text('Annuler'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(true),
-                                                  style: TextButton.styleFrom(
-                                                    foregroundColor: Colors.red,
-                                                  ),
-                                                  child:
-                                                      const Text('Supprimer'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                        if (confirmed != true || !mounted)
-                                          return;
-                                        try {
-                                          await ConversationService
-                                              .deleteMessage(
-                                            conversationId:
-                                                widget.conversationId,
-                                            messageId: messageDocId,
-                                          );
-                                          if (!mounted) return;
-                                          scaffoldMessenger.showSnackBar(
-                                            const SnackBar(
-                                                content:
-                                                    Text('Message supprime.')),
-                                          );
-                                        } catch (error) {
-                                          if (!mounted) return;
-                                          scaffoldMessenger.showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                  'Impossible de supprimer ce message : $error'),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    : null,
-                              );
-
-                              if (!showDateChip) {
-                                return messageBubble;
-                              }
-
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildThreadDateChip(sentAt),
-                                  messageBubble,
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                        if (_showNewMessagesButton)
-                          Positioned(
-                            right: 18,
-                            bottom: 18,
-                            child: FilledButton.icon(
-                              onPressed: () =>
-                                  _scrollToLatestMessage(force: true),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: kPrestoBlue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 9,
                                 ),
                               ),
-                              icon:
-                                  const Icon(Icons.keyboard_arrow_down_rounded),
-                              label: const Text('Nouveaux messages'),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
+                            );
+                          }
+
+                          final liveDocs = snapshot.data?.docs ?? const [];
+                          _handleLiveMessageDocs(liveDocs);
+                          _applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
+                          final docs = _mergeMessageDocs(liveDocs);
+                          final visibleItemCount =
+                              docs.length + _optimisticMessages.length;
+                          final canLoadMore = docs.isNotEmpty &&
+                              (_hasAttemptedOlderPagination
+                                  ? _hasMoreMessages
+                                  : liveDocs.length >= _messagePageSize);
+
+                          if (visibleItemCount == 0) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Text(
+                                  'Aucun message pour le moment.\nVous pouvez lancer la conversation.',
+                                  textAlign: TextAlign.center,
+                                  style: kPrestoBodyTextStyle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF4B5563),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return Stack(
+                            children: [
+                              NotificationListener<ScrollNotification>(
+                                onNotification: (_) {
+                                  if (_showNewMessagesButton &&
+                                      _isNearLatestMessage()) {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      if (!mounted) return;
+                                      setState(
+                                          () => _showNewMessagesButton = false);
+                                    });
+                                  }
+                                  return false;
+                                },
+                                child: ListView.builder(
+                                  controller: _scrollController,
+                                  reverse: true,
+                                  padding:
+                                      const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                                  itemCount: visibleItemCount + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index == visibleItemCount) {
+                                      // Dernier item (visuellement en haut) : bouton charger plus
+                                      return Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (canLoadMore)
+                                            TextButton.icon(
+                                              onPressed: _isLoadingMoreMessages
+                                                  ? null
+                                                  : () => _loadMoreMessages(
+                                                      liveDocs),
+                                              icon: _isLoadingMoreMessages
+                                                  ? const SizedBox(
+                                                      width: 16,
+                                                      height: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                    )
+                                                  : const Icon(
+                                                      Icons.history_rounded,
+                                                      size: 16),
+                                              label: Text(
+                                                _isLoadingMoreMessages
+                                                    ? 'Chargement...'
+                                                    : 'Charger les messages plus anciens',
+                                              ),
+                                              style: TextButton.styleFrom(
+                                                foregroundColor:
+                                                    const Color(0xFF6B7280),
+                                                textStyle: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    }
+
+                                    if (index < _optimisticMessages.length) {
+                                      final optimisticMessage =
+                                          _optimisticMessages[index];
+                                      return _buildMessageBubble(
+                                        text: optimisticMessage.text,
+                                        isMine: true,
+                                        senderName:
+                                            optimisticMessage.senderName,
+                                        sentAt: optimisticMessage.sentAt,
+                                        attachments:
+                                            optimisticMessage.attachments,
+                                        statusLabel: optimisticMessage.status ==
+                                                _OptimisticMessageStatus.failed
+                                            ? 'Non envoyé'
+                                            : 'Envoi...',
+                                        failed: optimisticMessage.status ==
+                                            _OptimisticMessageStatus.failed,
+                                        onRetry: optimisticMessage.status ==
+                                                _OptimisticMessageStatus.failed
+                                            ? () => _retryOptimisticMessage(
+                                                  optimisticMessage,
+                                                )
+                                            : null,
+                                      );
+                                    }
+
+                                    final docIndex =
+                                        index - _optimisticMessages.length;
+                                    final data = docs[docIndex].data();
+                                    final text =
+                                        ((data['text'] ?? data['body']) ?? '')
+                                            .toString();
+                                    final senderId = ((data['senderId'] ??
+                                                data['sender_id']) ??
+                                            '')
+                                        .toString();
+                                    final senderName = ((data['senderName'] ??
+                                                data['sender_name']) ??
+                                            '')
+                                        .toString();
+                                    final sentAt = parseFirestoreDateTime(
+                                      (data['createdAt'] ?? data['created_at']),
+                                    );
+                                    final olderMessageDate =
+                                        docIndex + 1 < docs.length
+                                            ? parseFirestoreDateTime(
+                                                (docs[docIndex + 1]
+                                                        .data()['createdAt'] ??
+                                                    docs[docIndex + 1]
+                                                        .data()['created_at']),
+                                              )
+                                            : null;
+                                    final showDateChip = sentAt != null &&
+                                        (olderMessageDate == null ||
+                                            !_isSameCalendarDay(
+                                                sentAt, olderMessageDate));
+                                    final isMine =
+                                        senderId == widget.currentUserId;
+                                    final readReceipt = isMine
+                                        ? _readReceiptLabel(sentAt)
+                                        : null;
+                                    final messageDocId = docs[docIndex].id;
+                                    final attachments =
+                                        _MessageAttachment.fromList(
+                                      data['attachments'],
+                                    );
+                                    final newerSenderId = docIndex > 0
+                                        ? ((docs[docIndex - 1]
+                                                        .data()['senderId'] ??
+                                                    docs[docIndex - 1]
+                                                        .data()['sender_id']) ??
+                                                '')
+                                            .toString()
+                                        : '';
+                                    final olderSenderId = docIndex + 1 <
+                                            docs.length
+                                        ? ((docs[docIndex + 1]
+                                                        .data()['senderId'] ??
+                                                    docs[docIndex + 1]
+                                                        .data()['sender_id']) ??
+                                                '')
+                                            .toString()
+                                        : '';
+                                    final groupedWithNewer =
+                                        newerSenderId == senderId &&
+                                            newerSenderId.isNotEmpty &&
+                                            !showDateChip;
+                                    final groupedWithOlder =
+                                        olderSenderId == senderId &&
+                                            olderSenderId.isNotEmpty &&
+                                            !showDateChip;
+
+                                    final messageBubble = _buildMessageBubble(
+                                      text: text,
+                                      isMine: isMine,
+                                      senderName: senderName,
+                                      sentAt: sentAt,
+                                      attachments: attachments,
+                                      readReceipt: readReceipt,
+                                      statusLabel: isMine && readReceipt == null
+                                          ? 'Envoyé'
+                                          : null,
+                                      groupedWithNewer: groupedWithNewer,
+                                      groupedWithOlder: groupedWithOlder,
+                                      onLongPress: isMine
+                                          ? () async {
+                                              final scaffoldMessenger =
+                                                  ScaffoldMessenger.of(context);
+                                              final confirmed =
+                                                  await showDialog<bool>(
+                                                context: context,
+                                                builder: (ctx) {
+                                                  final overlayTheme =
+                                                      ctx.prestoOverlayTheme;
+                                                  return AlertDialog(
+                                                    backgroundColor:
+                                                        overlayTheme
+                                                            .surfaceColor,
+                                                    surfaceTintColor:
+                                                        overlayTheme
+                                                            .surfaceTintColor,
+                                                    shape: overlayTheme
+                                                        .dialogShape,
+                                                    title: const Text(
+                                                        'Supprimer ce message'),
+                                                    content: const Text(
+                                                      'Ce message sera definitivement supprime.',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(ctx)
+                                                                .pop(false),
+                                                        child: const Text(
+                                                            'Annuler'),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(ctx)
+                                                                .pop(true),
+                                                        style: TextButton
+                                                            .styleFrom(
+                                                          foregroundColor:
+                                                              Colors.red,
+                                                        ),
+                                                        child: const Text(
+                                                            'Supprimer'),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                              if (confirmed != true || !mounted)
+                                                return;
+                                              try {
+                                                await ConversationService
+                                                    .deleteMessage(
+                                                  conversationId:
+                                                      widget.conversationId,
+                                                  messageId: messageDocId,
+                                                );
+                                                if (!mounted) return;
+                                                scaffoldMessenger.showSnackBar(
+                                                  const SnackBar(
+                                                      content: Text(
+                                                          'Message supprime.')),
+                                                );
+                                              } catch (error) {
+                                                if (!mounted) return;
+                                                scaffoldMessenger.showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        'Impossible de supprimer ce message : $error'),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          : null,
+                                    );
+
+                                    if (!showDateChip) {
+                                      return messageBubble;
+                                    }
+
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _buildThreadDateChip(sentAt),
+                                        messageBubble,
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                              if (_showNewMessagesButton)
+                                Positioned(
+                                  right: 18,
+                                  bottom: 18,
+                                  child: FilledButton.icon(
+                                    onPressed: () =>
+                                        _scrollToLatestMessage(force: true),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: kPrestoBlue,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 9,
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                        Icons.keyboard_arrow_down_rounded),
+                                    label: const Text('Nouveaux messages'),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
               ),
               SafeArea(
                 top: false,

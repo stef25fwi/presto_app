@@ -560,6 +560,8 @@ service cloud.firestore {
               || ((data.unread_count is map) && data.unread_count.keys().hasAny([uid()]))
               || ((data.lastReadAt is map) && data.lastReadAt.keys().hasAny([uid()]))
               || ((data.last_read_at is map) && data.last_read_at.keys().hasAny([uid()]))
+              || ((data.archivedBy is map) && data.archivedBy.keys().hasAny([uid()]))
+              || ((data.blockedBy is map) && data.blockedBy.keys().hasAny([uid()]))
             ));
       }
 
@@ -581,7 +583,11 @@ service cloud.firestore {
       }
 
       function canReadConversationAsParticipant(data) {
-        return hasAppCheck() && isParticipantInConversationData(data);
+        // Auth + participant membership protect private messages. Do not block
+        // the inbox on web when App Check / reCAPTCHA is temporarily rejected.
+        // Message writes still go through validated Cloud Functions or a strict
+        // client fallback guarded by parent participant checks.
+        return isParticipantInConversationData(data);
       }
 
       function isValidClientMessageCreate() {
@@ -620,13 +626,9 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         allow get, list: if isAdmin()
-          || (hasAppCheck()
-            && (
-              isParentConversationParticipant()
-              || hasParticipantAccess(resource.data)
-            ));
-        allow create: if hasAppCheck()
-          && isParentConversationParticipant()
+          || isParentConversationParticipant()
+          || hasParticipantAccess(resource.data);
+        allow create: if isParentConversationParticipant()
           && isValidClientMessageCreate();
         allow update, delete: if false;
       }

@@ -317,8 +317,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       // (cle reCAPTCHA invalide ou domaine non autorise), pas des regles.
       if (kIsWeb) {
         return 'Acces refuse a la messagerie : la verification de securite App Check a ete rejetee. '
-        'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et que le domaine est autorise dans la console Firebase, puis rechargez la page.'
-        '${appCheckWebHostHint()}';
+            'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et que le domaine est autorise dans la console Firebase, puis rechargez la page.'
+            '${appCheckWebHostHint()}';
       }
       return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
     }
@@ -509,6 +509,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             user: FirebaseAuth.instance.currentUser,
             forceRefreshToken: forceRefreshTokens,
             forceRefreshAppCheckToken: forceRefreshTokens,
+            requireAppCheckToken: false,
           );
         }
       } catch (error) {
@@ -521,8 +522,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         if (UserProfileBootstrapService.isAppCheckFailure(error) &&
             appCheckPrefixRetryCount < 3) {
           appCheckPrefixRetryCount += 1;
-          final appCheckDelay =
-              Duration(seconds: appCheckPrefixRetryCount * 2);
+          final appCheckDelay = Duration(seconds: appCheckPrefixRetryCount * 2);
           unawaited(() async {
             if (kDebugMode) {
               debugPrint(
@@ -872,7 +872,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           initialDraftText: initialDraftText,
         ),
       );
-      final navigator = Navigator.maybeOf(context) ?? appNavigatorKey.currentState;
+      final navigator =
+          Navigator.maybeOf(context) ?? appNavigatorKey.currentState;
       if (navigator == null) {
         throw StateError('Navigator indisponible pour ouvrir la conversation.');
       }
@@ -1056,6 +1057,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         user: FirebaseAuth.instance.currentUser,
         forceRefreshToken: forceRefreshTokens,
         forceRefreshAppCheckToken: forceRefreshTokens,
+        requireAppCheckToken: false,
       );
       final snapshot = await FirebaseFirestore.instance
           .collection('conversations')
@@ -1817,7 +1819,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           child: InkWell(
                                             borderRadius:
                                                 BorderRadius.circular(16),
-                                            onTap: () => unawaited(openConversation()),
+                                            onTap: () =>
+                                                unawaited(openConversation()),
                                             child: AnimatedContainer(
                                               duration: const Duration(
                                                   milliseconds: 220),
@@ -1847,7 +1850,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   GestureDetector(
-                                                    onTap: () => unawaited(openConversation()),
+                                                    onTap: () => unawaited(
+                                                        openConversation()),
                                                     child: _ConversationAvatar(
                                                       title: title,
                                                       userId:

@@ -619,6 +619,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       await UserProfileBootstrapService.prepareProfileFirestoreAccess(
         user: authUser,
         forceRefreshAppCheckToken: true,
+        requireAppCheckToken: false,
       );
     } catch (error) {
       logRuntimeAction(

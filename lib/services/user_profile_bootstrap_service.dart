@@ -92,6 +92,7 @@ class UserProfileBootstrapService {
     User? user,
     bool forceRefreshToken = false,
     bool forceRefreshAppCheckToken = false,
+    bool requireAppCheckToken = true,
   }) async {
     User? resolvedUser = user ?? FirebaseAuth.instance.currentUser;
     if (resolvedUser == null) {
@@ -129,7 +130,14 @@ class UserProfileBootstrapService {
       );
     } catch (error, stackTrace) {
       debugPrint('[ProfileFirestore] App Check token refresh failed: $error');
-      throw _normalizeBootstrapError(error, stackTrace);
+      final normalizedError = _normalizeBootstrapError(error, stackTrace);
+      if (requireAppCheckToken) {
+        throw normalizedError;
+      }
+      debugPrint(
+        '[ProfileFirestore] App Check ignored for non-sensitive access: '
+        '${normalizedError.code}',
+      );
     }
 
     return FirebaseAuth.instance.currentUser ?? resolvedUser;
@@ -301,8 +309,8 @@ class UserProfileBootstrapService {
         }
         // App Check failures (reCAPTCHA still warming up) need a longer pause
         // so the background token fetch can complete before the next attempt.
-        final isAppCheck = error is UserProfileBootstrapException &&
-            error.isAppCheckFailure;
+        final isAppCheck =
+            error is UserProfileBootstrapException && error.isAppCheckFailure;
         final backoff = isAppCheck
             ? Duration(seconds: 3 * (attempt + 1))
             : _baseBackoff * math.pow(2, attempt).toInt();
