@@ -1151,18 +1151,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       return;
     } catch (error) {
-      final code = _messagingErrorCode(error);
-      if (code != 'permission-denied' && code != 'unauthenticated') rethrow;
+      if (_messagingErrorCode(error) != 'unauthenticated') rethrow;
       firstError = error;
     }
-    // Token may have expired — refresh and retry once
+    // Auth token may have expired — refresh and retry once
     final retryReady = await _ensureMessagingAccess(
       interactive: false,
       forceRefreshToken: true,
       forceRefreshAppCheckToken: true,
     );
     if (!retryReady) throw firstError;
-    if (!mounted) return;
     await ConversationService.sendMessage(
       conversationId: widget.conversationId,
       text: text,
@@ -1184,7 +1182,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
-      showSuccessSnackBar(context, 'Connectez-vous pour envoyer un message.');
+      showErrorSnackBar(context, 'Connectez-vous pour envoyer un message.');
       return;
     }
 
@@ -1202,6 +1200,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _optimisticMessages.insert(0, optimisticMessage);
     });
     _controller.clear();
+    _scheduleTypingUpdate(false);
 
     _scrollToLatestMessage(force: true);
 
