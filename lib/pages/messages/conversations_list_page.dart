@@ -449,6 +449,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     var permissionDeniedRetryCount = 0;
     var appCheckPrefixRetryCount = 0;
     var _subscriptionGeneration = 0;
+    var _isRetryingPermissionDenied = false;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -580,7 +581,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
 
-        if (_isPermissionDenied(error) && permissionDeniedRetryCount < 3) {
+        if (_isPermissionDenied(error) &&
+            permissionDeniedRetryCount < 3 &&
+            !_isRetryingPermissionDenied) {
+          _isRetryingPermissionDenied = true;
           permissionDeniedRetryCount += 1;
           unawaited(() async {
             final delay =
@@ -591,6 +595,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             if (delay > Duration.zero) {
               await Future<void>.delayed(delay);
             }
+            _isRetryingPermissionDenied = false;
             if (!isCancelled && !controller.isClosed) {
               await startSubscriptions(forceRefreshTokens: true);
             }
