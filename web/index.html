@@ -78,6 +78,27 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
   </style>
+
+<!-- ILIPRESTO_FORCE_CLEAR_OLD_FLUTTER_CACHE -->
+<script>
+(function() {
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(reg) { reg.unregister(); });
+      });
+    }
+    if (window.caches) {
+      caches.keys().then(function(keys) {
+        keys.forEach(function(key) { caches.delete(key); });
+      });
+    }
+  } catch (e) {
+    console.warn('Cache cleanup skipped', e);
+  }
+})();
+</script>
+
 </head>
 <body>
   <script>

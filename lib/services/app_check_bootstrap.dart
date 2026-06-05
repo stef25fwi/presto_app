@@ -6,6 +6,21 @@ import '../config/app_check_state.dart';
 import '../firebase_init.dart';
 import 'admin_web_debug_store.dart';
 
+const String _webRecaptchaEnterpriseSiteKeyFromDefine = String.fromEnvironment(
+  'RECAPTCHA_ENTERPRISE_SITE_KEY',
+);
+
+// Site key publique reCAPTCHA Enterprise pour ilipresto.fr.
+// Fallback volontaire pour éviter siteKeySet=false si le --dart-define est oublié.
+const String _webRecaptchaEnterpriseSiteKeyFallback =
+    '6Lc0DuIsAAAAAI7JFa1B6EY1OpCs43kPMDqBFJhC';
+
+String get _effectiveWebRecaptchaEnterpriseSiteKey {
+  final fromDefine = _webRecaptchaEnterpriseSiteKeyFromDefine.trim();
+  if (fromDefine.isNotEmpty) return fromDefine;
+  return _webRecaptchaEnterpriseSiteKeyFallback.trim();
+}
+
 Future<void>? _appCheckTokenRefreshInFlight;
 
 Future<void> refreshAppCheckToken({
@@ -136,7 +151,8 @@ Future<void> bootstrapAppCheck() async {
       );
       appCheckActivationAttempted = true;
       await FirebaseAppCheck.instance.activate(
-        webProvider: ReCaptchaEnterpriseProvider(siteKey),
+        webProvider: ReCaptchaEnterpriseProvider(
+            _effectiveWebRecaptchaEnterpriseSiteKey),
         androidProvider:
             kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
         appleProvider:
