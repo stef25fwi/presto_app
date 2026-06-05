@@ -833,7 +833,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         stackTrace: stackTrace,
         message: 'conversation-open-failed',
       );
-      if (!mounted) return;
+      if (!context.mounted) return;
       showErrorSnackBar(
         context,
         'Impossible d ouvrir cette conversation pour le moment.',

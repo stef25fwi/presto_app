@@ -71,6 +71,37 @@ function requireAuthUid(request: { auth?: { uid?: string; token?: Record<string,
   return uid;
 }
 
+function hasAdminAccessFromRequest(
+  request: { auth?: { token?: Record<string, unknown> } },
+): boolean {
+  const token = request.auth?.token as Record<string, unknown> | undefined;
+  const roles = extractRolesFromAuthToken(token);
+  const primaryRole = String(
+    token?.primaryRole || token?.role || token?.adminRole || "",
+  )
+    .trim()
+    .toLowerCase();
+
+  return (
+    roles.includes("admin") ||
+    roles.includes("superadmin") ||
+    primaryRole === "admin" ||
+    primaryRole === "superadmin" ||
+    token?.admin === true ||
+    token?.isAdmin === true ||
+    token?.superadmin === true ||
+    token?.superAdmin === true
+  );
+}
+
+function requireAdminAccess(
+  request: { auth?: { token?: Record<string, unknown> } },
+): void {
+  if (!hasAdminAccessFromRequest(request)) {
+    throw new HttpsError("permission-denied", "admin access required");
+  }
+}
+
 function sanitizeConversationPart(value: string): string {
   return value.replaceAll("/", "_").trim();
 }
@@ -1042,6 +1073,46 @@ export const unblockConversation = onCall({ region: PROJECT_REGION, enforceAppCh
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }),
   );
+
+  return { ok: true };
+});
+
+export const adminUnblockConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  const currentUserId = requireAuthUid(request);
+  requireAdminAccess(request);
+
+  const conversationId = String(request.data?.conversationId || "").trim();
+  if (!conversationId) {
+    throw new HttpsError("invalid-argument", "conversationId is required");
+  }
+
+  const { convRef, data, participants, conversation } = await loadConversationForParticipant(
+    conversationId,
+    currentUserId,
+    { isAdmin: true },
+  );
+  const archivedBy = readConversationFlagMap(data, "archivedBy");
+  const blockedBy: Record<string, boolean> = {};
+  for (const participantId of participants) {
+    blockedBy[participantId] = false;
+  }
+
+  await convRef.update(
+    buildConversationMirrorFields({
+      ...conversation,
+      participants,
+      archivedBy,
+      blockedBy,
+      status: computeConversationStatus(participants, archivedBy, blockedBy),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }),
+  );
+
+  logger.info("admin_unblocked_conversation", {
+    conversationId_len: conversationId.length,
+    adminUid_len: currentUserId.length,
+    participantCount: participants.length,
+  });
 
   return { ok: true };
 });

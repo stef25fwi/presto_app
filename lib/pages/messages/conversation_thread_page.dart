@@ -70,7 +70,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   QueryDocumentSnapshot<Map<String, dynamic>>? _paginationAnchorDoc;
   Future<_OfferPreview?>? _offerPreviewFuture;
   String? _offerPreviewFutureId;
-  late Stream<QuerySnapshot<Map<String, dynamic>>> _messageStream;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _messageStream;
   bool _isSending = false;
   bool _hasDraftText = false;
   bool _isMarkingRead = false;
@@ -89,9 +89,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _showNewMessagesButton = false;
   bool _isUploadingAttachment = false;
   bool _canLookupOtherParticipantProfile = false;
+  bool _isPreparingMessageStream = true;
+  bool _isAdminViewer = false;
   String? _newestLiveMessageId;
   bool _isBlocked = false;
   bool _isBlockedForCurrentUser = false;
+  bool _isBlockedByAnotherParticipant = false;
   bool _isArchivedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
   bool _hasRetriedMessageStreamAccess = false;
@@ -210,14 +213,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   void _retryMessageStreamAccessAfterDenied(Object? error) {
-    if (_hasRetriedMessageStreamAccess ||
-        !_participants.contains(widget.currentUserId)) {
-      return;
-    }
+    if (_hasRetriedMessageStreamAccess) return;
     _hasRetriedMessageStreamAccess = true;
     unawaited(() async {
       _debugMessagingAccess(
-        'messages-permission-denied-participant-retry-access',
+        'messages-permission-denied-retry-access',
         error: error,
         firestorePath: 'conversations/${widget.conversationId}/messages',
       );
@@ -228,6 +228,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       if (!ready || !mounted) return;
       setState(() {
+        _isPreparingMessageStream = false;
         _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
       });
     }());
@@ -257,8 +258,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   void initState() {
     super.initState();
     _controller.addListener(_handleDraftChanged);
-    _messageStream = _buildLiveStream();
-    _bindConversationListener();
     unawaited(_warmMessagingAccess());
     unawaited(_resolveParticipantProfileLookupAccess());
   }
@@ -313,14 +312,30 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _warmMessagingAccess() async {
+    if (mounted) {
+      setState(() {
+        _isPreparingMessageStream = true;
+      });
+    }
+
     final ready = await _ensureMessagingAccess(
       interactive: false,
       forceRefreshAppCheckToken: true,
     );
-    if (!ready || !mounted) return;
+    if (!mounted) return;
+
+    if (!ready) {
+      setState(() {
+        _isPreparingMessageStream = false;
+        _messageStream = null;
+      });
+      return;
+    }
 
     _bindConversationListener();
     setState(() {
+      _hasRetriedMessageStreamAccess = false;
+      _isPreparingMessageStream = false;
       _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
     });
   }
@@ -334,9 +349,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         returnOnLocalAdminEvidence: true,
       );
       final canLookup = accessState.hasConfirmedAdminAccess;
+      final isAdminViewer = accessState.effectiveIsAdmin || canLookup;
       if (!mounted) return;
 
-      if (_canLookupOtherParticipantProfile == canLookup) {
+      if (_canLookupOtherParticipantProfile == canLookup &&
+          _isAdminViewer == isAdminViewer) {
         if (canLookup && _otherParticipantId.trim().isNotEmpty) {
           _bindPresenceListener(_otherParticipantId);
         }
@@ -345,6 +362,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
       setState(() {
         _canLookupOtherParticipantProfile = canLookup;
+        _isAdminViewer = isAdminViewer;
         if (!canLookup) {
           _otherPresenceStatus = '';
           _otherLastSeenAt = null;
@@ -955,6 +973,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           _isBlocked = isConversationBlocked(data);
           _isBlockedForCurrentUser =
               isConversationBlockedForUser(data, widget.currentUserId);
+          _isBlockedByAnotherParticipant =
+              isConversationBlockedByOtherUser(data, widget.currentUserId);
           _isArchivedForCurrentUser =
               isConversationArchivedForUser(data, widget.currentUserId);
         });
@@ -1322,6 +1342,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
+        case _ConversationThreadAction.adminUnblock:
+          await ConversationService.adminUnblockConversation(
+              conversationId: widget.conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation debloquee par admin.');
+          return;
         case _ConversationThreadAction.delete:
           final confirmed = await showDialog<bool>(
             context: context,
@@ -1379,7 +1405,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           color: const Color(0xFFB91C1C),
           message: _isBlockedForCurrentUser
               ? 'Vous avez bloque cette conversation. Debloquez-la pour reprendre les echanges.'
-              : 'Cette conversation est actuellement bloquee.',
+              : _isBlockedByAnotherParticipant
+                  ? _isAdminViewer
+                      ? 'Cette conversation a ete bloquee par un participant. Un admin peut la debloquer.'
+                      : 'Cette conversation a ete bloquee par l autre participant.'
+                  : 'Cette conversation est actuellement bloquee.',
         ),
       );
     }
@@ -2062,6 +2092,49 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
+  Widget _buildMessagesAccessGate() {
+    final isPreparing = _isPreparingMessageStream;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isPreparing)
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+              )
+            else
+              const Icon(
+                Icons.lock_clock_rounded,
+                color: Color(0xFF6B7280),
+                size: 42,
+              ),
+            const SizedBox(height: 14),
+            Text(
+              isPreparing
+                  ? 'Preparation securisee de la messagerie…'
+                  : 'La messagerie est temporairement indisponible. Verifiez App Check, votre connexion puis reessayez.',
+              textAlign: TextAlign.center,
+              style: kPrestoBodyTextStyle.copyWith(
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF4B5563),
+              ),
+            ),
+            if (!isPreparing) ...[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: _warmMessagingAccess,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Reessayer'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2084,12 +2157,26 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 child:
                     Text(_isArchivedForCurrentUser ? 'Restaurer' : 'Archiver'),
               ),
-              PopupMenuItem<_ConversationThreadAction>(
-                value: _isBlockedForCurrentUser
-                    ? _ConversationThreadAction.unblock
-                    : _ConversationThreadAction.block,
-                child: Text(_isBlockedForCurrentUser ? 'Debloquer' : 'Bloquer'),
-              ),
+              if (_isBlockedForCurrentUser)
+                const PopupMenuItem<_ConversationThreadAction>(
+                  value: _ConversationThreadAction.unblock,
+                  child: Text('Debloquer'),
+                )
+              else if (_isBlockedByAnotherParticipant && _isAdminViewer)
+                const PopupMenuItem<_ConversationThreadAction>(
+                  value: _ConversationThreadAction.adminUnblock,
+                  child: Text('Debloquer en admin'),
+                )
+              else if (_isBlockedByAnotherParticipant)
+                const PopupMenuItem<_ConversationThreadAction>(
+                  enabled: false,
+                  child: Text('Bloquee par l autre utilisateur'),
+                )
+              else
+                const PopupMenuItem<_ConversationThreadAction>(
+                  value: _ConversationThreadAction.block,
+                  child: Text('Bloquer'),
+                ),
               const PopupMenuItem<_ConversationThreadAction>(
                 value: _ConversationThreadAction.delete,
                 child: Text(
@@ -2111,8 +2198,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               _buildSafetyReminderBanner(),
               _buildTypingIndicator(),
               Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _messageStream,
+                child: _isPreparingMessageStream || _messageStream == null
+                    ? _buildMessagesAccessGate()
+                    : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _messageStream!,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
@@ -2771,6 +2860,7 @@ enum _ConversationThreadAction {
   unarchive,
   block,
   unblock,
+  adminUnblock,
   delete,
 }
 

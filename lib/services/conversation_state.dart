@@ -28,6 +28,19 @@ bool isConversationBlockedForUser(Map<String, dynamic> data, String userId) {
   return readConversationFlagForUser(data, 'blockedBy', userId);
 }
 
+bool isConversationBlockedByOtherUser(
+  Map<String, dynamic> data,
+  String userId,
+) {
+  final raw = data['blockedBy'];
+  if (raw is! Map) return false;
+  for (final entry in raw.entries) {
+    if (entry.key.toString() == userId) continue;
+    if (entry.value == true) return true;
+  }
+  return false;
+}
+
 bool shouldShowConversation({
   required Map<String, dynamic> data,
   required String userId,

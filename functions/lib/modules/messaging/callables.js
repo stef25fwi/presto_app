@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.processConversationAttachmentPhoto = void 0;
+exports.deleteConversationMessage = exports.deleteConversation = exports.adminUnblockConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.processConversationAttachmentPhoto = void 0;
 exports.assertConversationParticipantAccess = assertConversationParticipantAccess;
 exports.canonicalConversationId = canonicalConversationId;
 exports.resolveOfferLikeData = resolveOfferLikeData;
@@ -55,6 +55,26 @@ function requireAuthUid(request) {
         throw new https_1.HttpsError("unauthenticated", "authentication required");
     }
     return uid;
+}
+function hasAdminAccessFromRequest(request) {
+    const token = request.auth?.token;
+    const roles = (0, roles_1.extractRolesFromAuthToken)(token);
+    const primaryRole = String(token?.primaryRole || token?.role || token?.adminRole || "")
+        .trim()
+        .toLowerCase();
+    return (roles.includes("admin") ||
+        roles.includes("superadmin") ||
+        primaryRole === "admin" ||
+        primaryRole === "superadmin" ||
+        token?.admin === true ||
+        token?.isAdmin === true ||
+        token?.superadmin === true ||
+        token?.superAdmin === true);
+}
+function requireAdminAccess(request) {
+    if (!hasAdminAccessFromRequest(request)) {
+        throw new https_1.HttpsError("permission-denied", "admin access required");
+    }
 }
 function sanitizeConversationPart(value) {
     return value.replaceAll("/", "_").trim();
@@ -776,6 +796,34 @@ exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
         status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
     }));
+    return { ok: true };
+});
+exports.adminUnblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    requireAdminAccess(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    if (!conversationId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId is required");
+    }
+    const { convRef, data, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId, { isAdmin: true });
+    const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
+    const blockedBy = {};
+    for (const participantId of participants) {
+        blockedBy[participantId] = false;
+    }
+    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        participants,
+        archivedBy,
+        blockedBy,
+        status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
+        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    }));
+    logger_1.logger.info("admin_unblocked_conversation", {
+        conversationId_len: conversationId.length,
+        adminUid_len: currentUserId.length,
+        participantCount: participants.length,
+    });
     return { ok: true };
 });
 exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
