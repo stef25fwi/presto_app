@@ -24,46 +24,8 @@ String get _effectiveWebRecaptchaEnterpriseSiteKey {
 Future<void>? _appCheckTokenRefreshInFlight;
 
 Future<void> refreshAppCheckToken({
-  String reason = 'manual',
+  required String reason,
   bool forceRefresh = false,
-}) async {
-  try {
-    final Object? token =
-        await FirebaseAppCheck.instance.getToken(forceRefresh);
-    final tokenLength = token is String ? token.length : 0;
-
-    if (kDebugMode) {
-      debugPrint(
-        '[AppCheck] token refresh ok reason=$reason length=$tokenLength',
-      );
-    }
-  } catch (error, stackTrace) {
-    final message = error.toString();
-
-    final calledBeforeActivate = message.contains(
-          'FirebaseAppCheck.instance.activate() must be called first',
-        ) ||
-        message.contains('activate() must be called first') ||
-        message.contains('Before using other Firebase App Check APIs');
-
-    if (calledBeforeActivate) {
-      if (kDebugMode) {
-        debugPrint(
-          '[AppCheck] token refresh skipped before activation reason=$reason error=$error',
-        );
-      }
-      return;
-    }
-
-    if (kDebugMode) {
-      debugPrint(
-        '[AppCheck] token refresh failed reason=$reason error=$error',
-      );
-      debugPrint('$stackTrace');
-    }
-
-    return;
-  }
 }) {
   final inFlight = _appCheckTokenRefreshInFlight;
   if (inFlight != null) return inFlight;
