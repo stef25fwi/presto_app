@@ -1466,6 +1466,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                           _showContactOptionsSheet(context, data),
                     ),
                     SizedBox(height: sectionGap),
+                    const _OfferDetailsAdMobBannerSpace(),
+                    const SizedBox(height: 12),
                     _AdvertiserContactCard(
                       data: data,
                       compact: isCompactMobile,
@@ -1704,8 +1706,8 @@ class _OfferUiData {
       readValue('postalCode', () => o.postalCode) ?? readValue('cp'),
       fallback: '',
     );
-    final category = _asString(readValue('category', () => o.category),
-        fallback: '');
+    final category =
+        _asString(readValue('category', () => o.category), fallback: '');
 
     final fullDescription = _asString(
       readValue('description', () => o.description),
@@ -2992,6 +2994,44 @@ class _PracticalInfoCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
+  const _OfferDetailsAdMobBannerSpace();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Espace publicitaire AdMob',
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 56,
+            maxHeight: 82,
+          ),
+          child: const Center(
+            child: Text(
+              'Espace publicitaire',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
