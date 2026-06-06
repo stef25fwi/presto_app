@@ -141,7 +141,7 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          padding: const EdgeInsets.fromLTRB(6, 16, 6, 16),
           children: [
             const SizedBox(height: 6),
             const Text(
@@ -436,7 +436,7 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+          padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
           children: [
             const Text(
               'Mode Express : Estimation Rapide',

@@ -2128,7 +2128,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     Expanded(
                       child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        padding: const EdgeInsets.fromLTRB(6, 0, 6, 12),
                         itemCount: _allFavoriteCategories.length,
                         separatorBuilder: (_, __) => const Divider(height: 0),
                         itemBuilder: (_, index) {
@@ -2281,7 +2281,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     Expanded(
                       child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        padding: const EdgeInsets.fromLTRB(6, 0, 6, 12),
                         itemCount: items.length,
                         separatorBuilder: (_, __) => const Divider(height: 0),
                         itemBuilder: (_, index) {

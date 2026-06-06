@@ -178,9 +178,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
         }
 
         final screenWidth = MediaQuery.of(context).size.width;
-        final panelWidth = screenWidth < 500
-            ? (screenWidth * 0.9).clamp(280.0, 380.0)
-            : 440.0;
+        final panelWidth =
+            screenWidth < 500 ? (screenWidth * 0.9).clamp(280.0, 380.0) : 440.0;
         final isSmallScreen = screenWidth < 500;
 
         return Stack(
@@ -197,7 +196,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_isExpanded) _buildExpandedPanel(context, adminState, isSmallScreen),
+                      if (_isExpanded)
+                        _buildExpandedPanel(context, adminState, isSmallScreen),
                       const SizedBox(height: 8),
                       FilledButton.icon(
                         onPressed: () {
@@ -237,7 +237,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
     );
   }
 
-  Widget _buildExpandedPanel(BuildContext context, AdminAccessState adminState, bool isSmallScreen) {
+  Widget _buildExpandedPanel(
+      BuildContext context, AdminAccessState adminState, bool isSmallScreen) {
     final host = currentAppCheckWebHost();
     final hostClass = appCheckWebHostClass(host);
     final activationError = appCheckActivationError?.toString().trim() ?? '';
@@ -347,14 +348,16 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                             _copyLogContent(context);
                           }
                         },
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
                           const PopupMenuItem(
                             value: 'refresh',
                             child: Row(
                               children: [
                                 Icon(Icons.refresh_rounded, size: 16),
                                 SizedBox(width: 8),
-                                Text('Rafraichir', style: TextStyle(fontSize: 12)),
+                                Text('Rafraichir',
+                                    style: TextStyle(fontSize: 12)),
                               ],
                             ),
                           ),
@@ -410,7 +413,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                 <String>[
                   'route=${_debugStore.currentRoute}',
                   'host=$host class=$hostClass',
-                  'user=${_debugStore.currentUserId ?? 'null'} ${_debugStore.currentUserEmail ?? ''}'.trim(),
+                  'user=${_debugStore.currentUserId ?? 'null'} ${_debugStore.currentUserEmail ?? ''}'
+                      .trim(),
                 ],
               ),
               _buildSection(
@@ -429,7 +433,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                   'attempted=$appCheckActivationAttempted success=$appCheckActivationSucceeded',
                   'provider=$kAppCheckWebRecaptchaProviderLabel siteKeySet=${kAppCheckWebRecaptchaSiteKey.trim().isNotEmpty}',
                   'lastRefresh=${_formatTime(appCheckLastTokenRefreshAt)}',
-                  if (activationError.isNotEmpty) 'activationError=$activationError',
+                  if (activationError.isNotEmpty)
+                    'activationError=$activationError',
                   if (refreshError.isNotEmpty) 'refreshError=$refreshError',
                 ],
               ),
@@ -483,7 +488,9 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                         });
                       },
                       labelStyle: TextStyle(fontSize: isSmallScreen ? 10 : 11),
-                      materialTapTargetSize: isSmallScreen ? MaterialTapTargetSize.shrinkWrap : MaterialTapTargetSize.padded,
+                      materialTapTargetSize: isSmallScreen
+                          ? MaterialTapTargetSize.shrinkWrap
+                          : MaterialTapTargetSize.padded,
                     ),
                 ],
               ),
@@ -499,14 +506,17 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                           : 'Tous evenements',
                       style: TextStyle(fontSize: isSmallScreen ? 10 : 11),
                     ),
-                    avatar: Icon(Icons.cloud_done_outlined, size: isSmallScreen ? 14 : 18),
+                    avatar: Icon(Icons.cloud_done_outlined,
+                        size: isSmallScreen ? 14 : 18),
                     selected: _callableOnly,
                     onSelected: (selected) {
                       setState(() {
                         _callableOnly = selected;
                       });
                     },
-                    materialTapTargetSize: isSmallScreen ? MaterialTapTargetSize.shrinkWrap : MaterialTapTargetSize.padded,
+                    materialTapTargetSize: isSmallScreen
+                        ? MaterialTapTargetSize.shrinkWrap
+                        : MaterialTapTargetSize.padded,
                   ),
                   if (_callableOnly)
                     Text(
@@ -521,7 +531,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
               ),
               SizedBox(height: isSmallScreen ? 6 : 8),
               ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: isSmallScreen ? 200 : 260),
+                constraints:
+                    BoxConstraints(maxHeight: isSmallScreen ? 200 : 260),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -530,7 +541,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                   ),
                   child: ListView.separated(
                     shrinkWrap: true,
-                    padding: EdgeInsets.all(isSmallScreen ? 6 : 8),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 6, vertical: isSmallScreen ? 6 : 8),
                     itemCount: events.length,
                     separatorBuilder: (_, __) => const Divider(height: 10),
                     itemBuilder: (context, index) {

@@ -1037,7 +1037,7 @@ class _HomePageState extends State<HomePage>
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 180),
               child: ListView.builder(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 shrinkWrap: true,
                 itemCount: options.length,
                 itemBuilder: (context, index) {

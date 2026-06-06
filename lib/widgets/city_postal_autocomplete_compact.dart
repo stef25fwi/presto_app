@@ -123,7 +123,7 @@ class _CityPostalAutocompleteCompactState
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 300, maxWidth: 520),
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 itemCount: options.length,
                 itemBuilder: (context, i) {
                   final c = options.elementAt(i);

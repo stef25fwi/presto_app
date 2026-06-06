@@ -251,7 +251,7 @@ class _CityPostalAutocompleteFieldState
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 300, maxWidth: 520),
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 itemCount: list.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, i) {

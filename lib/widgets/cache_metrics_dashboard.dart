@@ -28,7 +28,7 @@ class _CacheMetricsDashboardState extends State<CacheMetricsDashboard> {
         backgroundColor: const Color(0xFFFF6600),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 16),
         children: [
           // Session actuelle
           _buildSessionCard(),

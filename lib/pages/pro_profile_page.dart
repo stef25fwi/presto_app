@@ -215,7 +215,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 16),
             children: [
               const Text(
                 "Informations entreprise",

@@ -232,7 +232,7 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 16),
             itemCount: docs.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
@@ -319,9 +319,8 @@ class _PhotoReviewItem {
     final summary = (safeSearch['summary'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     final createdRaw = data['createdAt'];
-    final createdAt = createdRaw is Timestamp
-        ? createdRaw.toDate()
-        : DateTime.now();
+    final createdAt =
+        createdRaw is Timestamp ? createdRaw.toDate() : DateTime.now();
 
     return _PhotoReviewItem(
       reviewId: snapshot.id,
@@ -358,7 +357,8 @@ class _PhotoReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageSource = item.imageUrl.isNotEmpty ? item.imageUrl : item.thumbnailUrl;
+    final imageSource =
+        item.imageUrl.isNotEmpty ? item.imageUrl : item.thumbnailUrl;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -420,7 +420,9 @@ class _PhotoReviewCard extends StatelessWidget {
               children: [
                 _ReviewInfoPill(
                   icon: Icons.flag_outlined,
-                  label: item.reason.isEmpty ? 'Revue manuelle requise' : item.reason,
+                  label: item.reason.isEmpty
+                      ? 'Revue manuelle requise'
+                      : item.reason,
                 ),
                 if (item.safeSearchSummary.isNotEmpty)
                   _ReviewInfoPill(
