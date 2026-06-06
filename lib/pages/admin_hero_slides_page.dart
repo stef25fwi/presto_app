@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import '../models/hero_slide.dart';
@@ -507,15 +508,36 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                           return;
                                         }
                                         Navigator.of(context).pop(true);
-                                      } catch (error) {
+                                      } catch (error, stackTrace) {
+                                        logRuntimeAction(
+                                          area: 'admin-hero',
+                                          action: existing == null
+                                              ? 'add-slide-failure'
+                                              : 'update-slide-failure',
+                                          details: <String, Object?>{
+                                            'errorType':
+                                                error.runtimeType.toString(),
+                                            'message': error.toString(),
+                                            'fileName': selectedFileName,
+                                            'mediaType': selectedMediaType,
+                                            'contentType': selectedContentType,
+                                            'hasBytes':
+                                                selectedBytes.isNotEmpty,
+                                          },
+                                        );
+                                        debugPrint(
+                                          '[AdminHero] save failed: $error\n$stackTrace',
+                                        );
                                         if (!mounted) {
                                           return;
                                         }
+                                        final readableError =
+                                            _formatHeroSlideSaveError(error);
                                         showErrorSnackBar(
                                           context,
                                           existing == null
-                                              ? 'Impossible d’ajouter le slide. Vérifiez le fichier ou votre connexion.'
-                                              : 'Impossible de modifier le slide. Vérifiez le fichier ou votre connexion.',
+                                              ? 'Impossible d’ajouter le slide : $readableError'
+                                              : 'Impossible de modifier le slide : $readableError',
                                         );
                                       } finally {
                                         if (mounted) {
@@ -1061,6 +1083,28 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
       return '';
     }
     return name.substring(dotIndex + 1).toLowerCase();
+  }
+
+  String _formatHeroSlideSaveError(Object error) {
+    if (error is FirebaseException) {
+      final code = error.code.trim();
+      final message = (error.message ?? '').trim();
+
+      if (code == 'permission-denied') {
+        return 'permission-denied — accès refusé par les règles Firestore ou par le rôle admin.';
+      }
+      if (code == 'unauthenticated') {
+        return 'unauthenticated — reconnecte-toi au compte administrateur.';
+      }
+      if (code == 'unauthorized' || code == 'storage/unauthorized') {
+        return 'storage unauthorized — accès refusé par les règles Storage hero_slides.';
+      }
+
+      return message.isEmpty ? code : '$code — $message';
+    }
+
+    final raw = error.toString().replaceFirst('Exception: ', '').trim();
+    return raw.isEmpty ? 'erreur inconnue' : raw;
   }
 
   bool _isSupportedHeroMedia(String name) {
