@@ -5,6 +5,7 @@ const firestore_1 = require("firebase-functions/v2/firestore");
 const firestore_2 = require("../../core/firestore");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
+const system_messages_1 = require("../marketplace/services/system_messages");
 function getCampaignTitle(data) {
     return String(data.title || data.newsletter_title || "Newsletter PRESTO").trim();
 }
@@ -35,21 +36,30 @@ async function emitNewsletterCampaign(campaignId, data) {
             if (!recipientEmail)
                 continue;
             const eventId = `evt_marketing_newsletter_${campaignId}_${userId}`;
-            await firestore_2.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
-                event_id: eventId,
-                event_name: "marketing.newsletter.monthly",
-                source_collection: constants_1.COLLECTIONS.newsletterCampaigns,
-                source_id: campaignId,
-                recipient_user_id: userId,
-                dedupe_key: (0, hash_1.sha256)(`marketing.newsletter.monthly:${campaignId}:${userId}`),
-                occurred_at: Number(data.published_at || data.updated_at || Date.now()),
-                payload: {
-                    recipient_email: recipientEmail,
-                    newsletterTitle,
-                    newsletterUrl,
-                },
-                status: "created",
-            }, { merge: true });
+            await Promise.all([
+                firestore_2.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
+                    event_id: eventId,
+                    event_name: "marketing.newsletter.monthly",
+                    source_collection: constants_1.COLLECTIONS.newsletterCampaigns,
+                    source_id: campaignId,
+                    recipient_user_id: userId,
+                    dedupe_key: (0, hash_1.sha256)(`marketing.newsletter.monthly:${campaignId}:${userId}`),
+                    occurred_at: Number(data.published_at || data.updated_at || Date.now()),
+                    payload: {
+                        recipient_email: recipientEmail,
+                        newsletterTitle,
+                        newsletterUrl,
+                    },
+                    status: "created",
+                }, { merge: true }),
+                (0, system_messages_1.sendTeamBroadcastMessage)({
+                    userId,
+                    messageId: `newsletter_${campaignId}_${userId}`,
+                    body: newsletterTitle,
+                    campaignTitle: newsletterTitle,
+                    campaignUrl: newsletterUrl || undefined,
+                }),
+            ]);
         }
         if (snap.size < 200 || !lastDoc)
             break;
