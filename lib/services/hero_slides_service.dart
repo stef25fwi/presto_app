@@ -23,6 +23,18 @@ class HeroSlidesService {
   CollectionReference<Map<String, dynamic>> get _slidesCollection =>
       _firestore.collection('heroSlides');
 
+  User _requireSignedInUser() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseException(
+        plugin: 'firebase_auth',
+        code: 'unauthenticated',
+        message: 'Utilisateur non connecté pour gérer les slides Hero.',
+      );
+    }
+    return user;
+  }
+
   Stream<List<HeroSlide>> watchActiveSlides() {
     return _slidesCollection
         .where('isActive', isEqualTo: true)
@@ -46,6 +58,7 @@ class HeroSlidesService {
     bool isFirst = false,
     void Function(double progress)? onUploadProgress,
   }) async {
+    final user = _requireSignedInUser();
     final normalizedMediaType = _normalizeMediaType(mediaType);
     final slides = await _fetchAllSlides();
     final nextOrder = order ?? _nextOrder(slides);
@@ -86,7 +99,7 @@ class HeroSlidesService {
       'isFirst': shouldBeFirst,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'createdBy': _auth.currentUser?.uid,
+      'createdBy': user.uid,
     });
 
     try {
@@ -110,6 +123,7 @@ class HeroSlidesService {
     String? replacementContentType,
     void Function(double progress)? onUploadProgress,
   }) async {
+    _requireSignedInUser();
     final slides = await _fetchAllSlides();
     final docRef = _slidesCollection.doc(slide.id);
     var nextMediaUrl = slide.mediaUrl;
@@ -202,6 +216,7 @@ class HeroSlidesService {
   }
 
   Future<void> deleteSlide(HeroSlide slide) async {
+    _requireSignedInUser();
     final slides = await _fetchAllSlides();
     final batch = _firestore.batch();
     batch.delete(_slidesCollection.doc(slide.id));
@@ -226,6 +241,7 @@ class HeroSlidesService {
   }
 
   Future<void> setAsFirstSlide(String slideId) async {
+    _requireSignedInUser();
     final slides = await _fetchAllSlides();
     final batch = _firestore.batch();
 
@@ -240,6 +256,7 @@ class HeroSlidesService {
   }
 
   Future<void> reorderSlides(List<HeroSlide> slides) async {
+    _requireSignedInUser();
     final batch = _firestore.batch();
 
     for (var index = 0; index < slides.length; index += 1) {
