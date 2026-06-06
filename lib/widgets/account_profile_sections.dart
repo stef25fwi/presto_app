@@ -417,118 +417,28 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              InkWell(
-                onTap: onOpenCategoryPicker,
-                borderRadius: BorderRadius.circular(12),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Catégories',
-                    filled: true,
-                    fillColor: const Color(0xFFF9F9F9),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          categoriesCount == 0
-                              ? 'Choisir des catégories'
-                              : '$categoriesCount catégorie(s) sélectionnée(s)',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_drop_down,
-                        color: Colors.black54,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              InkWell(
-                onTap: onOpenSubcategoryPicker,
-                borderRadius: BorderRadius.circular(12),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Sous-catégories',
-                    filled: true,
-                    fillColor: const Color(0xFFF9F9F9),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          subcategoriesCount == 0
-                              ? 'Choisir des sous-catégories'
-                              : '$subcategoriesCount sous-catégorie(s) sélectionnée(s)',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.arrow_drop_down,
-                        color: Colors.black54,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              InkWell(
+              _AlertSelectorField(
                 onTap: onOpenDeptPicker,
-                borderRadius: BorderRadius.circular(12),
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    labelText: 'Départements',
-                    filled: true,
-                    fillColor: const Color(0xFFF9F9F9),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          departementsCount == 0
-                              ? 'Tous les départements'
-                              : '$departementsCount département(s) sélectionné(s)',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const Icon(Icons.arrow_drop_down, color: Colors.black54),
-                    ],
-                  ),
-                ),
+                labelText: 'Départements',
+                valueText: departementsCount == 0
+                    ? 'Tous les départements'
+                    : '$departementsCount département(s) sélectionné(s)',
+              ),
+              const SizedBox(height: 10),
+              _AlertSelectorField(
+                onTap: onOpenCategoryPicker,
+                labelText: 'Catégories',
+                valueText: categoriesCount == 0
+                    ? 'Choisir des catégories'
+                    : '$categoriesCount catégorie(s) sélectionnée(s)',
+              ),
+              const SizedBox(height: 10),
+              _AlertSelectorField(
+                onTap: onOpenSubcategoryPicker,
+                labelText: 'Sous-catégories',
+                valueText: subcategoriesCount == 0
+                    ? 'Choisir des sous-catégories'
+                    : '$subcategoriesCount sous-catégorie(s) sélectionnée(s)',
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -743,6 +653,58 @@ class AccountProUpgradeSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AlertSelectorField extends StatelessWidget {
+  final VoidCallback onTap;
+  final String labelText;
+  final String valueText;
+
+  const _AlertSelectorField({
+    required this.onTap,
+    required this.labelText,
+    required this.valueText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: labelText,
+          filled: true,
+          fillColor: const Color(0xFFF9F9F9),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 10,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                valueText,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_drop_down,
+              color: Colors.black54,
+            ),
+          ],
+        ),
       ),
     );
   }
