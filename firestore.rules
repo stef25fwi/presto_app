@@ -305,8 +305,7 @@ service cloud.firestore {
         && isSignedIn()
         && userId == uid()
         && !request.resource.data.keys().hasAny(protectedUserFields());
-      allow update: if hasAppCheck()
-        && isSignedIn()
+      allow update: if isSignedIn()
         && userId == uid()
         && !changedKeys().hasAny(protectedUserFields());
       allow delete: if hasAppCheck() && isSignedIn() && userId == uid();
@@ -343,7 +342,7 @@ service cloud.firestore {
     }
 
     match /listingDrafts/{draftId} {
-      allow read: if hasAppCheck() && isSignedIn() && resource.data.ownerId == uid();
+      allow read: if (hasAppCheck() && isSignedIn() && resource.data.ownerId == uid()) || isAdmin();
       allow create, update: if false;
       allow delete: if hasAppCheck() && isSignedIn() && resource.data.ownerId == uid();
     }
@@ -662,6 +661,34 @@ service cloud.firestore {
     // ⛔ [REFUSÉ] Push tokens — server-only
     match /push_tokens/{tokenId} {
       allow read, write: if false;
+    }
+
+
+    // cache_analytics — lecture admin, écriture serveur uniquement
+    match /cache_analytics/{docId} {
+      allow read: if isMarketplaceAdmin();
+      allow write: if false;
+    }
+
+    // parcours — lecture propriétaire ou admin
+    match /parcours/{parcoursId} {
+      allow read: if isSignedIn()
+        && (isAdmin() || resource.data.userId == uid() || resource.data.ownerId == uid());
+      allow write: if false;
+    }
+
+    // toolbox_journeys — lecture propriétaire ou admin
+    match /toolbox_journeys/{journeyId} {
+      allow read: if isSignedIn()
+        && (isAdmin() || resource.data.userId == uid() || resource.data.ownerId == uid());
+      allow write: if false;
+    }
+
+    // toolbox_journey_index — lecture propriétaire ou admin
+    match /toolbox_journey_index/{indexId} {
+      allow read: if isSignedIn()
+        && (isAdmin() || resource.data.userId == uid() || resource.data.ownerId == uid());
+      allow write: if false;
     }
 
     // ⛔ [REFUSÉ] Catch-all — tout accès non déclaré est refusé

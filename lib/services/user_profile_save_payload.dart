@@ -37,6 +37,7 @@ class UserProfileSavePayload {
     required String city,
     List<String> selectedFavoriteCategories = const <String>[],
     List<String> selectedFavoriteSubcategories = const <String>[],
+    List<String> selectedFavoriteDepartements = const <String>[],
   }) {
     final normalizedEmail = (email ?? '').trim().toLowerCase();
     final normalizedDisplayName = displayName.trim();
@@ -69,6 +70,7 @@ class UserProfileSavePayload {
       'phone': normalizedPhone,
       'selectedFavoriteCategories': selectedFavoriteCategories,
       'selectedFavoriteSubcategories': selectedFavoriteSubcategories,
+      'selectedFavoriteDepartements': selectedFavoriteDepartements,
       'profileCompleted': true,
       'profileCompleteness': completeness,
       'profileUpdatedAt': FieldValue.serverTimestamp(),

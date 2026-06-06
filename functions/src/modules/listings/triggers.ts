@@ -25,6 +25,10 @@ function getCategory(data: Record<string, unknown> | undefined): string {
   return String(data?.category || "").trim();
 }
 
+export function getPostalCode(data: Record<string, unknown> | undefined): string {
+  return String(data?.postalCode || data?.codePostal || data?.zipCode || data?.cp || "").trim();
+}
+
 export function getSubCategory(data: Record<string, unknown> | undefined): string {
   return String(data?.subCategory || data?.subcategory || "").trim();
 }
@@ -67,10 +71,12 @@ export function shouldNotifyUserForFavoriteListing({
   userData,
   listingCategory,
   listingSubCategory,
+  listingPostalCode,
 }: {
   userData: Record<string, unknown>;
   listingCategory: string;
   listingSubCategory: string;
+  listingPostalCode?: string;
 }): boolean {
   const normalizedCategory = normalizeAlertToken(listingCategory);
   if (!normalizedCategory) return false;
@@ -83,6 +89,20 @@ export function shouldNotifyUserForFavoriteListing({
 
   if (!hasCategorySelection) {
     return false;
+  }
+
+  // Filtrer par département si l'utilisateur en a sélectionné
+  const selectedDepartements = normalizeStringList(userData.selectedFavoriteDepartements);
+  if (selectedDepartements.length > 0) {
+    const postalCode = (listingPostalCode || '').trim();
+    if (postalCode.length >= 2) {
+      const listingDept = (postalCode.startsWith('97') || postalCode.startsWith('98'))
+        ? postalCode.substring(0, 3)
+        : postalCode.substring(0, 2);
+      if (!selectedDepartements.includes(listingDept)) {
+        return false;
+      }
+    }
   }
 
   // Sans sous-catégorie sur l'annonce, on notifie tous les abonnés à la catégorie.
@@ -140,6 +160,7 @@ async function notifyFavoriteCategoryUsers({
       userData,
       listingCategory: category,
       listingSubCategory: subCategory,
+      listingPostalCode: getPostalCode(offerData),
     })) {
       recipients.add(doc.id);
     }

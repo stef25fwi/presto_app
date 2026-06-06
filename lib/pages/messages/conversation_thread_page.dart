@@ -1946,9 +1946,57 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   Widget _buildAttachmentPreview(_MessageAttachment attachment) {
     if (attachment.type == 'image') {
-      return InkWell(
-        onTap: () => unawaited(_openAttachment(attachment)),
-        borderRadius: BorderRadius.circular(14),
+      final fullUrl = attachment.url.isNotEmpty
+          ? attachment.url
+          : attachment.thumbnailUrl;
+      return GestureDetector(
+        onTap: () => showGeneralDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          barrierLabel: 'Fermer',
+          barrierColor: Colors.black,
+          transitionDuration: Duration.zero,
+          pageBuilder: (ctx, _, __) => Material(
+            color: Colors.black,
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Center(
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: OfferNetworkImage(
+                        url: fullUrl,
+                        fit: BoxFit.contain,
+                        errorChild: const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white54,
+                          size: 64,
+                        ),
+                        loadingChild: const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: SizedBox(

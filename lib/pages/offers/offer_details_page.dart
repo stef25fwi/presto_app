@@ -1694,23 +1694,22 @@ class _OfferUiData {
     final detail = _asString(
       readValue('shortDescription', () => o.shortDescription) ??
           readValue('detail'),
-      fallback: '+ fixation TV',
+      fallback: '',
     );
     final city = _asString(
       readValue('city', () => o.city) ?? readValue('location'),
-      fallback: 'Les Abymes',
+      fallback: '',
     );
     final postalCode = _asString(
       readValue('postalCode', () => o.postalCode) ?? readValue('cp'),
       fallback: '',
     );
     final category = _asString(readValue('category', () => o.category),
-        fallback: 'Bricolage');
+        fallback: '');
 
     final fullDescription = _asString(
       readValue('description', () => o.description),
-      fallback:
-          'Montage d\'un petit meuble + fixation d\'une\nTV au mur (support déjà acheté). Mur béton.\nPrévoir perceuse.',
+      fallback: '',
     );
     final phone = _asString(readValue('phone', () => o.phone), fallback: '');
     final publishedAtLabel = _asString(
@@ -1737,7 +1736,7 @@ class _OfferUiData {
 
     final price = _asDouble(
       readValue('price', () => o.price) ?? readValue('budget'),
-      fallback: 90,
+      fallback: 0,
     );
 
     final advertiserId = _asString(
@@ -2575,22 +2574,11 @@ Future<void> _showPhotoGalleryPopup(
     barrierDismissible: true,
     barrierLabel: 'Fermer',
     barrierColor: Colors.black87,
-    transitionDuration: const Duration(milliseconds: 220),
+    transitionDuration: Duration.zero,
     pageBuilder: (context, _, __) {
       return _PhotoGalleryPopup(
         imageUrls: imageUrls,
         initialIndex: safeIndex,
-      );
-    },
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: animation,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.96, end: 1).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-          ),
-          child: child,
-        ),
       );
     },
   );
@@ -2782,20 +2770,38 @@ class _OfferImage extends StatelessWidget {
     this.loadingChild,
   });
 
+  static bool _isDirectUrl(String url) {
+    return url.startsWith('https://') ||
+        url.startsWith('http://') ||
+        url.startsWith('data:image/') ||
+        url.startsWith('//');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final trimmed = rawUrl.trim();
+
+    // URL déjà résolue — pas de FutureBuilder, pas de clignotement
+    if (trimmed.isEmpty) return errorChild;
+    if (_isDirectUrl(trimmed)) {
+      final url = trimmed.startsWith('//') ? 'https:$trimmed' : trimmed;
+      return OfferNetworkImage(
+        url: url,
+        fit: fit,
+        errorChild: errorChild,
+        loadingChild: loadingChild,
+      );
+    }
+
+    // Chemin Storage → résolution async nécessaire
     return FutureBuilder<String?>(
       future: _resolveOfferImageUrl(rawUrl),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return loadingChild ?? errorChild;
         }
-
         final resolvedUrl = (snapshot.data ?? '').trim();
-        if (resolvedUrl.isEmpty) {
-          return errorChild;
-        }
-
+        if (resolvedUrl.isEmpty) return errorChild;
         return OfferNetworkImage(
           url: resolvedUrl,
           fit: fit,

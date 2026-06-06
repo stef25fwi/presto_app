@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onListingPublished = exports.onOfferUpdated = exports.onOfferCreated = void 0;
 exports.buildListingRouteUrl = buildListingRouteUrl;
+exports.getPostalCode = getPostalCode;
 exports.getSubCategory = getSubCategory;
 exports.shouldNotifyUserForFavoriteListing = shouldNotifyUserForFavoriteListing;
 const firestore_1 = require("firebase-functions/v2/firestore");
@@ -26,6 +27,9 @@ function buildListingRouteUrl(sourceCollection, sourceId) {
 }
 function getCategory(data) {
     return String(data?.category || "").trim();
+}
+function getPostalCode(data) {
+    return String(data?.postalCode || data?.codePostal || data?.zipCode || data?.cp || "").trim();
 }
 function getSubCategory(data) {
     return String(data?.subCategory || data?.subcategory || "").trim();
@@ -62,7 +66,7 @@ function normalizeStringList(value) {
         .map((entry) => String(entry || "").trim())
         .filter((entry) => entry.length > 0);
 }
-function shouldNotifyUserForFavoriteListing({ userData, listingCategory, listingSubCategory, }) {
+function shouldNotifyUserForFavoriteListing({ userData, listingCategory, listingSubCategory, listingPostalCode, }) {
     const normalizedCategory = normalizeAlertToken(listingCategory);
     if (!normalizedCategory)
         return false;
@@ -73,6 +77,19 @@ function shouldNotifyUserForFavoriteListing({ userData, listingCategory, listing
         .includes(normalizedCategory);
     if (!hasCategorySelection) {
         return false;
+    }
+    // Filtrer par département si l'utilisateur en a sélectionné
+    const selectedDepartements = normalizeStringList(userData.selectedFavoriteDepartements);
+    if (selectedDepartements.length > 0) {
+        const postalCode = (listingPostalCode || '').trim();
+        if (postalCode.length >= 2) {
+            const listingDept = (postalCode.startsWith('97') || postalCode.startsWith('98'))
+                ? postalCode.substring(0, 3)
+                : postalCode.substring(0, 2);
+            if (!selectedDepartements.includes(listingDept)) {
+                return false;
+            }
+        }
     }
     // Sans sous-catégorie sur l'annonce, on notifie tous les abonnés à la catégorie.
     const normalizedListingSubCategory = normalizeAlertToken(listingSubCategory);
@@ -116,6 +133,7 @@ async function notifyFavoriteCategoryUsers({ offerId, offerData, ownerId, }) {
             userData,
             listingCategory: category,
             listingSubCategory: subCategory,
+            listingPostalCode: getPostalCode(offerData),
         })) {
             recipients.add(doc.id);
         }

@@ -36,22 +36,58 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
 Stream<QuerySnapshot<Map<String, dynamic>>> _pollConversationQuerySnapshots(
   Query<Map<String, dynamic>> query, {
   Duration interval = const Duration(seconds: 5),
-}) async* {
-  while (true) {
-    yield await query.get();
-    await Future<void>.delayed(interval);
+}) {
+  late StreamController<QuerySnapshot<Map<String, dynamic>>> controller;
+  bool cancelled = false;
+
+  Future<void> poll() async {
+    while (!cancelled) {
+      try {
+        if (!controller.isClosed) controller.add(await query.get());
+      } catch (error, stack) {
+        // Émet l'erreur au listener (→ handleError → emitState)
+        // sans fermer le stream → le poll continue
+        if (!cancelled && !controller.isClosed) {
+          controller.addError(error, stack);
+        }
+      }
+      if (!cancelled) await Future<void>.delayed(interval);
+    }
   }
+
+  controller = StreamController(
+    onListen: () => poll(),
+    onCancel: () => cancelled = true,
+  );
+  return controller.stream;
 }
 
 Stream<DocumentSnapshot<Map<String, dynamic>>>
     _pollConversationDocumentSnapshot(
   DocumentReference<Map<String, dynamic>> document, {
   Duration interval = const Duration(seconds: 15),
-}) async* {
-  while (true) {
-    yield await document.get();
-    await Future<void>.delayed(interval);
+}) {
+  late StreamController<DocumentSnapshot<Map<String, dynamic>>> controller;
+  bool cancelled = false;
+
+  Future<void> poll() async {
+    while (!cancelled) {
+      try {
+        if (!controller.isClosed) controller.add(await document.get());
+      } catch (error, stack) {
+        if (!cancelled && !controller.isClosed) {
+          controller.addError(error, stack);
+        }
+      }
+      if (!cancelled) await Future<void>.delayed(interval);
+    }
   }
+
+  controller = StreamController(
+    onListen: () => poll(),
+    onCancel: () => cancelled = true,
+  );
+  return controller.stream;
 }
 
 class ConversationsQueryContract {

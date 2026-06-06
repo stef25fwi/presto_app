@@ -101,7 +101,7 @@ Future<void> bootstrapAppCheck() async {
 
   try {
     if (kIsWeb) {
-      final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+      final siteKey = _effectiveWebRecaptchaEnterpriseSiteKey.trim();
       final host = currentAppCheckWebHost();
       final hostClass = appCheckWebHostClass(host);
       if (siteKey.isEmpty) {

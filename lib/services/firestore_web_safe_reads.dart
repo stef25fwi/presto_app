@@ -11,7 +11,9 @@ extension WebSafeQuerySnapshots on Query<Map<String, dynamic>> {
     String? debugKey,
   }) async* {
     while (true) {
-      yield await get();
+      try {
+        yield await get();
+      } catch (_) { /* erreur transitoire — stream reste ouvert */ }
       await Future<void>.delayed(interval);
     }
   }
@@ -23,7 +25,9 @@ extension WebSafeDocumentSnapshots on DocumentReference<Map<String, dynamic>> {
     String? debugKey,
   }) async* {
     while (true) {
-      yield await get();
+      try {
+        yield await get();
+      } catch (_) { /* erreur transitoire — stream reste ouvert */ }
       await Future<void>.delayed(interval);
     }
   }

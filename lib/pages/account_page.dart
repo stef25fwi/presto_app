@@ -27,6 +27,7 @@ import '../services/user_profile_save_payload.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/account_profile_sections.dart';
+import '../services/app_check_bootstrap.dart';
 
 import '../main.dart'
     show
@@ -129,6 +130,7 @@ class _AccountPageState extends State<AccountPage> {
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
   Set<String> _selectedFavoriteSubcategories = <String>{};
+  Set<String> _selectedFavoriteDepartements = <String>{};
   Set<String> _draftFavoriteSelections = <String>{};
   bool _profileLoaded = false;
   bool _profileLoadRequested = false;
@@ -823,6 +825,7 @@ class _AccountPageState extends State<AccountPage> {
     _favoriteCategories = <String>{};
     _selectedFavoriteCategories = <String>{};
     _selectedFavoriteSubcategories = <String>{};
+    _selectedFavoriteDepartements = <String>{};
     _draftFavoriteSelections = <String>{};
     _resetAdminAccessState();
 
@@ -1500,6 +1503,13 @@ class _AccountPageState extends State<AccountPage> {
       _selectedFavoriteSubcategories = hasSelectedFavoriteSubcategoriesKey
           ? selectedSubcats.toSet()
           : previousSelectedFavoriteSubcategories;
+      if (data.containsKey('selectedFavoriteDepartements')) {
+        _selectedFavoriteDepartements =
+            (data['selectedFavoriteDepartements'] as List<dynamic>? ?? [])
+                .map((e) => e.toString())
+                .where((e) => e.isNotEmpty)
+                .toSet();
+      }
 
       final hasStoredFavorites = hasFavoriteCategoriesKey ||
           hasSelectedFavoriteCategoriesKey ||
@@ -1758,7 +1768,13 @@ class _AccountPageState extends State<AccountPage> {
         city: city,
         selectedFavoriteCategories: _selectedFavoriteCategories.toList(),
         selectedFavoriteSubcategories: _selectedFavoriteSubcategories.toList(),
+        selectedFavoriteDepartements: _selectedFavoriteDepartements.toList(),
       );
+
+      // Rafraîchir le token App Check avant l'écriture (non bloquant)
+      try {
+        await refreshAppCheckToken(reason: 'profile-save');
+      } catch (_) {}
 
       final userRef =
           FirebaseFirestore.instance.collection('users').doc(user.uid);
@@ -1885,6 +1901,8 @@ class _AccountPageState extends State<AccountPage> {
         _selectedFavoriteCategories.toSet();
     final previousSelectedFavoriteSubcategories =
         _selectedFavoriteSubcategories.toSet();
+    final previousSelectedFavoriteDepartements =
+        _selectedFavoriteDepartements.toSet();
 
     final selectedCats = draft.where((e) => !e.contains('—')).toSet();
     final selectedSubcats = draft.where((e) => e.contains('—')).toSet();
@@ -1904,7 +1922,20 @@ class _AccountPageState extends State<AccountPage> {
         _favoriteCategories = previousFavoriteCategories;
         _selectedFavoriteCategories = previousSelectedFavoriteCategories;
         _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
+        _selectedFavoriteDepartements = previousSelectedFavoriteDepartements;
       });
+    }
+  }
+
+  Future<void> _openDeptPicker() async {
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (ctx) => _DeptPickerDialog(
+        selected: Set<String>.from(_selectedFavoriteDepartements),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _selectedFavoriteDepartements = result);
     }
   }
 
@@ -2673,11 +2704,30 @@ class _AccountPageState extends State<AccountPage> {
                           subcategoriesCount: draftSubcategoryLabels.length,
                           selectedCategories: draftCategoryLabels,
                           selectedSubcategories: draftSubcategoryLabels,
+                          selectedDepartements: _selectedFavoriteDepartements.toList()..sort(),
+                          departementsCount: _selectedFavoriteDepartements.length,
                           isSaving: _isSavingProfile,
                           showTitle: false,
                           onOpenCategoryPicker: _openCategoryPickerSheet,
                           onOpenSubcategoryPicker: _openSubcategoryPickerSheet,
+                          onOpenDeptPicker: _openDeptPicker,
                           onApply: () => _applyDraftFavorites(user),
+                          onRemoveCategory: (category) {
+                            setState(() {
+                              _draftFavoriteSelections.remove(category);
+                              _draftFavoriteSelections.removeWhere(
+                                  (e) => e.startsWith('\$category — '));
+                            });
+                            unawaited(_applyDraftFavorites(user));
+                          },
+                          onRemoveSubcategory: (label) {
+                            setState(() => _draftFavoriteSelections.remove(label));
+                            unawaited(_applyDraftFavorites(user));
+                          },
+                          onRemoveDepartement: (code) {
+                            setState(() => _selectedFavoriteDepartements.remove(code));
+                            unawaited(_applyDraftFavorites(user));
+                          },
                         ),
                       ),
                     ),
@@ -3234,6 +3284,116 @@ class _AccountPageState extends State<AccountPage> {
           return _buildProfile(user);
         }
       },
+    );
+  }
+}
+
+
+class _DeptPickerDialog extends StatefulWidget {
+  final Set<String> selected;
+  const _DeptPickerDialog({required this.selected});
+
+  @override
+  State<_DeptPickerDialog> createState() => _DeptPickerDialogState();
+}
+
+class _DeptPickerDialogState extends State<_DeptPickerDialog> {
+  late Set<String> _current;
+  String _query = '';
+
+  static const _dromCodes = ['971', '972', '973', '974', '975', '976'];
+
+  @override
+  void initState() {
+    super.initState();
+    _current = Set<String>.from(widget.selected);
+  }
+
+  List<MapEntry<String, String>> get _filtered {
+    final q = _query.trim().toLowerCase();
+    final entries = kDepartments.entries.toList();
+    final drom = entries.where((e) => _dromCodes.contains(e.key)).toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final metro = entries.where((e) => !_dromCodes.contains(e.key)).toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
+    final all = [...drom, ...metro];
+    if (q.isEmpty) return all;
+    return all
+        .where((e) =>
+            e.value.toLowerCase().contains(q) || e.key.contains(q))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filtered;
+    return AlertDialog(
+      title: const Text('Départements d\'alerte'),
+      contentPadding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 420,
+        child: Column(
+          children: [
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Rechercher un département...',
+                prefixIcon: Icon(Icons.search),
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.builder(
+                itemCount: filtered.length,
+                itemBuilder: (ctx, i) {
+                  final e = filtered[i];
+                  final isDrom = _dromCodes.contains(e.key);
+                  return CheckboxListTile(
+                    dense: true,
+                    title: Text(
+                      '${e.value} (${e.key})',
+                      style: TextStyle(
+                        fontWeight: isDrom ? FontWeight.w700 : FontWeight.normal,
+                        color: isDrom ? kPrestoBlue : Colors.black87,
+                        fontSize: 13,
+                      ),
+                    ),
+                    value: _current.contains(e.key),
+                    onChanged: (v) => setState(() => v == true
+                        ? _current.add(e.key)
+                        : _current.remove(e.key)),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    activeColor: const Color(0xFF009688),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Annuler'),
+        ),
+        if (_current.isNotEmpty)
+          TextButton(
+            onPressed: () => setState(() => _current.clear()),
+            child: const Text('Effacer', style: TextStyle(color: Colors.red)),
+          ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF009688),
+            foregroundColor: Colors.white,
+          ),
+          onPressed: () =>
+              Navigator.of(context).pop(Set<String>.from(_current)),
+          child: Text(
+              _current.isEmpty ? 'Tous' : 'Valider (${_current.length})'),
+        ),
+      ],
     );
   }
 }

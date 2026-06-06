@@ -2359,12 +2359,20 @@ class _AutoScrollingOffersCarouselState
   }
 
   void _onTick(Duration elapsed) {
-    if (_isUserDragging || !_scrollController.hasClients) {
+    if (!_scrollController.hasClients) {
       _lastElapsed = elapsed;
       return;
     }
 
-    final dtMs = (elapsed - _lastElapsed).inMilliseconds;
+    // Ne pas interrompre le momentum post-fling utilisateur
+    if (_isUserDragging ||
+        _scrollController.position.isScrollingNotifier.value) {
+      _lastElapsed = elapsed;
+      return;
+    }
+
+    // Plafonner à 2 frames max pour éviter un saut brutal après un long drag
+    final dtMs = (elapsed - _lastElapsed).inMilliseconds.clamp(0, 32);
     _lastElapsed = elapsed;
     if (dtMs <= 0) return;
 

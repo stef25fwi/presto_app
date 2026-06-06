@@ -3,6 +3,7 @@ import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/fire
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { sendTeamBroadcastMessage } from "../marketplace/services/system_messages";
 
 type NewsletterCampaign = {
   title?: string;
@@ -47,21 +48,30 @@ async function emitNewsletterCampaign(campaignId: string, data: NewsletterCampai
       if (!recipientEmail) continue;
 
       const eventId = `evt_marketing_newsletter_${campaignId}_${userId}`;
-      await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
-        event_id: eventId,
-        event_name: "marketing.newsletter.monthly",
-        source_collection: COLLECTIONS.newsletterCampaigns,
-        source_id: campaignId,
-        recipient_user_id: userId,
-        dedupe_key: sha256(`marketing.newsletter.monthly:${campaignId}:${userId}`),
-        occurred_at: Number(data.published_at || data.updated_at || Date.now()),
-        payload: {
-          recipient_email: recipientEmail,
-          newsletterTitle,
-          newsletterUrl,
-        },
-        status: "created",
-      }, { merge: true });
+      await Promise.all([
+        db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
+          event_id: eventId,
+          event_name: "marketing.newsletter.monthly",
+          source_collection: COLLECTIONS.newsletterCampaigns,
+          source_id: campaignId,
+          recipient_user_id: userId,
+          dedupe_key: sha256(`marketing.newsletter.monthly:${campaignId}:${userId}`),
+          occurred_at: Number(data.published_at || data.updated_at || Date.now()),
+          payload: {
+            recipient_email: recipientEmail,
+            newsletterTitle,
+            newsletterUrl,
+          },
+          status: "created",
+        }, { merge: true }),
+        sendTeamBroadcastMessage({
+          userId,
+          messageId: `newsletter_${campaignId}_${userId}`,
+          body: newsletterTitle,
+          campaignTitle: newsletterTitle,
+          campaignUrl: newsletterUrl || undefined,
+        }),
+      ]);
     }
 
     if (snap.size < 200 || !lastDoc) break;

@@ -20,7 +20,9 @@ Stream<DocumentSnapshot<Map<String, dynamic>>> _pollInboxDocument(
       .collection('metadata')
       .doc('inbox');
   while (true) {
-    yield await document.get();
+    try {
+      yield await document.get();
+    } catch (_) { /* erreur transitoire */ }
     await Future<void>.delayed(const Duration(seconds: 8));
   }
 }

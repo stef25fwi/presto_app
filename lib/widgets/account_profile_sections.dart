@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/city_search.dart';
+import '../constants.dart';
 import 'phone_input_field.dart';
 
 const double _kAccountSectionTileHorizontalPadding = 10;
@@ -278,7 +279,13 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
   final bool showTitle;
   final VoidCallback onOpenCategoryPicker;
   final VoidCallback onOpenSubcategoryPicker;
+  final VoidCallback onOpenDeptPicker;
   final VoidCallback onApply;
+  final void Function(String)? onRemoveCategory;
+  final void Function(String)? onRemoveSubcategory;
+  final void Function(String)? onRemoveDepartement;
+  final List<String> selectedDepartements;
+  final int departementsCount;
 
   const AccountFavoriteCategoriesSection({
     super.key,
@@ -290,13 +297,20 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
     this.showTitle = true,
     required this.onOpenCategoryPicker,
     required this.onOpenSubcategoryPicker,
+    required this.onOpenDeptPicker,
     required this.onApply,
+    required this.selectedDepartements,
+    required this.departementsCount,
+    this.onRemoveCategory,
+    this.onRemoveSubcategory,
+    this.onRemoveDepartement,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasSelections =
-        selectedCategories.isNotEmpty || selectedSubcategories.isNotEmpty;
+    final hasSelections = selectedCategories.isNotEmpty ||
+        selectedSubcategories.isNotEmpty ||
+        selectedDepartements.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -361,6 +375,26 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: Color(0xFFB85C00),
                         ),
+                        onDeleted: onRemoveCategory != null
+                            ? () => onRemoveCategory!(category)
+                            : null,
+                        deleteIconColor: const Color(0xFFB85C00),
+                      ),
+                    ),
+                    ...selectedDepartements.map(
+                      (code) => Chip(
+                        label: Text(kDepartments[code] ?? code),
+                        backgroundColor: const Color(0xFFE0F2F1),
+                        side: const BorderSide(color: Color(0xFF80CBC4)),
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF00695C),
+                        ),
+                        onDeleted: onRemoveDepartement != null
+                            ? () => onRemoveDepartement!(code)
+                            : null,
+                        deleteIconColor: const Color(0xFF00695C),
                       ),
                     ),
                     ...selectedSubcategories.map(
@@ -373,6 +407,10 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1A4EA1),
                         ),
+                        onDeleted: onRemoveSubcategory != null
+                            ? () => onRemoveSubcategory!(subcategory)
+                            : null,
+                        deleteIconColor: const Color(0xFF1A4EA1),
                       ),
                     ),
                   ],
@@ -452,6 +490,42 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                         Icons.arrow_drop_down,
                         color: Colors.black54,
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: onOpenDeptPicker,
+                borderRadius: BorderRadius.circular(12),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Départements',
+                    filled: true,
+                    fillColor: const Color(0xFFF9F9F9),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          departementsCount == 0
+                              ? 'Tous les départements'
+                              : '$departementsCount département(s) sélectionné(s)',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.black54),
                     ],
                   ),
                 ),
