@@ -1085,7 +1085,8 @@ class _AccountPageState extends State<AccountPage> {
     final storedPath = _firstStoredProfilePhotoPath(data);
     final currentPhotoValue = _firstNonEmptyProfilePhoto(data);
 
-    if (storedPath.isEmpty && !_isResolvableStorageProfilePhoto(currentPhotoValue)) {
+    if (storedPath.isEmpty &&
+        !_isResolvableStorageProfilePhoto(currentPhotoValue)) {
       return;
     }
 
@@ -1114,7 +1115,8 @@ class _AccountPageState extends State<AccountPage> {
           .doc(user.uid)
           .set(profilePhotoPayload, SetOptions(merge: true));
     } catch (error) {
-      debugPrint('[ProfilePhoto] storage hydration failed uid=${user.uid}: $error');
+      debugPrint(
+          '[ProfilePhoto] storage hydration failed uid=${user.uid}: $error');
     }
   }
 
@@ -1928,12 +1930,168 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _openDeptPicker() async {
-    final result = await showDialog<Set<String>>(
+    final result = await showModalBottomSheet<Set<String>>(
       context: context,
-      builder: (ctx) => _DeptPickerDialog(
-        selected: Set<String>.from(_selectedFavoriteDepartements),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
+      builder: (ctx) {
+        final draft = Set<String>.from(_selectedFavoriteDepartements);
+        var search = '';
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final entries = kDepartments.entries.toList()
+              ..sort((a, b) => a.value.compareTo(b.value));
+
+            final query = search.trim().toLowerCase();
+            final visibleEntries = query.isEmpty
+                ? entries
+                : entries.where((entry) {
+                    final code = entry.key.toLowerCase();
+                    final label = entry.value.toLowerCase();
+                    return code.contains(query) || label.contains(query);
+                  }).toList();
+
+            return FractionallySizedBox(
+              heightFactor: 0.88,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  10,
+                  16,
+                  16 + MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.black12,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Choisir des départements',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: kPrestoBlue,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setModalState(draft.clear);
+                          },
+                          child: const Text('Tout effacer'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher un département...',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: kPrestoBlue, width: 1.4),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setModalState(() => search = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: visibleEntries.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                        itemBuilder: (context, index) {
+                          final entry = visibleEntries[index];
+                          final code = entry.key;
+                          final label = entry.value;
+                          final checked = draft.contains(code);
+
+                          return CheckboxListTile(
+                            value: checked,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            activeColor: kPrestoBlue,
+                            title: Text(
+                              label,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            subtitle: Text(code),
+                            onChanged: (_) {
+                              setModalState(() {
+                                if (checked) {
+                                  draft.remove(code);
+                                } else {
+                                  draft.add(code);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Annuler'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: kPrestoOrange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: () => Navigator.of(context)
+                                .pop(Set<String>.from(draft)),
+                            child: const Text('Valider'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
+
     if (result != null && mounted) {
       setState(() => _selectedFavoriteDepartements = result);
     }
@@ -2704,8 +2862,10 @@ class _AccountPageState extends State<AccountPage> {
                           subcategoriesCount: draftSubcategoryLabels.length,
                           selectedCategories: draftCategoryLabels,
                           selectedSubcategories: draftSubcategoryLabels,
-                          selectedDepartements: _selectedFavoriteDepartements.toList()..sort(),
-                          departementsCount: _selectedFavoriteDepartements.length,
+                          selectedDepartements:
+                              _selectedFavoriteDepartements.toList()..sort(),
+                          departementsCount:
+                              _selectedFavoriteDepartements.length,
                           isSaving: _isSavingProfile,
                           showTitle: false,
                           onOpenCategoryPicker: _openCategoryPickerSheet,
@@ -2721,11 +2881,13 @@ class _AccountPageState extends State<AccountPage> {
                             unawaited(_applyDraftFavorites(user));
                           },
                           onRemoveSubcategory: (label) {
-                            setState(() => _draftFavoriteSelections.remove(label));
+                            setState(
+                                () => _draftFavoriteSelections.remove(label));
                             unawaited(_applyDraftFavorites(user));
                           },
                           onRemoveDepartement: (code) {
-                            setState(() => _selectedFavoriteDepartements.remove(code));
+                            setState(() =>
+                                _selectedFavoriteDepartements.remove(code));
                             unawaited(_applyDraftFavorites(user));
                           },
                         ),
@@ -3288,7 +3450,6 @@ class _AccountPageState extends State<AccountPage> {
   }
 }
 
-
 class _DeptPickerDialog extends StatefulWidget {
   final Set<String> selected;
   const _DeptPickerDialog({required this.selected});
@@ -3319,8 +3480,7 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
     final all = [...drom, ...metro];
     if (q.isEmpty) return all;
     return all
-        .where((e) =>
-            e.value.toLowerCase().contains(q) || e.key.contains(q))
+        .where((e) => e.value.toLowerCase().contains(q) || e.key.contains(q))
         .toList();
   }
 
@@ -3355,7 +3515,8 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
                     title: Text(
                       '${e.value} (${e.key})',
                       style: TextStyle(
-                        fontWeight: isDrom ? FontWeight.w700 : FontWeight.normal,
+                        fontWeight:
+                            isDrom ? FontWeight.w700 : FontWeight.normal,
                         color: isDrom ? kPrestoBlue : Colors.black87,
                         fontSize: 13,
                       ),
@@ -3390,8 +3551,8 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
           ),
           onPressed: () =>
               Navigator.of(context).pop(Set<String>.from(_current)),
-          child: Text(
-              _current.isEmpty ? 'Tous' : 'Valider (${_current.length})'),
+          child:
+              Text(_current.isEmpty ? 'Tous' : 'Valider (${_current.length})'),
         ),
       ],
     );
