@@ -1484,7 +1484,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1511,8 +1511,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    Color(0xFF1A73E8),
-                                    Color(0xFF0D47A1),
+                                    Color(0x331A73E8),
+                                    Color(0x141A73E8),
+                                    Color(0x0DFFFFFF),
                                   ],
                                 )
                               : null,
@@ -1520,16 +1521,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
                             color: _showFilters
-                                ? Colors.white.withValues(alpha: 0.28)
+                                ? const Color(0x551A73E8)
                                 : const Color(0xFFE4D8DA),
                           ),
                           boxShadow: _showFilters
                               ? [
                                   BoxShadow(
-                                    color: const Color(0xFF1A73E8)
-                                        .withValues(alpha: 0.20),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
+                                    color: const Color(0x1A1A73E8),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ]
                               : null,
@@ -1588,7 +1588,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                   if (activeFiltersCount > 0)
                     Container(
                       height: 28,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
@@ -1681,7 +1681,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                   width: double.infinity,
                   height: kToolbarHeight,
                   color: kPrestoOrange,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: Center(
                     child: Text(
                       baseTitle,
@@ -2039,19 +2039,20 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF1A73E8),
-                  Color(0xFF0D47A1),
+                  Color(0x331A73E8),
+                  Color(0x141A73E8),
+                  Color(0x0DFFFFFF),
                 ],
               ),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.18),
+                color: const Color(0x331A73E8),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 14,
-                  offset: const Offset(0, 6),
+                  color: const Color(0x1A1A73E8),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -2076,8 +2077,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                         style: OutlinedButton.styleFrom(
                           foregroundColor: kPrestoBlue,
                           backgroundColor: Colors.white.withValues(alpha: 0.97),
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.74),
+                          side: const BorderSide(
+                            color: Color(0xFFCDD9F0),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           textStyle: const TextStyle(
@@ -3092,7 +3093,7 @@ class _StandardResponseBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFF3EEF4),
         borderRadius: BorderRadius.circular(999),
@@ -3119,7 +3120,7 @@ class _EmptyOffers extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

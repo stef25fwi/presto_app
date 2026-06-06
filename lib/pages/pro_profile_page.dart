@@ -88,7 +88,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
         filled: true,
         fillColor: Colors.white,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       );
 

@@ -219,7 +219,7 @@ class _BigToolCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(6, 16, 6, 16),
       decoration: BoxDecoration(
         color: ToolboxPage.card,
         borderRadius: BorderRadius.circular(22),
@@ -329,7 +329,7 @@ class _CheckGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     // attendu: 4 items (2 colonnes x 2 lignes)
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(18),
@@ -460,7 +460,7 @@ class _MiniPlaceholderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(6, 14, 6, 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),

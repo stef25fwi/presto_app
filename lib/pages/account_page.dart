@@ -2558,23 +2558,38 @@ class _AccountPageState extends State<AccountPage> {
                           Stack(
                             clipBehavior: Clip.none,
                             children: [
-                              CircleAvatar(
-                                radius: 42,
-                                backgroundColor: Colors.white,
-                                backgroundImage: const AssetImage(
-                                  'assets/images/logowebp.webp',
-                                ),
-                                foregroundImage: visiblePhotoUrl.isNotEmpty
-                                    ? NetworkImage(visiblePhotoUrl)
-                                    : null,
-                                onForegroundImageError: (error, stackTrace) {
-                                  debugPrint(
-                                    '[ProfilePhoto] avatar render failed '
-                                    'uid=${user.uid} url=$visiblePhotoUrl error=$error',
-                                  );
-                                },
-                                child: _isUploadingProfilePhoto
-                                    ? Container(
+                              SizedBox(
+                                width: 84,
+                                height: 84,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    // Logo ilipresto par défaut
+                                    const CircleAvatar(
+                                      radius: 42,
+                                      backgroundColor: Colors.white,
+                                      backgroundImage: AssetImage(
+                                        'assets/images/logowebp.webp',
+                                      ),
+                                    ),
+                                    // Photo utilisateur (ClipOval fonctionne sur web)
+                                    if (visiblePhotoUrl.isNotEmpty)
+                                      ClipOval(
+                                        child: Image.network(
+                                          visiblePhotoUrl,
+                                          fit: BoxFit.cover,
+                                          gaplessPlayback: true,
+                                          errorBuilder: (_, __, ___) =>
+                                              const SizedBox.shrink(),
+                                          loadingBuilder: (_, child, progress) =>
+                                              progress == null
+                                                  ? child
+                                                  : const SizedBox.shrink(),
+                                        ),
+                                      ),
+                                    // Overlay upload en cours
+                                    if (_isUploadingProfilePhoto)
+                                      Container(
                                         decoration: BoxDecoration(
                                           color: Colors.black.withOpacity(0.35),
                                           shape: BoxShape.circle,
@@ -2589,8 +2604,9 @@ class _AccountPageState extends State<AccountPage> {
                                             ),
                                           ),
                                         ),
-                                      )
-                                    : null,
+                                      ),
+                                  ],
+                                ),
                               ),
                               Positioned(
                                 right: -2,

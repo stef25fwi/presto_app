@@ -362,9 +362,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         (kIsWeb &&
             appCheckActivationAttempted &&
             !appCheckActivationSucceeded)) {
-      return 'La verification de securite web est indisponible pour la messagerie. '
-          'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et rechargez la page.'
-          '${appCheckWebHostHint()}';
+        return 'Vérification de sécurité indisponible. Rechargez la page.';
     }
     if (_isPermissionDenied(error)) {
       // Toutes les requetes participants (participantIds, participants, ...)
@@ -373,9 +371,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       // global des lectures vient quasi toujours d'un jeton App Check rejete
       // (cle reCAPTCHA invalide ou domaine non autorise), pas des regles.
       if (kIsWeb) {
-        return 'Acces refuse a la messagerie : la verification de securite App Check a ete rejetee. '
-            'Verifiez la cle APPCHECK_RECAPTCHA_SITE_KEY et que le domaine est autorise dans la console Firebase, puis rechargez la page.'
-            '${appCheckWebHostHint()}';
+        return 'Messagerie inaccessible. Rechargez la page.';
       }
       return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
     }
@@ -569,36 +565,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             requireAppCheckToken: false,
           );
         }
-      } catch (error) {
+      } catch (_) {
         if (myGeneration != _subscriptionGeneration ||
             isCancelled ||
             controller.isClosed) return;
-        // Retry preflight AppCheck failures: reCAPTCHA may still be warming up
-        // in the background. Allow up to 3 retries with growing delays before
-        // surfacing the error to the UI.
-        if (UserProfileBootstrapService.isAppCheckFailure(error) &&
-            appCheckPrefixRetryCount < 3) {
-          appCheckPrefixRetryCount += 1;
-          final appCheckDelay = Duration(seconds: appCheckPrefixRetryCount * 2);
-          unawaited(() async {
-            if (kDebugMode) {
-              debugPrint(
-                '[MessagesList] appcheck preflight retry '
-                '$appCheckPrefixRetryCount/3 in $appCheckDelay',
-              );
-            }
-            await Future<void>.delayed(appCheckDelay);
-            if (!isCancelled && !controller.isClosed) {
-              await startSubscriptions(forceRefreshTokens: true);
-            }
-          }());
-          return;
-        }
-        _appendAdminConversationLog(
-            'mode=$mode startSubscriptions error app_check=$error');
-        errorsByField['app_check'] = error;
-        emitState();
-        return;
+        // App Check preflight failed — subscriptions immédiates.
       }
 
       if (myGeneration != _subscriptionGeneration ||

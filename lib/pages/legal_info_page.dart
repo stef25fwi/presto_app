@@ -77,7 +77,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
           children: [
             const SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               child: _SegmentTabs(
                 activeIndex: _tab,
                 labels: const ["Mentions légales", "Confidentialité", "CGU"],
@@ -88,7 +88,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
             const SizedBox(height: 12),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
+                padding: const EdgeInsets.fromLTRB(6, 0, 6, 18),
                 child: Column(
                   children: [
                     const SizedBox(height: 4),
@@ -480,7 +480,7 @@ class _LegalSectionPage extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(6, 16, 6, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -644,7 +644,7 @@ class _HostingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _CardShell(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        padding: const EdgeInsets.fromLTRB(6, 14, 6, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
