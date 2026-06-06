@@ -495,6 +495,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _descriptionEditedByUser = false;
   bool _locationEditedByUser = false;
   bool _postalCodeEditedByUser = false;
+  bool _locationPostalPrefilledByAi = false;
+  bool _isClearingAiPrefilledLocationPostal = false;
   bool _categoryEditedByUser = false;
   bool _delayEditedByUser = false;
   bool _budgetEditedByUser = false;
@@ -3298,6 +3300,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         _applyDraftToForm(draft);
         _applyKeywordCategoryPairFromText(input);
+        _markLocationPostalPrefilledByAiIfChanged(beforeSnapshot);
 
         final didChange = beforeSnapshot['title'] != _titleController.text ||
             beforeSnapshot['description'] != _descriptionController.text ||
@@ -3366,6 +3369,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _descriptionEditedByUser = false;
       _locationEditedByUser = false;
       _postalCodeEditedByUser = false;
+      _locationPostalPrefilledByAi = false;
+      _isClearingAiPrefilledLocationPostal = false;
       _categoryEditedByUser = false;
       _delayEditedByUser = false;
       _budgetEditedByUser = false;
@@ -3390,6 +3395,55 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
+
+  void _markLocationPostalPrefilledByAiIfChanged(
+    Map<String, String> beforeSnapshot,
+  ) {
+    final locationChanged =
+        beforeSnapshot['location'] != _locationController.text;
+    final postalChanged =
+        beforeSnapshot['postal'] != _postalCodeController.text;
+
+    if (!locationChanged && !postalChanged) {
+      return;
+    }
+
+    final hasLocationValue = _locationController.text.trim().isNotEmpty ||
+        _postalCodeController.text.trim().isNotEmpty;
+
+    if (hasLocationValue) {
+      _locationPostalPrefilledByAi = true;
+    }
+  }
+
+  void _clearAiPrefilledLocationPostalOnUserTap() {
+    if (!_locationPostalPrefilledByAi ||
+        _isClearingAiPrefilledLocationPostal ||
+        _isApplyingProgrammaticPublishUpdate) {
+      return;
+    }
+
+    final hasValue = _locationController.text.trim().isNotEmpty ||
+        _postalCodeController.text.trim().isNotEmpty;
+
+    if (!hasValue) {
+      _locationPostalPrefilledByAi = false;
+      return;
+    }
+
+    _isClearingAiPrefilledLocationPostal = true;
+    setState(() {
+      _locationController.clear();
+      _postalCodeController.clear();
+      _locationEditedByUser = false;
+      _postalCodeEditedByUser = false;
+      _citySuggestions = [];
+      _highlightedIndex = -1;
+      _locationPostalPrefilledByAi = false;
+    });
+    _isClearingAiPrefilledLocationPostal = false;
+    _recompute();
+  }
 
   void _onCityChanged(String value) {
     final query = value.trim();
@@ -4267,6 +4321,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 14),
                       ),
+                      onTap: _clearAiPrefilledLocationPostalOnUserTap,
                       onChanged: _onCityChanged,
                       onEditingComplete: _canonicalizeLocationInputs,
                       validator: _validateCanonicalCity,
@@ -4290,6 +4345,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 14),
                     ),
+                    onTap: _clearAiPrefilledLocationPostalOnUserTap,
                     onChanged: _onPostalCodeChanged,
                     onEditingComplete: _canonicalizeLocationInputs,
                     validator: _validatePostalCode,
