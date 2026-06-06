@@ -2491,7 +2491,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
       height: thumbSize,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         itemCount: imageUrls.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {

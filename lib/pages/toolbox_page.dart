@@ -41,7 +41,7 @@ class ToolboxPage extends StatelessWidget {
           SafeArea(
             top: false,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(6, 16, 6, 24),
               children: [
                 _BigToolCard(
                   icon: Icons.rocket_launch_rounded,

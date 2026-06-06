@@ -180,7 +180,8 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                             constraints: const BoxConstraints(maxHeight: 200),
                             width: MediaQuery.of(context).size.width - 80,
                             child: ListView.builder(
-                              padding: EdgeInsets.zero,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
                               shrinkWrap: true,
                               itemCount: options.length,
                               itemBuilder: (context, index) {

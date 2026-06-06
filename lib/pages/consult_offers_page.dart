@@ -827,7 +827,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         },
       );
       try {
-        final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
+        final loads =
+            <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
           loadMergedPublicOfferQueryVariants(
             queries: buildMarketplaceListingsBrowseQueries(
               limit: limit,
@@ -1720,7 +1721,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                         final err = snapshot.error;
                         if (err != null) {
                           PrestoMonitoring.I
-                          .trackError('consult_offers.fetch', err);
+                              .trackError('consult_offers.fetch', err);
                         }
 
                         final friendly = err == null
@@ -1793,7 +1794,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: ClampingScrollPhysics(),
                             ),
-                            padding: EdgeInsets.zero,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             children: [
                               Padding(
                                 padding: EdgeInsets.fromLTRB(24, 18, 24, 12),
@@ -2296,7 +2297,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   shrinkWrap: true,
                   itemCount: options.length,
                   itemBuilder: (context, index) {
@@ -3424,7 +3426,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+          padding: const EdgeInsets.fromLTRB(6, 14, 6, 14),
           children: [
             FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
               future: _activeOffersFuture,

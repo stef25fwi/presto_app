@@ -1420,11 +1420,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           await ConversationService.adminUnblockConversation(
               conversationId: widget.conversationId);
           if (!mounted) return;
-            setState(() {
-              _isBlocked = false;
-              _isBlockedForCurrentUser = false;
-              _isBlockedByAnotherParticipant = false;
-            });
+          setState(() {
+            _isBlocked = false;
+            _isBlockedForCurrentUser = false;
+            _isBlockedByAnotherParticipant = false;
+          });
           showSuccessSnackBar(context, 'Conversation debloquee par admin.');
           return;
         case _ConversationThreadAction.delete:
@@ -1946,9 +1946,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   Widget _buildAttachmentPreview(_MessageAttachment attachment) {
     if (attachment.type == 'image') {
-      final fullUrl = attachment.url.isNotEmpty
-          ? attachment.url
-          : attachment.thumbnailUrl;
+      final fullUrl =
+          attachment.url.isNotEmpty ? attachment.url : attachment.thumbnailUrl;
       return GestureDetector(
         onTap: () => showGeneralDialog<void>(
           context: context,
@@ -2446,7 +2445,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   controller: _scrollController,
                                   reverse: true,
                                   padding:
-                                      const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                                      const EdgeInsets.fromLTRB(6, 8, 6, 16),
                                   itemCount: visibleItemCount + 1,
                                   itemBuilder: (context, index) {
                                     if (index == visibleItemCount) {

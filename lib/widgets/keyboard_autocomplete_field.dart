@@ -262,7 +262,7 @@ class _KeyboardAutocompleteFieldState<T>
                 constraints: const BoxConstraints(maxHeight: 280),
                 child: ListView.builder(
                   controller: _scrollController,
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   itemCount: _options.length,
                   itemBuilder: (context, index) {
                     final opt = _options[index];

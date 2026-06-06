@@ -4088,7 +4088,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 : AutovalidateMode.disabled,
             child: ListView(
               controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
+              padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
               children: [
                 const SizedBox(height: 6),
                 AiPublishControl(
