@@ -432,7 +432,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFF6E7BE),
             borderRadius: BorderRadius.circular(999),
@@ -771,7 +771,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final normalizedOfferId = _offerId.trim();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: FutureBuilder<_OfferPreview?>(
         future: _offerPreviewFor(normalizedOfferId),
         builder: (context, snapshot) {
@@ -787,7 +787,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(18),
@@ -1531,7 +1531,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (!_showSafetyReminder) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),

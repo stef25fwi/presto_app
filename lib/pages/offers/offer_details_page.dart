@@ -1540,6 +1540,8 @@ class _OfferUiData {
   final String paymentMethod;
   final String serviceType;
   final List<String> imageUrls;
+  final int viewCount;
+  final int phoneViewCount;
 
   const _OfferUiData({
     required this.offerId,
@@ -1577,6 +1579,8 @@ class _OfferUiData {
     required this.paymentMethod,
     required this.serviceType,
     this.imageUrls = const [],
+    this.viewCount = 0,
+    this.phoneViewCount = 0,
   });
 
   String get sanitizedTitle {
@@ -1872,6 +1876,13 @@ class _OfferUiData {
       paymentMethod: paymentMethod,
       serviceType: serviceType,
       imageUrls: rawImageUrlsList.cast<String>(),
+      viewCount: _asInt(readValue('viewCount'), fallback: 0),
+      phoneViewCount: _asInt(
+        readValue('phoneViewCount') ??
+            readValue('phoneViews') ??
+            readValue('contactViews'),
+        fallback: 0,
+      ),
     );
   }
 
@@ -2303,6 +2314,52 @@ class _HeroCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    // Stats propriétaire (vues + contacts tél)
+                    Builder(builder: (context) {
+                      final me = FirebaseAuth.instance.currentUser?.uid ?? '';
+                      final isOwner = me.isNotEmpty && me == data.advertiserId;
+                      if (!isOwner) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.visibility_outlined,
+                                    size: 13, color: Color(0xFF6B708D)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '\${data.viewCount} vue\${data.viewCount > 1 ? "s" : ""}',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B708D),
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                            if (data.phoneViewCount > 0)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.phone_outlined,
+                                      size: 13, color: Color(0xFF6B708D)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '\${data.phoneViewCount} contact\${data.phoneViewCount > 1 ? "s" : ""}',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF6B708D),
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ],
@@ -2619,7 +2676,7 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black,
+      color: Colors.white,
       child: SafeArea(
         child: Stack(
           children: [
@@ -2638,17 +2695,10 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
                         fit: BoxFit.contain,
                         errorChild: const Icon(
                           Icons.broken_image_outlined,
-                          color: Colors.white54,
+                          color: Colors.black26,
                           size: 64,
                         ),
-                        loadingChild: const SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white70,
-                          ),
-                        ),
+                        loadingChild: const SizedBox.shrink(),
                       ),
                     ),
                   );

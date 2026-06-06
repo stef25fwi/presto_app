@@ -1792,9 +1792,9 @@ class _HomePageState extends State<HomePage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
+                padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 14),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
@@ -1856,7 +1856,7 @@ class _HomePageState extends State<HomePage>
 
               // SLIDER
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: SizedBox(
                   height: 220,
                   child: Container(
@@ -1907,7 +1907,7 @@ class _HomePageState extends State<HomePage>
 
               _buildHomeCategoriesSection(),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
 
               _buildLatestOffersSection(),
 

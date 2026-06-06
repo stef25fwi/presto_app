@@ -93,7 +93,7 @@ class ToolboxHubPage extends StatelessWidget {
         bottom: true,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            const contentPadding = EdgeInsets.fromLTRB(10, 10, 10, 18);
+            const contentPadding = EdgeInsets.fromLTRB(6, 10, 6, 18);
             const cardSpacing = 12.0;
             const minPhoneTileHeight = 292.0;
             final availableHeight =
@@ -125,7 +125,7 @@ class ToolboxHubPage extends StatelessWidget {
             }
 
             return Padding(
-              padding: const EdgeInsets.fromLTRB(8, 12, 8, 24),
+              padding: const EdgeInsets.fromLTRB(6, 12, 6, 24),
               child: Column(
                 children: [
                   Expanded(child: firstCard),
