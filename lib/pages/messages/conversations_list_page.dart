@@ -589,9 +589,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
             doc,
-            assumedParticipants: field == conversationPrimaryParticipantField
-                ? const <String>[]
-                : <String>[userId],
+            assumedParticipants: <String>[userId],
           );
         }).toList(growable: false);
         snapshotsByField[field] = docs;
