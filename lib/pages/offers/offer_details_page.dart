@@ -19,6 +19,7 @@ import 'package:presto_app/services/marketplace_human_verification.dart';
 import 'package:presto_app/services/user_profile_bootstrap_service.dart';
 import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
+import 'dart:async';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -616,11 +617,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
 
     try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      unawaited(UserProfileBootstrapService.prepareProfileFirestoreAccess(
         user: authUser,
         forceRefreshAppCheckToken: true,
         requireAppCheckToken: false,
-      );
+      ));
     } catch (error) {
       logRuntimeAction(
         area: 'messaging',
