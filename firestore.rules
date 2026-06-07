@@ -132,6 +132,7 @@ service cloud.firestore {
           || ((data.memberIds is list) && data.memberIds.hasAny([uid()]))
           || ((data.users is list) && data.users.hasAny([uid()]))
           || ((data.userIds is list) && data.userIds.hasAny([uid()]))
+          || ((data.participantsMap is map) && data.participantsMap[uid()] == true)
         );
     }
 
