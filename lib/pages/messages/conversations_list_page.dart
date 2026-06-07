@@ -181,7 +181,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     var adminSource = 'none';
     var detectedClaims = const <String, dynamic>{};
     try {
-      final tokenResult = await user.getIdTokenResult(true);
+      final tokenResult = await user.getIdTokenResult(false);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
       detectedClaims = claims;
       isAdmin = _hasAdminAccess(claims);
@@ -190,25 +190,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
 
       if (!isAdmin) {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        final data = userDoc.data() ?? const <String, dynamic>{};
-        isAdmin = _hasAdminAccess(data);
-        if (isAdmin) {
+        final results = await Future.wait([
+          FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+          FirebaseFirestore.instance.collection('adminUsers').doc(user.uid).get(),
+        ]);
+        final userData = results[0].data() ?? const <String, dynamic>{};
+        final adminData = results[1].data() ?? const <String, dynamic>{};
+        if (_hasAdminAccess(userData)) {
+          isAdmin = true;
           adminSource = 'users/${user.uid}';
-        }
-      }
-
-      if (!isAdmin) {
-        final adminUserDoc = await FirebaseFirestore.instance
-            .collection('adminUsers')
-            .doc(user.uid)
-            .get();
-        final data = adminUserDoc.data() ?? const <String, dynamic>{};
-        isAdmin = _hasAdminAccess(data) || _isEnabledAdminGrant(data);
-        if (isAdmin) {
+        } else if (_hasAdminAccess(adminData) || _isEnabledAdminGrant(adminData)) {
+          isAdmin = true;
           adminSource = 'adminUsers/${user.uid}';
         }
       }
