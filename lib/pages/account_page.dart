@@ -2581,17 +2581,13 @@ class _AccountPageState extends State<AccountPage> {
                                     // Photo utilisateur (ClipOval fonctionne sur web)
                                     if (visiblePhotoUrl.isNotEmpty)
                                       ClipOval(
-                                        key: ValueKey(visiblePhotoUrl),
                                         child: Image.network(
                                           visiblePhotoUrl,
                                           fit: BoxFit.cover,
+                                          width: 84,
+                                          height: 84,
                                           gaplessPlayback: true,
-                                          errorBuilder: (_, __, ___) =>
-                                              const SizedBox.shrink(),
-                                          loadingBuilder: (_, child, progress) =>
-                                              progress == null
-                                                  ? child
-                                                  : const SizedBox.shrink(),
+                                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                                         ),
                                       ),
                                     // Overlay upload en cours
