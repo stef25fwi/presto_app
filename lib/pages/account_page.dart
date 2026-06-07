@@ -126,6 +126,7 @@ class _AccountPageState extends State<AccountPage> {
   String? _activeProfileUid;
   String _profileEmail = '';
   String? _profilePhotoUrl;
+  DateTime? _profilePhotoUploadedAt;
 
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
@@ -1254,6 +1255,7 @@ class _AccountPageState extends State<AccountPage> {
       if (!mounted || _activeProfileUid != user.uid) return;
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
+      _profilePhotoUploadedAt = DateTime.now();
       setState(() => _profilePhotoUrl = downloadUrl);
       showSuccessSnackBar(context, 'Photo de profil mise à jour');
     } on FirebaseException catch (error) {
@@ -1382,7 +1384,9 @@ class _AccountPageState extends State<AccountPage> {
             _profileEmail = hydratedEmail;
           }
           hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
-          if (hydratedPhotoUrl.isNotEmpty) {
+          final _photoUploadedRecently = _profilePhotoUploadedAt != null &&
+              DateTime.now().difference(_profilePhotoUploadedAt!) < const Duration(seconds: 10);
+          if (hydratedPhotoUrl.isNotEmpty && !_photoUploadedRecently) {
             _profilePhotoUrl = hydratedPhotoUrl;
           }
         }
