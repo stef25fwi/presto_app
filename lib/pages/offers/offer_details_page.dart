@@ -2978,7 +2978,72 @@ class _PracticalInfoCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        children: [],
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFBFAFA),
+              borderRadius: BorderRadius.circular(compact ? 20 : 24),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                compact ? 14 : 18,
+                compact ? 12 : 16,
+                compact ? 14 : 18,
+                compact ? 14 : 18,
+              ),
+              child: Column(
+                children: [
+                  _InfoLine(
+                    icon: Icons.handyman_outlined,
+                    label: 'Catégorie',
+                    value: data.category,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.map_outlined,
+                    label: 'Zone d\'intervention',
+                    value: data.serviceArea,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Déplacement possible',
+                    value: data.canTravel ? 'Oui' : 'Non',
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.access_time_rounded,
+                    label: 'Horaires',
+                    value: data.schedule,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.access_time_rounded,
+                    label: 'Délai',
+                    value: data.missionDelay,
+                    compact: compact,
+                  ),
+                  const Divider(height: 1, thickness: 1, color: line),
+                  _InfoLine(
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'Mode de paiement',
+                    value: 'À convenir',
+                    compact: compact,
+                    trailing: _paymentInfoPill(context),
+                  ),
+                  _InfoLine(
+                    icon: Icons.work_outline_rounded,
+                    label: 'Type de prestation',
+                    value: data.serviceType.toLowerCase().contains('ponct')
+                        ? 'Ponctuelle'
+                        : data.serviceType,
+                    compact: compact,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
