@@ -33,6 +33,15 @@ import 'services/admin_audio_runtime_store.dart';
 import 'services/admin_web_debug_store.dart';
 import 'services/post_auth_navigation_intent_service.dart';
 import 'widgets/admin_web_debug_panel.dart';
+import 'pages/auth/login_page.dart';
+import 'pages/auth/register_page.dart';
+import 'pages/auth/forgot_password_page.dart';
+import 'pages/auth/verify_email_page.dart';
+import 'pages/auth/reset_password_success_page.dart';
+import 'pages/account/account_security_page.dart';
+import 'pages/account/change_email_page.dart';
+import 'pages/account/change_password_page.dart';
+import 'pages/account/delete_account_page.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -855,6 +864,16 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       },
       onGenerateRoute: _onGenerateRoute,
       routes: {
+        LoginPage.routeName: (_) => const LoginPage(),
+        RegisterPage.routeName: (_) => const RegisterPage(),
+        ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),
+        VerifyEmailPage.routeName: (_) => const VerifyEmailPage(),
+        ResetPasswordSuccessPage.routeName: (_) =>
+            const ResetPasswordSuccessPage(email: ''),
+        AccountSecurityPage.routeName: (_) => const AccountSecurityPage(),
+        ChangeEmailPage.routeName: (_) => const ChangeEmailPage(),
+        ChangePasswordPage.routeName: (_) => const ChangePasswordPage(),
+        DeleteAccountPage.routeName: (_) => const DeleteAccountPage(),
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),

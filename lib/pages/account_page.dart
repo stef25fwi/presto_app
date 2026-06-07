@@ -37,6 +37,7 @@ import '../main.dart'
         pendingRedirectAuthResult,
         pendingRedirectAuthError;
 import 'user_offers_section.dart';
+import 'package:presto_app/pages/account/account_security_page.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
@@ -1385,7 +1386,8 @@ class _AccountPageState extends State<AccountPage> {
           }
           hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
           final _photoUploadedRecently = _profilePhotoUploadedAt != null &&
-              DateTime.now().difference(_profilePhotoUploadedAt!) < const Duration(seconds: 10);
+              DateTime.now().difference(_profilePhotoUploadedAt!) <
+                  const Duration(seconds: 10);
           if (hydratedPhotoUrl.isNotEmpty && !_photoUploadedRecently) {
             _profilePhotoUrl = hydratedPhotoUrl;
           }
@@ -2524,7 +2526,8 @@ class _AccountPageState extends State<AccountPage> {
         : (user.email ?? '');
     final visiblePhotoUrl = (_profilePhotoUrl ?? '').trim();
     // ignore: avoid_print
-    print('[BUILD] visiblePhotoUrl=$visiblePhotoUrl isUploading=$_isUploadingProfilePhoto');
+    print(
+        '[BUILD] visiblePhotoUrl=$visiblePhotoUrl isUploading=$_isUploadingProfilePhoto');
     final draftCategoryLabels = _draftFavoriteSelections
         .where((entry) => !entry.contains('—'))
         .toList()
@@ -2589,7 +2592,8 @@ class _AccountPageState extends State<AccountPage> {
                                           width: 84,
                                           height: 84,
                                           gaplessPlayback: true,
-                                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                          errorBuilder: (_, __, ___) =>
+                                              const SizedBox.shrink(),
                                         ),
                                       ),
                                     // Overlay upload en cours
@@ -2918,6 +2922,24 @@ class _AccountPageState extends State<AccountPage> {
                       child: const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 28),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AccountSecurityPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.security_rounded),
+                        label: const Text(
+                          'Sécurité du compte',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     _buildAdminSpaceEntry(user),
                     SizedBox(
                       width: double.infinity,

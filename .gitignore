@@ -69,3 +69,4 @@ android/key.properties
 build_logs/
 service-account.json
 service-account.json
+*.bak_*
