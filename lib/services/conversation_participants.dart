@@ -4,9 +4,9 @@ const conversationParticipantQueryFieldAliases = <String>[
   'participantIds',
   'participants',
   'participant_ids',
-  'userIds',
-  'users',
-  'memberIds',
+  // 'userIds',    // non couvert par les règles Firestore
+  // 'users',      // non couvert par les règles Firestore
+  // 'memberIds',  // non couvert par les règles Firestore
 ];
 
 const conversationParticipantFieldAliases = <String>[

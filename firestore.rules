@@ -129,6 +129,7 @@ service cloud.firestore {
           || ((data.participants is list) && data.participants.hasAny([uid()]))
           || ((data.participant_ids is list) && data.participant_ids.hasAny([uid()]))
           || ((data.participantIds is list) && data.participantIds.hasAny([uid()]))
+          || ((data.participantIds is list) && data.participantIds.hasAny([uid()]))
           || ((data.memberIds is list) && data.memberIds.hasAny([uid()]))
           || ((data.users is list) && data.users.hasAny([uid()]))
           || ((data.userIds is list) && data.userIds.hasAny([uid()]))

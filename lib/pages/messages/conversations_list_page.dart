@@ -586,6 +586,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
+      debugPrint('[CONV] 🟢 field=$field count=${snapshot.docs.length} uid=$userId');
+      if (snapshot.docs.isNotEmpty) {
+        debugPrint('[CONV]    keys=${snapshot.docs.first.data().keys.toList()}');
+      }
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
             doc,
@@ -606,6 +610,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
 
       void handleError(String field, Object error) {
+            debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
         _appendAdminConversationLog('mode=$mode field=$field erreur=$error');
         if (kDebugMode) {
           debugPrint(
