@@ -67,3 +67,5 @@ firestore_data.json
 .env.local
 android/key.properties
 build_logs/
+service-account.json
+service-account.json
