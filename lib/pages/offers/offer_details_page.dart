@@ -2314,7 +2314,22 @@ class _HeroCard extends StatelessWidget {
                         ),
                       ],
                     ),
-
+                    // Stats propriétaire (vues + contacts tél)
+                    Builder(builder: (context) {
+                      final me = FirebaseAuth.instance.currentUser?.uid ?? '';
+                      final isOwner = me.isNotEmpty && me == data.advertiserId;
+                      if (!isOwner) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.visibility_outlined,
+                                    size: 13, color: Color(0xFF6B708D)),
                                 const SizedBox(width: 4),
                                 Text(
                                   '\${data.viewCount} vue\${data.viewCount > 1 ? "s" : ""}',
@@ -3024,11 +3039,6 @@ class _PracticalInfoCard extends StatelessWidget {
                         : data.serviceType,
                     compact: compact,
                   ),
-                  if (data.viewCount > 0 || data.phoneViewCount > 0)
-                    _OfferStatsMetaRow(
-                      viewCount: data.viewCount,
-                      phoneViewCount: data.phoneViewCount,
-                    ),
                 ],
               ),
             ),
@@ -3072,82 +3082,6 @@ class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-
-class _OfferStatsMetaRow extends StatelessWidget {
-  final int viewCount;
-  final int phoneViewCount;
-
-  const _OfferStatsMetaRow({
-    required this.viewCount,
-    required this.phoneViewCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (viewCount <= 0 && phoneViewCount <= 0) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          if (viewCount > 0)
-            _OfferStatsPill(
-              icon: Icons.visibility_outlined,
-              label: '$viewCount vue${viewCount > 1 ? "s" : ""}',
-            ),
-          if (phoneViewCount > 0)
-            _OfferStatsPill(
-              icon: Icons.phone_in_talk_outlined,
-              label:
-                  '$phoneViewCount vue${phoneViewCount > 1 ? "s" : ""} tél.',
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OfferStatsPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _OfferStatsPill({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A73E8).withOpacity(0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFF1A73E8).withOpacity(0.18)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: const Color(0xFF1A73E8)),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1A73E8),
-            ),
-          ),
-        ],
       ),
     );
   }
