@@ -1558,30 +1558,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
 
-        if (!_adminStatusReady || _adminStatusUid != userId) {
-          return Scaffold(
-            backgroundColor: kMessagesPageBackground,
-            appBar: AppBar(
-              systemOverlayStyle: kMessagesStatusBarStyle,
-              backgroundColor: kPrestoOrange,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-              title: _buildMessagesAppBarTitle(),
-            ),
-            body: Stack(
-              children: [
-                _buildWatermark(),
-                const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
         return Scaffold(
           backgroundColor: kMessagesPageBackground,
           appBar: AppBar(
