@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../services/email_action_service.dart';
+import '../../../services/email_auth_error_mapper.dart';
 import '../../../services/user_profile_bootstrap_service.dart';
 import 'user_profile_service.dart';
 
@@ -73,6 +74,37 @@ class EmailAuthService {
   }
 
   Future<void> sendPasswordResetEmail(String email) async {
-    await _auth.sendPasswordResetEmail(email: email.trim().toLowerCase());
+    final normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'missing-email',
+        message: mapEmailAuthError(
+          FirebaseAuthException(code: 'missing-email'),
+        ),
+      );
+    }
+
+    try {
+      // Priorité au callable backend si disponible : meilleur contrôle sécurité/logs.
+      await EmailActionService.requestPasswordResetEmail(normalizedEmail);
+    } catch (_) {
+      // Fallback Firebase Auth natif pour ne jamais bloquer la récupération.
+      await _auth.sendPasswordResetEmail(email: normalizedEmail);
+    }
+  }
+
+  Future<void> requestEmailVerificationEmail() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'user-token-expired',
+        message: 'Reconnecte-toi pour recevoir un email de vérification.',
+      );
+    }
+    await EmailActionService.requestEmailVerificationEmail();
+  }
+
+  Future<bool> syncCurrentUserEmailVerificationState() {
+    return EmailActionService.syncCurrentUserEmailVerificationState();
   }
 }
