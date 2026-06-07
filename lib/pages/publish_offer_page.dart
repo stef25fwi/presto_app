@@ -49,6 +49,7 @@ import '../utils/recording_path_web.dart'
 import '../widgets/ai_publish_control.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/photo_selector_tile.dart';
+import 'package:presto_app/services/auth_guard.dart';
 
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
@@ -1873,6 +1874,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void initState() {
+    // PRESTO_AUTH_PAGE_GUARD_PUBLICATION
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await AuthGuard.requireVerifiedEmail(context);
+    });
+
     super.initState();
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
