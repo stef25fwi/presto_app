@@ -1449,9 +1449,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
-                  isCompactMobile ? 14 : 16,
+                  6,
                   isCompactMobile ? 10 : 12,
-                  isCompactMobile ? 14 : 16,
+                  6,
                   isCompactMobile ? 14 : 16,
                 ),
                 child: Column(

@@ -2523,6 +2523,8 @@ class _AccountPageState extends State<AccountPage> {
         ? _profileEmail.trim()
         : (user.email ?? '');
     final visiblePhotoUrl = (_profilePhotoUrl ?? '').trim();
+    // ignore: avoid_print
+    print('[BUILD] visiblePhotoUrl=$visiblePhotoUrl isUploading=$_isUploadingProfilePhoto');
     final draftCategoryLabels = _draftFavoriteSelections
         .where((entry) => !entry.contains('—'))
         .toList()
