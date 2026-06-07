@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import 'change_email_page.dart';
 import 'change_password_page.dart';
 import 'delete_account_page.dart';
+import 'package:presto_app/services/auth_guard.dart';
 
 class AccountSecurityPage extends StatelessWidget {
   const AccountSecurityPage({super.key});
@@ -49,7 +50,11 @@ class AccountSecurityPage extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.alternate_email),
             title: const Text('Changer mon email'),
-            onTap: () {
+            onTap: () async {
+              final allowed = await AuthGuard.requireVerifiedEmail(context);
+              if (!allowed) return;
+              if (!context.mounted) return;
+
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ChangeEmailPage()),
               );
@@ -58,7 +63,11 @@ class AccountSecurityPage extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.lock),
             title: const Text('Changer mon mot de passe'),
-            onTap: () {
+            onTap: () async {
+              final allowed = await AuthGuard.requireVerifiedEmail(context);
+              if (!allowed) return;
+              if (!context.mounted) return;
+
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
               );
@@ -74,7 +83,11 @@ class AccountSecurityPage extends StatelessWidget {
             leading: const Icon(Icons.delete_forever, color: Colors.red),
             title: const Text('Supprimer mon compte'),
             textColor: Colors.red,
-            onTap: () {
+            onTap: () async {
+              final allowed = await AuthGuard.requireVerifiedEmail(context);
+              if (!allowed) return;
+              if (!context.mounted) return;
+
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DeleteAccountPage()),
               );
