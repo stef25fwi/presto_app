@@ -572,6 +572,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         // App Check preflight failed — subscriptions immédiates.
       }
 
+      // Force Firebase Auth token refresh — ensures request.auth is valid
+      // for Firestore rules even when App Check preflight failed.
+      try {
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
+      } catch (_) {}
+
       if (myGeneration != _subscriptionGeneration ||
           isCancelled ||
           controller.isClosed) return;
@@ -618,7 +624,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             final delay =
                 _permissionDeniedRetryDelay(permissionDeniedRetryCount);
             await cancelSubscriptions();
-            snapshotsByField.clear();
+            // snapshotsByField intentionally NOT cleared — keep showing stale conversations during retry.
             errorsByField.clear();
             if (delay > Duration.zero) {
               await Future<void>.delayed(delay);
