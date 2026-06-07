@@ -150,11 +150,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       await _emailAuthService.sendPasswordResetEmail(_emailController.text);
       if (!mounted) return;
       showSuccessSnackBar(
-          context, mapPasswordResetSuccessMessage(_emailController.text));
-      if (!mounted) return;
-      showSuccessSnackBar(
         context,
-        'E-mail de réinitialisation envoyé.',
+        mapPasswordResetSuccessMessage(_emailController.text),
       );
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
