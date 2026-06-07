@@ -622,7 +622,13 @@ service cloud.firestore {
       }
 
       allow get: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
-      allow list: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
+      allow list: if canReadConversationAsAdmin()
+        || (isSignedIn() && (
+          resource.data.participantIds.hasAny([uid()])
+          || resource.data.participants.hasAny([uid()])
+          || resource.data.participant_ids.hasAny([uid()])
+          || resource.data.memberIds.hasAny([uid()])
+        ));
       allow create, update, delete: if false;
 
       match /messages/{messageId} {

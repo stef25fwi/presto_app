@@ -586,9 +586,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
-      debugPrint('[CONV] 🟢 field=$field count=${snapshot.docs.length} uid=$userId');
       if (snapshot.docs.isNotEmpty) {
-        debugPrint('[CONV]    keys=${snapshot.docs.first.data().keys.toList()}');
       }
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
@@ -675,7 +673,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
       }
     }
-
     unawaited(startSubscriptions(forceRefreshTokens: false));
 
     controller.onCancel = () async {
