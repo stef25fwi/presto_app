@@ -9,6 +9,7 @@ exports.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES = [
     "participants",
     "participant_ids",
     "userIds",
+    "users",
     "memberIds",
 ];
 exports.CONVERSATION_PARTICIPANT_FIELD_ALIASES = [

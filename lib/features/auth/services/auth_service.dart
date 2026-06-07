@@ -48,6 +48,12 @@ class EmailAuthService {
       email: email.trim().toLowerCase(),
       password: password,
     );
+    try {
+      await _auth.setLanguageCode('fr');
+      await credential.user?.sendEmailVerification();
+    } catch (_) {
+      // Ne bloque pas la création du compte si l'envoi email échoue.
+    }
     final user = credential.user ?? _auth.currentUser;
     if (user == null) {
       throw FirebaseAuthException(
