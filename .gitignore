@@ -1,73 +1,63 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-*.orig
-*.rej
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
-node_modules/
-
-# Firebase CLI local cache
-.firebase/
-
-# Local diagnostics and accidental merge/export residue
-mic_toggle_audit_*.txt
+/android/build/reports/
+android/key.properties
+# Android Studio will place build artifacts here
+app.*.map.json
+app.*.symbols
+.atom/
 audit_microia/
 audit_prod/
-page_screenshots/
-*.har
-*.zip
-*.tar.gz
-zicAlExN
-
-# Données Firestore exportées
-firestore_data.json
-*.firestore_backup.json
-/android/build/reports/
-.env.local
-android/key.properties
-
-_logs/
-service-account.json
-service-account.json
 *.bak_*
+.build/
+/build/
+.buildlog/
+*.class
+/coverage/
+.dart_tool/
+**/doc/api/
+# Données Firestore exportées
+.DS_Store
+.env.local
+.firebase/
+# Firebase CLI local cache
+*.firestore_backup.json
+firestore_data.json
+# Flutter/Dart/Pub related
+.flutter-plugins-dependencies
+*.har
+.history
+.idea/
+*.iml
+# IntelliJ related
+**/ios/Flutter/.last_build_id
+*.ipr
+# is commented out by default.
+*.iws
+# Local diagnostics and accidental merge/export residue
+*.log
+_logs/
+mic_toggle_audit_*.txt
+migrate_working_dir/
+# Miscellaneous
+node_modules/
+# Obfuscation related
+*.orig
+page_screenshots/
+.pub/
+.pub-cache/
+*.pyc
+*.rej
+service-account.json
+.svn/
+.swiftpm/
+*.swp
+# Symbolication related
+*.tar.gz
+# The .vscode folder contains launch configuration and tasks you configure in
+#.vscode/
+# VS Code which you may wish to be included in version control, so this line
+zicAlExN
+*.zip

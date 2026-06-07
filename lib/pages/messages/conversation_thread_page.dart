@@ -222,7 +222,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       case 'not-found':
         return 'La conversation n’existe pas encore. Revenez depuis l’annonce pour la créer avant d’envoyer le premier message.';
       case 'permission-denied':
-        return 'Envoi refusé : ce compte n’est pas reconnu comme participant de la conversation.';
+        return 'Ouverture de la conversation en cours. Ferme puis rouvre la conversation si le message ne part pas.';
       case 'unauthenticated':
         return 'Connectez-vous pour envoyer un message.';
       case 'failed-precondition':
