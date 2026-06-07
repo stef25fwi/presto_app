@@ -21,7 +21,6 @@ class AuthGuard {
     }
 
     await user.reload();
-
     final refreshedUser = FirebaseAuth.instance.currentUser;
 
     final isPasswordUser = refreshedUser?.providerData.any(
