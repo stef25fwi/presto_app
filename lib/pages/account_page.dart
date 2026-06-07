@@ -1252,6 +1252,8 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       if (!mounted || _activeProfileUid != user.uid) return;
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
       setState(() => _profilePhotoUrl = downloadUrl);
       showSuccessSnackBar(context, 'Photo de profil mise à jour');
     } on FirebaseException catch (error) {
@@ -2575,6 +2577,7 @@ class _AccountPageState extends State<AccountPage> {
                                     // Photo utilisateur (ClipOval fonctionne sur web)
                                     if (visiblePhotoUrl.isNotEmpty)
                                       ClipOval(
+                                        key: ValueKey(visiblePhotoUrl),
                                         child: Image.network(
                                           visiblePhotoUrl,
                                           fit: BoxFit.cover,
