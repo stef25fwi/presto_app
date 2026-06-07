@@ -22,6 +22,7 @@ import '../../services/firestore_date_parser.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import '../../widgets/offer_network_image.dart';
+import 'package:presto_app/services/auth_guard.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -279,6 +280,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   @override
   void initState() {
+    // PRESTO_AUTH_PAGE_GUARD_MESSAGES
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await AuthGuard.requireVerifiedEmail(context);
+    });
+
     super.initState();
     _controller.addListener(_handleDraftChanged);
     unawaited(_warmMessagingAccess());
