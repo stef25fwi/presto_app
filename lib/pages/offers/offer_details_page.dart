@@ -436,7 +436,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       builder: (sheetContext) {
         final bottom = MediaQuery.of(sheetContext).viewInsets.bottom;
         return Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
+          padding: EdgeInsets.fromLTRB(6, 16, 6, bottom + 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -753,7 +753,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           top: false,
           child: Container(
             color: overlayTheme.surfaceColor,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -766,7 +766,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 const SizedBox(height: 8),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
                   decoration: BoxDecoration(
                     color: overlayTheme.selectionFillColor,
                     borderRadius: overlayTheme.popupRadius,
@@ -906,7 +906,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           top: false,
           child: Container(
             color: overlayTheme.surfaceColor,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1160,7 +1160,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: EdgeInsets.fromLTRB(6, 16, 6, 8),
                 child: Text(
                   'Signaler l\'annonce',
                   textAlign: TextAlign.center,
@@ -2707,13 +2707,13 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
             ),
             Positioned(
               top: 10,
-              left: 10,
-              right: 10,
+              left: 6,
+              right: 6,
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: 6,
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
@@ -3059,7 +3059,7 @@ class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.only(bottom: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(16),
