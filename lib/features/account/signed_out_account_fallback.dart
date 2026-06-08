@@ -16,8 +16,6 @@ import '../../pages/pro_profile_page.dart';
 
 import 'package:presto_app/widgets/pro_siret_signup_section.dart';
 
-import 'package:presto_app/services/pro_siret_service.dart';
-
 class SignedOutAccountFallback extends StatefulWidget {
   const SignedOutAccountFallback({
     super.key,
@@ -121,30 +119,6 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       } else {
         await _emailAuthService.signIn(email: email, password: password);
       }
-      if (_isSignup && _isBusinessSignup) {
-        Object? siretValidationError;
-
-        for (var attempt = 0; attempt < 2; attempt += 1) {
-          try {
-            await ProSiretService().verifySiret(_signupSiretClean);
-            siretValidationError = null;
-            break;
-          } catch (error) {
-            siretValidationError = error;
-            await Future<void>.delayed(const Duration(milliseconds: 500));
-          }
-        }
-
-        if (siretValidationError != null) {
-          if (!mounted) return;
-          showErrorSnackBar(
-            context,
-            'Compte créé, mais validation SIRET officielle impossible. Réessayez depuis votre profil entreprise.',
-          );
-          return;
-        }
-      }
-
       await _trackLogin(authMethod: 'email', isNewUser: _isSignup);
       if (!mounted) return;
       showSuccessSnackBar(
@@ -159,7 +133,10 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         await Navigator.of(context).push(
           MaterialPageRoute(
             fullscreenDialog: true,
-            builder: (_) => const ProProfilePage(),
+            builder: (_) => ProProfilePage(
+              initialSiret: _signupSiretClean,
+              initialCompanyName: _verifiedSignupCompanyName,
+            ),
           ),
         );
       }
