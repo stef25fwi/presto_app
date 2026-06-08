@@ -87,6 +87,31 @@ class ProSiretService {
     return false;
   }
 
+  Future<ProSiretVerificationResult> preVerifySiret(String rawSiret) async {
+    final cleaned = cleanSiret(rawSiret);
+
+    if (!isValidSiretFormat(cleaned)) {
+      throw Exception('Le SIRET doit contenir exactement 14 chiffres.');
+    }
+
+    if (!isValidSiretLuhn(cleaned)) {
+      throw Exception('Le numéro SIRET n’est pas valide.');
+    }
+
+    final callable = _functions.httpsCallable('preVerifySiret');
+    final response = await callable.call(<String, dynamic>{
+      'siret': cleaned,
+    });
+
+    final rawData = response.data;
+    if (rawData is! Map) {
+      throw Exception('Réponse SIRET invalide.');
+    }
+
+    final data = Map<String, dynamic>.from(rawData);
+    return ProSiretVerificationResult.fromMap(data);
+  }
+
   Future<ProSiretVerificationResult> verifySiret(String rawSiret) async {
     final siret = cleanSiret(rawSiret);
 

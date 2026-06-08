@@ -7,10 +7,12 @@ class ProSiretSignupSection extends StatefulWidget {
   const ProSiretSignupSection({
     super.key,
     required this.visible,
+    this.onSiretChanged,
     this.onVerified,
   });
 
   final bool visible;
+  final ValueChanged<String>? onSiretChanged;
   final ValueChanged<ProSiretVerificationResult>? onVerified;
 
   @override
@@ -31,6 +33,17 @@ class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
     super.dispose();
   }
 
+  void _handleChanged(String value) {
+    widget.onSiretChanged?.call(value);
+
+    if (_result != null || _error != null) {
+      setState(() {
+        _result = null;
+        _error = null;
+      });
+    }
+  }
+
   Future<void> _verify() async {
     FocusScope.of(context).unfocus();
 
@@ -41,7 +54,9 @@ class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
     });
 
     try {
-      final result = await _service.verifySiret(_siretController.text);
+      // Pré-vérification autorisée avant connexion :
+      // App Check obligatoire, aucune écriture dans users/pro_profiles.
+      final result = await _service.preVerifySiret(_siretController.text);
 
       if (!mounted) return;
 
@@ -81,6 +96,7 @@ class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
         children: [
           TextFormField(
             controller: _siretController,
+            onChanged: _handleChanged,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
