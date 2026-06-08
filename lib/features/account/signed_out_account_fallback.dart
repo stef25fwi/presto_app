@@ -513,7 +513,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                               borderRadius: BorderRadius.circular(18),
                             ),
                           ),
-                          icon: const Icon(Icons.g_mobiledata_rounded),
+                          icon: const _GoogleLogo(size: 22),
                           label: const Text('Continuer avec Google'),
                         ),
                         if (!_isSignup) ...[
