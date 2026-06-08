@@ -1,1 +1,1230 @@
-// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter\n\nimport 'dart:async';\n\nimport 'package:flutter/foundation.dart';\nimport 'package:flutter/material.dart';\nimport 'package:flutter/services.dart';\n\nimport 'package:firebase_auth/firebase_auth.dart';\nimport 'package:firebase_crashlytics/firebase_crashlytics.dart';\nimport 'package:cloud_firestore/cloud_firestore.dart';\n\nimport 'app/app_globals.dart';\nimport 'app/secondary_named_routes.dart';\nimport 'app/theme.dart';\nimport 'app_core.dart';\nimport 'firebase_init.dart';\nimport 'dev/page_capture_catalog_page.dart';\nimport 'debug_auth.dart';\nimport 'pages/offers/offer_details_page.dart';\nimport 'pages/messages/messages_page_v2.dart';\nimport 'pages/home_page.dart';\nimport 'pages/account_page.dart';\nimport 'pages/publish_offer_page.dart';\nimport 'pages/admin_space_page.dart';\nimport 'pages/consult_offers_page.dart' show UserPublicProfilePage;\nimport 'services/city_search.dart';\nimport 'services/app_check_bootstrap.dart';\nimport 'services/app_route_parser.dart';\nimport 'services/firestore_bootstrap.dart';\nimport 'services/notification_service.dart';\nimport 'services/admin_audio_runtime_store.dart';\nimport 'services/admin_web_debug_store.dart';\nimport 'services/post_auth_navigation_intent_service.dart';\nimport 'widgets/admin_web_debug_panel.dart';\nimport 'pages/auth/login_page.dart';\nimport 'pages/auth/register_page.dart';\nimport 'pages/auth/forgot_password_page.dart';\nimport 'pages/auth/verify_email_page.dart';\nimport 'pages/auth/reset_password_success_page.dart';\nimport 'pages/account/account_security_page.dart';\nimport 'pages/account/change_email_page.dart';\nimport 'pages/account/change_password_page.dart';\nimport 'pages/account/delete_account_page.dart';\n\nexport 'pages/publish_offer_page.dart' show PublishOfferPage;\n\nfinal AdminAudioRuntimeStore adminAudioRuntimeStore =\n    AdminAudioRuntimeStore.instance;\nfinal AdminWebDebugStore adminWebDebugStore = AdminWebDebugStore.instance;\n\n/// Résultat de `FirebaseAuth.getRedirectResult()` capturé une seule fois au\n/// démarrage (web). Permet aux pages compte/profil de récupérer le retour\n/// d'un sign-in fédéré (Google/Facebook/Apple) sans courir la course\n/// contre la consommation interne du SDK Firebase.\nUserCredential? pendingRedirectAuthResult;\nObject? pendingRedirectAuthError;\nString? pendingPostAuthRoute;\n\nclass PrestoRemoteConfig {\n  static String audioPipeline = 'HYBRID';\n\n  static Future<void> init() async {}\n}\n\nclass PrestoMonitoring {\n  PrestoMonitoring._();\n\n  static final PrestoMonitoring I = PrestoMonitoring._();\n\n  void trackOtherStream({required String key, required int docsCount}) {\n    if (kDebugMode) {\n      debugPrint('[monitoring] stream=$key count=$docsCount');\n    }\n    adminWebDebugStore.recordEvent(\n      area: 'monitoring',\n      message: 'stream',\n      detail: 'key=$key count=$docsCount',\n    );\n  }\n\n  void trackOffersSnapshot(int docsCount) {\n    trackOtherStream(key: 'offers.snapshot', docsCount: docsCount);\n  }\n\n  void trackFunctionsCall({required String name, required int ms}) {\n    if (kDebugMode) {\n      debugPrint('[monitoring] function=$name ms=$ms');\n    }\n    adminWebDebugStore.recordEvent(\n      area: 'monitoring',\n      message: 'function',\n      detail: 'name=$name ms=$ms',\n    );\n  }\n\n  void trackError(String key, Object error) {\n    if (kDebugMode) {\n      debugPrint('[monitoring] error=$key $error');\n    }\n    adminWebDebugStore.recordError(\n      'monitoring',\n      error,\n      message: key,\n    );\n  }\n}\n\nconst String kOfferDeleteReasonFoundProvider =\n    'J ai deja trouve un prestataire';\nconst String kOfferDeleteReasonFoundOnIliPresto =\n    'J’ai trouvé quelqu’un sur iliprestō';\nconst Duration kOfferJobDoneOverlayDuration = Duration(hours: 10);\nconst double kMarketplaceOutlineWidth = 1.2;\nconst String kAppVersion = String.fromEnvironment(\n  'APP_VERSION',\n  defaultValue: 'dev',\n);\nconst String kAppBuildNumber = String.fromEnvironment(\n  'APP_BUILD_NUMBER',\n  defaultValue: '0',\n);\nconst String kAppBuildSha = String.fromEnvironment(\n  'APP_BUILD_SHA',\n  defaultValue: 'local',\n);\nconst String kAppBuildBranch = String.fromEnvironment(\n  'APP_BUILD_BRANCH',\n  defaultValue: '',\n);\nconst String kAppBuildTag = String.fromEnvironment(\n  'APP_BUILD_TAG',\n  defaultValue: '',\n);\nconst String kAppBuildTimeUtc = String.fromEnvironment(\n  'APP_BUILD_TIME_UTC',\n  defaultValue: '',\n);\n\nSystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {\n  final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);\n  final isDarkBackground = estimated == Brightness.dark;\n  return SystemUiOverlayStyle(\n    statusBarColor: backgroundColor,\n    statusBarIconBrightness:\n        isDarkBackground ? Brightness.light : Brightness.dark,\n    statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,\n    systemNavigationBarColor: backgroundColor,\n    systemNavigationBarDividerColor: backgroundColor,\n    systemNavigationBarIconBrightness:\n        isDarkBackground ? Brightness.light : Brightness.dark,\n  );\n}\n\nDateTime? _offerDateTimeFromDynamic(dynamic value) {\n  if (value is Timestamp) return value.toDate();\n  if (value is DateTime) return value;\n  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);\n  if (value is String) return DateTime.tryParse(value);\n  return null;\n}\n\nString? inferRegionFromPostalCode(String postalCode) {\n  final cp = postalCode.trim();\n  if (cp.length < 2) return null;\n\n  if (cp.length >= 3 && cp.startsWith('97')) {\n    switch (cp.substring(0, 3)) {\n      case '971':\n        return 'Guadeloupe';\n      case '972':\n        return 'Martinique';\n      case '973':\n        return 'Guyane';\n      case '974':\n        return 'La Réunion';\n      case '976':\n        return 'Mayotte';\n    }\n  }\n\n  if (cp.startsWith('20')) {\n    return 'Corse';\n  }\n\n  final two = int.tryParse(cp.substring(0, 2));\n  if (two == null) return null;\n\n  if (<int>{1, 3, 7, 15, 26, 38, 42, 43, 63, 69, 73, 74}.contains(two)) {\n    return 'Auvergne-Rhône-Alpes';\n  }\n\n  if (<int>{21, 25, 39, 58, 70, 71, 89, 90}.contains(two)) {\n    return 'Bourgogne-Franche-Comté';\n  }\n\n  if (<int>{22, 29, 35, 56}.contains(two)) {\n    return 'Bretagne';\n  }\n\n  if (<int>{18, 28, 36, 37, 41, 45}.contains(two)) {\n    return 'Centre-Val de Loire';\n  }\n\n  if (<int>{8, 10, 51, 52, 54, 55, 57, 67, 68, 88}.contains(two)) {\n    return 'Grand Est';\n  }\n\n  if (<int>{2, 59, 60, 62, 80}.contains(two)) {\n    return 'Hauts-de-France';\n  }\n\n  if (<int>{75, 77, 78, 91, 92, 93, 94, 95}.contains(two)) {\n    return 'Île-de-France';\n  }\n\n  if (<int>{14, 27, 50, 61, 76}.contains(two)) {\n    return 'Normandie';\n  }\n\n  if (<int>{16, 17, 19, 23, 24, 33, 40, 47, 64, 79, 86, 87}.contains(two)) {\n    return 'Nouvelle-Aquitaine';\n  }\n\n  if (<int>{9, 11, 12, 30, 31, 32, 34, 46, 48, 65, 66, 81, 82}.contains(two)) {\n    return 'Occitanie';\n  }\n\n  if (<int>{44, 49, 53, 72, 85}.contains(two)) {\n    return 'Pays de la Loire';\n  }\n\n  if (<int>{4, 5, 6, 13, 83, 84}.contains(two)) {\n    return 'Provence-Alpes-Côte d\'Azur';\n  }\n\n  return null;\n}\n\n/// ============= WIDGETS HELPER POUR OfferDetailPage =============\n\nString _offerDetailsPublishedLabel(dynamic raw) {\n  if (raw is Timestamp) {\n    final publishedAt = raw.toDate();\n    final diff = DateTime.now().difference(publishedAt);\n\n    if (diff.inMinutes < 1) return 'Publiee a l\'instant';\n    if (diff.inHours < 1) return 'Publiee il y a ${diff.inMinutes} min';\n    if (diff.inDays < 1) return 'Publiee il y a ${diff.inHours} h';\n    if (diff.inDays < 7) return 'Publiee il y a ${diff.inDays} j';\n  }\n\n  return 'Publication recente';\n}\n\nString _extractOfferImageUrl(dynamic entry) {\n  if (entry == null) return '';\n  if (entry is Map) {\n    for (final key in const [\n      'downloadUrl',\n      'thumbnailUrl',\n      'imageUrl',\n      'photoUrl',\n      'url',\n      'secureUrl',\n      'src',\n      'storagePath',\n      'filePath',\n      'path',\n    ]) {\n      final value = (entry[key] ?? '').toString().trim();\n      if (value.isNotEmpty) {\n        return value;\n      }\n    }\n    return '';\n  }\n  return entry.toString().trim();\n}\n\nList<String> _collectOfferImageUrls({\n  dynamic rawImageUrls,\n  dynamic rawMedia,\n  dynamic rawImageUrl,\n  dynamic rawThumbnailUrl,\n}) {\n  final orderedUrls = <String>[];\n\n  void addUrl(dynamic value) {\n    final url = _extractOfferImageUrl(value);\n    if (url.isEmpty || orderedUrls.contains(url)) {\n      return;\n    }\n    orderedUrls.add(url);\n  }\n\n  if (rawImageUrls is List) {\n    for (final entry in rawImageUrls) {\n      addUrl(entry);\n    }\n  }\n\n  if (rawMedia is List) {\n    for (final entry in rawMedia) {\n      addUrl(entry);\n    }\n  }\n\n  addUrl(rawImageUrl);\n  addUrl(rawThumbnailUrl);\n\n  return orderedUrls;\n}\n\nOffer buildOfferDetailsOffer({\n  required String offerId,\n  required Map<String, dynamic> data,\n}) {\n  final title = (data['title'] ?? '').toString().trim();\n  final location = ((data['location'] ?? data['city']) ?? '').toString().trim();\n  final postalCode =\n      ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();\n  final category = (data['category'] ?? '').toString().trim();\n  final description = (data['description'] ?? '').toString().trim();\n  final isUrgent = (data['urgent'] as bool?) ?? false;\n  final budget = data['budget'];\n  final price = budget is num ? budget.toDouble() : 0.0;\n  final rawMedia = (data['media'] as List<dynamic>? ?? const <dynamic>[])\n      .whereType<Map>()\n      .map(\n        (entry) => Map<String, dynamic>.from(entry.cast<dynamic, dynamic>()),\n      )\n      .toList(growable: false);\n  final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();\n  final imageUrls = _collectOfferImageUrls(\n    rawImageUrls: data['imageUrls'],\n    rawMedia: rawMedia,\n    rawImageUrl: data['imageUrl'],\n    rawThumbnailUrl: thumbnailUrl,\n  );\n  final advertiserName =\n      ((data['userName'] ?? data['pseudo']) ?? '').toString().trim();\n  final serviceArea =\n      (data['serviceArea'] ?? (location.isEmpty ? 'Zone locale' : location))\n          .toString();\n  final missionDelay =\n      ((data['missionDelay'] ?? data['averageDelay']) ?? 'Délai non précisé')\n          .toString();\n  final createdAt = data['createdAt'];\n  final publishedAt = data['publishedAt'];\n  final listingStatus = (data['status'] ?? '').toString().trim();\n  final moderationStatus = (data['moderationStatus'] ?? '').toString().trim();\n  final visibility = (data['visibility'] ?? '').toString().trim();\n  final mediaProcessingStatus =\n      (data['mediaProcessingStatus'] ?? '').toString().trim();\n  final categoryId = (data['categoryId'] ?? '').toString().trim();\n  final cityId = (data['cityId'] ?? '').toString().trim();\n  final isMarketplaceValue = data['isMarketplace'];\n  final inferredMarketplace = categoryId.isNotEmpty ||\n      cityId.isNotEmpty ||\n      listingStatus.isNotEmpty ||\n      visibility.isNotEmpty ||\n      mediaProcessingStatus.isNotEmpty ||\n      data.containsKey('favoriteCount') ||\n      data.containsKey('ownerId');\n  final isMarketplace = isMarketplaceValue is bool\n      ? isMarketplaceValue\n      : isMarketplaceValue.toString().trim().toLowerCase() == 'true' ||\n          inferredMarketplace;\n\n  return Offer(\n    id: offerId,\n    listingId: offerId,\n    title: title.isEmpty ? 'Annonce' : title,\n    price: price,\n    category: category.isEmpty ? 'Categorie non precisee' : category,\n    categoryId: categoryId,\n    city: location.isEmpty ? 'Lieu non precise' : location,\n    cityId: cityId,\n    postalCode: postalCode,\n    isUrgent: isUrgent,\n    publishedAtLabel: _offerDetailsPublishedLabel(data['createdAt']),\n    publishedAt: publishedAt is Timestamp ? publishedAt.toDate() : null,\n    createdAt: createdAt is Timestamp ? createdAt.toDate() : null,\n    availability:\n        (data['availability'] ?? 'Disponibilite a confirmer').toString(),\n    shortDescription: description.isEmpty\n        ? 'Consultez le detail de cette annonce et contactez l\'annonceur.'\n        : description,\n    description: description,\n    phone: (data['phone'] ?? '').toString(),\n    imageUrls: imageUrls,\n    media: rawMedia,\n    thumbnailUrl: thumbnailUrl,\n    statusBadges: <String>[\n      'Disponible',\n      if ((data['urgent'] as bool?) ?? false) 'Urgent',\n      if ((data['verified'] as bool?) ?? false) 'Verifie',\n      'Nouveau',\n    ],\n    status: listingStatus,\n    moderationStatus: moderationStatus,\n    visibility: visibility,\n    mediaProcessingStatus: mediaProcessingStatus,\n    isMarketplace: isMarketplace,\n    practicalInfo: PracticalInfo(\n      category: category.isEmpty ? 'Service' : category,\n      serviceArea: serviceArea,\n      canTravel: (data['canTravel'] as bool?) ?? true,\n      schedule: (data['schedule'] ?? 'Horaires a convenir').toString(),\n      missionDelay: missionDelay,\n      averageDelay: missionDelay,\n      paymentMethod:\n          (data['paymentMethod'] ?? 'Paiement a convenir').toString(),\n      serviceType: (data['serviceType'] ?? 'Prestation ponctuelle').toString(),\n    ),\n    advertiser: Advertiser(\n      id: (data['userId'] ?? data['uid'] ?? '').toString(),\n      name: advertiserName.isEmpty ? 'Annonceur Presto' : advertiserName,\n      verified: (data['verified'] as bool?) ?? false,\n      rating:\n          (data['rating'] is num) ? (data['rating'] as num).toDouble() : null,\n      offersCount: (data['offersCount'] is num)\n          ? (data['offersCount'] as num).toInt()\n          : 1,\n      reviewsCount: (data['reviewsCount'] is num)\n          ? (data['reviewsCount'] as num).toInt()\n          : (data['reviewCount'] is num)\n              ? (data['reviewCount'] as num).toInt()\n              : (data['ratingCount'] is num)\n                  ? (data['ratingCount'] as num).toInt()\n                  : 0,\n      seniorityLabel: (data['seniorityLabel'] ?? 'Membre Presto').toString(),\n      city: location.isEmpty ? 'Ville non precisee' : location,\n      bio: (data['bio'] ?? '').toString(),\n      avatarUrl: ((data['avatarUrl'] ??\n                  data['photoUrl'] ??\n                  data['photoURL'] ??\n                  data['profilePhotoUrl'] ??\n                  data['imageUrl']) ??\n              '')\n          .toString(),\n      isOnline: ((data['status'] ?? '').toString().toLowerCase() == 'online'),\n      lastSeenLabel: 'Activite recente',\n    ),\n    actionType: ((data['actionType'] ?? '') == 'booking')\n        ? OfferActionType.booking\n        : OfferActionType.contact,\n    similarOffers: const [],\n  );\n}\n\n/// ✅ Pastille affichant le pipeline audio actif (Remote Config)\nclass AudioPipelineBadge extends StatelessWidget {\n  const AudioPipelineBadge({super.key});\n\n  Color _colorFor(String v) {\n    switch (v.toUpperCase()) {\n      case 'STREAM':\n        return Colors.green;\n      case 'HYBRID':\n        return Colors.blue;\n      case 'CHUNK':\n        return Colors.orange;\n      case 'DISABLED':\n        return Colors.red;\n      default:\n        return Colors.grey;\n    }\n  }\n\n  @override\n  Widget build(BuildContext context) {\n    final v = PrestoRemoteConfig.audioPipeline;\n    final c = _colorFor(v);\n    return Container(\n      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),\n      decoration: BoxDecoration(\n        color: c.withOpacity(0.12),\n        borderRadius: BorderRadius.circular(16),\n        border: Border.all(color: c.withOpacity(0.28)),\n      ),\n      child: Row(\n        mainAxisSize: MainAxisSize.min,\n        children: [\n          Icon(Icons.graphic_eq, size: 16, color: c),\n          const SizedBox(width: 6),\n          Text(\n            v.isEmpty ? 'UNKNOWN' : v,\n            style: TextStyle(\n              fontSize: 12,\n              fontWeight: FontWeight.w900,\n              color: c,\n            ),\n          ),\n        ],\n      ),\n    );\n  }\n}\n\nclass CardShell extends StatelessWidget {\n  final Widget child;\n  const CardShell({Key? key, required this.child}) : super(key: key);\n\n  @override\n  Widget build(BuildContext context) {\n    return Container(\n      width: double.infinity,\n      padding: const EdgeInsets.all(16),\n      decoration: BoxDecoration(\n        color: Colors.white,\n        borderRadius: BorderRadius.circular(18),\n        boxShadow: [\n          BoxShadow(\n            color: Colors.black.withOpacity(0.06),\n            blurRadius: 18,\n            offset: const Offset(0, 8),\n          ),\n        ],\n      ),\n      child: child,\n    );\n  }\n}\n\nFuture<void> main() async {\n  runZonedGuarded(() async {\n    WidgetsFlutterBinding.ensureInitialized();\n    adminWebDebugStore.recordEvent(\n      area: 'app',\n      message: 'startup',\n      detail: 'platform=${kIsWeb ? 'web' : defaultTargetPlatform.name}',\n    );\n\n    await ensureFirebaseInitialized(source: 'main');\n\n    await bootstrapAppCheck();\n\n    adminWebDebugStore.recordEvent(area: 'firebase', message: 'initialized');\n    await bootstrapFirestore();\n    adminWebDebugStore.recordEvent(area: 'firestore', message: 'bootstrapped');\n\n    // 📋 Diagnostics\n    if (kDebugMode) {\n      debugPrint('=== Firebase Initialization ===');\n      debugPrint(\n          '[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');\n      debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');\n      debugPrint(\n          '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');\n      debugPrint('[Firestore] initialization ready');\n      if (kIsWeb) {\n        debugPrint('✓ Platform: Web');\n        debugPrint('  - Google Sign-In: Popup + Redirect fallback');\n      } else {\n        debugPrint(\n            '✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');\n      }\n      debugPrint('');\n    }\n\n    // ✅ Activer la persistance Firestore (cache + offline)\n    if (!kIsWeb) {\n      try {\n        await FirebaseFirestore.instance.enableNetwork();\n        if (kDebugMode) debugPrint('✓ Firestore persistence: Enabled');\n      } catch (e) {\n        if (kDebugMode) debugPrint('⚠️ Firestore persistence error: $e');\n      }\n    } else {\n      // Web: persistance auto si IndexedDB disponible\n      if (kDebugMode)\n        debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');\n    }\n\n    // ✅ Initialiser le service Firebase centralisé avec optimisations\n    // await FirebaseService.instance.initialize();\n\n    // ✅ Remote Config: charger le pipeline audio\n    await PrestoRemoteConfig.init();\n    if (kDebugMode)\n      debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');\n    adminWebDebugStore.recordEvent(\n      area: 'remote-config',\n      message: 'initialized',\n      detail: 'audio_pipeline=${PrestoRemoteConfig.audioPipeline}',\n    );\n\n    // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)\n    // Supprimé : on n'impose plus de connexion automatique au démarrage\n    // L'auth anonyme sera gérée au besoin par chaque page qui en a besoin\n    try {\n      final auth = FirebaseAuth.instance;\n      if (kDebugMode) {\n        DebugAuth.installAuthStateLogs();\n      }\n\n      if (kIsWeb) {\n        // Garantit la persistance LOCAL pour survivre au signInWithRedirect\n        // (sinon Safari/Brave retombent en SESSION et perdent l'état au\n        // retour OAuth).\n        try {\n          await auth.setPersistence(Persistence.LOCAL);\n        } catch (e) {\n          if (kDebugMode) debugPrint('[Auth] setPersistence failed: $e');\n        }\n\n        // Capture UNE SEULE FOIS le résultat d'un éventuel\n        // signInWithRedirect précédent. Doit être appelé tôt pour ne pas\n        // courir la course contre AccountPage qui appelle aussi\n        // getRedirectResult dans son initState.\n        try {\n          pendingRedirectAuthResult = await auth.getRedirectResult();\n          if (kDebugMode) {\n            debugPrint(\n              '[Auth] getRedirectResult: user='\n              '${pendingRedirectAuthResult?.user?.uid} '\n              'provider=${pendingRedirectAuthResult?.credential?.providerId}',\n            );\n          }\n        } catch (e) {\n          pendingRedirectAuthError = e;\n          if (kDebugMode) debugPrint('[Auth] getRedirectResult error: $e');\n        }\n\n        final shouldRestorePostAuthRoute =\n            pendingRedirectAuthResult?.user != null ||\n                pendingRedirectAuthError != null;\n        if (shouldRestorePostAuthRoute) {\n          try {\n            pendingPostAuthRoute =\n                await PostAuthNavigationIntentService.takePendingRoute();\n            if (kDebugMode && pendingPostAuthRoute != null) {\n              debugPrint(\n                  '[Auth] pending post-auth route=$pendingPostAuthRoute');\n            }\n          } catch (e) {\n            if (kDebugMode) {\n              debugPrint('[Auth] takePendingRoute failed: $e');\n            }\n          }\n        }\n      }\n\n      // Ne force plus signInAnonymously() au démarrage\n      if (auth.currentUser != null) {\n        if (kDebugMode)\n          debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');\n        SessionState.userId = auth.currentUser!.uid;\n      } else {\n        if (kDebugMode) debugPrint('[Auth] No user signed in at startup (OK)');\n        SessionState.userId = null;\n      }\n\n      // Synchronise SessionState.userId globalement dès qu'Auth change\n      // (couvre sign-in/sign-out depuis n'importe quelle page).\n      FirebaseAuth.instance.authStateChanges().listen((User? user) {\n        SessionState.userId = user?.uid;\n        adminWebDebugStore.updateAuth(user);\n        if (kDebugMode)\n          debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');\n      });\n    } catch (e) {\n      adminWebDebugStore.recordError('auth', e,\n          message: 'startup-check-failed');\n      if (kDebugMode) debugPrint('[Auth] check failed: $e');\n    }\n\n    // Configuration globale : barre système bleue Prestō sur toute l'app.\n    // (Le SplashScreen surcharge en orange.)\n    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));\n\n    // Crashlytics n'est pas supporté sur le web\n    final previousFlutterOnError = FlutterError.onError;\n    FlutterError.onError = (FlutterErrorDetails details) {\n      previousFlutterOnError?.call(details);\n      adminWebDebugStore.recordError(\n        'flutter',\n        details.exception,\n        stackTrace: details.stack,\n        message: details.library ?? 'flutter-error',\n      );\n      if (!kIsWeb) {\n        FirebaseCrashlytics.instance.recordFlutterFatalError(details);\n      }\n    };\n\n    PlatformDispatcher.instance.onError = (error, stack) {\n      adminWebDebugStore.recordError(\n        'platform',\n        error,\n        stackTrace: stack,\n        message: 'platform-dispatcher',\n      );\n      if (!kIsWeb) {\n        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);\n      }\n      return true;\n    };\n\n    if (!kIsWeb) {\n      await FirebaseCrashlytics.instance\n          .setCrashlyticsCollectionEnabled(!kDebugMode);\n    }\n\n    await CitySearch.instance.ensureLoaded();\n\n    // Initialisation des notifications push sur toutes les plateformes.\n    // Sur Web, l'enregistrement du token dépend de FCM_WEB_VAPID_KEY.\n    try {\n      await NotificationService().initialize(\n        navigatorKey: appNavigatorKey,\n      );\n      adminWebDebugStore.recordEvent(\n        area: 'notifications',\n        message: 'initialized',\n      );\n    } catch (e) {\n      adminWebDebugStore.recordError('notifications', e,\n          message: 'init-failed');\n      if (kDebugMode) debugPrint('[Notifications] init error: $e');\n    }\n\n    runApp(const PrestoApp());\n  }, (error, stack) {\n    adminWebDebugStore.recordError(\n      'zone',\n      error,\n      stackTrace: stack,\n      message: 'runZonedGuarded',\n    );\n    if (!kIsWeb) {\n      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);\n    }\n  });\n}\n\nclass PrestoApp extends StatefulWidget {\n  const PrestoApp({super.key});\n\n  @override\n  State<PrestoApp> createState() => _PrestoAppState();\n}\n\nclass _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {\n  bool _navigatorReadySignaled = false;\n\n  @override\n  void initState() {\n    super.initState();\n    WidgetsBinding.instance.addObserver(this);\n  }\n\n  @override\n  void dispose() {\n    WidgetsBinding.instance.removeObserver(this);\n    super.dispose();\n  }\n\n  @override\n  void didChangeAppLifecycleState(AppLifecycleState state) {\n    if (state != AppLifecycleState.resumed) return;\n    adminWebDebugStore.recordEvent(\n      area: 'lifecycle',\n      message: 'resumed',\n    );\n    unawaited(\n      refreshAppCheckToken(reason: 'app-resumed').catchError((Object error) {\n        if (kDebugMode) {\n          debugPrint('[AppCheck] resume refresh skipped: $error');\n        }\n      }),\n    );\n  }\n\n  Widget _buildInitialHome() {\n    if (kIsWeb) {\n      final rawPath = Uri.base.path.trim();\n      final normalizedPath = rawPath.endsWith('/') && rawPath.length > 1\n          ? rawPath.substring(0, rawPath.length - 1)\n          : rawPath;\n      if (!kReleaseMode && normalizedPath == '/page-catalog') {\n        return const PageCaptureCatalogPage();\n      }\n    }\n\n    return const SplashScreen();\n  }\n\n  void _signalNavigatorReady() {\n    if (_navigatorReadySignaled) return;\n    _navigatorReadySignaled = true;\n    NotificationService().markNavigatorReady();\n  }\n\n  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {\n    final routeName = settings.name ?? '';\n    final parsedRoute = Uri.tryParse(routeName);\n    if (!kReleaseMode &&\n        parsedRoute != null &&\n        parsedRoute.path == '/page-catalog') {\n      return MaterialPageRoute(\n        settings: settings,\n        builder: (_) => const PageCaptureCatalogPage(),\n      );\n    }\n\n    final target = parseAppDeepLink(settings.name);\n    if (target == null) return null;\n\n    if (target.offerId != null) {\n      return MaterialPageRoute(\n        settings: settings,\n        builder: (_) => OfferDeepLinkPage(\n          offerId: target.offerId!,\n          preferMarketplace: target.preferMarketplace,\n        ),\n      );\n    }\n\n    if (target.userId != null && target.routeName == '/profile') {\n      return MaterialPageRoute(\n        settings: settings,\n        builder: (_) => UserPublicProfilePage(userId: target.userId!),\n      );\n    }\n\n    if (target.routeName == AppDeepLinkTarget.messagesRouteName ||\n        target.routeName == AppDeepLinkTarget.messagesV2RouteName) {\n      return MaterialPageRoute(\n        settings: settings,\n        builder: (_) => MessagesPageV2(\n          initialConversationId: target.conversationId,\n          initialDraftText: target.initialDraftText,\n        ),\n      );\n    }\n\n    return MaterialPageRoute(\n      settings: settings,\n      builder: (_) => HomePage(\n        initialIndex: 3,\n        initialMessagesConversationId: target.conversationId,\n        initialMessagesDraftText: target.initialDraftText,\n      ),\n    );\n  }\n\n  @override\n  Widget build(BuildContext context) {\n    return MaterialApp(\n      title: 'iliprestō',\n      debugShowCheckedModeBanner: false,\n      navigatorKey: appNavigatorKey,\n      builder: (context, child) {\n        WidgetsBinding.instance.addPostFrameCallback((_) {\n          if (!mounted) return;\n          _signalNavigatorReady();\n        });\n        return AdminWebDebugPanel(\n          child: child ?? const SizedBox.shrink(),\n        );\n      },\n      onGenerateRoute: _onGenerateRoute,\n      routes: {\n        LoginPage.routeName: (_) => const LoginPage(),\n        RegisterPage.routeName: (_) => const RegisterPage(),\n        ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),\n        VerifyEmailPage.routeName: (_) => const VerifyEmailPage(),\n        ResetPasswordSuccessPage.routeName: (_) =>\n            const ResetPasswordSuccessPage(email: ''),\n        AccountSecurityPage.routeName: (_) => const AccountSecurityPage(),\n        ChangeEmailPage.routeName: (_) => const ChangeEmailPage(),\n        ChangePasswordPage.routeName: (_) => const ChangePasswordPage(),\n        DeleteAccountPage.routeName: (_) => const DeleteAccountPage(),\n        '/publish': (_) => const PublishOfferPage(),\n        '/messages': (_) => const MessagesPageV2(),\n        '/messages-2': (_) => const MessagesPageV2(),\n        '/account': (_) => const AccountPage(),\n        '/admin': (_) => const AdminSpacePage(),\n        if (!kReleaseMode)\n          '/page-catalog': (_) => const PageCaptureCatalogPage(),\n        ...buildSecondaryNamedRoutes(),\n      },\n      theme: buildPrestoTheme(),\n      // L'application doit toujours démarrer par le splash puis la home.\n      // Les pages protégées gèrent elles-mêmes la demande de connexion.\n      home: _buildInitialHome(),\n    );\n  }\n}\n\n/// SPLASH /////////////////////////////////////////////////////////////////\n\nclass SplashScreen extends StatefulWidget {\n  const SplashScreen({super.key});\n\n  @override\n  State<SplashScreen> createState() => _SplashScreenState();\n}\n\nclass _SplashScreenState extends State<SplashScreen>\n    with SingleTickerProviderStateMixin {\n  late final AnimationController _controller;\n  late final Animation<double> _scaleAnimation;\n  Timer? _navTimer;\n\n  @override\n  void initState() {\n    super.initState();\n\n    // Splash : status bar + barre de navigation système en orange.\n    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoOrange));\n\n    _controller = AnimationController(\n      vsync: this,\n      duration: const Duration(milliseconds: 700),\n    )..repeat(reverse: true);\n\n    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(\n      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),\n    );\n\n    _scheduleNavigation(_initialSplashDuration());\n  }\n\n  Duration _initialSplashDuration() {\n    if (!kIsWeb) {\n      return const Duration(milliseconds: 3500);\n    }\n\n    if (pendingPostAuthRoute == PostAuthNavigationIntentService.accountRoute) {\n      return const Duration(milliseconds: 1200);\n    }\n\n    final webPath = _normalizedWebPath();\n    final hasDeepLink = parseAppDeepLink(Uri.base.toString()) != null;\n    if (webPath == '/account' || webPath == '/publish' || hasDeepLink) {\n      return const Duration(milliseconds: 1200);\n    }\n\n    return const Duration(milliseconds: 3500);\n  }\n\n  String _normalizedWebPath() {\n    final rawPath = Uri.base.path.trim();\n    if (rawPath.isEmpty) {\n      return '/';\n    }\n    return rawPath.endsWith('/') && rawPath.length > 1\n        ? rawPath.substring(0, rawPath.length - 1)\n        : rawPath;\n  }\n\n  Widget _destinationForCurrentLocation() {\n    final webPath = _normalizedWebPath();\n\n    // RÈGLE PRINCIPALE :\n    // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.\n    // On ne doit jamais envoyer un utilisateur déconnecté vers Connexion/Compte\n    // sauf s'il a explicitement ouvert /account.\n    pendingPostAuthRoute = null;\n\n    if (webPath.isEmpty || webPath == '/') {\n      return const HomePage();\n    }\n\n    if (!kIsWeb) {\n      return const HomePage();\n    }\n\n    // Flow normal :\n    // - ouverture racine "/" => SplashScreen puis HomePage\n    // - aucune redirection automatique vers l'onglet Compte après splash\n    // - la connexion s'affiche uniquement si l'utilisateur clique sur Profil/Compte\n    pendingPostAuthRoute = null;\n\n    if (webPath == '/account') {\n      return const AccountPage();\n    }\n    if (webPath == '/publish') {\n      return const PublishOfferPage();\n    }\n\n    final target = parseAppDeepLink(Uri.base.toString());\n    if (target != null) {\n      if (target.offerId != null) {\n        return OfferDeepLinkPage(\n          offerId: target.offerId!,\n          preferMarketplace: target.preferMarketplace,\n        );\n      }\n\n      if (target.routeName == AppDeepLinkTarget.messagesRouteName ||\n          target.routeName == AppDeepLinkTarget.messagesV2RouteName) {\n        return MessagesPageV2(\n          initialConversationId: target.conversationId,\n          initialDraftText: target.initialDraftText,\n        );\n      }\n\n      return HomePage(\n        initialIndex: 3,\n        initialMessagesConversationId: target.conversationId,\n        initialMessagesDraftText: target.initialDraftText,\n      );\n    }\n\n    return const HomePage();\n  }\n\n  void _scheduleNavigation(Duration duration) {\n    _navTimer?.cancel();\n    _navTimer = Timer(duration, () {\n      try {\n        _navigateTo(_destinationForCurrentLocation());\n      } catch (e) {\n        // Navigation principale a échoué — forcer HomePage comme fallback.\n        try {\n          _navigateTo(const HomePage());\n        } catch (_) {}\n      }\n    });\n  }\n\n  void _navigateTo(Widget page) {\n    if (!mounted) return;\n    _navTimer?.cancel();\n    Navigator.of(context).pushReplacement(\n      MaterialPageRoute(builder: (_) => page),\n    );\n  }\n\n  @override\n  void dispose() {\n    _controller.dispose();\n    _navTimer?.cancel();\n    // Sécurité: si le widget est détruit autrement, on remet le style global.\n    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));\n    super.dispose();\n  }\n\n  @override\n  Widget build(BuildContext context) {\n    return AnnotatedRegion<SystemUiOverlayStyle>(\n      value: prestoOverlayStyleFor(kPrestoOrange),\n      child: Scaffold(\n        backgroundColor: kPrestoOrange,\n        body: SafeArea(\n          child: Stack(\n            children: [\n              Center(\n                child: Padding(\n                  padding: const EdgeInsets.symmetric(horizontal: 16),\n                  child: Column(\n                    mainAxisSize: MainAxisSize.min,\n                    children: [\n                      /*\n                      GestureDetector(\n                        onLongPress: () {\n                          Navigator.push(\n                            context,\n                            MaterialPageRoute(\n                              builder: (context) => const HomePageV2Option2(),\n                            ),\n                          );\n                        },\n                        child: ScaleTransition(\n                          scale: _scaleAnimation,\n                          child: const Text(\n                            'iliprestō',\n                            style: TextStyle(\n                              fontSize: 54,\n                              fontWeight: FontWeight.w900,\n                              color: Colors.white,\n                              letterSpacing: 1.3,\n                            ),\n                          ),\n                        ),\n                      ),\n                      */\n                      ScaleTransition(\n                        scale: _scaleAnimation,\n                        child: const Text(\n                          'iliprestō',\n                          style: TextStyle(\n                            fontSize: 54,\n                            fontWeight: FontWeight.w900,\n                            color: Colors.white,\n                            letterSpacing: 1.3,\n                          ),\n                        ),\n                      ),\n                      // */\n                      const SizedBox(height: 28),\n                      const Text(\n                        'Trouvez un prestataire\nillico presto!',\n                        textAlign: TextAlign.center,\n                        style: TextStyle(\n                          fontSize: 24,\n                          height: 1.25,\n                          fontWeight: FontWeight.w700,\n                          color: Colors.white,\n                        ),\n                      ),\n                      const SizedBox(height: 46),\n                      SizedBox(\n                        width: 260,\n                        child: OutlinedButton(\n                          style: OutlinedButton.styleFrom(\n                            side:\n                                const BorderSide(color: Colors.white, width: 2),\n                            padding: const EdgeInsets.symmetric(\n                                vertical: 14, horizontal: 8),\n                            foregroundColor: Colors.white,\n                            shape: RoundedRectangleBorder(\n                              borderRadius: BorderRadius.circular(999),\n                            ),\n                          ),\n                          onPressed: () =>\n                              _navigateTo(const HomePage(initialIndex: 2)),\n                          child: const Text(\n                            "J’offre un job",\n                            style: TextStyle(\n                                fontSize: 18, fontWeight: FontWeight.w700),\n                          ),\n                        ),\n                      ),\n                      const SizedBox(height: 18),\n                      SizedBox(\n                        width: 260,\n                        child: ElevatedButton(\n                          style: ElevatedButton.styleFrom(\n                            padding: const EdgeInsets.symmetric(\n                                vertical: 14, horizontal: 8),\n                            backgroundColor: kPrestoBlue,\n                            foregroundColor: Colors.white,\n                            shape: RoundedRectangleBorder(\n                              borderRadius: BorderRadius.circular(999),\n                            ),\n                          ),\n                          onPressed: () =>\n                              _navigateTo(const HomePage(initialIndex: 1)),\n                          child: const Text(\n                            "Je consulte les offres",\n                            style: TextStyle(\n                                fontSize: 18, fontWeight: FontWeight.w700),\n                          ),\n                        ),\n                      ),\n                    ],\n                  ),\n                ),\n              ),\n              const Positioned(\n                left: 12,\n                right: 12,\n                bottom: 12,\n                child: _SplashBuildStamp(),\n              ),\n            ],\n          ),\n        ),\n      ),\n    );\n  }\n}\n\nclass _SplashBuildStamp extends StatelessWidget {\n  const _SplashBuildStamp();\n\n  @override\n  Widget build(BuildContext context) {\n    final shortSha = kAppBuildSha == 'local'\n        ? 'local'\n        : (kAppBuildSha.length > 12\n            ? kAppBuildSha.substring(0, 12)\n            : kAppBuildSha);\n    final primaryLine = 'v$kAppVersion+$kAppBuildNumber • commit $shortSha';\n    final secondaryParts = <String>[\n      if (kAppBuildBranch.trim().isNotEmpty) 'branch ${kAppBuildBranch.trim()}',\n      if (kAppBuildTag.trim().isNotEmpty) 'tag ${kAppBuildTag.trim()}',\n      if (kAppBuildTimeUtc.trim().isNotEmpty)\n        'build ${kAppBuildTimeUtc.trim()}',\n    ];\n\n    return Center(\n      child: ConstrainedBox(\n        constraints: const BoxConstraints(maxWidth: 360),\n        child: Container(\n          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),\n          decoration: BoxDecoration(\n            color: Colors.black.withOpacity(0.18),\n            borderRadius: BorderRadius.circular(14),\n            border: Border.all(color: Colors.white.withOpacity(0.18)),\n          ),\n          child: Column(\n            mainAxisSize: MainAxisSize.min,\n            children: [\n              Text(\n                primaryLine,\n                textAlign: TextAlign.center,\n                style: const TextStyle(\n                  fontSize: 11,\n                  height: 1.25,\n                  color: Colors.white,\n                  fontWeight: FontWeight.w800,\n                ),\n              ),\n              if (secondaryParts.isNotEmpty) ...[\n                const SizedBox(height: 4),\n                Text(\n                  secondaryParts.join(' • '),\n                  textAlign: TextAlign.center,\n                  style: const TextStyle(\n                    fontSize: 10,\n                    height: 1.2,\n                    color: Colors.white70,\n                    fontWeight: FontWeight.w600,\n                  ),\n                ),\n              ],\n            ],\n          ),\n        ),\n      ),\n    );\n  }\n}\n
+// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
+
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'app/app_globals.dart';
+import 'app/secondary_named_routes.dart';
+import 'app/theme.dart';
+import 'app_core.dart';
+import 'firebase_init.dart';
+import 'dev/page_capture_catalog_page.dart';
+import 'debug_auth.dart';
+import 'pages/offers/offer_details_page.dart';
+import 'pages/messages/messages_page_v2.dart';
+import 'pages/home_page.dart';
+import 'pages/account_page.dart';
+import 'pages/publish_offer_page.dart';
+import 'pages/admin_space_page.dart';
+import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
+import 'services/city_search.dart';
+import 'services/app_check_bootstrap.dart';
+import 'services/app_route_parser.dart';
+import 'services/firestore_bootstrap.dart';
+import 'services/notification_service.dart';
+import 'services/admin_audio_runtime_store.dart';
+import 'services/admin_web_debug_store.dart';
+import 'services/post_auth_navigation_intent_service.dart';
+import 'widgets/admin_web_debug_panel.dart';
+import 'pages/auth/login_page.dart';
+import 'pages/auth/register_page.dart';
+import 'pages/auth/forgot_password_page.dart';
+import 'pages/auth/verify_email_page.dart';
+import 'pages/auth/reset_password_success_page.dart';
+import 'pages/account/account_security_page.dart';
+import 'pages/account/change_email_page.dart';
+import 'pages/account/change_password_page.dart';
+import 'pages/account/delete_account_page.dart';
+
+export 'pages/publish_offer_page.dart' show PublishOfferPage;
+
+final AdminAudioRuntimeStore adminAudioRuntimeStore =
+    AdminAudioRuntimeStore.instance;
+final AdminWebDebugStore adminWebDebugStore = AdminWebDebugStore.instance;
+
+/// Résultat de `FirebaseAuth.getRedirectResult()` capturé une seule fois au
+/// démarrage (web). Permet aux pages compte/profil de récupérer le retour
+/// d'un sign-in fédéré (Google/Facebook/Apple) sans courir la course
+/// contre la consommation interne du SDK Firebase.
+UserCredential? pendingRedirectAuthResult;
+Object? pendingRedirectAuthError;
+String? pendingPostAuthRoute;
+
+class PrestoRemoteConfig {
+  static String audioPipeline = 'HYBRID';
+
+  static Future<void> init() async {}
+}
+
+class PrestoMonitoring {
+  PrestoMonitoring._();
+
+  static final PrestoMonitoring I = PrestoMonitoring._();
+
+  void trackOtherStream({required String key, required int docsCount}) {
+    if (kDebugMode) {
+      debugPrint('[monitoring] stream=$key count=$docsCount');
+    }
+    adminWebDebugStore.recordEvent(
+      area: 'monitoring',
+      message: 'stream',
+      detail: 'key=$key count=$docsCount',
+    );
+  }
+
+  void trackOffersSnapshot(int docsCount) {
+    trackOtherStream(key: 'offers.snapshot', docsCount: docsCount);
+  }
+
+  void trackFunctionsCall({required String name, required int ms}) {
+    if (kDebugMode) {
+      debugPrint('[monitoring] function=$name ms=$ms');
+    }
+    adminWebDebugStore.recordEvent(
+      area: 'monitoring',
+      message: 'function',
+      detail: 'name=$name ms=$ms',
+    );
+  }
+
+  void trackError(String key, Object error) {
+    if (kDebugMode) {
+      debugPrint('[monitoring] error=$key $error');
+    }
+    adminWebDebugStore.recordError(
+      'monitoring',
+      error,
+      message: key,
+    );
+  }
+}
+
+const String kOfferDeleteReasonFoundProvider =
+    'J ai deja trouve un prestataire';
+const String kOfferDeleteReasonFoundOnIliPresto =
+    'J’ai trouvé quelqu’un sur iliprestō';
+const Duration kOfferJobDoneOverlayDuration = Duration(hours: 10);
+const double kMarketplaceOutlineWidth = 1.2;
+const String kAppVersion = String.fromEnvironment(
+  'APP_VERSION',
+  defaultValue: 'dev',
+);
+const String kAppBuildNumber = String.fromEnvironment(
+  'APP_BUILD_NUMBER',
+  defaultValue: '0',
+);
+const String kAppBuildSha = String.fromEnvironment(
+  'APP_BUILD_SHA',
+  defaultValue: 'local',
+);
+const String kAppBuildBranch = String.fromEnvironment(
+  'APP_BUILD_BRANCH',
+  defaultValue: '',
+);
+const String kAppBuildTag = String.fromEnvironment(
+  'APP_BUILD_TAG',
+  defaultValue: '',
+);
+const String kAppBuildTimeUtc = String.fromEnvironment(
+  'APP_BUILD_TIME_UTC',
+  defaultValue: '',
+);
+
+SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
+  final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
+  final isDarkBackground = estimated == Brightness.dark;
+  return SystemUiOverlayStyle(
+    statusBarColor: backgroundColor,
+    statusBarIconBrightness:
+        isDarkBackground ? Brightness.light : Brightness.dark,
+    statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
+    systemNavigationBarColor: backgroundColor,
+    systemNavigationBarDividerColor: backgroundColor,
+    systemNavigationBarIconBrightness:
+        isDarkBackground ? Brightness.light : Brightness.dark,
+  );
+}
+
+DateTime? _offerDateTimeFromDynamic(dynamic value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
+String? inferRegionFromPostalCode(String postalCode) {
+  final cp = postalCode.trim();
+  if (cp.length < 2) return null;
+
+  if (cp.length >= 3 && cp.startsWith('97')) {
+    switch (cp.substring(0, 3)) {
+      case '971':
+        return 'Guadeloupe';
+      case '972':
+        return 'Martinique';
+      case '973':
+        return 'Guyane';
+      case '974':
+        return 'La Réunion';
+      case '976':
+        return 'Mayotte';
+    }
+  }
+
+  if (cp.startsWith('20')) {
+    return 'Corse';
+  }
+
+  final two = int.tryParse(cp.substring(0, 2));
+  if (two == null) return null;
+
+  if (<int>{1, 3, 7, 15, 26, 38, 42, 43, 63, 69, 73, 74}.contains(two)) {
+    return 'Auvergne-Rhône-Alpes';
+  }
+
+  if (<int>{21, 25, 39, 58, 70, 71, 89, 90}.contains(two)) {
+    return 'Bourgogne-Franche-Comté';
+  }
+
+  if (<int>{22, 29, 35, 56}.contains(two)) {
+    return 'Bretagne';
+  }
+
+  if (<int>{18, 28, 36, 37, 41, 45}.contains(two)) {
+    return 'Centre-Val de Loire';
+  }
+
+  if (<int>{8, 10, 51, 52, 54, 55, 57, 67, 68, 88}.contains(two)) {
+    return 'Grand Est';
+  }
+
+  if (<int>{2, 59, 60, 62, 80}.contains(two)) {
+    return 'Hauts-de-France';
+  }
+
+  if (<int>{75, 77, 78, 91, 92, 93, 94, 95}.contains(two)) {
+    return 'Île-de-France';
+  }
+
+  if (<int>{14, 27, 50, 61, 76}.contains(two)) {
+    return 'Normandie';
+  }
+
+  if (<int>{16, 17, 19, 23, 24, 33, 40, 47, 64, 79, 86, 87}.contains(two)) {
+    return 'Nouvelle-Aquitaine';
+  }
+
+  if (<int>{9, 11, 12, 30, 31, 32, 34, 46, 48, 65, 66, 81, 82}.contains(two)) {
+    return 'Occitanie';
+  }
+
+  if (<int>{44, 49, 53, 72, 85}.contains(two)) {
+    return 'Pays de la Loire';
+  }
+
+  if (<int>{4, 5, 6, 13, 83, 84}.contains(two)) {
+    return 'Provence-Alpes-Côte d\'Azur';
+  }
+
+  return null;
+}
+
+/// ============= WIDGETS HELPER POUR OfferDetailPage =============
+
+String _offerDetailsPublishedLabel(dynamic raw) {
+  if (raw is Timestamp) {
+    final publishedAt = raw.toDate();
+    final diff = DateTime.now().difference(publishedAt);
+
+    if (diff.inMinutes < 1) return 'Publiee a l\'instant';
+    if (diff.inHours < 1) return 'Publiee il y a ${diff.inMinutes} min';
+    if (diff.inDays < 1) return 'Publiee il y a ${diff.inHours} h';
+    if (diff.inDays < 7) return 'Publiee il y a ${diff.inDays} j';
+  }
+
+  return 'Publication recente';
+}
+
+String _extractOfferImageUrl(dynamic entry) {
+  if (entry == null) return '';
+  if (entry is Map) {
+    for (final key in const [
+      'downloadUrl',
+      'thumbnailUrl',
+      'imageUrl',
+      'photoUrl',
+      'url',
+      'secureUrl',
+      'src',
+      'storagePath',
+      'filePath',
+      'path',
+    ]) {
+      final value = (entry[key] ?? '').toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+  return entry.toString().trim();
+}
+
+List<String> _collectOfferImageUrls({
+  dynamic rawImageUrls,
+  dynamic rawMedia,
+  dynamic rawImageUrl,
+  dynamic rawThumbnailUrl,
+}) {
+  final orderedUrls = <String>[];
+
+  void addUrl(dynamic value) {
+    final url = _extractOfferImageUrl(value);
+    if (url.isEmpty || orderedUrls.contains(url)) {
+      return;
+    }
+    orderedUrls.add(url);
+  }
+
+  if (rawImageUrls is List) {
+    for (final entry in rawImageUrls) {
+      addUrl(entry);
+    }
+  }
+
+  if (rawMedia is List) {
+    for (final entry in rawMedia) {
+      addUrl(entry);
+    }
+  }
+
+  addUrl(rawImageUrl);
+  addUrl(rawThumbnailUrl);
+
+  return orderedUrls;
+}
+
+Offer buildOfferDetailsOffer({
+  required String offerId,
+  required Map<String, dynamic> data,
+}) {
+  final title = (data['title'] ?? '').toString().trim();
+  final location = ((data['location'] ?? data['city']) ?? '').toString().trim();
+  final postalCode =
+      ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+  final category = (data['category'] ?? '').toString().trim();
+  final description = (data['description'] ?? '').toString().trim();
+  final isUrgent = (data['urgent'] as bool?) ?? false;
+  final budget = data['budget'];
+  final price = budget is num ? budget.toDouble() : 0.0;
+  final rawMedia = (data['media'] as List<dynamic>? ?? const <dynamic>[])
+      .whereType<Map>()
+      .map(
+        (entry) => Map<String, dynamic>.from(entry.cast<dynamic, dynamic>()),
+      )
+      .toList(growable: false);
+  final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
+  final imageUrls = _collectOfferImageUrls(
+    rawImageUrls: data['imageUrls'],
+    rawMedia: rawMedia,
+    rawImageUrl: data['imageUrl'],
+    rawThumbnailUrl: thumbnailUrl,
+  );
+  final advertiserName =
+      ((data['userName'] ?? data['pseudo']) ?? '').toString().trim();
+  final serviceArea =
+      (data['serviceArea'] ?? (location.isEmpty ? 'Zone locale' : location))
+          .toString();
+  final missionDelay =
+      ((data['missionDelay'] ?? data['averageDelay']) ?? 'Délai non précisé')
+          .toString();
+  final createdAt = data['createdAt'];
+  final publishedAt = data['publishedAt'];
+  final listingStatus = (data['status'] ?? '').toString().trim();
+  final moderationStatus = (data['moderationStatus'] ?? '').toString().trim();
+  final visibility = (data['visibility'] ?? '').toString().trim();
+  final mediaProcessingStatus =
+      (data['mediaProcessingStatus'] ?? '').toString().trim();
+  final categoryId = (data['categoryId'] ?? '').toString().trim();
+  final cityId = (data['cityId'] ?? '').toString().trim();
+  final isMarketplaceValue = data['isMarketplace'];
+  final inferredMarketplace = categoryId.isNotEmpty ||
+      cityId.isNotEmpty ||
+      listingStatus.isNotEmpty ||
+      visibility.isNotEmpty ||
+      mediaProcessingStatus.isNotEmpty ||
+      data.containsKey('favoriteCount') ||
+      data.containsKey('ownerId');
+  final isMarketplace = isMarketplaceValue is bool
+      ? isMarketplaceValue
+      : isMarketplaceValue.toString().trim().toLowerCase() == 'true' ||
+          inferredMarketplace;
+
+  return Offer(
+    id: offerId,
+    listingId: offerId,
+    title: title.isEmpty ? 'Annonce' : title,
+    price: price,
+    category: category.isEmpty ? 'Categorie non precisee' : category,
+    categoryId: categoryId,
+    city: location.isEmpty ? 'Lieu non precise' : location,
+    cityId: cityId,
+    postalCode: postalCode,
+    isUrgent: isUrgent,
+    publishedAtLabel: _offerDetailsPublishedLabel(data['createdAt']),
+    publishedAt: publishedAt is Timestamp ? publishedAt.toDate() : null,
+    createdAt: createdAt is Timestamp ? createdAt.toDate() : null,
+    availability:
+        (data['availability'] ?? 'Disponibilite a confirmer').toString(),
+    shortDescription: description.isEmpty
+        ? 'Consultez le detail de cette annonce et contactez l\'annonceur.'
+        : description,
+    description: description,
+    phone: (data['phone'] ?? '').toString(),
+    imageUrls: imageUrls,
+    media: rawMedia,
+    thumbnailUrl: thumbnailUrl,
+    statusBadges: <String>[
+      'Disponible',
+      if ((data['urgent'] as bool?) ?? false) 'Urgent',
+      if ((data['verified'] as bool?) ?? false) 'Verifie',
+      'Nouveau',
+    ],
+    status: listingStatus,
+    moderationStatus: moderationStatus,
+    visibility: visibility,
+    mediaProcessingStatus: mediaProcessingStatus,
+    isMarketplace: isMarketplace,
+    practicalInfo: PracticalInfo(
+      category: category.isEmpty ? 'Service' : category,
+      serviceArea: serviceArea,
+      canTravel: (data['canTravel'] as bool?) ?? true,
+      schedule: (data['schedule'] ?? 'Horaires a convenir').toString(),
+      missionDelay: missionDelay,
+      averageDelay: missionDelay,
+      paymentMethod:
+          (data['paymentMethod'] ?? 'Paiement a convenir').toString(),
+      serviceType: (data['serviceType'] ?? 'Prestation ponctuelle').toString(),
+    ),
+    advertiser: Advertiser(
+      id: (data['userId'] ?? data['uid'] ?? '').toString(),
+      name: advertiserName.isEmpty ? 'Annonceur Presto' : advertiserName,
+      verified: (data['verified'] as bool?) ?? false,
+      rating:
+          (data['rating'] is num) ? (data['rating'] as num).toDouble() : null,
+      offersCount: (data['offersCount'] is num)
+          ? (data['offersCount'] as num).toInt()
+          : 1,
+      reviewsCount: (data['reviewsCount'] is num)
+          ? (data['reviewsCount'] as num).toInt()
+          : (data['reviewCount'] is num)
+              ? (data['reviewCount'] as num).toInt()
+              : (data['ratingCount'] is num)
+                  ? (data['ratingCount'] as num).toInt()
+                  : 0,
+      seniorityLabel: (data['seniorityLabel'] ?? 'Membre Presto').toString(),
+      city: location.isEmpty ? 'Ville non precisee' : location,
+      bio: (data['bio'] ?? '').toString(),
+      avatarUrl: ((data['avatarUrl'] ??
+                  data['photoUrl'] ??
+                  data['photoURL'] ??
+                  data['profilePhotoUrl'] ??
+                  data['imageUrl']) ??
+              '')
+          .toString(),
+      isOnline: ((data['status'] ?? '').toString().toLowerCase() == 'online'),
+      lastSeenLabel: 'Activite recente',
+    ),
+    actionType: ((data['actionType'] ?? '') == 'booking')
+        ? OfferActionType.booking
+        : OfferActionType.contact,
+    similarOffers: const [],
+  );
+}
+
+/// ✅ Pastille affichant le pipeline audio actif (Remote Config)
+class AudioPipelineBadge extends StatelessWidget {
+  const AudioPipelineBadge({super.key});
+
+  Color _colorFor(String v) {
+    switch (v.toUpperCase()) {
+      case 'STREAM':
+        return Colors.green;
+      case 'HYBRID':
+        return Colors.blue;
+      case 'CHUNK':
+        return Colors.orange;
+      case 'DISABLED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = PrestoRemoteConfig.audioPipeline;
+    final c = _colorFor(v);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: c.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.withOpacity(0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.graphic_eq, size: 16, color: c),
+          const SizedBox(width: 6),
+          Text(
+            v.isEmpty ? 'UNKNOWN' : v,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: c,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CardShell extends StatelessWidget {
+  final Widget child;
+  const CardShell({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+Future<void> main() async {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    adminWebDebugStore.recordEvent(
+      area: 'app',
+      message: 'startup',
+      detail: 'platform=${kIsWeb ? 'web' : defaultTargetPlatform.name}',
+    );
+
+    await ensureFirebaseInitialized(source: 'main');
+
+    await bootstrapAppCheck();
+
+    adminWebDebugStore.recordEvent(area: 'firebase', message: 'initialized');
+    await bootstrapFirestore();
+    adminWebDebugStore.recordEvent(area: 'firestore', message: 'bootstrapped');
+
+    // 📋 Diagnostics
+    if (kDebugMode) {
+      debugPrint('=== Firebase Initialization ===');
+      debugPrint(
+          '[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');
+      debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
+      debugPrint(
+          '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
+      debugPrint('[Firestore] initialization ready');
+      if (kIsWeb) {
+        debugPrint('✓ Platform: Web');
+        debugPrint('  - Google Sign-In: Popup + Redirect fallback');
+      } else {
+        debugPrint(
+            '✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
+      }
+      debugPrint('');
+    }
+
+    // ✅ Activer la persistance Firestore (cache + offline)
+    if (!kIsWeb) {
+      try {
+        await FirebaseFirestore.instance.enableNetwork();
+        if (kDebugMode) debugPrint('✓ Firestore persistence: Enabled');
+      } catch (e) {
+        if (kDebugMode) debugPrint('⚠️ Firestore persistence error: $e');
+      }
+    } else {
+      // Web: persistance auto si IndexedDB disponible
+      if (kDebugMode)
+        debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
+    }
+
+    // ✅ Initialiser le service Firebase centralisé avec optimisations
+    // await FirebaseService.instance.initialize();
+
+    // ✅ Remote Config: charger le pipeline audio
+    await PrestoRemoteConfig.init();
+    if (kDebugMode)
+      debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
+    adminWebDebugStore.recordEvent(
+      area: 'remote-config',
+      message: 'initialized',
+      detail: 'audio_pipeline=${PrestoRemoteConfig.audioPipeline}',
+    );
+
+    // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
+    // Supprimé : on n'impose plus de connexion automatique au démarrage
+    // L'auth anonyme sera gérée au besoin par chaque page qui en a besoin
+    try {
+      final auth = FirebaseAuth.instance;
+      if (kDebugMode) {
+        DebugAuth.installAuthStateLogs();
+      }
+
+      if (kIsWeb) {
+        // Garantit la persistance LOCAL pour survivre au signInWithRedirect
+        // (sinon Safari/Brave retombent en SESSION et perdent l'état au
+        // retour OAuth).
+        try {
+          await auth.setPersistence(Persistence.LOCAL);
+        } catch (e) {
+          if (kDebugMode) debugPrint('[Auth] setPersistence failed: $e');
+        }
+
+        // Capture UNE SEULE FOIS le résultat d'un éventuel
+        // signInWithRedirect précédent. Doit être appelé tôt pour ne pas
+        // courir la course contre AccountPage qui appelle aussi
+        // getRedirectResult dans son initState.
+        try {
+          pendingRedirectAuthResult = await auth.getRedirectResult();
+          if (kDebugMode) {
+            debugPrint(
+              '[Auth] getRedirectResult: user='
+              '${pendingRedirectAuthResult?.user?.uid} '
+              'provider=${pendingRedirectAuthResult?.credential?.providerId}',
+            );
+          }
+        } catch (e) {
+          pendingRedirectAuthError = e;
+          if (kDebugMode) debugPrint('[Auth] getRedirectResult error: $e');
+        }
+
+        final shouldRestorePostAuthRoute =
+            pendingRedirectAuthResult?.user != null ||
+                pendingRedirectAuthError != null;
+        if (shouldRestorePostAuthRoute) {
+          try {
+            pendingPostAuthRoute =
+                await PostAuthNavigationIntentService.takePendingRoute();
+            if (kDebugMode && pendingPostAuthRoute != null) {
+              debugPrint(
+                  '[Auth] pending post-auth route=$pendingPostAuthRoute');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              debugPrint('[Auth] takePendingRoute failed: $e');
+            }
+          }
+        }
+      }
+
+      // Ne force plus signInAnonymously() au démarrage
+      if (auth.currentUser != null) {
+        if (kDebugMode)
+          debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+        SessionState.userId = auth.currentUser!.uid;
+      } else {
+        if (kDebugMode) debugPrint('[Auth] No user signed in at startup (OK)');
+        SessionState.userId = null;
+      }
+
+      // Synchronise SessionState.userId globalement dès qu'Auth change
+      // (couvre sign-in/sign-out depuis n'importe quelle page).
+      FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        SessionState.userId = user?.uid;
+        adminWebDebugStore.updateAuth(user);
+        if (kDebugMode)
+          debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
+      });
+    } catch (e) {
+      adminWebDebugStore.recordError('auth', e,
+          message: 'startup-check-failed');
+      if (kDebugMode) debugPrint('[Auth] check failed: $e');
+    }
+
+    // Configuration globale : barre système bleue Prestō sur toute l'app.
+    // (Le SplashScreen surcharge en orange.)
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
+
+    // Crashlytics n'est pas supporté sur le web
+    final previousFlutterOnError = FlutterError.onError;
+    FlutterError.onError = (FlutterErrorDetails details) {
+      previousFlutterOnError?.call(details);
+      adminWebDebugStore.recordError(
+        'flutter',
+        details.exception,
+        stackTrace: details.stack,
+        message: details.library ?? 'flutter-error',
+      );
+      if (!kIsWeb) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      }
+    };
+
+    PlatformDispatcher.instance.onError = (error, stack) {
+      adminWebDebugStore.recordError(
+        'platform',
+        error,
+        stackTrace: stack,
+        message: 'platform-dispatcher',
+      );
+      if (!kIsWeb) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      }
+      return true;
+    };
+
+    if (!kIsWeb) {
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(!kDebugMode);
+    }
+
+    await CitySearch.instance.ensureLoaded();
+
+    // Initialisation des notifications push sur toutes les plateformes.
+    // Sur Web, l'enregistrement du token dépend de FCM_WEB_VAPID_KEY.
+    try {
+      await NotificationService().initialize(
+        navigatorKey: appNavigatorKey,
+      );
+      adminWebDebugStore.recordEvent(
+        area: 'notifications',
+        message: 'initialized',
+      );
+    } catch (e) {
+      adminWebDebugStore.recordError('notifications', e,
+          message: 'init-failed');
+      if (kDebugMode) debugPrint('[Notifications] init error: $e');
+    }
+
+    runApp(const PrestoApp());
+  }, (error, stack) {
+    adminWebDebugStore.recordError(
+      'zone',
+      error,
+      stackTrace: stack,
+      message: 'runZonedGuarded',
+    );
+    if (!kIsWeb) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    }
+  });
+}
+
+class PrestoApp extends StatefulWidget {
+  const PrestoApp({super.key});
+
+  @override
+  State<PrestoApp> createState() => _PrestoAppState();
+}
+
+class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
+  bool _navigatorReadySignaled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    adminWebDebugStore.recordEvent(
+      area: 'lifecycle',
+      message: 'resumed',
+    );
+    unawaited(
+      refreshAppCheckToken(reason: 'app-resumed').catchError((Object error) {
+        if (kDebugMode) {
+          debugPrint('[AppCheck] resume refresh skipped: $error');
+        }
+      }),
+    );
+  }
+
+  Widget _buildInitialHome() {
+    if (kIsWeb) {
+      final rawPath = Uri.base.path.trim();
+      final normalizedPath = rawPath.endsWith('/') && rawPath.length > 1
+          ? rawPath.substring(0, rawPath.length - 1)
+          : rawPath;
+      if (!kReleaseMode && normalizedPath == '/page-catalog') {
+        return const PageCaptureCatalogPage();
+      }
+    }
+
+    return const SplashScreen();
+  }
+
+  void _signalNavigatorReady() {
+    if (_navigatorReadySignaled) return;
+    _navigatorReadySignaled = true;
+    NotificationService().markNavigatorReady();
+  }
+
+  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    final routeName = settings.name ?? '';
+    final parsedRoute = Uri.tryParse(routeName);
+    if (!kReleaseMode &&
+        parsedRoute != null &&
+        parsedRoute.path == '/page-catalog') {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const PageCaptureCatalogPage(),
+      );
+    }
+
+    final target = parseAppDeepLink(settings.name);
+    if (target == null) return null;
+
+    if (target.offerId != null) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => OfferDeepLinkPage(
+          offerId: target.offerId!,
+          preferMarketplace: target.preferMarketplace,
+        ),
+      );
+    }
+
+    if (target.userId != null && target.routeName == '/profile') {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => UserPublicProfilePage(userId: target.userId!),
+      );
+    }
+
+    if (target.routeName == AppDeepLinkTarget.messagesRouteName ||
+        target.routeName == AppDeepLinkTarget.messagesV2RouteName) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => MessagesPageV2(
+          initialConversationId: target.conversationId,
+          initialDraftText: target.initialDraftText,
+        ),
+      );
+    }
+
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (_) => HomePage(
+        initialIndex: 3,
+        initialMessagesConversationId: target.conversationId,
+        initialMessagesDraftText: target.initialDraftText,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'iliprestō',
+      debugShowCheckedModeBanner: false,
+      navigatorKey: appNavigatorKey,
+      builder: (context, child) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _signalNavigatorReady();
+        });
+        return AdminWebDebugPanel(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+      onGenerateRoute: _onGenerateRoute,
+      routes: {
+        LoginPage.routeName: (_) => const LoginPage(),
+        RegisterPage.routeName: (_) => const RegisterPage(),
+        ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),
+        VerifyEmailPage.routeName: (_) => const VerifyEmailPage(),
+        ResetPasswordSuccessPage.routeName: (_) =>
+            const ResetPasswordSuccessPage(email: ''),
+        AccountSecurityPage.routeName: (_) => const AccountSecurityPage(),
+        ChangeEmailPage.routeName: (_) => const ChangeEmailPage(),
+        ChangePasswordPage.routeName: (_) => const ChangePasswordPage(),
+        DeleteAccountPage.routeName: (_) => const DeleteAccountPage(),
+        '/publish': (_) => const PublishOfferPage(),
+        '/messages': (_) => const MessagesPageV2(),
+        '/messages-2': (_) => const MessagesPageV2(),
+        '/account': (_) => const AccountPage(),
+        '/admin': (_) => const AdminSpacePage(),
+        if (!kReleaseMode)
+          '/page-catalog': (_) => const PageCaptureCatalogPage(),
+        ...buildSecondaryNamedRoutes(),
+      },
+      theme: buildPrestoTheme(),
+      // L'application doit toujours démarrer par le splash puis la home.
+      // Les pages protégées gèrent elles-mêmes la demande de connexion.
+      home: _buildInitialHome(),
+    );
+  }
+}
+
+/// SPLASH /////////////////////////////////////////////////////////////////
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+  Timer? _navTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Splash : status bar + barre de navigation système en orange.
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoOrange));
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _scheduleNavigation(_initialSplashDuration());
+  }
+
+  Duration _initialSplashDuration() {
+    if (!kIsWeb) {
+      return const Duration(milliseconds: 3500);
+    }
+
+    if (pendingPostAuthRoute == PostAuthNavigationIntentService.accountRoute) {
+      return const Duration(milliseconds: 1200);
+    }
+
+    final webPath = _normalizedWebPath();
+    final hasDeepLink = parseAppDeepLink(Uri.base.toString()) != null;
+    if (webPath == '/account' || webPath == '/publish' || hasDeepLink) {
+      return const Duration(milliseconds: 1200);
+    }
+
+    return const Duration(milliseconds: 3500);
+  }
+
+  String _normalizedWebPath() {
+    final rawPath = Uri.base.path.trim();
+    if (rawPath.isEmpty) {
+      return '/';
+    }
+    return rawPath.endsWith('/') && rawPath.length > 1
+        ? rawPath.substring(0, rawPath.length - 1)
+        : rawPath;
+  }
+
+  Widget _destinationForCurrentLocation() {
+    final webPath = _normalizedWebPath();
+
+    // RÈGLE PRINCIPALE :
+    // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
+    // On ne doit jamais envoyer un utilisateur déconnecté vers Connexion/Compte
+    // sauf s'il a explicitement ouvert /account.
+    pendingPostAuthRoute = null;
+
+    if (webPath.isEmpty || webPath == '/') {
+      return const HomePage();
+    }
+
+    if (!kIsWeb) {
+      return const HomePage();
+    }
+
+    // Flow normal :
+    // - ouverture racine "/" => SplashScreen puis HomePage
+    // - aucune redirection automatique vers l'onglet Compte après splash
+    // - la connexion s'affiche uniquement si l'utilisateur clique sur Profil/Compte
+    pendingPostAuthRoute = null;
+
+    if (webPath == '/account') {
+      return const AccountPage();
+    }
+    if (webPath == '/publish') {
+      return const PublishOfferPage();
+    }
+
+    final target = parseAppDeepLink(Uri.base.toString());
+    if (target != null) {
+      if (target.offerId != null) {
+        return OfferDeepLinkPage(
+          offerId: target.offerId!,
+          preferMarketplace: target.preferMarketplace,
+        );
+      }
+
+      if (target.routeName == AppDeepLinkTarget.messagesRouteName ||
+          target.routeName == AppDeepLinkTarget.messagesV2RouteName) {
+        return MessagesPageV2(
+          initialConversationId: target.conversationId,
+          initialDraftText: target.initialDraftText,
+        );
+      }
+
+      return HomePage(
+        initialIndex: 3,
+        initialMessagesConversationId: target.conversationId,
+        initialMessagesDraftText: target.initialDraftText,
+      );
+    }
+
+    return const HomePage();
+  }
+
+  void _scheduleNavigation(Duration duration) {
+    _navTimer?.cancel();
+    _navTimer = Timer(duration, () {
+      try {
+        _navigateTo(_destinationForCurrentLocation());
+      } catch (e) {
+        // Navigation principale a échoué — forcer HomePage comme fallback.
+        try {
+          _navigateTo(const HomePage());
+        } catch (_) {}
+      }
+    });
+  }
+
+  void _navigateTo(Widget page) {
+    if (!mounted) return;
+    _navTimer?.cancel();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => page),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _navTimer?.cancel();
+    // Sécurité: si le widget est détruit autrement, on remet le style global.
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: prestoOverlayStyleFor(kPrestoOrange),
+      child: Scaffold(
+        backgroundColor: kPrestoOrange,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      /*
+                      GestureDetector(
+                        onLongPress: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomePageV2Option2(),
+                            ),
+                          );
+                        },
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: const Text(
+                            'iliprestō',
+                            style: TextStyle(
+                              fontSize: 54,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.3,
+                            ),
+                          ),
+                        ),
+                      ),
+                      */
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: const Text(
+                          'iliprestō',
+                          style: TextStyle(
+                            fontSize: 54,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 1.3,
+                          ),
+                        ),
+                      ),
+                      // */
+                      const SizedBox(height: 28),
+                      const Text(
+                        'Trouvez un prestataire\nillico presto!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          height: 1.25,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 46),
+                      SizedBox(
+                        width: 260,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side:
+                                const BorderSide(color: Colors.white, width: 2),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 8),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          onPressed: () =>
+                              _navigateTo(const HomePage(initialIndex: 2)),
+                          child: const Text(
+                            "J’offre un job",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: 260,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 8),
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          onPressed: () =>
+                              _navigateTo(const HomePage(initialIndex: 1)),
+                          child: const Text(
+                            "Je consulte les offres",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Positioned(
+                left: 12,
+                right: 12,
+                bottom: 12,
+                child: _SplashBuildStamp(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SplashBuildStamp extends StatelessWidget {
+  const _SplashBuildStamp();
+
+  @override
+  Widget build(BuildContext context) {
+    final shortSha = kAppBuildSha == 'local'
+        ? 'local'
+        : (kAppBuildSha.length > 12
+            ? kAppBuildSha.substring(0, 12)
+            : kAppBuildSha);
+    final primaryLine = 'v$kAppVersion+$kAppBuildNumber • commit $shortSha';
+    final secondaryParts = <String>[
+      if (kAppBuildBranch.trim().isNotEmpty) 'branch ${kAppBuildBranch.trim()}',
+      if (kAppBuildTag.trim().isNotEmpty) 'tag ${kAppBuildTag.trim()}',
+      if (kAppBuildTimeUtc.trim().isNotEmpty)
+        'build ${kAppBuildTimeUtc.trim()}',
+    ];
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withOpacity(0.18)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                primaryLine,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.25,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (secondaryParts.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  secondaryParts.join(' • '),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    height: 1.2,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
