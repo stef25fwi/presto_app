@@ -286,16 +286,13 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              width: 46,
-                              height: 46,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF6600),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.bolt_rounded,
-                                color: Colors.white,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.asset(
+                                'assets/images/logowebp.webp',
+                                width: 46,
+                                height: 46,
+                                fit: BoxFit.cover,
                               ),
                             ),
                             const SizedBox(width: 12),
