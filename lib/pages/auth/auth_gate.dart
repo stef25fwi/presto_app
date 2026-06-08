@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'login_page.dart';
+import '../account_page.dart';
 import 'verify_email_page.dart';
 
 class AuthGate extends StatelessWidget {
@@ -31,7 +31,7 @@ class AuthGate extends StatelessWidget {
         final user = snapshot.data;
 
         if (user == null) {
-          return const LoginPage();
+          return const AccountPage();
         }
 
         if (_isPasswordUser(user) && !user.emailVerified) {
