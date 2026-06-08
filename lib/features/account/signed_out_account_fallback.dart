@@ -605,3 +605,76 @@ class _AccountTypeButton extends StatelessWidget {
     );
   }
 }
+
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo({
+    this.size = 22,
+  });
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size.square(size),
+      painter: const _GoogleLogoPainter(),
+    );
+  }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
+  static const Color _blue = Color(0xFF4285F4);
+  static const Color _red = Color(0xFFEA4335);
+  static const Color _yellow = Color(0xFFFBBC05);
+  static const Color _green = Color(0xFF34A853);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = size.width * 0.16;
+    final rect = Offset(strokeWidth / 2, strokeWidth / 2) &
+        Size(size.width - strokeWidth, size.height - strokeWidth);
+
+    Paint arcPaint(Color color) => Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    // Logo Google "G" simplifié, multicolore, sans asset externe.
+    canvas.drawArc(rect, -0.18, 1.36, false, arcPaint(_blue));
+    canvas.drawArc(rect, 1.10, 1.15, false, arcPaint(_green));
+    canvas.drawArc(rect, 2.18, 0.82, false, arcPaint(_yellow));
+    canvas.drawArc(rect, 2.90, 1.18, false, arcPaint(_red));
+    canvas.drawArc(rect, 4.00, 0.92, false, arcPaint(_blue));
+
+    final horizontalPaint = Paint()
+      ..color = _blue
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final y = size.height * 0.52;
+    canvas.drawLine(
+      Offset(size.width * 0.52, y),
+      Offset(size.width * 0.88, y),
+      horizontalPaint,
+    );
+
+    final verticalPaint = Paint()
+      ..color = _blue
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(size.width * 0.88, y),
+      Offset(size.width * 0.88, size.height * 0.68),
+      verticalPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GoogleLogoPainter oldDelegate) => false;
+}
