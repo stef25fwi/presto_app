@@ -775,6 +775,17 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
   }
 
   Widget _buildInitialHome() {
+    // FIX ROUTAGE INITIAL :
+    // Au lancement normal de l'app, le splash doit finir sur HomePage.
+    // On ignore les anciennes intentions /account ou /login mémorisées.
+    final initialWebPath =
+        Uri.base.path.trim().isEmpty ? '/' : Uri.base.path.trim();
+    if (initialWebPath.isEmpty ||
+        initialWebPath == '/' ||
+        initialWebPath == '/login') {
+      pendingPostAuthRoute = null;
+    }
+
     if (kIsWeb) {
       final rawPath = Uri.base.path.trim();
       final normalizedPath = rawPath.endsWith('/') && rawPath.length > 1
@@ -955,6 +966,20 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _destinationForCurrentLocation() {
     final webPath = _normalizedWebPath();
+
+    // ROUTAGE RACINE APRÈS SPLASH :
+    // Une ouverture normale de l'application doit toujours afficher l'accueil.
+    if (webPath.isEmpty || webPath == '/' || webPath == '/login') {
+      pendingPostAuthRoute = null;
+      return const HomePage();
+    }
+
+    // FIX DESTINATION SPLASH ROOT HOME :
+    // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
+    if (webPath.isEmpty || webPath == '/' || webPath == '/login') {
+      pendingPostAuthRoute = null;
+      return const HomePage();
+    }
 
     // RÈGLE PRINCIPALE :
     // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
