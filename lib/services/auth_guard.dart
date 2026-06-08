@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../pages/auth/login_page.dart';
+import '../pages/account_page.dart';
 import '../pages/auth/verify_email_page.dart';
 
 class AuthGuard {
@@ -14,7 +14,7 @@ class AuthGuard {
       if (!context.mounted) return false;
 
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(builder: (_) => const AccountPage()),
       );
 
       return false;
