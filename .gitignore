@@ -61,3 +61,4 @@ service-account.json
 # VS Code which you may wish to be included in version control, so this line
 zicAlExN
 *.zip
+build_logs/
