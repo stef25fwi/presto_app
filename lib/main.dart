@@ -958,13 +958,14 @@ class _SplashScreenState extends State<SplashScreen>
       return const HomePage();
     }
 
-    final postAuthRoute = pendingPostAuthRoute;
-    pendingPostAuthRoute = null;
-    if (postAuthRoute == PostAuthNavigationIntentService.accountRoute) {
-      return const HomePage(initialIndex: 4);
-    }
-
     final webPath = _normalizedWebPath();
+
+    // Flow normal :
+    // - ouverture racine "/" => SplashScreen puis HomePage
+    // - aucune redirection automatique vers l'onglet Compte après splash
+    // - la connexion s'affiche uniquement si l'utilisateur clique sur Profil/Compte
+    pendingPostAuthRoute = null;
+
     if (webPath == '/account') {
       return const AccountPage();
     }
