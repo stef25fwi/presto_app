@@ -16,6 +16,8 @@ import '../../pages/pro_profile_page.dart';
 
 import 'package:presto_app/widgets/pro_siret_signup_section.dart';
 
+import 'package:presto_app/services/pro_siret_service.dart';
+
 class SignedOutAccountFallback extends StatefulWidget {
   const SignedOutAccountFallback({
     super.key,
@@ -46,6 +48,11 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
   bool _isLoading = false;
   bool _isSignup = false;
   bool _isBusinessSignup = false;
+  String _signupSiretRaw = '';
+  String? _verifiedSignupSiret;
+  String? _verifiedSignupCompanyName;
+
+  String get _signupSiretClean => _signupSiretRaw.replaceAll(RegExp(r'\D'), '');
   bool _obscurePassword = true;
   bool _obscurePasswordConfirm = true;
   String? _errorMessage;
@@ -81,6 +88,19 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
   }
 
   Future<void> _submitEmailAuth() async {
+    if (_isSignup && _isBusinessSignup) {
+      final cleanedSiret = _signupSiretClean;
+      if (cleanedSiret.length != 14 ||
+          _verifiedSignupSiret == null ||
+          _verifiedSignupSiret != cleanedSiret) {
+        showErrorSnackBar(
+          context,
+          'Vérifiez votre SIRET avant de créer le compte entreprise.',
+        );
+        return;
+      }
+    }
+
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final email = _emailController.text.trim();
@@ -101,6 +121,30 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       } else {
         await _emailAuthService.signIn(email: email, password: password);
       }
+      if (_isSignup && _isBusinessSignup) {
+        Object? siretValidationError;
+
+        for (var attempt = 0; attempt < 2; attempt += 1) {
+          try {
+            await ProSiretService().verifySiret(_signupSiretClean);
+            siretValidationError = null;
+            break;
+          } catch (error) {
+            siretValidationError = error;
+            await Future<void>.delayed(const Duration(milliseconds: 500));
+          }
+        }
+
+        if (siretValidationError != null) {
+          if (!mounted) return;
+          showErrorSnackBar(
+            context,
+            'Compte créé, mais validation SIRET officielle impossible. Réessayez depuis votre profil entreprise.',
+          );
+          return;
+        }
+      }
+
       await _trackLogin(authMethod: 'email', isNewUser: _isSignup);
       if (!mounted) return;
       showSuccessSnackBar(
@@ -348,7 +392,23 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                           const SizedBox(height: 14),
                           ProSiretSignupSection(
                             visible: _isBusinessSignup,
+                            onSiretChanged: (value) {
+                              final cleaned =
+                                  value.replaceAll(RegExp(r'\D'), '');
+                              setState(() {
+                                _signupSiretRaw = value;
+                                if (_verifiedSignupSiret != cleaned) {
+                                  _verifiedSignupSiret = null;
+                                  _verifiedSignupCompanyName = null;
+                                }
+                              });
+                            },
                             onVerified: (result) {
+                              final cleaned = _signupSiretClean;
+                              setState(() {
+                                _verifiedSignupSiret = cleaned;
+                                _verifiedSignupCompanyName = result.companyName;
+                              });
                               showSuccessSnackBar(
                                 context,
                                 result.companyName.isNotEmpty
