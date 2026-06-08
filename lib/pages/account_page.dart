@@ -39,6 +39,8 @@ import '../main.dart'
 import 'user_offers_section.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 
+import 'package:presto_app/widgets/pro_siret_verification_card.dart';
+
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
 class AccountPage extends StatefulWidget {
@@ -579,6 +581,20 @@ class _AccountPageState extends State<AccountPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ProSiretVerificationCard(
+            onVerified: (result) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    result.companyName.isNotEmpty
+                        ? 'Compte pro vérifié : ${result.companyName}'
+                        : 'Compte pro vérifié',
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               const Icon(Icons.bug_report_rounded, color: Colors.black54),
