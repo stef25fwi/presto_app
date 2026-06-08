@@ -103,8 +103,8 @@ class _ProSiretVerificationCardState extends State<ProSiretVerificationCard> {
                 LengthLimitingTextInputFormatter(14),
               ],
               decoration: InputDecoration(
-                labelText: 'Numéro SIRET',
-                hintText: '14 chiffres',
+                labelText: 'Numéro SIRET — 14 chiffres',
+                hintText: 'Exemple : 73282932000074',
                 prefixIcon: const Icon(Icons.business_rounded),
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(

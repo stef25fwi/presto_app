@@ -103,8 +103,8 @@ class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
               LengthLimitingTextInputFormatter(14),
             ],
             decoration: InputDecoration(
-              labelText: 'Numéro SIRET',
-              hintText: '14 chiffres',
+              labelText: 'Numéro SIRET — 14 chiffres',
+              hintText: 'Exemple : 73282932000074',
               prefixIcon: const Icon(Icons.business_rounded),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
