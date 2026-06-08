@@ -14,6 +14,8 @@ import '../../utils/friendly_snackbar.dart';
 import '../../utils/runtime_action_logger.dart';
 import '../../pages/pro_profile_page.dart';
 
+import 'package:presto_app/widgets/pro_siret_signup_section.dart';
+
 class SignedOutAccountFallback extends StatefulWidget {
   const SignedOutAccountFallback({
     super.key,
@@ -118,12 +120,12 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         );
       }
     } on FirebaseAuthException catch (error) {
-    if (error.code == 'wrong-password' ||
-        error.code == 'invalid-credential' ||
-        error.code == 'invalid-login-credentials') {
-      // clear password after failed login
-      _passwordController.clear();
-    }
+      if (error.code == 'wrong-password' ||
+          error.code == 'invalid-credential' ||
+          error.code == 'invalid-login-credentials') {
+        // clear password after failed login
+        _passwordController.clear();
+      }
 
       if (!mounted) return;
       final message = friendlyEmailAuthErrorMessage(
@@ -344,6 +346,17 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                             ],
                           ),
                           const SizedBox(height: 14),
+                          ProSiretSignupSection(
+                            visible: _isBusinessSignup,
+                            onVerified: (result) {
+                              showSuccessSnackBar(
+                                context,
+                                result.companyName.isNotEmpty
+                                    ? 'SIRET vérifié : ${result.companyName}'
+                                    : 'SIRET vérifié',
+                              );
+                            },
+                          ),
                           AuthTextField(
                             controller: _displayNameController,
                             label: _isBusinessSignup
