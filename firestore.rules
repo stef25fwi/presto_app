@@ -3,6 +3,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+
+
+    // Comptes professionnels ilipresto :
+    // L'utilisateur peut lire son profil pro.
+    // Il ne peut pas s'auto-attribuer un SIRET vérifié.
+    // Les champs SIRET officiels sont écrits uniquement par Cloud Function Admin SDK.
+    match /pro_profiles/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && !request.resource.data.keys().hasAny([
+          "siret",
+          "siren",
+          "companyName",
+          "address",
+          "postalCode",
+          "city",
+          "nafCode",
+          "establishmentActive",
+          "siretVerified",
+          "proStatus",
+          "verifiedAt",
+          "verifiedSource"
+        ]);
+
+      allow update: if request.auth != null
+        && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          "siret",
+          "siren",
+          "companyName",
+          "address",
+          "postalCode",
+          "city",
+          "nafCode",
+          "establishmentActive",
+          "siretVerified",
+          "proStatus",
+          "verifiedAt",
+          "verifiedSource"
+        ]);
+
+      allow delete: if false;
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }

@@ -114,3 +114,5 @@ export {
 export { handleEmailProviderWebhook } from "./modules/email/webhooks/handler";
 
 export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./modules/email/scheduled";
+
+export { verifySiret } from "./modules/pro/verifySiret";
