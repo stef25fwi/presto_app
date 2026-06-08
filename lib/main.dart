@@ -970,8 +970,6 @@ class _SplashScreenState extends State<SplashScreen>
       return const HomePage();
     }
 
-    final webPath = _normalizedWebPath();
-
     // Flow normal :
     // - ouverture racine "/" => SplashScreen puis HomePage
     // - aucune redirection automatique vers l'onglet Compte après splash
