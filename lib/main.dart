@@ -42,7 +42,6 @@ import 'pages/account/account_security_page.dart';
 import 'pages/account/change_email_page.dart';
 import 'pages/account/change_password_page.dart';
 import 'pages/account/delete_account_page.dart';
-import 'pages/auth/auth_gate.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -885,9 +884,9 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         ...buildSecondaryNamedRoutes(),
       },
       theme: buildPrestoTheme(),
-      home: AuthGate(
-        verifiedChild: _buildInitialHome(),
-      ),
+      // L'application doit toujours démarrer par le splash puis la home.
+      // Les pages protégées gèrent elles-mêmes la demande de connexion.
+      home: _buildInitialHome(),
     );
   }
 }
