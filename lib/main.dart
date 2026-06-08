@@ -954,6 +954,18 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _destinationForCurrentLocation() {
+    final webPath = _normalizedWebPath();
+
+    // RÈGLE PRINCIPALE :
+    // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
+    // On ne doit jamais envoyer un utilisateur déconnecté vers Connexion/Compte
+    // sauf s'il a explicitement ouvert /account.
+    pendingPostAuthRoute = null;
+
+    if (webPath.isEmpty || webPath == '/') {
+      return const HomePage();
+    }
+
     if (!kIsWeb) {
       return const HomePage();
     }
