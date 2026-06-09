@@ -41,6 +41,11 @@ import 'pages/account/account_security_page.dart';
 import 'pages/account/change_email_page.dart';
 import 'pages/account/change_password_page.dart';
 import 'pages/account/delete_account_page.dart';
+import 'package:presto_app/features/trust/pages/professional_profile_page.dart';
+import 'package:presto_app/features/trust/pages/siret_verification_page.dart';
+import 'package:presto_app/features/trust/pages/user_reviews_page.dart';
+import 'package:presto_app/features/business_guidance/pages/business_guidance_page.dart';
+import 'package:presto_app/features/business_guidance/pages/business_project_sheet_page.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -899,6 +904,13 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
       onGenerateRoute: _onGenerateRoute,
       routes: {
+        ProfessionalProfilePage.routeName: (_) =>
+            const ProfessionalProfilePage(),
+        SiretVerificationPage.routeName: (_) => const SiretVerificationPage(),
+        UserReviewsPage.routeName: (_) => const UserReviewsPage(),
+        BusinessGuidancePage.routeName: (_) => const BusinessGuidancePage(),
+        BusinessProjectSheetPage.routeName: (_) =>
+            const BusinessProjectSheetPage(),
         LoginPage.routeName: (_) => const HomePage(),
         RegisterPage.routeName: (_) => const RegisterPage(),
         ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),

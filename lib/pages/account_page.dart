@@ -38,6 +38,11 @@ import '../main.dart'
         pendingRedirectAuthError;
 import 'user_offers_section.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
+import 'package:presto_app/features/trust/pages/professional_profile_page.dart';
+import 'package:presto_app/features/trust/pages/siret_verification_page.dart';
+import 'package:presto_app/features/trust/pages/user_reviews_page.dart';
+import 'package:presto_app/features/business_guidance/pages/business_guidance_page.dart';
+import 'package:presto_app/features/business_guidance/pages/business_project_sheet_page.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
@@ -2563,6 +2568,7 @@ class _AccountPageState extends State<AccountPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+            const _TrustBusinessGuidanceSection(),
                     Center(
                       child: Column(
                         children: [
@@ -3601,3 +3607,66 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
     );
   }
 }
+
+
+class _TrustBusinessGuidanceSection extends StatelessWidget {
+  const _TrustBusinessGuidanceSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        children: [
+          const ListTile(
+            leading: Icon(Icons.workspace_premium_outlined),
+            title: Text('Espace confiance et activité'),
+            subtitle: Text('Fiche Pro, SIRET, avis et parcours création entreprise.'),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.business_center_outlined),
+            title: const Text('Ma fiche Pro'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).pushNamed(
+              ProfessionalProfilePage.routeName,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.verified_user_outlined),
+            title: const Text('Vérifier mon SIRET'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).pushNamed(
+              SiretVerificationPage.routeName,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.star_border),
+            title: const Text('Mes avis'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).pushNamed(
+              UserReviewsPage.routeName,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.route_outlined),
+            title: const Text('Créer mon activité'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).pushNamed(
+              BusinessGuidancePage.routeName,
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('Ma fiche projet'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).pushNamed(
+              BusinessProjectSheetPage.routeName,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
