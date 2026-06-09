@@ -12,7 +12,7 @@ buildscript {
     }
     dependencies {
         // Google Services plugin pour Firebase
-        classpath("com.google.gms:google-services:4.4.0")
+        classpath("com.google.gms:google-services:4.4.1")
         // Firebase Crashlytics Gradle plugin
         classpath("com.google.firebase:firebase-crashlytics-gradle:3.0.3")
     }
