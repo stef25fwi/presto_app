@@ -56,6 +56,9 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/data/business_guidance/official_sources.registry.json
+    - assets/data/business_guidance/france_regions.seed.json
+    - assets/data/business_guidance/local_resources.seed.json
     - assets/images/
     - assets/images/logowebp.webp
     - assets/data/cities/

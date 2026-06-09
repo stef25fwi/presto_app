@@ -1,0 +1,3450 @@
+{
+  "regions": [
+    {
+      "regionCode": "auvergne_rhone_alpes",
+      "name": "Auvergne-Rhône-Alpes",
+      "departments": [
+        "01",
+        "03",
+        "07",
+        "15",
+        "26",
+        "38",
+        "42",
+        "43",
+        "63",
+        "69",
+        "73",
+        "74"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_auvergne_rhone_alpes",
+      "defaultRegionOrgId": "region_auvergne_rhone_alpes"
+    },
+    {
+      "regionCode": "bourgogne_franche_comte",
+      "name": "Bourgogne-Franche-Comté",
+      "departments": [
+        "21",
+        "25",
+        "39",
+        "58",
+        "70",
+        "71",
+        "89",
+        "90"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_bourgogne_franche_comte",
+      "defaultRegionOrgId": "region_bourgogne_franche_comte"
+    },
+    {
+      "regionCode": "bretagne",
+      "name": "Bretagne",
+      "departments": [
+        "22",
+        "29",
+        "35",
+        "56"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_bretagne",
+      "defaultRegionOrgId": "region_bretagne"
+    },
+    {
+      "regionCode": "centre_val_de_loire",
+      "name": "Centre-Val de Loire",
+      "departments": [
+        "18",
+        "28",
+        "36",
+        "37",
+        "41",
+        "45"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_centre_val_de_loire",
+      "defaultRegionOrgId": "region_centre_val_de_loire"
+    },
+    {
+      "regionCode": "corse",
+      "name": "Corse",
+      "departments": [
+        "2A",
+        "2B"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_corse",
+      "defaultRegionOrgId": "region_corse"
+    },
+    {
+      "regionCode": "grand_est",
+      "name": "Grand Est",
+      "departments": [
+        "08",
+        "10",
+        "51",
+        "52",
+        "54",
+        "55",
+        "57",
+        "67",
+        "68",
+        "88"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_grand_est",
+      "defaultRegionOrgId": "region_grand_est"
+    },
+    {
+      "regionCode": "hauts_de_france",
+      "name": "Hauts-de-France",
+      "departments": [
+        "02",
+        "59",
+        "60",
+        "62",
+        "80"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_hauts_de_france",
+      "defaultRegionOrgId": "region_hauts_de_france"
+    },
+    {
+      "regionCode": "ile_de_france",
+      "name": "Île-de-France",
+      "departments": [
+        "75",
+        "77",
+        "78",
+        "91",
+        "92",
+        "93",
+        "94",
+        "95"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_ile_de_france",
+      "defaultRegionOrgId": "region_ile_de_france"
+    },
+    {
+      "regionCode": "normandie",
+      "name": "Normandie",
+      "departments": [
+        "14",
+        "27",
+        "50",
+        "61",
+        "76"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_normandie",
+      "defaultRegionOrgId": "region_normandie"
+    },
+    {
+      "regionCode": "nouvelle_aquitaine",
+      "name": "Nouvelle-Aquitaine",
+      "departments": [
+        "16",
+        "17",
+        "19",
+        "23",
+        "24",
+        "33",
+        "40",
+        "47",
+        "64",
+        "79",
+        "86",
+        "87"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_nouvelle_aquitaine",
+      "defaultRegionOrgId": "region_nouvelle_aquitaine"
+    },
+    {
+      "regionCode": "occitanie",
+      "name": "Occitanie",
+      "departments": [
+        "09",
+        "11",
+        "12",
+        "30",
+        "31",
+        "32",
+        "34",
+        "46",
+        "48",
+        "65",
+        "66",
+        "81",
+        "82"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_occitanie",
+      "defaultRegionOrgId": "region_occitanie"
+    },
+    {
+      "regionCode": "pays_de_la_loire",
+      "name": "Pays de la Loire",
+      "departments": [
+        "44",
+        "49",
+        "53",
+        "72",
+        "85"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_pays_de_la_loire",
+      "defaultRegionOrgId": "region_pays_de_la_loire"
+    },
+    {
+      "regionCode": "provence_alpes_cote_d_azur",
+      "name": "Provence-Alpes-Côte d'Azur",
+      "departments": [
+        "04",
+        "05",
+        "06",
+        "13",
+        "83",
+        "84"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_provence_alpes_cote_d_azur",
+      "defaultRegionOrgId": "region_provence_alpes_cote_d_azur"
+    },
+    {
+      "regionCode": "guadeloupe",
+      "name": "Guadeloupe",
+      "departments": [
+        "971"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_guadeloupe",
+      "defaultRegionOrgId": "region_guadeloupe"
+    },
+    {
+      "regionCode": "martinique",
+      "name": "Martinique",
+      "departments": [
+        "972"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_martinique",
+      "defaultRegionOrgId": "region_martinique"
+    },
+    {
+      "regionCode": "guyane",
+      "name": "Guyane",
+      "departments": [
+        "973"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_guyane",
+      "defaultRegionOrgId": "region_guyane"
+    },
+    {
+      "regionCode": "reunion",
+      "name": "La Réunion",
+      "departments": [
+        "974"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_reunion",
+      "defaultRegionOrgId": "region_reunion"
+    },
+    {
+      "regionCode": "mayotte",
+      "name": "Mayotte",
+      "departments": [
+        "976"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_mayotte",
+      "defaultRegionOrgId": "region_mayotte"
+    }
+  ],
+  "organizations": [
+    {
+      "id": "cci_auvergne_rhone_alpes",
+      "regionCode": "auvergne_rhone_alpes",
+      "type": "cci",
+      "name": "CCI - Auvergne-Rhône-Alpes",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_auvergne_rhone_alpes",
+      "regionCode": "auvergne_rhone_alpes",
+      "type": "cma",
+      "name": "CMA - Auvergne-Rhône-Alpes",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_auvergne_rhone_alpes",
+      "regionCode": "auvergne_rhone_alpes",
+      "type": "region",
+      "name": "Région / collectivité - Auvergne-Rhône-Alpes",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_auvergne_rhone_alpes",
+      "regionCode": "auvergne_rhone_alpes",
+      "type": "france_travail",
+      "name": "France Travail - Auvergne-Rhône-Alpes",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_auvergne_rhone_alpes",
+      "regionCode": "auvergne_rhone_alpes",
+      "type": "france_services",
+      "name": "France Services - Auvergne-Rhône-Alpes",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_bourgogne_franche_comte",
+      "regionCode": "bourgogne_franche_comte",
+      "type": "cci",
+      "name": "CCI - Bourgogne-Franche-Comté",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_bourgogne_franche_comte",
+      "regionCode": "bourgogne_franche_comte",
+      "type": "cma",
+      "name": "CMA - Bourgogne-Franche-Comté",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_bourgogne_franche_comte",
+      "regionCode": "bourgogne_franche_comte",
+      "type": "region",
+      "name": "Région / collectivité - Bourgogne-Franche-Comté",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_bourgogne_franche_comte",
+      "regionCode": "bourgogne_franche_comte",
+      "type": "france_travail",
+      "name": "France Travail - Bourgogne-Franche-Comté",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_bourgogne_franche_comte",
+      "regionCode": "bourgogne_franche_comte",
+      "type": "france_services",
+      "name": "France Services - Bourgogne-Franche-Comté",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_bretagne",
+      "regionCode": "bretagne",
+      "type": "cci",
+      "name": "CCI - Bretagne",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_bretagne",
+      "regionCode": "bretagne",
+      "type": "cma",
+      "name": "CMA - Bretagne",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_bretagne",
+      "regionCode": "bretagne",
+      "type": "region",
+      "name": "Région / collectivité - Bretagne",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_bretagne",
+      "regionCode": "bretagne",
+      "type": "france_travail",
+      "name": "France Travail - Bretagne",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_bretagne",
+      "regionCode": "bretagne",
+      "type": "france_services",
+      "name": "France Services - Bretagne",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_centre_val_de_loire",
+      "regionCode": "centre_val_de_loire",
+      "type": "cci",
+      "name": "CCI - Centre-Val de Loire",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_centre_val_de_loire",
+      "regionCode": "centre_val_de_loire",
+      "type": "cma",
+      "name": "CMA - Centre-Val de Loire",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_centre_val_de_loire",
+      "regionCode": "centre_val_de_loire",
+      "type": "region",
+      "name": "Région / collectivité - Centre-Val de Loire",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_centre_val_de_loire",
+      "regionCode": "centre_val_de_loire",
+      "type": "france_travail",
+      "name": "France Travail - Centre-Val de Loire",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_centre_val_de_loire",
+      "regionCode": "centre_val_de_loire",
+      "type": "france_services",
+      "name": "France Services - Centre-Val de Loire",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_corse",
+      "regionCode": "corse",
+      "type": "cci",
+      "name": "CCI - Corse",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_corse",
+      "regionCode": "corse",
+      "type": "cma",
+      "name": "CMA - Corse",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_corse",
+      "regionCode": "corse",
+      "type": "region",
+      "name": "Région / collectivité - Corse",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_corse",
+      "regionCode": "corse",
+      "type": "france_travail",
+      "name": "France Travail - Corse",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_corse",
+      "regionCode": "corse",
+      "type": "france_services",
+      "name": "France Services - Corse",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_grand_est",
+      "regionCode": "grand_est",
+      "type": "cci",
+      "name": "CCI - Grand Est",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_grand_est",
+      "regionCode": "grand_est",
+      "type": "cma",
+      "name": "CMA - Grand Est",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_grand_est",
+      "regionCode": "grand_est",
+      "type": "region",
+      "name": "Région / collectivité - Grand Est",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_grand_est",
+      "regionCode": "grand_est",
+      "type": "france_travail",
+      "name": "France Travail - Grand Est",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_grand_est",
+      "regionCode": "grand_est",
+      "type": "france_services",
+      "name": "France Services - Grand Est",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_hauts_de_france",
+      "regionCode": "hauts_de_france",
+      "type": "cci",
+      "name": "CCI - Hauts-de-France",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_hauts_de_france",
+      "regionCode": "hauts_de_france",
+      "type": "cma",
+      "name": "CMA - Hauts-de-France",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_hauts_de_france",
+      "regionCode": "hauts_de_france",
+      "type": "region",
+      "name": "Région / collectivité - Hauts-de-France",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_hauts_de_france",
+      "regionCode": "hauts_de_france",
+      "type": "france_travail",
+      "name": "France Travail - Hauts-de-France",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_hauts_de_france",
+      "regionCode": "hauts_de_france",
+      "type": "france_services",
+      "name": "France Services - Hauts-de-France",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_ile_de_france",
+      "regionCode": "ile_de_france",
+      "type": "cci",
+      "name": "CCI - Île-de-France",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_ile_de_france",
+      "regionCode": "ile_de_france",
+      "type": "cma",
+      "name": "CMA - Île-de-France",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_ile_de_france",
+      "regionCode": "ile_de_france",
+      "type": "region",
+      "name": "Région / collectivité - Île-de-France",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_ile_de_france",
+      "regionCode": "ile_de_france",
+      "type": "france_travail",
+      "name": "France Travail - Île-de-France",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_ile_de_france",
+      "regionCode": "ile_de_france",
+      "type": "france_services",
+      "name": "France Services - Île-de-France",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_normandie",
+      "regionCode": "normandie",
+      "type": "cci",
+      "name": "CCI - Normandie",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_normandie",
+      "regionCode": "normandie",
+      "type": "cma",
+      "name": "CMA - Normandie",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_normandie",
+      "regionCode": "normandie",
+      "type": "region",
+      "name": "Région / collectivité - Normandie",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_normandie",
+      "regionCode": "normandie",
+      "type": "france_travail",
+      "name": "France Travail - Normandie",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_normandie",
+      "regionCode": "normandie",
+      "type": "france_services",
+      "name": "France Services - Normandie",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_nouvelle_aquitaine",
+      "regionCode": "nouvelle_aquitaine",
+      "type": "cci",
+      "name": "CCI - Nouvelle-Aquitaine",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_nouvelle_aquitaine",
+      "regionCode": "nouvelle_aquitaine",
+      "type": "cma",
+      "name": "CMA - Nouvelle-Aquitaine",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_nouvelle_aquitaine",
+      "regionCode": "nouvelle_aquitaine",
+      "type": "region",
+      "name": "Région / collectivité - Nouvelle-Aquitaine",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_nouvelle_aquitaine",
+      "regionCode": "nouvelle_aquitaine",
+      "type": "france_travail",
+      "name": "France Travail - Nouvelle-Aquitaine",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_nouvelle_aquitaine",
+      "regionCode": "nouvelle_aquitaine",
+      "type": "france_services",
+      "name": "France Services - Nouvelle-Aquitaine",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_occitanie",
+      "regionCode": "occitanie",
+      "type": "cci",
+      "name": "CCI - Occitanie",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_occitanie",
+      "regionCode": "occitanie",
+      "type": "cma",
+      "name": "CMA - Occitanie",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_occitanie",
+      "regionCode": "occitanie",
+      "type": "region",
+      "name": "Région / collectivité - Occitanie",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_occitanie",
+      "regionCode": "occitanie",
+      "type": "france_travail",
+      "name": "France Travail - Occitanie",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_occitanie",
+      "regionCode": "occitanie",
+      "type": "france_services",
+      "name": "France Services - Occitanie",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_pays_de_la_loire",
+      "regionCode": "pays_de_la_loire",
+      "type": "cci",
+      "name": "CCI - Pays de la Loire",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_pays_de_la_loire",
+      "regionCode": "pays_de_la_loire",
+      "type": "cma",
+      "name": "CMA - Pays de la Loire",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_pays_de_la_loire",
+      "regionCode": "pays_de_la_loire",
+      "type": "region",
+      "name": "Région / collectivité - Pays de la Loire",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_pays_de_la_loire",
+      "regionCode": "pays_de_la_loire",
+      "type": "france_travail",
+      "name": "France Travail - Pays de la Loire",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_pays_de_la_loire",
+      "regionCode": "pays_de_la_loire",
+      "type": "france_services",
+      "name": "France Services - Pays de la Loire",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_provence_alpes_cote_d_azur",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "type": "cci",
+      "name": "CCI - Provence-Alpes-Côte d'Azur",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_provence_alpes_cote_d_azur",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "type": "cma",
+      "name": "CMA - Provence-Alpes-Côte d'Azur",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_provence_alpes_cote_d_azur",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "type": "region",
+      "name": "Région / collectivité - Provence-Alpes-Côte d'Azur",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_provence_alpes_cote_d_azur",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "type": "france_travail",
+      "name": "France Travail - Provence-Alpes-Côte d'Azur",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_provence_alpes_cote_d_azur",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "type": "france_services",
+      "name": "France Services - Provence-Alpes-Côte d'Azur",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_guadeloupe",
+      "regionCode": "guadeloupe",
+      "type": "cci",
+      "name": "CCI - Guadeloupe",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_guadeloupe",
+      "regionCode": "guadeloupe",
+      "type": "cma",
+      "name": "CMA - Guadeloupe",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_guadeloupe",
+      "regionCode": "guadeloupe",
+      "type": "region",
+      "name": "Région / collectivité - Guadeloupe",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_guadeloupe",
+      "regionCode": "guadeloupe",
+      "type": "france_travail",
+      "name": "France Travail - Guadeloupe",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_guadeloupe",
+      "regionCode": "guadeloupe",
+      "type": "france_services",
+      "name": "France Services - Guadeloupe",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_martinique",
+      "regionCode": "martinique",
+      "type": "cci",
+      "name": "CCI - Martinique",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_martinique",
+      "regionCode": "martinique",
+      "type": "cma",
+      "name": "CMA - Martinique",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_martinique",
+      "regionCode": "martinique",
+      "type": "region",
+      "name": "Région / collectivité - Martinique",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_martinique",
+      "regionCode": "martinique",
+      "type": "france_travail",
+      "name": "France Travail - Martinique",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_martinique",
+      "regionCode": "martinique",
+      "type": "france_services",
+      "name": "France Services - Martinique",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_guyane",
+      "regionCode": "guyane",
+      "type": "cci",
+      "name": "CCI - Guyane",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_guyane",
+      "regionCode": "guyane",
+      "type": "cma",
+      "name": "CMA - Guyane",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_guyane",
+      "regionCode": "guyane",
+      "type": "region",
+      "name": "Région / collectivité - Guyane",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_guyane",
+      "regionCode": "guyane",
+      "type": "france_travail",
+      "name": "France Travail - Guyane",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_guyane",
+      "regionCode": "guyane",
+      "type": "france_services",
+      "name": "France Services - Guyane",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_reunion",
+      "regionCode": "reunion",
+      "type": "cci",
+      "name": "CCI - La Réunion",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_reunion",
+      "regionCode": "reunion",
+      "type": "cma",
+      "name": "CMA - La Réunion",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_reunion",
+      "regionCode": "reunion",
+      "type": "region",
+      "name": "Région / collectivité - La Réunion",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_reunion",
+      "regionCode": "reunion",
+      "type": "france_travail",
+      "name": "France Travail - La Réunion",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_reunion",
+      "regionCode": "reunion",
+      "type": "france_services",
+      "name": "France Services - La Réunion",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cci_mayotte",
+      "regionCode": "mayotte",
+      "type": "cci",
+      "name": "CCI - Mayotte",
+      "description": "Chambre de Commerce et d'Industrie locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Création entreprise",
+        "Formalités",
+        "Accompagnement entrepreneur",
+        "Information économique"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "cma_mayotte",
+      "regionCode": "mayotte",
+      "type": "cma",
+      "name": "CMA - Mayotte",
+      "description": "Chambre de Métiers et de l'Artisanat locale. Données de contact à vérifier et compléter depuis une source officielle.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Artisanat",
+        "Création activité artisanale",
+        "Formalités artisanales",
+        "Formation"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "region_mayotte",
+      "regionCode": "mayotte",
+      "type": "region",
+      "name": "Région / collectivité - Mayotte",
+      "description": "Collectivité régionale ou territoriale compétente pour l'économie locale, les aides et le développement des entreprises.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Aides publiques",
+        "Développement économique",
+        "Accompagnement projet",
+        "Subventions à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_travail_mayotte",
+      "regionCode": "mayotte",
+      "type": "france_travail",
+      "name": "France Travail - Mayotte",
+      "description": "Accompagnement emploi, création d'activité et dispositifs pour demandeurs d'emploi selon situation.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Accompagnement emploi",
+        "Création activité",
+        "Orientation",
+        "Aides demandeur d'emploi à vérifier"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    },
+    {
+      "id": "france_services_mayotte",
+      "regionCode": "mayotte",
+      "type": "france_services",
+      "name": "France Services - Mayotte",
+      "description": "Point d'accueil pour accompagner les démarches administratives.",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "address": "",
+      "services": [
+        "Démarches administratives",
+        "Orientation",
+        "Accès services publics"
+      ],
+      "enabled": true,
+      "status": "needs_review"
+    }
+  ],
+  "publicAids": [
+    {
+      "id": "auvergne_rhone_alpes_aide_creation_entreprise",
+      "regionCode": "auvergne_rhone_alpes",
+      "title": "Aides création entreprise - Auvergne-Rhône-Alpes",
+      "provider": "Région / organismes publics - Auvergne-Rhône-Alpes",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_auvergne_rhone_alpes",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "auvergne_rhone_alpes_accompagnement_cci",
+      "regionCode": "auvergne_rhone_alpes",
+      "title": "Accompagnement CCI - Auvergne-Rhône-Alpes",
+      "provider": "CCI - Auvergne-Rhône-Alpes",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_auvergne_rhone_alpes",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "auvergne_rhone_alpes_accompagnement_cma",
+      "regionCode": "auvergne_rhone_alpes",
+      "title": "Accompagnement CMA - Auvergne-Rhône-Alpes",
+      "provider": "CMA - Auvergne-Rhône-Alpes",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_auvergne_rhone_alpes",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "bourgogne_franche_comte_aide_creation_entreprise",
+      "regionCode": "bourgogne_franche_comte",
+      "title": "Aides création entreprise - Bourgogne-Franche-Comté",
+      "provider": "Région / organismes publics - Bourgogne-Franche-Comté",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_bourgogne_franche_comte",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "bourgogne_franche_comte_accompagnement_cci",
+      "regionCode": "bourgogne_franche_comte",
+      "title": "Accompagnement CCI - Bourgogne-Franche-Comté",
+      "provider": "CCI - Bourgogne-Franche-Comté",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_bourgogne_franche_comte",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "bourgogne_franche_comte_accompagnement_cma",
+      "regionCode": "bourgogne_franche_comte",
+      "title": "Accompagnement CMA - Bourgogne-Franche-Comté",
+      "provider": "CMA - Bourgogne-Franche-Comté",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_bourgogne_franche_comte",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "bretagne_aide_creation_entreprise",
+      "regionCode": "bretagne",
+      "title": "Aides création entreprise - Bretagne",
+      "provider": "Région / organismes publics - Bretagne",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_bretagne",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "bretagne_accompagnement_cci",
+      "regionCode": "bretagne",
+      "title": "Accompagnement CCI - Bretagne",
+      "provider": "CCI - Bretagne",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_bretagne",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "bretagne_accompagnement_cma",
+      "regionCode": "bretagne",
+      "title": "Accompagnement CMA - Bretagne",
+      "provider": "CMA - Bretagne",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_bretagne",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "centre_val_de_loire_aide_creation_entreprise",
+      "regionCode": "centre_val_de_loire",
+      "title": "Aides création entreprise - Centre-Val de Loire",
+      "provider": "Région / organismes publics - Centre-Val de Loire",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_centre_val_de_loire",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "centre_val_de_loire_accompagnement_cci",
+      "regionCode": "centre_val_de_loire",
+      "title": "Accompagnement CCI - Centre-Val de Loire",
+      "provider": "CCI - Centre-Val de Loire",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_centre_val_de_loire",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "centre_val_de_loire_accompagnement_cma",
+      "regionCode": "centre_val_de_loire",
+      "title": "Accompagnement CMA - Centre-Val de Loire",
+      "provider": "CMA - Centre-Val de Loire",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_centre_val_de_loire",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "corse_aide_creation_entreprise",
+      "regionCode": "corse",
+      "title": "Aides création entreprise - Corse",
+      "provider": "Région / organismes publics - Corse",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_corse",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "corse_accompagnement_cci",
+      "regionCode": "corse",
+      "title": "Accompagnement CCI - Corse",
+      "provider": "CCI - Corse",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_corse",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "corse_accompagnement_cma",
+      "regionCode": "corse",
+      "title": "Accompagnement CMA - Corse",
+      "provider": "CMA - Corse",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_corse",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "grand_est_aide_creation_entreprise",
+      "regionCode": "grand_est",
+      "title": "Aides création entreprise - Grand Est",
+      "provider": "Région / organismes publics - Grand Est",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_grand_est",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "grand_est_accompagnement_cci",
+      "regionCode": "grand_est",
+      "title": "Accompagnement CCI - Grand Est",
+      "provider": "CCI - Grand Est",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_grand_est",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "grand_est_accompagnement_cma",
+      "regionCode": "grand_est",
+      "title": "Accompagnement CMA - Grand Est",
+      "provider": "CMA - Grand Est",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_grand_est",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "hauts_de_france_aide_creation_entreprise",
+      "regionCode": "hauts_de_france",
+      "title": "Aides création entreprise - Hauts-de-France",
+      "provider": "Région / organismes publics - Hauts-de-France",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_hauts_de_france",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "hauts_de_france_accompagnement_cci",
+      "regionCode": "hauts_de_france",
+      "title": "Accompagnement CCI - Hauts-de-France",
+      "provider": "CCI - Hauts-de-France",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_hauts_de_france",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "hauts_de_france_accompagnement_cma",
+      "regionCode": "hauts_de_france",
+      "title": "Accompagnement CMA - Hauts-de-France",
+      "provider": "CMA - Hauts-de-France",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_hauts_de_france",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "ile_de_france_aide_creation_entreprise",
+      "regionCode": "ile_de_france",
+      "title": "Aides création entreprise - Île-de-France",
+      "provider": "Région / organismes publics - Île-de-France",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_ile_de_france",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "ile_de_france_accompagnement_cci",
+      "regionCode": "ile_de_france",
+      "title": "Accompagnement CCI - Île-de-France",
+      "provider": "CCI - Île-de-France",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_ile_de_france",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "ile_de_france_accompagnement_cma",
+      "regionCode": "ile_de_france",
+      "title": "Accompagnement CMA - Île-de-France",
+      "provider": "CMA - Île-de-France",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_ile_de_france",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "normandie_aide_creation_entreprise",
+      "regionCode": "normandie",
+      "title": "Aides création entreprise - Normandie",
+      "provider": "Région / organismes publics - Normandie",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_normandie",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "normandie_accompagnement_cci",
+      "regionCode": "normandie",
+      "title": "Accompagnement CCI - Normandie",
+      "provider": "CCI - Normandie",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_normandie",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "normandie_accompagnement_cma",
+      "regionCode": "normandie",
+      "title": "Accompagnement CMA - Normandie",
+      "provider": "CMA - Normandie",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_normandie",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "nouvelle_aquitaine_aide_creation_entreprise",
+      "regionCode": "nouvelle_aquitaine",
+      "title": "Aides création entreprise - Nouvelle-Aquitaine",
+      "provider": "Région / organismes publics - Nouvelle-Aquitaine",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_nouvelle_aquitaine",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "nouvelle_aquitaine_accompagnement_cci",
+      "regionCode": "nouvelle_aquitaine",
+      "title": "Accompagnement CCI - Nouvelle-Aquitaine",
+      "provider": "CCI - Nouvelle-Aquitaine",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_nouvelle_aquitaine",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "nouvelle_aquitaine_accompagnement_cma",
+      "regionCode": "nouvelle_aquitaine",
+      "title": "Accompagnement CMA - Nouvelle-Aquitaine",
+      "provider": "CMA - Nouvelle-Aquitaine",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_nouvelle_aquitaine",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "occitanie_aide_creation_entreprise",
+      "regionCode": "occitanie",
+      "title": "Aides création entreprise - Occitanie",
+      "provider": "Région / organismes publics - Occitanie",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_occitanie",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "occitanie_accompagnement_cci",
+      "regionCode": "occitanie",
+      "title": "Accompagnement CCI - Occitanie",
+      "provider": "CCI - Occitanie",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_occitanie",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "occitanie_accompagnement_cma",
+      "regionCode": "occitanie",
+      "title": "Accompagnement CMA - Occitanie",
+      "provider": "CMA - Occitanie",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_occitanie",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "pays_de_la_loire_aide_creation_entreprise",
+      "regionCode": "pays_de_la_loire",
+      "title": "Aides création entreprise - Pays de la Loire",
+      "provider": "Région / organismes publics - Pays de la Loire",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_pays_de_la_loire",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "pays_de_la_loire_accompagnement_cci",
+      "regionCode": "pays_de_la_loire",
+      "title": "Accompagnement CCI - Pays de la Loire",
+      "provider": "CCI - Pays de la Loire",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_pays_de_la_loire",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "pays_de_la_loire_accompagnement_cma",
+      "regionCode": "pays_de_la_loire",
+      "title": "Accompagnement CMA - Pays de la Loire",
+      "provider": "CMA - Pays de la Loire",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_pays_de_la_loire",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "provence_alpes_cote_d_azur_aide_creation_entreprise",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "title": "Aides création entreprise - Provence-Alpes-Côte d'Azur",
+      "provider": "Région / organismes publics - Provence-Alpes-Côte d'Azur",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_provence_alpes_cote_d_azur",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "provence_alpes_cote_d_azur_accompagnement_cci",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "title": "Accompagnement CCI - Provence-Alpes-Côte d'Azur",
+      "provider": "CCI - Provence-Alpes-Côte d'Azur",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_provence_alpes_cote_d_azur",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "provence_alpes_cote_d_azur_accompagnement_cma",
+      "regionCode": "provence_alpes_cote_d_azur",
+      "title": "Accompagnement CMA - Provence-Alpes-Côte d'Azur",
+      "provider": "CMA - Provence-Alpes-Côte d'Azur",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_provence_alpes_cote_d_azur",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "guadeloupe_aide_creation_entreprise",
+      "regionCode": "guadeloupe",
+      "title": "Aides création entreprise - Guadeloupe",
+      "provider": "Région / organismes publics - Guadeloupe",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_guadeloupe",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "guadeloupe_accompagnement_cci",
+      "regionCode": "guadeloupe",
+      "title": "Accompagnement CCI - Guadeloupe",
+      "provider": "CCI - Guadeloupe",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_guadeloupe",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "guadeloupe_accompagnement_cma",
+      "regionCode": "guadeloupe",
+      "title": "Accompagnement CMA - Guadeloupe",
+      "provider": "CMA - Guadeloupe",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_guadeloupe",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "martinique_aide_creation_entreprise",
+      "regionCode": "martinique",
+      "title": "Aides création entreprise - Martinique",
+      "provider": "Région / organismes publics - Martinique",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_martinique",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "martinique_accompagnement_cci",
+      "regionCode": "martinique",
+      "title": "Accompagnement CCI - Martinique",
+      "provider": "CCI - Martinique",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_martinique",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "martinique_accompagnement_cma",
+      "regionCode": "martinique",
+      "title": "Accompagnement CMA - Martinique",
+      "provider": "CMA - Martinique",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_martinique",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "guyane_aide_creation_entreprise",
+      "regionCode": "guyane",
+      "title": "Aides création entreprise - Guyane",
+      "provider": "Région / organismes publics - Guyane",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_guyane",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "guyane_accompagnement_cci",
+      "regionCode": "guyane",
+      "title": "Accompagnement CCI - Guyane",
+      "provider": "CCI - Guyane",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_guyane",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "guyane_accompagnement_cma",
+      "regionCode": "guyane",
+      "title": "Accompagnement CMA - Guyane",
+      "provider": "CMA - Guyane",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_guyane",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "reunion_aide_creation_entreprise",
+      "regionCode": "reunion",
+      "title": "Aides création entreprise - La Réunion",
+      "provider": "Région / organismes publics - La Réunion",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_reunion",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "reunion_accompagnement_cci",
+      "regionCode": "reunion",
+      "title": "Accompagnement CCI - La Réunion",
+      "provider": "CCI - La Réunion",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_reunion",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "reunion_accompagnement_cma",
+      "regionCode": "reunion",
+      "title": "Accompagnement CMA - La Réunion",
+      "provider": "CMA - La Réunion",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_reunion",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "mayotte_aide_creation_entreprise",
+      "regionCode": "mayotte",
+      "title": "Aides création entreprise - Mayotte",
+      "provider": "Région / organismes publics - Mayotte",
+      "description": "Dispositifs d'aide à la création ou au développement d'entreprise à vérifier auprès des organismes officiels.",
+      "eligibility": [
+        "Créateur d'entreprise",
+        "Porteur de projet local",
+        "Demandeur d'emploi selon dispositif",
+        "Entreprise implantée localement selon dispositif"
+      ],
+      "projectTypes": [
+        "food_truck",
+        "jardinage",
+        "livraison_locale",
+        "aide_a_domicile",
+        "nettoyage",
+        "artisanat"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "region_mayotte",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "mayotte_accompagnement_cci",
+      "regionCode": "mayotte",
+      "title": "Accompagnement CCI - Mayotte",
+      "provider": "CCI - Mayotte",
+      "description": "Information, orientation et accompagnement des porteurs de projet et entrepreneurs.",
+      "eligibility": [
+        "Porteur de projet",
+        "Créateur d'entreprise",
+        "Activité commerciale ou de services"
+      ],
+      "projectTypes": [
+        "commerce",
+        "services",
+        "food_truck",
+        "livraison_locale"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cci_mayotte",
+      "status": "needs_review",
+      "enabled": true
+    },
+    {
+      "id": "mayotte_accompagnement_cma",
+      "regionCode": "mayotte",
+      "title": "Accompagnement CMA - Mayotte",
+      "provider": "CMA - Mayotte",
+      "description": "Accompagnement des projets artisanaux, formalités, formation et développement.",
+      "eligibility": [
+        "Projet artisanal",
+        "Artisan",
+        "Créateur d'activité artisanale"
+      ],
+      "projectTypes": [
+        "artisanat",
+        "jardinage",
+        "nettoyage",
+        "coiffure_domicile",
+        "esthetique_domicile"
+      ],
+      "link": "",
+      "sourceUrl": "",
+      "lastVerifiedAt": "",
+      "contactOrganizationId": "cma_mayotte",
+      "status": "needs_review",
+      "enabled": true
+    }
+  ],
+  "projectTemplates": [
+    {
+      "id": "food_truck",
+      "projectType": "food_truck",
+      "title": "Créer son food truck",
+      "category": "Restauration mobile",
+      "defaultSteps": [
+        "Définir le concept et la clientèle ciblée",
+        "Choisir le statut juridique adapté",
+        "Vérifier les règles sanitaires applicables",
+        "Vérifier les autorisations d'emplacement",
+        "Préparer le budget véhicule et matériel",
+        "Contacter les organismes locaux",
+        "Identifier les aides publiques possibles",
+        "Préparer le lancement commercial"
+      ],
+      "requiredDocuments": [
+        "Pièce d'identité",
+        "Justificatif de domicile",
+        "Description du projet",
+        "Budget prévisionnel",
+        "Documents liés au véhicule",
+        "Assurance professionnelle à vérifier",
+        "Autorisations d'emplacement à vérifier"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "jardinage",
+      "projectType": "jardinage",
+      "title": "Créer une activité de jardinage",
+      "category": "Services / espaces verts",
+      "defaultSteps": [
+        "Définir les prestations proposées",
+        "Choisir la zone d'intervention",
+        "Vérifier le statut juridique adapté",
+        "Évaluer le matériel nécessaire",
+        "Vérifier les assurances",
+        "Créer une fiche Pro",
+        "Contacter les organismes locaux",
+        "Chercher les aides possibles"
+      ],
+      "requiredDocuments": [
+        "Pièce d'identité",
+        "Justificatif de domicile",
+        "Liste du matériel",
+        "Budget prévisionnel",
+        "Assurance professionnelle à vérifier"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "livraison_locale",
+      "projectType": "livraison_locale",
+      "title": "Créer une activité de livraison locale",
+      "category": "Transport / livraison",
+      "defaultSteps": [
+        "Définir le type de livraison",
+        "Choisir la zone de livraison",
+        "Vérifier les obligations réglementaires",
+        "Préparer le véhicule ou moyen de transport",
+        "Vérifier les assurances",
+        "Évaluer les coûts",
+        "Contacter les organismes locaux"
+      ],
+      "requiredDocuments": [
+        "Pièce d'identité",
+        "Justificatif de domicile",
+        "Permis si nécessaire",
+        "Assurance véhicule à vérifier",
+        "Budget prévisionnel"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "aide_a_domicile",
+      "projectType": "aide_a_domicile",
+      "title": "Créer une activité d'aide à domicile",
+      "category": "Services à la personne",
+      "defaultSteps": [
+        "Définir les prestations",
+        "Vérifier les obligations liées aux services à la personne",
+        "Choisir le statut juridique",
+        "Vérifier les assurances",
+        "Préparer la zone d'intervention",
+        "Contacter les organismes locaux"
+      ],
+      "requiredDocuments": [
+        "Pièce d'identité",
+        "Justificatif de domicile",
+        "Description des prestations",
+        "Assurance professionnelle à vérifier",
+        "Budget prévisionnel"
+      ],
+      "enabled": true
+    },
+    {
+      "id": "nettoyage",
+      "projectType": "nettoyage",
+      "title": "Créer une activité de nettoyage",
+      "category": "Services",
+      "defaultSteps": [
+        "Définir les prestations",
+        "Identifier les clients cibles",
+        "Choisir le statut juridique",
+        "Préparer la liste du matériel",
+        "Vérifier les assurances",
+        "Contacter les organismes locaux"
+      ],
+      "requiredDocuments": [
+        "Pièce d'identité",
+        "Justificatif de domicile",
+        "Liste du matériel",
+        "Budget prévisionnel",
+        "Assurance professionnelle à vérifier"
+      ],
+      "enabled": true
+    }
+  ]
+}

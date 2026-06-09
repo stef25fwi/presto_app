@@ -1,0 +1,267 @@
+{
+  "regions": [
+    {
+      "regionCode": "auvergne_rhone_alpes",
+      "name": "Auvergne-Rhône-Alpes",
+      "departments": [
+        "01",
+        "03",
+        "07",
+        "15",
+        "26",
+        "38",
+        "42",
+        "43",
+        "63",
+        "69",
+        "73",
+        "74"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_auvergne_rhone_alpes",
+      "defaultRegionOrgId": "region_auvergne_rhone_alpes"
+    },
+    {
+      "regionCode": "bourgogne_franche_comte",
+      "name": "Bourgogne-Franche-Comté",
+      "departments": [
+        "21",
+        "25",
+        "39",
+        "58",
+        "70",
+        "71",
+        "89",
+        "90"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_bourgogne_franche_comte",
+      "defaultRegionOrgId": "region_bourgogne_franche_comte"
+    },
+    {
+      "regionCode": "bretagne",
+      "name": "Bretagne",
+      "departments": [
+        "22",
+        "29",
+        "35",
+        "56"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_bretagne",
+      "defaultRegionOrgId": "region_bretagne"
+    },
+    {
+      "regionCode": "centre_val_de_loire",
+      "name": "Centre-Val de Loire",
+      "departments": [
+        "18",
+        "28",
+        "36",
+        "37",
+        "41",
+        "45"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_centre_val_de_loire",
+      "defaultRegionOrgId": "region_centre_val_de_loire"
+    },
+    {
+      "regionCode": "corse",
+      "name": "Corse",
+      "departments": [
+        "2A",
+        "2B"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_corse",
+      "defaultRegionOrgId": "region_corse"
+    },
+    {
+      "regionCode": "grand_est",
+      "name": "Grand Est",
+      "departments": [
+        "08",
+        "10",
+        "51",
+        "52",
+        "54",
+        "55",
+        "57",
+        "67",
+        "68",
+        "88"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_grand_est",
+      "defaultRegionOrgId": "region_grand_est"
+    },
+    {
+      "regionCode": "hauts_de_france",
+      "name": "Hauts-de-France",
+      "departments": [
+        "02",
+        "59",
+        "60",
+        "62",
+        "80"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_hauts_de_france",
+      "defaultRegionOrgId": "region_hauts_de_france"
+    },
+    {
+      "regionCode": "ile_de_france",
+      "name": "Île-de-France",
+      "departments": [
+        "75",
+        "77",
+        "78",
+        "91",
+        "92",
+        "93",
+        "94",
+        "95"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_ile_de_france",
+      "defaultRegionOrgId": "region_ile_de_france"
+    },
+    {
+      "regionCode": "normandie",
+      "name": "Normandie",
+      "departments": [
+        "14",
+        "27",
+        "50",
+        "61",
+        "76"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_normandie",
+      "defaultRegionOrgId": "region_normandie"
+    },
+    {
+      "regionCode": "nouvelle_aquitaine",
+      "name": "Nouvelle-Aquitaine",
+      "departments": [
+        "16",
+        "17",
+        "19",
+        "23",
+        "24",
+        "33",
+        "40",
+        "47",
+        "64",
+        "79",
+        "86",
+        "87"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_nouvelle_aquitaine",
+      "defaultRegionOrgId": "region_nouvelle_aquitaine"
+    },
+    {
+      "regionCode": "occitanie",
+      "name": "Occitanie",
+      "departments": [
+        "09",
+        "11",
+        "12",
+        "30",
+        "31",
+        "32",
+        "34",
+        "46",
+        "48",
+        "65",
+        "66",
+        "81",
+        "82"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_occitanie",
+      "defaultRegionOrgId": "region_occitanie"
+    },
+    {
+      "regionCode": "pays_de_la_loire",
+      "name": "Pays de la Loire",
+      "departments": [
+        "44",
+        "49",
+        "53",
+        "72",
+        "85"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_pays_de_la_loire",
+      "defaultRegionOrgId": "region_pays_de_la_loire"
+    },
+    {
+      "regionCode": "provence_alpes_cote_d_azur",
+      "name": "Provence-Alpes-Côte d'Azur",
+      "departments": [
+        "04",
+        "05",
+        "06",
+        "13",
+        "83",
+        "84"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_provence_alpes_cote_d_azur",
+      "defaultRegionOrgId": "region_provence_alpes_cote_d_azur"
+    },
+    {
+      "regionCode": "guadeloupe",
+      "name": "Guadeloupe",
+      "departments": [
+        "971"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_guadeloupe",
+      "defaultRegionOrgId": "region_guadeloupe"
+    },
+    {
+      "regionCode": "martinique",
+      "name": "Martinique",
+      "departments": [
+        "972"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_martinique",
+      "defaultRegionOrgId": "region_martinique"
+    },
+    {
+      "regionCode": "guyane",
+      "name": "Guyane",
+      "departments": [
+        "973"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_guyane",
+      "defaultRegionOrgId": "region_guyane"
+    },
+    {
+      "regionCode": "reunion",
+      "name": "La Réunion",
+      "departments": [
+        "974"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_reunion",
+      "defaultRegionOrgId": "region_reunion"
+    },
+    {
+      "regionCode": "mayotte",
+      "name": "Mayotte",
+      "departments": [
+        "976"
+      ],
+      "enabled": true,
+      "defaultCciId": "cci_mayotte",
+      "defaultRegionOrgId": "region_mayotte"
+    }
+  ]
+}

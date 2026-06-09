@@ -1,0 +1,64 @@
+{
+  "sources": [
+    {
+      "id": "api_gouv",
+      "name": "API.gouv.fr",
+      "type": "api_catalog",
+      "description": "Catalogue des API du service public.",
+      "url": "https://api.gouv.fr",
+      "requiresAuth": false,
+      "usage": ["api_discovery", "official_sources"],
+      "enabled": true
+    },
+    {
+      "id": "api_annuaire_administration",
+      "name": "API Annuaire de l'administration",
+      "type": "api",
+      "description": "Recherche de services publics et organismes administratifs.",
+      "url": "https://api.gouv.fr/les-api/api-annuaire-administration-services-publics",
+      "requiresAuth": false,
+      "usage": ["local_organizations", "public_services"],
+      "enabled": true
+    },
+    {
+      "id": "api_entreprise",
+      "name": "API Entreprise",
+      "type": "api",
+      "description": "Données administratives entreprises et associations selon habilitation.",
+      "url": "https://entreprise.api.gouv.fr",
+      "requiresAuth": true,
+      "usage": ["siret", "business_identity"],
+      "enabled": true
+    },
+    {
+      "id": "api_sirene",
+      "name": "API Sirene",
+      "type": "api",
+      "description": "Répertoire Sirene des entreprises et établissements.",
+      "url": "https://api.gouv.fr/les-api/sirene_v3",
+      "requiresAuth": false,
+      "usage": ["siret", "establishments"],
+      "enabled": true
+    },
+    {
+      "id": "entreprendre_service_public",
+      "name": "Entreprendre Service-Public",
+      "type": "official_website",
+      "description": "Informations officielles sur création d'entreprise, aides et démarches.",
+      "url": "https://entreprendre.service-public.fr",
+      "requiresAuth": false,
+      "usage": ["business_steps", "public_aids", "legal_info"],
+      "enabled": true
+    },
+    {
+      "id": "data_gouv",
+      "name": "data.gouv.fr",
+      "type": "open_data",
+      "description": "Plateforme ouverte des données publiques françaises.",
+      "url": "https://www.data.gouv.fr",
+      "requiresAuth": false,
+      "usage": ["open_data", "regional_datasets"],
+      "enabled": true
+    }
+  ]
+}
