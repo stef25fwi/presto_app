@@ -108,10 +108,7 @@ class BusinessGuidanceService {
   }
 
   Stream<List<BusinessProjectSheet>> watchUserProjectSheets(String userId) {
-    return _projectSheets
-        .where('userId', isEqualTo: userId)
-        .snapshots()
-        .map(
+    return _projectSheets.where('userId', isEqualTo: userId).snapshots().map(
           (snapshot) => snapshot.docs
               .map((doc) => BusinessProjectSheet.fromMap(doc.id, doc.data()))
               .toList(),
