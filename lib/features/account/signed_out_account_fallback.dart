@@ -263,7 +263,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 32),
+              padding: const EdgeInsets.fromLTRB(6, 28, 6, 32),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: Colors.white,
