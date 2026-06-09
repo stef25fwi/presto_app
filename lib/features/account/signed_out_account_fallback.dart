@@ -246,8 +246,11 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
     const borderColor = Color(0xFFE5E7EB);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
+        surfaceTintColor: const Color(0xFFFF6600),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: statusBlue,
           statusBarIconBrightness: Brightness.light,
@@ -255,8 +258,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         ),
         title: const Text('Mon compte'),
         automaticallyImplyLeading: false,
-        backgroundColor: proOrange,
-        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFF6600),
+        foregroundColor: const Color(0xFFFFFFFF),
       ),
       body: SafeArea(
         child: Center(
@@ -577,7 +580,7 @@ class _AccountTypeButton extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFF3EA) : const Color(0xFFF9FAFB),
+          color: selected ? const Color(0xFFFFF3EA) : const Color(0xFFFFFFFF),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? const Color(0xFFFF6600) : const Color(0xFFE5E7EB),

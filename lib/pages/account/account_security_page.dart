@@ -17,7 +17,15 @@ class AccountSecurityPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sécurité du compte')),
+      backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFF6600),
+        foregroundColor: const Color(0xFFFFFFFF),
+        surfaceTintColor: const Color(0xFFFF6600),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: const Text('Sécurité du compte'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
