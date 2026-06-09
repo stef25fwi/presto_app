@@ -25,7 +25,7 @@ export const notifyListingApproved = onDocumentUpdated("listings/{listingId}", a
   if (!ownerId) return;
 
   await createInAppNotification({
-    notificationId: `listing_approved_trigger_${listingId}`,
+    notificationId: `listing_approved_${listingId}`,
     userId: ownerId,
     title: "Annonce approuvee",
     message: normalizeString(after.title) || "Votre annonce est en ligne.",
@@ -69,7 +69,7 @@ export const notifyListingRejected = onDocumentUpdated("listings/{listingId}", a
     "Votre annonce a ete rejetee.";
 
   await createInAppNotification({
-    notificationId: `listing_rejected_trigger_${listingId}`,
+    notificationId: `listing_rejected_${listingId}`,
     userId: ownerId,
     title: "Annonce rejetee",
     message: rejectionMessage,
