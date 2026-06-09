@@ -6,6 +6,8 @@ import '../models/business_project_template.dart';
 import '../models/local_organization.dart';
 import '../models/public_aid.dart';
 import '../services/local_business_guidance_repository.dart';
+import '../services/business_guidance_service.dart';
+import 'business_project_sheet_page.dart';
 
 class BusinessGuidancePage extends StatefulWidget {
   const BusinessGuidancePage({super.key});
@@ -20,7 +22,11 @@ class _BusinessGuidancePageState extends State<BusinessGuidancePage> {
   final LocalBusinessGuidanceRepository _repository =
       const LocalBusinessGuidanceRepository();
 
+  final BusinessGuidanceService _businessGuidanceService =
+      BusinessGuidanceService();
+
   late Future<_BusinessGuidanceData> _future;
+  bool _isCreatingProjectSheet = false;
 
   @override
   void initState() {
@@ -109,6 +115,71 @@ class _BusinessGuidancePageState extends State<BusinessGuidancePage> {
     }
   }
 
+  Future<void> _generateProjectSheet({
+    required _BusinessGuidanceData data,
+    required BusinessProjectTemplate template,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connecte-toi pour générer une fiche projet.'),
+        ),
+      );
+      return;
+    }
+
+    if (_isCreatingProjectSheet) return;
+
+    setState(() {
+      _isCreatingProjectSheet = true;
+    });
+
+    try {
+      final sheetId = await _businessGuidanceService.createProjectSheet(
+        userId: user.uid,
+        regionCode: data.regionCode,
+        department: data.department,
+        city: data.city,
+        projectType: template.projectType,
+        title: '${template.title} - ${data.regionName}',
+        summary:
+            'Fiche projet générée pour ${template.title} dans la région ${data.regionName}.',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Fiche projet générée : $sheetId'),
+          action: SnackBarAction(
+            label: 'Voir',
+            onPressed: () {
+              Navigator.of(context).pushNamed(
+                BusinessProjectSheetPage.routeName,
+              );
+            },
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Impossible de générer la fiche projet : $error'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingProjectSheet = false;
+        });
+      }
+    }
+  }
+
   Future<void> _refresh() async {
     setState(() {
       _future = _loadData();
@@ -157,7 +228,12 @@ class _BusinessGuidancePageState extends State<BusinessGuidancePage> {
                 const SizedBox(height: 14),
                 _WarningCard(usedFallback: data.usedFallback),
                 const SizedBox(height: 14),
-                _ProjectTemplatesSection(templates: data.templates),
+                _ProjectTemplatesSection(
+                  templates: data.templates,
+                  data: data,
+                  isCreating: _isCreatingProjectSheet,
+                  onGenerate: _generateProjectSheet,
+                ),
                 const SizedBox(height: 14),
                 _OrganizationsSection(organizations: data.organizations),
                 const SizedBox(height: 14),
@@ -246,9 +322,20 @@ class _WarningCard extends StatelessWidget {
 }
 
 class _ProjectTemplatesSection extends StatelessWidget {
-  const _ProjectTemplatesSection({required this.templates});
+  const _ProjectTemplatesSection({
+    required this.templates,
+    required this.data,
+    required this.isCreating,
+    required this.onGenerate,
+  });
 
   final List<BusinessProjectTemplate> templates;
+  final _BusinessGuidanceData data;
+  final bool isCreating;
+  final Future<void> Function({
+    required _BusinessGuidanceData data,
+    required BusinessProjectTemplate template,
+  }) onGenerate;
 
   @override
   Widget build(BuildContext context) {
@@ -274,6 +361,24 @@ class _ProjectTemplatesSection extends StatelessWidget {
               _TextListBlock(
                 title: 'Documents à préparer',
                 items: template.requiredDocuments,
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.icon(
+                  onPressed: isCreating
+                      ? null
+                      : () => onGenerate(
+                            data: data,
+                            template: template,
+                          ),
+                  icon: const Icon(Icons.add_task_outlined),
+                  label: Text(
+                    isCreating
+                        ? 'Génération en cours...'
+                        : 'Générer ma fiche projet',
+                  ),
+                ),
               ),
             ],
           ),
