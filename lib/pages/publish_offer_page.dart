@@ -159,19 +159,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_useCloudStt) return true;
 
     if (appCheckActivationSucceeded) {
-      _appendPublishAiTrace(
-        'appcheck',
-        'App Check OK pour $flow',
-        level: PublishAiTraceLevel.success,
-      );
+      _appendPublishAiTrace('appcheck', 'App Check OK pour $flow',
+          level: PublishAiTraceLevel.success);
       return true;
     }
 
     try {
       if (!appCheckActivationAttempted) {
         throw StateError(
-          'App Check non initialise par le bootstrap pour $flow',
-        );
+            'App Check non initialise par le bootstrap pour $flow');
       }
       final appCheckToken = await FirebaseAppCheck.instance
           .getToken(true)
@@ -183,11 +179,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appCheckActivationSucceeded = true;
       appCheckActivationError = null;
       appCheckActivationStackTrace = null;
-      _appendPublishAiTrace(
-        'appcheck',
-        'App Check token OK pour $flow',
-        level: PublishAiTraceLevel.success,
-      );
+      _appendPublishAiTrace('appcheck', 'App Check token OK pour $flow',
+          level: PublishAiTraceLevel.success);
       return true;
     } catch (e, st) {
       appCheckActivationAttempted = true;
@@ -199,38 +192,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final activationError = appCheckActivationError;
     final activationStackTrace = appCheckActivationStackTrace;
     final exception = Exception(
-      'App Check activation unavailable: ${activationError ?? 'unknown error'}',
-    );
+        'App Check activation unavailable: ${activationError ?? 'unknown error'}');
 
     try {
       await CrashlyticsContext.recordError(
-        exception,
-        activationStackTrace ?? StackTrace.current,
-        reason: 'App Check activation unavailable before micro IA flow',
-        fatal: false,
-        keys: {
-          'component': 'Main',
-          'flow': flow,
-          'step': 'appCheck',
-          'activationAttempted': appCheckActivationAttempted.toString(),
-          'activationSucceeded': appCheckActivationSucceeded.toString(),
-        },
-      );
+          exception, activationStackTrace ?? StackTrace.current,
+          reason: 'App Check activation unavailable before micro IA flow',
+          fatal: false,
+          keys: {
+            'component': 'Main',
+            'flow': flow,
+            'step': 'appCheck',
+            'activationAttempted': appCheckActivationAttempted.toString(),
+            'activationSucceeded': appCheckActivationSucceeded.toString(),
+          });
 
       debugPrint('[AppCheck] blocking $flow: $activationError');
     } catch (_) {}
 
-    _appendPublishAiTrace(
-      'appcheck',
-      'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
-      level: PublishAiTraceLevel.error,
-    );
+    _appendPublishAiTrace('appcheck',
+        'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
+        level: PublishAiTraceLevel.error);
 
     if (mounted && showBlockingMessage) {
-      showErrorSnackBar(
-        context,
-        'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
-      );
+      showErrorSnackBar(context,
+          'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.');
     }
     return false;
   }
@@ -244,70 +230,56 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String contentType,
     required String extension,
   }) async {
-    _appendPublishAiTrace(
-      'upload_audio',
-      'Préparation upload ${audioBytes.length} bytes, $contentType, .$extension',
-    );
-    _logMicroIaDebug(
-      'UPLOAD',
-      'chunk=final bytes=${audioBytes.length} contentType=$contentType extension=$extension',
-    );
+    _appendPublishAiTrace('upload_audio',
+        'Préparation upload ${audioBytes.length} bytes, $contentType, .$extension');
+    _logMicroIaDebug('UPLOAD',
+        'chunk=final bytes=${audioBytes.length} contentType=$contentType extension=$extension');
     final storagePath = await _listingAudioAiService.uploadAudioBytes(
-      ownerUid: ownerUid,
-      audioBytes: audioBytes,
-      contentType: contentType,
-      extension: extension,
-    );
-    _appendPublishAiTrace(
-      'upload_audio',
-      'Audio uploadé vers $storagePath',
-      level: PublishAiTraceLevel.success,
-    );
+        ownerUid: ownerUid,
+        audioBytes: audioBytes,
+        contentType: contentType,
+        extension: extension);
+    _appendPublishAiTrace('upload_audio', 'Audio uploadé vers $storagePath',
+        level: PublishAiTraceLevel.success);
 
-    _appendPublishAiTrace(
-      'microia_callable',
-      'Appel microIaProcessAudio (mode combiné STT+draft) en cours',
-    );
+    _appendPublishAiTrace('microia_callable',
+        'Appel microIaProcessAudio (mode combiné STT+draft) en cours');
 
     // Mode combiné : transcription + brouillon en un seul appel (~1-2 s gagnés)
     final currentCity = _locationController.text.trim();
     final out = await MicroIaService.processAudio(
-      storagePath: storagePath,
-      languageCode: OpenAiConfig.defaultLanguageCode,
-      generateDraft: true,
-      draftCity: currentCity.isNotEmpty ? currentCity : null,
-      draftCategory: _category,
-      debugLabel: 'publish_final_audio',
-    ).timeout(const Duration(seconds: 90));
+            storagePath: storagePath,
+            languageCode: OpenAiConfig.defaultLanguageCode,
+            generateDraft: true,
+            draftCity: currentCity.isNotEmpty ? currentCity : null,
+            draftCategory: _category,
+            debugLabel: 'publish_final_audio')
+        .timeout(const Duration(seconds: 90));
 
     final transcript = (out['text'] ?? '').toString().trim();
     if (transcript.isEmpty) {
       _appendPublishAiTrace(
-        'microia_callable',
-        'Réponse reçue mais transcription vide',
-        level: PublishAiTraceLevel.error,
-      );
+          'microia_callable', 'Réponse reçue mais transcription vide',
+          level: PublishAiTraceLevel.error);
       throw Exception('Aucun texte reconnu');
     }
 
     final modeUsed = (out['modeUsed'] ?? '').toString().trim();
     if (modeUsed.isNotEmpty) {
       _adminAudioRuntimeStore.confirmLatestBackendResult(
-        backendModeUsed: modeUsed,
-        detail:
-            'Réponse backend confirmée via $modeUsed (${transcript.length} caractères)',
-        transcriptLength: transcript.length,
-      );
+          backendModeUsed: modeUsed,
+          detail:
+              'Réponse backend confirmée via $modeUsed (${transcript.length} caractères)',
+          transcriptLength: transcript.length);
     }
 
     final hasCombinedDraft = out['draft'] is Map;
     _appendPublishAiTrace(
-      'microia_callable',
-      modeUsed.isEmpty
-          ? 'Transcription reçue (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}'
-          : 'Transcription reçue via $modeUsed (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}',
-      level: PublishAiTraceLevel.success,
-    );
+        'microia_callable',
+        modeUsed.isEmpty
+            ? 'Transcription reçue (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}'
+            : 'Transcription reçue via $modeUsed (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}',
+        level: PublishAiTraceLevel.success);
 
     return {
       'text': transcript,
@@ -325,35 +297,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     Map<String, dynamic>? combinedDraft,
   }) async {
     _latestRecognizedTranscript = transcript;
-    _appendPublishAiTrace(
-      'draft_local',
-      'Pré-remplissage local depuis la transcription (${transcript.length} caractères)',
-    );
+    _appendPublishAiTrace('draft_local',
+        'Pré-remplissage local depuis la transcription (${transcript.length} caractères)');
     _applyFastDraftFromTranscript(transcript);
 
     final Map<String, dynamic> draft;
     if (combinedDraft != null) {
       // Draft déjà généré par microIaProcessAudio — aucun appel réseau supplémentaire
-      _appendPublishAiTrace(
-        'draft_remote',
-        'Brouillon combiné disponible — utilisation directe (0 appel supplémentaire)',
-        level: PublishAiTraceLevel.success,
-      );
+      _appendPublishAiTrace('draft_remote',
+          'Brouillon combiné disponible — utilisation directe (0 appel supplémentaire)',
+          level: PublishAiTraceLevel.success);
       draft = {...combinedDraft, 'success': true};
     } else {
       // Fallback : appel séparé avec format riche (tous les champs)
-      _appendPublishAiTrace(
-        'draft_remote',
-        'Appel generateOfferDraftV2 depuis la transcription (fallback)',
-      );
+      _appendPublishAiTrace('draft_remote',
+          'Appel generateOfferDraftV2 depuis la transcription (fallback)');
       draft = await _aiService.generateOfferDraftV2(text: transcript);
       _appendPublishAiTrace(
-        'draft_remote',
-        'Réponse generateOfferDraftV2 reçue',
-        level: draft['success'] == true
-            ? PublishAiTraceLevel.success
-            : PublishAiTraceLevel.warning,
-      );
+          'draft_remote', 'Réponse generateOfferDraftV2 reçue',
+          level: draft['success'] == true
+              ? PublishAiTraceLevel.success
+              : PublishAiTraceLevel.warning);
     }
 
     if (!mounted) return;
@@ -361,20 +325,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (draft['success'] == true) {
       _applyDraftToForm(draft);
       _appendPublishAiTrace(
-        'draft_remote',
-        'Champs du formulaire remplis par le draft IA',
-        level: PublishAiTraceLevel.success,
-      );
+          'draft_remote', 'Champs du formulaire remplis par le draft IA',
+          level: PublishAiTraceLevel.success);
       showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
       return;
     }
 
     final code = (draft['code'] ?? '').toString();
-    throw Exception(
-      code == 'deadline-exceeded'
-          ? 'Connexion lente, réessaie.'
-          : (draft['error'] ?? 'Erreur IA inconnue').toString(),
-    );
+    throw Exception(code == 'deadline-exceeded'
+        ? 'Connexion lente, réessaie.'
+        : (draft['error'] ?? 'Erreur IA inconnue').toString());
   }
 
   /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
@@ -413,8 +373,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               'item_category': category,
             },
           ],
-        },
-      );
+        });
 
       // ✅ Event personnalisé supplémentaire
       await _analytics.logEvent(
@@ -427,8 +386,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           'has_photos': _selectedPhotos.isNotEmpty,
           'photo_count': _selectedPhotos.length,
           'is_urgent': _isUrgent,
-        },
-      );
+        });
       */
     } catch (e) {
       debugPrint('[Analytics] logOfferPublished error: $e');
@@ -570,14 +528,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _publishAiTraceAttempt += 1;
     _publishAiTraceEntries
       ..clear()
-      ..add(
-        PublishAiTraceEntry(
+      ..add(PublishAiTraceEntry(
           timestamp: DateTime.now(),
           level: PublishAiTraceLevel.info,
           stage: 'start',
-          detail: 'Essai #$_publishAiTraceAttempt lance via $flowLabel',
-        ),
-      );
+          detail: 'Essai #$_publishAiTraceAttempt lance via $flowLabel'));
     _notifyPublishAiTraceChanged();
   }
 
@@ -589,25 +544,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_publishAiTraceEntries.length >= 120) {
       _publishAiTraceEntries.removeAt(0);
     }
-    _publishAiTraceEntries.add(
-      PublishAiTraceEntry(
-        timestamp: DateTime.now(),
-        level: level,
-        stage: stage,
-        detail: detail,
-      ),
-    );
+    _publishAiTraceEntries.add(PublishAiTraceEntry(
+        timestamp: DateTime.now(), level: level, stage: stage, detail: detail));
     AdminWebDebugStore.instance.recordEvent(
-      area: 'publish-ai',
-      message: stage,
-      level: switch (level) {
-        PublishAiTraceLevel.error => 'error',
-        PublishAiTraceLevel.warning => 'warn',
-        PublishAiTraceLevel.success => 'success',
-        PublishAiTraceLevel.info => 'info',
-      },
-      detail: detail,
-    );
+        area: 'publish-ai',
+        message: stage,
+        level: switch (level) {
+          PublishAiTraceLevel.error => 'error',
+          PublishAiTraceLevel.warning => 'warn',
+          PublishAiTraceLevel.success => 'success',
+          PublishAiTraceLevel.info => 'info',
+        },
+        detail: detail);
     _notifyPublishAiTraceChanged();
   }
 
@@ -730,11 +678,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _logMicroIaDebug(String stage, String message) {
-    AdminWebDebugStore.instance.recordEvent(
-      area: 'publish-ai',
-      message: stage,
-      detail: message,
-    );
+    AdminWebDebugStore.instance
+        .recordEvent(area: 'publish-ai', message: stage, detail: message);
     debugPrint('[MICIA][$stage] $message');
   }
 
@@ -745,29 +690,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) async {
     try {
       final secureContext = await MicroIaService.prepareSecureCallableContext(
-        forceRefreshToken: forceRefreshToken,
-      );
-      _appendPublishAiTrace(
-        'auth',
-        'Session OK uid=${secureContext.uid} token=ok appcheck=${secureContext.hasAppCheckToken ? 'ok' : 'missing'}',
-        level: PublishAiTraceLevel.success,
-      );
-      _logMicroIaDebug(
-        'AUTH',
-        'uid=${secureContext.uid} email=${secureContext.email ?? ''} stage=$stage',
-      );
+          forceRefreshToken: forceRefreshToken);
+      _appendPublishAiTrace('auth',
+          'Session OK uid=${secureContext.uid} token=ok appcheck=${secureContext.hasAppCheckToken ? 'ok' : 'missing'}',
+          level: PublishAiTraceLevel.success);
+      _logMicroIaDebug('AUTH',
+          'uid=${secureContext.uid} email=${secureContext.email ?? ''} stage=$stage');
       _logMicroIaDebug('TOKEN', 'fetched=yes stage=$stage');
-      _logMicroIaDebug(
-        'APPCHECK',
-        'token=${secureContext.hasAppCheckToken ? 'yes' : 'no'} stage=$stage',
-      );
+      _logMicroIaDebug('APPCHECK',
+          'token=${secureContext.hasAppCheckToken ? 'yes' : 'no'} stage=$stage');
       return secureContext;
     } on MicroIaClientAuthException catch (error) {
-      _appendPublishAiTrace(
-        'auth',
-        error.message,
-        level: PublishAiTraceLevel.error,
-      );
+      _appendPublishAiTrace('auth', error.message,
+          level: PublishAiTraceLevel.error);
       _logMicroIaDebug('AUTH', 'user=null code=${error.code} stage=$stage');
       _logMicroIaDebug('TOKEN', 'fetched=no stage=$stage');
       if (showUserMessage && mounted) {
@@ -776,11 +711,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return null;
     } catch (error) {
       final message = _formatMicroIaRuntimeError(error);
-      _appendPublishAiTrace(
-        'auth',
-        message,
-        level: PublishAiTraceLevel.error,
-      );
+      _appendPublishAiTrace('auth', message, level: PublishAiTraceLevel.error);
       _logMicroIaDebug('AUTH', 'unexpected_error stage=$stage err=$message');
       if (showUserMessage && mounted) {
         showErrorSnackBar(context, message);
@@ -828,11 +759,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
     if (user == null) {
-      _appendPublishAiTrace(
-        'admin_check',
-        'Aucun utilisateur FirebaseAuth disponible pour la verification admin',
-        level: PublishAiTraceLevel.warning,
-      );
+      _appendPublishAiTrace('admin_check',
+          'Aucun utilisateur FirebaseAuth disponible pour la verification admin',
+          level: PublishAiTraceLevel.warning);
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = 0;
@@ -842,15 +771,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       final accessState = await _publishAdminAccessResolver.resolveAdminAccess(
-        forceRefresh: true,
-      );
-      _appendAdminAccessStateTrace(
-        'admin_check',
-        accessState,
-        level: accessState.effectiveIsAdmin
-            ? PublishAiTraceLevel.success
-            : PublishAiTraceLevel.warning,
-      );
+          forceRefresh: true);
+      _appendAdminAccessStateTrace('admin_check', accessState,
+          level: accessState.effectiveIsAdmin
+              ? PublishAiTraceLevel.success
+              : PublishAiTraceLevel.warning);
 
       if (!accessState.effectiveIsAdmin) {
         if (!mounted) return;
@@ -874,13 +799,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       try {
         await MicroIaService.prepareSecureCallableContext(
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: true,
-        );
-        final configCallable = _functions.httpsCallable(
-          'adminGetMicroIaConfig',
-          options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-        );
+            forceRefreshToken: true, forceRefreshAppCheckToken: true);
+        final configCallable = _functions.httpsCallable('adminGetMicroIaConfig',
+            options:
+                HttpsCallableOptions(timeout: const Duration(seconds: 15)));
         HttpsCallableResult<dynamic> configRes;
         try {
           configRes = await configCallable.call<dynamic>({});
@@ -888,24 +810,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           if (e.code != 'unauthenticated' && e.code != 'permission-denied') {
             rethrow;
           }
-          _appendPublishAiTrace(
-            'admin_config',
-            'Re-tentative apres refresh token+appcheck (code=${e.code})',
-            level: PublishAiTraceLevel.warning,
-          );
+          _appendPublishAiTrace('admin_config',
+              'Re-tentative apres refresh token+appcheck (code=${e.code})',
+              level: PublishAiTraceLevel.warning);
           await MicroIaService.prepareSecureCallableContext(
-            forceRefreshToken: true,
-            forceRefreshAppCheckToken: true,
-          );
+              forceRefreshToken: true, forceRefreshAppCheckToken: true);
           configRes = await configCallable.call<dynamic>({});
         }
         final data = Map<String, dynamic>.from(configRes.data as Map);
         final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
-        _appendPublishAiTrace(
-          'admin_config',
-          'mode=${_publishAiDebugValue(mode)} source=${_publishAiDebugValue(data['source'])}',
-          level: PublishAiTraceLevel.success,
-        );
+        _appendPublishAiTrace('admin_config',
+            'mode=${_publishAiDebugValue(mode)} source=${_publishAiDebugValue(data['source'])}',
+            level: PublishAiTraceLevel.success);
 
         if (!mounted) return;
         setState(() {
@@ -918,11 +834,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         unawaited(_adminAudioRuntimeStore.enableCloudSync());
         _adminAudioRuntimeStore.updateConfiguredMode(mode);
       } on FirebaseFunctionsException catch (e) {
-        _appendPublishAiTrace(
-          'admin_config',
-          'Erreur config code=${e.code} message=${_publishAiDebugValue(e.message)}',
-          level: PublishAiTraceLevel.warning,
-        );
+        _appendPublishAiTrace('admin_config',
+            'Erreur config code=${e.code} message=${_publishAiDebugValue(e.message)}',
+            level: PublishAiTraceLevel.warning);
         if (!mounted) return;
         setState(() {
           _adminAudioRuntimeAccessState = 1;
@@ -932,41 +846,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           }
         });
       } catch (error) {
-        _appendPublishAiTrace(
-          'admin_config',
-          'Erreur config inattendue: ${_publishAiDebugValue(error)}',
-          level: PublishAiTraceLevel.warning,
-        );
+        _appendPublishAiTrace('admin_config',
+            'Erreur config inattendue: ${_publishAiDebugValue(error)}',
+            level: PublishAiTraceLevel.warning);
       }
     } on FirebaseFunctionsException catch (e) {
-      _appendPublishAiTrace(
-        'admin_check',
-        'Erreur callable code=${e.code} message=${_publishAiDebugValue(e.message)} uid=${user.uid}',
-        level: PublishAiTraceLevel.error,
-      );
+      _appendPublishAiTrace('admin_check',
+          'Erreur callable code=${e.code} message=${_publishAiDebugValue(e.message)} uid=${user.uid}',
+          level: PublishAiTraceLevel.error);
       if ((e.code == 'permission-denied' || e.code == 'unauthenticated') &&
           user.uid.isNotEmpty) {
         await _ensureProtectedSessionReady(forceRefreshToken: true);
         if (!mounted) return;
         try {
           final retryCallable = _functions.httpsCallable(
-            'getMyAdminAccessStatus',
-            options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-          );
+              'getMyAdminAccessStatus',
+              options:
+                  HttpsCallableOptions(timeout: const Duration(seconds: 15)));
           final retryRes = await retryCallable.call<dynamic>({});
           final retryData = Map<String, dynamic>.from(retryRes.data as Map);
-          _appendAdminAccessDiagnosticTrace(
-            'admin_retry',
-            retryData,
-            level: retryData['isAdmin'] == true
-                ? PublishAiTraceLevel.success
-                : PublishAiTraceLevel.warning,
-          );
+          _appendAdminAccessDiagnosticTrace('admin_retry', retryData,
+              level: retryData['isAdmin'] == true
+                  ? PublishAiTraceLevel.success
+                  : PublishAiTraceLevel.warning);
           if (retryData['isAdmin'] != true) {
             throw FirebaseFunctionsException(
-              code: 'permission-denied',
-              message: 'Accès admin non confirmé après nouvelle tentative.',
-            );
+                code: 'permission-denied',
+                message: 'Accès admin non confirmé après nouvelle tentative.');
           }
           if (!mounted) return;
           setState(() {
@@ -994,10 +900,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (_) {
       _appendPublishAiTrace(
-        'admin_check',
-        'Erreur inattendue pendant la verification admin',
-        level: PublishAiTraceLevel.error,
-      );
+          'admin_check', 'Erreur inattendue pendant la verification admin',
+          level: PublishAiTraceLevel.error);
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = -1;
@@ -1019,12 +923,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _adminAudioRuntimeLabel = label;
     _adminAudioRuntimeDetail = detail;
     _adminAudioRuntimeStore.recordRuntime(
-      flowKey: flowKey,
-      label: label,
-      detail: detail,
-      status: status,
-      backendModeUsed: backendModeUsed,
-    );
+        flowKey: flowKey,
+        label: label,
+        detail: detail,
+        status: status,
+        backendModeUsed: backendModeUsed);
   }
 
   Widget _buildAdminAudioRuntimeIndicator() {
@@ -1039,106 +942,76 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _isListening ? 'LIVE' : (_isAnalyzing ? 'ANALYSE' : 'ADMIN');
 
     return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: accent.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withOpacity(0.24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.tune_rounded, size: 16, color: accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _adminAudioRuntimeLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: accent,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.24)),
-                  ),
-                  child: Text(
-                    stateLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: accent,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _adminAudioRuntimeDetail,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.2)),
-                  ),
-                  child: Text(
-                    'Mode serveur: ${_adminAudioModeLabel(_adminAudioRuntimeMode)}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.2)),
-                  ),
-                  child: Text(
-                    'Etat: ${_currentPublishAiRuntimeState()}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+        child: Container(
+            constraints: const BoxConstraints(maxWidth: 520),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+                color: accent.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: accent.withOpacity(0.24))),
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.tune_rounded, size: 16, color: accent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        child: Text(_adminAudioRuntimeLabel,
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                                color: accent))),
+                    Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.75),
+                            borderRadius: BorderRadius.circular(999),
+                            border:
+                                Border.all(color: accent.withOpacity(0.24))),
+                        child: Text(stateLabel,
+                            style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                color: accent))),
+                  ]),
+                  const SizedBox(height: 6),
+                  Text(_adminAudioRuntimeDetail,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                          height: 1.3)),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 8, runSpacing: 8, children: [
+                    Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: accent.withOpacity(0.2))),
+                        child: Text(
+                            'Mode serveur: ${_adminAudioModeLabel(_adminAudioRuntimeMode)}',
+                            style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black87))),
+                    Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: accent.withOpacity(0.2))),
+                        child: Text('Etat: ${_currentPublishAiRuntimeState()}',
+                            style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black87))),
+                  ]),
+                ])));
   }
 
   Future<void> _showPublishAiTraceDialog() async {
@@ -1146,220 +1019,197 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final overlayTheme = context.prestoOverlayTheme;
 
     await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return ValueListenableBuilder<int>(
-          valueListenable: _publishAiTraceVersion,
-          builder: (context, _, __) {
-            final entries = List<PublishAiTraceEntry>.unmodifiable(
-              _publishAiTraceEntries,
-            );
+        context: context,
+        builder: (dialogContext) {
+          return ValueListenableBuilder<int>(
+              valueListenable: _publishAiTraceVersion,
+              builder: (context, _, __) {
+                final entries = List<PublishAiTraceEntry>.unmodifiable(
+                    _publishAiTraceEntries);
 
-            return Dialog(
-              backgroundColor: overlayTheme.surfaceColor,
-              surfaceTintColor: overlayTheme.surfaceTintColor,
-              insetPadding: const EdgeInsets.all(16),
-              shape: overlayTheme.dialogShape,
-              child: ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 760, maxHeight: 680),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Diagnostic micro IA',
-                              style: kPrestoSectionTitleStyle,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Fermer',
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: kPrestoBlue.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: kPrestoBlue.withOpacity(0.18),
-                              ),
-                            ),
-                            child: Text(
-                              'Etat: ${_currentPublishAiRuntimeState()}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: kPrestoBlue,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.04),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              'Entrees: ${entries.length}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (_latestRecognizedTranscript.trim().isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.035),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.black12),
-                          ),
-                          child: Text(
-                            'Dernière transcription: ${_latestRecognizedTranscript.trim()}',
-                            style: const TextStyle(fontSize: 12, height: 1.35),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          TextButton.icon(
-                            onPressed:
-                                entries.isEmpty ? null : _clearPublishAiTrace,
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Effacer'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: entries.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'Aucun diagnostic pour le moment.',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              )
-                            : ListView.separated(
-                                itemCount: entries.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final entry = entries[index];
-                                  final color = _colorForPublishAiTraceLevel(
-                                    entry.level,
-                                  );
-                                  return Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: color.withOpacity(0.06),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: color.withOpacity(0.18),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 2),
-                                          child: Icon(
-                                            _iconForPublishAiTraceLevel(
-                                                entry.level),
-                                            color: color,
-                                            size: 18,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${_formatPublishAiTraceTime(entry.timestamp)}  ${entry.stage}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  color: color,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                entry.detail,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  height: 1.35,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+                return Dialog(
+                    backgroundColor: overlayTheme.surfaceColor,
+                    surfaceTintColor: overlayTheme.surfaceTintColor,
+                    insetPadding: const EdgeInsets.all(16),
+                    shape: overlayTheme.dialogShape,
+                    child: ConstrainedBox(
+                        constraints:
+                            const BoxConstraints(maxWidth: 760, maxHeight: 680),
+                        child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(children: [
+                                    const Expanded(
+                                        child: Text('Diagnostic micro IA',
+                                            style: kPrestoSectionTitleStyle)),
+                                    IconButton(
+                                        tooltip: 'Fermer',
+                                        onPressed: () =>
+                                            Navigator.of(dialogContext).pop(),
+                                        icon: const Icon(Icons.close_rounded)),
+                                  ]),
+                                  const SizedBox(height: 8),
+                                  Wrap(spacing: 8, runSpacing: 8, children: [
+                                    Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                            color:
+                                                kPrestoBlue.withOpacity(0.08),
+                                            borderRadius:
+                                                BorderRadius.circular(999),
+                                            border: Border.all(
+                                                color: kPrestoBlue
+                                                    .withOpacity(0.18))),
+                                        child: Text(
+                                            'Etat: ${_currentPublishAiRuntimeState()}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: kPrestoBlue))),
+                                    Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                            color:
+                                                Colors.black.withOpacity(0.04),
+                                            borderRadius:
+                                                BorderRadius.circular(999)),
+                                        child: Text(
+                                            'Entrees: ${entries.length}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w600))),
+                                  ]),
+                                  if (_latestRecognizedTranscript
+                                      .trim()
+                                      .isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                            color:
+                                                Colors.black.withOpacity(0.035),
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                            border: Border.all(
+                                                color: Colors.black12)),
+                                        child: Text(
+                                            'Dernière transcription: ${_latestRecognizedTranscript.trim()}',
+                                            style: const TextStyle(
+                                                fontSize: 12, height: 1.35))),
+                                  ],
+                                  const SizedBox(height: 12),
+                                  Row(children: [
+                                    TextButton.icon(
+                                        onPressed: entries.isEmpty
+                                            ? null
+                                            : _clearPublishAiTrace,
+                                        icon: const Icon(
+                                            Icons.delete_outline_rounded),
+                                        label: const Text('Effacer')),
+                                  ]),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                      child: entries.isEmpty
+                                          ? const Center(
+                                              child: Text(
+                                                  'Aucun diagnostic pour le moment.',
+                                                  style: TextStyle(
+                                                      color: Colors.black54)))
+                                          : ListView.separated(
+                                              itemCount: entries.length,
+                                              separatorBuilder: (_, __) =>
+                                                  const SizedBox(height: 8),
+                                              itemBuilder: (context, index) {
+                                                final entry = entries[index];
+                                                final color =
+                                                    _colorForPublishAiTraceLevel(
+                                                        entry.level);
+                                                return Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            12),
+                                                    decoration: BoxDecoration(
+                                                        color: color
+                                                            .withOpacity(0.06),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(14),
+                                                        border: Border.all(
+                                                            color: color
+                                                                .withOpacity(
+                                                                    0.18))),
+                                                    child: Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .only(
+                                                                      top: 2),
+                                                              child: Icon(
+                                                                  _iconForPublishAiTraceLevel(
+                                                                      entry
+                                                                          .level),
+                                                                  color: color,
+                                                                  size: 18)),
+                                                          const SizedBox(
+                                                              width: 10),
+                                                          Expanded(
+                                                              child: Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                Text(
+                                                                    '${_formatPublishAiTraceTime(entry.timestamp)}  ${entry.stage}',
+                                                                    style: TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .w700,
+                                                                        color:
+                                                                            color)),
+                                                                const SizedBox(
+                                                                    height: 4),
+                                                                Text(
+                                                                    entry
+                                                                        .detail,
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                            12,
+                                                                        height:
+                                                                            1.35)),
+                                                              ])),
+                                                        ]));
+                                              })),
+                                ]))));
+              });
+        });
   }
 
   Widget _buildPublishAiTraceActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TextButton.icon(
+    return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      TextButton.icon(
           onPressed: _showPublishAiTraceDialog,
           icon: const Icon(Icons.bug_report_outlined),
-          label: const Text('Diagnostic IA'),
-        ),
-        if (_publishAiTraceEntries.isNotEmpty)
-          TextButton(
-            onPressed: _clearPublishAiTrace,
-            child: const Text('Effacer'),
-          ),
-      ],
-    );
+          label: const Text('Diagnostic IA')),
+      if (_publishAiTraceEntries.isNotEmpty)
+        TextButton(
+            onPressed: _clearPublishAiTrace, child: const Text('Effacer')),
+    ]);
   }
 
   void _setControllerText(TextEditingController controller, String value) {
     if (controller.text == value) return;
     _runWithoutMarkingUserEdits(() {
       controller.value = controller.value.copyWith(
-        text: value,
-        selection: TextSelection.collapsed(offset: value.length),
-        composing: TextRange.empty,
-      );
+          text: value,
+          selection: TextSelection.collapsed(offset: value.length),
+          composing: TextRange.empty);
     });
   }
 
@@ -1493,10 +1343,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   double? _extractBudgetAmountFromTranscript(String transcript) {
-    final matches = RegExp(
-      r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
-      caseSensitive: false,
-    ).allMatches(transcript);
+    final matches = RegExp(r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
+            caseSensitive: false)
+        .allMatches(transcript);
 
     for (final match in matches) {
       final raw = (match.group(1) ?? '').replaceAll(',', '.');
@@ -1539,11 +1388,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final title = (draft['title'] ?? draft['titre'] ?? '').toString().trim();
     final description = _buildRichDraftDescription(draft);
     final category = _resolvePublishCategoryLabel(
-      (draft['category'] ?? draft['categorie'] ?? '').toString(),
-    );
-    final missionDelay = _normalizeDraftMissionDelay(
-      (draft['urgence'] ?? '').toString(),
-    );
+        (draft['category'] ?? draft['categorie'] ?? '').toString());
+    final missionDelay =
+        _normalizeDraftMissionDelay((draft['urgence'] ?? '').toString());
     final budget = draft['budget'] is Map
         ? Map<String, dynamic>.from(draft['budget'] as Map)
         : const <String, dynamic>{};
@@ -1564,10 +1411,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // user input. If the field is empty (user typed then cleared, or never
     // typed), we still apply the AI suggestion — otherwise the IA button
     // appears broken because it never updates anything.
-    bool canFillController(
-      TextEditingController controller,
-      bool editedFlag,
-    ) {
+    bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
 
@@ -1616,9 +1460,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     _applyDetectedCityData(
-      city: (draft['city'] ?? draft['ville'] ?? '').toString(),
-      postalCode: (draft['postalCode'] ?? '').toString(),
-    );
+        city: (draft['city'] ?? draft['ville'] ?? '').toString(),
+        postalCode: (draft['postalCode'] ?? '').toString());
     _applyKeywordCategoryPairFromText('$title\n$description');
     // Guarantee the publish button re-evaluates after AI sets state variables
     // (_category, _missionDelay, _budgetType) that have no controller listeners.
@@ -1639,25 +1482,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   CityRecord? _extractCityRecordFromTranscript(String transcript,
       {String? cp}) {
     if (cp != null && cp.trim().isNotEmpty) {
-      return FrenchCityPostalValidator.instance.resolveCanonicalCity(
-        city: '',
-        postalCode: cp.trim(),
-      );
+      return FrenchCityPostalValidator.instance
+          .resolveCanonicalCity(city: '', postalCode: cp.trim());
     }
 
     // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
     final m = RegExp(
-      r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{2,40})\b",
-      caseSensitive: false,
-    ).firstMatch(transcript);
+            r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{2,40})\b",
+            caseSensitive: false)
+        .firstMatch(transcript);
 
     final rawCity = m?.group(1)?.trim();
     if (rawCity == null || rawCity.isEmpty) return null;
 
-    return FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: rawCity,
-      postalCode: '',
-    );
+    return FrenchCityPostalValidator.instance
+        .resolveCanonicalCity(city: rawCity, postalCode: '');
   }
 
   String? _resolvePublishCategoryLabel(String? rawCategory) {
@@ -1677,17 +1516,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     String? city,
     String? postalCode,
   }) {
-    return FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: city,
-      postalCode: postalCode,
-    );
+    return FrenchCityPostalValidator.instance
+        .resolveCanonicalCity(city: city, postalCode: postalCode);
   }
 
   void _canonicalizeLocationInputs() {
     final best = _resolveCanonicalCityRecord(
-      city: _locationController.text,
-      postalCode: _postalCodeController.text,
-    );
+        city: _locationController.text, postalCode: _postalCodeController.text);
     if (best == null) return;
 
     final sameCity = _locationController.text.trim() == best.name;
@@ -1704,10 +1539,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final rawCity = (city ?? '').trim();
     final rawPostalCode = (postalCode ?? '').trim();
 
-    final best = _resolveCanonicalCityRecord(
-      city: rawCity,
-      postalCode: rawPostalCode,
-    );
+    final best =
+        _resolveCanonicalCityRecord(city: rawCity, postalCode: rawPostalCode);
 
     if (best != null) {
       _applyCity(best);
@@ -1719,8 +1552,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // retrouve bloque plus tard par la validation "ville/CP".
     if (kDebugMode && (rawCity.isNotEmpty || rawPostalCode.isNotEmpty)) {
       debugPrint(
-        '[Publish] IA location ignored: unresolved city="$rawCity" postalCode="$rawPostalCode"',
-      );
+          '[Publish] IA location ignored: unresolved city="$rawCity" postalCode="$rawPostalCode"');
     }
   }
 
@@ -1773,10 +1605,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final t = transcript.trim();
     if (t.isEmpty) return;
 
-    bool canFillController(
-      TextEditingController controller,
-      bool editedFlag,
-    ) {
+    bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
 
@@ -2034,14 +1863,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       try {
         await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-          user: user,
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: true,
-        );
+            user: user,
+            forceRefreshToken: true,
+            forceRefreshAppCheckToken: true);
       } catch (error) {
         debugPrint(
-          '[Publish] Préparation accès profil téléphone échouée, fallback cache/Auth: $error',
-        );
+            '[Publish] Préparation accès profil téléphone échouée, fallback cache/Auth: $error');
       }
 
       DocumentSnapshot<Map<String, dynamic>>? doc;
@@ -2051,25 +1878,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             .timeout(const Duration(seconds: 5));
       } catch (serverError) {
         debugPrint(
-          '[Publish] Lecture serveur téléphone profil impossible, fallback cache: $serverError',
-        );
+            '[Publish] Lecture serveur téléphone profil impossible, fallback cache: $serverError');
         try {
           doc = await userRef
               .get(const GetOptions(source: Source.cache))
               .timeout(const Duration(seconds: 3));
         } catch (cacheError) {
           debugPrint(
-            '[Publish] Lecture cache téléphone profil impossible, fallback Auth: $cacheError',
-          );
+              '[Publish] Lecture cache téléphone profil impossible, fallback Auth: $cacheError');
         }
       }
 
       final data = doc?.data();
       final rawPhone = _firstNonEmptyPublishPhone(
-        data,
-        const ['phone', 'phoneNumber', 'phone_number'],
-        fallbackValues: <String>[user.phoneNumber ?? ''],
-      );
+          data, const ['phone', 'phoneNumber', 'phone_number'],
+          fallbackValues: <String>[user.phoneNumber ?? '']);
       final phoneCountryCode =
           data == null ? null : data['phoneCountryCode']?.toString().trim();
 
@@ -2080,10 +1903,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       setState(() {
-        _applyPublishPhoneFromProfile(
-          rawPhone,
-          explicitCountryCode: phoneCountryCode,
-        );
+        _applyPublishPhoneFromProfile(rawPhone,
+            explicitCountryCode: phoneCountryCode);
       });
       _recompute();
     } catch (error) {
@@ -2116,10 +1937,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
+          user: user, forceRefreshToken: true, forceRefreshAppCheckToken: true);
       DocumentSnapshot<Map<String, dynamic>> doc;
       try {
         doc = await userRef
@@ -2142,16 +1960,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       CityRecord? cityRecord;
       if (profilePostalCode.isNotEmpty) {
         cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-          city: profileCity,
-          postalCode: profilePostalCode,
-        );
+            city: profileCity, postalCode: profilePostalCode);
       }
       if (cityRecord == null && profileCity.isNotEmpty) {
         final matches = FrenchCityPostalValidator.instance.searchSuggestions(
-          profileCity,
-          postalCodeHint: profilePostalCode,
-          limit: 5,
-        );
+            profileCity,
+            postalCodeHint: profilePostalCode,
+            limit: 5);
         for (final candidate in matches) {
           if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
             cityRecord = candidate;
@@ -2184,10 +1999,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           changed = true;
         }
 
-        final dept = cityRecord?.dept ??
-            departmentFromPostalCode(
-              resolvedPostalCode,
-            );
+        final dept =
+            cityRecord?.dept ?? departmentFromPostalCode(resolvedPostalCode);
         if (dept != null && dept.isNotEmpty) {
           _selectedDeptCode = dept;
           _selectedPhoneCountryCode = _countryCodeForDept(dept);
@@ -2219,17 +2032,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final baseColor = base.color ?? Colors.black87;
 
     return RichText(
-      text: TextSpan(
-        style: base.copyWith(color: baseColor),
-        children: [
-          TextSpan(text: text),
-          const TextSpan(
-            text: ' *',
-            style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
+        text: TextSpan(style: base.copyWith(color: baseColor), children: [
+      TextSpan(text: text),
+      const TextSpan(
+          text: ' *',
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+    ]));
   }
 
   bool _showAiPendingForController(TextEditingController controller) {
@@ -2248,22 +2056,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) {
     if (!showPending) return child;
 
-    return Stack(
-      children: [
-        child,
-        Positioned.fill(
+    return Stack(children: [
+      child,
+      Positioned.fill(
           child: IgnorePointer(
-            child: Align(
-              alignment: alignment,
-              child: Padding(
-                padding: padding,
-                child: const _FieldPendingDots(),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+              child: Align(
+                  alignment: alignment,
+                  child: Padding(
+                      padding: padding, child: const _FieldPendingDots())))),
+    ]);
   }
 
   String? _validatePublishTitle(String? value) {
@@ -2300,10 +2101,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Merci de saisir une ville';
     }
 
-    final result = FrenchCityPostalValidator.instance.validate(
-      city: trimmed,
-      postalCode: _postalCodeController.text,
-    );
+    final result = FrenchCityPostalValidator.instance
+        .validate(city: trimmed, postalCode: _postalCodeController.text);
     if (!result.isKnownCity) {
       return 'Choisissez une ville dans la liste ou vérifiez l\'orthographe.';
     }
@@ -2319,10 +2118,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Code postal invalide';
     }
 
-    final result = FrenchCityPostalValidator.instance.validate(
-      city: _locationController.text,
-      postalCode: trimmed,
-    );
+    final result = FrenchCityPostalValidator.instance
+        .validate(city: _locationController.text, postalCode: trimmed);
     if (!result.isKnownCity) {
       return null;
     }
@@ -2549,12 +2346,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _triggerPublishFieldShake(fieldId);
       final targetContext = _publishFieldKeyFor(fieldId).currentContext;
       if (targetContext != null) {
-        await Scrollable.ensureVisible(
-          targetContext,
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
-          alignment: 0.18,
-        );
+        await Scrollable.ensureVisible(targetContext,
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: 0.18);
       }
       break;
     }
@@ -2586,38 +2381,34 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final isShaking = _shakingPublishFieldId == fieldId;
 
     return TweenAnimationBuilder<double>(
-      key: ValueKey<String>('publish-field-$fieldId-$_publishShakeTick'),
-      tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
-      duration: const Duration(milliseconds: 420),
-      builder: (context, value, animatedChild) {
-        final dx =
-            isShaking ? math.sin(value * math.pi * 6) * (1 - value) * 12 : 0.0;
-        return Transform.translate(
-          offset: Offset(dx, 0),
-          child: animatedChild,
-        );
-      },
-      child: AnimatedContainer(
-        key: _publishFieldKeyFor(fieldId),
-        duration: const Duration(milliseconds: 180),
-        padding: invalid ? const EdgeInsets.all(6) : EdgeInsets.zero,
-        decoration: invalid
-            ? BoxDecoration(
-                color: const Color(0xFFFFF1F2),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFDC2626), width: 1.4),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1FDC2626),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              )
-            : null,
-        child: child,
-      ),
-    );
+        key: ValueKey<String>('publish-field-$fieldId-$_publishShakeTick'),
+        tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
+        duration: const Duration(milliseconds: 420),
+        builder: (context, value, animatedChild) {
+          final dx = isShaking
+              ? math.sin(value * math.pi * 6) * (1 - value) * 12
+              : 0.0;
+          return Transform.translate(
+              offset: Offset(dx, 0), child: animatedChild);
+        },
+        child: AnimatedContainer(
+            key: _publishFieldKeyFor(fieldId),
+            duration: const Duration(milliseconds: 180),
+            padding: invalid ? const EdgeInsets.all(6) : EdgeInsets.zero,
+            decoration: invalid
+                ? BoxDecoration(
+                    color: const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: const Color(0xFFDC2626), width: 1.4),
+                    boxShadow: const [
+                        BoxShadow(
+                            color: Color(0x1FDC2626),
+                            blurRadius: 12,
+                            offset: Offset(0, 4)),
+                      ])
+                : null,
+            child: child));
   }
 
   Widget _buildPublishValidationBanner() {
@@ -2627,39 +2418,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E6),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFC78F)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+            color: const Color(0xFFFFF3E6),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFFC78F))),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(
-              Icons.error_outline_rounded,
-              color: Color(0xFFB45309),
-              size: 18,
-            ),
-          ),
+              padding: EdgeInsets.only(top: 1),
+              child: Icon(Icons.error_outline_rounded,
+                  color: Color(0xFFB45309), size: 18)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              'Complète les champs mis en évidence : ${missing.join(', ')}.',
-              style: const TextStyle(
-                fontSize: 12,
-                height: 1.35,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF92400E),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+              child: Text(
+                  'Complète les champs mis en évidence : ${missing.join(', ')}.',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.35,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF92400E)))),
+        ]));
   }
 
   void _recompute() {
@@ -2679,81 +2458,63 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final overlayTheme = context.prestoOverlayTheme;
 
     final startInSignup = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: overlayTheme.surfaceColor,
-      shape: overlayTheme.sheetShape,
-      builder: (ctx) {
-        final bottom = MediaQuery.of(ctx).viewInsets.bottom;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                width: 48,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const Text(
-                'Connecte-toi pour publier',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Ton formulaire reste rempli. Connecte-toi ou crée ton compte pour finaliser la publication.',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Je me connecte'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(color: Colors.grey.shade400),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text("Je crée mon compte"),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Plus tard'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: overlayTheme.surfaceColor,
+        shape: overlayTheme.sheetShape,
+        builder: (ctx) {
+          final bottom = MediaQuery.of(ctx).viewInsets.bottom;
+          return Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
+              child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                        width: 48,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(999))),
+                    const Text('Connecte-toi pour publier',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    const Text(
+                        'Ton formulaire reste rempli. Connecte-toi ou crée ton compte pour finaliser la publication.',
+                        style: TextStyle(fontSize: 14, color: Colors.black87)),
+                    const SizedBox(height: 18),
+                    ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoOrange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16))),
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Je me connecte')),
+                    const SizedBox(height: 10),
+                    OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(color: Colors.grey.shade400),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16))),
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text("Je crée mon compte")),
+                    TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(null),
+                        child: const Text('Plus tard')),
+                  ]));
+        });
 
     if (startInSignup == null) return false;
 
     if (!mounted) return false;
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => AccountPage(startInSignup: startInSignup),
-      ),
-    );
+    await Navigator.of(context).push(MaterialPageRoute(
+        fullscreenDialog: true, builder: (_) => AccountPage()));
 
     if (!mounted) return false;
 
@@ -2801,13 +2562,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _onPublishPressed() async {
     logRuntimeAction(
-      area: 'publish',
-      action: 'tap-submit',
-      details: <String, Object?>{
-        'signedIn': _authOrNull?.currentUser != null,
-        'category': _category ?? '',
-      },
-    );
+        area: 'publish',
+        action: 'tap-submit',
+        details: <String, Object?>{
+          'signedIn': _authOrNull?.currentUser != null,
+          'category': _category ?? '',
+        });
 
     _canonicalizeLocationInputs();
 
@@ -2828,12 +2588,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || !_requiredOk()) {
       logRuntimeAction(
-        area: 'publish',
-        action: 'blocked-validation',
-        details: <String, Object?>{
-          'category': _category ?? '',
-        },
-      );
+          area: 'publish',
+          action: 'blocked-validation',
+          details: <String, Object?>{
+            'category': _category ?? '',
+          });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToFirstInvalidPublishField();
       });
@@ -2842,10 +2601,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) {
-      logRuntimeAction(
-        area: 'publish',
-        action: 'blocked-auth',
-      );
+      logRuntimeAction(area: 'publish', action: 'blocked-auth');
       return;
     }
 
@@ -2861,11 +2617,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_isListening) return;
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) {
-      _appendPublishAiTrace(
-        'auth',
-        'Connexion requise avant démarrage micro',
-        level: PublishAiTraceLevel.warning,
-      );
+      _appendPublishAiTrace('auth', 'Connexion requise avant démarrage micro',
+          level: PublishAiTraceLevel.warning);
       return;
     }
     // Profile completeness gate: the AI button only opens after the user
@@ -2874,11 +2627,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // (and gives a clear signal to incomplete accounts).
     final readiness = await _publishAiProfileReadiness.check();
     if (!readiness.isReady) {
-      _appendPublishAiTrace(
-        'profile_check',
-        'Profil non complet — accès IA bloqué (${readiness.missingFields.join(", ")})',
-        level: PublishAiTraceLevel.warning,
-      );
+      _appendPublishAiTrace('profile_check',
+          'Profil non complet — accès IA bloqué (${readiness.missingFields.join(", ")})',
+          level: PublishAiTraceLevel.warning);
       if (!mounted) return;
       showErrorSnackBar(context, readiness.describe());
       return;
@@ -2891,9 +2642,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _appendPublishAiTrace(
         'start_mic', 'Demande de démarrage du micro classique');
 
-    final appCheckReady = await _ensureAppCheckReady(
-      flow: kIsWeb ? 'webMic' : 'mobileMic',
-    );
+    final appCheckReady =
+        await _ensureAppCheckReady(flow: kIsWeb ? 'webMic' : 'mobileMic');
     if (!appCheckReady) return;
 
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
@@ -2901,9 +2651,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (kIsWeb) {
       try {
         final secureContext = await _requirePublishAiSecureContext(
-          stage: 'webMic.start',
-          forceRefreshToken: true,
-        );
+            stage: 'webMic.start', forceRefreshToken: true);
         if (secureContext == null) return;
         final uid = secureContext.uid;
 
@@ -2912,39 +2660,28 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         await _webRec.start();
         _rememberAdminAudioRuntime(
-          flowKey: 'classic_web',
-          label: 'Micro classique web',
-          detail: _classicAdminAudioRuntimeDetail(),
-        );
+            flowKey: 'classic_web',
+            label: 'Micro classique web',
+            detail: _classicAdminAudioRuntimeDetail());
         if (!mounted) return;
         setState(() => _isListening = true);
-        _appendPublishAiTrace(
-          'start_mic',
-          'Micro web démarré',
-          level: PublishAiTraceLevel.success,
-        );
+        _appendPublishAiTrace('start_mic', 'Micro web démarré',
+            level: PublishAiTraceLevel.success);
       } catch (e, st) {
         await CrashlyticsContext.recordError(
-          e is Exception ? e : Exception(e.toString()),
-          st,
-          reason: 'Web mic start failed',
-          fatal: false,
-          keys: {
-            'component': 'Main',
-            'flow': 'webMic',
-            'step': 'start',
-          },
-        );
+            e is Exception ? e : Exception(e.toString()), st,
+            reason: 'Web mic start failed',
+            fatal: false,
+            keys: {
+              'component': 'Main',
+              'flow': 'webMic',
+              'step': 'start',
+            });
         if (!mounted) return;
-        _appendPublishAiTrace(
-          'start_mic',
-          _formatMicroIaRuntimeError(e),
-          level: PublishAiTraceLevel.error,
-        );
-        showSuccessSnackBar(
-          context,
-          'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}',
-        );
+        _appendPublishAiTrace('start_mic', _formatMicroIaRuntimeError(e),
+            level: PublishAiTraceLevel.error);
+        showSuccessSnackBar(context,
+            'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}');
       }
       return;
     }
@@ -2953,77 +2690,56 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       _recordingPath = null;
       final secureContext = await _requirePublishAiSecureContext(
-        stage: 'mobileMic.start',
-        forceRefreshToken: true,
-      );
+          stage: 'mobileMic.start', forceRefreshToken: true);
       if (secureContext == null) return;
 
       if (await _recorder.hasPermission()) {
         final filePath =
             await createTempAudioPath(prefix: 'presto', extension: 'm4a');
         await _recorder.start(
-          RecordConfig(
-            encoder: AudioEncoder.aacLc,
-            sampleRate: 44100,
-            numChannels: 1,
-          ),
-          path: filePath,
-        );
+            RecordConfig(
+                encoder: AudioEncoder.aacLc, sampleRate: 44100, numChannels: 1),
+            path: filePath);
         _recordingPath = filePath;
       } else {
-        _appendPublishAiTrace(
-          'permission_micro',
-          'Permission micro refusée',
-          level: PublishAiTraceLevel.error,
-        );
+        _appendPublishAiTrace('permission_micro', 'Permission micro refusée',
+            level: PublishAiTraceLevel.error);
         if (!mounted) return;
         await showDialog<void>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Microphone non autorisé'),
-            content: const Text(
-              'Pour utiliser la dictée IA, autorise l\'accès au microphone dans les paramètres de ton téléphone :\nParamètres → Applications → Presto → Microphone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+            context: context,
+            builder: (ctx) => AlertDialog(
+                    title: const Text('Microphone non autorisé'),
+                    content: const Text(
+                        'Pour utiliser la dictée IA, autorise l\'accès au microphone dans les paramètres de ton téléphone :\nParamètres → Applications → Presto → Microphone.'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('OK')),
+                    ]));
         return;
       }
     } catch (e) {
       debugPrint('Recorder start error: $e');
       _recordingPath = null;
-      _appendPublishAiTrace(
-        'start_mic',
-        _formatMicroIaRuntimeError(e),
-        level: PublishAiTraceLevel.error,
-      );
+      _appendPublishAiTrace('start_mic', _formatMicroIaRuntimeError(e),
+          level: PublishAiTraceLevel.error);
       if (mounted) {
         showErrorSnackBar(
-          context,
-          'Micro indisponible: ${_formatMicroIaRuntimeError(e)}',
-        );
+            context, 'Micro indisponible: ${_formatMicroIaRuntimeError(e)}');
       }
       return;
     }
 
     setState(() {
       _rememberAdminAudioRuntime(
-        flowKey: 'classic_mobile',
-        label: 'Micro classique mobile',
-        detail: _classicAdminAudioRuntimeDetail(),
-      );
+          flowKey: 'classic_mobile',
+          label: 'Micro classique mobile',
+          detail: _classicAdminAudioRuntimeDetail());
       _isListening = true;
     });
-    _appendPublishAiTrace(
-      'start_mic',
-      kIsWeb ? 'Micro en écoute' : 'Enregistrement mobile lancé en AAC/m4a',
-      level: PublishAiTraceLevel.success,
-    );
+    _appendPublishAiTrace('start_mic',
+        kIsWeb ? 'Micro en écoute' : 'Enregistrement mobile lancé en AAC/m4a',
+        level: PublishAiTraceLevel.success);
   }
 
   Future<void> _stopMic() async {
@@ -3032,8 +2748,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
 
     final appCheckReady = await _ensureAppCheckReady(
-      flow: kIsWeb ? 'webMic.stop' : 'mobileMic.stop',
-    );
+        flow: kIsWeb ? 'webMic.stop' : 'mobileMic.stop');
     if (!appCheckReady) {
       if (kIsWeb) {
         unawaited(() async {
@@ -3062,26 +2777,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       try {
         final secureContext = await _requirePublishAiSecureContext(
-          stage: 'webMic.stop',
-          forceRefreshToken: true,
-          showUserMessage: false,
-        );
+            stage: 'webMic.stop',
+            forceRefreshToken: true,
+            showUserMessage: false);
         final uid = secureContext?.uid;
         if (uid == null)
           throw const MicroIaClientAuthException(
-            code: 'auth-missing',
-            message: 'Connecte-toi pour utiliser la dictée IA.',
-          );
+              code: 'auth-missing',
+              message: 'Connecte-toi pour utiliser la dictée IA.');
 
         final blob = await _webRec.stopToBlob();
-        final audioUpload = await webBlobToMicroIaUpload(
-          blob,
-          preferRawBytes: true,
-        );
-        _appendPublishAiTrace(
-          'web_audio',
-          'Blob converti: ${audioUpload.bytes.length} bytes, ${audioUpload.contentType}, .${audioUpload.extension}',
-        );
+        final audioUpload =
+            await webBlobToMicroIaUpload(blob, preferRawBytes: true);
+        _appendPublishAiTrace('web_audio',
+            'Blob converti: ${audioUpload.bytes.length} bytes, ${audioUpload.contentType}, .${audioUpload.extension}');
         if (audioUpload.bytes.isEmpty) {
           throw Exception('Audio invalide (fichier vide).');
         }
@@ -3092,43 +2801,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         }
 
         final audioResult = await _transcribePublishAudio(
-          ownerUid: uid,
-          audioBytes: audioUpload.bytes,
-          contentType: audioUpload.contentType,
-          extension: audioUpload.extension,
-        );
+            ownerUid: uid,
+            audioBytes: audioUpload.bytes,
+            contentType: audioUpload.contentType,
+            extension: audioUpload.extension);
 
         if (!mounted) return;
 
-        await _applyPublishDraftFromTranscript(
-          audioResult['text'] as String,
-          combinedDraft: audioResult['draft'] as Map<String, dynamic>?,
-        );
+        await _applyPublishDraftFromTranscript(audioResult['text'] as String,
+            combinedDraft: audioResult['draft'] as Map<String, dynamic>?);
       } catch (e, st) {
         await CrashlyticsContext.recordError(
-          e is Exception ? e : Exception(e.toString()),
-          st,
-          reason: 'Web mic stop/process failed',
-          fatal: false,
-          keys: {
-            'component': 'Main',
-            'flow': 'webMic',
-            'step': 'stop',
-          },
-        );
+            e is Exception ? e : Exception(e.toString()), st,
+            reason: 'Web mic stop/process failed',
+            fatal: false,
+            keys: {
+              'component': 'Main',
+              'flow': 'webMic',
+              'step': 'stop',
+            });
         if (!mounted) return;
-        _appendPublishAiTrace(
-          'stop_mic',
-          _formatMicroIaRuntimeError(e),
-          level: PublishAiTraceLevel.error,
-        );
+        _appendPublishAiTrace('stop_mic', _formatMicroIaRuntimeError(e),
+            level: PublishAiTraceLevel.error);
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showSuccessSnackBar(
-            context,
-            'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}',
-          );
+          showSuccessSnackBar(context,
+              'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}');
         }
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
@@ -3144,22 +2843,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       _recordingPath = null;
       _appendPublishAiTrace(
-        'mobile_audio',
-        recordedPath == null
-            ? 'Aucun fichier audio retourné par le recorder'
-            : 'Fichier enregistré: $recordedPath',
-        level: recordedPath == null
-            ? PublishAiTraceLevel.warning
-            : PublishAiTraceLevel.success,
-      );
+          'mobile_audio',
+          recordedPath == null
+              ? 'Aucun fichier audio retourné par le recorder'
+              : 'Fichier enregistré: $recordedPath',
+          level: recordedPath == null
+              ? PublishAiTraceLevel.warning
+              : PublishAiTraceLevel.success);
     } catch (e) {
       debugPrint('Recorder stop error: $e');
       _recordingPath = null;
-      _appendPublishAiTrace(
-        'mobile_audio',
-        _formatMicroIaRuntimeError(e),
-        level: PublishAiTraceLevel.error,
-      );
+      _appendPublishAiTrace('mobile_audio', _formatMicroIaRuntimeError(e),
+          level: PublishAiTraceLevel.error);
     }
     setState(() {
       _isListening = false;
@@ -3170,19 +2865,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       try {
         await _uploadAndTranscribe(recordedPath);
       } catch (e) {
-        _appendPublishAiTrace(
-          'stop_mic',
-          _formatMicroIaRuntimeError(e),
-          level: PublishAiTraceLevel.error,
-        );
+        _appendPublishAiTrace('stop_mic', _formatMicroIaRuntimeError(e),
+            level: PublishAiTraceLevel.error);
         if (!mounted) return;
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showSuccessSnackBar(
-            context,
-            'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
-          );
+          showSuccessSnackBar(context,
+              'Erreur transcription: ${_formatMicroIaRuntimeError(e)}');
         }
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
@@ -3191,11 +2881,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     if (!mounted) return;
-    _appendPublishAiTrace(
-      'stop_mic',
-      'Arrêt sans audio exploitable',
-      level: PublishAiTraceLevel.warning,
-    );
+    _appendPublishAiTrace('stop_mic', 'Arrêt sans audio exploitable',
+        level: PublishAiTraceLevel.warning);
     showSuccessSnackBar(context, 'Aucun audio disponible');
   }
 
@@ -3203,27 +2890,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Upload vers Firebase Storage puis appel de la Cloud Function.
     // Le traitement reste côté backend pour conserver les secrets serveur.
     final secureContext = await _requirePublishAiSecureContext(
-      stage: 'uploadAndTranscribe',
-      forceRefreshToken: true,
-      showUserMessage: false,
-    );
+        stage: 'uploadAndTranscribe',
+        forceRefreshToken: true,
+        showUserMessage: false);
     final uid = secureContext?.uid;
     if (uid == null) {
       _appendPublishAiTrace(
-        'auth',
-        'Utilisateur non connecté au moment de l\'upload',
-        level: PublishAiTraceLevel.error,
-      );
+          'auth', 'Utilisateur non connecté au moment de l\'upload',
+          level: PublishAiTraceLevel.error);
       throw 'Utilisateur non connecté';
     }
     final xfile = XFile(localPath);
     final audioBytes = await xfile.readAsBytes();
     if (audioBytes.isEmpty) {
       _appendPublishAiTrace(
-        'mobile_audio',
-        'Fichier audio introuvable ou vide: $localPath',
-        level: PublishAiTraceLevel.error,
-      );
+          'mobile_audio', 'Fichier audio introuvable ou vide: $localPath',
+          level: PublishAiTraceLevel.error);
       throw 'Fichier audio introuvable';
     }
     final lower = localPath.toLowerCase();
@@ -3231,24 +2913,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final isMp4 = lower.endsWith('.mp4');
     final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
     final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
-    _appendPublishAiTrace(
-      'mobile_audio',
-      'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
-      level: PublishAiTraceLevel.success,
-    );
+    _appendPublishAiTrace('mobile_audio',
+        'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
+        level: PublishAiTraceLevel.success);
     final audioResult = await _transcribePublishAudio(
-      ownerUid: uid,
-      audioBytes: audioBytes,
-      contentType: contentType,
-      extension: ext,
-    );
+        ownerUid: uid,
+        audioBytes: audioBytes,
+        contentType: contentType,
+        extension: ext);
 
     if (!mounted) return;
 
-    await _applyPublishDraftFromTranscript(
-      audioResult['text'] as String,
-      combinedDraft: audioResult['draft'] as Map<String, dynamic>?,
-    );
+    await _applyPublishDraftFromTranscript(audioResult['text'] as String,
+        combinedDraft: audioResult['draft'] as Map<String, dynamic>?);
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
@@ -3262,20 +2939,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) {
       _appendPublishAiTrace(
-        'auth',
-        'Connexion requise avant analyse IA textuelle',
-        level: PublishAiTraceLevel.warning,
-      );
+          'auth', 'Connexion requise avant analyse IA textuelle',
+          level: PublishAiTraceLevel.warning);
       return;
     }
 
     final readiness = await _publishAiProfileReadiness.check();
     if (!readiness.isReady) {
-      _appendPublishAiTrace(
-        'profile_check',
-        'Profil non complet — accès IA bloqué (${readiness.missingFields.join(", ")})',
-        level: PublishAiTraceLevel.warning,
-      );
+      _appendPublishAiTrace('profile_check',
+          'Profil non complet — accès IA bloqué (${readiness.missingFields.join(", ")})',
+          level: PublishAiTraceLevel.warning);
       if (!mounted) return;
       showErrorSnackBar(context, readiness.describe());
       return;
@@ -3287,17 +2960,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      _appendPublishAiTrace(
-        'draft_remote',
-        'Appel generateOfferDraftV2 depuis le bouton IA (format riche)',
-      );
+      _appendPublishAiTrace('draft_remote',
+          'Appel generateOfferDraftV2 depuis le bouton IA (format riche)');
       final draft = await _aiService.generateOfferDraftV2(
-        text: input,
-        city: _locationController.text.trim().isNotEmpty
-            ? _locationController.text.trim()
-            : null,
-        category: _category,
-      );
+          text: input,
+          city: _locationController.text.trim().isNotEmpty
+              ? _locationController.text.trim()
+              : null,
+          category: _category);
 
       if (!mounted) return;
 
@@ -3326,27 +2996,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             beforeCategory != _category;
 
         showSuccessSnackBar(
-          context,
-          didChange
-              ? '✨ Analyse IA complétée\nChamps remplis automatiquement'
-              : '✨ Analyse IA complétée — aucun nouveau champ à remplir',
-        );
+            context,
+            didChange
+                ? '✨ Analyse IA complétée\nChamps remplis automatiquement'
+                : '✨ Analyse IA complétée — aucun nouveau champ à remplir');
         return;
       }
 
       final code = (draft['code'] ?? '').toString();
       showSuccessSnackBar(
-        context,
-        code == 'deadline-exceeded'
-            ? 'Connexion lente, réessaie.'
-            : 'Erreur IA: ${(draft['error'] ?? 'inconnue').toString()}',
-      );
+          context,
+          code == 'deadline-exceeded'
+              ? 'Connexion lente, réessaie.'
+              : 'Erreur IA: ${(draft['error'] ?? 'inconnue').toString()}');
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(
-        context,
-        "Erreur lors de l'analyse : ${_formatMicroIaRuntimeError(e)}",
-      );
+      showSuccessSnackBar(context,
+          "Erreur lors de l'analyse : ${_formatMicroIaRuntimeError(e)}");
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
@@ -3413,8 +3079,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
 
   void _markLocationPostalPrefilledByAiIfChanged(
-    Map<String, String> beforeSnapshot,
-  ) {
+      Map<String, String> beforeSnapshot) {
     final locationChanged =
         beforeSnapshot['location'] != _locationController.text;
     final postalChanged =
@@ -3471,15 +3136,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      query,
-      postalCodeHint: _postalCodeController.text,
-      limit: 10,
-    );
+    final results = FrenchCityPostalValidator.instance.searchSuggestions(query,
+        postalCodeHint: _postalCodeController.text, limit: 10);
     final exactMatch = FrenchCityPostalValidator.instance.resolveExactTypedCity(
-      city: query,
-      postalCode: _postalCodeController.text,
-    );
+        city: query, postalCode: _postalCodeController.text);
     setState(() {
       _citySuggestions = results;
       _highlightedIndex = results.isNotEmpty ? 0 : -1;
@@ -3497,11 +3157,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final results = FrenchCityPostalValidator.instance.searchSuggestions(
-      '',
-      postalCodeHint: cp,
-      limit: 10,
-    );
+    final results = FrenchCityPostalValidator.instance
+        .searchSuggestions('', postalCodeHint: cp, limit: 10);
 
     if (!mounted) return;
 
@@ -3513,10 +3170,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final best = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-      city: _locationController.text,
-      postalCode: cp,
-    );
+    final best = FrenchCityPostalValidator.instance
+        .resolveCanonicalCity(city: _locationController.text, postalCode: cp);
 
     setState(() {
       _citySuggestions = results;
@@ -3568,57 +3223,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_citySuggestions.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(top: 4),
-      constraints: const BoxConstraints(maxHeight: 220),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 10,
-            spreadRadius: 1,
-            color: Colors.black12,
-          ),
-        ],
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: _citySuggestions.length,
-        itemBuilder: (context, index) {
-          final city = _citySuggestions[index];
-          final selected = index == _highlightedIndex;
+        margin: const EdgeInsets.only(top: 4),
+        constraints: const BoxConstraints(maxHeight: 220),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(blurRadius: 10, spreadRadius: 1, color: Colors.black12),
+            ]),
+        child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _citySuggestions.length,
+            itemBuilder: (context, index) {
+              final city = _citySuggestions[index];
+              final selected = index == _highlightedIndex;
 
-          return InkWell(
-            onTap: () => _applyCity(city, markAsUserEdited: true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              color: selected ? kPrestoBlue.withOpacity(0.08) : null,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${city.name} (${city.cp})',
-                      style: TextStyle(
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Dept ${city.dept}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
+              return InkWell(
+                  onTap: () => _applyCity(city, markAsUserEdited: true),
+                  child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      color: selected ? kPrestoBlue.withOpacity(0.08) : null,
+                      child: Row(children: [
+                        Expanded(
+                            child: Text('${city.name} (${city.cp})',
+                                style: TextStyle(
+                                    fontWeight: selected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400))),
+                        const SizedBox(width: 8),
+                        Text('Dept ${city.dept}',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600)),
+                      ])));
+            }));
   }
 
   // --- GESTION DES PHOTOS ---
@@ -3630,79 +3268,59 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final overlayTheme = context.prestoOverlayTheme;
 
     await showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: overlayTheme.surfaceColor,
-          surfaceTintColor: overlayTheme.surfaceTintColor,
-          shape: overlayTheme.dialogShape,
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: overlayTheme.dialogRadius,
-                child: Container(
-                  color: overlayTheme.surfaceColor,
-                  child: InteractiveViewer(
-                    minScale: 1.0,
-                    maxScale: 4.0,
-                    child: Image.memory(
-                      bytes,
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child: Text(
-                          'Image indisponible',
-                          style: TextStyle(color: Colors.black87),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Material(
-                  color: Colors.white,
-                  shape: const CircleBorder(),
-                  child: IconButton(
-                    tooltip: 'Fermer',
-                    icon:
-                        const Icon(Icons.close_rounded, color: Colors.black87),
-                    onPressed: () => Navigator.of(ctx).pop(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 12,
-                bottom: 12,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+        context: context,
+        barrierDismissible: true,
+        builder: (ctx) {
+          return Dialog(
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
+              shape: overlayTheme.dialogShape,
+              insetPadding: const EdgeInsets.all(16),
+              child: Stack(children: [
+                ClipRRect(
+                    borderRadius: overlayTheme.dialogRadius,
+                    child: Container(
+                        color: overlayTheme.surfaceColor,
+                        child: InteractiveViewer(
+                            minScale: 1.0,
+                            maxScale: 4.0,
+                            child: Image.memory(bytes,
+                                fit: BoxFit.contain,
+                                gaplessPlayback: true,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (_, __, ___) => const Center(
+                                    child: Text('Image indisponible',
+                                        style: TextStyle(
+                                            color: Colors.black87))))))),
+                Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Material(
+                        color: Colors.white,
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                            tooltip: 'Fermer',
+                            icon: const Icon(Icons.close_rounded,
+                                color: Colors.black87),
+                            onPressed: () => Navigator.of(ctx).pop()))),
+                Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.black12)),
+                        child: Text(label,
+                            style: const TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12)))),
+              ]));
+        });
   }
 
   Future<void> _onPhotoTileTap(int photoIndex) async {
@@ -3720,49 +3338,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final overlayTheme = context.prestoOverlayTheme;
 
     return showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: overlayTheme.surfaceColor,
-      shape: overlayTheme.sheetShape,
-      builder: (ctx) {
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
-                  title: Text(kIsWeb ? 'Fichiers / galerie' : 'Galerie'),
-                  onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
-                ),
-                ListTile(
-                  enabled: !kIsWeb,
-                  leading: const Icon(Icons.photo_camera_outlined),
-                  title: const Text('Appareil photo'),
-                  subtitle: kIsWeb
-                      ? const Text('Disponible sur mobile uniquement')
-                      : null,
-                  onTap: kIsWeb
-                      ? null
-                      : () => Navigator.of(ctx).pop(ImageSource.camera),
-                ),
-                const SizedBox(height: 6),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+        context: context,
+        backgroundColor: overlayTheme.surfaceColor,
+        shape: overlayTheme.sheetShape,
+        builder: (ctx) {
+          return SafeArea(
+              top: false,
+              child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(999))),
+                    ListTile(
+                        leading: const Icon(Icons.photo_library_outlined),
+                        title: Text(kIsWeb ? 'Fichiers / galerie' : 'Galerie'),
+                        onTap: () =>
+                            Navigator.of(ctx).pop(ImageSource.gallery)),
+                    ListTile(
+                        enabled: !kIsWeb,
+                        leading: const Icon(Icons.photo_camera_outlined),
+                        title: const Text('Appareil photo'),
+                        subtitle: kIsWeb
+                            ? const Text('Disponible sur mobile uniquement')
+                            : null,
+                        onTap: kIsWeb
+                            ? null
+                            : () => Navigator.of(ctx).pop(ImageSource.camera)),
+                    const SizedBox(height: 6),
+                  ])));
+        });
   }
 
   Future<void> _pickImage(int photoIndex) async {
@@ -3770,9 +3379,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         photoIndex >= _selectedPhotos.length) {
       final photoLabel = _maxListingPhotos > 1 ? 'photos' : 'photo';
       showSuccessSnackBar(
-        context,
-        'Maximum $_maxListingPhotos $photoLabel autorisées',
-      );
+          context, 'Maximum $_maxListingPhotos $photoLabel autorisées');
       return;
     }
 
@@ -3860,13 +3467,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   /// Crée des notifications pour les utilisateurs ayant cette catégorie en favori
-  Future<void> _createNotificationsForFavorites(
-    String offerId,
-    String category,
-    String? subCategory,
-    String offerTitle,
-    String publisherUserId,
-  ) async {
+  Future<void> _createNotificationsForFavorites(String offerId, String category,
+      String? subCategory, String offerTitle, String publisherUserId) async {
     // 🔒 Sécurité: la création de notifications se fait côté serveur (Cloud Functions)
     // afin d'éviter qu'un client puisse créer des notifications pour d'autres utilisateurs.
     return;
@@ -3886,98 +3488,86 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       try {
         await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-          user: user,
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: false,
-        );
+            user: user,
+            forceRefreshToken: true,
+            forceRefreshAppCheckToken: false);
       } catch (error, stackTrace) {
-        await CrashlyticsContext.recordError(
-          error,
-          stackTrace,
-          reason:
-              'publish blocked before submit: auth/appcheck/profile preflight failed',
-          fatal: false,
-          keys: <String, String>{
-            'component': 'PublishOfferPage',
-            'step': 'submit-preflight',
-            'uid': user.uid,
-          },
-        );
+        await CrashlyticsContext.recordError(error, stackTrace,
+            reason:
+                'publish blocked before submit: auth/appcheck/profile preflight failed',
+            fatal: false,
+            keys: <String, String>{
+              'component': 'PublishOfferPage',
+              'step': 'submit-preflight',
+              'uid': user.uid,
+            });
         if (UserProfileBootstrapService.isAppCheckFailure(error)) {
           debugPrint(
-            '[PublishOffer] App Check preflight failed; continuing to protected draft write retry: $error',
-          );
+              '[PublishOffer] App Check preflight failed; continuing to protected draft write retry: $error');
         } else {
           if (mounted) {
-            showErrorSnackBar(
-              context,
-              'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
-            );
+            showErrorSnackBar(context,
+                'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.');
           }
           return;
         }
       }
       logRuntimeAction(
-        area: 'publish',
-        action: 'submit-start',
-        details: <String, Object?>{
-          'userId': user.uid,
-          'category': _category ?? '',
-          'city': _locationController.text.trim(),
-          'hasPhotos': _selectedPhotos.isNotEmpty,
-        },
-      );
+          area: 'publish',
+          action: 'submit-start',
+          details: <String, Object?>{
+            'userId': user.uid,
+            'category': _category ?? '',
+            'city': _locationController.text.trim(),
+            'hasPhotos': _selectedPhotos.isNotEmpty,
+          });
       final budgetValue = _budgetType == 'À négocier'
           ? 0.0
           : (_parseBudget(_budgetController.text) ?? 0.0);
       final publishService =
           _marketplacePublishService ??= MarketplacePublishService();
       final publishResult = await publishService.publish(
-        ownerId: user.uid,
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        category:
-            _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
-        city: _locationController.text.trim(),
-        postalCode: _postalCodeController.text.trim(),
-        phone:
-            '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'
-                .trim(),
-        subCategory: _selectedSubCategory,
-        missionDelay: _missionDelay,
-        isUrgent: _isUrgent,
-        price: budgetValue,
-        budgetType: _budgetType,
-        photos: List<XFile>.from(_selectedPhotos),
-      );
+          ownerId: user.uid,
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          category: _resolvePublishCategoryLabel(_category) ??
+              (_category ?? '').trim(),
+          city: _locationController.text.trim(),
+          postalCode: _postalCodeController.text.trim(),
+          phone:
+              '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'
+                  .trim(),
+          subCategory: _selectedSubCategory,
+          missionDelay: _missionDelay,
+          isUrgent: _isUrgent,
+          price: budgetValue,
+          budgetType: _budgetType,
+          photos: List<XFile>.from(_selectedPhotos));
 
       // ✅ Analytics: publication
       await _logOfferPublished(
-        offerId: publishResult.listingId,
-        title: _titleController.text.trim(),
-        category: (_category ?? '').toString().trim(),
-        budget: _budgetController.text.trim(),
-        budgetType: _budgetType,
-      );
+          offerId: publishResult.listingId,
+          title: _titleController.text.trim(),
+          category: (_category ?? '').toString().trim(),
+          budget: _budgetController.text.trim(),
+          budgetType: _budgetType);
 
       // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
       await _createNotificationsForFavorites(
-        publishResult.listingId,
-        _category ?? '',
-        _selectedSubCategory,
-        _titleController.text.trim(),
-        user.uid,
-      );
+          publishResult.listingId,
+          _category ?? '',
+          _selectedSubCategory,
+          _titleController.text.trim(),
+          user.uid);
 
       logRuntimeAction(
-        area: 'publish',
-        action: 'submit-success',
-        details: <String, Object?>{
-          'listingId': publishResult.listingId,
-          'category': _category ?? '',
-          'city': _locationController.text.trim(),
-        },
-      );
+          area: 'publish',
+          action: 'submit-success',
+          details: <String, Object?>{
+            'listingId': publishResult.listingId,
+            'category': _category ?? '',
+            'city': _locationController.text.trim(),
+          });
 
       if (!mounted) return;
 
@@ -3985,37 +3575,26 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await showModerationPendingDialog(context);
         if (!mounted) return;
         appNavigatorKey.currentState?.pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const HomePage(initialIndex: 4),
-          ),
-        );
+            MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 4)));
         return;
       }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (_) => OfferDetailsPage(
-            offer: publishResult.detailData,
-            currentUserId: user.uid,
-            onBackToConsult: () {
-              appNavigatorKey.currentState?.pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => const HomePage(initialIndex: 4),
-                ),
-              );
-            },
-          ),
-        ),
-      );
+              offer: publishResult.detailData,
+              currentUserId: user.uid,
+              onBackToConsult: () {
+                appNavigatorKey.currentState?.pushReplacement(MaterialPageRoute(
+                    builder: (_) => const HomePage(initialIndex: 4)));
+              })));
     } catch (e) {
       logRuntimeAction(
-        area: 'publish',
-        action: 'submit-failure',
-        details: <String, Object?>{
-          'errorType': e.runtimeType,
-          'message': e,
-        },
-      );
+          area: 'publish',
+          action: 'submit-failure',
+          details: <String, Object?>{
+            'errorType': e.runtimeType,
+            'message': e,
+          });
       if (!mounted) return;
       final message = _formatPublishError(e);
       showErrorSnackBar(context, 'Erreur lors de la publication : $message');
@@ -4033,535 +3612,480 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final publishVisuallyDisabled = !_canPublish || _isSubmitting;
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-          backgroundColor: kPrestoOrange,
-          foregroundColor: Colors.white,
-          iconTheme: const IconThemeData(color: Colors.white),
-          actionsIconTheme: const IconThemeData(color: Colors.white),
-          elevation: 0,
-          title: const Text(
-            'Je publie une offre',
-            style: kPrestoAppBarTitleStyle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh_outlined),
-              tooltip: 'Réinitialiser tous les champs',
-              onPressed: () {
-                final overlayTheme = context.prestoOverlayTheme;
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    backgroundColor: overlayTheme.surfaceColor,
-                    surfaceTintColor: overlayTheme.surfaceTintColor,
-                    shape: overlayTheme.dialogShape,
-                    title: const Text(
-                      'Réinitialiser ?',
-                      style: kPrestoSectionTitleStyle,
-                    ),
-                    content: const Text(
-                      'Voulez-vous effacer tous les champs et recommencer ?',
-                      style: kPrestoBodyTextStyle,
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: kPrestoBlue,
-                        ),
-                        child: const Text('Annuler'),
-                      ),
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _resetAllFields();
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: kPrestoOrange,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Réinitialiser'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        body: SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode: _attemptedSubmit
-                ? AutovalidateMode.always
-                : AutovalidateMode.disabled,
-            child: ListView(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
-              children: [
-                const SizedBox(height: 6),
-                AiPublishControl(
-                  state: _aiPublishState,
-                  onStartRecording: _startMic,
-                  onStopRecording: _stopMic,
-                  onDiagnostic: _showPublishAiTraceDialog,
-                  onClear: _clearPublishAiTrace,
-                ),
-                const SizedBox(height: 16),
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+            resizeToAvoidBottomInset: true,
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+                systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+                backgroundColor: kPrestoOrange,
+                foregroundColor: Colors.white,
+                iconTheme: const IconThemeData(color: Colors.white),
+                actionsIconTheme: const IconThemeData(color: Colors.white),
+                elevation: 0,
+                title: const Text('Je publie une offre',
+                    style: kPrestoAppBarTitleStyle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                actions: [
+                  IconButton(
+                      icon: const Icon(Icons.refresh_outlined),
+                      tooltip: 'Réinitialiser tous les champs',
+                      onPressed: () {
+                        final overlayTheme = context.prestoOverlayTheme;
+                        showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                                    backgroundColor: overlayTheme.surfaceColor,
+                                    surfaceTintColor:
+                                        overlayTheme.surfaceTintColor,
+                                    shape: overlayTheme.dialogShape,
+                                    title: const Text('Réinitialiser ?',
+                                        style: kPrestoSectionTitleStyle),
+                                    content: const Text(
+                                        'Voulez-vous effacer tous les champs et recommencer ?',
+                                        style: kPrestoBodyTextStyle),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          style: TextButton.styleFrom(
+                                              foregroundColor: kPrestoBlue),
+                                          child: const Text('Annuler')),
+                                      FilledButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            _resetAllFields();
+                                          },
+                                          style: FilledButton.styleFrom(
+                                              backgroundColor: kPrestoOrange,
+                                              foregroundColor: Colors.white),
+                                          child: const Text('Réinitialiser')),
+                                    ]));
+                      }),
+                ]),
+            body: SafeArea(
+                child: Form(
+                    key: _formKey,
+                    autovalidateMode: _attemptedSubmit
+                        ? AutovalidateMode.always
+                        : AutovalidateMode.disabled,
+                    child: ListView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
+                        children: [
+                          const SizedBox(height: 6),
+                          AiPublishControl(
+                              state: _aiPublishState,
+                              onStartRecording: _startMic,
+                              onStopRecording: _stopMic,
+                              onDiagnostic: _showPublishAiTraceDialog,
+                              onClear: _clearPublishAiTrace),
+                          const SizedBox(height: 16),
 
-                // TITRE
-                _withPublishFieldHighlight(
-                  fieldId: 'title',
-                  child: _withAiPendingOverlay(
-                    showPending: _showAiPendingForController(_titleController),
-                    child: TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Titre de l’offre'),
-                        border: const OutlineInputBorder(),
-                        hintText: 'Ex : Monter un meuble IKEA',
-                      ),
-                      validator: _validatePublishTitle,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+                          // TITRE
+                          _withPublishFieldHighlight(
+                              fieldId: 'title',
+                              child: _withAiPendingOverlay(
+                                  showPending: _showAiPendingForController(
+                                      _titleController),
+                                  child: TextFormField(
+                                      controller: _titleController,
+                                      decoration: InputDecoration(
+                                          label: _requiredLabel(
+                                              'Titre de l’offre'),
+                                          border: const OutlineInputBorder(),
+                                          hintText:
+                                              'Ex : Monter un meuble IKEA'),
+                                      validator: _validatePublishTitle))),
+                          const SizedBox(height: 16),
 
-                // CATÉGORIE
-                _withPublishFieldHighlight(
-                  fieldId: 'category',
-                  child: _withAiPendingOverlay(
-                    showPending: _showAiPendingForCategory,
-                    child: DropdownButtonFormField<String>(
-                      value: _category,
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Catégorie'),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                      ),
-                      items: _categories
-                          .map(
-                            (cat) => DropdownMenuItem(
-                              value: cat,
-                              child: Text(cat),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _categoryEditedByUser = true;
-                          _category = value;
-                          _selectedSubCategory = null;
-                        });
-                        _recompute();
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Merci de choisir une catégorie';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+                          // CATÉGORIE
+                          _withPublishFieldHighlight(
+                              fieldId: 'category',
+                              child: _withAiPendingOverlay(
+                                  showPending: _showAiPendingForCategory,
+                                  child: DropdownButtonFormField<String>(
+                                      value: _category,
+                                      dropdownColor: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      decoration: InputDecoration(
+                                          label: _requiredLabel('Catégorie'),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 14)),
+                                      items: _categories
+                                          .map((cat) => DropdownMenuItem(
+                                              value: cat, child: Text(cat)))
+                                          .toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _categoryEditedByUser = true;
+                                          _category = value;
+                                          _selectedSubCategory = null;
+                                        });
+                                        _recompute();
+                                      },
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Merci de choisir une catégorie';
+                                        }
+                                        return null;
+                                      }))),
+                          const SizedBox(height: 16),
 
-                // SOUS-CATÉGORIE (dropdown dynamique)
-                if (_category != null)
-                  DropdownButtonFormField<String>(
-                    value: _selectedSubCategory,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      labelText: 'Sous-catégorie',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    items: (kCategorySubcategories[_category] ?? [])
-                        .map(
-                          (sub) => DropdownMenuItem(
-                            value: sub,
-                            child: Text(sub),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSubCategory = value;
-                      });
-                      _recompute();
-                    },
-                    validator: (_) => null,
-                  ),
-                if (_category != null) const SizedBox(height: 16),
+                          // SOUS-CATÉGORIE (dropdown dynamique)
+                          if (_category != null)
+                            DropdownButtonFormField<String>(
+                                value: _selectedSubCategory,
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                decoration: InputDecoration(
+                                    labelText: 'Sous-catégorie',
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 14)),
+                                items: (kCategorySubcategories[_category] ?? [])
+                                    .map((sub) => DropdownMenuItem(
+                                        value: sub, child: Text(sub)))
+                                    .toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedSubCategory = value;
+                                  });
+                                  _recompute();
+                                },
+                                validator: (_) => null),
+                          if (_category != null) const SizedBox(height: 16),
 
-                // DESCRIPTION
-                // ListenableBuilder permet de rafraîchir le suffixIcon IA
-                // dynamiquement à chaque frappe, sans reconstruire la page entière.
-                ListenableBuilder(
-                  listenable: _descriptionController,
-                  builder: (context, _) => _withPublishFieldHighlight(
-                    fieldId: 'description',
-                    child: _withAiPendingOverlay(
-                      showPending:
-                          _showAiPendingForController(_descriptionController),
-                      alignment: Alignment.topRight,
-                      padding: const EdgeInsets.only(top: 14, right: 42),
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        decoration: InputDecoration(
-                          label: _requiredLabel('Description détaillée'),
-                          alignLabelWithHint: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
-                          // Bouton IA textuel (✨) : visible dès que l'utilisateur
-                          // a saisi du texte. Déclenche l'analyse IA sans micro.
-                          suffixIcon:
-                              (_descriptionController.text.trim().isNotEmpty &&
-                                      !_isAnalyzing &&
-                                      !_isListening)
-                                  ? Tooltip(
-                                      message: 'Remplir les champs avec l\'IA',
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.auto_awesome,
-                                          color: Color(0xFF2D84F6),
-                                        ),
-                                        onPressed: _onTapAiAnalyze,
-                                      ),
-                                    )
-                                  : null,
-                        ),
-                        minLines: 4,
-                        maxLines: 8,
-                        validator: _validatePublishDescription,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+                          // DESCRIPTION
+                          // ListenableBuilder permet de rafraîchir le suffixIcon IA
+                          // dynamiquement à chaque frappe, sans reconstruire la page entière.
+                          ListenableBuilder(
+                              listenable: _descriptionController,
+                              builder: (context, _) =>
+                                  _withPublishFieldHighlight(
+                                      fieldId: 'description',
+                                      child: _withAiPendingOverlay(
+                                          showPending: _showAiPendingForController(
+                                              _descriptionController),
+                                          alignment: Alignment.topRight,
+                                          padding: const EdgeInsets.only(
+                                              top: 14, right: 42),
+                                          child: TextFormField(
+                                              controller:
+                                                  _descriptionController,
+                                              decoration: InputDecoration(
+                                                  label: _requiredLabel(
+                                                      'Description détaillée'),
+                                                  alignLabelWithHint: true,
+                                                  filled: true,
+                                                  fillColor: Colors.white,
+                                                  border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12)),
+                                                  contentPadding:
+                                                      const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 14),
+                                                  // Bouton IA textuel (✨) : visible dès que l'utilisateur
+                                                  // a saisi du texte. Déclenche l'analyse IA sans micro.
+                                                  suffixIcon: (_descriptionController
+                                                              .text
+                                                              .trim()
+                                                              .isNotEmpty &&
+                                                          !_isAnalyzing &&
+                                                          !_isListening)
+                                                      ? Tooltip(
+                                                          message:
+                                                              'Remplir les champs avec l\'IA',
+                                                          child: IconButton(
+                                                              icon: const Icon(Icons.auto_awesome, color: Color(0xFF2D84F6)),
+                                                              onPressed: _onTapAiAnalyze))
+                                                      : null),
+                                              minLines: 4,
+                                              maxLines: 8,
+                                              validator: _validatePublishDescription)))),
+                          const SizedBox(height: 16),
 
-                // PHOTOS
-                Row(
-                  children: [
-                    Text(
-                      'Photos de l\'offre',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      '(optionnel, 2 photos maximum)',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _visiblePhotoTileCount,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1,
-                  ),
-                  itemBuilder: (context, index) {
-                    final hasPhoto = index < _selectedPhotos.length;
-                    return PhotoSelectorTile(
-                      label: 'Photo ${index + 1}',
-                      file: hasPhoto ? _selectedPhotos[index] : null,
-                      bytes: hasPhoto && index < _selectedPhotoBytes.length
-                          ? _selectedPhotoBytes[index]
-                          : null,
-                      onTap: () => _onPhotoTileTap(index),
-                      onLongPress: () => _pickImage(index),
-                      onRemove: hasPhoto ? () => _removePhotoAt(index) : null,
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
+                          // PHOTOS
+                          Row(children: [
+                            Text('Photos de l\'offre',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w700)),
+                            SizedBox(width: 8),
+                            Text('(optionnel, 2 photos maximum)',
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w600)),
+                          ]),
+                          const SizedBox(height: 12),
+                          GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _visiblePhotoTileCount,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      mainAxisSpacing: 12,
+                                      crossAxisSpacing: 12,
+                                      childAspectRatio: 1),
+                              itemBuilder: (context, index) {
+                                final hasPhoto = index < _selectedPhotos.length;
+                                return PhotoSelectorTile(
+                                    label: 'Photo ${index + 1}',
+                                    file: hasPhoto
+                                        ? _selectedPhotos[index]
+                                        : null,
+                                    bytes: hasPhoto &&
+                                            index < _selectedPhotoBytes.length
+                                        ? _selectedPhotoBytes[index]
+                                        : null,
+                                    onTap: () => _onPhotoTileTap(index),
+                                    onLongPress: () => _pickImage(index),
+                                    onRemove: hasPhoto
+                                        ? () => _removePhotoAt(index)
+                                        : null);
+                              }),
+                          const SizedBox(height: 16),
 
-                // VILLE + CP + AUTOCOMPLÉTION
-                const Text(
-                  'Localisation',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                _withPublishFieldHighlight(
-                  fieldId: 'city',
-                  child: _withAiPendingOverlay(
-                    showPending:
-                        _showAiPendingForController(_locationController),
-                    child: TextFormField(
-                      controller: _locationController,
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Ville'),
-                        hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                      ),
-                      onTap: _clearAiPrefilledLocationPostalOnUserTap,
-                      onChanged: _onCityChanged,
-                      onEditingComplete: _canonicalizeLocationInputs,
-                      validator: _validateCanonicalCity,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _withAiPendingOverlay(
-                  showPending:
-                      _showAiPendingForController(_postalCodeController),
-                  child: TextFormField(
-                    controller: _postalCodeController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Code postal',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    onTap: _clearAiPrefilledLocationPostalOnUserTap,
-                    onChanged: _onPostalCodeChanged,
-                    onEditingComplete: _canonicalizeLocationInputs,
-                    validator: _validatePostalCode,
-                  ),
-                ),
-                _buildCitySuggestionsOverlay(),
-                const SizedBox(height: 16),
+                          // VILLE + CP + AUTOCOMPLÉTION
+                          const Text('Localisation',
+                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          _withPublishFieldHighlight(
+                              fieldId: 'city',
+                              child: _withAiPendingOverlay(
+                                  showPending: _showAiPendingForController(
+                                      _locationController),
+                                  child: TextFormField(
+                                      controller: _locationController,
+                                      decoration: InputDecoration(
+                                          label: _requiredLabel('Ville'),
+                                          hintText:
+                                              'Ex : Les Abymes, Baie-Mahault, Paris...',
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 14)),
+                                      onTap:
+                                          _clearAiPrefilledLocationPostalOnUserTap,
+                                      onChanged: _onCityChanged,
+                                      onEditingComplete:
+                                          _canonicalizeLocationInputs,
+                                      validator: _validateCanonicalCity))),
+                          const SizedBox(height: 8),
+                          _withAiPendingOverlay(
+                              showPending: _showAiPendingForController(
+                                  _postalCodeController),
+                              child: TextFormField(
+                                  controller: _postalCodeController,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                      labelText: 'Code postal',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14)),
+                                  onTap:
+                                      _clearAiPrefilledLocationPostalOnUserTap,
+                                  onChanged: _onPostalCodeChanged,
+                                  onEditingComplete:
+                                      _canonicalizeLocationInputs,
+                                  validator: _validatePostalCode)),
+                          _buildCitySuggestionsOverlay(),
+                          const SizedBox(height: 16),
 
-                // TÉLÉPHONE avec sélection indicatif
-                _withPublishFieldHighlight(
-                  fieldId: 'phone',
-                  child: PhoneInputFieldCompact(
-                    controller: _phoneController,
-                    label: _requiredLabel('Téléphone (pour être rappelé)'),
-                    hintText:
-                        phoneHintForCountryCode(_selectedPhoneCountryCode),
-                    initialCountryCode: _selectedPhoneCountryCode,
-                    onCountryCodeChanged: (code) {
-                      setState(() {
-                        _selectedPhoneCountryCode = code;
-                      });
-                    },
-                    onPhoneChanged: (_) => _recompute(),
-                    validator: (value) {
-                      return _isValidPhoneFR(value ?? '')
-                          ? null
-                          : 'Téléphone invalide';
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
+                          // TÉLÉPHONE avec sélection indicatif
+                          _withPublishFieldHighlight(
+                              fieldId: 'phone',
+                              child: PhoneInputFieldCompact(
+                                  controller: _phoneController,
+                                  label: _requiredLabel(
+                                      'Téléphone (pour être rappelé)'),
+                                  hintText: phoneHintForCountryCode(
+                                      _selectedPhoneCountryCode),
+                                  initialCountryCode: _selectedPhoneCountryCode,
+                                  onCountryCodeChanged: (code) {
+                                    setState(() {
+                                      _selectedPhoneCountryCode = code;
+                                    });
+                                  },
+                                  onPhoneChanged: (_) => _recompute(),
+                                  validator: (value) {
+                                    return _isValidPhoneFR(value ?? '')
+                                        ? null
+                                        : 'Téléphone invalide';
+                                  })),
+                          const SizedBox(height: 16),
 
-                // DÉLAI POUR EFFECTUER LA MISSION
-                _withPublishFieldHighlight(
-                  fieldId: 'delay',
-                  child: DropdownButtonFormField<String>(
-                    value: _missionDelay,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Délai pour effectuer la mission'),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    items: _missionDelayOptions
-                        .map(
-                          (delay) => DropdownMenuItem(
-                            value: delay,
-                            child: Text(delay),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _delayEditedByUser = true;
-                        _missionDelay = value;
-                        _isUrgent = value == 'Urgent';
-                      });
-                      _recompute();
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Merci de choisir un délai';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _withPublishFieldHighlight(
-                  fieldId: 'budget',
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<String>(
-                          value: _budgetType,
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          decoration: InputDecoration(
-                            labelText: 'Type de budget',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                          items: _budgetTypes
-                              .map(
-                                (type) => DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setState(() {
-                              _budgetEditedByUser = true;
-                              _budgetType = value;
-                            });
-                            _recompute();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          controller: _budgetController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            label: _budgetType == 'À négocier'
-                                ? const Text('Budget')
-                                : _requiredLabel('Budget (€)'),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                          enabled: _budgetType == 'Fixe',
-                          validator: (value) {
-                            if (_budgetType == 'À négocier') return null;
-                            final b = _parseBudget(value ?? '');
-                            if (b == null) return 'Montant invalide';
-                            if (b <= 0) return 'Le montant doit être > 0';
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
+                          // DÉLAI POUR EFFECTUER LA MISSION
+                          _withPublishFieldHighlight(
+                              fieldId: 'delay',
+                              child: DropdownButtonFormField<String>(
+                                  value: _missionDelay,
+                                  dropdownColor: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  decoration: InputDecoration(
+                                      label: _requiredLabel(
+                                          'Délai pour effectuer la mission'),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14)),
+                                  items: _missionDelayOptions
+                                      .map((delay) => DropdownMenuItem(
+                                          value: delay, child: Text(delay)))
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _delayEditedByUser = true;
+                                      _missionDelay = value;
+                                      _isUrgent = value == 'Urgent';
+                                    });
+                                    _recompute();
+                                  },
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Merci de choisir un délai';
+                                    }
+                                    return null;
+                                  })),
+                          const SizedBox(height: 16),
+                          _withPublishFieldHighlight(
+                              fieldId: 'budget',
+                              child: Row(children: [
+                                Expanded(
+                                    flex: 2,
+                                    child: DropdownButtonFormField<String>(
+                                        value: _budgetType,
+                                        dropdownColor: Colors.white,
+                                        borderRadius: BorderRadius.circular(14),
+                                        decoration: InputDecoration(
+                                            labelText: 'Type de budget',
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12)),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 14)),
+                                        items: _budgetTypes
+                                            .map((type) => DropdownMenuItem(
+                                                value: type, child: Text(type)))
+                                            .toList(),
+                                        onChanged: (value) {
+                                          if (value == null) return;
+                                          setState(() {
+                                            _budgetEditedByUser = true;
+                                            _budgetType = value;
+                                          });
+                                          _recompute();
+                                        })),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                    flex: 3,
+                                    child: TextFormField(
+                                        controller: _budgetController,
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(decimal: true),
+                                        decoration: InputDecoration(
+                                            label: _budgetType == 'À négocier'
+                                                ? const Text('Budget')
+                                                : _requiredLabel('Budget (€)'),
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12)),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 14)),
+                                        enabled: _budgetType == 'Fixe',
+                                        validator: (value) {
+                                          if (_budgetType == 'À négocier')
+                                            return null;
+                                          final b = _parseBudget(value ?? '');
+                                          if (b == null)
+                                            return 'Montant invalide';
+                                          if (b <= 0)
+                                            return 'Le montant doit être > 0';
+                                          return null;
+                                        })),
+                              ])),
+                          const SizedBox(height: 24),
 
-                const Text(
-                  '* Champs obligatoires',
-                  style: TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 10),
-                _buildPublishValidationBanner(),
-                if (_attemptedSubmit && _missingPublishFieldLabels().isNotEmpty)
-                  const SizedBox(height: 10),
+                          const Text('* Champs obligatoires',
+                              style: TextStyle(color: Colors.black54)),
+                          const SizedBox(height: 10),
+                          _buildPublishValidationBanner(),
+                          if (_attemptedSubmit &&
+                              _missingPublishFieldLabels().isNotEmpty)
+                            const SizedBox(height: 10),
 
-                // BOUTON PUBLIER
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isSubmitting ? null : _onPublishPressed,
-                    icon: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send),
-                    label: Text(
-                      _isSubmitting
-                          ? 'Publication en cours...'
-                          : 'Publier mon offre',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: publishVisuallyDisabled
-                          ? Colors.grey.shade400
-                          : kPrestoOrange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+                          // BOUTON PUBLIER
+                          SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                  onPressed:
+                                      _isSubmitting ? null : _onPublishPressed,
+                                  icon: _isSubmitting
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2))
+                                      : const Icon(Icons.send),
+                                  label: Text(_isSubmitting
+                                      ? 'Publication en cours...'
+                                      : 'Publier mon offre'),
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: publishVisuallyDisabled
+                                          ? Colors.grey.shade400
+                                          : kPrestoOrange,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14)))),
+                        ])))));
   }
 }
 
 Future<void> showModerationPendingDialog(BuildContext context) async {
   final navigator = Navigator.of(context, rootNavigator: true);
   showDialog<void>(
-    context: context,
-    useRootNavigator: true,
-    barrierDismissible: false,
-    barrierColor: Colors.black.withValues(alpha: 0.18),
-    builder: (_) => const _ModerationPendingDialog(),
-  );
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.18),
+      builder: (_) => const _ModerationPendingDialog());
 
   await Future.delayed(const Duration(seconds: 2));
   if (navigator.canPop()) {
@@ -4575,69 +4099,46 @@ class _ModerationPendingDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0.92, end: 1),
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutBack,
-            builder: (context, scale, child) {
-              return Transform.scale(
-                scale: scale,
-                child: Opacity(
-                  opacity: scale.clamp(0, 1),
-                  child: child,
-                ),
-              );
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1A73E8),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 36,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Annonce en attente de validation',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: kPrestoBlue,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Votre annonce est en cours de vérification. Elle sera publiée si elle respecte les règles de modération.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 1.4,
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.92, end: 1),
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeOutBack,
+                    builder: (context, scale, child) {
+                      return Transform.scale(
+                          scale: scale,
+                          child: Opacity(
+                              opacity: scale.clamp(0, 1), child: child));
+                    },
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Container(
+                          width: 72,
+                          height: 72,
+                          decoration: const BoxDecoration(
+                              color: Color(0xFF1A73E8), shape: BoxShape.circle),
+                          child: const Icon(Icons.check,
+                              color: Colors.white, size: 36)),
+                      const SizedBox(height: 20),
+                      const Text('Annonce en attente de validation',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: kPrestoBlue)),
+                      const SizedBox(height: 12),
+                      const Text(
+                          'Votre annonce est en cours de vérification. Elle sera publiée si elle respecte les règles de modération.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 15,
+                              height: 1.4,
+                              color: Color(0xFF4B5563))),
+                    ])))));
   }
 }
 
@@ -4647,24 +4148,18 @@ class _FieldPendingDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _FieldPendingDot(delay: 0),
-            SizedBox(width: 4),
-            _FieldPendingDot(delay: 180),
-            SizedBox(width: 4),
-            _FieldPendingDot(delay: 360),
-          ],
-        ),
-      ),
-    );
+        decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.92),
+            borderRadius: BorderRadius.circular(999)),
+        child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              _FieldPendingDot(delay: 0),
+              SizedBox(width: 4),
+              _FieldPendingDot(delay: 180),
+              SizedBox(width: 4),
+              _FieldPendingDot(delay: 360),
+            ])));
   }
 }
 
@@ -4686,12 +4181,9 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 900),
-      vsync: this,
-    );
-    _opacity = Tween<double>(begin: 0.25, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+        duration: const Duration(milliseconds: 900), vsync: this);
+    _opacity = Tween<double>(begin: 0.25, end: 1.0)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     Future<void>.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
@@ -4709,15 +4201,11 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: _opacity,
-      child: Container(
-        width: 6,
-        height: 6,
-        decoration: const BoxDecoration(
-          color: kPrestoBlue,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
+        opacity: _opacity,
+        child: Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+                color: kPrestoBlue, shape: BoxShape.circle)));
   }
 }
