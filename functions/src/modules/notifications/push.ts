@@ -85,7 +85,7 @@ export async function createInAppNotification({
   data?: Record<string, unknown>;
 }): Promise<void> {
   try {
-    await db.collection(COLLECTIONS.notifications).doc(notificationId).create({
+    await db.collection(COLLECTIONS.notifications).doc(notificationId).set({
       userId,
       title,
       message,
@@ -97,7 +97,7 @@ export async function createInAppNotification({
       read: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    }, { merge: true });
   } catch (error) {
     const code = (error as { code?: number | string }).code;
     const codeText = String(code || "").toLowerCase();
