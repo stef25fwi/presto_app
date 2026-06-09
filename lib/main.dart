@@ -20,7 +20,6 @@ import 'debug_auth.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
 import 'pages/home_page.dart';
-import 'pages/account_page.dart';
 import 'pages/publish_offer_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
@@ -900,7 +899,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
       onGenerateRoute: _onGenerateRoute,
       routes: {
-        LoginPage.routeName: (_) => const LoginPage(),
+        LoginPage.routeName: (_) => const HomePage(),
         RegisterPage.routeName: (_) => const RegisterPage(),
         ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),
         VerifyEmailPage.routeName: (_) => const VerifyEmailPage(),
@@ -913,7 +912,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),
-        '/account': (_) => const AccountPage(),
+        '/account': (_) => const HomePage(),
         '/admin': (_) => const AdminSpacePage(),
         if (!kReleaseMode)
           '/page-catalog': (_) => const PageCaptureCatalogPage(),
