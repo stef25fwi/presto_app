@@ -60,6 +60,8 @@ class NotificationService {
   String? _pendingRouteName;
   String? _lastRegisteredToken;
   String? _lastHandledMessageId;
+  String? _lastVisibleNotificationKey;
+  DateTime? _lastVisibleNotificationAt;
   String? _lastOpenedRouteName;
   DateTime? _lastOpenedRouteAt;
   AuthorizationStatus? _lastAuthorizationStatus;
@@ -93,9 +95,12 @@ class NotificationService {
 
     if (!kIsWeb) {
       await _messaging.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
+        // Evite le double affichage smartphone :
+        // - Firebase/iOS ne montre pas automatiquement la bannière en foreground.
+        // - Flutter garde un seul affichage contrôlé via showForegroundNotification().
+        alert: false,
+        badge: false,
+        sound: false,
       );
     }
 
@@ -115,6 +120,11 @@ class NotificationService {
       debugPrint(
         '[Notifications-Foreground] route=${_resolveRouteName(message)} data=${message.data}',
       );
+      if (_shouldSkipVisibleForegroundNotification(message)) {
+        _foregroundHandler(message);
+        return;
+      }
+
       if (_shouldShowLocalForegroundNotification(message)) {
         await showForegroundNotification(message);
       }
@@ -150,6 +160,66 @@ class NotificationService {
 
     _initialized = true;
     _schedulePendingRouteFlush();
+  }
+
+  String _readMessageDataValue(RemoteMessage message, String key) {
+    final value = message.data[key];
+    if (value == null) return '';
+    return value.toString().trim();
+  }
+
+  String _visibleNotificationDedupeKey(RemoteMessage message) {
+    final explicitKeys = [
+      'notificationId',
+      'notification_id',
+      'messageId',
+      'message_id',
+      'conversationId',
+      'conversation_id',
+      'listingId',
+      'listing_id',
+      'routeName',
+      'route_name',
+    ];
+
+    for (final key in explicitKeys) {
+      final value = _readMessageDataValue(message, key);
+      if (value.isNotEmpty) {
+        return '$key:$value';
+      }
+    }
+
+    final firebaseMessageId = message.messageId;
+    if (firebaseMessageId != null && firebaseMessageId.trim().isNotEmpty) {
+      return 'firebaseMessageId:${firebaseMessageId.trim()}';
+    }
+
+    final title =
+        message.notification?.title ?? _readMessageDataValue(message, 'title');
+    final body =
+        message.notification?.body ?? _readMessageDataValue(message, 'body');
+    final route = _resolveRouteName(message);
+
+    return 'fallback:$route|$title|$body';
+  }
+
+  bool _shouldSkipVisibleForegroundNotification(RemoteMessage message) {
+    final key = _visibleNotificationDedupeKey(message);
+    final now = DateTime.now();
+
+    final lastAt = _lastVisibleNotificationAt;
+    final isRecentDuplicate = _lastVisibleNotificationKey == key &&
+        lastAt != null &&
+        now.difference(lastAt).inSeconds < 10;
+
+    if (isRecentDuplicate) {
+      debugPrint('[Notifications] Doublon visible ignoré: $key');
+      return true;
+    }
+
+    _lastVisibleNotificationKey = key;
+    _lastVisibleNotificationAt = now;
+    return false;
   }
 
   bool _isAuthorizedStatus(AuthorizationStatus status) {
