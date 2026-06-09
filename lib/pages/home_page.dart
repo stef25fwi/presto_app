@@ -1669,7 +1669,12 @@ class _HomePageState extends State<HomePage>
                 categoryFilter: _consultCategoryFilter,
                 searchQuery: _consultSearchQuery,
               ),
-              PublishOfferPage(onScroll: (_) {}),
+              // 🔒 Lazy mount : PublishOfferPage monte uniquement
+              // quand l'onglet est actif — évite le guard auth
+              // qui poussait HomePage(initialIndex:4) au démarrage.
+              _selectedIndex == 2
+                  ? PublishOfferPage(onScroll: (_) {})
+                  : const SizedBox.shrink(),
               MessagesPageV2(
                 initialConversationId: widget.initialMessagesConversationId,
                 initialDraftText: widget.initialMessagesDraftText,
