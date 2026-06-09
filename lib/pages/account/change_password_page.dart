@@ -68,7 +68,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFF6600),
+        foregroundColor: const Color(0xFFFFFFFF),
+        surfaceTintColor: const Color(0xFFFF6600),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: const Text('Changer mot de passe'),
       ),
       body: Padding(
