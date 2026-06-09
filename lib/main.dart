@@ -1001,8 +1001,13 @@ class _SplashScreenState extends State<SplashScreen>
     // - la connexion s'affiche uniquement si l'utilisateur clique sur Profil/Compte
     pendingPostAuthRoute = null;
 
+    // Sécurité démarrage :
+    // Le splash ne doit jamais imposer l'écran Compte/Connexion.
+    // Même si le navigateur/PWA rouvre l'ancienne URL /account,
+    // on revient sur l'accueil. L'utilisateur accédera au compte via le bouton Compte.
     if (webPath == '/account') {
-      return const AccountPage();
+      pendingPostAuthRoute = null;
+      return const HomePage();
     }
     if (webPath == '/publish') {
       return const PublishOfferPage();
