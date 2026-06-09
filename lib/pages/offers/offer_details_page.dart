@@ -519,7 +519,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     await Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => AccountPage(startInSignup: startInSignup),
+        builder: (_) => AccountPage(),
       ),
     );
 

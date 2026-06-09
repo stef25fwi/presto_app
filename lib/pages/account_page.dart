@@ -2568,7 +2568,9 @@ class _AccountPageState extends State<AccountPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-            const _TrustBusinessGuidanceSection(),
+                    const _AccountExactHeader(),
+                    const SizedBox(height: 30),
+                    const _TrustBusinessGuidanceSection(),
                     Center(
                       child: Column(
                         children: [
@@ -3608,7 +3610,6 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
   }
 }
 
-
 class _TrustBusinessGuidanceSection extends StatelessWidget {
   const _TrustBusinessGuidanceSection();
 
@@ -3621,7 +3622,8 @@ class _TrustBusinessGuidanceSection extends StatelessWidget {
           const ListTile(
             leading: Icon(Icons.workspace_premium_outlined),
             title: Text('Espace confiance et activité'),
-            subtitle: Text('Fiche Pro, SIRET, avis et parcours création entreprise.'),
+            subtitle:
+                Text('Fiche Pro, SIRET, avis et parcours création entreprise.'),
           ),
           const Divider(height: 1),
           ListTile(
@@ -3670,3 +3672,262 @@ class _TrustBusinessGuidanceSection extends StatelessWidget {
   }
 }
 
+class _AccountExactHeader extends StatelessWidget {
+  const _AccountExactHeader();
+
+  static const Color orange = Color(0xFFFF4B12);
+  static const Color blue = Color(0xFF1A5FE8);
+  static const Color dark = Color(0xFF111827);
+  static const Color muted = Color(0xFF6B7280);
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color softBlue = Color(0xFFEAF1FF);
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = _displayName(user);
+    final initials = _initials(displayName);
+
+    return Column(
+      children: [
+        const SizedBox(height: 18),
+        const _AccountExactLogo(),
+        const SizedBox(height: 28),
+        _AccountExactProfileBlock(
+          displayName: displayName,
+          initials: initials,
+          photoUrl: user?.photoURL,
+        ),
+      ],
+    );
+  }
+
+  static String _displayName(User? user) {
+    final name = user?.displayName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+
+    final email = user?.email?.trim();
+    if (email != null && email.isNotEmpty) {
+      final left = email.split('@').first.trim();
+      if (left.isNotEmpty) return left;
+    }
+
+    return 'Stef Stefan';
+  }
+
+  static String _initials(String value) {
+    final parts = value.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return 'SS';
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
+  }
+}
+
+class _AccountExactLogo extends StatelessWidget {
+  const _AccountExactLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        RichText(
+          textAlign: TextAlign.center,
+          text: const TextSpan(
+            children: [
+              TextSpan(
+                text: 'ili',
+                style: TextStyle(
+                  color: _AccountExactHeader.orange,
+                  fontSize: 44,
+                  height: 0.95,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -2,
+                ),
+              ),
+              TextSpan(
+                text: 'prestō',
+                style: TextStyle(
+                  color: _AccountExactHeader.blue,
+                  fontSize: 44,
+                  height: 0.95,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 2),
+        const Text(
+          'Prestō',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _AccountExactHeader.blue,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            height: 0.95,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AccountExactProfileBlock extends StatelessWidget {
+  const _AccountExactProfileBlock({
+    required this.displayName,
+    required this.initials,
+    required this.photoUrl,
+  });
+
+  final String displayName;
+  final String initials;
+  final String? photoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 104,
+              height: 104,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _AccountExactHeader.border,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.07),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                backgroundColor: _AccountExactHeader.softBlue,
+                backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+                    ? NetworkImage(photoUrl!)
+                    : null,
+                child: photoUrl == null || photoUrl!.isEmpty
+                    ? Text(
+                        initials,
+                        style: const TextStyle(
+                          color: _AccountExactHeader.blue,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 28,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            Positioned(
+              right: -4,
+              bottom: 3,
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: _AccountExactHeader.blue,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 4,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: 25,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 28),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _AccountExactHeader.dark,
+                  fontSize: 31,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.7,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    color: _AccountExactHeader.blue,
+                    size: 22,
+                  ),
+                  SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      'Guadeloupe • Les Abymes',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _AccountExactHeader.dark,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 11),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: _AccountExactHeader.softBlue,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.verified_user,
+                      color: _AccountExactHeader.blue,
+                      size: 18,
+                    ),
+                    SizedBox(width: 7),
+                    Text(
+                      'Profil vérifié',
+                      style: TextStyle(
+                        color: _AccountExactHeader.blue,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

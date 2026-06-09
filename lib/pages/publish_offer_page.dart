@@ -2751,7 +2751,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => AccountPage(startInSignup: startInSignup),
+        builder: (_) => AccountPage(),
       ),
     );
 
