@@ -232,9 +232,10 @@ class OfferDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PrestoOfferDetailsPage(
-        offer: offer,
-        currentUserId: currentUserId,
-        onBackToConsult: onBackToConsult);
+      offer: offer,
+      currentUserId: currentUserId,
+      onBackToConsult: onBackToConsult,
+    );
   }
 }
 
@@ -246,9 +247,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   static const Color _headerOrange = Color(0xFFFF6600);
   static const Color _statusBarBlue = Color(0xFF1A73E8);
   static const SystemUiOverlayStyle _statusBarStyle = SystemUiOverlayStyle(
-      statusBarColor: _statusBarBlue,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark);
+    statusBarColor: _statusBarBlue,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+  );
   static final FavoriteRepository _favoriteRepository = FavoriteRepository();
   static final ReportRepository _reportRepository = ReportRepository();
   static const MarketplaceHumanVerification _verification =
@@ -289,14 +291,18 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     dynamic thumbnailUrl,
   }) {
     return _collectOfferDetailImageUrls(
-        imageUrls: imageUrls,
-        media: media,
-        imageUrl: imageUrl,
-        thumbnailUrl: thumbnailUrl);
+      imageUrls: imageUrls,
+      media: media,
+      imageUrl: imageUrl,
+      thumbnailUrl: thumbnailUrl,
+    );
   }
 
   Object? _mergeMarketplaceOffer(
-      Object? source, Map<String, dynamic>? fetchedData, String listingId) {
+    Object? source,
+    Map<String, dynamic>? fetchedData,
+    String listingId,
+  ) {
     if (fetchedData == null || fetchedData.isEmpty) {
       return source;
     }
@@ -312,10 +318,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     };
 
     final imageUrls = _collectImageUrls(
-        imageUrls: merged['imageUrls'],
-        media: merged['media'],
-        imageUrl: merged['imageUrl'],
-        thumbnailUrl: merged['thumbnailUrl']);
+      imageUrls: merged['imageUrls'],
+      media: merged['media'],
+      imageUrl: merged['imageUrl'],
+      thumbnailUrl: merged['thumbnailUrl'],
+    );
     if (imageUrls.isNotEmpty) {
       merged['imageUrls'] = imageUrls;
     }
@@ -336,8 +343,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       return true;
     }
 
-    final dynamicSource =
-        Map<String, dynamic>.from(source.cast<dynamic, dynamic>());
+    final dynamicSource = Map<String, dynamic>.from(
+      source.cast<dynamic, dynamic>(),
+    );
     final title = (dynamicSource['title'] ?? '').toString().trim();
     final description =
         (dynamicSource['description'] ?? dynamicSource['detail'] ?? '')
@@ -348,10 +356,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
             .toString()
             .trim();
     final imageUrls = _collectImageUrls(
-        imageUrls: dynamicSource['imageUrls'],
-        media: dynamicSource['media'],
-        imageUrl: dynamicSource['imageUrl'],
-        thumbnailUrl: dynamicSource['thumbnailUrl']);
+      imageUrls: dynamicSource['imageUrls'],
+      media: dynamicSource['media'],
+      imageUrl: dynamicSource['imageUrl'],
+      thumbnailUrl: dynamicSource['thumbnailUrl'],
+    );
 
     return title.isEmpty ||
         description.isEmpty ||
@@ -421,77 +430,98 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     final overlayTheme = context.prestoOverlayTheme;
     final startInSignup = await showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: overlayTheme.surfaceColor,
-        shape: overlayTheme.sheetShape,
-        builder: (sheetContext) {
-          final bottom = MediaQuery.of(sheetContext).viewInsets.bottom;
-          return Padding(
-              padding: EdgeInsets.fromLTRB(6, 16, 6, bottom + 20),
-              child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                        width: 48,
-                        height: 5,
-                        margin: const EdgeInsets.only(bottom: 14),
-                        decoration: BoxDecoration(
-                            color: Colors.black26,
-                            borderRadius: BorderRadius.circular(999))),
-                    Text(title,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 8),
-                    Text(description,
-                        style: const TextStyle(
-                            fontSize: 14, color: Colors.black87)),
-                    const SizedBox(height: 18),
-                    ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: _headerOrange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16))),
-                        onPressed: () => Navigator.of(sheetContext).pop(false),
-                        child: const Text('Je me connecte')),
-                    const SizedBox(height: 10),
-                    OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            side: BorderSide(color: Colors.grey.shade400),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16))),
-                        onPressed: () => Navigator.of(sheetContext).pop(true),
-                        child: const Text('Je crée mon compte')),
-                    TextButton(
-                        onPressed: () => Navigator.of(sheetContext).pop(null),
-                        child: const Text('Plus tard')),
-                  ]));
-        });
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        final bottom = MediaQuery.of(sheetContext).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(6, 16, 6, bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Text(
+                title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _headerOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(sheetContext).pop(false),
+                child: const Text('Je me connecte'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade400),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(sheetContext).pop(true),
+                child: const Text('Je crée mon compte'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(sheetContext).pop(null),
+                child: const Text('Plus tard'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
 
     if (startInSignup == null || !context.mounted) {
       logRuntimeAction(
-          area: area,
-          action: 'auth-handoff-cancelled',
-          details: <String, Object?>{
-            'offerId': offerId,
-          });
+        area: area,
+        action: 'auth-handoff-cancelled',
+        details: <String, Object?>{
+          'offerId': offerId,
+        },
+      );
       return null;
     }
 
     logRuntimeAction(
-        area: area,
-        action: 'auth-handoff-opened',
-        details: <String, Object?>{
-          'offerId': offerId,
-          'startInSignup': startInSignup,
-        });
+      area: area,
+      action: 'auth-handoff-opened',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'startInSignup': startInSignup,
+      },
+    );
 
-    await Navigator.of(context).push(MaterialPageRoute(
-        fullscreenDialog: true, builder: (_) => AccountPage()));
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AccountPage(startInSignup: startInSignup),
+      ),
+    );
 
     if (!context.mounted) {
       return null;
@@ -499,46 +529,52 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     final resolvedUser = await _resolveSignedInUser();
     logRuntimeAction(
-        area: area,
-        action: resolvedUser == null
-            ? 'auth-handoff-failed'
-            : 'auth-handoff-success',
-        details: <String, Object?>{
-          'offerId': offerId,
-          'userId': resolvedUser?.uid,
-        });
+      area: area,
+      action:
+          resolvedUser == null ? 'auth-handoff-failed' : 'auth-handoff-success',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'userId': resolvedUser?.uid,
+      },
+    );
     return resolvedUser;
   }
 
   Future<void> _openInternalMessaging(
-      BuildContext context, _OfferUiData data) async {
+    BuildContext context,
+    _OfferUiData data,
+  ) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     User? authUser = FirebaseAuth.instance.currentUser;
     var me = authUser?.uid.isNotEmpty == true ? authUser!.uid : currentUserId;
 
     logRuntimeAction(
-        area: 'messaging',
-        action: 'open-from-offer',
-        details: <String, Object?>{
-          'offerId': data.offerId,
-          'advertiserId': data.advertiserId,
-          'currentUserId': me,
-        });
+      area: 'messaging',
+      action: 'open-from-offer',
+      details: <String, Object?>{
+        'offerId': data.offerId,
+        'advertiserId': data.advertiserId,
+        'currentUserId': me,
+      },
+    );
 
     if (me.isEmpty || me == 'buyer_demo_001') {
       logRuntimeAction(
-          area: 'messaging',
-          action: 'blocked-auth',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
-      final signedInUser = await _ensureSignedInForOfferAction(context,
-          area: 'messaging',
-          offerId: data.offerId,
-          title: 'Connectez-vous pour contacter l’annonceur',
-          description:
-              'Connectez-vous ou créez votre compte pour ouvrir la messagerie et reprendre cet échange.');
+        area: 'messaging',
+        action: 'blocked-auth',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
+      final signedInUser = await _ensureSignedInForOfferAction(
+        context,
+        area: 'messaging',
+        offerId: data.offerId,
+        title: 'Connectez-vous pour contacter l’annonceur',
+        description:
+            'Connectez-vous ou créez votre compte pour ouvrir la messagerie et reprendre cet échange.',
+      );
       if (signedInUser == null) return;
       if (!context.mounted) return;
       authUser = signedInUser;
@@ -547,25 +583,30 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     if (data.advertiserId.isEmpty) {
       logRuntimeAction(
-          area: 'messaging',
-          action: 'blocked-missing-advertiser',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
+        area: 'messaging',
+        action: 'blocked-missing-advertiser',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       messenger?.showSnackBar(
-          const SnackBar(content: Text("Annonceur introuvable.")));
+        const SnackBar(content: Text("Annonceur introuvable.")),
+      );
       return;
     }
 
     if (data.advertiserId == me) {
       logRuntimeAction(
-          area: 'messaging',
-          action: 'blocked-self-message',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
-      messenger?.showSnackBar(const SnackBar(
-          content: Text("Vous ne pouvez pas vous envoyer un message.")));
+        area: 'messaging',
+        action: 'blocked-self-message',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
+      messenger?.showSnackBar(
+        const SnackBar(
+            content: Text("Vous ne pouvez pas vous envoyer un message.")),
+      );
       return;
     }
 
@@ -577,53 +618,64 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     try {
       unawaited(UserProfileBootstrapService.prepareProfileFirestoreAccess(
-          user: authUser,
-          forceRefreshAppCheckToken: true,
-          requireAppCheckToken: false));
+        user: authUser,
+        forceRefreshAppCheckToken: true,
+        requireAppCheckToken: false,
+      ));
     } catch (error) {
       logRuntimeAction(
-          area: 'messaging',
-          action: 'blocked-app-check-before-open',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-            'error': error,
-          });
+        area: 'messaging',
+        action: 'blocked-app-check-before-open',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'error': error,
+        },
+      );
       if (!context.mounted) return;
-      messenger?.showSnackBar(SnackBar(
+      messenger?.showSnackBar(
+        SnackBar(
           content: Text(
-              UserProfileBootstrapService.userFacingProfileSyncMessage(
-                  error))));
+            UserProfileBootstrapService.userFacingProfileSyncMessage(error),
+          ),
+        ),
+      );
       return;
     }
 
     final resolvedConversationId = await ConversationService.ensureConversation(
-        offerId: data.offerId,
-        offerTitle: data.title,
-        currentUserId: me,
-        otherUserId: data.advertiserId,
-        currentUserName: currentUserName,
-        otherUserName: data.advertiserName);
+      offerId: data.offerId,
+      offerTitle: data.title,
+      currentUserId: me,
+      otherUserId: data.advertiserId,
+      currentUserName: currentUserName,
+      otherUserName: data.advertiserName,
+    );
 
     if (!context.mounted) return;
     final targetRoute = buildMessagesRoute(
-        conversationId: resolvedConversationId,
-        initialDraftText: initialDraftText);
+      conversationId: resolvedConversationId,
+      initialDraftText: initialDraftText,
+    );
     logRuntimeAction(
-        area: 'messaging',
-        action: 'open-route',
-        details: <String, Object?>{
-          'route': targetRoute,
-          'conversationId': resolvedConversationId,
-          'offerId': data.offerId,
-        });
-    navigator.pushNamed(targetRoute);
+      area: 'messaging',
+      action: 'open-route',
+      details: <String, Object?>{
+        'route': targetRoute,
+        'conversationId': resolvedConversationId,
+        'offerId': data.offerId,
+      },
+    );
+    navigator.pushNamed(
+      targetRoute,
+    );
   }
 
   Future<void> _callPhone(BuildContext context, String phone) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (phone.trim().isEmpty) {
       messenger?.showSnackBar(
-          const SnackBar(content: Text("Aucun numéro disponible.")));
+        const SnackBar(content: Text("Aucun numéro disponible.")),
+      );
       return;
     }
 
@@ -632,8 +684,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final ok = await canLaunchUrl(uri);
     if (!ok) {
       if (!context.mounted) return;
-      messenger?.showSnackBar(const SnackBar(
-          content: Text("Impossible de lancer l'appel sur cet appareil.")));
+      messenger?.showSnackBar(
+        const SnackBar(
+            content: Text("Impossible de lancer l'appel sur cet appareil.")),
+      );
       return;
     }
 
@@ -649,7 +703,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final ok = await canLaunchUrl(uri);
     if (!context.mounted) return;
     if (!ok) {
-      messenger?.showSnackBar(SnackBar(content: Text(errorMessage)));
+      messenger?.showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
       return;
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -664,219 +720,284 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final shareText = '${data.title} - ${data.city}\n$offerUrl';
 
     await showModalBottomSheet<void>(
-        context: context,
-        backgroundColor: overlayTheme.surfaceColor,
-        shape: overlayTheme.sheetShape,
-        builder: (sheetContext) {
-          Future<void> copyLink() async {
-            await Clipboard.setData(ClipboardData(text: offerUrl));
-            if (!sheetContext.mounted) return;
-            Navigator.of(sheetContext).pop();
-            if (!context.mounted) return;
-            messenger?.showSnackBar(
-                const SnackBar(content: Text('Lien de l\'annonce copié.')));
-          }
+      context: context,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        Future<void> copyLink() async {
+          await Clipboard.setData(ClipboardData(text: offerUrl));
+          if (!sheetContext.mounted) return;
+          Navigator.of(sheetContext).pop();
+          if (!context.mounted) return;
+          messenger?.showSnackBar(
+            const SnackBar(content: Text('Lien de l\'annonce copié.')),
+          );
+        }
 
-          Future<void> openInstagram() async {
-            await Clipboard.setData(ClipboardData(text: shareText));
-            if (!sheetContext.mounted) return;
-            Navigator.of(sheetContext).pop();
-            await _openExternalShareTarget(context,
-                uri: Uri.parse('https://www.instagram.com/'),
-                errorMessage: 'Impossible d\'ouvrir Instagram.');
-            if (!context.mounted) return;
-            messenger?.showSnackBar(const SnackBar(
-                content: Text('Texte copié. Collez-le dans Instagram.')));
-          }
+        Future<void> openInstagram() async {
+          await Clipboard.setData(ClipboardData(text: shareText));
+          if (!sheetContext.mounted) return;
+          Navigator.of(sheetContext).pop();
+          await _openExternalShareTarget(
+            context,
+            uri: Uri.parse('https://www.instagram.com/'),
+            errorMessage: 'Impossible d\'ouvrir Instagram.',
+          );
+          if (!context.mounted) return;
+          messenger?.showSnackBar(
+            const SnackBar(
+                content: Text('Texte copié. Collez-le dans Instagram.')),
+          );
+        }
 
-          return SafeArea(
-              top: false,
-              child: Container(
-                  color: overlayTheme.surfaceColor,
-                  padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text('Partager l\'annonce',
-                            textAlign: TextAlign.center,
-                            style: kPrestoSectionTitleStyle),
-                        const SizedBox(height: 8),
-                        Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 10),
-                            decoration: BoxDecoration(
-                                color: overlayTheme.selectionFillColor,
-                                borderRadius: overlayTheme.popupRadius,
-                                border: Border.all(
-                                    color: overlayTheme.borderColor)),
-                            child: Row(children: [
-                              Expanded(
-                                  child: Text(offerUrl,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF6B7280),
-                                          height: 1.35))),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                  onPressed: copyLink,
-                                  tooltip: 'Copier le lien',
-                                  icon: const Icon(Icons.content_copy_rounded,
-                                      size: 20, color: Color(0xFF111827)),
-                                  visualDensity: VisualDensity.compact,
-                                  splashRadius: 20),
-                            ])),
-                        const SizedBox(height: 14),
-                        GridView.count(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 14,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            childAspectRatio: 0.8,
-                            children: [
-                              _ShareOptionTile(
-                                  icon: const FaIcon(FontAwesomeIcons.whatsapp,
-                                      color: Colors.white, size: 22),
-                                  label: 'WhatsApp',
-                                  color: const Color(0xFF25D366),
-                                  onTap: () async {
-                                    Navigator.of(sheetContext).pop();
-                                    await _openExternalShareTarget(context,
-                                        uri: Uri.parse(
-                                            'https://wa.me/?text=${Uri.encodeComponent(shareText)}'),
-                                        errorMessage:
-                                            'Impossible d\'ouvrir WhatsApp.');
-                                  }),
-                              _ShareOptionTile(
-                                  icon: const FaIcon(FontAwesomeIcons.facebookF,
-                                      color: Colors.white, size: 20),
-                                  label: 'Facebook',
-                                  color: const Color(0xFF1877F2),
-                                  onTap: () async {
-                                    Navigator.of(sheetContext).pop();
-                                    await _openExternalShareTarget(context,
-                                        uri: Uri.parse(
-                                            'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(offerUrl)}'),
-                                        errorMessage:
-                                            'Impossible d\'ouvrir Facebook.');
-                                  }),
-                              _ShareOptionTile(
-                                  icon: const FaIcon(FontAwesomeIcons.instagram,
-                                      color: Colors.white, size: 22),
-                                  label: 'Instagram',
-                                  color: const Color(0xFFE1306C),
-                                  onTap: openInstagram),
-                              _ShareOptionTile(
-                                  icon: const FaIcon(FontAwesomeIcons.envelope,
-                                      color: Colors.white, size: 20),
-                                  label: 'Mail',
-                                  color: const Color(0xFF0459D9),
-                                  onTap: () async {
-                                    Navigator.of(sheetContext).pop();
-                                    await _openExternalShareTarget(context,
-                                        uri: Uri(
-                                            scheme: 'mailto',
-                                            queryParameters: {
-                                              'subject': data.title,
-                                              'body': shareText,
-                                            }),
-                                        errorMessage:
-                                            'Impossible d\'ouvrir l\'application mail.');
-                                  }),
-                            ]),
-                      ])));
-        });
+        return SafeArea(
+          top: false,
+          child: Container(
+            color: overlayTheme.surfaceColor,
+            padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Partager l\'annonce',
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: overlayTheme.selectionFillColor,
+                    borderRadius: overlayTheme.popupRadius,
+                    border: Border.all(color: overlayTheme.borderColor),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          offerUrl,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6B7280),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: copyLink,
+                        tooltip: 'Copier le lien',
+                        icon: const Icon(
+                          Icons.content_copy_rounded,
+                          size: 20,
+                          color: Color(0xFF111827),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        splashRadius: 20,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                GridView.count(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 14,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 0.8,
+                  children: [
+                    _ShareOptionTile(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.whatsapp,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      label: 'WhatsApp',
+                      color: const Color(0xFF25D366),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _openExternalShareTarget(
+                          context,
+                          uri: Uri.parse(
+                            'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
+                          ),
+                          errorMessage: 'Impossible d\'ouvrir WhatsApp.',
+                        );
+                      },
+                    ),
+                    _ShareOptionTile(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.facebookF,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      label: 'Facebook',
+                      color: const Color(0xFF1877F2),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _openExternalShareTarget(
+                          context,
+                          uri: Uri.parse(
+                            'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(offerUrl)}',
+                          ),
+                          errorMessage: 'Impossible d\'ouvrir Facebook.',
+                        );
+                      },
+                    ),
+                    _ShareOptionTile(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.instagram,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      label: 'Instagram',
+                      color: const Color(0xFFE1306C),
+                      onTap: openInstagram,
+                    ),
+                    _ShareOptionTile(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.envelope,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      label: 'Mail',
+                      color: const Color(0xFF0459D9),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _openExternalShareTarget(
+                          context,
+                          uri: Uri(
+                            scheme: 'mailto',
+                            queryParameters: {
+                              'subject': data.title,
+                              'body': shareText,
+                            },
+                          ),
+                          errorMessage:
+                              'Impossible d\'ouvrir l\'application mail.',
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _showContactOptionsSheet(
       BuildContext context, _OfferUiData data) async {
     final overlayTheme = context.prestoOverlayTheme;
     await showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: false,
-        backgroundColor: overlayTheme.surfaceColor,
-        shape: overlayTheme.sheetShape,
-        builder: (sheetContext) {
-          return SafeArea(
-              top: false,
-              child: Container(
-                  color: overlayTheme.surfaceColor,
-                  padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
-                  child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text('Proposer mes services',
-                            textAlign: TextAlign.center,
-                            style: kPrestoSectionTitleStyle),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                            height: 50,
-                            child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(sheetContext).pop();
-                                  _openInternalMessaging(context, data);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFF6A00),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20))),
-                                icon: const Icon(Icons.chat_bubble_outline),
-                                label: const Text('Envoyer un message'))),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                            height: 50,
-                            child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(sheetContext).pop();
-                                  _callPhone(context, data.phone);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0459D9),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20))),
-                                icon: const Icon(Icons.call_outlined),
-                                label: const Text('Appeler'))),
-                      ])));
-        });
+      context: context,
+      isScrollControlled: false,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            color: overlayTheme.surfaceColor,
+            padding: const EdgeInsets.fromLTRB(6, 14, 6, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Proposer mes services',
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _openInternalMessaging(context, data);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6A00),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Envoyer un message'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _callPhone(context, data.phone);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0459D9),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    icon: const Icon(Icons.call_outlined),
+                    label: const Text('Appeler'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _toggleFavorite(
-      BuildContext context, _OfferUiData data, bool isFavorite) async {
+    BuildContext context,
+    _OfferUiData data,
+    bool isFavorite,
+  ) async {
     final messenger = ScaffoldMessenger.maybeOf(context);
     var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
 
     logRuntimeAction(
-        area: 'favorites',
-        action: 'toggle-from-offer',
-        details: <String, Object?>{
-          'offerId': data.offerId,
-          'userId': uid,
-          'isFavorite': isFavorite,
-          'isMarketplace': data.isMarketplace,
-        });
+      area: 'favorites',
+      action: 'toggle-from-offer',
+      details: <String, Object?>{
+        'offerId': data.offerId,
+        'userId': uid,
+        'isFavorite': isFavorite,
+        'isMarketplace': data.isMarketplace,
+      },
+    );
 
     if (uid.isEmpty) {
       logRuntimeAction(
-          area: 'favorites',
-          action: 'blocked-auth',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
-      final signedInUser = await _ensureSignedInForOfferAction(context,
-          area: 'favorites',
-          offerId: data.offerId,
-          title: 'Connectez-vous pour enregistrer cette annonce',
-          description:
-              'Vos favoris seront synchronisés avec votre compte pour retrouver cette annonce plus tard.');
+        area: 'favorites',
+        action: 'blocked-auth',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
+      final signedInUser = await _ensureSignedInForOfferAction(
+        context,
+        area: 'favorites',
+        offerId: data.offerId,
+        title: 'Connectez-vous pour enregistrer cette annonce',
+        description:
+            'Vos favoris seront synchronisés avec votre compte pour retrouver cette annonce plus tard.',
+      );
       if (signedInUser == null) return;
       if (!context.mounted) return;
       uid = signedInUser.uid.trim();
@@ -884,9 +1005,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     final offerId = data.offerId.trim();
     if (offerId.isEmpty) {
-      logRuntimeAction(area: 'favorites', action: 'blocked-missing-offer');
-      messenger
-          ?.showSnackBar(const SnackBar(content: Text('Annonce introuvable.')));
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'blocked-missing-offer',
+      );
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Annonce introuvable.')),
+      );
       return;
     }
 
@@ -894,48 +1019,62 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       final active = await _favoriteRepository.toggleFavorite(offerId);
 
       logRuntimeAction(
-          area: 'favorites',
-          action: 'toggle-success',
-          details: <String, Object?>{
-            'offerId': offerId,
-            'active': active,
-            'source': data.isMarketplace ? 'marketplace' : 'canonical-callable',
-          });
+        area: 'favorites',
+        action: 'toggle-success',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'active': active,
+          'source': data.isMarketplace ? 'marketplace' : 'canonical-callable',
+        },
+      );
 
       if (!context.mounted) return;
-      messenger?.showSnackBar(SnackBar(
-          content: Text(active
-              ? 'Annonce ajoutée aux favoris.'
-              : 'Annonce retirée des favoris.')));
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            active
+                ? 'Annonce ajoutée aux favoris.'
+                : 'Annonce retirée des favoris.',
+          ),
+        ),
+      );
     } on FirebaseFunctionsException catch (e) {
       logRuntimeAction(
-          area: 'favorites',
-          action: 'toggle-failure',
-          details: <String, Object?>{
-            'offerId': offerId,
-            'errorType': e.runtimeType,
-            'message': e,
-            'code': e.code,
-          });
+        area: 'favorites',
+        action: 'toggle-failure',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+          'code': e.code,
+        },
+      );
       if (!context.mounted) return;
       final isLegacyUnavailable = !data.isMarketplace &&
           (e.code == 'not-found' || e.code == 'failed-precondition');
-      messenger?.showSnackBar(SnackBar(
-          content: Text(isLegacyUnavailable
-              ? 'Cette annonce legacy n\'a pas encore ete migree vers Marketplace. Les favoris ne sont disponibles que sur les listings canoniques.'
-              : 'Erreur lors de la mise à jour du favori : $e')));
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isLegacyUnavailable
+                ? 'Cette annonce legacy n\'a pas encore ete migree vers Marketplace. Les favoris ne sont disponibles que sur les listings canoniques.'
+                : 'Erreur lors de la mise à jour du favori : $e',
+          ),
+        ),
+      );
     } catch (e) {
       logRuntimeAction(
-          area: 'favorites',
-          action: 'toggle-failure',
-          details: <String, Object?>{
-            'offerId': offerId,
-            'errorType': e.runtimeType,
-            'message': e,
-          });
+        area: 'favorites',
+        action: 'toggle-failure',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
       if (!context.mounted) return;
-      messenger?.showSnackBar(SnackBar(
-          content: Text('Erreur lors de la mise à jour du favori : $e')));
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Erreur lors de la mise à jour du favori : $e')),
+      );
     }
   }
 
@@ -944,27 +1083,31 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     var uid = FirebaseAuth.instance.currentUser?.uid.trim() ?? '';
 
     logRuntimeAction(
-        area: 'offers',
-        action: 'report-open',
-        details: <String, Object?>{
-          'offerId': data.offerId,
-          'userId': uid,
-          'isMarketplace': data.isMarketplace,
-        });
+      area: 'offers',
+      action: 'report-open',
+      details: <String, Object?>{
+        'offerId': data.offerId,
+        'userId': uid,
+        'isMarketplace': data.isMarketplace,
+      },
+    );
 
     if (uid.isEmpty) {
       logRuntimeAction(
-          area: 'offers',
-          action: 'report-blocked-auth',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
-      final signedInUser = await _ensureSignedInForOfferAction(context,
-          area: 'offers',
-          offerId: data.offerId,
-          title: 'Connectez-vous pour signaler cette annonce',
-          description:
-              'Votre signalement sera associé à votre compte pour que nous puissions le traiter correctement.');
+        area: 'offers',
+        action: 'report-blocked-auth',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
+      final signedInUser = await _ensureSignedInForOfferAction(
+        context,
+        area: 'offers',
+        offerId: data.offerId,
+        title: 'Connectez-vous pour signaler cette annonce',
+        description:
+            'Votre signalement sera associé à votre compte pour que nous puissions le traiter correctement.',
+      );
       if (signedInUser == null) return;
       if (!context.mounted) return;
       uid = signedInUser.uid.trim();
@@ -972,64 +1115,82 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {
       logRuntimeAction(
-          area: 'offers',
-          action: 'report-blocked-unsupported',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-            'isMarketplace': data.isMarketplace,
-          });
-      messenger?.showSnackBar(const SnackBar(
+        area: 'offers',
+        action: 'report-blocked-unsupported',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'isMarketplace': data.isMarketplace,
+        },
+      );
+      messenger?.showSnackBar(
+        const SnackBar(
           content: Text(
-              'Le signalement est disponible uniquement pour Marketplace.')));
+              'Le signalement est disponible uniquement pour Marketplace.'),
+        ),
+      );
       return;
     }
 
     if (data.advertiserId.trim().isNotEmpty &&
         data.advertiserId.trim() == uid) {
       logRuntimeAction(
-          area: 'offers',
-          action: 'report-blocked-self',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
-      messenger?.showSnackBar(const SnackBar(
-          content: Text('Vous ne pouvez pas signaler votre propre annonce.')));
+        area: 'offers',
+        action: 'report-blocked-self',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Vous ne pouvez pas signaler votre propre annonce.'),
+        ),
+      );
       return;
     }
 
     final overlayTheme = context.prestoOverlayTheme;
     final reason = await showModalBottomSheet<ListingReportReasonCode>(
-        context: context,
-        backgroundColor: overlayTheme.surfaceColor,
-        shape: overlayTheme.sheetShape,
-        builder: (sheetContext) {
-          return SafeArea(
-              top: false,
-              child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Padding(
-                        padding: EdgeInsets.fromLTRB(6, 16, 6, 8),
-                        child: Text('Signaler l\'annonce',
-                            textAlign: TextAlign.center,
-                            style: kPrestoSectionTitleStyle)),
-                    ...ListingReportReasonCode.values.map((entry) => ListTile(
-                        tileColor: overlayTheme.surfaceColor,
-                        leading: const Icon(Icons.flag_outlined),
-                        title: Text(_reportReasonLabel(entry)),
-                        onTap: () => Navigator.of(sheetContext).pop(entry))),
-                    const SizedBox(height: 8),
-                  ]));
-        });
+      context: context,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(6, 16, 6, 8),
+                child: Text(
+                  'Signaler l\'annonce',
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+              ),
+              ...ListingReportReasonCode.values.map(
+                (entry) => ListTile(
+                  tileColor: overlayTheme.surfaceColor,
+                  leading: const Icon(Icons.flag_outlined),
+                  title: Text(_reportReasonLabel(entry)),
+                  onTap: () => Navigator.of(sheetContext).pop(entry),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
 
     if (reason == null) {
       logRuntimeAction(
-          area: 'offers',
-          action: 'report-cancelled',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-          });
+        area: 'offers',
+        action: 'report-cancelled',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       return;
     }
 
@@ -1042,30 +1203,37 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       final controller = TextEditingController();
       try {
         reasonText = await showDialog<String>(
-            context: context,
-            builder: (dialogContext) {
-              final overlayTheme = dialogContext.prestoOverlayTheme;
-              return AlertDialog(
-                  backgroundColor: overlayTheme.surfaceColor,
-                  surfaceTintColor: overlayTheme.surfaceTintColor,
-                  shape: overlayTheme.dialogShape,
-                  title: const Text('Précisez le motif'),
-                  content: TextField(
-                      controller: controller,
-                      maxLines: 4,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                          hintText: 'Décrivez brièvement le problème')),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        child: const Text('Annuler')),
-                    ElevatedButton(
-                        onPressed: () => Navigator.of(dialogContext)
-                            .pop(controller.text.trim()),
-                        child: const Text('Envoyer')),
-                  ]);
-            });
+          context: context,
+          builder: (dialogContext) {
+            final overlayTheme = dialogContext.prestoOverlayTheme;
+            return AlertDialog(
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
+              shape: overlayTheme.dialogShape,
+              title: const Text('Précisez le motif'),
+              content: TextField(
+                controller: controller,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  hintText: 'Décrivez brièvement le problème',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(
+                    controller.text.trim(),
+                  ),
+                  child: const Text('Envoyer'),
+                ),
+              ],
+            );
+          },
+        );
       } finally {
         controller.dispose();
       }
@@ -1076,42 +1244,52 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     try {
-      final recaptchaToken = await _verification
-          .obtainToken(MarketplaceHumanVerificationAction.listingReport);
+      final recaptchaToken = await _verification.obtainToken(
+        MarketplaceHumanVerificationAction.listingReport,
+      );
       final ok = await _reportRepository.reportListing(
-          ListingReportDraft(
-              listingId: data.offerId,
-              reasonCode: reason,
-              reasonText: (reasonText ?? '').trim().isEmpty
-                  ? null
-                  : reasonText!.trim()),
-          recaptchaToken: recaptchaToken);
+        ListingReportDraft(
+          listingId: data.offerId,
+          reasonCode: reason,
+          reasonText:
+              (reasonText ?? '').trim().isEmpty ? null : reasonText!.trim(),
+        ),
+        recaptchaToken: recaptchaToken,
+      );
 
       logRuntimeAction(
-          area: 'offers',
-          action: ok ? 'report-success' : 'report-rejected',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-            'reason': reason.name,
-          });
+        area: 'offers',
+        action: ok ? 'report-success' : 'report-rejected',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'reason': reason.name,
+        },
+      );
 
-      if (!context.mounted) return;
-      messenger?.showSnackBar(SnackBar(
-          content: Text(ok
-              ? 'Signalement envoyé. Merci pour votre retour.'
-              : 'Le signalement n\'a pas pu être envoyé.')));
-    } catch (e) {
-      logRuntimeAction(
-          area: 'offers',
-          action: 'report-failure',
-          details: <String, Object?>{
-            'offerId': data.offerId,
-            'errorType': e.runtimeType,
-            'message': e,
-          });
       if (!context.mounted) return;
       messenger?.showSnackBar(
-          SnackBar(content: Text('Erreur lors du signalement : $e')));
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Signalement envoyé. Merci pour votre retour.'
+                : 'Le signalement n\'a pas pu être envoyé.',
+          ),
+        ),
+      );
+    } catch (e) {
+      logRuntimeAction(
+        area: 'offers',
+        action: 'report-failure',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
+      if (!context.mounted) return;
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Erreur lors du signalement : $e')),
+      );
     }
   }
 
@@ -1180,30 +1358,32 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     if (uid.isEmpty) {
       return IconButton(
-          tooltip: 'Ajouter aux favoris',
-          onPressed: () => _toggleFavorite(context, data, false),
-          icon: const Icon(Icons.favorite_border_rounded),
-          color: Colors.white,
-          splashRadius: 20);
+        tooltip: 'Ajouter aux favoris',
+        onPressed: () => _toggleFavorite(context, data, false),
+        icon: const Icon(Icons.favorite_border_rounded),
+        color: Colors.white,
+        splashRadius: 20,
+      );
     }
 
     return StreamBuilder<Set<String>>(
-        stream: _favoriteRepository.watchFavoriteListingIds(uid),
-        builder: (context, snapshot) {
-          final favoriteIds = snapshot.data ?? const <String>{};
-          final isFavorite = data.offerId.trim().isNotEmpty &&
-              favoriteIds.contains(data.offerId.trim());
+      stream: _favoriteRepository.watchFavoriteListingIds(uid),
+      builder: (context, snapshot) {
+        final favoriteIds = snapshot.data ?? const <String>{};
+        final isFavorite = data.offerId.trim().isNotEmpty &&
+            favoriteIds.contains(data.offerId.trim());
 
-          return IconButton(
-              tooltip:
-                  isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
-              onPressed: () => _toggleFavorite(context, data, isFavorite),
-              icon: Icon(isFavorite
-                  ? Icons.favorite_rounded
-                  : Icons.favorite_border_rounded),
-              color: isFavorite ? const Color(0xFFE53935) : Colors.white,
-              splashRadius: 20);
-        });
+        return IconButton(
+          tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
+          onPressed: () => _toggleFavorite(context, data, isFavorite),
+          icon: Icon(
+            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          ),
+          color: isFavorite ? const Color(0xFFE53935) : Colors.white,
+          splashRadius: 20,
+        );
+      },
+    );
   }
 
   @override
@@ -1216,74 +1396,92 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       final sectionGap = isCompactMobile ? 12.0 : 14.0;
 
       return Scaffold(
-          backgroundColor: bg,
-          appBar: AppBar(
-              systemOverlayStyle: _statusBarStyle,
-              leading: IconButton(
-                  tooltip: 'Retour',
-                  onPressed: () {
-                    if (onBackToConsult != null) {
-                      onBackToConsult!();
-                      return;
-                    }
-                    Navigator.of(context).maybePop();
-                  },
-                  icon: const Icon(Icons.arrow_back)),
-              backgroundColor: _headerOrange,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-              titleSpacing: 0,
-              iconTheme: const IconThemeData(color: Colors.white),
-              title: const Text('Détail annonce',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: kPrestoAppBarTitleStyle),
-              actions: [
-                IconButton(
-                    tooltip: 'Partager',
-                    onPressed: () => _showShareOptionsSheet(context, data),
-                    icon: const Icon(Icons.share_outlined),
-                    color: Colors.white,
-                    splashRadius: 20),
-                if (data.isMarketplace)
-                  IconButton(
-                      tooltip: 'Signaler',
-                      onPressed: () => _showReportSheet(context, data),
-                      icon: const Icon(Icons.flag_outlined),
-                      color: Colors.white,
-                      splashRadius: 20),
-                _buildFavoriteAction(context, data),
-                const SizedBox(width: 6),
-              ]),
-          body: Stack(children: [
+        backgroundColor: bg,
+        appBar: AppBar(
+          systemOverlayStyle: _statusBarStyle,
+          leading: IconButton(
+            tooltip: 'Retour',
+            onPressed: () {
+              if (onBackToConsult != null) {
+                onBackToConsult!();
+                return;
+              }
+              Navigator.of(context).maybePop();
+            },
+            icon: const Icon(Icons.arrow_back),
+          ),
+          backgroundColor: _headerOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          titleSpacing: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
+            'Détail annonce',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: kPrestoAppBarTitleStyle,
+          ),
+          actions: [
+            IconButton(
+              tooltip: 'Partager',
+              onPressed: () => _showShareOptionsSheet(context, data),
+              icon: const Icon(Icons.share_outlined),
+              color: Colors.white,
+              splashRadius: 20,
+            ),
+            if (data.isMarketplace)
+              IconButton(
+                tooltip: 'Signaler',
+                onPressed: () => _showReportSheet(context, data),
+                icon: const Icon(Icons.flag_outlined),
+                color: Colors.white,
+                splashRadius: 20,
+              ),
+            _buildFavoriteAction(context, data),
+            const SizedBox(width: 6),
+          ],
+        ),
+        body: Stack(
+          children: [
             const _BackgroundDecor(),
             SafeArea(
-                top: false,
-                child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(6, isCompactMobile ? 10 : 12,
-                        6, isCompactMobile ? 14 : 16),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _HeroCard(data: data, compact: isCompactMobile),
-                          SizedBox(height: sectionGap),
-                          _PracticalInfoCard(
-                              data: data,
-                              compact: isCompactMobile,
-                              onContactTap: () =>
-                                  _showContactOptionsSheet(context, data)),
-                          SizedBox(height: sectionGap),
-                          const _OfferDetailsAdMobBannerSpace(),
-                          const SizedBox(height: 12),
-                          _AdvertiserContactCard(
-                              data: data,
-                              compact: isCompactMobile,
-                              onContactTap: () =>
-                                  _showContactOptionsSheet(context, data)),
-                        ]))),
-          ]));
+              top: false,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  6,
+                  isCompactMobile ? 10 : 12,
+                  6,
+                  isCompactMobile ? 14 : 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeroCard(data: data, compact: isCompactMobile),
+                    SizedBox(height: sectionGap),
+                    _PracticalInfoCard(
+                      data: data,
+                      compact: isCompactMobile,
+                      onContactTap: () =>
+                          _showContactOptionsSheet(context, data),
+                    ),
+                    SizedBox(height: sectionGap),
+                    const _OfferDetailsAdMobBannerSpace(),
+                    const SizedBox(height: 12),
+                    _AdvertiserContactCard(
+                      data: data,
+                      compact: isCompactMobile,
+                      onContactTap: () =>
+                          _showContactOptionsSheet(context, data),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     final listingId = _extractMarketplaceListingId(offer);
@@ -1292,12 +1490,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     return FutureBuilder<Map<String, dynamic>?>(
-        future: _fetchMarketplaceOffer(listingId),
-        builder: (context, snapshot) {
-          final mergedOffer =
-              _mergeMarketplaceOffer(offer, snapshot.data, listingId);
-          return buildPage(mergedOffer);
-        });
+      future: _fetchMarketplaceOffer(listingId),
+      builder: (context, snapshot) {
+        final mergedOffer = _mergeMarketplaceOffer(
+          offer,
+          snapshot.data,
+          listingId,
+        );
+        return buildPage(mergedOffer);
+      },
+    );
   }
 }
 
@@ -1452,10 +1654,11 @@ class _OfferUiData {
     final dynamic practical = readValue('practicalInfo', () => o.practicalInfo);
 
     final offerId = _asString(
-        readValue('id', () => o.id) ??
-            readValue('offerId') ??
-            readValue('listingId'),
-        fallback: '');
+      readValue('id', () => o.id) ??
+          readValue('offerId') ??
+          readValue('listingId'),
+      fallback: '',
+    );
     final marketplaceFlag = readValue('isMarketplace', () => o.isMarketplace);
     final isMarketplace = marketplaceFlag is bool
         ? marketplaceFlag
@@ -1465,11 +1668,14 @@ class _OfferUiData {
                 .isNotEmpty ||
             _asString(readValue('visibility', () => o.visibility), fallback: '')
                 .isNotEmpty;
-    final listingStatus =
-        _asString(readValue('status', () => o.status), fallback: '');
+    final listingStatus = _asString(
+      readValue('status', () => o.status),
+      fallback: '',
+    );
     final moderationStatus = _asString(
-        readValue('moderationStatus', () => o.moderationStatus),
-        fallback: '');
+      readValue('moderationStatus', () => o.moderationStatus),
+      fallback: '',
+    );
     final rawMedia = readValue('media', () => o.media);
     final rawImageUrls = readValue('imageUrls', () => o.imageUrls);
     final mediaCount = rawMedia is List
@@ -1477,40 +1683,50 @@ class _OfferUiData {
         : rawImageUrls is List
             ? rawImageUrls.length
             : 0;
-    final mediaProcessingStatus = _asString(readValue('mediaProcessingStatus'),
-        fallback: (!listingStatus.trim().toLowerCase().contains('active') &&
-                !listingStatus.trim().toLowerCase().contains('published') &&
-                mediaCount > 0)
-            ? 'processing'
-            : 'completed');
+    final mediaProcessingStatus = _asString(
+      readValue('mediaProcessingStatus'),
+      fallback: (!listingStatus.trim().toLowerCase().contains('active') &&
+              !listingStatus.trim().toLowerCase().contains('published') &&
+              mediaCount > 0)
+          ? 'processing'
+          : 'completed',
+    );
     final title = _asString(readValue('title', () => o.title),
         fallback: 'Montage meuble');
     final publishedAt = _asDateTime(
-        readValue('publishedAt', () => o.publishedAt) ??
-            readValue('createdAt', () => o.createdAt) ??
-            readValue('updatedAt', () => o.updatedAt));
+      readValue('publishedAt', () => o.publishedAt) ??
+          readValue('createdAt', () => o.createdAt) ??
+          readValue('updatedAt', () => o.updatedAt),
+    );
     final detail = _asString(
-        readValue('shortDescription', () => o.shortDescription) ??
-            readValue('detail'),
-        fallback: '');
+      readValue('shortDescription', () => o.shortDescription) ??
+          readValue('detail'),
+      fallback: '',
+    );
     final city = _asString(
-        readValue('city', () => o.city) ?? readValue('location'),
-        fallback: '');
+      readValue('city', () => o.city) ?? readValue('location'),
+      fallback: '',
+    );
     final postalCode = _asString(
-        readValue('postalCode', () => o.postalCode) ?? readValue('cp'),
-        fallback: '');
+      readValue('postalCode', () => o.postalCode) ?? readValue('cp'),
+      fallback: '',
+    );
     final category =
         _asString(readValue('category', () => o.category), fallback: '');
 
-    final fullDescription =
-        _asString(readValue('description', () => o.description), fallback: '');
+    final fullDescription = _asString(
+      readValue('description', () => o.description),
+      fallback: '',
+    );
     final phone = _asString(readValue('phone', () => o.phone), fallback: '');
     final publishedAtLabel = _asString(
-        readValue('publishedAtLabel', () => o.publishedAtLabel),
-        fallback: 'Publication récente');
+      readValue('publishedAtLabel', () => o.publishedAtLabel),
+      fallback: 'Publication récente',
+    );
     final availability = _asString(
-        readValue('availability', () => o.availability),
-        fallback: 'Disponibilité à confirmer');
+      readValue('availability', () => o.availability),
+      fallback: 'Disponibilité à confirmer',
+    );
     final actionTypeRaw = readValue('actionType', () => o.actionType);
     final actionType = actionTypeRaw is OfferActionType
         ? actionTypeRaw
@@ -1521,134 +1737,154 @@ class _OfferUiData {
         readValue('isUrgent', () => o.isUrgent) ?? readValue('urgent');
     final isUrgent = urgentRaw is bool
         ? urgentRaw
-        : statusBadges.any((badge) => badge.toLowerCase().contains('urgent'));
+        : statusBadges.any(
+            (badge) => badge.toLowerCase().contains('urgent'),
+          );
 
     final price = _asDouble(
-        readValue('price', () => o.price) ?? readValue('budget'),
-        fallback: 0);
+      readValue('price', () => o.price) ?? readValue('budget'),
+      fallback: 0,
+    );
 
     final advertiserId = _asString(
-        readNestedValue(advertiser, 'id', () => advertiser.id) ??
-            readValue('userId', () => o.userId) ??
-            readValue('uid', () => o.uid) ??
-            readValue('ownerId', () => o.ownerId),
-        fallback: '');
+      readNestedValue(advertiser, 'id', () => advertiser.id) ??
+          readValue('userId', () => o.userId) ??
+          readValue('uid', () => o.uid) ??
+          readValue('ownerId', () => o.ownerId),
+      fallback: '',
+    );
     final advertiserName = _asString(
-        readNestedValue(advertiser, 'name', () => advertiser.name) ??
-            readValue('pseudo') ??
-            readValue('displayName') ??
-            readValue('ownerName') ??
-            readValue('name') ??
-            readValue('userName'),
-        fallback: 'Annonceur iliprestō');
+      readNestedValue(advertiser, 'name', () => advertiser.name) ??
+          readValue('pseudo') ??
+          readValue('displayName') ??
+          readValue('ownerName') ??
+          readValue('name') ??
+          readValue('userName'),
+      fallback: 'Annonceur iliprestō',
+    );
     final advertiserRole = _asString(
-        readNestedValue(advertiser, 'bio', () => advertiser.bio) ??
-            readValue('bio'),
-        fallback: 'Bricoleur expérimenté');
+      readNestedValue(advertiser, 'bio', () => advertiser.bio) ??
+          readValue('bio'),
+      fallback: 'Bricoleur expérimenté',
+    );
     final advertiserAvatarUrl = _asString(
-        readNestedValue(advertiser, 'avatarUrl', () => advertiser.avatarUrl) ??
-            readNestedValue(advertiser, 'photoUrl') ??
-            readNestedValue(advertiser, 'photoURL') ??
-            readNestedValue(advertiser, 'profilePhotoUrl') ??
-            readNestedValue(advertiser, 'imageUrl') ??
-            readValue('avatarUrl') ??
-            readValue('photoUrl') ??
-            readValue('photoURL') ??
-            readValue('profilePhotoUrl') ??
-            readValue('imageUrl'),
-        fallback: '');
+      readNestedValue(advertiser, 'avatarUrl', () => advertiser.avatarUrl) ??
+          readNestedValue(advertiser, 'photoUrl') ??
+          readNestedValue(advertiser, 'photoURL') ??
+          readNestedValue(advertiser, 'profilePhotoUrl') ??
+          readNestedValue(advertiser, 'imageUrl') ??
+          readValue('avatarUrl') ??
+          readValue('photoUrl') ??
+          readValue('photoURL') ??
+          readValue('profilePhotoUrl') ??
+          readValue('imageUrl'),
+      fallback: '',
+    );
     final advertiserRating = _asDouble(
-        readNestedValue(advertiser, 'rating', () => advertiser.rating) ??
-            readValue('rating'),
-        fallback: 0.0);
+      readNestedValue(advertiser, 'rating', () => advertiser.rating) ??
+          readValue('rating'),
+      fallback: 0.0,
+    );
     final advertiserReviewCount = _asInt(
-        readNestedValue(
-                advertiser, 'reviewsCount', () => advertiser.reviewsCount) ??
-            readNestedValue(
-                advertiser, 'reviewCount', () => advertiser.reviewCount) ??
-            readValue('reviewsCount'),
-        fallback: 0);
+      readNestedValue(
+              advertiser, 'reviewsCount', () => advertiser.reviewsCount) ??
+          readNestedValue(
+              advertiser, 'reviewCount', () => advertiser.reviewCount) ??
+          readValue('reviewsCount'),
+      fallback: 0,
+    );
     final verified = _asBool(
-        readNestedValue(advertiser, 'verified', () => advertiser.verified) ??
-            readValue('verified'),
-        fallback: true);
+      readNestedValue(advertiser, 'verified', () => advertiser.verified) ??
+          readValue('verified'),
+      fallback: true,
+    );
 
     final serviceArea = _asString(
-        readNestedValue(practical, 'serviceArea', () => practical.serviceArea),
-        fallback: city);
+      readNestedValue(practical, 'serviceArea', () => practical.serviceArea),
+      fallback: city,
+    );
     final canTravel = _asBool(
-        readNestedValue(practical, 'canTravel', () => practical.canTravel),
-        fallback: true);
+      readNestedValue(practical, 'canTravel', () => practical.canTravel),
+      fallback: true,
+    );
     final schedule = _asString(
-        readNestedValue(practical, 'schedule', () => practical.schedule),
-        fallback: 'Horaires à convenir');
+      readNestedValue(practical, 'schedule', () => practical.schedule),
+      fallback: 'Horaires à convenir',
+    );
     final missionDelay = _asString(
-        readNestedValue(
-                practical, 'missionDelay', () => practical.missionDelay) ??
-            readValue('missionDelay', () => o.missionDelay) ??
-            readValue('averageDelay', () => o.averageDelay),
-        fallback: 'Délai non précisé');
+      readNestedValue(
+              practical, 'missionDelay', () => practical.missionDelay) ??
+          readValue('missionDelay', () => o.missionDelay) ??
+          readValue('averageDelay', () => o.averageDelay),
+      fallback: 'Délai non précisé',
+    );
     final averageDelay = _asString(
-        readNestedValue(
-                practical, 'averageDelay', () => practical.averageDelay) ??
-            readValue('averageDelay', () => o.averageDelay),
-        fallback: '30 min en moyenne');
+      readNestedValue(
+              practical, 'averageDelay', () => practical.averageDelay) ??
+          readValue('averageDelay', () => o.averageDelay),
+      fallback: '30 min en moyenne',
+    );
     final paymentMethod = _asString(
-        readNestedValue(
-            practical, 'paymentMethod', () => practical.paymentMethod),
-        fallback: 'Paiement à convenir');
+      readNestedValue(
+          practical, 'paymentMethod', () => practical.paymentMethod),
+      fallback: 'Paiement à convenir',
+    );
     final serviceType = _asString(
-        readNestedValue(practical, 'serviceType', () => practical.serviceType),
-        fallback: 'Prestation ponctuelle');
+      readNestedValue(practical, 'serviceType', () => practical.serviceType),
+      fallback: 'Prestation ponctuelle',
+    );
 
     final rawImageUrlsList = _collectOfferDetailImageUrls(
-        imageUrls: rawImageUrls,
-        media: rawMedia,
-        imageUrl: readValue('imageUrl'),
-        thumbnailUrl: readValue('thumbnailUrl', () => o.thumbnailUrl));
+      imageUrls: rawImageUrls,
+      media: rawMedia,
+      imageUrl: readValue('imageUrl'),
+      thumbnailUrl: readValue('thumbnailUrl', () => o.thumbnailUrl),
+    );
 
     return _OfferUiData(
-        offerId: offerId,
-        isMarketplace: isMarketplace,
-        listingStatus: listingStatus,
-        moderationStatus: moderationStatus,
-        mediaProcessingStatus: mediaProcessingStatus,
-        mediaCount: mediaCount,
-        publishedAt: publishedAt,
-        title: title,
-        detail: detail,
-        city: city,
-        postalCode: postalCode,
-        isUrgent: isUrgent,
-        category: category,
-        description: fullDescription,
-        phone: phone,
-        publishedAtLabel: publishedAtLabel,
-        availability: availability,
-        price: price,
-        actionType: actionType,
-        statusBadges: statusBadges,
-        advertiserId: advertiserId,
-        advertiserName: advertiserName,
-        advertiserRole: advertiserRole,
-        advertiserAvatarUrl: advertiserAvatarUrl,
-        advertiserRating: advertiserRating,
-        advertiserReviewCount: advertiserReviewCount,
-        verified: verified,
-        serviceArea: serviceArea,
-        canTravel: canTravel,
-        schedule: schedule,
-        missionDelay: missionDelay,
-        averageDelay: averageDelay,
-        paymentMethod: paymentMethod,
-        serviceType: serviceType,
-        imageUrls: rawImageUrlsList.cast<String>(),
-        viewCount: _asInt(readValue('viewCount'), fallback: 0),
-        phoneViewCount: _asInt(
-            readValue('phoneViewCount') ??
-                readValue('phoneViews') ??
-                readValue('contactViews'),
-            fallback: 0));
+      offerId: offerId,
+      isMarketplace: isMarketplace,
+      listingStatus: listingStatus,
+      moderationStatus: moderationStatus,
+      mediaProcessingStatus: mediaProcessingStatus,
+      mediaCount: mediaCount,
+      publishedAt: publishedAt,
+      title: title,
+      detail: detail,
+      city: city,
+      postalCode: postalCode,
+      isUrgent: isUrgent,
+      category: category,
+      description: fullDescription,
+      phone: phone,
+      publishedAtLabel: publishedAtLabel,
+      availability: availability,
+      price: price,
+      actionType: actionType,
+      statusBadges: statusBadges,
+      advertiserId: advertiserId,
+      advertiserName: advertiserName,
+      advertiserRole: advertiserRole,
+      advertiserAvatarUrl: advertiserAvatarUrl,
+      advertiserRating: advertiserRating,
+      advertiserReviewCount: advertiserReviewCount,
+      verified: verified,
+      serviceArea: serviceArea,
+      canTravel: canTravel,
+      schedule: schedule,
+      missionDelay: missionDelay,
+      averageDelay: averageDelay,
+      paymentMethod: paymentMethod,
+      serviceType: serviceType,
+      imageUrls: rawImageUrlsList.cast<String>(),
+      viewCount: _asInt(readValue('viewCount'), fallback: 0),
+      phoneViewCount: _asInt(
+        readValue('phoneViewCount') ??
+            readValue('phoneViews') ??
+            readValue('contactViews'),
+        fallback: 0,
+      ),
+    );
   }
 
   static dynamic _read(dynamic Function() getter) {
@@ -1718,23 +1954,33 @@ class _BackgroundDecor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(children: [
-      const Positioned.fill(child: ColoredBox(color: Color(0xFFF6EFEC))),
-      Positioned(
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: ColoredBox(color: Color(0xFFF6EFEC)),
+        ),
+        Positioned(
           left: -60,
           bottom: 120,
           child: IgnorePointer(
-              child: Container(
-                  width: 220,
-                  height: 220,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(colors: [
-                        const Color(0xFF1976F3).withOpacity(0.12),
-                        const Color(0xFF1976F3).withOpacity(0.05),
-                        Colors.transparent,
-                      ]))))),
-    ]);
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF1976F3).withOpacity(0.12),
+                    const Color(0xFF1976F3).withOpacity(0.05),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1750,45 +1996,65 @@ class _TopHeader extends StatelessWidget {
     const blue = Color(0xFF1565D8);
 
     return SizedBox(
-        height: compact ? 42 : 46,
-        child: Row(children: [
+      height: compact ? 42 : 46,
+      child: Row(
+        children: [
           IconButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              icon: Icon(Icons.arrow_back_rounded,
-                  color: orange, size: compact ? 28 : 32),
-              splashRadius: compact ? 18 : 22,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints()),
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: orange,
+              size: compact ? 28 : 32,
+            ),
+            splashRadius: compact ? 18 : 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
           SizedBox(width: compact ? 12 : 16),
           Expanded(
-              child: Text(_truncatedTitle(title),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: blue,
-                      fontSize: compact ? 24 : 27,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                      height: 1.0))),
+            child: Text(
+              _truncatedTitle(title),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: blue,
+                fontSize: compact ? 24 : 27,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+                height: 1.0,
+              ),
+            ),
+          ),
           IconButton(
-              onPressed: () {
-                logRuntimeAction(
-                    area: 'offers',
-                    action: 'listing-alert-unavailable',
-                    details: <String, Object?>{
-                      'title': title,
-                    });
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content:
-                        Text('Les alertes sur annonce arrivent bientot.')));
-              },
-              tooltip: 'Alertes bientot disponibles',
-              icon: Icon(Icons.notifications_none_rounded,
-                  color: blue, size: compact ? 28 : 32),
-              splashRadius: compact ? 18 : 22,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints()),
-        ]));
+            onPressed: () {
+              logRuntimeAction(
+                area: 'offers',
+                action: 'listing-alert-unavailable',
+                details: <String, Object?>{
+                  'title': title,
+                },
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Les alertes sur annonce arrivent bientot.',
+                  ),
+                ),
+              );
+            },
+            tooltip: 'Alertes bientot disponibles',
+            icon: Icon(
+              Icons.notifications_none_rounded,
+              color: blue,
+              size: compact ? 28 : 32,
+            ),
+            splashRadius: compact ? 18 : 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
   }
 
   String _truncatedTitle(String value) {
@@ -1806,8 +2072,11 @@ class _HeroCard extends StatelessWidget {
 
   void _openGallery(BuildContext context, int initialIndex) {
     if (data.imageUrls.isEmpty) return;
-    _showPhotoGalleryPopup(context,
-        imageUrls: data.imageUrls, initialIndex: initialIndex);
+    _showPhotoGalleryPopup(
+      context,
+      imageUrls: data.imageUrls,
+      initialIndex: initialIndex,
+    );
   }
 
   @override
@@ -1827,215 +2096,279 @@ class _HeroCard extends StatelessWidget {
     final mainPhotoUrl = hasPhotos ? data.imageUrls.first : '';
 
     return Container(
-        decoration: BoxDecoration(
-            color: card,
-            borderRadius: BorderRadius.circular(compact ? 20 : 24),
-            border: Border.all(color: const Color(0xFFF0E7E4), width: 1),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x10000000),
-                  blurRadius: 18,
-                  offset: Offset(0, 8)),
-            ]),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(compact ? 20 : 24),
+        border: Border.all(
+          color: const Color(0xFFF0E7E4),
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10000000),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           // ── Photo principale ──
           if (hasPhotos)
             ClipRRect(
-                borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(compact ? 20 : 24)),
-                child: SizedBox(
-                    width: double.infinity,
-                    height: compact ? 180 : 220,
-                    child: Stack(fit: StackFit.expand, children: [
-                      _OfferImage(
-                          rawUrl: mainPhotoUrl,
-                          fit: BoxFit.cover,
-                          loadingChild: Container(
-                              color: const Color(0xFFF3F4F6),
-                              child: const Center(
-                                  child: SizedBox(
-                                      width: 28,
-                                      height: 28,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Color(0xFFFF6A00))))),
-                          errorChild: Container(
-                              color: const Color(0xFFF3F4F6),
-                              child: const Center(
-                                  child: Icon(Icons.image_outlined,
-                                      size: 48, color: Color(0xFF9CA3AF))))),
-                      _PhotoGalleryTapOverlay(
-                          onTap: () => _openGallery(context, 0)),
-                    ]))),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(compact ? 20 : 24),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: compact ? 180 : 220,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _OfferImage(
+                      rawUrl: mainPhotoUrl,
+                      fit: BoxFit.cover,
+                      loadingChild: Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFFFF6A00),
+                            ),
+                          ),
+                        ),
+                      ),
+                      errorChild: Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: Icon(Icons.image_outlined,
+                              size: 48, color: Color(0xFF9CA3AF)),
+                        ),
+                      ),
+                    ),
+                    _PhotoGalleryTapOverlay(
+                        onTap: () => _openGallery(context, 0)),
+                  ],
+                ),
+              ),
+            ),
           // ── Miniatures additionnelles ──
           if (data.imageUrls.length > 1)
             Padding(
-                padding: EdgeInsets.fromLTRB(
-                    compact ? 12 : 16, compact ? 8 : 10, compact ? 12 : 16, 0),
-                child: SizedBox(
-                    height: compact ? 56 : 64,
-                    child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: data.imageUrls.length,
-                        separatorBuilder: (_, __) =>
-                            SizedBox(width: compact ? 6 : 8),
-                        itemBuilder: (context, index) {
-                          final isSelected = index == 0;
-                          return Container(
-                              width: compact ? 56 : 64,
-                              height: compact ? 56 : 64,
-                              decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.circular(compact ? 10 : 12),
-                                  border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFFFF6A00)
-                                          : const Color(0xFFE5E7EB),
-                                      width: isSelected ? 2.5 : 1.5)),
-                              child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                      (compact ? 10 : 12) - 1),
-                                  child: Stack(fit: StackFit.expand, children: [
-                                    _OfferImage(
-                                        rawUrl: data.imageUrls[index],
-                                        fit: BoxFit.cover,
-                                        errorChild: Container(
-                                            color: const Color(0xFFF3F4F6),
-                                            child: const Icon(
-                                                Icons.broken_image_outlined,
-                                                color: Color(0xFF9CA3AF),
-                                                size: 20))),
-                                    _PhotoGalleryTapOverlay(
-                                        onTap: () =>
-                                            _openGallery(context, index)),
-                                  ])));
-                        }))),
+              padding: EdgeInsets.fromLTRB(
+                  compact ? 12 : 16, compact ? 8 : 10, compact ? 12 : 16, 0),
+              child: SizedBox(
+                height: compact ? 56 : 64,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: data.imageUrls.length,
+                  separatorBuilder: (_, __) => SizedBox(width: compact ? 6 : 8),
+                  itemBuilder: (context, index) {
+                    final isSelected = index == 0;
+                    return Container(
+                      width: compact ? 56 : 64,
+                      height: compact ? 56 : 64,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(compact ? 10 : 12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFFFF6A00)
+                              : const Color(0xFFE5E7EB),
+                          width: isSelected ? 2.5 : 1.5,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius:
+                            BorderRadius.circular((compact ? 10 : 12) - 1),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _OfferImage(
+                              rawUrl: data.imageUrls[index],
+                              fit: BoxFit.cover,
+                              errorChild: Container(
+                                color: const Color(0xFFF3F4F6),
+                                child: const Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Color(0xFF9CA3AF),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            _PhotoGalleryTapOverlay(
+                              onTap: () => _openGallery(context, index),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
           // ── Contenu texte ──
           Padding(
-              padding: EdgeInsets.fromLTRB(
-                  compact ? 15 : 18,
-                  hasPhotos ? (compact ? 10 : 12) : (compact ? 15 : 18),
-                  compact ? 15 : 18,
-                  compact ? 15 : 18),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            padding: EdgeInsets.fromLTRB(
+              compact ? 15 : 18,
+              hasPhotos ? (compact ? 10 : 12) : (compact ? 15 : 18),
+              compact ? 15 : 18,
+              compact ? 15 : 18,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.sanitizedTitle.toUpperCase(),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: compact ? 17 : 18,
+                    height: 1.0,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                SizedBox(height: compact ? 6 : 7),
+                Text(
+                  locationLine,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: compact ? 12.5 : 13,
+                    height: 1.15,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                SizedBox(height: compact ? 4 : 5),
+                Text(
+                  data.publishedAtExactLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: compact ? 12 : 12.5,
+                    height: 1.15,
+                    fontWeight: FontWeight.w500,
+                    color: textMuted,
+                    letterSpacing: -0.05,
+                  ),
+                ),
+                SizedBox(height: compact ? 10 : 12),
+                Text(
+                  detailsLine,
+                  softWrap: true,
+                  style: TextStyle(
+                    fontSize: compact ? 14 : 15,
+                    height: 1.28,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary.withOpacity(0.9),
+                  ),
+                ),
+                if (data.showPendingPhotoNotice) ...[
+                  SizedBox(height: compact ? 10 : 12),
+                  _PendingPhotoNotice(
+                    compact: compact,
+                    isProcessing: data.isMediaStillProcessing,
+                    moderationStatus: data.moderationStatus,
+                  ),
+                ],
+                SizedBox(height: compact ? 10 : 12),
+                Container(
+                  height: 1,
+                  color: divider,
+                ),
+                SizedBox(height: compact ? 10 : 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(data.sanitizedTitle.toUpperCase(),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: compact ? 17 : 18,
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${data.price.toStringAsFixed(0)} €',
+                          style: TextStyle(
+                            fontSize: compact ? 28 : 30,
                             height: 1.0,
                             fontWeight: FontWeight.w800,
-                            color: textPrimary,
-                            letterSpacing: 0.4)),
-                    SizedBox(height: compact ? 6 : 7),
-                    Text(locationLine,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: compact ? 12.5 : 13,
-                            height: 1.15,
-                            fontWeight: FontWeight.w600,
-                            color: textMuted,
-                            letterSpacing: -0.1)),
-                    SizedBox(height: compact ? 4 : 5),
-                    Text(data.publishedAtExactLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: compact ? 12 : 12.5,
-                            height: 1.15,
-                            fontWeight: FontWeight.w500,
-                            color: textMuted,
-                            letterSpacing: -0.05)),
-                    SizedBox(height: compact ? 10 : 12),
-                    Text(detailsLine,
-                        softWrap: true,
-                        style: TextStyle(
-                            fontSize: compact ? 14 : 15,
-                            height: 1.28,
-                            fontWeight: FontWeight.w500,
-                            color: textPrimary.withOpacity(0.9))),
-                    if (data.showPendingPhotoNotice) ...[
-                      SizedBox(height: compact ? 10 : 12),
-                      _PendingPhotoNotice(
-                          compact: compact,
-                          isProcessing: data.isMediaStillProcessing,
-                          moderationStatus: data.moderationStatus),
-                    ],
-                    SizedBox(height: compact ? 10 : 12),
-                    Container(height: 1, color: divider),
-                    SizedBox(height: compact ? 10 : 12),
-                    Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Spacer(),
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            color: orange2,
+                            letterSpacing: -0.6,
+                          ),
+                        ),
+                        SizedBox(height: compact ? 6 : 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _DelayBadge(
+                                text: data.averageDelay, compact: compact),
+                            if (data.isUrgent) ...[
+                              SizedBox(width: compact ? 6 : 8),
+                              _UrgentBadge(compact: compact),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                    // Stats propriétaire (vues + contacts tél)
+                    Builder(builder: (context) {
+                      final me = FirebaseAuth.instance.currentUser?.uid ?? '';
+                      final isOwner = me.isNotEmpty && me == data.advertiserId;
+                      if (!isOwner) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('${data.price.toStringAsFixed(0)} €',
-                                    style: TextStyle(
-                                        fontSize: compact ? 28 : 30,
-                                        height: 1.0,
-                                        fontWeight: FontWeight.w800,
-                                        color: orange2,
-                                        letterSpacing: -0.6)),
-                                SizedBox(height: compact ? 6 : 8),
-                                Row(mainAxisSize: MainAxisSize.min, children: [
-                                  _DelayBadge(
-                                      text: data.averageDelay,
-                                      compact: compact),
-                                  if (data.isUrgent) ...[
-                                    SizedBox(width: compact ? 6 : 8),
-                                    _UrgentBadge(compact: compact),
-                                  ],
-                                ]),
-                              ]),
-                          // Stats propriétaire (vues + contacts tél)
-                          Builder(builder: (context) {
-                            final me =
-                                FirebaseAuth.instance.currentUser?.uid ?? '';
-                            final isOwner =
-                                me.isNotEmpty && me == data.advertiserId;
-                            if (!isOwner) return const SizedBox.shrink();
-                            return Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child:
-                                    Wrap(spacing: 12, runSpacing: 4, children: [
-                                  Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.visibility_outlined,
-                                            size: 13, color: Color(0xFF6B708D)),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                            '\${data.viewCount} vue\${data.viewCount > 1 ? "s" : ""}',
-                                            style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Color(0xFF6B708D),
-                                                fontWeight: FontWeight.w600)),
-                                      ]),
-                                  if (data.phoneViewCount > 0)
-                                    Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.phone_outlined,
-                                              size: 13,
-                                              color: Color(0xFF6B708D)),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                              '\${data.phoneViewCount} contact\${data.phoneViewCount > 1 ? "s" : ""}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF6B708D),
-                                                  fontWeight: FontWeight.w600)),
-                                        ]),
-                                ]));
-                          }),
-                        ]),
-                  ])),
-        ]));
+                                const Icon(Icons.visibility_outlined,
+                                    size: 13, color: Color(0xFF6B708D)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '\${data.viewCount} vue\${data.viewCount > 1 ? "s" : ""}',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B708D),
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                            if (data.phoneViewCount > 0)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.phone_outlined,
+                                      size: 13, color: Color(0xFF6B708D)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '\${data.phoneViewCount} contact\${data.phoneViewCount > 1 ? "s" : ""}',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF6B708D),
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2067,47 +2400,65 @@ class _PendingPhotoNotice extends StatelessWidget {
             : 'Cette annonce reste temporairement hors ligne avant publication.';
 
     return Container(
-        width: double.infinity,
-        padding: EdgeInsets.fromLTRB(compact ? 12 : 14, compact ? 10 : 12,
-            compact ? 12 : 14, compact ? 10 : 12),
-        decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(compact ? 14 : 16),
-            border: Border.all(color: border)),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 14,
+        compact ? 10 : 12,
+        compact ? 12 : 14,
+        compact ? 10 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(compact ? 14 : 16),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Container(
-              width: compact ? 28 : 32,
-              height: compact ? 28 : 32,
-              decoration:
-                  const BoxDecoration(color: accent, shape: BoxShape.circle),
-              child: Icon(
-                  isProcessing
-                      ? Icons.sync_rounded
-                      : Icons.hourglass_top_rounded,
-                  size: compact ? 16 : 18,
-                  color: Colors.white)),
+            width: compact ? 28 : 32,
+            height: compact ? 28 : 32,
+            decoration: const BoxDecoration(
+              color: accent,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isProcessing ? Icons.sync_rounded : Icons.hourglass_top_rounded,
+              size: compact ? 16 : 18,
+              color: Colors.white,
+            ),
+          ),
           SizedBox(width: compact ? 10 : 12),
           Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                    isProcessing
-                        ? 'Photos en traitement'
-                        : 'Annonce en attente de validation',
-                    style: TextStyle(
-                        fontSize: compact ? 12.5 : 13.5,
-                        fontWeight: FontWeight.w800,
-                        color: titleColor)),
+                  isProcessing
+                      ? 'Photos en traitement'
+                      : 'Annonce en attente de validation',
+                  style: TextStyle(
+                    fontSize: compact ? 12.5 : 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: titleColor,
+                  ),
+                ),
                 SizedBox(height: compact ? 4 : 5),
-                Text(message,
-                    style: TextStyle(
-                        fontSize: compact ? 11.5 : 12.5,
-                        height: 1.3,
-                        fontWeight: FontWeight.w600,
-                        color: bodyColor)),
-              ])),
-        ]));
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: compact ? 11.5 : 12.5,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                    color: bodyColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2125,23 +2476,36 @@ class _HeroInfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        height: compact ? 52 : 58,
-        padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
-        decoration: BoxDecoration(
-            color: const Color(0xFFF0EDF6),
-            borderRadius: BorderRadius.circular(29)),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(icon, size: compact ? 21 : 24, color: const Color(0xFF2B2F52)),
+      height: compact ? 52 : 58,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0EDF6),
+        borderRadius: BorderRadius.circular(29),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: compact ? 21 : 24,
+            color: const Color(0xFF2B2F52),
+          ),
           SizedBox(width: compact ? 8 : 10),
           Flexible(
-              child: Text(label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: compact ? 16 : 18,
-                      height: 1,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2B2F52)))),
-        ]));
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 16 : 18,
+                height: 1,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF2B2F52),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2153,12 +2517,15 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
-        child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-                onTap: onTap,
-                splashColor: Colors.white.withOpacity(0.08),
-                highlightColor: Colors.white.withOpacity(0.04))));
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: Colors.white.withOpacity(0.08),
+          highlightColor: Colors.white.withOpacity(0.04),
+        ),
+      ),
+    );
   }
 }
 
@@ -2179,55 +2546,78 @@ class _PhotoThumbnailStrip extends StatelessWidget {
     const double borderRadius = 14;
 
     return SizedBox(
-        height: thumbSize,
-        child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            itemCount: imageUrls.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              return Container(
-                  width: thumbSize,
-                  height: thumbSize,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(borderRadius),
-                      border: Border.all(
-                          color: const Color(0xFFE5E7EB), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2)),
-                      ]),
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(borderRadius - 1),
-                      child: Stack(fit: StackFit.expand, children: [
-                        _OfferImage(
-                            rawUrl: imageUrls[index],
-                            fit: BoxFit.cover,
-                            errorChild: Container(
-                                color: const Color(0xFFF3F4F6),
-                                child: const Icon(Icons.broken_image_outlined,
-                                    color: Color(0xFF9CA3AF), size: 28)),
-                            loadingChild: Container(
-                                color: const Color(0xFFF3F4F6),
-                                child: const Center(
-                                    child: SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Color(0xFFFF6A00)))))),
-                        _PhotoGalleryTapOverlay(
-                            onTap: () =>
-                                _openFullScreenGallery(context, index)),
-                      ])));
-            }));
+      height: thumbSize,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        itemCount: imageUrls.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          return Container(
+            width: thumbSize,
+            height: thumbSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: const Color(0xFFE5E7EB),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius - 1),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _OfferImage(
+                    rawUrl: imageUrls[index],
+                    fit: BoxFit.cover,
+                    errorChild: Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Icon(
+                        Icons.broken_image_outlined,
+                        color: Color(0xFF9CA3AF),
+                        size: 28,
+                      ),
+                    ),
+                    loadingChild: Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFFF6A00),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _PhotoGalleryTapOverlay(
+                    onTap: () => _openFullScreenGallery(context, index),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _openFullScreenGallery(BuildContext context, int initialIndex) {
-    _showPhotoGalleryPopup(context,
-        imageUrls: imageUrls, initialIndex: initialIndex);
+    _showPhotoGalleryPopup(
+      context,
+      imageUrls: imageUrls,
+      initialIndex: initialIndex,
+    );
   }
 }
 
@@ -2239,16 +2629,19 @@ Future<void> _showPhotoGalleryPopup(
   if (imageUrls.isEmpty) return Future<void>.value();
   final safeIndex = initialIndex.clamp(0, imageUrls.length - 1);
   return showGeneralDialog<void>(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: true,
-      barrierLabel: 'Fermer',
-      barrierColor: Colors.black87,
-      transitionDuration: Duration.zero,
-      pageBuilder: (context, _, __) {
-        return _PhotoGalleryPopup(
-            imageUrls: imageUrls, initialIndex: safeIndex);
-      });
+    context: context,
+    useRootNavigator: true,
+    barrierDismissible: true,
+    barrierLabel: 'Fermer',
+    barrierColor: Colors.black87,
+    transitionDuration: Duration.zero,
+    pageBuilder: (context, _, __) {
+      return _PhotoGalleryPopup(
+        imageUrls: imageUrls,
+        initialIndex: safeIndex,
+      );
+    },
+  );
 }
 
 class _PhotoGalleryPopup extends StatefulWidget {
@@ -2284,55 +2677,75 @@ class _PhotoGalleryPopupState extends State<_PhotoGalleryPopup> {
   @override
   Widget build(BuildContext context) {
     return Material(
-        color: Colors.white,
-        child: SafeArea(
-            child: Stack(children: [
-          Positioned.fill(
+      color: Colors.white,
+      child: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
               child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.imageUrls.length,
-                  onPageChanged: (index) =>
-                      setState(() => _currentPage = index),
-                  itemBuilder: (context, index) {
-                    return InteractiveViewer(
-                        minScale: 0.5,
-                        maxScale: 4.0,
-                        child: Center(
-                            child: _OfferImage(
-                                rawUrl: widget.imageUrls[index],
-                                fit: BoxFit.contain,
-                                errorChild: const Icon(
-                                    Icons.broken_image_outlined,
-                                    color: Colors.black26,
-                                    size: 64),
-                                loadingChild: const SizedBox.shrink())));
-                  })),
-          Positioned(
+                controller: _pageController,
+                itemCount: widget.imageUrls.length,
+                onPageChanged: (index) => setState(() => _currentPage = index),
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: _OfferImage(
+                        rawUrl: widget.imageUrls[index],
+                        fit: BoxFit.contain,
+                        errorChild: const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.black26,
+                          size: 64,
+                        ),
+                        loadingChild: const SizedBox.shrink(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Positioned(
               top: 10,
               left: 6,
               right: 6,
-              child: Row(children: [
-                Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
-                        color: Colors.black45,
-                        borderRadius: BorderRadius.circular(999)),
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                     child: Text(
-                        '${_currentPage + 1} / ${widget.imageUrls.length}',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700))),
-                const Spacer(),
-                IconButton.filledTonal(
+                      '${_currentPage + 1} / ${widget.imageUrls.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton.filledTonal(
                     onPressed: () => Navigator.of(context).pop(),
                     style: IconButton.styleFrom(
-                        backgroundColor: Colors.black45,
-                        foregroundColor: Colors.white),
-                    icon: const Icon(Icons.close_rounded)),
-              ])),
-        ])));
+                      backgroundColor: Colors.black45,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -2426,27 +2839,30 @@ class _OfferImage extends StatelessWidget {
     if (_isDirectUrl(trimmed)) {
       final url = trimmed.startsWith('//') ? 'https:$trimmed' : trimmed;
       return OfferNetworkImage(
-          url: url,
-          fit: fit,
-          errorChild: errorChild,
-          loadingChild: loadingChild);
+        url: url,
+        fit: fit,
+        errorChild: errorChild,
+        loadingChild: loadingChild,
+      );
     }
 
     // Chemin Storage → résolution async nécessaire
     return FutureBuilder<String?>(
-        future: _resolveOfferImageUrl(rawUrl),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return loadingChild ?? errorChild;
-          }
-          final resolvedUrl = (snapshot.data ?? '').trim();
-          if (resolvedUrl.isEmpty) return errorChild;
-          return OfferNetworkImage(
-              url: resolvedUrl,
-              fit: fit,
-              errorChild: errorChild,
-              loadingChild: loadingChild);
-        });
+      future: _resolveOfferImageUrl(rawUrl),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return loadingChild ?? errorChild;
+        }
+        final resolvedUrl = (snapshot.data ?? '').trim();
+        if (resolvedUrl.isEmpty) return errorChild;
+        return OfferNetworkImage(
+          url: resolvedUrl,
+          fit: fit,
+          errorChild: errorChild,
+          loadingChild: loadingChild,
+        );
+      },
+    );
   }
 }
 
@@ -2463,57 +2879,76 @@ class _PracticalInfoCard extends StatelessWidget {
 
   void _showPaymentInfoPopup(BuildContext context) {
     showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          final overlayTheme = dialogContext.prestoOverlayTheme;
-          return AlertDialog(
-              backgroundColor: overlayTheme.surfaceColor,
-              surfaceTintColor: overlayTheme.surfaceTintColor,
-              shape: overlayTheme.dialogShape,
-              title: const Text('Infos paiement'),
-              content: const Text(
-                  'Le mode de paiement est convenu directement entre le client et le prestataire. '
-                  'IliPresto ne collecte pas le paiement sur cette annonce.'),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('Fermer')),
-              ]);
-        });
+      context: context,
+      builder: (dialogContext) {
+        final overlayTheme = dialogContext.prestoOverlayTheme;
+        return AlertDialog(
+          backgroundColor: overlayTheme.surfaceColor,
+          surfaceTintColor: overlayTheme.surfaceTintColor,
+          shape: overlayTheme.dialogShape,
+          title: const Text('Infos paiement'),
+          content: const Text(
+            'Le mode de paiement est convenu directement entre le client et le prestataire. '
+            'IliPresto ne collecte pas le paiement sur cette annonce.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _paymentInfoPill(BuildContext context) {
     return Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
-        child: Ink(
-            decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [
-                  Color(0xFF1A73E8),
-                  Color(0xFF1565D8),
-                ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                      color: const Color(0xFF1A73E8).withOpacity(0.20),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2)),
-                ]),
-            child: InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: () => _showPaymentInfoPopup(context),
-                child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                    child: SizedBox(
-                        width: 44,
-                        child: Center(
-                            child: Text('Infos',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0))))))));
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF1A73E8),
+              Color(0xFF1565D8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1A73E8).withOpacity(0.20),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onTap: () => _showPaymentInfoPopup(context),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+            child: SizedBox(
+              width: 44,
+              child: Center(
+                child: Text(
+                  'Infos',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -2526,70 +2961,92 @@ class _PracticalInfoCard extends StatelessWidget {
     const green = Color(0xFF45B36B);
 
     return Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(compact ? 28 : 32),
-            boxShadow: [
-              BoxShadow(
-                  color: const Color(0xFF9B8E86).withOpacity(0.10),
-                  blurRadius: compact ? 18 : 22,
-                  offset: Offset(0, compact ? 8 : 10)),
-              BoxShadow(
-                  color: blueSoft.withOpacity(0.55),
-                  blurRadius: compact ? 15 : 18,
-                  spreadRadius: 1,
-                  offset: Offset(0, compact ? 11 : 14)),
-            ]),
-        child: Column(children: [
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(compact ? 28 : 32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            blurRadius: compact ? 18 : 22,
+            offset: Offset(0, compact ? 8 : 10),
+          ),
+          BoxShadow(
+            color: blueSoft.withOpacity(0.55),
+            blurRadius: compact ? 15 : 18,
+            spreadRadius: 1,
+            offset: Offset(0, compact ? 11 : 14),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
           Container(
-              decoration: BoxDecoration(
-                  color: const Color(0xFFFBFAFA),
-                  borderRadius: BorderRadius.circular(compact ? 20 : 24)),
-              child: Padding(
-                  padding: EdgeInsets.fromLTRB(compact ? 14 : 18,
-                      compact ? 12 : 16, compact ? 14 : 18, compact ? 14 : 18),
-                  child: Column(children: [
-                    _InfoLine(
-                        icon: Icons.handyman_outlined,
-                        label: 'Catégorie',
-                        value: data.category,
-                        compact: compact),
-                    _InfoLine(
-                        icon: Icons.map_outlined,
-                        label: 'Zone d\'intervention',
-                        value: data.serviceArea,
-                        compact: compact),
-                    _InfoLine(
-                        icon: Icons.check_circle_outline_rounded,
-                        label: 'Déplacement possible',
-                        value: data.canTravel ? 'Oui' : 'Non',
-                        compact: compact),
-                    _InfoLine(
-                        icon: Icons.access_time_rounded,
-                        label: 'Horaires',
-                        value: data.schedule,
-                        compact: compact),
-                    _InfoLine(
-                        icon: Icons.access_time_rounded,
-                        label: 'Délai',
-                        value: data.missionDelay,
-                        compact: compact),
-                    const Divider(height: 1, thickness: 1, color: line),
-                    _InfoLine(
-                        icon: Icons.account_balance_wallet_outlined,
-                        label: 'Mode de paiement',
-                        value: 'À convenir',
-                        compact: compact,
-                        trailing: _paymentInfoPill(context)),
-                    _InfoLine(
-                        icon: Icons.work_outline_rounded,
-                        label: 'Type de prestation',
-                        value: data.serviceType.toLowerCase().contains('ponct')
-                            ? 'Ponctuelle'
-                            : data.serviceType,
-                        compact: compact),
-                  ]))),
-        ]));
+            decoration: BoxDecoration(
+              color: const Color(0xFFFBFAFA),
+              borderRadius: BorderRadius.circular(compact ? 20 : 24),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                compact ? 14 : 18,
+                compact ? 12 : 16,
+                compact ? 14 : 18,
+                compact ? 14 : 18,
+              ),
+              child: Column(
+                children: [
+                  _InfoLine(
+                    icon: Icons.handyman_outlined,
+                    label: 'Catégorie',
+                    value: data.category,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.map_outlined,
+                    label: 'Zone d\'intervention',
+                    value: data.serviceArea,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.check_circle_outline_rounded,
+                    label: 'Déplacement possible',
+                    value: data.canTravel ? 'Oui' : 'Non',
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.access_time_rounded,
+                    label: 'Horaires',
+                    value: data.schedule,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.access_time_rounded,
+                    label: 'Délai',
+                    value: data.missionDelay,
+                    compact: compact,
+                  ),
+                  const Divider(height: 1, thickness: 1, color: line),
+                  _InfoLine(
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'Mode de paiement',
+                    value: 'À convenir',
+                    compact: compact,
+                    trailing: _paymentInfoPill(context),
+                  ),
+                  _InfoLine(
+                    icon: Icons.work_outline_rounded,
+                    label: 'Type de prestation',
+                    value: data.serviceType.toLowerCase().contains('ponct')
+                        ? 'Ponctuelle'
+                        : data.serviceType,
+                    compact: compact,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -2599,24 +3056,35 @@ class _OfferDetailsAdMobBannerSpace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-        label: 'Espace publicitaire AdMob',
-        child: Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-            decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB))),
-            child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 56, maxHeight: 82),
-                child: const Center(
-                    child: Text('Espace publicitaire',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF6B7280)))))));
+      label: 'Espace publicitaire AdMob',
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: 56,
+            maxHeight: 82,
+          ),
+          child: const Center(
+            child: Text(
+              'Espace publicitaire',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -2636,44 +3104,63 @@ class _AdvertiserContactCard extends StatelessWidget {
     const blueSoft = Color(0xFFDCEBFF);
 
     return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(compact ? 28 : 32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            blurRadius: compact ? 18 : 22,
+            offset: Offset(0, compact ? 8 : 10),
+          ),
+          BoxShadow(
+            color: blueSoft.withOpacity(0.55),
+            blurRadius: compact ? 15 : 18,
+            spreadRadius: 1,
+            offset: Offset(0, compact ? 11 : 14),
+          ),
+        ],
+      ),
+      child: Container(
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(compact ? 28 : 32),
-            boxShadow: [
-              BoxShadow(
-                  color: const Color(0xFF9B8E86).withOpacity(0.10),
-                  blurRadius: compact ? 18 : 22,
-                  offset: Offset(0, compact ? 8 : 10)),
-              BoxShadow(
-                  color: blueSoft.withOpacity(0.55),
-                  blurRadius: compact ? 15 : 18,
-                  spreadRadius: 1,
-                  offset: Offset(0, compact ? 11 : 14)),
-            ]),
-        child: Container(
-            decoration: BoxDecoration(
-                color: const Color(0xFFFBFAFA),
-                borderRadius: BorderRadius.circular(compact ? 20 : 24)),
-            child: Padding(
-                padding: EdgeInsets.fromLTRB(compact ? 14 : 18,
-                    compact ? 12 : 16, compact ? 14 : 18, compact ? 14 : 18),
-                child: Column(children: [
-                  _AdvertiserHeaderLine(
-                      advertiserName: data.advertiserName,
-                      verified: data.verified,
-                      compact: compact),
-                  _AdvertiserMetaLine(
-                      advertiserRating: data.advertiserRating,
-                      advertiserReviewCount: data.advertiserReviewCount,
-                      verified: data.verified,
-                      compact: compact),
-                  _MaskedPhoneInfoLine(phone: data.phone, compact: compact),
-                  SizedBox(height: compact ? 12 : 14),
-                  _InlineCta(
-                      label: 'Proposer mes services',
-                      compact: compact,
-                      onTap: onContactTap),
-                ]))));
+          color: const Color(0xFFFBFAFA),
+          borderRadius: BorderRadius.circular(compact ? 20 : 24),
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            compact ? 14 : 18,
+            compact ? 12 : 16,
+            compact ? 14 : 18,
+            compact ? 14 : 18,
+          ),
+          child: Column(
+            children: [
+              _AdvertiserHeaderLine(
+                advertiserName: data.advertiserName,
+                verified: data.verified,
+                compact: compact,
+              ),
+              _AdvertiserMetaLine(
+                advertiserRating: data.advertiserRating,
+                advertiserReviewCount: data.advertiserReviewCount,
+                verified: data.verified,
+                compact: compact,
+              ),
+              _MaskedPhoneInfoLine(
+                phone: data.phone,
+                compact: compact,
+              ),
+              SizedBox(height: compact ? 12 : 14),
+              _InlineCta(
+                label: 'Proposer mes services',
+                compact: compact,
+                onTap: onContactTap,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -2695,54 +3182,84 @@ class _AdvertiserHeaderLine extends StatelessWidget {
     const green = Color(0xFF45B36B);
     const line = Color(0xFFE6E3E6);
 
-    return Column(children: [
-      Padding(
+    return Column(
+      children: [
+        Padding(
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Container(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
                 width: compact ? 34 : 38,
                 height: compact ? 34 : 38,
                 decoration: BoxDecoration(
-                    color: const Color(0xFFEFF2F7),
-                    borderRadius: BorderRadius.circular(999)),
-                child: Icon(Icons.person_outline_rounded,
-                    size: compact ? 20 : 22, color: navy)),
-            SizedBox(width: compact ? 10 : 12),
-            Expanded(
+                  color: const Color(0xFFEFF2F7),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  size: compact ? 20 : 22,
+                  color: navy,
+                ),
+              ),
+              SizedBox(width: compact ? 10 : 12),
+              Expanded(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Row(children: [
-                    Flexible(
-                        child: Text(advertiserName,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            advertiserName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                color: navy,
-                                fontSize: compact ? 16 : 17,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.15))),
-                    if (verified) ...[
-                      SizedBox(width: compact ? 6 : 8),
-                      Icon(Icons.check_circle_rounded,
-                          size: compact ? 16 : 18, color: green),
-                    ],
-                  ]),
-                  SizedBox(height: compact ? 4 : 5),
-                  Row(children: [
-                    Icon(Icons.access_time_rounded,
-                        color: muted, size: compact ? 13 : 14),
-                    SizedBox(width: compact ? 4 : 5),
-                    Text('Réponse en moins d\'une heure',
-                        style: TextStyle(
+                              color: navy,
+                              fontSize: compact ? 16 : 17,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.15,
+                            ),
+                          ),
+                        ),
+                        if (verified) ...[
+                          SizedBox(width: compact ? 6 : 8),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: compact ? 16 : 18,
+                            color: green,
+                          ),
+                        ],
+                      ],
+                    ),
+                    SizedBox(height: compact ? 4 : 5),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          color: muted,
+                          size: compact ? 13 : 14,
+                        ),
+                        SizedBox(width: compact ? 4 : 5),
+                        Text(
+                          'Réponse en moins d\'une heure',
+                          style: TextStyle(
                             color: muted,
                             fontSize: compact ? 12 : 13,
-                            fontWeight: FontWeight.w500)),
-                  ]),
-                ])),
-          ])),
-      const Divider(height: 1, thickness: 1, color: line),
-    ]);
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
+    );
   }
 }
 
@@ -2767,39 +3284,56 @@ class _InfoLine extends StatelessWidget {
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
 
-    return Column(children: [
-      Padding(
+    return Column(
+      children: [
+        Padding(
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Icon(icon, color: const Color(0xFF6C7384), size: compact ? 20 : 22),
-            SizedBox(width: compact ? 8 : 10),
-            Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  color: const Color(0xFF6C7384), size: compact ? 20 : 22),
+              SizedBox(width: compact ? 8 : 10),
+              Expanded(
                 child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(label,
-                        style: TextStyle(
-                            color: muted,
-                            fontSize: compact ? 15 : 16,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.1)))),
-            SizedBox(width: compact ? 8 : 10),
-            Flexible(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: compact ? 15 : 16,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: compact ? 8 : 10),
+              Flexible(
                 child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(value,
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                            color: navy,
-                            fontSize: compact ? 15 : 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.15)))),
-            if (trailing != null) ...[
-              SizedBox(width: compact ? 6 : 8),
-              trailing!,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: compact ? 15 : 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.15,
+                    ),
+                  ),
+                ),
+              ),
+              if (trailing != null) ...[
+                SizedBox(width: compact ? 6 : 8),
+                trailing!,
+              ],
             ],
-          ])),
-      const Divider(height: 1, thickness: 1, color: line),
-    ]);
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
+    );
   }
 }
 
@@ -2824,72 +3358,106 @@ class _AdvertiserMetaLine extends StatelessWidget {
     const green = Color(0xFF45B36B);
     const line = Color(0xFFE6E3E6);
 
-    return Column(children: [
-      Padding(
+    return Column(
+      children: [
+        Padding(
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Container(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
                 width: compact ? 26 : 30,
                 height: compact ? 26 : 30,
                 decoration: BoxDecoration(
-                    color: const Color(0xFFEFF2F7),
-                    borderRadius: BorderRadius.circular(999)),
-                child: Icon(Icons.person_outline_rounded,
-                    size: compact ? 16 : 18, color: navy)),
-            SizedBox(width: compact ? 8 : 10),
-            Text('Profil',
-                style: TextStyle(
-                    color: muted,
-                    fontSize: compact ? 15 : 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.1)),
-            const Spacer(),
-            if (verified) ...[
-              Icon(Icons.check_circle_rounded,
-                  size: compact ? 15 : 17, color: green),
-              SizedBox(width: compact ? 4 : 5),
-            ],
-            if (advertiserRating > 0) ...[
-              Icon(Icons.star_rounded, size: compact ? 15 : 17, color: orange),
-              SizedBox(width: compact ? 4 : 5),
-              Text(advertiserRating.toStringAsFixed(1),
-                  style: TextStyle(
-                      color: orange,
-                      fontSize: compact ? 14 : 16,
-                      fontWeight: FontWeight.w800)),
-              SizedBox(width: compact ? 6 : 8),
+                  color: const Color(0xFFEFF2F7),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  size: compact ? 16 : 18,
+                  color: navy,
+                ),
+              ),
+              SizedBox(width: compact ? 8 : 10),
               Text(
+                'Profil',
+                style: TextStyle(
+                  color: muted,
+                  fontSize: compact ? 15 : 16,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.1,
+                ),
+              ),
+              const Spacer(),
+              if (verified) ...[
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: compact ? 15 : 17,
+                  color: green,
+                ),
+                SizedBox(width: compact ? 4 : 5),
+              ],
+              if (advertiserRating > 0) ...[
+                Icon(
+                  Icons.star_rounded,
+                  size: compact ? 15 : 17,
+                  color: orange,
+                ),
+                SizedBox(width: compact ? 4 : 5),
+                Text(
+                  advertiserRating.toStringAsFixed(1),
+                  style: TextStyle(
+                    color: orange,
+                    fontSize: compact ? 14 : 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(width: compact ? 6 : 8),
+                Text(
                   advertiserReviewCount > 0
                       ? '($advertiserReviewCount avis)'
                       : '(0 avis)',
                   style: TextStyle(
-                      color: navy,
-                      fontSize: compact ? 14 : 15,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.1)),
-            ] else ...[
-              Container(
+                    color: navy,
+                    fontSize: compact ? 14 : 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ] else ...[
+                Container(
                   padding: EdgeInsets.symmetric(
-                      horizontal: compact ? 9 : 11, vertical: compact ? 4 : 5),
+                    horizontal: compact ? 9 : 11,
+                    vertical: compact ? 4 : 5,
+                  ),
                   decoration: BoxDecoration(
-                      color: green,
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: [
-                        BoxShadow(
-                            color: green.withOpacity(0.18),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2)),
-                      ]),
-                  child: Text('Nouveau',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: compact ? 12.5 : 13.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0))),
+                    color: green,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      BoxShadow(
+                        color: green.withOpacity(0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    'Nouveau',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: compact ? 12.5 : 13.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ])),
-      const Divider(height: 1, thickness: 1, color: line),
-    ]);
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
+    );
   }
 }
 
@@ -2941,40 +3509,57 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     final displayedValue =
         _isPhoneVisible ? widget.phone.trim() : _maskedLabel(widget.phone);
 
-    return Column(children: [
-      Padding(
+    return Column(
+      children: [
+        Padding(
           padding: EdgeInsets.symmetric(vertical: widget.compact ? 10 : 12),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Icon(Icons.call_outlined,
-                color: const Color(0xFF6C7384), size: widget.compact ? 20 : 22),
-            SizedBox(width: widget.compact ? 8 : 10),
-            Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.call_outlined,
+                color: const Color(0xFF6C7384),
+                size: widget.compact ? 20 : 22,
+              ),
+              SizedBox(width: widget.compact ? 8 : 10),
+              Expanded(
                 child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Téléphone',
-                        style: TextStyle(
-                            color: muted,
-                            fontSize: widget.compact ? 15 : 16,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.1)))),
-            SizedBox(width: widget.compact ? 8 : 10),
-            Flexible(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Téléphone',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: widget.compact ? 15 : 16,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: widget.compact ? 8 : 10),
+              Flexible(
                 child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
                     alignment: Alignment.centerRight,
-                    child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerRight,
-                        child: Text(displayedValue,
-                            maxLines: 1,
-                            softWrap: false,
-                            textAlign: TextAlign.right,
-                            style: TextStyle(
-                                color: navy,
-                                fontSize: widget.compact ? 15 : 16,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.15))))),
-            SizedBox(width: widget.compact ? 4 : 6),
-            IconButton(
+                    child: Text(
+                      displayedValue,
+                      maxLines: 1,
+                      softWrap: false,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: navy,
+                        fontSize: widget.compact ? 15 : 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: widget.compact ? 4 : 6),
+              IconButton(
                 onPressed: hasPhone
                     ? () => setState(() => _isPhoneVisible = !_isPhoneVisible)
                     : null,
@@ -2983,14 +3568,19 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
                 visualDensity: VisualDensity.compact,
                 splashRadius: widget.compact ? 18 : 20,
                 icon: Icon(
-                    _isPhoneVisible
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: hasPhone ? navy : muted,
-                    size: widget.compact ? 20 : 22)),
-          ])),
-      const Divider(height: 1, thickness: 1, color: line),
-    ]);
+                  _isPhoneVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: hasPhone ? navy : muted,
+                  size: widget.compact ? 20 : 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
+    );
   }
 }
 
@@ -3011,40 +3601,51 @@ class _DelayBadge extends StatelessWidget {
     final subline = normalized.contains('en moyenne') ? 'en moyenne' : '';
 
     return _HeaderPillBadge(
-        compact: compact,
-        minWidth: compact ? 88 : 96,
-        padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
-        decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Color(0xFFFFB13B), Color(0xFFFF6A00)]),
-            boxShadow: [
-              BoxShadow(
-                  color: Color(0x26FF7A00),
-                  blurRadius: 12,
-                  offset: Offset(0, 4)),
-            ]),
-        child: RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(children: [
+      compact: compact,
+      minWidth: compact ? 88 : 96,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFFFB13B), Color(0xFFFF6A00)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x26FF7A00),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: headline,
+              style: TextStyle(
+                color: headlineColor,
+                fontSize: compact ? 10.5 : 11,
+                fontWeight: FontWeight.w800,
+                height: 1,
+                letterSpacing: 0.2,
+              ),
+            ),
+            if (subline.isNotEmpty)
               TextSpan(
-                  text: headline,
-                  style: TextStyle(
-                      color: headlineColor,
-                      fontSize: compact ? 10.5 : 11,
-                      fontWeight: FontWeight.w800,
-                      height: 1,
-                      letterSpacing: 0.2)),
-              if (subline.isNotEmpty)
-                TextSpan(
-                    text: '  $subline',
-                    style: TextStyle(
-                        color: sublineColor,
-                        fontSize: compact ? 8.5 : 9,
-                        fontWeight: FontWeight.w700,
-                        height: 1)),
-            ])));
+                text: '  $subline',
+                style: TextStyle(
+                  color: sublineColor,
+                  fontSize: compact ? 8.5 : 9,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -3056,28 +3657,35 @@ class _UrgentBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _HeaderPillBadge(
-        compact: compact,
-        minWidth: compact ? 88 : 96,
-        padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
-        decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Color(0xFFFFA43A), Color(0xFFFF6A00)]),
-            boxShadow: [
-              BoxShadow(
-                  color: Color(0x2EFF8A00),
-                  blurRadius: 12,
-                  offset: Offset(0, 4)),
-            ]),
-        child: Text('URGENT',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: compact ? 10.5 : 11,
-                height: 1,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.2)));
+      compact: compact,
+      minWidth: compact ? 88 : 96,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFFFA43A), Color(0xFFFF6A00)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x2EFF8A00),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Text(
+        'URGENT',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: compact ? 10.5 : 11,
+          height: 1,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
   }
 }
 
@@ -3099,13 +3707,15 @@ class _HeaderPillBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        constraints: BoxConstraints(minWidth: minWidth),
-        height: compact ? 26 : 28,
-        padding: padding,
-        decoration:
-            decoration.copyWith(borderRadius: BorderRadius.circular(999)),
-        alignment: Alignment.center,
-        child: child);
+      constraints: BoxConstraints(minWidth: minWidth),
+      height: compact ? 26 : 28,
+      padding: padding,
+      decoration: decoration.copyWith(
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: child,
+    );
   }
 }
 
@@ -3120,39 +3730,50 @@ class _InlineCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        height: compact ? 56 : 62,
-        decoration: BoxDecoration(
-            gradient: const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [Color(0xFF49A6FF), Color(0xFF0058DF)]),
-            borderRadius: BorderRadius.circular(100),
-            boxShadow: [
-              BoxShadow(
-                  color: const Color(0xFF0A63E7).withOpacity(0.35),
-                  blurRadius: compact ? 15 : 18,
-                  offset: Offset(0, compact ? 7 : 8)),
-              BoxShadow(
-                  color: Colors.white.withOpacity(0.35),
-                  blurRadius: compact ? 5 : 6,
-                  offset: const Offset(0, -1)),
-            ]),
-        child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-                borderRadius: BorderRadius.circular(100),
-                onTap: onTap,
-                child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: compact ? 14 : 16),
-                    child: Center(
-                        child: Text(label,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: compact ? 17 : 19,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.2)))))));
+      height: compact ? 56 : 62,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFF49A6FF), Color(0xFF0058DF)],
+        ),
+        borderRadius: BorderRadius.circular(100),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A63E7).withOpacity(0.35),
+            blurRadius: compact ? 15 : 18,
+            offset: Offset(0, compact ? 7 : 8),
+          ),
+          BoxShadow(
+            color: Colors.white.withOpacity(0.35),
+            blurRadius: compact ? 5 : 6,
+            offset: const Offset(0, -1),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(100),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 16),
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: compact ? 17 : 19,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -3172,44 +3793,61 @@ class _ShareOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-        color: Colors.transparent,
-        child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: onTap,
-            child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          boxShadow: const [
-                            BoxShadow(
-                                color: Color(0x12000000),
-                                blurRadius: 10,
-                                offset: Offset(0, 4)),
-                          ]),
-                      child: Center(
-                          child: Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                  color: color,
-                                  borderRadius: BorderRadius.circular(12)),
-                              child: Center(child: icon)))),
-                  const SizedBox(height: 8),
-                  Text(label,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF111827))),
-                ]))));
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFFE5E7EB),
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x12000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(child: icon),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -3221,45 +3859,69 @@ class _AvatarFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        decoration: const BoxDecoration(
-            gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFF7D25B), Color(0xFFC98E27)])),
-        child: Stack(fit: StackFit.expand, children: [
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF7D25B), Color(0xFFC98E27)],
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
           Positioned(
-              bottom: 0,
-              left: 4,
-              right: 4,
-              child: Container(
-                  height: 13,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFDAA065), shape: BoxShape.circle))),
+            bottom: 0,
+            left: 4,
+            right: 4,
+            child: Container(
+              height: 13,
+              decoration: const BoxDecoration(
+                color: Color(0xFFDAA065),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
           const Positioned(
-              top: 7,
-              left: 9,
-              child:
-                  CircleAvatar(radius: 2, backgroundColor: Color(0xFF50371E))),
+            top: 7,
+            left: 9,
+            child: CircleAvatar(
+              radius: 2,
+              backgroundColor: Color(0xFF50371E),
+            ),
+          ),
           const Positioned(
-              top: 7,
-              right: 9,
-              child:
-                  CircleAvatar(radius: 2, backgroundColor: Color(0xFF50371E))),
+            top: 7,
+            right: 9,
+            child: CircleAvatar(
+              radius: 2,
+              backgroundColor: Color(0xFF50371E),
+            ),
+          ),
           Positioned(
-              top: 12,
-              left: 9,
-              right: 9,
-              child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                      color: const Color(0xFF8B5A31).withOpacity(0.85),
-                      borderRadius: BorderRadius.circular(6)))),
+            top: 12,
+            left: 9,
+            right: 9,
+            child: Container(
+              height: 6,
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5A31).withOpacity(0.85),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
           if (initials.isNotEmpty)
             Align(
-                alignment: const Alignment(0, 0.9),
-                child: Text(initials,
-                    style: const TextStyle(
-                        color: Colors.transparent, fontSize: 1))),
-        ]));
+              alignment: const Alignment(0, 0.9),
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: Colors.transparent,
+                  fontSize: 1,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
