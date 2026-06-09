@@ -805,6 +805,30 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
     NotificationService().markNavigatorReady();
   }
 
+  List<Route<dynamic>> _onGenerateInitialRoutes(String initialRouteName) {
+    final parsed = Uri.tryParse(initialRouteName);
+    final rawPath = (parsed?.path ?? initialRouteName).trim();
+    final normalizedPath = rawPath.isEmpty
+        ? '/'
+        : rawPath.endsWith('/') && rawPath.length > 1
+            ? rawPath.substring(0, rawPath.length - 1)
+            : rawPath;
+
+    // Sécurité Flutter Web / PWA :
+    // Si le navigateur rouvre /account ou /login, on n'affiche pas directement
+    // la page connexion. L'app démarre toujours par le splash.
+    if (normalizedPath == '/account' || normalizedPath == '/login') {
+      pendingPostAuthRoute = null;
+    }
+
+    return <Route<dynamic>>[
+      MaterialPageRoute(
+        settings: const RouteSettings(name: '/'),
+        builder: (_) => _buildInitialHome(),
+      ),
+    ];
+  }
+
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
     final routeName = settings.name ?? '';
     final parsedRoute = Uri.tryParse(routeName);
@@ -873,6 +897,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           child: child ?? const SizedBox.shrink(),
         );
       },
+      onGenerateInitialRoutes: _onGenerateInitialRoutes,
       onGenerateRoute: _onGenerateRoute,
       routes: {
         LoginPage.routeName: (_) => const LoginPage(),
