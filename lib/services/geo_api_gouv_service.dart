@@ -8,14 +8,12 @@ import 'package:http/http.dart' as http;
 class GeoApiGouvCommune {
   const GeoApiGouvCommune({
     required this.name,
-    required this.inseeCode,
     required this.postalCodes,
     required this.departmentCode,
     required this.regionCode,
   });
 
   final String name;
-  final String inseeCode;
   final List<String> postalCodes;
   final String departmentCode;
   final String regionCode;
@@ -36,7 +34,6 @@ class GeoApiGouvCommune {
 
     return GeoApiGouvCommune(
       name: (json['nom'] ?? '').toString(),
-      inseeCode: (json['code'] ?? '').toString(),
       postalCodes: postalCodes,
       departmentCode: (json['codeDepartement'] ?? '').toString(),
       regionCode: (json['codeRegion'] ?? '').toString(),
@@ -93,7 +90,7 @@ class GeoApiGouvService {
       cacheKey: 'cp:$normalizedPostalCode:$limit',
       queryParameters: <String, String>{
         'codePostal': normalizedPostalCode,
-        'fields': 'nom,code,codesPostaux,codeDepartement,codeRegion',
+        'fields': 'nom,codesPostaux,codeDepartement,codeRegion',
         'format': 'json',
       },
       postalCodeFilter: normalizedPostalCode,
@@ -120,7 +117,7 @@ class GeoApiGouvService {
 
     final params = <String, String>{
       'nom': trimmedQuery,
-      'fields': 'nom,code,codesPostaux,codeDepartement,codeRegion',
+      'fields': 'nom,codesPostaux,codeDepartement,codeRegion',
       'format': 'json',
       'boost': 'population',
       'limit': limit.toString(),
