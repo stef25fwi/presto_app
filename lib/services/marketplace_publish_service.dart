@@ -16,6 +16,7 @@ import 'firebase_functions_region.dart';
 import 'city_search.dart';
 import 'french_city_postal_validator.dart';
 import 'geo_api_gouv_service.dart';
+import 'location_text_normalizer.dart';
 import 'marketplace_human_verification.dart';
 import 'offer_indexing.dart';
 import 'user_profile_bootstrap_service.dart';
@@ -443,12 +444,7 @@ class MarketplacePublishService {
   }
 
   String _normalizeLocationName(String value) {
-    return value
-        .toLowerCase()
-        .replaceAll(RegExp(r"['’]"), "'")
-        .replaceAll(RegExp(r"[^a-z0-9àâäéèêëïîôöùûüçñ\s-]"), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    return normalizeLocationLookupKey(value);
   }
 
   Future<MarketplacePublishResult> publish({

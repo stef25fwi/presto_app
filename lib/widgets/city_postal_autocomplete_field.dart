@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../services/geo_api_gouv_service.dart';
+import '../services/location_text_normalizer.dart';
+
+String _normalize(String value) => normalizeLocationLookupKey(value);
 
 class CityEntry {
   /// Affichage user-friendly pour Paris arrondissements
