@@ -49,7 +49,6 @@ class GeoApiGouvCommune {
     return <String, dynamic>{
       'communeName': name,
       'postalCode': primaryPostalCode,
-      'inseeCode': inseeCode,
       'departmentCode': departmentCode,
       'regionCode': regionCode,
       'locationSource': locationSource,

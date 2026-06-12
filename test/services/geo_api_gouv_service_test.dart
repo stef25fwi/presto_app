@@ -70,7 +70,6 @@ void main() {
 
       expect(fields['communeName'], 'Baie-Mahault');
       expect(fields['postalCode'], '97122');
-      expect(fields['inseeCode'], '97103');
       expect(fields['departmentCode'], '971');
       expect(fields['regionCode'], '01');
       expect(fields['locationSource'], 'geo_api_gouv');
