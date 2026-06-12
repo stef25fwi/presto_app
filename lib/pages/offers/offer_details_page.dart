@@ -422,7 +422,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     required String title,
     required String description,
   }) async {
-    final user = await _resolveSignedInUser();
+    // Popup immédiate : on ne doit pas attendre authStateChanges()
+    // ni le timeout de 5 secondes avant d'informer l'utilisateur.
+    final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       return user;
     }
