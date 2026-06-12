@@ -242,16 +242,21 @@ class _CityPostalAutocompleteFieldState
       final serial = ++_requestSerial;
       final cp = _extractPostalCode(widget.postalCodeController.text.trim());
 
+      // UX voulue :
+      // - 1 à 4 chiffres : aucune auto-complétion ville.
+      // - 5 chiffres : recherche CP -> commune.
       if (cp == null || cp.length != 5) {
+        if (!mounted || serial != _requestSerial) return;
+        setState(() => _options = const <CityEntry>[]);
         return;
       }
 
       await _localService.init();
 
+      final currentCity = widget.cityController.text.trim();
+
       final localResults = _localService.search(
-        widget.cityController.text.trim().isEmpty
-            ? cp
-            : widget.cityController.text.trim(),
+        currentCity.isEmpty ? cp : currentCity,
         cpHint: cp,
         limit: 50,
       );
@@ -276,15 +281,29 @@ class _CityPostalAutocompleteFieldState
         limit: 50,
       );
 
-      if (merged.isEmpty) return;
+      if (merged.isEmpty) {
+        setState(() => _options = const <CityEntry>[]);
+        return;
+      }
 
+      // On garde aussi les suggestions disponibles sous le champ ville.
       setState(() => _options = merged);
 
-      // Si la ville est vide et qu'il n'y a qu'un résultat fiable, on remplit.
-      if (widget.cityController.text.trim().isEmpty && merged.length == 1) {
+      // CP complet => remplissage automatique de la ville.
+      // Si plusieurs communes existent pour un même CP, on prend la première
+      // proposition la plus fiable : Geo API Gouv d'abord, puis fallback local.
+      final selected = merged.firstWhere(
+        (entry) => entry.cps.contains(cp),
+        orElse: () => merged.first,
+      );
+
+      final officialCity = selected.name.trim();
+      if (officialCity.isEmpty) return;
+
+      if (widget.cityController.text.trim() != officialCity) {
         _isApplyingSelection = true;
         try {
-          widget.cityController.text = merged.first.name;
+          widget.cityController.text = officialCity;
         } finally {
           _isApplyingSelection = false;
         }
