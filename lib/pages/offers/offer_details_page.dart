@@ -20,6 +20,7 @@ import 'package:presto_app/services/user_profile_bootstrap_service.dart';
 import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
 import 'dart:async';
+import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -2927,7 +2928,7 @@ class _PracticalInfoCard extends StatelessWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(999),
-          onTap: () => _showPaymentInfoPopup(context),
+          onTap: () => showPaymentInfoPopup(context),
           child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
             child: SizedBox(
