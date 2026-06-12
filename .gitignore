@@ -62,3 +62,9 @@ service-account.json
 zicAlExN
 *.zip
 build_logs/
+
+# Secrets Firebase / Google Cloud - ne jamais commit
+lib/services/service-account.json
+**/service-account.json
+**/*service-account*.json
+**/*firebase*service*.json
