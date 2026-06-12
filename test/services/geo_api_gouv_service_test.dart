@@ -35,7 +35,6 @@ void main() {
 
       expect(results, hasLength(1));
       expect(results.first.name, 'Baie-Mahault');
-      expect(results.first.inseeCode, '97103');
       expect(results.first.primaryPostalCode, '97122');
       expect(results.first.departmentCode, '971');
       expect(results.first.regionCode, '01');
@@ -60,7 +59,6 @@ void main() {
     test('toFirestoreLocationFields prépare les nouveaux champs', () {
       const commune = GeoApiGouvCommune(
         name: 'Baie-Mahault',
-        inseeCode: '97103',
         postalCodes: <String>['97122'],
         departmentCode: '971',
         regionCode: '01',
