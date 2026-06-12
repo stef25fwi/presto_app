@@ -15,6 +15,7 @@ import '../models/marketplace_listing_draft.dart';
 import 'firebase_functions_region.dart';
 import 'city_search.dart';
 import 'french_city_postal_validator.dart';
+import 'geo_api_gouv_service.dart';
 import 'marketplace_human_verification.dart';
 import 'offer_indexing.dart';
 import 'user_profile_bootstrap_service.dart';
@@ -111,6 +112,7 @@ class MarketplacePublishService {
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
+  final GeoApiGouvService _geoApiGouvService = GeoApiGouvService();
   final ListingReadRepository _listingReadRepository;
   final FirebaseStorage? _storageOverride;
   FirebaseStorage get _storage => _storageOverride ?? FirebaseStorage.instance;
@@ -396,6 +398,59 @@ class MarketplacePublishService {
     );
   }
 
+  Future<GeoApiGouvCommune?> _resolveGeoApiGouvCommune({
+    required String city,
+    required String postalCode,
+  }) async {
+    final candidates = await _geoApiGouvService.searchCommunesByName(
+      city,
+      postalCodeHint: postalCode,
+      limit: 10,
+    );
+
+    if (candidates.isEmpty) return null;
+
+    final normalizedCity = _normalizeLocationName(city);
+    final normalizedPostalCode = postalCode.trim();
+
+    bool postalMatches(GeoApiGouvCommune commune) {
+      if (normalizedPostalCode.isEmpty) return true;
+      return commune.matchesPostalCode(normalizedPostalCode);
+    }
+
+    for (final commune in candidates) {
+      if (_normalizeLocationName(commune.name) == normalizedCity &&
+          postalMatches(commune)) {
+        return commune;
+      }
+    }
+
+    for (final commune in candidates) {
+      if (postalMatches(commune)) {
+        return commune;
+      }
+    }
+
+    for (final commune in candidates) {
+      final candidateName = _normalizeLocationName(commune.name);
+      if (candidateName.contains(normalizedCity) ||
+          normalizedCity.contains(candidateName)) {
+        return commune;
+      }
+    }
+
+    return candidates.first;
+  }
+
+  String _normalizeLocationName(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r"['’]"), "'")
+        .replaceAll(RegExp(r"[^a-z0-9àâäéèêëïîôöùûüçñ\s-]"), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   Future<MarketplacePublishResult> publish({
     required String ownerId,
     required String title,
@@ -428,20 +483,46 @@ class MarketplacePublishService {
       city: inputCity,
       postalCode: resolvedPostalCode,
     );
-    if (!locationValidation.isKnownCity) {
+
+    final hasLocalCity = locationValidation.isKnownCity;
+    final hasMatchingLocalPostalCode =
+        resolvedPostalCode.isEmpty || locationValidation.postalCodeMatches;
+
+    final GeoApiGouvCommune? geoCommune =
+        hasLocalCity && hasMatchingLocalPostalCode
+            ? null
+            : await _resolveGeoApiGouvCommune(
+                city: inputCity,
+                postalCode: resolvedPostalCode,
+              );
+
+    if (!hasLocalCity && geoCommune == null) {
       throw StateError(
         'Choisissez une ville dans la liste ou vérifiez l\'orthographe.',
       );
     }
+
     if (resolvedPostalCode.isNotEmpty &&
-        !locationValidation.postalCodeMatches) {
+        !hasMatchingLocalPostalCode &&
+        geoCommune == null) {
       throw StateError('Le code postal ne correspond pas à cette ville.');
     }
 
-    final canonicalCity = locationValidation.canonicalCity!;
+    final canonicalCity = locationValidation.canonicalCity;
 
-    final resolvedCity = canonicalCity.name.trim();
-    resolvedPostalCode = canonicalCity.cp.trim();
+    final resolvedCity =
+        (geoCommune?.name ?? canonicalCity?.name ?? inputCity).trim();
+    resolvedPostalCode = (geoCommune?.primaryPostalCode ??
+            canonicalCity?.cp ??
+            resolvedPostalCode)
+        .trim();
+
+    final resolvedDept =
+        (geoCommune?.departmentCode ?? canonicalCity?.dept ?? '').trim();
+    final resolvedRegion =
+        (geoCommune?.regionCode ?? canonicalCity?.region ?? '').trim();
+    final locationSource =
+        geoCommune == null ? 'local_city_data' : 'geo_api_gouv';
 
     final indexed = buildOfferIndexFields(
       category: resolvedCategory,
@@ -481,8 +562,12 @@ class MarketplacePublishService {
           location: resolvedCity,
           postalCode: resolvedPostalCode,
           cp: resolvedPostalCode,
-          dept: canonicalCity.dept,
-          region: canonicalCity.region,
+          dept: resolvedDept,
+          region: resolvedRegion,
+          communeName: resolvedCity,
+          departmentCode: resolvedDept,
+          regionCode: resolvedRegion,
+          locationSource: locationSource,
           cityCategoryKey: (indexed['cityCategoryKey'] ?? '').toString().trim(),
           budgetValue: price,
         ),

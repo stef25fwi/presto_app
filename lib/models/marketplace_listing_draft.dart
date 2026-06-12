@@ -54,6 +54,10 @@ class MarketplaceListingDraft {
   final String? cp;
   final String? dept;
   final String? region;
+  final String? communeName;
+  final String? departmentCode;
+  final String? regionCode;
+  final String? locationSource;
   final String? cityCategoryKey;
   final double? budgetValue;
 
@@ -79,6 +83,10 @@ class MarketplaceListingDraft {
     this.cp,
     this.dept,
     this.region,
+    this.communeName,
+    this.departmentCode,
+    this.regionCode,
+    this.locationSource,
     this.cityCategoryKey,
     this.budgetValue,
   });
@@ -94,17 +102,31 @@ class MarketplaceListingDraft {
       'media': media.map((entry) => entry.toMap()).toList(growable: false),
       'status': status.value,
       if (phone != null && phone!.trim().isNotEmpty) 'phone': phone!.trim(),
-      if (budgetType != null && budgetType!.trim().isNotEmpty) 'budgetType': budgetType!.trim(),
-      if (missionDelay != null && missionDelay!.trim().isNotEmpty) 'missionDelay': missionDelay!.trim(),
+      if (budgetType != null && budgetType!.trim().isNotEmpty)
+        'budgetType': budgetType!.trim(),
+      if (missionDelay != null && missionDelay!.trim().isNotEmpty)
+        'missionDelay': missionDelay!.trim(),
       'isUrgent': isUrgent,
-      if (subCategory != null && subCategory!.trim().isNotEmpty) 'subCategory': subCategory!.trim(),
-      if (category != null && category!.trim().isNotEmpty) 'category': category!.trim(),
+      if (subCategory != null && subCategory!.trim().isNotEmpty)
+        'subCategory': subCategory!.trim(),
+      if (category != null && category!.trim().isNotEmpty)
+        'category': category!.trim(),
       if (city != null && city!.trim().isNotEmpty) 'city': city!.trim(),
-      if (location != null && location!.trim().isNotEmpty) 'location': location!.trim(),
-      if (postalCode != null && postalCode!.trim().isNotEmpty) 'postalCode': postalCode!.trim(),
+      if (location != null && location!.trim().isNotEmpty)
+        'location': location!.trim(),
+      if (postalCode != null && postalCode!.trim().isNotEmpty)
+        'postalCode': postalCode!.trim(),
       if (cp != null && cp!.trim().isNotEmpty) 'cp': cp!.trim(),
       if (dept != null && dept!.trim().isNotEmpty) 'dept': dept!.trim(),
       if (region != null && region!.trim().isNotEmpty) 'region': region!.trim(),
+      if (communeName != null && communeName!.trim().isNotEmpty)
+        'communeName': communeName!.trim(),
+      if (departmentCode != null && departmentCode!.trim().isNotEmpty)
+        'departmentCode': departmentCode!.trim(),
+      if (regionCode != null && regionCode!.trim().isNotEmpty)
+        'regionCode': regionCode!.trim(),
+      if (locationSource != null && locationSource!.trim().isNotEmpty)
+        'locationSource': locationSource!.trim(),
       if (cityCategoryKey != null && cityCategoryKey!.trim().isNotEmpty)
         'cityCategoryKey': cityCategoryKey!.trim(),
       if (budgetValue != null) 'budgetValue': budgetValue,
