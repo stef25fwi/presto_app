@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../services/geo_api_gouv_service.dart';
+
 class CityEntry {
   /// Affichage user-friendly pour Paris arrondissements
   String get displayName {
@@ -41,6 +43,15 @@ class CityEntry {
     );
   }
 
+  factory CityEntry.fromGeoApiGouv(GeoApiGouvCommune commune) {
+    return CityEntry(
+      name: commune.name,
+      dept: commune.departmentCode,
+      cps: commune.postalCodes,
+      nameNorm: _normalize(commune.name),
+    );
+  }
+
   static String _normalize(String s) => s
       .toLowerCase()
       .replaceAll(RegExp(r"['']"), "'")
@@ -65,16 +76,17 @@ class CityPostalService {
   }
 
   List<String> _deptCandidatesFromCp(String cp5) {
-    if (cp5.startsWith('97') || cp5.startsWith('98'))
-      return [cp5.substring(0, 3)];
-    if (cp5.startsWith('20')) return ['2A', '2B']; // Corse
-    return [cp5.substring(0, 2)];
+    if (cp5.startsWith('97') || cp5.startsWith('98')) {
+      return <String>[cp5.substring(0, 3)];
+    }
+    if (cp5.startsWith('20')) return <String>['2A', '2B']; // Corse
+    return <String>[cp5.substring(0, 2)];
   }
 
   List<CityEntry> search(String query, {String? cpHint, int limit = 50}) {
     final all = _all ?? const <CityEntry>[];
     final q = CityEntry._normalize(query);
-    if (q.isEmpty) return const [];
+    if (q.isEmpty) return const <CityEntry>[];
 
     final cp = cpHint != null ? _cp5(cpHint) : null;
     final deptFilter = cp != null ? _deptCandidatesFromCp(cp) : null;
@@ -121,6 +133,8 @@ class CityPostalService {
 
 /// Widget à utiliser dans tes formulaires.
 /// - Tape la ville => suggestions
+/// - Geo API Gouv est interrogée après debounce si la recherche est précise
+/// - Fallback local si l'API est indisponible
 /// - Clique => remplit ville + CP
 /// - Si plusieurs CP => choix via bottom sheet
 class CityPostalAutocompleteField extends StatefulWidget {
@@ -142,14 +156,17 @@ class CityPostalAutocompleteField extends StatefulWidget {
 
 class _CityPostalAutocompleteFieldState
     extends State<CityPostalAutocompleteField> {
-  final CityPostalService _service = CityPostalService();
+  final CityPostalService _localService = CityPostalService();
+  final GeoApiGouvService _geoService = GeoApiGouvService();
+
   Timer? _debounce;
-  List<CityEntry> _options = const [];
+  List<CityEntry> _options = const <CityEntry>[];
+  int _requestSerial = 0;
 
   @override
   void initState() {
     super.initState();
-    _service.init();
+    _localService.init();
     widget.cityController.addListener(_onCityChanged);
   }
 
@@ -157,30 +174,111 @@ class _CityPostalAutocompleteFieldState
   void dispose() {
     widget.cityController.removeListener(_onCityChanged);
     _debounce?.cancel();
+    _geoService.close();
     super.dispose();
   }
 
   void _onCityChanged() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 120), () async {
-      await _service.init();
+
+    _debounce = Timer(const Duration(milliseconds: 280), () async {
+      final serial = ++_requestSerial;
+
+      await _localService.init();
 
       final q = widget.cityController.text.trim();
+      final cpHint = widget.postalCodeController.text.trim();
+
       if (q.isEmpty) {
-        if (!mounted) return;
-        setState(() => _options = const []);
+        if (!mounted || serial != _requestSerial) return;
+        setState(() => _options = const <CityEntry>[]);
         return;
       }
 
-      final res = _service.search(
+      // Résultat local immédiat : l'app reste utilisable même sans réseau.
+      final localResults = _localService.search(
         q,
-        cpHint: widget.postalCodeController.text,
+        cpHint: cpHint,
         limit: 50,
       );
 
-      if (!mounted) return;
-      setState(() => _options = res);
+      if (!mounted || serial != _requestSerial) return;
+      setState(() => _options = localResults);
+
+      // Geo API Gouv seulement si la recherche est assez précise.
+      if (!_shouldQueryGeoApi(q, cpHint)) return;
+
+      final geoResults = await _searchGeoApiGouv(q, cpHint: cpHint);
+
+      if (!mounted || serial != _requestSerial) return;
+
+      final merged = _mergeCityEntries(
+        <CityEntry>[
+          ...geoResults,
+          ...localResults,
+        ],
+        limit: 50,
+      );
+
+      if (merged.isNotEmpty) {
+        setState(() => _options = merged);
+      }
     });
+  }
+
+  bool _shouldQueryGeoApi(String query, String cpHint) {
+    final q = query.trim();
+    final cp = _extractPostalCode(cpHint);
+
+    if (cp != null && cp.length == 5) return true;
+
+    // Évite les appels API à chaque petite frappe.
+    return q.length >= 3;
+  }
+
+  Future<List<CityEntry>> _searchGeoApiGouv(
+    String query, {
+    required String cpHint,
+  }) async {
+    final q = query.trim();
+    final cp = _extractPostalCode(cpHint);
+
+    final communes = await _geoService.searchCommunesByName(
+      q,
+      postalCodeHint: cp,
+      limit: 20,
+    );
+
+    return communes
+        .map(CityEntry.fromGeoApiGouv)
+        .where((entry) => entry.name.trim().isNotEmpty)
+        .toList(growable: false);
+  }
+
+  List<CityEntry> _mergeCityEntries(
+    List<CityEntry> entries, {
+    required int limit,
+  }) {
+    final seen = <String>{};
+    final out = <CityEntry>[];
+
+    for (final entry in entries) {
+      final key =
+          '${entry.name.toLowerCase()}|${entry.dept}|${entry.cps.join(",")}';
+      if (seen.contains(key)) continue;
+
+      seen.add(key);
+      out.add(entry);
+
+      if (out.length >= limit) break;
+    }
+
+    return out;
+  }
+
+  String? _extractPostalCode(String text) {
+    final match = RegExp(r'\b(\d{5})\b').firstMatch(text);
+    return match?.group(1);
   }
 
   Future<void> _applySelection(CityEntry c) async {
@@ -213,13 +311,17 @@ class _CityPostalAutocompleteFieldState
         shrinkWrap: true,
         children: [
           ListTile(
-            title: Text("Choisir le code postal – ${c.name}",
-                style: const TextStyle(fontWeight: FontWeight.w800)),
+            title: Text(
+              'Choisir le code postal – ${c.name}',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
-          ...c.cps.map((cp) => ListTile(
-                title: Text(cp),
-                onTap: () => Navigator.pop(context, cp),
-              )),
+          ...c.cps.map(
+            (cp) => ListTile(
+              title: Text(cp),
+              onTap: () => Navigator.pop(context, cp),
+            ),
+          ),
           const SizedBox(height: 12),
         ],
       ),
@@ -256,16 +358,16 @@ class _CityPostalAutocompleteFieldState
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, i) {
                   final c = list[i];
-                  final cpLabel = c.cps.isEmpty
-                      ? ""
-                      : (c.cps.length == 1
-                          ? c.cps.first
-                          : "${c.cps.first} … (+${c.cps.length - 1})");
+                  final cpLabel = c.cps.isEmpty ? '' : c.cps.join(', ');
                   return ListTile(
                     dense: true,
-                    title: Text(c.displayName),
-                    subtitle: Text(
-                        "${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
+                    title: Text(
+                      c.displayName,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: cpLabel.isEmpty
+                        ? Text('Département ${c.dept}')
+                        : Text('$cpLabel · Département ${c.dept}'),
                     onTap: () => onSelected(c),
                   );
                 },
@@ -274,7 +376,7 @@ class _CityPostalAutocompleteFieldState
           ),
         );
       },
-      onSelected: (c) => _applySelection(c),
+      onSelected: _applySelection,
     );
   }
 }
