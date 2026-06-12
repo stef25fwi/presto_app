@@ -2878,30 +2878,6 @@ class _PracticalInfoCard extends StatelessWidget {
     required this.onContactTap,
   });
 
-  void _showPaymentInfoPopup(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        final overlayTheme = dialogContext.prestoOverlayTheme;
-        return AlertDialog(
-          backgroundColor: overlayTheme.surfaceColor,
-          surfaceTintColor: overlayTheme.surfaceTintColor,
-          shape: overlayTheme.dialogShape,
-          title: const Text('Infos paiement'),
-          content: const Text(
-            'Le mode de paiement est convenu directement entre le client et le prestataire. '
-            'IliPresto ne collecte pas le paiement sur cette annonce.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Fermer'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Widget _paymentInfoPill(BuildContext context) {
     return Material(
