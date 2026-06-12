@@ -160,20 +160,25 @@ class _CityPostalAutocompleteFieldState
   final GeoApiGouvService _geoService = GeoApiGouvService();
 
   Timer? _debounce;
+  Timer? _postalDebounce;
   List<CityEntry> _options = const <CityEntry>[];
   int _requestSerial = 0;
+  bool _isApplyingSelection = false;
 
   @override
   void initState() {
     super.initState();
     _localService.init();
     widget.cityController.addListener(_onCityChanged);
+    widget.postalCodeController.addListener(_onPostalCodeChanged);
   }
 
   @override
   void dispose() {
     widget.cityController.removeListener(_onCityChanged);
+    widget.postalCodeController.removeListener(_onPostalCodeChanged);
     _debounce?.cancel();
+    _postalDebounce?.cancel();
     _geoService.close();
     super.dispose();
   }
@@ -222,6 +227,64 @@ class _CityPostalAutocompleteFieldState
 
       if (merged.isNotEmpty) {
         setState(() => _options = merged);
+      }
+    });
+  }
+
+  void _onPostalCodeChanged() {
+    if (_isApplyingSelection) return;
+
+    _postalDebounce?.cancel();
+    _postalDebounce = Timer(const Duration(milliseconds: 280), () async {
+      final serial = ++_requestSerial;
+      final cp = _extractPostalCode(widget.postalCodeController.text.trim());
+
+      if (cp == null || cp.length != 5) {
+        return;
+      }
+
+      await _localService.init();
+
+      final localResults = _localService.search(
+        widget.cityController.text.trim().isEmpty
+            ? cp
+            : widget.cityController.text.trim(),
+        cpHint: cp,
+        limit: 50,
+      );
+
+      final geoCommunes = await _geoService.findCommunesByPostalCode(
+        cp,
+        limit: 20,
+      );
+
+      if (!mounted || serial != _requestSerial) return;
+
+      final geoResults = geoCommunes
+          .map(CityEntry.fromGeoApiGouv)
+          .where((entry) => entry.name.trim().isNotEmpty)
+          .toList(growable: false);
+
+      final merged = _mergeCityEntries(
+        <CityEntry>[
+          ...geoResults,
+          ...localResults,
+        ],
+        limit: 50,
+      );
+
+      if (merged.isEmpty) return;
+
+      setState(() => _options = merged);
+
+      // Si la ville est vide et qu'il n'y a qu'un résultat fiable, on remplit.
+      if (widget.cityController.text.trim().isEmpty && merged.length == 1) {
+        _isApplyingSelection = true;
+        try {
+          widget.cityController.text = merged.first.name;
+        } finally {
+          _isApplyingSelection = false;
+        }
       }
     });
   }
@@ -282,13 +345,23 @@ class _CityPostalAutocompleteFieldState
   }
 
   Future<void> _applySelection(CityEntry c) async {
-    widget.cityController.text = c.name;
+    _isApplyingSelection = true;
+    try {
+      widget.cityController.text = c.name;
+    } finally {
+      _isApplyingSelection = false;
+    }
 
     if (c.cps.isEmpty) return;
 
     // 1 seul CP => auto
     if (c.cps.length == 1) {
-      widget.postalCodeController.text = c.cps.first;
+      _isApplyingSelection = true;
+      try {
+        widget.postalCodeController.text = c.cps.first;
+      } finally {
+        _isApplyingSelection = false;
+      }
       return;
     }
 
@@ -297,7 +370,12 @@ class _CityPostalAutocompleteFieldState
         .firstMatch(widget.postalCodeController.text)
         ?.group(1);
     if (typed != null && c.cps.contains(typed)) {
-      widget.postalCodeController.text = typed;
+      _isApplyingSelection = true;
+      try {
+        widget.postalCodeController.text = typed;
+      } finally {
+        _isApplyingSelection = false;
+      }
       return;
     }
 
@@ -327,7 +405,14 @@ class _CityPostalAutocompleteFieldState
       ),
     );
 
-    if (picked != null) widget.postalCodeController.text = picked;
+    if (picked != null) {
+      _isApplyingSelection = true;
+      try {
+        widget.postalCodeController.text = picked;
+      } finally {
+        _isApplyingSelection = false;
+      }
+    }
   }
 
   @override
