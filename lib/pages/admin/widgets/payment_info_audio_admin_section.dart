@@ -1,134 +1,222 @@
-import 'dart:typed_data';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:presto_app/services/payment_info_audio_service.dart';
+
+import 'package:presto_app/services/payment_info_audio_settings_service.dart';
+
 class PaymentInfoAudioAdminSection extends StatefulWidget {
   const PaymentInfoAudioAdminSection({super.key});
+
   @override
   State<PaymentInfoAudioAdminSection> createState() =>
       _PaymentInfoAudioAdminSectionState();
 }
+
 class _PaymentInfoAudioAdminSectionState
     extends State<PaymentInfoAudioAdminSection> {
-  final _service = PaymentInfoAudioService();
-  bool _uploading = false;
-  Future<void> _pickAndUploadMp3() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3'],
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.single;
-    final Uint8List? bytes = file.bytes;
-    if (bytes == null) {
-      _showSnack('Fichier MP3 non lisible.');
+  final TextEditingController _urlController = TextEditingController();
+  final AudioPlayer _player = AudioPlayer();
+
+  bool _enabled = true;
+  bool _saving = false;
+  bool _testing = false;
+  String? _lastLoadedUrl;
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _player.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final url = _urlController.text.trim();
+
+    if (url.isEmpty || !url.toLowerCase().contains('.mp3')) {
+      _showMessage('Ajoute une URL MP3 valide.');
       return;
     }
-    setState(() => _uploading = true);
+
+    setState(() => _saving = true);
+
     try {
-      final ref = FirebaseStorage.instance.ref(
-        PaymentInfoAudioService.storagePath,
+      await PaymentInfoAudioSettingsService.save(
+        mp3Url: url,
+        enabled: _enabled,
       );
-      await ref.putData(
-        bytes,
-        SettableMetadata(
-          contentType: 'audio/mpeg',
-          customMetadata: {
-            'usage': 'payment_info_popup',
-            'fileName': file.name,
-          },
-        ),
-      );
-      final url = await ref.getDownloadURL();
-      await FirebaseFirestore.instance
-          .collection(PaymentInfoAudioService.configCollection)
-          .doc(PaymentInfoAudioService.configDoc)
-          .set({
-        'audioUrl': url,
-        'storagePath': PaymentInfoAudioService.storagePath,
-        'fileName': file.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      _showSnack('Audio du popup mis à jour.');
-    } catch (e) {
-      _showSnack('Erreur upload audio : $e');
+
+      if (!mounted) return;
+      _showMessage('MP3 paiement mis à jour.');
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage('Erreur sauvegarde MP3 : $error');
     } finally {
-      if (mounted) setState(() => _uploading = false);
+      if (mounted) setState(() => _saving = false);
     }
   }
-  void _showSnack(String message) {
-    if (!mounted) return;
+
+  Future<void> _testAudio() async {
+    final url = _urlController.text.trim();
+
+    if (url.isEmpty) {
+      _showMessage('Ajoute une URL MP3 avant de tester.');
+      return;
+    }
+
+    setState(() => _testing = true);
+
+    try {
+      await _player.stop();
+      await _player.play(UrlSource(url));
+
+      if (!mounted) return;
+      _showMessage('Lecture test démarrée.');
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage('Erreur lecture MP3 : $error');
+    } finally {
+      if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
+
+  void _syncFromSettings(PaymentInfoAudioSettings settings) {
+    if (_lastLoadedUrl == settings.mp3Url) return;
+
+    _lastLoadedUrl = settings.mp3Url;
+    _urlController.text = settings.mp3Url;
+    _enabled = settings.enabled;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<String?>(
-      stream: _service.watchAudioUrl(),
+    return StreamBuilder<PaymentInfoAudioSettings>(
+      stream: PaymentInfoAudioSettingsService.watch(),
       builder: (context, snapshot) {
-        final audioUrl = snapshot.data;
+        final settings = snapshot.data;
+
+        if (settings != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() => _syncFromSettings(settings));
+            }
+          });
+        }
+
         return Card(
           elevation: 0,
-          margin: const EdgeInsets.symmetric(vertical: 12),
+          color: const Color(0xFFFFF7ED),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
+            side: const BorderSide(color: Color(0xFFFFD7AA)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Lecture popup paiement',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF07184A),
-                  ),
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.volume_up_rounded,
+                      color: Color(0xFFFF6600),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Mise à jour MP3 paiement',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Mets à jour le fichier MP3 lu dans le popup “Infos paiement”.',
+                  'Colle ici l’URL du fichier MP3 à lire dans le popup paiement.',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF4A5878),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  audioUrl == null || audioUrl.isEmpty
-                      ? 'Aucun MP3 configuré.'
-                      : 'MP3 configuré dans Firebase Storage.',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: audioUrl == null || audioUrl.isEmpty
-                        ? Colors.orange
-                        : Colors.green,
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
                   ),
                 ),
                 const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: _uploading ? null : _pickAndUploadMp3,
-                    icon: _uploading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.upload_file_rounded),
-                    label: Text(
-                      _uploading ? 'Upload en cours...' : 'Mettre à jour le MP3',
+                TextField(
+                  controller: _urlController,
+                  decoration: InputDecoration(
+                    labelText: 'URL du MP3 paiement',
+                    hintText: 'https://.../audio-paiement.mp3',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                SwitchListTile.adaptive(
+                  value: _enabled,
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: const Color(0xFFFF6600),
+                  title: const Text(
+                    'Activer l’audio dans le popup paiement',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  onChanged: (value) => setState(() => _enabled = value),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _testing ? null : _testAudio,
+                        icon: _testing
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Tester'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _saving ? null : _save,
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.save_rounded),
+                        label: const Text('Enregistrer'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (snapshot.hasError) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Erreur chargement MP3 : ${snapshot.error}',
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

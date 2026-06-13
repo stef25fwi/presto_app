@@ -21,6 +21,7 @@ import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
 import 'dart:async';
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
+import 'package:presto_app/widgets/payment_info_audio_player.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -1445,6 +1446,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         ),
         body: Stack(
           children: [
+            const PaymentInfoAudioPlayer(),
+            const SizedBox(height: 12),
             const _BackgroundDecor(),
             SafeArea(
               top: false,
@@ -2877,7 +2880,6 @@ class _PracticalInfoCard extends StatelessWidget {
     this.compact = false,
     required this.onContactTap,
   });
-
 
   Widget _paymentInfoPill(BuildContext context) {
     return Material(
