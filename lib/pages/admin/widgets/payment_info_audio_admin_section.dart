@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:presto_app/services/firebase_functions_region.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
 
 class PaymentInfoAudioAdminSection extends StatefulWidget {
@@ -15,6 +17,7 @@ class _PaymentInfoAudioAdminSectionState
     extends State<PaymentInfoAudioAdminSection> {
   final _service = PaymentInfoAudioService();
   bool _uploading = false;
+  bool _generating = false;
 
   Future<void> _pickAndUploadMp3() async {
     final result = await FilePicker.platform.pickFiles(
@@ -40,6 +43,25 @@ class _PaymentInfoAudioAdminSectionState
     }
   }
 
+  Future<void> _generateMp3FromText() async {
+    setState(() => _generating = true);
+    try {
+      await callPrestoFunction<dynamic>(
+        functions: prestoFirebaseFunctions,
+        name: 'generatePaymentInfoAudio',
+        timeout: const Duration(seconds: 120),
+        area: 'admin-audio',
+      );
+      _showSnack('MP3 régénéré depuis le texte du popup.');
+    } on FirebaseFunctionsException catch (e) {
+      _showSnack('Erreur génération : ${e.message ?? e.code}');
+    } catch (e) {
+      _showSnack('Erreur génération : $e');
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
+
   void _showSnack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -54,6 +76,7 @@ class _PaymentInfoAudioAdminSectionState
       builder: (context, snapshot) {
         final audioUrl = snapshot.data;
         final hasAudio = audioUrl?.isNotEmpty == true;
+        final busy = _uploading || _generating;
         return Card(
           elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 12),
@@ -76,11 +99,9 @@ class _PaymentInfoAudioAdminSectionState
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Mets à jour le fichier MP3 lu dans le popup "Infos paiement".',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF4A5878),
-                  ),
+                  'Mets à jour le fichier MP3 lu dans le popup "Infos paiement".\n'
+                  'Tu peux importer un MP3 manuellement ou régénérer depuis le texte du popup via IA (OpenAI TTS).',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF4A5878)),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -97,7 +118,27 @@ class _PaymentInfoAudioAdminSectionState
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton.icon(
-                    onPressed: _uploading ? null : _pickAndUploadMp3,
+                    onPressed: busy ? null : _generateMp3FromText,
+                    icon: _generating
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome_rounded),
+                    label: Text(
+                      _generating
+                          ? 'Génération en cours...'
+                          : 'Régénérer le MP3 depuis le texte (IA)',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: busy ? null : _pickAndUploadMp3,
                     icon: _uploading
                         ? const SizedBox(
                             width: 18,
@@ -106,7 +147,9 @@ class _PaymentInfoAudioAdminSectionState
                           )
                         : const Icon(Icons.upload_file_rounded),
                     label: Text(
-                      _uploading ? 'Upload en cours...' : 'Mettre à jour le MP3',
+                      _uploading
+                          ? 'Upload en cours...'
+                          : 'Importer un MP3 manuellement',
                     ),
                   ),
                 ),

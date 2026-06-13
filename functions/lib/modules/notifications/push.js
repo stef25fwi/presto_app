@@ -61,7 +61,7 @@ async function cleanupInvalidTokens(userId, docIds) {
 }
 async function createInAppNotification({ notificationId, userId, title, message, type, routeName, conversationId, offerId, data = {}, }) {
     try {
-        await firestore_1.db.collection(constants_1.COLLECTIONS.notifications).doc(notificationId).create({
+        await firestore_1.db.collection(constants_1.COLLECTIONS.notifications).doc(notificationId).set({
             userId,
             title,
             message,
@@ -73,7 +73,7 @@ async function createInAppNotification({ notificationId, userId, title, message,
             read: false,
             createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-        });
+        }, { merge: true });
     }
     catch (error) {
         const code = error.code;

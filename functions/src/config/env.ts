@@ -1,5 +1,6 @@
 import { defineSecret } from "firebase-functions/params";
 
+export const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 export const EMAIL_PROVIDER_API_KEY = defineSecret("EMAIL_PROVIDER_API_KEY");
 export const EMAIL_PROVIDER_WEBHOOK_SECRET = defineSecret("EMAIL_PROVIDER_WEBHOOK_SECRET");
 export const BREVO_API_KEY = defineSecret("BREVO_API_KEY");
