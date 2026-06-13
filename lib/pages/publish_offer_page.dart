@@ -37,6 +37,8 @@ import '../services/city_search.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/french_city_postal_validator.dart';
 import '../services/marketplace_publish_service.dart';
+import '../services/geo_api_gouv_service.dart';
+import '../services/location_text_normalizer.dart';
 import '../services/marketplace_remote_config_service.dart';
 import '../services/offer_indexing.dart';
 import '../services/admin_audio_runtime_store.dart';
@@ -441,6 +443,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
+  final GeoApiGouvService _geoApiGouvService = GeoApiGouvService();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
 
@@ -1619,6 +1622,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyDetectedCityData(
       city: (draft['city'] ?? draft['ville'] ?? '').toString(),
       postalCode: (draft['postalCode'] ?? '').toString(),
+      departmentHint: (draft['department'] ??
+              draft['departement'] ??
+              draft['departmentName'] ??
+              draft['departmentCode'] ??
+              '')
+          .toString(),
+      regionHint:
+          (draft['region'] ?? draft['regionName'] ?? draft['regionCode'] ?? '')
+              .toString(),
+      locationHint: (draft['location'] ??
+              draft['adresse'] ??
+              draft['address'] ??
+              draft['rawLocation'] ??
+              '')
+          .toString(),
     );
     _applyKeywordCategoryPairFromText('$title\n$description');
     // Guarantee the publish button re-evaluates after AI sets state variables
@@ -1698,9 +1716,153 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyCity(best, forceApply: true);
   }
 
+  String _normalizeAiGeoHint(String value) {
+    return normalizeLocationLookupKey(value)
+        .replaceAll(RegExp(r'\bdepartement\b'), '')
+        .replaceAll(RegExp(r'\bdepartment\b'), '')
+        .replaceAll(RegExp(r'\bregion\b'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  bool _geoCommuneMatchesAiHint(
+    GeoApiGouvCommune commune, {
+    required String departmentHint,
+    required String regionHint,
+    required String locationHint,
+  }) {
+    final dept = commune.departmentCode.trim();
+    final region = commune.regionCode.trim();
+
+    final hints = <String>[
+      departmentHint,
+      regionHint,
+      locationHint,
+    ].map(_normalizeAiGeoHint).where((v) => v.isNotEmpty).toList();
+
+    if (hints.isEmpty) {
+      return true;
+    }
+
+    final departmentAliases = <String, Set<String>>{
+      '971': {'971', 'guadeloupe', 'gwada'},
+      '972': {'972', 'martinique'},
+      '973': {'973', 'guyane', 'guyane francaise'},
+      '974': {'974', 'reunion', 'la reunion'},
+      '976': {'976', 'mayotte'},
+    };
+
+    final regionAliases = <String, Set<String>>{
+      '01': {'01', 'guadeloupe', 'gwada'},
+      '02': {'02', 'martinique'},
+      '03': {'03', 'guyane', 'guyane francaise'},
+      '04': {'04', 'reunion', 'la reunion'},
+      '06': {'06', 'mayotte'},
+    };
+
+    bool hintMatchesAliases(String hint, Set<String> aliases) {
+      return aliases.any((alias) => hint == alias || hint.contains(alias));
+    }
+
+    for (final hint in hints) {
+      if (hint == dept || hint.contains(dept)) return true;
+      if (hint == region || hint.contains(region)) return true;
+
+      final deptAliases = departmentAliases[dept];
+      if (deptAliases != null && hintMatchesAliases(hint, deptAliases)) {
+        return true;
+      }
+
+      final regAliases = regionAliases[region];
+      if (regAliases != null && hintMatchesAliases(hint, regAliases)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Future<void> _resolveAiCityWithGeoApiGouv({
+    required String rawCity,
+    required String rawPostalCode,
+    required String departmentHint,
+    required String regionHint,
+    required String locationHint,
+  }) async {
+    final city = rawCity.trim();
+    final postalCode = rawPostalCode.trim();
+
+    if (city.isEmpty) return;
+
+    try {
+      final communes = postalCode.length == 5
+          ? await _geoApiGouvService.findCommunesByPostalCode(postalCode)
+          : await _geoApiGouvService.searchCommunesByName(city);
+
+      if (!mounted || communes.isEmpty) return;
+
+      final normalizedCity = normalizeLocationLookupKey(city);
+
+      final candidates = communes.where((commune) {
+        final normalizedCommune = normalizeLocationLookupKey(commune.name);
+
+        final nameMatches = normalizedCommune == normalizedCity ||
+            normalizedCommune.contains(normalizedCity) ||
+            normalizedCity.contains(normalizedCommune);
+
+        if (!nameMatches) return false;
+
+        return _geoCommuneMatchesAiHint(
+          commune,
+          departmentHint: departmentHint,
+          regionHint: regionHint,
+          locationHint: locationHint,
+        );
+      }).toList();
+
+      final selected =
+          candidates.isNotEmpty ? candidates.first : communes.first;
+      final resolvedCp = selected.primaryPostalCode.trim();
+
+      if (resolvedCp.isEmpty) return;
+
+      setState(() {
+        if (_locationController.text.trim().isEmpty ||
+            normalizeLocationLookupKey(_locationController.text) !=
+                normalizeLocationLookupKey(selected.name)) {
+          _setControllerText(_locationController, selected.name);
+        }
+
+        if (!_postalCodeEditedByUser ||
+            _postalCodeController.text.trim().isEmpty) {
+          _setControllerText(_postalCodeController, resolvedCp);
+        }
+
+        _selectedDeptCode = selected.departmentCode;
+        _selectedRegionCode = selected.regionCode;
+        _selectedPhoneCountryCode =
+            _countryCodeForDept(selected.departmentCode);
+      });
+
+      if (kDebugMode) {
+        debugPrint(
+          '[Publish] IA Geo resolved city="$city" deptHint="$departmentHint" '
+          'regionHint="$regionHint" -> ${selected.name} $resolvedCp',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Publish] IA Geo resolve failed: $e');
+      }
+    }
+  }
+
   void _applyDetectedCityData({
     String? city,
     String? postalCode,
+    String? departmentHint,
+    String? regionHint,
+    String? locationHint,
   }) {
     final rawCity = (city ?? '').trim();
     final rawPostalCode = (postalCode ?? '').trim();
@@ -1714,6 +1876,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _applyCity(best);
       return;
     }
+
+    _resolveAiCityWithGeoApiGouv(
+      rawCity: rawCity,
+      rawPostalCode: rawPostalCode,
+      departmentHint: (departmentHint ?? '').trim(),
+      regionHint: (regionHint ?? '').trim(),
+      locationHint: (locationHint ?? '').trim(),
+    );
 
     // Ne jamais injecter une ville/CP IA non resolus dans le formulaire.
     // Sinon l'utilisateur voit des champs remplis mais invalides, puis se
