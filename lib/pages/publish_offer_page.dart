@@ -4328,6 +4328,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: CityPostalAutocompleteField(
                       cityController: _locationController,
                       postalCodeController: _postalCodeController,
+                      onSelected: (city) {
+                        setState(() {
+                          _selectedDeptCode = city.dept;
+                          // CityEntry ne porte pas toujours le code région.
+                          // La publication recalcule la région officielle via Geo API Gouv.
+                          _selectedRegionCode = null;
+                          _selectedPhoneCountryCode =
+                              _countryCodeForDept(city.dept);
+                          _locationEditedByUser = true;
+                          _postalCodeEditedByUser = true;
+                        });
+                      },
                       decoration: InputDecoration(
                         label: _requiredLabel('Ville'),
                         hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
