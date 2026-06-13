@@ -4,8 +4,8 @@ String friendlyEmailAuthErrorMessage(String code, [String? fallbackMessage]) {
   switch (code.trim()) {
     case 'invalid-email':
       return 'Adresse e-mail invalide.';
-    case ‘missing-email’:
-      return "L’adresse e-mail est obligatoire.";
+    case 'missing-email':
+      return "L'adresse e-mail est obligatoire.";
     case 'missing-password':
       return 'Le mot de passe est obligatoire.';
     case 'user-disabled':
@@ -38,7 +38,7 @@ String friendlyEmailAuthErrorMessage(String code, [String? fallbackMessage]) {
     default:
       final fallback = fallbackMessage?.trim();
       return fallback == null || fallback.isEmpty
-          ? "Erreur d’authentification."
+          ? "Erreur d'authentification."
           : fallback;
   }
 }
@@ -48,8 +48,8 @@ String mapEmailAuthError(Object error) {
     return friendlyEmailAuthErrorMessage(error.code, error.message);
   }
 
-  final raw = error.toString().replaceFirst(‘Exception: ‘, ‘’).trim();
-  return raw.isEmpty ? "Erreur d’authentification." : raw;
+  final raw = error.toString().replaceFirst('Exception: ', '').trim();
+  return raw.isEmpty ? "Erreur d'authentification." : raw;
 }
 
 String mapPasswordResetSuccessMessage(String email) {
