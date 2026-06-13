@@ -2794,8 +2794,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   ),
                   _KpiTile(
                     icon: Icons.slideshow_rounded,
-                    title: ‘Gestion du Hero’,
-                    subtitle: ‘Images, vidéos et durée d\’affichage’,
+                    title: "Gestion du Hero",
+                    subtitle: "Images, vidéos et durée d'affichage",
                     badge: null,
                     iconColor: prestoOrange,
                     onTap: () {
@@ -2808,8 +2808,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   ),
                   _KpiTile(
                     icon: Icons.headphones_rounded,
-                    title: ‘Audio popup’,
-                    subtitle: ‘Génération & import MP3’,
+                    title: "Audio popup",
+                    subtitle: "Génération & import MP3",
                     badge: null,
                     iconColor: prestoBlue,
                     onTap: () {
