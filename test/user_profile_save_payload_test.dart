@@ -43,6 +43,7 @@ void main() {
         'accountType',
         'selectedFavoriteCategories',
         'selectedFavoriteSubcategories',
+        'selectedFavoriteDepartements',
         'profileCompleted',
         'profileCompleteness',
         'profileUpdatedAt',
