@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+
+import 'package:presto_app/services/payment_info_audio_service.dart';
 
 const Color kBlueDark = Color(0xFF07184A);
 const Color kBlue = Color(0xFF0A7BFF);
@@ -24,10 +27,53 @@ class PaymentInfoPopup extends StatefulWidget {
 }
 
 class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
-  bool _isPlaying = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final PaymentInfoAudioService _audioService = PaymentInfoAudioService();
 
-  void _toggleAudioExplanation() {
-    setState(() => _isPlaying = !_isPlaying);
+  bool _isPlaying = false;
+  String? _audioUrl;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _audioService.watchAudioUrl().listen((url) {
+      if (!mounted) return;
+      setState(() => _audioUrl = url);
+    });
+
+    _audioPlayer.playerStateStream.listen((state) {
+      if (!mounted) return;
+      setState(() => _isPlaying = state.playing);
+    });
+  }
+
+  Future<void> _toggleAudioExplanation() async {
+    try {
+      final url = _audioUrl ?? await _audioService.getStorageAudioUrl();
+
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+        return;
+      }
+
+      if (_audioPlayer.audioSource == null) {
+        await _audioPlayer.setUrl(url);
+      }
+
+      await _audioPlayer.play();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Audio indisponible pour le moment.')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   @override
