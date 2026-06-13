@@ -2506,3 +2506,12 @@ exports.processOfferPhoto = onCall(
 // lib/index.js (point d'entrée "main" dans package.json).
 // Ce fichier ne contient plus que les callables legacy JS, importées par
 // le bridge src/legacy/callables_compat.ts.
+
+/**
+ * Payment info MP3 pipeline.
+ * Last export wins intentionally: this production implementation owns
+ * generatePaymentInfoAudio.
+ */
+const paymentInfoAudioPipeline = require("./payment_info_audio_pipeline");
+exports.generatePaymentInfoAudio = paymentInfoAudioPipeline.generatePaymentInfoAudio;
+

@@ -758,5 +758,12 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false;
     }
-  }
+  
+    // Audio public du popup paiement : lecture utilisateur, écriture uniquement backend Admin SDK.
+    match /public_config/payment_info_audio {
+      allow read: if true;
+      allow write: if false;
+    }
+
+}
 }
