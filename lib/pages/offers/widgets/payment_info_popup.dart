@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:presto_app/services/payment_info_audio_service.dart';
 
 const Color kBlueDark = Color(0xFF07184A);
 const Color kBlue = Color(0xFF0A7BFF);
@@ -24,10 +27,40 @@ class PaymentInfoPopup extends StatefulWidget {
 }
 
 class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
+  late final AudioPlayer _player;
+  StreamSubscription<String?>? _urlSub;
+  String? _audioUrl;
   bool _isPlaying = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+    _urlSub = PaymentInfoAudioService().watchAudioUrl().listen((url) {
+      if (mounted) setState(() => _audioUrl = url);
+    });
+    _player.playerStateStream.listen((state) {
+      if (!mounted) return;
+      final playing = state.playing;
+      if (_isPlaying != playing) setState(() => _isPlaying = playing);
+    });
+  }
+
+  @override
+  void dispose() {
+    _urlSub?.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
   void _toggleAudioExplanation() {
-    setState(() => _isPlaying = !_isPlaying);
+    final url = _audioUrl;
+    if (url == null || url.isEmpty) return;
+    if (_isPlaying) {
+      _player.pause();
+    } else {
+      _player.setUrl(url).then((_) => _player.play());
+    }
   }
 
   @override
@@ -90,6 +123,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                         const SizedBox(height: 12),
                         _InfoBanner(
                           isPlaying: _isPlaying,
+                          canPlay: _audioUrl?.isNotEmpty == true,
                           onToggleAudio: _toggleAudioExplanation,
                         ),
                         const SizedBox(height: 12),
@@ -118,7 +152,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                               icon: Icons.handshake_rounded,
                               title: 'Prestation\nentre particuliers',
                               body:
-                                  'Le paiement en espèces est possible lorsqu’il ne s’agit pas d’un besoin professionnel.',
+                                  'Le paiement en espèces est possible lorsqu'il ne s'agit pas d'un besoin professionnel.',
                               badgeIcon: Icons.receipt_long_rounded,
                               badge:
                                   'Preuve écrite\nnécessaire au-delà de\n1 500 €',
@@ -132,7 +166,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                                   'Pour certaines activités (ménage, jardinage, aide à la personne, soutien scolaire...), le particulier peut utiliser le CESU.',
                               badgeIcon: Icons.badge_rounded,
                               badge:
-                                  'Le CESU permet de\ndéclarer et rémunérer\nl’intervenant.',
+                                  'Le CESU permet de\ndéclarer et rémunérer\nl'intervenant.',
                             ),
                             _RuleCard(
                               number: '4',
@@ -160,7 +194,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                           child: ElevatedButton.icon(
                             onPressed: () => Navigator.of(context).pop(true),
                             icon: const Icon(Icons.check_rounded),
-                            label: const Text('J’ai compris'),
+                            label: const Text('J'ai compris'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: kBlue,
                               foregroundColor: Colors.white,
@@ -252,9 +286,11 @@ class _InfoBanner extends StatelessWidget {
   const _InfoBanner({
     required this.isPlaying,
     required this.onToggleAudio,
+    required this.canPlay,
   });
 
   final bool isPlaying;
+  final bool canPlay;
   final VoidCallback onToggleAudio;
 
   @override
@@ -278,7 +314,7 @@ class _InfoBanner extends StatelessWidget {
                 children: [
                   TextSpan(
                     text:
-                        'Voici l’essentiel à retenir pour payer en toute sécurité.',
+                        'Voici l'essentiel à retenir pour payer en toute sécurité.',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ],
@@ -291,40 +327,42 @@ class _InfoBanner extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: onToggleAudio,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF3FF),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFBBD9FF)),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    isPlaying
-                        ? Icons.pause_circle_filled_rounded
-                        : Icons.play_circle_fill_rounded,
-                    color: kBlue,
-                    size: 32,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isPlaying ? 'Pause\nlecture' : 'Écouter\nl’explication',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
+          if (canPlay) ...[
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onToggleAudio,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF3FF),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFBBD9FF)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      isPlaying
+                          ? Icons.pause_circle_filled_rounded
+                          : Icons.play_circle_fill_rounded,
                       color: kBlue,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w900,
+                      size: 32,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      isPlaying ? 'Pause\nlecture' : 'Écouter\nl'explication',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: kBlue,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -636,7 +674,7 @@ void _showMoreInfo(BuildContext context) {
           ),
           const SizedBox(height: 12),
           const Text(
-            'iliprestō vous informe sur les moyens de paiement possibles, mais ne remplace pas un conseil juridique, fiscal ou comptable. En cas de doute, rapprochez-vous d’un organisme compétent ou d’un professionnel.',
+            'iliprestō vous informe sur les moyens de paiement possibles, mais ne remplace pas un conseil juridique, fiscal ou comptable. En cas de doute, rapprochez-vous d'un organisme compétent ou d'un professionnel.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: kTextSecondary,
