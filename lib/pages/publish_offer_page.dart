@@ -4362,7 +4362,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           horizontal: 12, vertical: 14),
                     ),
                     onTap: _clearAiPrefilledLocationPostalOnUserTap,
-                    onChanged: _onPostalCodeChanged,
                     onEditingComplete: _canonicalizeLocationInputs,
                     validator: _validatePostalCode,
                   ),
