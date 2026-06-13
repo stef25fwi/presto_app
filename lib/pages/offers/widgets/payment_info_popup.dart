@@ -50,21 +50,31 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
 
   Future<void> _toggleAudioExplanation() async {
     try {
-      final url = _audioUrl ?? await _audioService.getStorageAudioUrl();
+      final firestoreUrl = _audioUrl;
+      final storageUrl = await _audioService.getStorageAudioUrl();
+      final url = (firestoreUrl != null && firestoreUrl.trim().isNotEmpty)
+          ? firestoreUrl.trim()
+          : storageUrl;
+
+      debugPrint('PAYMENT_AUDIO_URL: $url');
 
       if (_audioPlayer.playing) {
         await _audioPlayer.pause();
+        debugPrint('PAYMENT_AUDIO_STATUS: pause');
         return;
       }
 
-      if (_audioPlayer.audioSource == null) {
-        await _audioPlayer.setUrl(url);
-      }
-
+      await _audioPlayer.stop();
+      await _audioPlayer.setUrl(url);
+      await _audioPlayer.seek(Duration.zero);
       await _audioPlayer.play();
-    } catch (e) {
-      if (!mounted) return;
+
+      debugPrint('PAYMENT_AUDIO_STATUS: play');
+    } catch (e, st) {
       debugPrint('PAYMENT_AUDIO_ERROR: $e');
+      debugPrint('PAYMENT_AUDIO_STACK: $st');
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Audio indisponible : $e')),
       );
