@@ -99,6 +99,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isLoadingMoreMessages = false;
   bool _hasMoreMessages = true;
   List<String> _participants = const [];
+  // ignore: unused_field
   Map<String, String> _participantNames = const {};
   Map<String, dynamic> _lastReadAt = const {};
   bool _metaLoaded = false;

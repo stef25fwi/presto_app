@@ -11,6 +11,7 @@ enum InboxCountType {
   unreadNotifications,
 }
 
+// ignore: unused_element
 Stream<DocumentSnapshot<Map<String, dynamic>>> _pollInboxDocument(
   String userId,
 ) async* {
@@ -22,7 +23,7 @@ Stream<DocumentSnapshot<Map<String, dynamic>>> _pollInboxDocument(
   while (true) {
     try {
       yield await document.get();
-    } catch (_) { /* erreur transitoire */ }
+    } catch (_) {/* erreur transitoire */}
     await Future<void>.delayed(const Duration(seconds: 8));
   }
 }

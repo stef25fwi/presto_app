@@ -23,6 +23,13 @@ import 'dart:async';
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
 import 'package:presto_app/widgets/payment_info_audio_player.dart';
 
+// Couleurs partagées utilisées dans les blocs UI de détail d'annonce.
+// Elles sont volontairement globales car plusieurs widgets privés du fichier les réutilisent.
+const navy = Color(0xFF18233D);
+const muted = Color(0xFF6F7282);
+const orange = Color(0xFFFF7B12);
+const green = Color(0xFF45B36B);
+
 // ─── Data models ─────────────────────────────────────────────────────────────
 
 enum OfferActionType { booking, contact }
@@ -53,6 +60,7 @@ String _extractOfferDetailImageUrl(dynamic entry) {
   return entry.toString().trim();
 }
 
+// ignore: unused_element
 String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
   if (data is! Map) return '';
   for (final key in keys) {
@@ -282,6 +290,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     return rawId;
   }
 
+  // ignore: unused_element
   String _extractImageUrl(dynamic entry) {
     return _extractOfferDetailImageUrl(entry);
   }
@@ -1308,6 +1317,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     };
   }
 
+  // ignore: unused_element
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
     final dynamic rawOffer = offer;
     final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
@@ -1988,6 +1998,7 @@ class _BackgroundDecor extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _TopHeader extends StatelessWidget {
   final String title;
   final bool compact;
@@ -2466,6 +2477,7 @@ class _PendingPhotoNotice extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _HeroInfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -2535,6 +2547,7 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
 
 // ─── Photo gallery ───────────────────────────────────────────────────────────
 
+// ignore: unused_element
 class _PhotoThumbnailStrip extends StatelessWidget {
   final List<String> imageUrls;
 
@@ -2932,12 +2945,8 @@ class _PracticalInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF18233D);
     const blueSoft = Color(0xFFDCEBFF);
-    const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
-    const orange = Color(0xFFFF7B12);
-    const green = Color(0xFF45B36B);
 
     return Container(
       decoration: BoxDecoration(
@@ -3156,9 +3165,6 @@ class _AdvertiserHeaderLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF18233D);
-    const muted = Color(0xFF6F7282);
-    const green = Color(0xFF45B36B);
     const line = Color(0xFFE6E3E6);
 
     return Column(
@@ -3259,8 +3265,6 @@ class _InfoLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF18233D);
-    const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
 
     return Column(
@@ -3331,10 +3335,6 @@ class _AdvertiserMetaLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF18233D);
-    const muted = Color(0xFF6F7282);
-    const orange = Color(0xFFFF7B12);
-    const green = Color(0xFF45B36B);
     const line = Color(0xFFE6E3E6);
 
     return Column(
@@ -3480,8 +3480,6 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF18233D);
-    const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
 
     final hasPhone = widget.phone.trim().isNotEmpty;
@@ -3830,6 +3828,7 @@ class _ShareOptionTile extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _AvatarFallback extends StatelessWidget {
   final String initials;
 

@@ -59,7 +59,7 @@ Future<void> main() async {
     return;
   }
 
-  final map = decoded as Map<String, dynamic>;
+  final map = decoded;
   print('Root keys: ${map.keys.join(', ')}');
 
   final dynamic data = map['data'];

@@ -363,6 +363,7 @@ class NotificationService {
   }
 
   /// Handler pour les messages reçus en background (app fermée)
+  // ignore: unused_element
   static Future<void> _backgroundHandler(RemoteMessage message) async {
     debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
     debugPrint(

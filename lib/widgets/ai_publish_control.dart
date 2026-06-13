@@ -24,6 +24,7 @@ class AiPublishControl extends StatelessWidget {
   final VoidCallback onDiagnostic;
   final VoidCallback onClear;
 
+  // ignore: unused_element
   bool get _isReady => state == AiPublishState.ready;
   bool get _isRecording => state == AiPublishState.recording;
   bool get _isAnalyzing => state == AiPublishState.analyzing;

@@ -28,7 +28,6 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
   late final Animation<double> _rotation;
 
   static const Color kBlue = Color(0xFF1A73E8);
-  static const Color kOrange = Color(0xFFFF6600);
 
   @override
   void initState() {
@@ -95,8 +94,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                         color: Colors.white,
                       ),
                       child: Center(
-                        child:
-                            widget.centerChild ??
+                        child: widget.centerChild ??
                             Icon(
                               Icons.info_rounded,
                               color: kBlue,

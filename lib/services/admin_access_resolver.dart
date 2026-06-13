@@ -635,6 +635,7 @@ class AdminAccessResolver {
     }
   }
 
+  // ignore: unused_element
   Future<AdminAccessState> _verifyServerAccessRetry(
     HttpsCallable callable,
     User user,

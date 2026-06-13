@@ -192,14 +192,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (!isAdmin) {
         final results = await Future.wait([
           FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
-          FirebaseFirestore.instance.collection('adminUsers').doc(user.uid).get(),
+          FirebaseFirestore.instance
+              .collection('adminUsers')
+              .doc(user.uid)
+              .get(),
         ]);
         final userData = results[0].data() ?? const <String, dynamic>{};
         final adminData = results[1].data() ?? const <String, dynamic>{};
         if (_hasAdminAccess(userData)) {
           isAdmin = true;
           adminSource = 'users/${user.uid}';
-        } else if (_hasAdminAccess(adminData) || _isEnabledAdminGrant(adminData)) {
+        } else if (_hasAdminAccess(adminData) ||
+            _isEnabledAdminGrant(adminData)) {
           isAdmin = true;
           adminSource = 'adminUsers/${user.uid}';
         }
@@ -354,7 +358,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         (kIsWeb &&
             appCheckActivationAttempted &&
             !appCheckActivationSucceeded)) {
-        return 'Vérification de sécurité indisponible. Rechargez la page.';
+      return 'Vérification de sécurité indisponible. Rechargez la page.';
     }
     if (_isPermissionDenied(error)) {
       // Toutes les requetes participants (participantIds, participants, ...)
@@ -430,6 +434,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return 'Touchez pour ouvrir la conversation';
   }
 
+  // ignore: unused_element
   String _searchableConversationText(Map<String, dynamic> data, String userId) {
     return [
       _conversationTitle(data, userId),
@@ -445,6 +450,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     ].join(' ').toLowerCase();
   }
 
+  // ignore: unused_element
   DateTime? _conversationSortDate(Map<String, dynamic> data) {
     return parseFirestoreDateTime(
           _conversationValue(data, const ['lastMessageAt', 'last_message_at']),
@@ -457,6 +463,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         );
   }
 
+  // ignore: unused_element
   String? _notificationConversationId(Map<String, dynamic> data) {
     final directValue = _conversationValue(
       data,
@@ -492,6 +499,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
     var permissionDeniedRetryCount = 0;
+    // ignore: unused_local_variable
     var appCheckPrefixRetryCount = 0;
     var _subscriptionGeneration = 0;
     var _isRetryingPermissionDenied = false;
@@ -578,8 +586,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
-      if (snapshot.docs.isNotEmpty) {
-      }
+        if (snapshot.docs.isNotEmpty) {}
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
             doc,
@@ -600,7 +607,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
 
       void handleError(String field, Object error) {
-            debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
+        debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
         _appendAdminConversationLog('mode=$mode field=$field erreur=$error');
         if (kDebugMode) {
           debugPrint(
@@ -665,6 +672,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
       }
     }
+
     unawaited(startSubscriptions(forceRefreshTokens: false));
 
     controller.onCancel = () async {

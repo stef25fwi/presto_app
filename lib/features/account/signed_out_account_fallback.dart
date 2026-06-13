@@ -239,7 +239,6 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       });
     }
 
-    const proOrange = Color(0xFFFF6600);
     const statusBlue = Color(0xFF1A73E8);
     const textDark = Color(0xFF1F2937);
     const textMuted = Color(0xFF6B7280);

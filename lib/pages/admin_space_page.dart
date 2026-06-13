@@ -858,7 +858,6 @@ class _AdminDashboardComputed {
   }) {
     final totalAccounts = _toInt(userStats?['totalAccounts']);
     final onlineUsers = _toInt(userStats?['onlineUsers']);
-    final proLogins = _toInt(userStats?['proLogins']);
     final start = _startOfDay(DateTime.now())
         .subtract(Duration(days: window.dayCount - 1));
     final bucketCount = window.dayCount;
