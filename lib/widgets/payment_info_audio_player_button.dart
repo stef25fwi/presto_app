@@ -23,10 +23,16 @@ class PaymentInfoAudioPlayerButton extends StatefulWidget {
 class _PaymentInfoAudioPlayerButtonState
     extends State<PaymentInfoAudioPlayerButton> {
   late final AudioPlayer _player;
-  StreamSubscription<void>? _completeSubscription;
 
+  StreamSubscription<void>? _completeSubscription;
+  StreamSubscription<PlayerState>? _stateSubscription;
+
+  PlayerState _playerState = PlayerState.stopped;
   bool _isLoading = false;
-  bool _isPlaying = false;
+  bool _sourceLoaded = false;
+
+  bool get _isPlaying => _playerState == PlayerState.playing;
+  bool get _isPaused => _playerState == PlayerState.paused;
 
   @override
   void initState() {
@@ -34,55 +40,87 @@ class _PaymentInfoAudioPlayerButtonState
 
     _player = AudioPlayer();
 
+    _stateSubscription = _player.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+
+      setState(() {
+        _playerState = state;
+        _isLoading = false;
+      });
+    });
+
     _completeSubscription = _player.onPlayerComplete.listen((_) {
       if (!mounted) return;
 
       setState(() {
+        _playerState = PlayerState.stopped;
         _isLoading = false;
-        _isPlaying = false;
+        _sourceLoaded = false;
       });
     });
   }
 
   @override
+  void didUpdateWidget(covariant PaymentInfoAudioPlayerButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.audioUrl != widget.audioUrl) {
+      _resetPlayerForNewUrl();
+    }
+  }
+
+  Future<void> _resetPlayerForNewUrl() async {
+    try {
+      await _player.stop();
+    } catch (_) {
+      // Rien à faire : le reset ne doit jamais casser l'UI.
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _playerState = PlayerState.stopped;
+      _isLoading = false;
+      _sourceLoaded = false;
+    });
+  }
+
+  @override
   void dispose() {
+    _stateSubscription?.cancel();
     _completeSubscription?.cancel();
     _player.dispose();
     super.dispose();
   }
 
   Future<void> _toggle() async {
-    if (_isLoading || widget.audioUrl.trim().isEmpty) return;
+    final audioUrl = widget.audioUrl.trim();
+
+    if (_isLoading || audioUrl.isEmpty) return;
 
     try {
       setState(() => _isLoading = true);
 
       if (_isPlaying) {
         await _player.pause();
+        return;
+      }
 
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-          _isPlaying = false;
-        });
-
+      if (_isPaused && _sourceLoaded) {
+        await _player.resume();
         return;
       }
 
       await _player.stop();
-      await _player.play(UrlSource(widget.audioUrl));
-
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _isPlaying = true;
-      });
+      _sourceLoaded = true;
+      await _player.play(UrlSource(audioUrl));
     } catch (error) {
       if (!mounted) return;
 
       setState(() {
+        _playerState = PlayerState.stopped;
         _isLoading = false;
-        _isPlaying = false;
+        _sourceLoaded = false;
       });
 
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
@@ -93,28 +131,49 @@ class _PaymentInfoAudioPlayerButtonState
     }
   }
 
+  Widget _buildIcon() {
+    if (_isLoading) {
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    if (_isPlaying) {
+      return const Icon(Icons.pause_rounded);
+    }
+
+    if (_isPaused) {
+      return const Icon(Icons.play_arrow_rounded);
+    }
+
+    return const Icon(Icons.volume_up_rounded);
+  }
+
+  String _buttonLabel() {
+    if (_isLoading) return 'Chargement...';
+    if (_isPlaying) return 'Pause';
+    if (_isPaused) return 'Reprendre';
+    return widget.label;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final icon = _isLoading
-        ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        : Icon(_isPlaying ? Icons.pause_rounded : Icons.volume_up_rounded);
+    final onPressed = _isLoading ? null : _toggle;
 
     if (widget.compact) {
       return IconButton(
-        tooltip: widget.label,
-        onPressed: _isLoading ? null : _toggle,
-        icon: icon,
+        tooltip: _buttonLabel(),
+        onPressed: onPressed,
+        icon: _buildIcon(),
       );
     }
 
     return FilledButton.icon(
-      onPressed: _isLoading ? null : _toggle,
-      icon: icon,
-      label: Text(_isPlaying ? 'Pause' : widget.label),
+      onPressed: onPressed,
+      icon: _buildIcon(),
+      label: Text(_buttonLabel()),
     );
   }
 }
