@@ -23,7 +23,7 @@ exports.notifyListingApproved = (0, firestore_1.onDocumentUpdated)("listings/{li
     if (!ownerId)
         return;
     await (0, push_1.createInAppNotification)({
-        notificationId: `listing_approved_trigger_${listingId}`,
+        notificationId: `listing_approved_${listingId}`,
         userId: ownerId,
         title: "Annonce approuvee",
         message: normalizeString(after.title) || "Votre annonce est en ligne.",
@@ -63,7 +63,7 @@ exports.notifyListingRejected = (0, firestore_1.onDocumentUpdated)("listings/{li
         normalizeString(after.moderationReason) ||
         "Votre annonce a ete rejetee.";
     await (0, push_1.createInAppNotification)({
-        notificationId: `listing_rejected_trigger_${listingId}`,
+        notificationId: `listing_rejected_${listingId}`,
         userId: ownerId,
         title: "Annonce rejetee",
         message: rejectionMessage,

@@ -101,6 +101,7 @@ export { onNotificationCreated, onNotificationUpdated } from "./modules/notifica
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
 export { moderateNewOffer } from "./modules/moderation/moderate_new_offer";
+export { generatePaymentInfoAudio } from "./modules/admin/callables";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 
 export {
