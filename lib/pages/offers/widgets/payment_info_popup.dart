@@ -29,8 +29,10 @@ class PaymentInfoPopup extends StatefulWidget {
 class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
   late final AudioPlayer _player;
   StreamSubscription<String?>? _urlSub;
+  StreamSubscription<PlayerState>? _playerStateSub;
   String? _audioUrl;
   bool _isPlaying = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -39,7 +41,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
     _urlSub = PaymentInfoAudioService().watchAudioUrl().listen((url) {
       if (mounted) setState(() => _audioUrl = url);
     });
-    _player.playerStateStream.listen((state) {
+    _playerStateSub = _player.playerStateStream.listen((state) {
       if (!mounted) return;
       final playing = state.playing;
       if (_isPlaying != playing) setState(() => _isPlaying = playing);
@@ -49,19 +51,26 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
   @override
   void dispose() {
     _urlSub?.cancel();
+    _playerStateSub?.cancel();
     _player.dispose();
     super.dispose();
   }
 
-  void _toggleAudioExplanation() {
+  Future<void> _toggleAudioExplanation() async {
     final url = _audioUrl;
-    if (url == null || url.isEmpty) return;
+    if (url == null || url.isEmpty || _isLoading) return;
     if (_isPlaying) {
-      _player.pause();
-    } else {
-      _player.setUrl(url).then((_) => _player.play()).catchError((Object e) {
-        if (mounted) setState(() => _isPlaying = false);
-      });
+      await _player.pause();
+      return;
+    }
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      await _player.setUrl(url);
+      await _player.play();
+    } catch (e) {
+      if (mounted) setState(() => _isPlaying = false);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -125,6 +134,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                         const SizedBox(height: 12),
                         _InfoBanner(
                           isPlaying: _isPlaying,
+                          isLoading: _isLoading,
                           canPlay: _audioUrl?.isNotEmpty == true,
                           onToggleAudio: _toggleAudioExplanation,
                         ),
@@ -287,11 +297,13 @@ class _Header extends StatelessWidget {
 class _InfoBanner extends StatelessWidget {
   const _InfoBanner({
     required this.isPlaying,
+    required this.isLoading,
     required this.onToggleAudio,
     required this.canPlay,
   });
 
   final bool isPlaying;
+  final bool isLoading;
   final bool canPlay;
   final VoidCallback onToggleAudio;
 
@@ -332,7 +344,7 @@ class _InfoBanner extends StatelessWidget {
           if (canPlay) ...[
             const SizedBox(width: 8),
             InkWell(
-              onTap: onToggleAudio,
+              onTap: isLoading ? null : onToggleAudio,
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
@@ -343,16 +355,30 @@ class _InfoBanner extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    Icon(
-                      isPlaying
-                          ? Icons.pause_circle_filled_rounded
-                          : Icons.play_circle_fill_rounded,
-                      color: kBlue,
-                      size: 32,
-                    ),
+                    if (isLoading)
+                      const SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: kBlue,
+                        ),
+                      )
+                    else
+                      Icon(
+                        isPlaying
+                            ? Icons.pause_circle_filled_rounded
+                            : Icons.play_circle_fill_rounded,
+                        color: kBlue,
+                        size: 32,
+                      ),
                     const SizedBox(height: 2),
                     Text(
-                      isPlaying ? 'Pause\nlecture' : "Écouter\nl'explication",
+                      isLoading
+                          ? 'Chargement…'
+                          : isPlaying
+                              ? 'Pause\nlecture'
+                              : "Écouter\nl'explication",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: kBlue,
