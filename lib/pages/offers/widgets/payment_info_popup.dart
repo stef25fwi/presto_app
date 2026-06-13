@@ -59,7 +59,9 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
     if (_isPlaying) {
       _player.pause();
     } else {
-      _player.setUrl(url).then((_) => _player.play());
+      _player.setUrl(url).then((_) => _player.play()).catchError((Object e) {
+        if (mounted) setState(() => _isPlaying = false);
+      });
     }
   }
 
