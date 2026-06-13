@@ -1456,7 +1456,6 @@ class _EmailDashboardPageState extends State<EmailDashboardPage> {
       body: SafeArea(
         child: Column(
           children: [
-                const PaymentInfoAudioAdminSection(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
@@ -3189,10 +3188,12 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                       ],
                                     ),
                                     const SizedBox(height: 14),
-                                    Column(
-                                      children: [
-                                        for (final domain
-                                            in computed.domains) ...[
+                                      const PaymentInfoAudioAdminSection(),
+                                      const SizedBox(height: 14),
+                                      Column(
+                                        children: [
+                                          for (final domain
+                                              in computed.domains) ...[
                                           _AdminMetricDomainCard(
                                             domain: domain.domain,
                                             highlights: domain.highlights,
