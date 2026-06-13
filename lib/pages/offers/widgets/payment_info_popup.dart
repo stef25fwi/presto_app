@@ -16,8 +16,19 @@ Future<bool?> showPaymentInfoPopup(BuildContext context) {
   );
 }
 
-class PaymentInfoPopup extends StatelessWidget {
+class PaymentInfoPopup extends StatefulWidget {
   const PaymentInfoPopup({super.key});
+
+  @override
+  State<PaymentInfoPopup> createState() => _PaymentInfoPopupState();
+}
+
+class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
+  bool _isPlaying = false;
+
+  void _toggleAudioExplanation() {
+    setState(() => _isPlaying = !_isPlaying);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +88,10 @@ class PaymentInfoPopup extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const _InfoBanner(),
+                        _InfoBanner(
+                          isPlaying: _isPlaying,
+                          onToggleAudio: _toggleAudioExplanation,
+                        ),
                         const SizedBox(height: 12),
                         GridView.count(
                           shrinkWrap: true,
@@ -138,9 +152,7 @@ class PaymentInfoPopup extends StatelessWidget {
                         const SizedBox(height: 12),
                         const _ImportantBox(),
                         const SizedBox(height: 10),
-                        _MoreInfoTile(
-                          onTap: () => _showMoreInfo(context),
-                        ),
+                        _MoreInfoTile(onTap: () => _showMoreInfo(context)),
                         const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
@@ -237,7 +249,13 @@ class _Header extends StatelessWidget {
 }
 
 class _InfoBanner extends StatelessWidget {
-  const _InfoBanner();
+  const _InfoBanner({
+    required this.isPlaying,
+    required this.onToggleAudio,
+  });
+
+  final bool isPlaying;
+  final VoidCallback onToggleAudio;
 
   @override
   Widget build(BuildContext context) {
@@ -249,10 +267,10 @@ class _InfoBanner extends StatelessWidget {
         border: Border.all(color: const Color(0xFFBBD9FF)),
       ),
       child: Row(
-        children: const [
-          Icon(Icons.shield_rounded, color: kBlue, size: 38),
-          SizedBox(width: 10),
-          Expanded(
+        children: [
+          const Icon(Icons.shield_rounded, color: kBlue, size: 38),
+          const SizedBox(width: 10),
+          const Expanded(
             child: Text.rich(
               TextSpan(
                 text:
@@ -273,20 +291,39 @@ class _InfoBanner extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 8),
-          Column(
-            children: [
-              Icon(Icons.volume_up_rounded, color: kBlue, size: 30),
-              Text(
-                'Écouter\nl’explication',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: kBlue,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: onToggleAudio,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF3FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBBD9FF)),
               ),
-            ],
+              child: Column(
+                children: [
+                  Icon(
+                    isPlaying
+                        ? Icons.pause_circle_filled_rounded
+                        : Icons.play_circle_fill_rounded,
+                    color: kBlue,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isPlaying ? 'Pause\nlecture' : 'Écouter\nl’explication',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: kBlue,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -402,13 +439,13 @@ class _PaymentMethods extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final methods = [
-      _Method(Icons.credit_card_rounded, kBlue, 'Carte bancaire', 'Paiement sécurisé en ligne'),
-      _Method(Icons.account_balance_rounded, kGreen, 'Virement bancaire', 'Classique ou instantané'),
-      _Method(Icons.flash_on_rounded, kOrange, 'Virement instantané', 'Rapide et sécurisé'),
-      _Method(Icons.payments_rounded, kPurple, 'Espèces', 'Dans le cadre légal'),
-      _Method(Icons.account_balance_wallet_rounded, kBlue, 'Portefeuille électronique ou application mobile', 'Paiement rapide et traçable'),
-      _Method(Icons.receipt_long_rounded, Colors.pink, 'Chèque', 'Moins rapide, moins sécurisé'),
-      _Method(Icons.shield_rounded, kBlueDark, 'Paiement sécurisé intégré iliprestō', 'Sécurisé pour les deux parties'),
+      const _Method(Icons.credit_card_rounded, kBlue, 'Carte bancaire', 'Paiement sécurisé en ligne'),
+      const _Method(Icons.account_balance_rounded, kGreen, 'Virement bancaire', 'Classique ou instantané'),
+      const _Method(Icons.flash_on_rounded, kOrange, 'Virement instantané', 'Rapide et sécurisé'),
+      const _Method(Icons.payments_rounded, kPurple, 'Espèces', 'Dans le cadre légal'),
+      const _Method(Icons.account_balance_wallet_rounded, kBlue, 'Portefeuille électronique ou application mobile', 'Paiement rapide et traçable'),
+      const _Method(Icons.receipt_long_rounded, Colors.pink, 'Chèque', 'Moins rapide, moins sécurisé'),
+      const _Method(Icons.shield_rounded, kBlueDark, 'Paiement sécurisé intégré iliprestō', 'Sécurisé pour les deux parties'),
     ];
 
     return Container(
@@ -505,8 +542,8 @@ class _ImportantBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFFD18A)),
       ),
-      child: Row(
-        children: const [
+      child: const Row(
+        children: [
           Icon(Icons.warning_amber_rounded, color: Color(0xFFC47A00), size: 40),
           SizedBox(width: 10),
           Expanded(
