@@ -154,7 +154,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                               icon: Icons.handshake_rounded,
                               title: 'Prestation\nentre particuliers',
                               body:
-                                  'Le paiement en espèces est possible lorsqu'il ne s'agit pas d'un besoin professionnel.',
+                                  "Le paiement en espèces est possible lorsqu'il ne s'agit pas d'un besoin professionnel.",
                               badgeIcon: Icons.receipt_long_rounded,
                               badge:
                                   'Preuve écrite\nnécessaire au-delà de\n1 500 €',
@@ -168,7 +168,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                                   'Pour certaines activités (ménage, jardinage, aide à la personne, soutien scolaire...), le particulier peut utiliser le CESU.',
                               badgeIcon: Icons.badge_rounded,
                               badge:
-                                  'Le CESU permet de\ndéclarer et rémunérer\nl'intervenant.',
+                                  "Le CESU permet de\ndéclarer et rémunérer\nl'intervenant.",
                             ),
                             _RuleCard(
                               number: '4',
@@ -196,7 +196,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                           child: ElevatedButton.icon(
                             onPressed: () => Navigator.of(context).pop(true),
                             icon: const Icon(Icons.check_rounded),
-                            label: const Text('J'ai compris'),
+                            label: const Text("J'ai compris"),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: kBlue,
                               foregroundColor: Colors.white,
@@ -316,7 +316,7 @@ class _InfoBanner extends StatelessWidget {
                 children: [
                   TextSpan(
                     text:
-                        'Voici l'essentiel à retenir pour payer en toute sécurité.',
+                        "Voici l'essentiel à retenir pour payer en toute sécurité.",
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                 ],
@@ -352,7 +352,7 @@ class _InfoBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isPlaying ? 'Pause\nlecture' : 'Écouter\nl'explication',
+                      isPlaying ? 'Pause\nlecture' : "Écouter\nl'explication",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: kBlue,
@@ -676,7 +676,7 @@ void _showMoreInfo(BuildContext context) {
           ),
           const SizedBox(height: 12),
           const Text(
-            'iliprestō vous informe sur les moyens de paiement possibles, mais ne remplace pas un conseil juridique, fiscal ou comptable. En cas de doute, rapprochez-vous d'un organisme compétent ou d'un professionnel.',
+            "iliprestō vous informe sur les moyens de paiement possibles, mais ne remplace pas un conseil juridique, fiscal ou comptable. En cas de doute, rapprochez-vous d'un organisme compétent ou d'un professionnel.",
             textAlign: TextAlign.center,
             style: TextStyle(
               color: kTextSecondary,
