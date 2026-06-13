@@ -62,10 +62,11 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
       }
 
       await _audioPlayer.play();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      debugPrint('PAYMENT_AUDIO_ERROR: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Audio indisponible pour le moment.')),
+        SnackBar(content: Text('Audio indisponible : $e')),
       );
     }
   }
