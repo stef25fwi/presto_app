@@ -47,6 +47,7 @@ import '../utils/runtime_action_logger.dart';
 import '../utils/recording_path_web.dart'
     if (dart.library.io) '../utils/recording_path_io.dart';
 import '../widgets/ai_publish_control.dart';
+import '../widgets/city_postal_autocomplete_field.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/photo_selector_tile.dart';
 
@@ -4324,8 +4325,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: _withAiPendingOverlay(
                     showPending:
                         _showAiPendingForController(_locationController),
-                    child: TextFormField(
-                      controller: _locationController,
+                    child: CityPostalAutocompleteField(
+                      cityController: _locationController,
+                      postalCodeController: _postalCodeController,
                       decoration: InputDecoration(
                         label: _requiredLabel('Ville'),
                         hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
@@ -4335,12 +4337,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
+                          horizontal: 12,
+                          vertical: 14,
+                        ),
                       ),
-                      onTap: _clearAiPrefilledLocationPostalOnUserTap,
-                      onChanged: _onCityChanged,
-                      onEditingComplete: _canonicalizeLocationInputs,
-                      validator: _validateCanonicalCity,
                     ),
                   ),
                 ),
@@ -4367,7 +4367,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     validator: _validatePostalCode,
                   ),
                 ),
-                _buildCitySuggestionsOverlay(),
                 const SizedBox(height: 16),
 
                 // TÉLÉPHONE avec sélection indicatif
