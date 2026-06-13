@@ -3,7 +3,6 @@ export const CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES = [
   "participants",
   "participant_ids",
   "userIds",
-  "users",
   "memberIds",
 ] as const;
 
