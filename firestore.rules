@@ -482,7 +482,13 @@ service cloud.firestore {
 
     match /appConfig/{configId} {
       allow read: if isMarketplaceAdmin();
-      allow write: if false;
+      allow write: if isMarketplaceAdmin();
+    }
+
+    // ✅ [AUTORISÉ] Config audio popup paiement — lecture utilisateur connecté, écriture admin
+    match /app_config/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isMarketplaceAdmin();
     }
 
     match /subscriptions/{subscriptionId} {
