@@ -1,59 +1,113 @@
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+
+class PaymentInfoAudioConfig {
+  const PaymentInfoAudioConfig({
+    required this.enabled,
+    required this.audioUrl,
+    required this.storagePath,
+    required this.contentType,
+    required this.version,
+    required this.generatedAt,
+    required this.generatedBy,
+  });
+
+  final bool enabled;
+  final String? audioUrl;
+  final String? storagePath;
+  final String? contentType;
+  final int? version;
+  final Timestamp? generatedAt;
+  final String? generatedBy;
+
+  bool get canPlay =>
+      enabled && audioUrl != null && audioUrl!.trim().isNotEmpty;
+
+  DateTime? get generatedDate => generatedAt?.toDate();
+
+  factory PaymentInfoAudioConfig.fromMap(Map<String, dynamic>? data) {
+    final map = data ?? <String, dynamic>{};
+
+    return PaymentInfoAudioConfig(
+      enabled: map['enabled'] == true,
+      audioUrl: map['audioUrl'] as String?,
+      storagePath: map['storagePath'] as String?,
+      contentType: map['contentType'] as String?,
+      version: map['version'] is int ? map['version'] as int : null,
+      generatedAt: map['generatedAt'] is Timestamp
+          ? map['generatedAt'] as Timestamp
+          : null,
+      generatedBy: map['generatedBy'] as String?,
+    );
+  }
+}
 
 class PaymentInfoAudioService {
   PaymentInfoAudioService({
     FirebaseFirestore? firestore,
-    FirebaseStorage? storage,
+    FirebaseFunctions? functions,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance;
+        _functions =
+            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
+  final FirebaseFunctions _functions;
 
-  static const String storagePath = 'audio/payment_info_popup_fr.mp3';
-  static const String configCollection = 'app_config';
-  static const String configDoc = 'payment_info_audio';
+  DocumentReference<Map<String, dynamic>> get _configRef =>
+      _firestore.collection('public_config').doc('payment_info_audio');
 
+  Stream<PaymentInfoAudioConfig?> watchConfig() {
+    return _configRef.snapshots().map((snapshot) {
+      if (!snapshot.exists) return null;
+      return PaymentInfoAudioConfig.fromMap(snapshot.data());
+    });
+  }
+
+  Future<PaymentInfoAudioConfig?> getConfig() async {
+    final snapshot = await _configRef.get();
+    if (!snapshot.exists) return null;
+    return PaymentInfoAudioConfig.fromMap(snapshot.data());
+  }
+
+  Future<PaymentInfoAudioConfig?> generatePaymentInfoAudio({
+    String? text,
+    String voice = 'alloy',
+    String locale = 'fr-FR',
+  }) async {
+    final callable = _functions.httpsCallable('generatePaymentInfoAudio');
+
+    await callable.call(<String, dynamic>{
+      if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
+      'voice': voice,
+      'locale': locale,
+      'format': 'mp3',
+    });
+
+    return getConfig();
+  }
+}
+
+extension PaymentInfoAudioServiceLegacyCompat on PaymentInfoAudioService {
+  /// Ancienne API conservée pour les anciens widgets/popups.
   Stream<String?> watchAudioUrl() {
-    return _firestore
-        .collection(configCollection)
-        .doc(configDoc)
-        .snapshots()
-        .map((doc) => doc.data()?['audioUrl'] as String?);
+    return watchConfig().map((config) => config?.audioUrl);
   }
 
-  Future<String?> getStorageAudioUrl() async {
-    try {
-      return await _storage.ref(storagePath).getDownloadURL();
-    } on FirebaseException {
-      return null;
+  /// Ancienne API minimale : publie une URL MP3 déjà disponible.
+  Future<void> uploadAudioUrl(String audioUrl) async {
+    final cleanUrl = audioUrl.trim();
+
+    if (cleanUrl.isEmpty) {
+      throw ArgumentError('audioUrl vide');
     }
-  }
 
-  Future<void> saveAudioUrl(String audioUrl, {String? fileName}) async {
-    await _firestore.collection(configCollection).doc(configDoc).set({
-      'audioUrl': audioUrl,
-      'storagePath': storagePath,
-      'updatedAt': FieldValue.serverTimestamp(),
-      if (fileName != null) 'fileName': fileName,
+    await _configRef.set({
+      'enabled': true,
+      'audioUrl': cleanUrl,
+      'contentType': 'audio/mpeg',
+      'version': DateTime.now().millisecondsSinceEpoch,
+      'generatedAt': FieldValue.serverTimestamp(),
+      'provider': 'manual_url',
     }, SetOptions(merge: true));
-  }
-
-  Future<void> uploadAudio(Uint8List bytes, String fileName) async {
-    final ref = _storage.ref(storagePath);
-    await ref.putData(
-      bytes,
-      SettableMetadata(
-        contentType: 'audio/mpeg',
-        customMetadata: {
-          'usage': 'payment_info_popup',
-          'fileName': fileName,
-        },
-      ),
-    );
-    final url = await ref.getDownloadURL();
-    await saveAudioUrl(url, fileName: fileName);
   }
 }
