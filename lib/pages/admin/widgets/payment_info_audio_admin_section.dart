@@ -29,22 +29,27 @@ class _PaymentInfoAudioAdminSectionState
     final file = result.files.single;
     final Uint8List? bytes = file.bytes;
     if (bytes == null) {
-      _showSnack('Fichier MP3 non lisible.');
+      if (mounted) _showSnack('Fichier MP3 non lisible.');
       return;
     }
     setState(() => _uploading = true);
+    String? snackMessage;
     try {
       await _service.uploadAudio(bytes, file.name);
-      _showSnack('Audio du popup mis à jour.');
+      snackMessage = 'Audio du popup mis à jour.';
     } catch (e) {
-      _showSnack('Erreur upload audio : $e');
+      snackMessage = 'Erreur upload audio : $e';
     } finally {
-      if (mounted) setState(() => _uploading = false);
+      if (mounted) {
+        setState(() => _uploading = false);
+        if (snackMessage != null) _showSnack(snackMessage);
+      }
     }
   }
 
   Future<void> _generateMp3FromText() async {
     setState(() => _generating = true);
+    String? snackMessage;
     try {
       await callPrestoFunction<dynamic>(
         functions: prestoFirebaseFunctions,
@@ -52,18 +57,20 @@ class _PaymentInfoAudioAdminSectionState
         timeout: const Duration(seconds: 120),
         area: 'admin-audio',
       );
-      _showSnack('MP3 régénéré depuis le texte du popup.');
+      snackMessage = 'MP3 régénéré depuis le texte du popup.';
     } on FirebaseFunctionsException catch (e) {
-      _showSnack('Erreur génération : ${e.message ?? e.code}');
+      snackMessage = 'Erreur génération : ${e.message ?? e.code}';
     } catch (e) {
-      _showSnack('Erreur génération : $e');
+      snackMessage = 'Erreur génération : $e';
     } finally {
-      if (mounted) setState(() => _generating = false);
+      if (mounted) {
+        setState(() => _generating = false);
+        if (snackMessage != null) _showSnack(snackMessage);
+      }
     }
   }
 
   void _showSnack(String message) {
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
