@@ -1,19 +1,21 @@
 import 'dart:typed_data';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
+
 class PaymentInfoAudioAdminSection extends StatefulWidget {
   const PaymentInfoAudioAdminSection({super.key});
+
   @override
   State<PaymentInfoAudioAdminSection> createState() =>
       _PaymentInfoAudioAdminSectionState();
 }
+
 class _PaymentInfoAudioAdminSectionState
     extends State<PaymentInfoAudioAdminSection> {
   final _service = PaymentInfoAudioService();
   bool _uploading = false;
+
   Future<void> _pickAndUploadMp3() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -29,29 +31,7 @@ class _PaymentInfoAudioAdminSectionState
     }
     setState(() => _uploading = true);
     try {
-      final ref = FirebaseStorage.instance.ref(
-        PaymentInfoAudioService.storagePath,
-      );
-      await ref.putData(
-        bytes,
-        SettableMetadata(
-          contentType: 'audio/mpeg',
-          customMetadata: {
-            'usage': 'payment_info_popup',
-            'fileName': file.name,
-          },
-        ),
-      );
-      final url = await ref.getDownloadURL();
-      await FirebaseFirestore.instance
-          .collection(PaymentInfoAudioService.configCollection)
-          .doc(PaymentInfoAudioService.configDoc)
-          .set({
-        'audioUrl': url,
-        'storagePath': PaymentInfoAudioService.storagePath,
-        'fileName': file.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await _service.uploadAudio(bytes, file.name);
       _showSnack('Audio du popup mis à jour.');
     } catch (e) {
       _showSnack('Erreur upload audio : $e');
@@ -59,18 +39,21 @@ class _PaymentInfoAudioAdminSectionState
       if (mounted) setState(() => _uploading = false);
     }
   }
+
   void _showSnack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<String?>(
       stream: _service.watchAudioUrl(),
       builder: (context, snapshot) {
         final audioUrl = snapshot.data;
+        final hasAudio = audioUrl?.isNotEmpty == true;
         return Card(
           elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 12),
@@ -93,7 +76,7 @@ class _PaymentInfoAudioAdminSectionState
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Mets à jour le fichier MP3 lu dans le popup “Infos paiement”.',
+                  'Mets à jour le fichier MP3 lu dans le popup "Infos paiement".',
                   style: TextStyle(
                     fontSize: 14,
                     color: Color(0xFF4A5878),
@@ -101,14 +84,12 @@ class _PaymentInfoAudioAdminSectionState
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  audioUrl == null || audioUrl.isEmpty
-                      ? 'Aucun MP3 configuré.'
-                      : 'MP3 configuré dans Firebase Storage.',
+                  hasAudio
+                      ? 'MP3 configuré dans Firebase Storage.'
+                      : 'Aucun MP3 configuré.',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: audioUrl == null || audioUrl.isEmpty
-                        ? Colors.orange
-                        : Colors.green,
+                    color: hasAudio ? Colors.green : Colors.orange,
                   ),
                 ),
                 const SizedBox(height: 14),

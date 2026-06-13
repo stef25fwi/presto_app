@@ -1456,7 +1456,10 @@ class _EmailDashboardPageState extends State<EmailDashboardPage> {
       body: SafeArea(
         child: Column(
           children: [
-                const PaymentInfoAudioAdminSection(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: PaymentInfoAudioAdminSection(),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
