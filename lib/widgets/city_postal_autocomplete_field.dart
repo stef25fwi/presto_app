@@ -144,12 +144,14 @@ class CityPostalAutocompleteField extends StatefulWidget {
   final TextEditingController cityController;
   final TextEditingController postalCodeController;
   final InputDecoration decoration;
+  final ValueChanged<CityEntry>? onSelected;
 
   const CityPostalAutocompleteField({
     super.key,
     required this.cityController,
     required this.postalCodeController,
     required this.decoration,
+    this.onSelected,
   });
 
   @override
@@ -435,6 +437,8 @@ class _CityPostalAutocompleteFieldState
         _isApplyingSelection = false;
       }
     }
+
+    widget.onSelected?.call(c);
   }
 
   @override
