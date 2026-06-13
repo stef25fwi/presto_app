@@ -150,6 +150,85 @@ class Advertiser {
   });
 }
 
+String _normalizeBudgetDisplayText(String value) {
+  return value
+      .toLowerCase()
+      .replaceAll('à', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('è', 'e')
+      .replaceAll('ê', 'e')
+      .replaceAll('ë', 'e')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
+bool _isNegotiableBudgetValue(Object? value) {
+  final raw = (value ?? '').toString().trim();
+  if (raw.isEmpty) return false;
+
+  final normalized = _normalizeBudgetDisplayText(raw);
+
+  return normalized.contains('negocier') ||
+      normalized.contains('negociable') ||
+      normalized.contains('negotiate') ||
+      normalized.contains('negotiable') ||
+      normalized == 'a negocier' ||
+      normalized == 'à négocier';
+}
+
+num? _asBudgetNumber(Object? value) {
+  if (value == null) return null;
+  if (value is num) return value;
+
+  final raw = value.toString().trim();
+  if (raw.isEmpty) return null;
+
+  final cleaned = raw
+      .replaceAll('€', '')
+      .replaceAll('EUR', '')
+      .replaceAll('eur', '')
+      .replaceAll(',', '.')
+      .trim();
+
+  return num.tryParse(cleaned);
+}
+
+bool _shouldHideBudgetOnOfferDetails(Map<String, dynamic> data) {
+  final possibleLabels = <Object?>[
+    data['budgetLabel'],
+    data['budgetText'],
+    data['budgetType'],
+    data['budgetMode'],
+    data['priceLabel'],
+    data['priceType'],
+    data['priceMode'],
+    data['budget'],
+    data['price'],
+  ];
+
+  for (final value in possibleLabels) {
+    if (_isNegotiableBudgetValue(value)) {
+      return true;
+    }
+  }
+
+  final possibleAmounts = <Object?>[
+    data['budgetAmount'],
+    data['budget'],
+    data['price'],
+    data['amount'],
+  ];
+
+  for (final value in possibleAmounts) {
+    final amount = _asBudgetNumber(value);
+    if (amount != null && amount <= 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 class Offer {
   final String id;
   final String listingId;
@@ -2292,17 +2371,19 @@ class _HeroCard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          '${data.price.toStringAsFixed(0)} €',
-                          style: TextStyle(
-                            fontSize: compact ? 28 : 30,
-                            height: 1.0,
-                            fontWeight: FontWeight.w800,
-                            color: orange2,
-                            letterSpacing: -0.6,
+                        if (data.price > 0) ...[
+                          Text(
+                            '${data.price.toStringAsFixed(0)} €',
+                            style: TextStyle(
+                              fontSize: compact ? 28 : 30,
+                              height: 1.0,
+                              fontWeight: FontWeight.w800,
+                              color: orange2,
+                              letterSpacing: -0.6,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: compact ? 6 : 8),
+                          SizedBox(height: compact ? 6 : 8),
+                        ],
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -2877,7 +2958,6 @@ class _PracticalInfoCard extends StatelessWidget {
     this.compact = false,
     required this.onContactTap,
   });
-
 
   Widget _paymentInfoPill(BuildContext context) {
     return Material(
