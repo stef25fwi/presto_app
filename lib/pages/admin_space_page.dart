@@ -2794,8 +2794,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   ),
                   _KpiTile(
                     icon: Icons.slideshow_rounded,
-                    title: 'Gestion du Hero',
-                    subtitle: 'Images, vidéos et durée d’affichage',
+                    title: ‘Gestion du Hero’,
+                    subtitle: ‘Images, vidéos et durée d\’affichage’,
                     badge: null,
                     iconColor: prestoOrange,
                     onTap: () {
@@ -2806,10 +2806,22 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
+                  _KpiTile(
+                    icon: Icons.headphones_rounded,
+                    title: ‘Audio popup’,
+                    subtitle: ‘Génération & import MP3’,
+                    badge: null,
+                    iconColor: prestoBlue,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const _AudioPopupAdminPage(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
-              const SizedBox(height: 18),
-              const PaymentInfoAudioAdminSection(),
               const SizedBox(height: 18),
               _AdminDashboardSection(
                 userStats: _userStats,
@@ -2818,6 +2830,33 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioPopupAdminPage extends StatelessWidget {
+  const _AudioPopupAdminPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
+        titleSpacing: 16,
+        title: const Text(
+          'Audio popup paiement',
+          style: kPrestoAppBarTitleStyle,
+        ),
+      ),
+      body: const SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: PaymentInfoAudioAdminSection(),
         ),
       ),
     );
