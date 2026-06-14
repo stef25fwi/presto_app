@@ -442,7 +442,8 @@ Retourne uniquement le JSON demandé.`;
       { role: 'user', content: userPrompt }
     ],
     temperature: 0.2,
-    max_tokens: 600
+    max_tokens: 350,
+    response_format: { type: 'json_object' },
   });
 
   const aiResponse = completion.choices?.[0]?.message?.content?.trim();
@@ -857,7 +858,7 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
     const tpl = await admin.remoteConfig().getTemplate();
     const p = tpl.parameters || {};
 
-    const mode = normalizeMode(p.microia_mode?.defaultValue?.value || "HYBRID");
+    const mode = normalizeMode(p.microia_mode?.defaultValue?.value || "GOOGLE_ONLY");
     const fallbackEnabled = asBool(p.microia_fallback_enabled?.defaultValue?.value, true);
     const qualityThreshold = asNum(p.microia_quality_threshold?.defaultValue?.value, 0.62);
     const languageCode = p.microia_language_code?.defaultValue?.value || "fr-FR";
@@ -874,7 +875,7 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
     return _microIaCfgCache;
   } catch (e) {
     console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
-    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false };
+    _microIaCfgCache = { mode: "GOOGLE_ONLY", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }

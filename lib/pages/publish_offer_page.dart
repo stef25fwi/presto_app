@@ -3135,7 +3135,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await _recorder.start(
           RecordConfig(
             encoder: AudioEncoder.aacLc,
-            sampleRate: 44100,
+            sampleRate: 16000,
             numChannels: 1,
           ),
           path: filePath,
