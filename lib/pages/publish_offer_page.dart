@@ -4284,6 +4284,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   onStopRecording: _stopMic,
                   onDiagnostic: _showPublishAiTraceDialog,
                   onClear: _clearPublishAiTrace,
+                  showAdminDiagnostics: _adminAudioRuntimeAccessState == 1,
                 ),
                 const SizedBox(height: 16),
 

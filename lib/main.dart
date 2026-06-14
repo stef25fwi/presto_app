@@ -144,10 +144,10 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
     statusBarIconBrightness:
         isDarkBackground ? Brightness.light : Brightness.dark,
     statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
-    systemNavigationBarColor: backgroundColor,
-    systemNavigationBarDividerColor: backgroundColor,
-    systemNavigationBarIconBrightness:
-        isDarkBackground ? Brightness.light : Brightness.dark,
+    // Barre système du bas sous la bottom bar : toujours blanche.
+    systemNavigationBarColor: Colors.white,
+    systemNavigationBarDividerColor: Colors.white,
+    systemNavigationBarIconBrightness: Brightness.dark,
   );
 }
 

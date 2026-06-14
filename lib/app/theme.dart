@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'presto_overlay_theme.dart';
 import '../constants.dart';
@@ -49,7 +50,15 @@ ThemeData _buildPrestoThemeData() {
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: true,
+      backgroundColor: prestoBlue,
       foregroundColor: Colors.white,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFF1A73E8),
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
       titleTextStyle: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
       toolbarTextStyle: kPrestoBodyTextStyle.copyWith(color: Colors.white),
     ),

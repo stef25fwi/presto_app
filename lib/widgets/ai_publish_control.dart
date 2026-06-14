@@ -16,6 +16,7 @@ class AiPublishControl extends StatelessWidget {
     required this.onStopRecording,
     required this.onDiagnostic,
     required this.onClear,
+    this.showAdminDiagnostics = false,
   });
 
   final AiPublishState state;
@@ -23,6 +24,7 @@ class AiPublishControl extends StatelessWidget {
   final VoidCallback onStopRecording;
   final VoidCallback onDiagnostic;
   final VoidCallback onClear;
+  final bool showAdminDiagnostics;
 
   bool get _isReady => state == AiPublishState.ready;
   bool get _isRecording => state == AiPublishState.recording;
@@ -45,25 +47,27 @@ class AiPublishControl extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _StatusPill(state: state),
-        const SizedBox(height: 20),
-        _MicroStateCard(state: state),
-        const SizedBox(height: 18),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _AiTextAction(
-              icon: Icons.bug_report_outlined,
-              label: 'Diagnostic IA',
-              onTap: onDiagnostic,
-            ),
-            const SizedBox(width: 28),
-            _AiTextAction(
-              icon: Icons.delete_outline,
-              label: 'Effacer',
-              onTap: onClear,
-            ),
-          ],
-        ),
+        if (showAdminDiagnostics) ...[
+          const SizedBox(height: 20),
+          _MicroStateCard(state: state),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _AiTextAction(
+                icon: Icons.bug_report_outlined,
+                label: 'Diagnostic IA',
+                onTap: onDiagnostic,
+              ),
+              const SizedBox(width: 28),
+              _AiTextAction(
+                icon: Icons.delete_outline,
+                label: 'Effacer',
+                onTap: onClear,
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
