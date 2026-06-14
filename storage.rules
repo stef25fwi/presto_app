@@ -59,7 +59,7 @@ service firebase.storage {
     function isImageUpload() {
       return request.resource != null
         && request.resource.contentType.matches('image/.*')
-        && request.resource.size < 15 * 1024 * 1024;
+        && request.resource.size < 8 * 1024 * 1024;
     }
 
     function isHeroMediaUpload() {
