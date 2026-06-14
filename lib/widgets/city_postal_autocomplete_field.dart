@@ -183,6 +183,11 @@ class _CityPostalAutocompleteFieldState
   int _requestSerial = 0;
   bool _isApplyingSelection = false;
 
+  /// Vrai dès que l'utilisateur a modifié le champ ville manuellement
+  /// (frappe directe, pas une sélection dans la liste).
+  /// Quand ce flag est actif, la modification du CP ne doit PAS écraser la ville.
+  bool _cityEnteredManually = false;
+
   @override
   void initState() {
     super.initState();
@@ -202,6 +207,13 @@ class _CityPostalAutocompleteFieldState
   }
 
   void _onCityChanged() {
+    // Si ce n'est pas une mise à jour programmatique (via _applySelection),
+    // l'utilisateur est en train de taper : on protège la ville contre
+    // un éventuel remplacement automatique depuis le champ CP.
+    if (!_isApplyingSelection) {
+      _cityEnteredManually = true;
+    }
+
     _debounce?.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 280), () async {
@@ -318,7 +330,14 @@ class _CityPostalAutocompleteFieldState
       final officialCity = selected.name.trim();
       if (officialCity.isEmpty) return;
 
-      if (widget.cityController.text.trim() != officialCity) {
+      // N'auto-remplir la ville depuis le CP que si :
+      // - le champ ville est vide, OU
+      // - la ville a été choisie via l'autocomplete (pas saisie manuellement).
+      // Cela évite d'écraser une correction manuelle de l'utilisateur.
+      final currentCity = widget.cityController.text.trim();
+      final canOverwriteCity = currentCity.isEmpty || !_cityEnteredManually;
+
+      if (canOverwriteCity && currentCity != officialCity) {
         _isApplyingSelection = true;
         try {
           widget.cityController.text = officialCity;
@@ -394,6 +413,10 @@ class _CityPostalAutocompleteFieldState
     final primaryCp = c.cps.isNotEmpty ? c.cps.first : '';
     final resolved = _localService.findByPostalCode(primaryCp, dept: c.dept) ?? c;
 
+    // L'utilisateur a explicitement choisi une ville dans la liste →
+    // on réinitialise le flag "saisie manuelle" pour que le CP puisse
+    // à nouveau mettre à jour la ville si l'utilisateur le modifie ensuite.
+    _cityEnteredManually = false;
     _isApplyingSelection = true;
     try {
       widget.cityController.text = resolved.name;
