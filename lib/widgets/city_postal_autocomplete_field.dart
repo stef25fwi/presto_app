@@ -385,8 +385,13 @@ class _CityPostalAutocompleteFieldState
     final out = <CityEntry>[];
 
     for (final entry in entries) {
-      final key =
-          '${entry.name.toLowerCase()}|${entry.dept}|${entry.cps.join(",")}';
+      // Normalise les accents pour dédupliquer "Péron" (geo.api.gouv.fr)
+      // et "PERON" (cities_compact.json) comme la même ville.
+      // On utilise le premier CP comme représentant plutôt que la liste
+      // entière, car l'ordre et le contenu peuvent différer selon la source.
+      final normalizedName = normalizeLocationLookupKey(entry.name);
+      final primaryCp = entry.cps.isNotEmpty ? entry.cps.first : '';
+      final key = '$normalizedName|${entry.dept}|$primaryCp';
       if (seen.contains(key)) continue;
 
       seen.add(key);
