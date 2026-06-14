@@ -165,8 +165,8 @@ async function processCollection(collectionName, buildRenewUrl, now, in72h) {
 exports.enqueueExpiringListingEmails = (0, scheduler_1.onSchedule)("every 1 hours", async () => {
     const now = Date.now();
     const in72h = now + 72 * 60 * 60 * 1000;
-    await processCollection(constants_1.COLLECTIONS.listings, (docId) => `https://presto.app/listings/${docId}/renew`, now, in72h);
-    await processCollection(constants_1.LEGACY_COLLECTIONS.offers, (docId) => `https://presto.app/offers/${docId}`, now, in72h);
+    await processCollection(constants_1.COLLECTIONS.listings, (docId) => `https://ilipresto.fr/listings/${docId}/renew`, now, in72h);
+    await processCollection(constants_1.LEGACY_COLLECTIONS.offers, (docId) => `https://ilipresto.fr/offers/${docId}`, now, in72h);
 });
 exports.enqueueFirstListingNotPublishedReminders = (0, scheduler_1.onSchedule)("every day 10:00", async () => {
     const cutoffMs = Date.now() - 24 * 60 * 60 * 1000;

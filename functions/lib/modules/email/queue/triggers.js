@@ -182,7 +182,7 @@ exports.processScheduledEmailDigests = (0, scheduler_1.onSchedule)("every 15 min
                         matchCount: capped.matchCount,
                         rawMatchCount: capped.rawMatchCount,
                         matchCountCapped: capped.capped,
-                        resultsUrl: "https://presto.app/recherche-sauvegardee",
+                        resultsUrl: "https://ilipresto.fr/recherche-sauvegardee",
                         digestMode: mode,
                         timezone,
                         bucketKey,

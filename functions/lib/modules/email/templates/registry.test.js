@@ -24,7 +24,7 @@ const registry_1 = require("./registry");
     const missing = (0, registry_1.listMissingRequiredVariables)("tpl_product_saved_search_match_found_v1", {
         searchName: "Plombier",
         matchCount: 3,
-        resultsUrl: "https://presto.app/searches/1",
+        resultsUrl: "https://ilipresto.fr/searches/1",
     });
     strict_1.default.deepEqual(missing, []);
 });

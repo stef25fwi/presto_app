@@ -8,10 +8,10 @@ const node_test_1 = __importDefault(require("node:test"));
 const constants_1 = require("../../shared/constants");
 const triggers_1 = require("./triggers");
 (0, node_test_1.default)("buildListingRouteUrl uses canonical listings route", () => {
-    strict_1.default.equal((0, triggers_1.buildListingRouteUrl)(constants_1.COLLECTIONS.listings, "listing_123"), "https://presto.app/listings/listing_123");
+    strict_1.default.equal((0, triggers_1.buildListingRouteUrl)(constants_1.COLLECTIONS.listings, "listing_123"), "https://ilipresto.fr/listings/listing_123");
 });
 (0, node_test_1.default)("buildListingRouteUrl keeps legacy offers route", () => {
-    strict_1.default.equal((0, triggers_1.buildListingRouteUrl)(constants_1.LEGACY_COLLECTIONS.offers, "offer_123"), "https://presto.app/offers/offer_123");
+    strict_1.default.equal((0, triggers_1.buildListingRouteUrl)(constants_1.LEGACY_COLLECTIONS.offers, "offer_123"), "https://ilipresto.fr/offers/offer_123");
 });
 (0, node_test_1.default)("getSubCategory reads canonical subCategory field", () => {
     strict_1.default.equal((0, triggers_1.getSubCategory)({ subCategory: "Peinture mur" }), "Peinture mur");

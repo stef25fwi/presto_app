@@ -88,8 +88,8 @@ async function enqueueAdminReportAlertEmails({ listingId, listingTitle, reportId
     const reporterName = normalizeString(reporterData.displayName || reporterData.display_name || reporterData.userName || reporterData.name) || "Utilisateur PRESTO";
     const reporterEmail = normalizeString(reporterData.email);
     const now = Date.now();
-    const listingUrl = `https://presto.app/listings/${encodeURIComponent(listingId)}`;
-    const reportUrl = `https://presto.app/admin/reports/${encodeURIComponent(reportId)}`;
+    const listingUrl = `https://ilipresto.fr/listings/${encodeURIComponent(listingId)}`;
+    const reportUrl = `https://ilipresto.fr/admin/reports/${encodeURIComponent(reportId)}`;
     await Promise.all(recipients.map((recipient) => {
         const eventId = `evt_listing_report_admin_alert_${reportId}_${recipient.userId}`;
         return firestore_1.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({

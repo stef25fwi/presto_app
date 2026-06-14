@@ -28,8 +28,8 @@ exports.onSupportTicketCreated = (0, firestore_1.onDocumentCreated)("support_tic
         payload: {
             recipient_email: email,
             ticketId,
-            ticketUrl: `https://presto.app/support/${ticketId}`,
-            replyUrl: `https://presto.app/support/${ticketId}`,
+            ticketUrl: `https://ilipresto.fr/support/${ticketId}`,
+            replyUrl: `https://ilipresto.fr/support/${ticketId}`,
         },
         status: "created",
     });
@@ -62,8 +62,8 @@ exports.onSupportTicketReplied = (0, firestore_1.onDocumentUpdated)("support_tic
         payload: {
             recipient_email: email,
             ticketId,
-            ticketUrl: `https://presto.app/support/${ticketId}`,
-            replyUrl: `https://presto.app/support/${ticketId}`,
+            ticketUrl: `https://ilipresto.fr/support/${ticketId}`,
+            replyUrl: `https://ilipresto.fr/support/${ticketId}`,
         },
         status: "created",
     });

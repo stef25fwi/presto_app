@@ -20,7 +20,7 @@ const constants_1 = require("../../../shared/constants");
     strict_1.default.equal(extra.currency, "EUR");
     strict_1.default.equal(extra.paymentMethod, "Carte Visa **** 4242");
     strict_1.default.equal(extra.nextRetryAt, 1760000000000);
-    strict_1.default.equal(extra.retryUrl, "https://presto.app/facturation");
+    strict_1.default.equal(extra.retryUrl, "https://ilipresto.fr/facturation");
 });
 (0, node_test_1.default)("billing invoice enrichment respects existing payload values", () => {
     const source = {
@@ -53,7 +53,7 @@ const constants_1 = require("../../../shared/constants");
     strict_1.default.equal(extra.planName, "PRESTO Premium");
     strict_1.default.equal(extra.currency, "EUR");
     strict_1.default.equal(extra.paymentMethod, "SEPA");
-    strict_1.default.equal(extra.manageUrl, "https://presto.app/abonnement");
+    strict_1.default.equal(extra.manageUrl, "https://ilipresto.fr/abonnement");
     strict_1.default.equal(typeof extra.renewalDate, "string");
 });
 (0, node_test_1.default)("listing enrichment uses canonical listing URL for listings", () => {
@@ -64,7 +64,7 @@ const constants_1 = require("../../../shared/constants");
         payload: {},
     });
     strict_1.default.equal(extra.listingTitle, "Listing marketplace");
-    strict_1.default.equal(extra.listingUrl, "https://presto.app/listings/listing_123");
+    strict_1.default.equal(extra.listingUrl, "https://ilipresto.fr/listings/listing_123");
     strict_1.default.equal(extra.city, "Paris");
 });
 (0, node_test_1.default)("listing enrichment keeps legacy offer URL for historical offers events", () => {
@@ -76,7 +76,7 @@ const constants_1 = require("../../../shared/constants");
         fallbackCity: "Lyon",
     });
     strict_1.default.equal(extra.listingTitle, "Offre legacy");
-    strict_1.default.equal(extra.listingUrl, "https://presto.app/offers/offer_123");
+    strict_1.default.equal(extra.listingUrl, "https://ilipresto.fr/offers/offer_123");
     strict_1.default.equal(extra.city, "Lyon");
 });
 //# sourceMappingURL=enrich.test.js.map
