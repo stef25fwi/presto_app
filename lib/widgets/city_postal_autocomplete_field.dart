@@ -132,6 +132,19 @@ class CityPostalService {
 
     return out;
   }
+
+  /// Retourne la première entrée locale dont le CP correspond,
+  /// en filtrant optionnellement par département.
+  CityEntry? findByPostalCode(String cp, {String? dept}) {
+    if (cp.isEmpty) return null;
+    final all = _all ?? const <CityEntry>[];
+    for (final entry in all) {
+      if (!entry.cps.contains(cp)) continue;
+      if (dept != null && dept.isNotEmpty && entry.dept != dept) continue;
+      return entry;
+    }
+    return null;
+  }
 }
 
 /// Widget à utiliser dans tes formulaires.
@@ -170,6 +183,11 @@ class _CityPostalAutocompleteFieldState
   int _requestSerial = 0;
   bool _isApplyingSelection = false;
 
+  /// Vrai dès que l'utilisateur a modifié le champ ville manuellement
+  /// (frappe directe, pas une sélection dans la liste).
+  /// Quand ce flag est actif, la modification du CP ne doit PAS écraser la ville.
+  bool _cityEnteredManually = false;
+
   @override
   void initState() {
     super.initState();
@@ -189,6 +207,13 @@ class _CityPostalAutocompleteFieldState
   }
 
   void _onCityChanged() {
+    // Si ce n'est pas une mise à jour programmatique (via _applySelection),
+    // l'utilisateur est en train de taper : on protège la ville contre
+    // un éventuel remplacement automatique depuis le champ CP.
+    if (!_isApplyingSelection) {
+      _cityEnteredManually = true;
+    }
+
     _debounce?.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 280), () async {
@@ -255,10 +280,10 @@ class _CityPostalAutocompleteFieldState
 
       await _localService.init();
 
-      final currentCity = widget.cityController.text.trim();
+      final queryHint = widget.cityController.text.trim();
 
       final localResults = _localService.search(
-        currentCity.isEmpty ? cp : currentCity,
+        queryHint.isEmpty ? cp : queryHint,
         cpHint: cp,
         limit: 50,
       );
@@ -292,17 +317,27 @@ class _CityPostalAutocompleteFieldState
       setState(() => _options = merged);
 
       // CP complet => remplissage automatique de la ville.
-      // Si plusieurs communes existent pour un même CP, on prend la première
-      // proposition la plus fiable : Geo API Gouv d'abord, puis fallback local.
-      final selected = merged.firstWhere(
-        (entry) => entry.cps.contains(cp),
-        orElse: () => merged.first,
-      );
+      // On prend d'abord l'entrée locale (nom issu de cities_compact.json,
+      // cohérent avec les documents seedés dans Firestore). Fallback sur
+      // le premier résultat merged si aucune entrée locale ne correspond.
+      final localEntry = _localService.findByPostalCode(cp);
+      final selected = localEntry ??
+          merged.firstWhere(
+            (entry) => entry.cps.contains(cp),
+            orElse: () => merged.first,
+          );
 
       final officialCity = selected.name.trim();
       if (officialCity.isEmpty) return;
 
-      if (widget.cityController.text.trim() != officialCity) {
+      // N'auto-remplir la ville depuis le CP que si :
+      // - le champ ville est vide, OU
+      // - la ville a été choisie via l'autocomplete (pas saisie manuellement).
+      // Cela évite d'écraser une correction manuelle de l'utilisateur.
+      final currentCity = widget.cityController.text.trim();
+      final canOverwriteCity = currentCity.isEmpty || !_cityEnteredManually;
+
+      if (canOverwriteCity && currentCity != officialCity) {
         _isApplyingSelection = true;
         try {
           widget.cityController.text = officialCity;
@@ -350,8 +385,13 @@ class _CityPostalAutocompleteFieldState
     final out = <CityEntry>[];
 
     for (final entry in entries) {
-      final key =
-          '${entry.name.toLowerCase()}|${entry.dept}|${entry.cps.join(",")}';
+      // Normalise les accents pour dédupliquer "Péron" (geo.api.gouv.fr)
+      // et "PERON" (cities_compact.json) comme la même ville.
+      // On utilise le premier CP comme représentant plutôt que la liste
+      // entière, car l'ordre et le contenu peuvent différer selon la source.
+      final normalizedName = normalizeLocationLookupKey(entry.name);
+      final primaryCp = entry.cps.isNotEmpty ? entry.cps.first : '';
+      final key = '$normalizedName|${entry.dept}|$primaryCp';
       if (seen.contains(key)) continue;
 
       seen.add(key);
@@ -369,23 +409,38 @@ class _CityPostalAutocompleteFieldState
   }
 
   Future<void> _applySelection(CityEntry c) async {
+    await _localService.init();
+
+    // Résoudre vers l'entrée locale correspondante pour garantir que le nom
+    // stocké dans le contrôleur correspond au document seedé en Firestore.
+    // Exemple : geo.api.gouv renvoie "Paris 1er Arrondissement" mais le seed
+    // utilise "PARIS 01" → cityId "75001_paris-01" (seul document existant).
+    final primaryCp = c.cps.isNotEmpty ? c.cps.first : '';
+    final resolved = _localService.findByPostalCode(primaryCp, dept: c.dept) ?? c;
+
+    // L'utilisateur a explicitement choisi une ville dans la liste →
+    // on réinitialise le flag "saisie manuelle" pour que le CP puisse
+    // à nouveau mettre à jour la ville si l'utilisateur le modifie ensuite.
+    _cityEnteredManually = false;
     _isApplyingSelection = true;
     try {
-      widget.cityController.text = c.name;
+      widget.cityController.text = resolved.name;
     } finally {
       _isApplyingSelection = false;
     }
 
-    if (c.cps.isEmpty) return;
+    final cps = resolved.cps.isNotEmpty ? resolved.cps : c.cps;
+    if (cps.isEmpty) return;
 
     // 1 seul CP => auto
-    if (c.cps.length == 1) {
+    if (cps.length == 1) {
       _isApplyingSelection = true;
       try {
-        widget.postalCodeController.text = c.cps.first;
+        widget.postalCodeController.text = cps.first;
       } finally {
         _isApplyingSelection = false;
       }
+      widget.onSelected?.call(resolved);
       return;
     }
 
@@ -393,13 +448,14 @@ class _CityPostalAutocompleteFieldState
     final typed = RegExp(r'\b(\d{5})\b')
         .firstMatch(widget.postalCodeController.text)
         ?.group(1);
-    if (typed != null && c.cps.contains(typed)) {
+    if (typed != null && cps.contains(typed)) {
       _isApplyingSelection = true;
       try {
         widget.postalCodeController.text = typed;
       } finally {
         _isApplyingSelection = false;
       }
+      widget.onSelected?.call(resolved);
       return;
     }
 
@@ -414,11 +470,11 @@ class _CityPostalAutocompleteFieldState
         children: [
           ListTile(
             title: Text(
-              'Choisir le code postal – ${c.name}',
+              'Choisir le code postal – ${resolved.name}',
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
-          ...c.cps.map(
+          ...cps.map(
             (cp) => ListTile(
               title: Text(cp),
               onTap: () => Navigator.pop(context, cp),
@@ -438,7 +494,7 @@ class _CityPostalAutocompleteFieldState
       }
     }
 
-    widget.onSelected?.call(c);
+    widget.onSelected?.call(resolved);
   }
 
   @override
