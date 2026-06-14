@@ -118,8 +118,8 @@ async function enqueueAdminReportAlertEmails({
   const reporterEmail = normalizeString(reporterData.email);
 
   const now = Date.now();
-  const listingUrl = `https://presto.app/listings/${encodeURIComponent(listingId)}`;
-  const reportUrl = `https://presto.app/admin/reports/${encodeURIComponent(reportId)}`;
+  const listingUrl = `https://ilipresto.fr/listings/${encodeURIComponent(listingId)}`;
+  const reportUrl = `https://ilipresto.fr/admin/reports/${encodeURIComponent(reportId)}`;
 
   await Promise.all(recipients.map((recipient) => {
     const eventId = `evt_listing_report_admin_alert_${reportId}_${recipient.userId}`;

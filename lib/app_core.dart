@@ -384,7 +384,7 @@ class SessionState extends ChangeNotifier {
   /// Mode démo (utilisé dans login_page.dart)
   void logInDemo() {
     SessionState.userId = 'demo-user';
-    SessionState.userEmail = 'demo@presto.app';
+    SessionState.userEmail = 'demo@ilipresto.app';
     displayName = 'Compte démo';
     notifyListeners();
   }

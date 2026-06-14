@@ -23,7 +23,7 @@ test("required variable validation ignores populated variables", () => {
   const missing = listMissingRequiredVariables("tpl_product_saved_search_match_found_v1", {
     searchName: "Plombier",
     matchCount: 3,
-    resultsUrl: "https://presto.app/searches/1",
+    resultsUrl: "https://ilipresto.fr/searches/1",
   });
 
   assert.deepEqual(missing, []);
