@@ -1,0 +1,2072 @@
+[
+  {
+    "name": "ALLINEUC",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ANDEL",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "AUCALEUC",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BEAUSSAIS SUR MER",
+    "cp": "22650",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BEGARD",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BELLE ISLE EN TERRE",
+    "cp": "22810",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BERHET",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BINIC ETABLES SUR MER",
+    "cp": "22520",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BINIC ETABLES SUR MER",
+    "cp": "22680",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BOBITAL",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BON REPOS SUR BLAVET",
+    "cp": "22570",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BOQUEHO",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BOURBRIAC",
+    "cp": "22390",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BOURSEUL",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BREHAND",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BRELIDY",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BRINGOLO",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BROONS",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BRUSVILY",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "BULAT PESTIVIEN",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CALANHEL",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CALLAC",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CALORGUEN",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CAMLEZ",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CANIHUEL",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CAOUENNEC LANVEZEAC",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CARNOET",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CAULNES",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CAUREL",
+    "cp": "22530",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CAVAN",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CHATELAUDREN PLOUAGAT",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "COADOUT",
+    "cp": "22970",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "COATASCORN",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "COATREVEN",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "COETMIEUX",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "COHINIAC",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CORLAY",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CORSEUL",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "CREHEN",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "DINAN",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "DUAULT",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "EREAC",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ERQUY",
+    "cp": "22430",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "EVRAN",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "FREHEL",
+    "cp": "22240",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GAUSSON",
+    "cp": "22150",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GLOMEL",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GOMENE",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GOMMENEC H",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GOUAREC",
+    "cp": "22570",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GOUDELIN",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GRACE UZEL",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GRACES",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GUENROC",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GUERLEDAN",
+    "cp": "22530",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GUINGAMP",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GUITTE",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "GURUNHUEL",
+    "cp": "22390",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "HEMONSTOIR",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "HENANBIHEN",
+    "cp": "22550",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "HENANSAL",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "HENON",
+    "cp": "22150",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "HILLION",
+    "cp": "22120",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ILE DE BREHAT",
+    "cp": "22870",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ILLIFAUT",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "JUGON LES LACS",
+    "cp": "22270",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERBORS",
+    "cp": "22610",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERFOT",
+    "cp": "22500",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERGRIST MOELOU",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERIEN",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERMARIA SULARD",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERMOROC H",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "KERPERT",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA BOUILLIE",
+    "cp": "22240",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE BLANCHE",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE NEUVE",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA CHEZE",
+    "cp": "22210",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA HARMOYE",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA LANDEC",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA MALHOURE",
+    "cp": "22640",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA MEAUGON",
+    "cp": "22440",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA MOTTE",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA PRENESSAYE",
+    "cp": "22210",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE JAUDY",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LA VICOMTE SUR RANCE",
+    "cp": "22690",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LAMBALLE ARMOR",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANCIEUX",
+    "cp": "22770",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANDEBAERON",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANDEBIA",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANDEHEN",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANFAINS",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANGOAT",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANGROLAY SUR RANCE",
+    "cp": "22490",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANGUEDIAS",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANGUENAN",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANGUEUX",
+    "cp": "22360",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANLEFF",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANLOUP",
+    "cp": "22580",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANMERIN",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANMODEZ",
+    "cp": "22610",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANNEBERT",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANNION",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANRELAS",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANRIVAIN",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANRODEC",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANTIC",
+    "cp": "22410",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANVALLAY",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANVELLEC",
+    "cp": "22420",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LANVOLLON",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LAURENAN",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE BODEO",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE FAOUET",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE FOEIL",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE HAUT CORLAY",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE HINGLE",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE LESLAY",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE MENE",
+    "cp": "22330",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE MERZER",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE MOUSTOIR",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE QUILLIO",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE QUIOU",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE VIEUX BOURG",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LE VIEUX MARCHE",
+    "cp": "22420",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LES CHAMPS GERAUX",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LESCOUET GOUAREC",
+    "cp": "22570",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LEZARDRIEUX",
+    "cp": "22740",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOC ENVEL",
+    "cp": "22810",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOCARN",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOGUIVY PLOUGRAS",
+    "cp": "22780",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOHUEC",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOSCOUET SUR MEU",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOUANNEC",
+    "cp": "22700",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOUARGAT",
+    "cp": "22540",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "LOUDEAC",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MAEL CARHAIX",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MAEL PESTIVIEN",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MAGOAR",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MANTALLOT",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MATIGNON",
+    "cp": "22550",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MEGRIT",
+    "cp": "22270",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MELLIONNEC",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MERDRIGNAC",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MERILLAC",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MERLEAC",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MINIHY TREGUIER",
+    "cp": "22220",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MONCONTOUR",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "MOUSTERU",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "NOYAL",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PABU",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PAIMPOL",
+    "cp": "22500",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PAULE",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PEDERNEC",
+    "cp": "22540",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PENGUILY",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PENVENAN",
+    "cp": "22710",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PERROS GUIREC",
+    "cp": "22700",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PEUMERIT QUINTIN",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLAINE HAUTE",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLAINTEL",
+    "cp": "22940",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLANCOET",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEBOULLE",
+    "cp": "22550",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEDELIAC",
+    "cp": "22270",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEDRAN",
+    "cp": "22960",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEGUIEN",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEHEDEL",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLELAN LE PETIT",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLELAUFF",
+    "cp": "22570",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLELO",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEMET",
+    "cp": "22210",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEMY",
+    "cp": "22150",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLENEE JUGON",
+    "cp": "22640",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLENEUF VAL ANDRE",
+    "cp": "22370",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLERIN",
+    "cp": "22190",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLERNEUF",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLESIDY",
+    "cp": "22720",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLESLIN TRIGAVOU",
+    "cp": "22490",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLESTAN",
+    "cp": "22640",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLESTIN LES GREVES",
+    "cp": "22310",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEUBIAN",
+    "cp": "22610",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEUDANIEL",
+    "cp": "22740",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEUDIHEN SUR RANCE",
+    "cp": "22690",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEUMEUR BODOU",
+    "cp": "22560",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEUMEUR GAUTIER",
+    "cp": "22740",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEVENON",
+    "cp": "22240",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLEVIN",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOEUC L HERMITAGE",
+    "cp": "22150",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOEZAL",
+    "cp": "22260",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOREC SUR ARGUENON",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUARET",
+    "cp": "22420",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUASNE",
+    "cp": "22830",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUBAZLANEC",
+    "cp": "22620",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUBEZRE",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUEC DU TRIEUX",
+    "cp": "22260",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUER SUR RANCE",
+    "cp": "22490",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUEZEC",
+    "cp": "22470",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUFRAGAN",
+    "cp": "22440",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUGONVER",
+    "cp": "22810",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUGRAS",
+    "cp": "22780",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUGRESCANT",
+    "cp": "22820",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUGUENAST LANGAST",
+    "cp": "22150",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUGUERNEVEL",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUGUIEL",
+    "cp": "22220",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUHA",
+    "cp": "22580",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUISY",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOULEC H",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUMAGOAR",
+    "cp": "22970",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUMILLIAU",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUNERIN",
+    "cp": "22780",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUNEVEZ MOEDEC",
+    "cp": "22810",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUNEVEZ QUINTIN",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOURAC H",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOURHAN",
+    "cp": "22410",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOURIVO",
+    "cp": "22860",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUVARA",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLOUZELAMBRE",
+    "cp": "22420",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUDUAL",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUFUR",
+    "cp": "22310",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUMAUDAN",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUMAUGAT",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUMIEUX",
+    "cp": "22210",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLURIEN",
+    "cp": "22240",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUSQUELLEC",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUSSULIEN",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PLUZUNET",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "POMMERET",
+    "cp": "22120",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "POMMERIT LE VICOMTE",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PONT MELVEZ",
+    "cp": "22390",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PONTRIEUX",
+    "cp": "22260",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PORDIC",
+    "cp": "22590",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "PRAT",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "QUEMPER GUEZENNEC",
+    "cp": "22260",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "QUEMPERVEN",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "QUESSOY",
+    "cp": "22120",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "QUEVERT",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "QUINTENIC",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "QUINTIN",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ROSPEZ",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ROSTRENEN",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ROUILLAC",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "RUCA",
+    "cp": "22550",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "RUNAN",
+    "cp": "22260",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "SENVEN LEHART",
+    "cp": "22720",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "SEVIGNAC",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "SQUIFFIEC",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST ADRIEN",
+    "cp": "22390",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST AGATHON",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DES EAUX",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST BARNABE",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST BIHY",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST BRANDAN",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST BRIEUC",
+    "cp": "22000",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CARADEC",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CARNE",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CARREUC",
+    "cp": "22150",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CAST LE GUILDO",
+    "cp": "22380",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CLET",
+    "cp": "22260",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CONNAN",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST CONNEC",
+    "cp": "22530",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST DENOUAL",
+    "cp": "22400",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST DONAN",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DU GUE DE L ISLE",
+    "cp": "22210",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST FIACRE",
+    "cp": "22720",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST GILDAS",
+    "cp": "22800",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST GILLES LES BOIS",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST GILLES PLIGEAUX",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST GILLES VIEUX MARCHE",
+    "cp": "22530",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST GLEN",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST HELEN",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST HERVE",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST IGEAUX",
+    "cp": "22570",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST JACUT DE LA MER",
+    "cp": "22750",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN KERDANIEL",
+    "cp": "22170",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST JOUAN DE L ISLE",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST JUDOCE",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN",
+    "cp": "22940",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST JUVAT",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST LORMEL",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MADEN",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DES PRES",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MAUDAN",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MAUDEZ",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MAYEUX",
+    "cp": "22320",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MELOIR DES BOIS",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE PLELAN",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL EN GREVE",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST NICODEME",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS DU PELEM",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST PEVER",
+    "cp": "22720",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST POTAN",
+    "cp": "22550",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST QUAY PERROS",
+    "cp": "22700",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST QUAY PORTRIEUX",
+    "cp": "22410",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST RIEUL",
+    "cp": "22270",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST SAMSON SUR RANCE",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST SERVAIS",
+    "cp": "22160",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST THELO",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST TRIMOEL",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "ST VRAN",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "STE TREPHINE",
+    "cp": "22480",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TADEN",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TONQUEDEC",
+    "cp": "22140",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TRAMAIN",
+    "cp": "22640",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREBEDAN",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREBEURDEN",
+    "cp": "22560",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREBRIVAN",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREBRY",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREDANIEL",
+    "cp": "22510",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREDARZEC",
+    "cp": "22220",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREDIAS",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREDREZ LOCQUEMEAU",
+    "cp": "22300",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREDUDER",
+    "cp": "22310",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREFFRIN",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREFUMEL",
+    "cp": "22630",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGASTEL",
+    "cp": "22730",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGLAMUS",
+    "cp": "22540",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGOMEUR",
+    "cp": "22590",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGONNEAU",
+    "cp": "22200",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGROM",
+    "cp": "22420",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGUEUX",
+    "cp": "22950",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGUIDEL",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREGUIER",
+    "cp": "22220",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TRELEVERN",
+    "cp": "22660",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TRELIVAN",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMARGAT",
+    "cp": "22110",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMEL",
+    "cp": "22310",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMEREUC",
+    "cp": "22490",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMEUR",
+    "cp": "22250",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMEVEN",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMOREL",
+    "cp": "22230",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREMUSON",
+    "cp": "22440",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREOGAN",
+    "cp": "22340",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TRESSIGNAUX",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREVE",
+    "cp": "22600",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREVENEUC",
+    "cp": "22410",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREVEREC",
+    "cp": "22290",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREVOU TREGUIGNEC",
+    "cp": "22660",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREVRON",
+    "cp": "22100",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TREZENY",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "TROGUERY",
+    "cp": "22450",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "UZEL",
+    "cp": "22460",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARGUENON",
+    "cp": "22130",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "VILDE GUINGALAN",
+    "cp": "22980",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "YFFINIAC",
+    "cp": "22120",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "YVIAS",
+    "cp": "22930",
+    "dept": "22",
+    "region": ""
+  },
+  {
+    "name": "YVIGNAC LA TOUR",
+    "cp": "22350",
+    "dept": "22",
+    "region": ""
+  }
+]
