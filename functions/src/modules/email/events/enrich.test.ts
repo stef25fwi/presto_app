@@ -17,7 +17,7 @@ test("billing invoice enrichment adds currency, method and retry info", () => {
   assert.equal(extra.currency, "EUR");
   assert.equal(extra.paymentMethod, "Carte Visa **** 4242");
   assert.equal(extra.nextRetryAt, 1760000000000);
-  assert.equal(extra.retryUrl, "https://presto.app/facturation");
+  assert.equal(extra.retryUrl, "https://ilipresto.fr/facturation");
 });
 
 test("billing invoice enrichment respects existing payload values", () => {
@@ -54,7 +54,7 @@ test("subscription enrichment defaults plan and manageUrl", () => {
   assert.equal(extra.planName, "PRESTO Premium");
   assert.equal(extra.currency, "EUR");
   assert.equal(extra.paymentMethod, "SEPA");
-  assert.equal(extra.manageUrl, "https://presto.app/abonnement");
+  assert.equal(extra.manageUrl, "https://ilipresto.fr/abonnement");
   assert.equal(typeof extra.renewalDate, "string");
 });
 
@@ -67,7 +67,7 @@ test("listing enrichment uses canonical listing URL for listings", () => {
   });
 
   assert.equal(extra.listingTitle, "Listing marketplace");
-  assert.equal(extra.listingUrl, "https://presto.app/listings/listing_123");
+  assert.equal(extra.listingUrl, "https://ilipresto.fr/listings/listing_123");
   assert.equal(extra.city, "Paris");
 });
 
@@ -81,6 +81,6 @@ test("listing enrichment keeps legacy offer URL for historical offers events", (
   });
 
   assert.equal(extra.listingTitle, "Offre legacy");
-  assert.equal(extra.listingUrl, "https://presto.app/offers/offer_123");
+  assert.equal(extra.listingUrl, "https://ilipresto.fr/offers/offer_123");
   assert.equal(extra.city, "Lyon");
 });

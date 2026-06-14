@@ -28,7 +28,7 @@ export const onReportCreated = onDocumentCreated("reports/{reportId}", async (ev
     payload: {
       recipient_email: email,
       reportId,
-      reportUrl: `https://presto.app/support/reports/${reportId}`,
+      reportUrl: `https://ilipresto.fr/support/reports/${reportId}`,
     },
     status: "created",
   });
@@ -66,7 +66,7 @@ export const onReportUpdated = onDocumentUpdated("reports/{reportId}", async (ev
       recipient_email: email,
       firstName: String(user.data()?.displayName || user.data()?.display_name || "").split(" ")[0] || "",
       reportId,
-      reportUrl: `https://presto.app/support/reports/${reportId}`,
+      reportUrl: `https://ilipresto.fr/support/reports/${reportId}`,
       resolutionSummary: String(after.resolution_summary || after.resolutionSummary || after.moderator_note || "Votre signalement a été traité par notre équipe."),
     },
     status: "created",

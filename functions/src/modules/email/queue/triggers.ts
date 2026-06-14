@@ -204,7 +204,7 @@ export const processScheduledEmailDigests = onSchedule("every 15 minutes", async
             matchCount: capped.matchCount,
             rawMatchCount: capped.rawMatchCount,
             matchCountCapped: capped.capped,
-            resultsUrl: "https://presto.app/recherche-sauvegardee",
+            resultsUrl: "https://ilipresto.fr/recherche-sauvegardee",
             digestMode: mode,
             timezone,
             bucketKey,
