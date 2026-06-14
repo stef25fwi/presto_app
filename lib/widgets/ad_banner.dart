@@ -8,7 +8,7 @@ import 'package:presto_app/widgets/random_asset_ticker.dart';
 
 /// Config pour les IDs pub AdMob production
 class AdConfig {
-  // ====== ANDROID (com.presto.app) ======
+  // ====== ANDROID (fr.ilipresto.app) ======
   static const String androidBannerId =
       'ca-app-pub-1792076968124623/1951540793'; // PROD
   static const String androidNativeId =
