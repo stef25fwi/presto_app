@@ -16,7 +16,7 @@ export function buildBillingInvoiceEnrichment(
     const retryAt = Number(source.next_retry_at ?? source.retry_at ?? 0);
     if (retryAt > 0) extra.nextRetryAt = retryAt;
   }
-  if (!payload.retryUrl) extra.retryUrl = "https://presto.app/facturation";
+  if (!payload.retryUrl) extra.retryUrl = "https://ilipresto.fr/facturation";
   return extra;
 }
 
@@ -36,7 +36,7 @@ export function buildSubscriptionEnrichment(
   if (!payload.paymentMethod) {
     extra.paymentMethod = String(source.payment_method_label ?? source.payment_method ?? source.method ?? "");
   }
-  if (!payload.manageUrl) extra.manageUrl = "https://presto.app/abonnement";
+  if (!payload.manageUrl) extra.manageUrl = "https://ilipresto.fr/abonnement";
   return extra;
 }
 
@@ -57,8 +57,8 @@ export function buildListingLikeEnrichment({
   if (!payload.listingTitle) extra.listingTitle = String(source.title ?? "");
   if (!payload.listingUrl) {
     extra.listingUrl = sourceCollection === COLLECTIONS.listings ?
-      `https://presto.app/listings/${sourceId}` :
-      `https://presto.app/offers/${sourceId}`;
+      `https://ilipresto.fr/listings/${sourceId}` :
+      `https://ilipresto.fr/offers/${sourceId}`;
   }
   if (!payload.city) extra.city = String(source.city ?? fallbackCity ?? "");
   return extra;
@@ -98,15 +98,15 @@ export async function enrichEventPayload(event: DomainEventPayload): Promise<Dom
             fallbackCity: extra.city,
           }));
         } else if (event.source_collection === COLLECTIONS.conversations) {
-          if (!event.payload.conversationUrl) extra.conversationUrl = `https://presto.app/messages/${event.source_id}`;
+          if (!event.payload.conversationUrl) extra.conversationUrl = `https://ilipresto.fr/messages/${event.source_id}`;
           if (!event.payload.listingTitle) extra.listingTitle = String(s.offerTitle ?? s.listingTitle ?? s.title ?? "");
         } else if (event.source_collection === COLLECTIONS.supportTickets) {
           if (!event.payload.ticketNumber) extra.ticketNumber = String(s.ticket_number ?? event.source_id);
           if (!event.payload.ticketSubject) extra.ticketSubject = String(s.subject ?? "");
-          if (!event.payload.replyUrl) extra.replyUrl = `https://presto.app/support/${event.source_id}`;
+          if (!event.payload.replyUrl) extra.replyUrl = `https://ilipresto.fr/support/${event.source_id}`;
         } else if (event.source_collection === COLLECTIONS.reports) {
           if (!event.payload.reportId) extra.reportId = event.source_id;
-          if (!event.payload.reportUrl) extra.reportUrl = `https://presto.app/support/reports/${event.source_id}`;
+          if (!event.payload.reportUrl) extra.reportUrl = `https://ilipresto.fr/support/reports/${event.source_id}`;
           if (!event.payload.resolutionSummary) {
             extra.resolutionSummary = String(s.resolution_summary ?? s.resolutionSummary ?? s.moderator_note ?? "Votre signalement a été traité par notre équipe.");
           }
@@ -123,7 +123,7 @@ export async function enrichEventPayload(event: DomainEventPayload): Promise<Dom
 
   // URL tableau de bord universelle
   if (!event.payload.dashboardUrl) {
-    extra.dashboardUrl = "https://presto.app/dashboard";
+    extra.dashboardUrl = "https://ilipresto.fr/dashboard";
   }
 
   return {

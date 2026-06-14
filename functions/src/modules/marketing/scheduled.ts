@@ -41,13 +41,13 @@ async function emitOnboardingEvent(userId: string, eventName: OnboardingStage["e
   };
 
   if (eventName === "marketing.onboarding.d1_due") {
-    payload.dashboardUrl = "https://presto.app/mon-compte";
+    payload.dashboardUrl = "https://ilipresto.fr/mon-compte";
   }
   if (eventName === "marketing.onboarding.d3_due") {
-    payload.createListingUrl = "https://presto.app/publier";
+    payload.createListingUrl = "https://ilipresto.fr/publier";
   }
   if (eventName === "marketing.onboarding.d7_due") {
-    payload.exploreUrl = "https://presto.app/offers";
+    payload.exploreUrl = "https://ilipresto.fr/offers";
   }
 
   const eventId = `evt_${eventName.replace(/\./g, "_")}_${userId}`;
@@ -169,7 +169,7 @@ async function processProfileIncompleteReminders(now: number): Promise<void> {
         payload: {
           recipient_email: recipientEmail,
           firstName: String(userData.displayName || userData.display_name || "").trim().split(" ")[0] || "",
-          completionUrl: "https://presto.app/mon-compte",
+          completionUrl: "https://ilipresto.fr/mon-compte",
           missingFieldsSummary: missingFields.join(", "),
         },
         status: "created",
@@ -230,7 +230,7 @@ async function processReactivation30Days(now: number): Promise<void> {
         payload: {
           recipient_email: recipientEmail,
           firstName: String(userData.displayName || userData.display_name || "").trim().split(" ")[0] || "",
-          dashboardUrl: "https://presto.app/mon-compte",
+          dashboardUrl: "https://ilipresto.fr/mon-compte",
         },
         status: "created",
       }, { merge: true });
