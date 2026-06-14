@@ -497,7 +497,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
     assertDraftOwnership(ownerId, draftData);
 
     const validated = validateListingDraftPayload(draftData, config.maxMediaCount || MARKETPLACE_MAX_MEDIA_COUNT);
-    const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
+    const refsData = await ensureCategoryAndCityAreResolvable(validated);
     const listingId = draftId;
     const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase(), listingId);
     const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
