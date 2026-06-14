@@ -39,9 +39,9 @@ class DefaultFirebaseOptions {
   static const String _authDomain = 'presto-app-74abe.firebaseapp.com';
   static const String _androidApiKey = 'AIzaSyDAKDN2nDDad4BKxbBVgfYyOqhy7nrtZsQ';
   static const String _androidAppId =
-      '1:151421230024:android:c31654694f0436f12b3efd';
+      '1:151421230024:android:339090c7418b3d7c2b3efd';
   static const String _androidClientId =
-      '151421230024-lung00ghpcc0qgbukvo29og1kuapnggf.apps.googleusercontent.com';
+      '151421230024-9qrsnlo537n1l3dcokep345me3bt8hl5.apps.googleusercontent.com';
   static const String _iosApiKey = 'AIzaSyBuf1j4W60LqaqCdjygCJAQQUuvzYxS0tk';
   static const String _iosAppId = '1:151421230024:ios:c3a75745c492983d2b3efd';
   static const String _iosClientId =
