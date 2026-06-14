@@ -132,6 +132,19 @@ class CityPostalService {
 
     return out;
   }
+
+  /// Retourne la première entrée locale dont le CP correspond,
+  /// en filtrant optionnellement par département.
+  CityEntry? findByPostalCode(String cp, {String? dept}) {
+    if (cp.isEmpty) return null;
+    final all = _all ?? const <CityEntry>[];
+    for (final entry in all) {
+      if (!entry.cps.contains(cp)) continue;
+      if (dept != null && dept.isNotEmpty && entry.dept != dept) continue;
+      return entry;
+    }
+    return null;
+  }
 }
 
 /// Widget à utiliser dans tes formulaires.
@@ -292,12 +305,15 @@ class _CityPostalAutocompleteFieldState
       setState(() => _options = merged);
 
       // CP complet => remplissage automatique de la ville.
-      // Si plusieurs communes existent pour un même CP, on prend la première
-      // proposition la plus fiable : Geo API Gouv d'abord, puis fallback local.
-      final selected = merged.firstWhere(
-        (entry) => entry.cps.contains(cp),
-        orElse: () => merged.first,
-      );
+      // On prend d'abord l'entrée locale (nom issu de cities_compact.json,
+      // cohérent avec les documents seedés dans Firestore). Fallback sur
+      // le premier résultat merged si aucune entrée locale ne correspond.
+      final localEntry = _localService.findByPostalCode(cp);
+      final selected = localEntry ??
+          merged.firstWhere(
+            (entry) => entry.cps.contains(cp),
+            orElse: () => merged.first,
+          );
 
       final officialCity = selected.name.trim();
       if (officialCity.isEmpty) return;
@@ -369,23 +385,34 @@ class _CityPostalAutocompleteFieldState
   }
 
   Future<void> _applySelection(CityEntry c) async {
+    await _localService.init();
+
+    // Résoudre vers l'entrée locale correspondante pour garantir que le nom
+    // stocké dans le contrôleur correspond au document seedé en Firestore.
+    // Exemple : geo.api.gouv renvoie "Paris 1er Arrondissement" mais le seed
+    // utilise "PARIS 01" → cityId "75001_paris-01" (seul document existant).
+    final primaryCp = c.cps.isNotEmpty ? c.cps.first : '';
+    final resolved = _localService.findByPostalCode(primaryCp, dept: c.dept) ?? c;
+
     _isApplyingSelection = true;
     try {
-      widget.cityController.text = c.name;
+      widget.cityController.text = resolved.name;
     } finally {
       _isApplyingSelection = false;
     }
 
-    if (c.cps.isEmpty) return;
+    final cps = resolved.cps.isNotEmpty ? resolved.cps : c.cps;
+    if (cps.isEmpty) return;
 
     // 1 seul CP => auto
-    if (c.cps.length == 1) {
+    if (cps.length == 1) {
       _isApplyingSelection = true;
       try {
-        widget.postalCodeController.text = c.cps.first;
+        widget.postalCodeController.text = cps.first;
       } finally {
         _isApplyingSelection = false;
       }
+      widget.onSelected?.call(resolved);
       return;
     }
 
@@ -393,13 +420,14 @@ class _CityPostalAutocompleteFieldState
     final typed = RegExp(r'\b(\d{5})\b')
         .firstMatch(widget.postalCodeController.text)
         ?.group(1);
-    if (typed != null && c.cps.contains(typed)) {
+    if (typed != null && cps.contains(typed)) {
       _isApplyingSelection = true;
       try {
         widget.postalCodeController.text = typed;
       } finally {
         _isApplyingSelection = false;
       }
+      widget.onSelected?.call(resolved);
       return;
     }
 
@@ -414,11 +442,11 @@ class _CityPostalAutocompleteFieldState
         children: [
           ListTile(
             title: Text(
-              'Choisir le code postal – ${c.name}',
+              'Choisir le code postal – ${resolved.name}',
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
-          ...c.cps.map(
+          ...cps.map(
             (cp) => ListTile(
               title: Text(cp),
               onTap: () => Navigator.pop(context, cp),
@@ -438,7 +466,7 @@ class _CityPostalAutocompleteFieldState
       }
     }
 
-    widget.onSelected?.call(c);
+    widget.onSelected?.call(resolved);
   }
 
   @override
