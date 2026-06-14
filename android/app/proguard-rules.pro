@@ -21,6 +21,13 @@
 # Google UMP (User Messaging Platform — consentement RGPD)
 -keep class com.google.android.ump.** { *; }
 
+# reCAPTCHA Enterprise (App Check / anti-spam)
+-keep class com.google.android.recaptcha.** { *; }
+-dontwarn com.google.android.recaptcha.**
+
+# Play Core (split install requis par Flutter deferred components / R8)
+-dontwarn com.google.android.play.core.**
+
 # Kotlin
 -keep class kotlin.** { *; }
 -dontwarn kotlin.**
