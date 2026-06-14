@@ -91,42 +91,45 @@ service cloud.firestore {
     }
 
     function hasUserDocAdminRole() {
+      let userPath = /databases/$(database)/documents/users/$(uid());
+      let d = get(userPath).data;
       return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(uid()))
+        && exists(userPath)
         && (
-          ((get(/databases/$(database)/documents/users/$(uid())).data.roles is list)
-            && get(/databases/$(database)/documents/users/$(uid())).data.roles.hasAny(['admin', 'superadmin']))
-          || ((get(/databases/$(database)/documents/users/$(uid())).data.roles is map)
-            && (get(/databases/$(database)/documents/users/$(uid())).data.roles.admin == true
-              || get(/databases/$(database)/documents/users/$(uid())).data.roles.superadmin == true
-              || get(/databases/$(database)/documents/users/$(uid())).data.roles.superAdmin == true))
-          || get(/databases/$(database)/documents/users/$(uid())).data.role == 'admin'
-          || get(/databases/$(database)/documents/users/$(uid())).data.role == 'superadmin'
-          || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == 'admin'
-          || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == 'superadmin'
-          || get(/databases/$(database)/documents/users/$(uid())).data.adminRole == 'admin'
-          || get(/databases/$(database)/documents/users/$(uid())).data.adminRole == 'superadmin'
-          || get(/databases/$(database)/documents/users/$(uid())).data.admin == true
-          || get(/databases/$(database)/documents/users/$(uid())).data.isAdmin == true
-          || get(/databases/$(database)/documents/users/$(uid())).data.superadmin == true
-          || get(/databases/$(database)/documents/users/$(uid())).data.superAdmin == true
+          ((d.roles is list) && d.roles.hasAny(['admin', 'superadmin']))
+          || ((d.roles is map)
+              && (d.roles.admin == true
+                || d.roles.superadmin == true
+                || d.roles.superAdmin == true))
+          || d.role == 'admin'
+          || d.role == 'superadmin'
+          || d.primaryRole == 'admin'
+          || d.primaryRole == 'superadmin'
+          || d.adminRole == 'admin'
+          || d.adminRole == 'superadmin'
+          || d.admin == true
+          || d.isAdmin == true
+          || d.superadmin == true
+          || d.superAdmin == true
         );
     }
 
     function hasEnabledAdminDoc() {
+      let adminPath = /databases/$(database)/documents/admins/$(uid());
+      let d = get(adminPath).data;
       return isSignedIn()
-        && exists(/databases/$(database)/documents/admins/$(uid()))
-        && get(/databases/$(database)/documents/admins/$(uid())).data.enabled != false
-        && (!('expiresAt' in get(/databases/$(database)/documents/admins/$(uid())).data)
-          || get(/databases/$(database)/documents/admins/$(uid())).data.expiresAt > request.time);
+        && exists(adminPath)
+        && d.enabled != false
+        && (!('expiresAt' in d) || d.expiresAt > request.time);
     }
 
     function hasEnabledAdminUserDoc() {
+      let adminUserPath = /databases/$(database)/documents/adminUsers/$(uid());
+      let d = get(adminUserPath).data;
       return isSignedIn()
-        && exists(/databases/$(database)/documents/adminUsers/$(uid()))
-        && get(/databases/$(database)/documents/adminUsers/$(uid())).data.enabled != false
-        && (!('expiresAt' in get(/databases/$(database)/documents/adminUsers/$(uid())).data)
-          || get(/databases/$(database)/documents/adminUsers/$(uid())).data.expiresAt > request.time);
+        && exists(adminUserPath)
+        && d.enabled != false
+        && (!('expiresAt' in d) || d.expiresAt > request.time);
     }
 
     function hasClaimRole(role) {
@@ -136,18 +139,18 @@ service cloud.firestore {
     }
 
     function hasUserDocRole(role) {
+      let userPath = /databases/$(database)/documents/users/$(uid());
+      let d = get(userPath).data;
       return isSignedIn()
-        && exists(/databases/$(database)/documents/users/$(uid()))
+        && exists(userPath)
         && (
-          ((get(/databases/$(database)/documents/users/$(uid())).data.roles is list)
-            && get(/databases/$(database)/documents/users/$(uid())).data.roles.hasAny([role]))
-          || ((get(/databases/$(database)/documents/users/$(uid())).data.roles is map)
-            && get(/databases/$(database)/documents/users/$(uid())).data.roles[role] == true)
-          || get(/databases/$(database)/documents/users/$(uid())).data.role == role
-          || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == role
-          || (role == 'moderator' && get(/databases/$(database)/documents/users/$(uid())).data.moderator == true)
-          || (role == 'admin' && get(/databases/$(database)/documents/users/$(uid())).data.admin == true)
-          || (role == 'superadmin' && get(/databases/$(database)/documents/users/$(uid())).data.superadmin == true)
+          ((d.roles is list) && d.roles.hasAny([role]))
+          || ((d.roles is map) && d.roles[role] == true)
+          || d.role == role
+          || d.primaryRole == role
+          || (role == 'moderator' && d.moderator == true)
+          || (role == 'admin' && d.admin == true)
+          || (role == 'superadmin' && d.superadmin == true)
         );
     }
 
@@ -326,7 +329,10 @@ service cloud.firestore {
         && request.resource.data.createdBy == uid()
         && isValidHeroSlide(request.resource.data);
       allow update: if isMarketplaceAdmin()
-        && isValidHeroSlide(request.resource.data);
+        && isValidHeroSlide(request.resource.data)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isMarketplaceAdmin();
     }
 
@@ -356,7 +362,8 @@ service cloud.firestore {
         && isSignedIn()
         && userId == uid()
         && !request.resource.data.keys().hasAny(protectedUserFields());
-      allow update: if isSignedIn()
+      allow update: if hasAppCheck()
+        && isSignedIn()
         && userId == uid()
         && !changedKeys().hasAny(protectedUserFields());
       allow delete: if hasAppCheck() && isSignedIn() && userId == uid();
@@ -661,8 +668,9 @@ service cloud.firestore {
             'createdVia',
             'clientMutationId'
           ])
-          && request.resource.data.senderId == uid()
-          && request.resource.data.sender_id == uid()
+          && (!('senderId' in request.resource.data) || request.resource.data.senderId == uid())
+          && (!('sender_id' in request.resource.data) || request.resource.data.sender_id == uid())
+          && (('senderId' in request.resource.data) || ('sender_id' in request.resource.data))
           && request.resource.data.createdVia == 'client_firestore_fallback'
           && request.resource.data.createdAt == request.time
           && request.resource.data.created_at == request.time
@@ -679,10 +687,10 @@ service cloud.firestore {
       allow get: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
       allow list: if canReadConversationAsAdmin()
         || (isSignedIn() && (
-          resource.data.participantIds.hasAny([uid()])
-          || resource.data.participants.hasAny([uid()])
-          || resource.data.participant_ids.hasAny([uid()])
-          || resource.data.memberIds.hasAny([uid()])
+          ((resource.data.participantIds is list) && resource.data.participantIds.hasAny([uid()]))
+          || ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
+          || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
+          || ((resource.data.memberIds is list) && resource.data.memberIds.hasAny([uid()]))
         ));
       allow create, update, delete: if false;
 
@@ -754,15 +762,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // ⛔ [REFUSÉ] Catch-all — tout accès non déclaré est refusé
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  
     // Audio public du popup paiement : lecture utilisateur, écriture uniquement backend Admin SDK.
     match /public_config/payment_info_audio {
       allow read: if true;
       allow write: if false;
+    }
+
+    // ⛔ [REFUSÉ] Catch-all — tout accès non déclaré est refusé
+    match /{document=**} {
+      allow read, write: if false;
     }
 
 }
