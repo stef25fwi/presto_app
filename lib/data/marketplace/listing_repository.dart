@@ -21,9 +21,6 @@ class ListingRepository {
   final FirebaseFunctions _functions;
   final ProductAnalyticsService _analytics;
 
-  CollectionReference<Map<String, dynamic>> get _drafts =>
-      _firestore.collection('listingDrafts');
-
   CollectionReference<Map<String, dynamic>> get _listings =>
       _firestore.collection('listings');
 
@@ -60,14 +57,6 @@ class ListingRepository {
       'media_count': draft.media.length,
     });
     return draftId;
-  }
-
-  Future<void> updateDraft(
-      String draftId, MarketplaceListingDraft draft) async {
-    await _drafts.doc(draftId).set(<String, dynamic>{
-      ...draft.toFirestore(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
   }
 
   Future<void> updateDraftMedia({
