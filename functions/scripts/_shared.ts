@@ -52,6 +52,10 @@ export function normalizeString(value: unknown): string {
 export function slugify(value: unknown): string {
   return normalizeString(value)
     .toLowerCase()
+    // Ligatures non d\u00e9composables par NFD \u2014 \u00e0 remplacer avant normalisation
+    // pour rester coh\u00e9rent avec offerSlugify() c\u00f4t\u00e9 Dart.
+    .replace(/\u0153/g, "oe")
+    .replace(/\u00e6/g, "ae")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
