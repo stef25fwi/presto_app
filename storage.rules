@@ -59,7 +59,7 @@ service firebase.storage {
     function isImageUpload() {
       return request.resource != null
         && request.resource.contentType.matches('image/.*')
-        && request.resource.size < 8 * 1024 * 1024;
+        && request.resource.size < 5 * 1024 * 1024;
     }
 
     function isHeroMediaUpload() {
@@ -180,14 +180,14 @@ service firebase.storage {
     // est maintenue par : auth uid + nommage par UID + contentType audio + taille max.
     match /stt/{file} {
       allow write: if request.auth != null
-        && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$")
+        && file.matches("(?i)^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$")
         && request.resource != null
         && request.resource.contentType.matches('audio/.*|video/webm')
         && request.resource.size < 25 * 1024 * 1024;
 
       // ℹ️ [INFO] Lecture restreinte au propriétaire
       allow read: if request.auth != null
-        && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$");
+        && file.matches("(?i)^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$");
     }
 
     // ✅ [AUTORISÉ] Audio popup paiement — upload admin, lecture publique
@@ -203,7 +203,7 @@ service firebase.storage {
     match /stt_streaming/{uid}/{file} {
       allow write: if request.auth != null
         && request.auth.uid == uid
-        && file.matches("^[0-9]+_chunk\\.(wav|webm|mp4|aac|m4a)$")
+        && file.matches("(?i)^[0-9]+_chunk\\.(wav|webm|mp4|aac|m4a)$")
         && request.resource != null
         && request.resource.contentType.matches('audio/.*|video/webm')
         && request.resource.size < 5 * 1024 * 1024;

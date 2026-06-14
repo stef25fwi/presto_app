@@ -200,22 +200,16 @@ service cloud.firestore {
           )));
     }
 
+    // hasAdminClaim()/hasUserDocAdminRole()/hasEnabledAdminDoc() already cover all
+    // admin and superadmin variants — no need to repeat them here.
     function isMarketplaceModerator() {
       return hasClaimRole('moderator')
         || hasUserDocRole('moderator')
-        || hasClaimRole('admin')
-        || hasUserDocRole('admin')
-        || hasClaimRole('superadmin')
-        || hasUserDocRole('superadmin')
         || isAdmin();
     }
 
     function isMarketplaceAdmin() {
-      return hasClaimRole('admin')
-        || hasUserDocRole('admin')
-        || hasClaimRole('superadmin')
-        || hasUserDocRole('superadmin')
-        || isAdmin();
+      return isAdmin();
     }
 
     function changedKeys() {
@@ -604,6 +598,11 @@ service cloud.firestore {
 
     // ✅ [AUTORISÉ] Conversations et messages
     match /conversations/{conversationId} {
+      // Deux formats d'ID coexistent :
+      // • Ancien (chat.ts)     : offer_{listingId}__{uidA}__{uidB}  (UIDs triés, double underscore)
+      // • Nouveau (callables.ts): conv_{sha256(listingId::uidA::uidB).slice(0,32)}  (hash opaque)
+      // isParticipantInConversationId() ne peut vérifier que le format ancien (UID lisible).
+      // Les conv_* sont couverts par isParticipantInConversationData() via les champs du document.
       function isParticipantInConversationId() {
         return isSignedIn()
           && (
