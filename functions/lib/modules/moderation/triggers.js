@@ -29,7 +29,7 @@ exports.onReportCreated = (0, firestore_1.onDocumentCreated)("reports/{reportId}
         payload: {
             recipient_email: email,
             reportId,
-            reportUrl: `https://presto.app/support/reports/${reportId}`,
+            reportUrl: `https://ilipresto.fr/support/reports/${reportId}`,
         },
         status: "created",
     });
@@ -65,7 +65,7 @@ exports.onReportUpdated = (0, firestore_2.onDocumentUpdated)("reports/{reportId}
             recipient_email: email,
             firstName: String(user.data()?.displayName || user.data()?.display_name || "").split(" ")[0] || "",
             reportId,
-            reportUrl: `https://presto.app/support/reports/${reportId}`,
+            reportUrl: `https://ilipresto.fr/support/reports/${reportId}`,
             resolutionSummary: String(after.resolution_summary || after.resolutionSummary || after.moderator_note || "Votre signalement a été traité par notre équipe."),
         },
         status: "created",

@@ -392,7 +392,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
         const draftData = (draftSnap.data() ?? {});
         assertDraftOwnership(ownerId, draftData);
         const validated = (0, listings_1.validateListingDraftPayload)(draftData, config.maxMediaCount || env_1.MARKETPLACE_MAX_MEDIA_COUNT);
-        const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
+        const refsData = await ensureCategoryAndCityAreResolvable(validated);
         const listingId = draftId;
         const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase(), listingId);
         const ownerIdentity = await loadOwnerPublicIdentity(ownerId);

@@ -43,7 +43,7 @@ exports.emailEventExample = {
         recipient_email: "client@example.com",
         firstName: "Nadia",
         amount: 29.99,
-        invoiceUrl: "https://presto.app/facturation",
+        invoiceUrl: "https://ilipresto.fr/facturation",
     },
     status: "created",
 };

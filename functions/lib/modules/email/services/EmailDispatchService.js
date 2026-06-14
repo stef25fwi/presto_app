@@ -13,7 +13,7 @@ function buildBrandVariables() {
         brandLogoUrl: "{{appBaseUrl}}/assets/images/logowebp.webp",
         brandLogoAlt: "e-livre resto",
         brandName: "e-livre resto",
-        appBaseUrl: "https://presto.app",
+        appBaseUrl: "https://ilipresto.fr",
     };
 }
 class EmailDispatchService {
