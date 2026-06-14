@@ -12,7 +12,9 @@ plugins {
 android {
     namespace = "fr.ilipresto.app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // NDK requis par les plugins Firebase (firebase_core 4.x), google_mobile_ads 7
+    // et recaptcha_enterprise. Évite l'erreur "depend on a different Android NDK version".
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -20,15 +22,24 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // Aligne la cible JVM de Kotlin sur Java 17 — sinon "Inconsistent JVM-target
+    // compatibility detected" entre compileXJavaWithJavac (17) et compileXKotlin.
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
 
     defaultConfig {
         applicationId = "fr.ilipresto.app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // minSdk 23 : exigé par firebase_core 4.x / firebase_auth 6.x,
+        // google_mobile_ads 7.0, recaptcha_enterprise 18.x et record 6.x.
+        // (la valeur par défaut flutter.minSdkVersion = 21 ferait échouer le merge du manifest)
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // multidex pour le grand nombre de dépendances Firebase/GMS
+        multiDexEnabled = true
     }
 
     // ── Release Signing ──────────────────────────────────────────────
