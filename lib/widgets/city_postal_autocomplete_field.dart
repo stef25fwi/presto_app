@@ -280,10 +280,10 @@ class _CityPostalAutocompleteFieldState
 
       await _localService.init();
 
-      final currentCity = widget.cityController.text.trim();
+      final queryHint = widget.cityController.text.trim();
 
       final localResults = _localService.search(
-        currentCity.isEmpty ? cp : currentCity,
+        queryHint.isEmpty ? cp : queryHint,
         cpHint: cp,
         limit: 50,
       );
