@@ -68,3 +68,5 @@ lib/services/service-account.json
 **/service-account.json
 **/*service-account*.json
 **/*firebase*service*.json
+release_apk/*.apk
+build/app/outputs/flutter-apk/*.apk
