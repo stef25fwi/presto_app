@@ -22,7 +22,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 const GEO_API_BASE = 'https://geo.api.gouv.fr';
-const FIELDS = 'nom,codesPostaux,codeDepartement,codeRegion';
+// `code` = code INSEE, identifiant unique officiel de chaque commune.
+const FIELDS = 'nom,code,codesPostaux,codeDepartement,codeRegion';
 
 // Tous les codes département métropole + DOM (pas les COM : 977, 978, 984, 986, 987, 988
 // car leur couverture est partielle sur l'API communes).
@@ -106,8 +107,9 @@ async function fetchDept(dept) {
 
     const deptCode = String(commune.codeDepartement || dept).trim();
     const region = String(commune.codeRegion || '').trim();
+    const insee = String(commune.code || '').trim();
 
-    entries.push({ name, dept: deptCode, cps, region });
+    entries.push({ name, dept: deptCode, cps, region, insee });
   }
 
   return entries;
@@ -157,7 +159,10 @@ async function main() {
 
     let added = 0;
     for (const entry of entries) {
-      const key = `${entry.cps[0]}|${entry.dept}`;
+      // Déduplication par code INSEE (identifiant unique de commune).
+      // NE PAS dédupliquer par code postal : un même CP couvre souvent
+      // plusieurs communes distinctes.
+      const key = entry.insee || `${entry.name}|${entry.dept}`;
       if (seen.has(key)) { skipped++; continue; }
       seen.add(key);
       allEntries.push(entry);
