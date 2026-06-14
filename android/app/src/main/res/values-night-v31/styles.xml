@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowSplashScreenBackground">#FF8A1D</item>
+        
+        
+        
+        
+        <item name="android:windowLightNavigationBar">true</item><item name="android:windowLightStatusBar">false</item><item name="android:navigationBarColor">@android:color/white</item><item name="android:statusBarColor">@color/presto_orange</item><item name="android:windowSplashScreenBackground">@color/presto_orange</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/native_splash_mark</item>
         <item name="android:windowSplashScreenAnimationDuration">220</item>
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
 
     <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
 </resources>
