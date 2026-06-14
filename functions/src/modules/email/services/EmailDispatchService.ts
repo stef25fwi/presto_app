@@ -17,7 +17,7 @@ function buildBrandVariables(): Record<string, string> {
     brandLogoUrl: "{{appBaseUrl}}/assets/images/logowebp.webp",
     brandLogoAlt: "e-livre resto",
     brandName: "e-livre resto",
-    appBaseUrl: "https://presto.app",
+    appBaseUrl: "https://ilipresto.fr",
   };
 }
 

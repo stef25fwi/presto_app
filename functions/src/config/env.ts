@@ -9,10 +9,10 @@ export const BREVO_WEBHOOK_SECRET = defineSecret("BREVO_WEBHOOK_SECRET");
 export const EMAIL_PROVIDER_NAME = process.env.EMAIL_PROVIDER_NAME || "";
 export const DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr") as "fr" | "en";
 export const DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
-export const EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <sahai.stephane@gmail.com>";
+export const EMAIL_FROM = process.env.EMAIL_FROM || "iliprestō <noreply@ilipresto.fr>";
 
 export const PROJECT_REGION = process.env.FUNCTION_REGION || "europe-west1";
-export const APP_BASE_URL = process.env.APP_BASE_URL || "https://presto.app";
+export const APP_BASE_URL = process.env.APP_BASE_URL || "https://ilipresto.fr";
 export const GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
 export const RECAPTCHA_ENTERPRISE_SITE_KEY = process.env.RECAPTCHA_ENTERPRISE_SITE_KEY || "";
 export const MARKETPLACE_MAX_MEDIA_COUNT = Number(process.env.MARKETPLACE_MAX_MEDIA_COUNT || 10);

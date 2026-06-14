@@ -11,14 +11,14 @@ import {
 test("buildListingRouteUrl uses canonical listings route", () => {
   assert.equal(
     buildListingRouteUrl(COLLECTIONS.listings, "listing_123"),
-    "https://presto.app/listings/listing_123",
+    "https://ilipresto.fr/listings/listing_123",
   );
 });
 
 test("buildListingRouteUrl keeps legacy offers route", () => {
   assert.equal(
     buildListingRouteUrl(LEGACY_COLLECTIONS.offers, "offer_123"),
-    "https://presto.app/offers/offer_123",
+    "https://ilipresto.fr/offers/offer_123",
   );
 });
 
