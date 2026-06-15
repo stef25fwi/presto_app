@@ -1105,7 +1105,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             decoration: InputDecoration(
               hintText: "Ex : Créer une entreprise de vente de gâteaux",
               prefixIcon: const Icon(Icons.search),
-              border: const OutlineInputBorder(
+              border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
@@ -1352,7 +1352,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _departementCtrl,
             decoration: InputDecoration(
               labelText: "Département (ex: 971) – optionnel",
-              border: const OutlineInputBorder(
+              border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
@@ -1367,7 +1367,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _communeCtrl,
             decoration: InputDecoration(
               labelText: "Commune – optionnel",
-              border: const OutlineInputBorder(
+              border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
@@ -1461,7 +1461,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     foregroundColor: const Color(0xFF111827),
                     side: BorderSide(color: Colors.grey.shade300),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: const RoundedRectangleBorder(
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
@@ -1481,7 +1481,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: const RoundedRectangleBorder(
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
@@ -2323,7 +2323,7 @@ class _DropdownField extends StatelessWidget {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(
+        border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: Colors.white,
@@ -2363,7 +2363,7 @@ class _NumberField extends StatelessWidget {
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(
+        border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: Colors.white,
@@ -2791,7 +2791,7 @@ class _AidStatusTile extends StatelessWidget {
                       horizontal: 12,
                       vertical: 10,
                     ),
-                    border: const OutlineInputBorder(
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
@@ -2846,7 +2846,7 @@ class _PlanTaskTile extends StatelessWidget {
             value: completed,
             onChanged: onChanged,
             activeColor: const Color(0xFF0F766E),
-            shape: const RoundedRectangleBorder(
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
           ),
@@ -3016,7 +3016,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                       decoration: InputDecoration(
                         hintText: 'Rechercher une région...',
                         prefixIcon: const Icon(Icons.search),
-                        border: const OutlineInputBorder(
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                         filled: true,
@@ -3040,7 +3040,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                         horizontal: 12,
                         vertical: 2,
                       ),
-                      shape: const RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                       tileColor: selected
