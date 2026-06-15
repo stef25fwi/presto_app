@@ -506,12 +506,10 @@ class _PrestoResponsiveFrame extends StatelessWidget {
 
   final Widget child;
 
-  static const double _kMaxContentWidth = 480;
-  static const double _kBreakpoint = 540;
+  static const double _kMaxContentWidth = 720;
+  static const double _kBreakpoint = 760;
 
-  // Légèrement plus sombre que scaffoldBackgroundColor (0xFFFDF4EC)
-  // pour créer un encadrement discret sur les grands écrans.
-  static const Color _kOuterBg = Color(0xFFE8DDD4);
+  static const Color _kOuterBg = Colors.white;
 
   @override
   Widget build(BuildContext context) {
