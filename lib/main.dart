@@ -506,17 +506,16 @@ class _PrestoResponsiveFrame extends StatelessWidget {
 
   final Widget child;
 
-  static const double _kMaxContentWidth = 720;
-  static const double _kBreakpoint = 760;
-
-  static const Color _kOuterBg = Colors.white;
+  static const double _kMaxContentWidth = 960;
+  static const double _kBreakpoint = 1000;
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (width <= _kBreakpoint) return child;
+    final outerBg = Theme.of(context).scaffoldBackgroundColor;
     return ColoredBox(
-      color: _kOuterBg,
+      color: outerBg,
       child: Center(
         child: SizedBox(
           width: _kMaxContentWidth,
