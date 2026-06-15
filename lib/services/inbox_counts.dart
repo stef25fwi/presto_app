@@ -11,22 +11,6 @@ enum InboxCountType {
   unreadNotifications,
 }
 
-Stream<DocumentSnapshot<Map<String, dynamic>>> _pollInboxDocument(
-  String userId,
-) async* {
-  final document = FirebaseFirestore.instance
-      .collection('users')
-      .doc(userId)
-      .collection('metadata')
-      .doc('inbox');
-  while (true) {
-    try {
-      yield await document.get();
-    } catch (_) { /* erreur transitoire */ }
-    await Future<void>.delayed(const Duration(seconds: 8));
-  }
-}
-
 Stream<int> streamInboxCount({
   required String userId,
   InboxCountType type = InboxCountType.totalUnread,

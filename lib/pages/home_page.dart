@@ -160,14 +160,6 @@ class _HomePageState extends State<HomePage>
   Object? _latestOffersError;
   DateTime? _lastLatestOffersLoadedAt;
 
-  /// Slogans animés (fade + slide) pour le 1er slide
-  final List<String> _firstSlideSlogans = const [
-    "Trouvez immédiatement quelqu’un pour faire le job.",
-    "Une personne près de chez vous.",
-    "Publiez… ils arrivent aussitôt.",
-  ];
-  int _sloganIndex = 0;
-  Timer? _sloganTimer;
   final List<String> _baseSearchKeywords = const [
     "jardinage",
     "jardinage aujourd’hui",
@@ -235,6 +227,7 @@ class _HomePageState extends State<HomePage>
       _consultSearchQuery = q;
       _selectedIndex = 1;
     });
+    _syncCategoryAnimation();
   }
 
   void _goToCategoryOffers(String category) {
@@ -254,6 +247,7 @@ class _HomePageState extends State<HomePage>
       _consultSearchQuery = null;
       _selectedIndex = 1;
     });
+    _syncCategoryAnimation();
   }
 
   /// ✅ Enregistre la recherche effectuée
@@ -298,6 +292,7 @@ class _HomePageState extends State<HomePage>
     */
 
     setState(() => _selectedIndex = index);
+    _syncCategoryAnimation();
 
     if (index == 3) {
       unawaited(_maybePromptMessagingNotifications());
@@ -340,15 +335,10 @@ class _HomePageState extends State<HomePage>
     _categoryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
-    )..repeat();
-
-    if (_firstSlideSlogans.length > 1) {
-      _sloganTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-        if (!mounted) return;
-        setState(() {
-          _sloganIndex = (_sloganIndex + 1) % _firstSlideSlogans.length;
-        });
-      });
+    );
+    // N'anime les catégories que lorsque l'accueil est l'onglet visible.
+    if (_selectedIndex == 0) {
+      _categoryController.repeat();
     }
 
     _listenDynamicKeywords();
@@ -570,11 +560,22 @@ class _HomePageState extends State<HomePage>
     _carouselController.dispose();
     _scrollController.dispose();
     _categoryController.dispose();
-    _sloganTimer?.cancel();
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
     _dynamicKeywordsSubscription?.cancel();
     super.dispose();
+  }
+
+  /// Démarre/arrête l'animation des catégories selon l'onglet visible.
+  /// L'accueil reste monté en permanence (IndexedStack) : sans cela
+  /// l'AnimationController tournerait à 60 fps même hors de l'onglet home,
+  /// ce qui provoquait des saccades de scroll.
+  void _syncCategoryAnimation() {
+    if (_selectedIndex == 0) {
+      if (!_categoryController.isAnimating) _categoryController.repeat();
+    } else if (_categoryController.isAnimating) {
+      _categoryController.stop();
+    }
   }
 
   /// Animation "bump" séquentielle sur les 6 catégories
@@ -710,7 +711,8 @@ class _HomePageState extends State<HomePage>
         )
         .toList(growable: false);
 
-    return AnimatedBuilder(
+    return RepaintBoundary(
+      child: AnimatedBuilder(
       animation: _categoryController,
       builder: (context, child) {
         return Padding(
@@ -740,6 +742,7 @@ class _HomePageState extends State<HomePage>
           ),
         );
       },
+    ),
     );
   }
 
@@ -856,7 +859,9 @@ class _HomePageState extends State<HomePage>
                   key: 'home.latestOffers',
                   docsCount: _latestOffers.length,
                 );
-                return RepaintBoundary(
+                return TickerMode(
+                  enabled: _selectedIndex == 0,
+                  child: RepaintBoundary(
                   child: _AutoScrollingOffersCarousel(
                     offers: _latestOffers,
                     onOfferTap: (doc) {
@@ -877,6 +882,7 @@ class _HomePageState extends State<HomePage>
                                 _consultSearchQuery = null;
                                 _selectedIndex = 1;
                               });
+                              _syncCategoryAnimation();
                               Navigator.of(context).pop();
                             },
                           ),
@@ -884,6 +890,7 @@ class _HomePageState extends State<HomePage>
                       );
                     },
                   ),
+                ),
                 );
               },
             ),
