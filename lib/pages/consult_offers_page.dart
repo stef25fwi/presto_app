@@ -458,6 +458,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
       _maybeLoadMore();
+      if (_showFilters &&
+          _scrollController.position.userScrollDirection !=
+              ScrollDirection.idle) {
+        setState(() => _showFilters = false);
+      }
     });
 
     final initialCategoryFilter = widget.categoryFilter?.trim();
