@@ -2339,6 +2339,51 @@ class _HeroCard extends StatelessWidget {
                     letterSpacing: -0.05,
                   ),
                 ),
+                Builder(builder: (context) {
+                  final me = FirebaseAuth.instance.currentUser?.uid ?? '';
+                  final isOwner = me.isNotEmpty && me == data.advertiserId;
+                  if (!isOwner) return const SizedBox.shrink();
+                  return Padding(
+                    padding: EdgeInsets.only(top: compact ? 4 : 5),
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 2,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.visibility_outlined,
+                                size: 13, color: Color(0xFF6B708D)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${data.viewCount} vue${data.viewCount > 1 ? "s" : ""}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B708D),
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                        if (data.phoneViewCount > 0)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.phone_outlined,
+                                  size: 13, color: Color(0xFF6B708D)),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${data.phoneViewCount} contact${data.phoneViewCount > 1 ? "s" : ""}',
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF6B708D),
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  );
+                }),
                 SizedBox(height: compact ? 10 : 12),
                 Text(
                   detailsLine,
@@ -2371,69 +2416,33 @@ class _HeroCard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        if (data.price > 0) ...[
-                          Text(
-                            '${data.price.toStringAsFixed(0)} €',
-                            style: TextStyle(
-                              fontSize: compact ? 28 : 30,
-                              height: 1.0,
-                              fontWeight: FontWeight.w800,
-                              color: orange2,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                          SizedBox(height: compact ? 6 : 8),
-                        ],
-                        if (data.isUrgent)
-                          _UrgentBadge(compact: compact),
-                      ],
-                    ),
-                    // Stats propriétaire (vues + contacts tél)
-                    Builder(builder: (context) {
-                      final me = FirebaseAuth.instance.currentUser?.uid ?? '';
-                      final isOwner = me.isNotEmpty && me == data.advertiserId;
-                      if (!isOwner) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 4,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.visibility_outlined,
-                                    size: 13, color: Color(0xFF6B708D)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '\${data.viewCount} vue\${data.viewCount > 1 ? "s" : ""}',
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF6B708D),
-                                      fontWeight: FontWeight.w600),
+                            if (data.price > 0) ...[
+                              Text(
+                                '${data.price.toStringAsFixed(0)} €',
+                                style: TextStyle(
+                                  fontSize: compact ? 28 : 30,
+                                  height: 1.0,
+                                  fontWeight: FontWeight.w800,
+                                  color: orange2,
+                                  letterSpacing: -0.6,
                                 ),
-                              ],
-                            ),
-                            if (data.phoneViewCount > 0)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.phone_outlined,
-                                      size: 13, color: Color(0xFF6B708D)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '\${data.phoneViewCount} contact\${data.phoneViewCount > 1 ? "s" : ""}',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF6B708D),
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ],
                               ),
+                              SizedBox(width: compact ? 8 : 10),
+                            ],
+                            _DelayBadge(
+                                text: data.averageDelay, compact: compact),
                           ],
                         ),
-                      );
-                    }),
+                        if (data.isUrgent) ...[
+                          SizedBox(height: compact ? 6 : 8),
+                          _UrgentBadge(compact: compact),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -3638,6 +3647,71 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
         ),
         const Divider(height: 1, thickness: 1, color: line),
       ],
+    );
+  }
+}
+
+class _DelayBadge extends StatelessWidget {
+  final String text;
+  final bool compact;
+
+  const _DelayBadge({required this.text, this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    const headlineColor = Colors.white;
+    const sublineColor = Color(0xFFFFF3E6);
+
+    final normalized = text.trim().isEmpty ? '30 min en moyenne' : text.trim();
+    final parts = normalized.split(' en moyenne');
+    final headline = parts.first.trim();
+    final subline = normalized.contains('en moyenne') ? 'en moyenne' : '';
+
+    return _HeaderPillBadge(
+      compact: compact,
+      minWidth: compact ? 88 : 96,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFFFB13B), Color(0xFFFF6A00)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x26FF7A00),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: headline,
+              style: TextStyle(
+                color: headlineColor,
+                fontSize: compact ? 10.5 : 11,
+                fontWeight: FontWeight.w800,
+                height: 1,
+                letterSpacing: 0.2,
+              ),
+            ),
+            if (subline.isNotEmpty)
+              TextSpan(
+                text: '  $subline',
+                style: TextStyle(
+                  color: sublineColor,
+                  fontSize: compact ? 8.5 : 9,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
