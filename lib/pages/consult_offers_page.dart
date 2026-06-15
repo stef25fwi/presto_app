@@ -35,6 +35,8 @@ import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
 import '../widgets/home_interactions.dart';
@@ -2881,16 +2883,29 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.data.title.toUpperCase(),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            height: 1.15,
-                            fontWeight: FontWeight.w700,
-                            color: _ConsultOffersPageState._offersNavy,
-                            letterSpacing: 0.15,
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCEEFD),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: AutoSizeText(
+                            widget.data.title.toUpperCase(),
+                            maxLines: 2,
+                            minFontSize: 12,
+                            maxFontSize: 17,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: _ConsultOffersPageState._offersNavy,
+                              letterSpacing: 0.15,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
