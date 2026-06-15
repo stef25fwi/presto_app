@@ -3853,7 +3853,7 @@ class _BottomSheetScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Color(0xFFF6F7F9),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),

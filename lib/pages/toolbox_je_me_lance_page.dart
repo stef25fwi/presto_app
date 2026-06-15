@@ -2980,7 +2980,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
       expand: false,
       builder: (ctx, scrollCtrl) {
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),

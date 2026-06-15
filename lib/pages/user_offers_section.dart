@@ -3274,7 +3274,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         isScrollControlled: true,
         useSafeArea: true,
         backgroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
         builder: (_) => EligibleResponderSearchSheet(
