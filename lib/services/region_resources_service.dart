@@ -18,7 +18,8 @@ const _kUniversal = <RegionResource>[
   ),
   RegionResource(
     name: 'URSSAF – Créer son entreprise',
-    url: 'https://www.urssaf.fr/portail/home/independant/je-cree-mon-entreprise.html',
+    url:
+        'https://www.urssaf.fr/portail/home/independant/je-cree-mon-entreprise.html',
     description: 'Cotisations sociales, ACRE et démarches sociales',
   ),
   RegionResource(
@@ -64,6 +65,13 @@ const _kUniversal = <RegionResource>[
 ];
 
 const _kDromExtra = <RegionResource>[
+  RegionResource(
+    name: 'LODEOM',
+    url:
+        'https://www.urssaf.fr/accueil/employeur/beneficier-exonerations/exonerations-zonees/exoneration-lodeom.html',
+    description:
+        'Exonérations de cotisations sociales spécifiques aux employeurs d’Outre-mer',
+  ),
   RegionResource(
     name: 'LADOM',
     url: 'https://www.ladom.fr',
@@ -218,18 +226,31 @@ const _kDromSet = {
   'mayotte',
 };
 
-bool isDROM(String region) => _kDromSet.contains(region.toLowerCase().trim());
+class RegionResourcesService {
+  const RegionResourcesService();
 
-List<RegionResource> getRegionResources(String region) {
-  if (region.isEmpty) return [];
-  final r = region.toLowerCase().trim();
-  final resources = <RegionResource>[..._kUniversal];
-  if (_kDromSet.contains(r)) {
-    resources.addAll(_kDromExtra);
+  static bool isDROM(String region) =>
+      _kDromSet.contains(region.toLowerCase().trim());
+
+  static List<RegionResource> getRegionResources(String region) {
+    if (region.isEmpty) return [];
+    final r = region.toLowerCase().trim();
+    final resources = <RegionResource>[..._kUniversal];
+
+    if (_kDromSet.contains(r)) {
+      resources.addAll(_kDromExtra);
+    }
+
+    final specific = _kRegionalSpecific[r];
+    if (specific != null) {
+      resources.addAll(specific);
+    }
+
+    return resources;
   }
-  final specific = _kRegionalSpecific[r];
-  if (specific != null) {
-    resources.addAll(specific);
-  }
-  return resources;
 }
+
+bool isDROM(String region) => RegionResourcesService.isDROM(region);
+
+List<RegionResource> getRegionResources(String region) =>
+    RegionResourcesService.getRegionResources(region);
