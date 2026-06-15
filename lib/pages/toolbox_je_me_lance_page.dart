@@ -72,7 +72,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   String _commune = '';
 
   // Extra fields (optional but useful)
-  String _ambition = 'Tester l’idée';
+  String _ambition = "Tester l'idée";
   double _caVise = 0;
   double _depensesPro = 0;
   String _besoinTva = 'Je ne sais pas';
@@ -518,7 +518,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       blocking.add(
           "Cumul : demande écrite hiérarchique + règles spécifiques (temps partiel / durée encadrée).");
     }
-    if (_situation == "Demandeur d’emploi") {
+    if (_situation == "Demandeur d'emploi") {
       blocking.add(
           "Aides France Travail : attention au timing (ARCE/ACRE) avant certaines démarches.");
     }
@@ -539,9 +539,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     } else if (hasManyCosts && !_association && !wantsGrowth) {
       statut = "Entreprise Individuelle (EI) au réel";
       why =
-          "Plus adapté si tu as beaucoup de frais : déduction plus fine qu’en micro.";
+          "Plus adapté si tu as beaucoup de frais : déduction plus fine qu'en micro.";
       planB =
-          "Créer une EURL/SASU si besoin de séparation plus forte ou d’associés.";
+          "Créer une EURL/SASU si besoin de séparation plus forte ou d'associés.";
     } else if (wantsGrowth ||
         _association ||
         _businessModel == 'Marketplace/plateforme') {
@@ -549,11 +549,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       why =
           "Adapté à la croissance, crédibilité, possible ouverture à des associés/investisseurs.";
       planB =
-          "EURL/SARL si tu veux un cadre plus ‘classique’ et souvent moins coûteux à gérer selon cas.";
+          "EURL/SARL si tu veux un cadre plus 'classique' et souvent moins coûteux à gérer selon cas.";
     } else {
       statut = "EURL / SARL";
       why =
-          "Cadre stable et ‘classique’, souvent apprécié pour une petite structure.";
+          "Cadre stable et 'classique', souvent apprécié pour une petite structure.";
       planB = "SASU/SAS si projet innovant, croissance, associés, levée.";
     }
 
@@ -574,8 +574,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final aides = <Map<String, dynamic>>[
       _aid("ACRE", "Exonération partielle de cotisations au démarrage", true),
       _aid("ARCE", "Capital France Travail (si ARE + conditions)",
-          _situation == "Demandeur d’emploi"),
-      _aid("Prêt d’honneur", "Initiative France / Réseau Entreprendre", true),
+          _situation == "Demandeur d'emploi"),
+      _aid("Prêt d'honneur", "Initiative France / Réseau Entreprendre", true),
       _aid("Aides territoriales",
           "Région / Département / Agglo (selon territoire)", true),
       _aid("Fonds européens",
@@ -758,7 +758,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _region = '';
     _departement = '';
     _commune = '';
-    _ambition = 'Tester l’idée';
+    _ambition = "Tester l'idée";
     _caVise = 0;
     _depensesPro = 0;
     _besoinTva = 'Je ne sais pas';
@@ -1044,7 +1044,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                             icon: Icons.cloud_off_outlined,
                             title: 'Mode local non sauvegardé',
                             text:
-                                'Tes réponses restent utilisables sur cet écran, mais elles ne seront pas reprises automatiquement plus tard tant que la persistance n’est pas disponible.',
+                                "Tes réponses restent utilisables sur cet écran, mais elles ne seront pas reprises automatiquement plus tard tant que la persistance n'est pas disponible.",
                           ),
                         ],
                         if (_journeyStatus == 'completed') ...[
@@ -1085,7 +1085,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       "Créer une entreprise de vente de gâteaux",
       "Service de jardinage / paysagiste",
       "Ouvrir une pâtisserie",
-      "Organisation d’événements / DJ / sono",
+      "Organisation d'événements / DJ / sono",
       "Ouvrir un food truck / snack",
       "Ouvrir un salon de coiffure / barber",
       "Réparation smartphones / petits appareils",
@@ -1131,7 +1131,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const _SectionTitle("Affiner (optionnel)"),
           const SizedBox(height: 8),
           _DropdownField(
-            label: "Type d’activité",
+            label: "Type d'activité",
             value: _activityType,
             items: const [
               "Vente de biens",
@@ -1190,7 +1190,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             label: "Objectif 6–12 mois",
             value: _ambition,
             items: const [
-              "Tester l’idée",
+              "Tester l'idée",
               "Complément de revenu",
               "Revenu principal",
               "Croissance/embauches",
@@ -1240,7 +1240,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const SizedBox(height: 10),
           SwitchListTile(
             value: _association,
-            title: const Text("Besoin de s’associer ?"),
+            title: const Text("Besoin de s'associer ?"),
             onChanged: (v) {
               setState(() => _association = v);
               _onAnyFieldChanged();
@@ -1264,7 +1264,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       "Salarié",
       "Fonctionnaire / agent public",
       "Activité secondaire",
-      "Demandeur d’emploi",
+      "Demandeur d'emploi",
       "Créateur / Entrepreneur (temps plein)",
       "Étudiant / En formation",
     ];
@@ -1302,7 +1302,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            "Ta région personnalise les aides, les contacts et ton plan d’action.",
+            "Ta région personnalise les aides, les contacts et ton plan d'action.",
           ),
           const SizedBox(height: 14),
           GestureDetector(
@@ -1330,7 +1330,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     child: Text(
                       _region.isNotEmpty
                           ? _region
-                          : ‘Choisir votre région…’,
+                          : 'Choisir votre région...',
                       style: TextStyle(
                         color: _region.isNotEmpty
                             ? const Color(0xFF111827)
@@ -1381,18 +1381,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             const SizedBox(height: 12),
             const _InfoBox(
               icon: Icons.info_outline,
-              title: "Pourquoi choisir sa région d’abord ?",
+              title: "Pourquoi choisir sa région d'abord ?",
               text:
-                  "Les aides, les guichets (CCI, CMA, BGE…) et certains dispositifs varient selon votre territoire. En choisissant votre région maintenant, le plan est personnalisé dès le départ.",
+                  "Les aides, les guichets (CCI, CMA, BGE...) et certains dispositifs varient selon votre territoire. En choisissant votre région maintenant, le plan est personnalisé dès le départ.",
             ),
           ],
           if (_region.isNotEmpty && isDROM(_region)) ...[
             const SizedBox(height: 12),
             const _ResultCallout(
               icon: Icons.flight_outlined,
-              title: ‘Territoire Outre-mer détecté’,
+              title: 'Territoire Outre-mer détecté',
               text:
-                  ‘Des aides spécifiques (LODEOM, LADOM, FEDER…) sont disponibles pour les créateurs d\’entreprise dans les DROM.’,
+                  'Des aides spécifiques (LODEOM, LADOM, FEDER...) sont disponibles pour les créateurs d\'entreprise dans les DROM.',
               tone: kBlue,
             ),
           ],
@@ -1516,7 +1516,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         title: "Mon parcours",
         child: _InfoBox(
           icon: Icons.route_outlined,
-          title: "Commence par l’étape 1",
+          title: "Commence par l'étape 1",
           text:
               "Dès que tu saisis ton projet, on génère automatiquement : statut conseillé, alertes, coûts, aides et plan 30 jours.",
         ),
@@ -1694,7 +1694,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         ),
         const SizedBox(height: 12),
         _Card(
-          title: "Plan d’action 30 jours",
+          title: "Plan d'action 30 jours",
           child: Column(
             children: _plan30.map((t) {
               return _PlanTaskTile(
@@ -1719,12 +1719,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   Widget _buildCompletionActionsCard() {
     return _Card(
-      title: ‘Actions après validation’,
+      title: 'Actions après validation',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            ‘Tu peux rouvrir ce parcours pour le corriger ou repartir d’un nouveau brouillon.’,
+            "Tu peux rouvrir ce parcours pour le corriger ou repartir d'un nouveau brouillon.",
           ),
           const SizedBox(height: 12),
           Row(
@@ -1733,7 +1733,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 child: OutlinedButton.icon(
                   onPressed: _reopenJourneyForEditing,
                   icon: const Icon(Icons.edit_outlined),
-                  label: const Text(‘Modifier’),
+                  label: const Text('Modifier'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1745,7 +1745,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     foregroundColor: Colors.white,
                   ),
                   icon: const Icon(Icons.add_circle_outline),
-                  label: const Text(‘Nouveau’),
+                  label: const Text('Nouveau'),
                 ),
               ),
             ],
@@ -3014,7 +3014,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                       controller: _searchCtrl,
                       autofocus: true,
                       decoration: InputDecoration(
-                        hintText: 'Rechercher une région…',
+                        hintText: 'Rechercher une région...',
                         prefixIcon: const Icon(Icons.search),
                         border: const OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
