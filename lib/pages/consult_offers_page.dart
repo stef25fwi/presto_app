@@ -2878,39 +2878,34 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                         ),
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCEEFD),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: AutoSizeText(
-                            widget.data.title.toUpperCase(),
-                            maxLines: 2,
-                            minFontSize: 12,
-                            maxFontSize: 17,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              height: 1.15,
-                              fontWeight: FontWeight.w700,
-                              color: _ConsultOffersPageState._offersNavy,
-                              letterSpacing: 0.15,
-                            ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Surlignage titre — flush bords haut/gauche/droit de la tuile
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                        color: const Color(0xFFDCEEFD),
+                        child: AutoSizeText(
+                          widget.data.title.toUpperCase(),
+                          maxLines: 2,
+                          minFontSize: 12,
+                          maxFontSize: 17,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            height: 1.15,
+                            fontWeight: FontWeight.w700,
+                            color: _ConsultOffersPageState._offersNavy,
+                            letterSpacing: 0.15,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
+                      ),
+                      // Contenu (photo + infos) avec padding normal
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Padding(
@@ -2985,8 +2980,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   if (widget.data.showJobDoneOverlay)
                     Positioned.fill(
