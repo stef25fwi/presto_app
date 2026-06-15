@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
+import 'package:presto_app/widgets/payment_info_audio_player_button.dart';
 
 const Color kBlueDark = Color(0xFF07184A);
 const Color kBlue = Color(0xFF0A7BFF);
@@ -27,51 +27,21 @@ class PaymentInfoPopup extends StatefulWidget {
 }
 
 class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
-  late final AudioPlayer _player;
-  StreamSubscription<PaymentInfoAudioConfig?>? _urlSub;
-  StreamSubscription<PlayerState>? _playerStateSub;
+  StreamSubscription<PaymentInfoAudioConfig?>? _configSub;
   PaymentInfoAudioConfig? _audioConfig;
-  bool _isPlaying = false;
-  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
-    _urlSub = PaymentInfoAudioService().watchConfig().listen((config) {
+    _configSub = PaymentInfoAudioService().watchConfig().listen((config) {
       if (mounted) setState(() => _audioConfig = config);
-    });
-    _playerStateSub = _player.playerStateStream.listen((state) {
-      if (!mounted) return;
-      final playing = state.playing;
-      if (_isPlaying != playing) setState(() => _isPlaying = playing);
     });
   }
 
   @override
   void dispose() {
-    _urlSub?.cancel();
-    _playerStateSub?.cancel();
-    _player.dispose();
+    _configSub?.cancel();
     super.dispose();
-  }
-
-  Future<void> _toggleAudioExplanation() async {
-    final url = _audioConfig?.audioUrl;
-    if (url == null || url.isEmpty || _isLoading) return;
-    if (_isPlaying) {
-      await _player.pause();
-      return;
-    }
-    if (mounted) setState(() => _isLoading = true);
-    try {
-      await _player.setUrl(url);
-      await _player.play();
-    } catch (e) {
-      if (mounted) setState(() => _isPlaying = false);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   @override
@@ -133,10 +103,9 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                         ),
                         const SizedBox(height: 12),
                         _InfoBanner(
-                          isPlaying: _isPlaying,
-                          isLoading: _isLoading,
-                          canPlay: _audioConfig?.canPlay == true,
-                          onToggleAudio: _toggleAudioExplanation,
+                          audioUrl: _audioConfig?.canPlay == true
+                              ? _audioConfig!.audioUrl
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         GridView.count(
@@ -295,20 +264,13 @@ class _Header extends StatelessWidget {
 }
 
 class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({
-    required this.isPlaying,
-    required this.isLoading,
-    required this.onToggleAudio,
-    required this.canPlay,
-  });
+  const _InfoBanner({this.audioUrl});
 
-  final bool isPlaying;
-  final bool isLoading;
-  final bool canPlay;
-  final VoidCallback onToggleAudio;
+  final String? audioUrl;
 
   @override
   Widget build(BuildContext context) {
+    final canPlay = audioUrl != null && audioUrl!.isNotEmpty;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -320,52 +282,11 @@ class _InfoBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (canPlay) ...[
-            InkWell(
-              onTap: isLoading ? null : onToggleAudio,
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAF3FF),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBBD9FF)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (isLoading)
-                      const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: kBlue,
-                        ),
-                      )
-                    else
-                      Icon(
-                        isPlaying
-                            ? Icons.pause_circle_filled_rounded
-                            : Icons.play_circle_fill_rounded,
-                        color: kBlue,
-                        size: 22,
-                      ),
-                    const SizedBox(width: 7),
-                    Text(
-                      isLoading
-                          ? 'Chargement…'
-                          : isPlaying
-                              ? 'Pause lecture'
-                              : "Écouter l'explication",
-                      style: const TextStyle(
-                        color: kBlue,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
+            SizedBox(
+              width: double.infinity,
+              child: PaymentInfoAudioPlayerButton(
+                audioUrl: audioUrl!,
+                label: "Écouter l'explication",
               ),
             ),
             const SizedBox(height: 10),
