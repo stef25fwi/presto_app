@@ -2454,7 +2454,7 @@ class _AutoScrollingOffersCarouselState
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: const Color(0x551A73E8),
-            width: 1.2,
+            width: 1.8,
           ),
         ),
         padding: const EdgeInsets.symmetric(
