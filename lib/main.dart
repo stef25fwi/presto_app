@@ -498,6 +498,38 @@ class AudioPipelineBadge extends StatelessWidget {
   }
 }
 
+/// Borne la largeur du contenu sur tablette/desktop pour éviter un affichage
+/// trop étalé. Sur mobile (< [_kBreakpoint] dp), aucune contrainte n'est
+/// appliquée.
+class _PrestoResponsiveFrame extends StatelessWidget {
+  const _PrestoResponsiveFrame({required this.child});
+
+  final Widget child;
+
+  static const double _kMaxContentWidth = 480;
+  static const double _kBreakpoint = 540;
+
+  // Légèrement plus sombre que scaffoldBackgroundColor (0xFFFDF4EC)
+  // pour créer un encadrement discret sur les grands écrans.
+  static const Color _kOuterBg = Color(0xFFE8DDD4);
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width <= _kBreakpoint) return child;
+    return ColoredBox(
+      color: _kOuterBg,
+      child: Center(
+        child: SizedBox(
+          width: _kMaxContentWidth,
+          height: double.infinity,
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
 class CardShell extends StatelessWidget {
   final Widget child;
   const CardShell({Key? key, required this.child}) : super(key: key);
@@ -893,7 +925,9 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           _signalNavigatorReady();
         });
         return AdminWebDebugPanel(
-          child: child ?? const SizedBox.shrink(),
+          child: _PrestoResponsiveFrame(
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
