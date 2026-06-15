@@ -513,9 +513,8 @@ class _PrestoResponsiveFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     if (width <= _kBreakpoint) return child;
-    final outerBg = Theme.of(context).scaffoldBackgroundColor;
     return ColoredBox(
-      color: outerBg,
+      color: Colors.white,
       child: Center(
         child: SizedBox(
           width: _kMaxContentWidth,
