@@ -2431,16 +2431,12 @@ class _HeroCard extends StatelessWidget {
                                   letterSpacing: -0.6,
                                 ),
                               ),
-                              SizedBox(width: compact ? 8 : 10),
+                              if (data.isUrgent)
+                                SizedBox(width: compact ? 8 : 10),
                             ],
-                            _DelayBadge(
-                                text: data.averageDelay, compact: compact),
+                            if (data.isUrgent) _UrgentBadge(compact: compact),
                           ],
                         ),
-                        if (data.isUrgent) ...[
-                          SizedBox(height: compact ? 6 : 8),
-                          _UrgentBadge(compact: compact),
-                        ],
                       ],
                     ),
                   ],
@@ -3647,71 +3643,6 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
         ),
         const Divider(height: 1, thickness: 1, color: line),
       ],
-    );
-  }
-}
-
-class _DelayBadge extends StatelessWidget {
-  final String text;
-  final bool compact;
-
-  const _DelayBadge({required this.text, this.compact = false});
-
-  @override
-  Widget build(BuildContext context) {
-    const headlineColor = Colors.white;
-    const sublineColor = Color(0xFFFFF3E6);
-
-    final normalized = text.trim().isEmpty ? '30 min en moyenne' : text.trim();
-    final parts = normalized.split(' en moyenne');
-    final headline = parts.first.trim();
-    final subline = normalized.contains('en moyenne') ? 'en moyenne' : '';
-
-    return _HeaderPillBadge(
-      compact: compact,
-      minWidth: compact ? 88 : 96,
-      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [Color(0xFFFFB13B), Color(0xFFFF6A00)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x26FF7A00),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: headline,
-              style: TextStyle(
-                color: headlineColor,
-                fontSize: compact ? 10.5 : 11,
-                fontWeight: FontWeight.w800,
-                height: 1,
-                letterSpacing: 0.2,
-              ),
-            ),
-            if (subline.isNotEmpty)
-              TextSpan(
-                text: '  $subline',
-                style: TextStyle(
-                  color: sublineColor,
-                  fontSize: compact ? 8.5 : 9,
-                  fontWeight: FontWeight.w700,
-                  height: 1,
-                ),
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
