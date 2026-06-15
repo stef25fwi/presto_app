@@ -1105,8 +1105,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             decoration: InputDecoration(
               hintText: "Ex : Créer une entreprise de vente de gâteaux",
               prefixIcon: const Icon(Icons.search),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1352,8 +1352,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _departementCtrl,
             decoration: InputDecoration(
               labelText: "Département (ex: 971) – optionnel",
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1367,8 +1367,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _communeCtrl,
             decoration: InputDecoration(
               labelText: "Commune – optionnel",
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1388,7 +1388,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           ],
           if (_region.isNotEmpty && isDROM(_region)) ...[
             const SizedBox(height: 12),
-            _ResultCallout(
+            const _ResultCallout(
               icon: Icons.flight_outlined,
               title: ‘Territoire Outre-mer détecté’,
               text:
@@ -3014,7 +3014,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                       decoration: InputDecoration(
                         hintText: 'Rechercher une région…',
                         prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                         filled: true,
@@ -3038,7 +3038,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                         horizontal: 12,
                         vertical: 2,
                       ),
-                      shape: RoundedRectangleBorder(
+                      shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                       tileColor: selected

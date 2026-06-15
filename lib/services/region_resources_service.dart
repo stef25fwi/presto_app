@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class RegionResource {
   final String name;
   final String url;
