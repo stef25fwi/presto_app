@@ -10,7 +10,7 @@ const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
 const roles_1 = require("../marketplace/services/roles");
 const AUDIO_STORAGE_PATH = "audio/payment_info_popup_fr.mp3";
-const APP_CONFIG_COLLECTION = "app_config";
+const PUBLIC_CONFIG_COLLECTION = "public_config";
 const PAYMENT_INFO_AUDIO_DOC = "payment_info_audio";
 const PAYMENT_INFO_NARRATION_FR = `Avant de payer une prestation sur iliprestō.
 
@@ -61,12 +61,14 @@ exports.generatePaymentInfoAudio = (0, https_1.onCall)({
     await file.makePublic();
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${AUDIO_STORAGE_PATH}`;
     await firebase_admin_1.default.firestore()
-        .collection(APP_CONFIG_COLLECTION)
+        .collection(PUBLIC_CONFIG_COLLECTION)
         .doc(PAYMENT_INFO_AUDIO_DOC)
         .set({
+        enabled: true,
         audioUrl: publicUrl,
         storagePath: AUDIO_STORAGE_PATH,
         fileName: "payment_info_popup_fr.mp3",
+        contentType: "audio/mpeg",
         generatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
         generatedBy: request.auth?.uid ?? "unknown",
         source: "tts_openai",
