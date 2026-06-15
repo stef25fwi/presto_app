@@ -1007,23 +1007,23 @@ class _HomePageState extends State<HomePage>
                 color: kPrestoBlue,
                 size: 22,
               ),
-              border: const OutlineInputBorder(
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: kPrestoBlue,
                   width: searchBarBorderWidth,
                 ),
               ),
-              enabledBorder: const OutlineInputBorder(
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: kPrestoBlue,
                   width: searchBarBorderWidth,
                 ),
               ),
-              focusedBorder: const OutlineInputBorder(
+              focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: kPrestoBlue,
                   width: searchBarBorderWidth,
                 ),
@@ -1054,7 +1054,7 @@ class _HomePageState extends State<HomePage>
                   final isHighlighted = index == highlightedIndex;
                   return ListTile(
                     dense: true,
-                    shape: const RoundedRectangleBorder(
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     title: Text(
