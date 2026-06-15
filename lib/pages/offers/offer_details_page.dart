@@ -2995,7 +2995,7 @@ class _PracticalInfoCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0,
                   ),
@@ -3087,7 +3087,7 @@ class _PracticalInfoCard extends StatelessWidget {
                     label: 'Mode de paiement',
                     value: 'À convenir',
                     compact: compact,
-                    trailing: _paymentInfoPill(context),
+                    labelSuffix: _paymentInfoPill(context),
                   ),
                   _InfoLine(
                     icon: Icons.work_outline_rounded,
@@ -3326,6 +3326,7 @@ class _InfoLine extends StatelessWidget {
   final String value;
   final bool compact;
   final Widget? trailing;
+  final Widget? labelSuffix;
 
   const _InfoLine({
     required this.icon,
@@ -3333,6 +3334,7 @@ class _InfoLine extends StatelessWidget {
     required this.value,
     this.compact = false,
     this.trailing,
+    this.labelSuffix,
   });
 
   @override
@@ -3352,17 +3354,25 @@ class _InfoLine extends StatelessWidget {
                   color: const Color(0xFF6C7384), size: compact ? 20 : 22),
               SizedBox(width: compact ? 8 : 10),
               Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: muted,
-                      fontSize: compact ? 15 : 16,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -0.1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: muted,
+                          fontSize: compact ? 15 : 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (labelSuffix != null) ...[
+                      SizedBox(width: compact ? 7 : 8),
+                      labelSuffix!,
+                    ],
+                  ],
                 ),
               ),
               SizedBox(width: compact ? 8 : 10),
