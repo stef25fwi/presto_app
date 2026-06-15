@@ -28,9 +28,9 @@ class PaymentInfoPopup extends StatefulWidget {
 
 class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
   late final AudioPlayer _player;
-  StreamSubscription<String?>? _urlSub;
+  StreamSubscription<PaymentInfoAudioConfig?>? _urlSub;
   StreamSubscription<PlayerState>? _playerStateSub;
-  String? _audioUrl;
+  PaymentInfoAudioConfig? _audioConfig;
   bool _isPlaying = false;
   bool _isLoading = false;
 
@@ -38,8 +38,8 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
   void initState() {
     super.initState();
     _player = AudioPlayer();
-    _urlSub = PaymentInfoAudioService().watchAudioUrl().listen((url) {
-      if (mounted) setState(() => _audioUrl = url);
+    _urlSub = PaymentInfoAudioService().watchConfig().listen((config) {
+      if (mounted) setState(() => _audioConfig = config);
     });
     _playerStateSub = _player.playerStateStream.listen((state) {
       if (!mounted) return;
@@ -57,7 +57,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
   }
 
   Future<void> _toggleAudioExplanation() async {
-    final url = _audioUrl;
+    final url = _audioConfig?.audioUrl;
     if (url == null || url.isEmpty || _isLoading) return;
     if (_isPlaying) {
       await _player.pause();
@@ -135,7 +135,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                         _InfoBanner(
                           isPlaying: _isPlaying,
                           isLoading: _isLoading,
-                          canPlay: _audioUrl?.isNotEmpty == true,
+                          canPlay: _audioConfig?.canPlay == true,
                           onToggleAudio: _toggleAudioExplanation,
                         ),
                         const SizedBox(height: 12),
