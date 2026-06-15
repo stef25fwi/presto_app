@@ -22,6 +22,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../data/city_postal_data.dart';
+import '../services/region_resources_service.dart';
 
 class ToolboxJeMeLancePage extends StatefulWidget {
   const ToolboxJeMeLancePage({super.key});
@@ -479,6 +482,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   Map<String, dynamic> _computeRecommendationRules() {
     final text = _projectCtrl.text.toLowerCase();
+    final isDromRegion = isDROM(_region);
     final hasManyCosts = _depensesPro >= 8000; // tweak threshold
     final wantsGrowth = _ambition.contains('Croissance') ||
         _ambition.contains('Lever') ||
@@ -576,6 +580,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           "Région / Département / Agglo (selon territoire)", true),
       _aid("Fonds européens",
           "FEDER / FSE+ / FEADER (via programmes régionaux)", true),
+      if (isDromRegion) ...[
+        _aid(
+          "LODEOM",
+          "Loi Outre-mer : exonérations renforcées de cotisations sociales au démarrage",
+          true,
+        ),
+        _aid(
+          "Aides CTM/CTG/CTD",
+          "Aides de la collectivité territoriale locale selon votre DROM",
+          true,
+        ),
+      ],
     ];
 
     // Plan 30 jours
@@ -583,8 +599,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       _task("Semaine 1", "Vérifier activité réglementée (si concerné)"),
       _task("Semaine 1", "Choisir statut + option TVA"),
       _task("Semaine 1", "Lister 10 clients cibles + offre + tarif"),
-      _task("Semaine 2", "Contacter CCI/CMA/BGE et prendre 1 RDV"),
-      _task("Semaine 2", "Chercher aides via Aides-territoires + Région"),
+      _task(
+        "Semaine 2",
+        _region.isNotEmpty
+            ? "Contacter CCI/CMA/BGE de $_region et prendre 1 RDV"
+            : "Contacter CCI/CMA/BGE local et prendre 1 RDV",
+      ),
+      _task(
+        "Semaine 2",
+        _region.isNotEmpty
+            ? "Chercher aides sur Aides-territoires pour la région $_region"
+            : "Chercher aides via Aides-territoires + Région",
+      ),
       _task("Semaine 3", "Monter dossier ACRE / France Travail (si concerné)"),
       _task(
           "Semaine 3", "Préparer dossier subvention (résumé + budget + devis)"),
@@ -644,9 +670,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Navigation
   // --------------------------
-  bool get _step1Valid => _projectCtrl.text.trim().length >= 6;
-  bool get _step2Valid => _situation.isNotEmpty;
-  bool get _step3Valid => _region.isNotEmpty && _departement.isNotEmpty;
+  bool get _step1Valid => _region.isNotEmpty;
+  bool get _step2Valid => _projectCtrl.text.trim().length >= 6;
+  bool get _step3Valid => _situation.isNotEmpty;
 
   Future<void> _next() async {
     if (_step == 1 && !_step1Valid) return;
@@ -791,6 +817,16 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     await _saveDraft();
   }
 
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible d\'ouvrir $url')),
+      );
+    }
+  }
+
   Widget _buildJourneyStatusStrip() {
     final chips = <Widget>[
       _JourneyStatusChip(
@@ -878,11 +914,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   String get _currentStepTitle {
     switch (_step) {
       case 1:
-        return 'Clarifier le projet';
+        return 'Ta région';
       case 2:
-        return 'Qualifier la situation';
+        return 'Ton projet';
       case 3:
-        return 'Activer le territoire';
+        return 'Ta situation';
       default:
         return 'Parcours personnalisé';
     }
@@ -895,11 +931,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     switch (_step) {
       case 1:
-        return 'Posez les bases du projet pour lancer une premiere recommandation exploitable.';
+        return 'Ta région personnalise les aides, les contacts locaux et le plan d action.';
       case 2:
-        return 'On ajuste les alertes et aides selon votre contexte personnel et professionnel.';
+        return 'Posez les bases du projet pour lancer une premiere recommandation exploitable.';
       case 3:
-        return 'La derniere etape active les relais locaux et finalise le plan d action.';
+        return 'On ajuste les alertes et aides selon votre contexte personnel et professionnel.';
       default:
         return 'Décrivez ton projet, ta situation et ton territoire.';
     }
@@ -908,11 +944,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   IconData get _currentStepIcon {
     switch (_step) {
       case 1:
-        return Icons.explore_outlined;
-      case 2:
-        return Icons.badge_outlined;
-      case 3:
         return Icons.place_outlined;
+      case 2:
+        return Icons.explore_outlined;
+      case 3:
+        return Icons.badge_outlined;
       default:
         return Icons.auto_awesome;
     }
@@ -1028,9 +1064,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                         const SizedBox(height: 12),
 
                         // Step content
-                        if (_step == 1) _buildStepProject(),
-                        if (_step == 2) _buildStepSituation(),
-                        if (_step == 3) _buildStepTerritory(),
+                        if (_step == 1) _buildStepRegion(),
+                        if (_step == 2) _buildStepProject(),
+                        if (_step == 3) _buildStepSituation(),
 
                         const SizedBox(height: 14),
                         _buildNavButtons(),
@@ -1058,7 +1094,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     return _Card(
       title: "Que souhaitez-vous faire ?",
-      stepLabel: "Étape 1/3",
+      stepLabel: "Étape 2/3",
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1235,7 +1271,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     return _Card(
       title: "Votre situation actuelle",
-      stepLabel: "Étape 2/3",
+      stepLabel: "Étape 3/3",
       child: Column(
         children: items
             .map((s) => _SelectRow(
@@ -1252,34 +1288,70 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     );
   }
 
-  Widget _buildStepTerritory() {
+  Widget _buildStepRegion() {
+    final regions = kFrenchCitiesData
+        .map((c) => c.region)
+        .toSet()
+        .toList()
+      ..sort();
+
     return _Card(
-      title: "Votre territoire",
-      stepLabel: "Étape 3/3",
+      title: "Ta région",
+      stepLabel: "Étape 1/3",
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text("Les organismes locaux s’adaptent à votre région."),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _regionCtrl,
-            decoration: InputDecoration(
-              labelText: "Région",
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              filled: true,
-              fillColor: Colors.white,
+          const Text(
+            "Ta région personnalise les aides, les contacts et ton plan d’action.",
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () => _showRegionPicker(regions),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _region.isNotEmpty
+                      ? kBlue
+                      : Colors.grey.shade400,
+                  width: _region.isNotEmpty ? 2 : 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.place_outlined,
+                    color: _region.isNotEmpty ? kBlue : Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _region.isNotEmpty
+                          ? _region
+                          : ‘Choisir votre région…’,
+                      style: TextStyle(
+                        color: _region.isNotEmpty
+                            ? const Color(0xFF111827)
+                            : Colors.grey.shade500,
+                        fontWeight: _region.isNotEmpty
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.expand_more, color: Colors.grey.shade600),
+                ],
+              ),
             ),
-            onChanged: (v) {
-              setState(() => _region = v.trim());
-              _onAnyFieldChanged();
-            },
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _departementCtrl,
             decoration: InputDecoration(
-              labelText: "Département (ex: 971)",
+              labelText: "Département (ex: 971) – optionnel",
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
@@ -1294,7 +1366,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           TextField(
             controller: _communeCtrl,
             decoration: InputDecoration(
-              labelText: "Commune (optionnel)",
+              labelText: "Commune – optionnel",
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
@@ -1305,14 +1377,43 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               _onAnyFieldChanged();
             },
           ),
-          const SizedBox(height: 12),
-          const _InfoBox(
-            icon: Icons.info_outline,
-            title: "Astuce",
-            text:
-                "Même si tu ne connais pas encore tous les contacts, ce parcours te sort déjà une liste de guichets incontournables (CCI/CMA/BGE/URSSAF/INPI/France Travail).",
-          ),
+          if (_region.isEmpty) ...[
+            const SizedBox(height: 12),
+            const _InfoBox(
+              icon: Icons.info_outline,
+              title: "Pourquoi choisir sa région d’abord ?",
+              text:
+                  "Les aides, les guichets (CCI, CMA, BGE…) et certains dispositifs varient selon votre territoire. En choisissant votre région maintenant, le plan est personnalisé dès le départ.",
+            ),
+          ],
+          if (_region.isNotEmpty && isDROM(_region)) ...[
+            const SizedBox(height: 12),
+            _ResultCallout(
+              icon: Icons.flight_outlined,
+              title: ‘Territoire Outre-mer détecté’,
+              text:
+                  ‘Des aides spécifiques (LODEOM, LADOM, FEDER…) sont disponibles pour les créateurs d\’entreprise dans les DROM.’,
+              tone: kBlue,
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  void _showRegionPicker(List<String> regions) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _RegionPickerSheet(
+        regions: regions,
+        currentRegion: _region,
+        onSelect: (r) {
+          setState(() => _region = r);
+          Navigator.pop(ctx);
+          _onAnyFieldChanged();
+        },
       ),
     );
   }
@@ -1608,18 +1709,22 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             }).toList(),
           ),
         ),
+        if (_region.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildRegionGuichets(),
+        ],
       ],
     );
   }
 
   Widget _buildCompletionActionsCard() {
     return _Card(
-      title: 'Actions après validation',
+      title: ‘Actions après validation’,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Tu peux rouvrir ce parcours pour le corriger ou repartir d’un nouveau brouillon.',
+            ‘Tu peux rouvrir ce parcours pour le corriger ou repartir d’un nouveau brouillon.’,
           ),
           const SizedBox(height: 12),
           Row(
@@ -1628,7 +1733,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 child: OutlinedButton.icon(
                   onPressed: _reopenJourneyForEditing,
                   icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Modifier'),
+                  label: const Text(‘Modifier’),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1640,10 +1745,37 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     foregroundColor: Colors.white,
                   ),
                   icon: const Icon(Icons.add_circle_outline),
-                  label: const Text('Nouveau'),
+                  label: const Text(‘Nouveau’),
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRegionGuichets() {
+    final resources = getRegionResources(_region);
+    if (resources.isEmpty) return const SizedBox.shrink();
+
+    return _Card(
+      title: "Contacts & guichets – $_region",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            "Organismes officiels pour créer votre entreprise en $_region.",
+            style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
+          ...resources.map(
+            (r) => _ResourceLinkTile(
+              name: r.name,
+              description: r.description,
+              url: r.url,
+              onTap: () => _launchUrl(r.url),
+            ),
           ),
         ],
       ),
@@ -1661,10 +1793,10 @@ class _StepperBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeLabel = step == 1
-        ? 'Projet en cours de cadrage'
+        ? 'Région en cours de sélection'
         : step == 2
-            ? 'Situation en cours de qualification'
-            : 'Territoire en cours de finalisation';
+            ? 'Projet en cours de cadrage'
+            : 'Situation en cours de qualification';
 
     Widget dot(int n, String label) {
       final active = step == n;
@@ -1745,11 +1877,11 @@ class _StepperBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              dot(1, "Projet"),
+              dot(1, "Région"),
               line(),
-              dot(2, "Situation"),
+              dot(2, "Projet"),
               line(),
-              dot(3, "Région"),
+              dot(3, "Situation"),
             ],
           ),
           const SizedBox(height: 10),
@@ -2787,6 +2919,233 @@ class _ErrorState extends StatelessWidget {
               onPressed: () => onRetry(),
               child: const Text("Réessayer"),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RegionPickerSheet extends StatefulWidget {
+  final List<String> regions;
+  final String currentRegion;
+  final ValueChanged<String> onSelect;
+
+  const _RegionPickerSheet({
+    required this.regions,
+    required this.currentRegion,
+    required this.onSelect,
+  });
+
+  @override
+  State<_RegionPickerSheet> createState() => _RegionPickerSheetState();
+}
+
+class _RegionPickerSheetState extends State<_RegionPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  List<String> _filtered = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.regions;
+    _searchCtrl.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.toLowerCase().trim();
+    setState(() {
+      _filtered = q.isEmpty
+          ? widget.regions
+          : widget.regions
+              .where((r) => r.toLowerCase().contains(q))
+              .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (ctx, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Choisir votre région',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _searchCtrl,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher une région…',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF6F7FB),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filtered.length,
+                  itemBuilder: (_, i) {
+                    final r = _filtered[i];
+                    final selected = r == widget.currentRegion;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      tileColor: selected
+                          ? const Color(0xFF1A73E8).withOpacity(0.08)
+                          : null,
+                      leading: Icon(
+                        Icons.place_outlined,
+                        color: selected
+                            ? const Color(0xFF1A73E8)
+                            : Colors.grey.shade600,
+                      ),
+                      title: Text(
+                        r,
+                        style: TextStyle(
+                          fontWeight: selected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: selected
+                              ? const Color(0xFF1A73E8)
+                              : const Color(0xFF111827),
+                        ),
+                      ),
+                      trailing: selected
+                          ? const Icon(Icons.check_circle_rounded,
+                              color: Color(0xFF1A73E8))
+                          : null,
+                      onTap: () => widget.onSelect(r),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ResourceLinkTile extends StatelessWidget {
+  final String name;
+  final String description;
+  final String url;
+  final VoidCallback onTap;
+
+  const _ResourceLinkTile({
+    required this.name,
+    required this.description,
+    required this.url,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.open_in_new_rounded,
+                color: Color(0xFF1A73E8),
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: Color(0xFF1A73E8),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 18),
           ],
         ),
       ),

@@ -55,12 +55,6 @@ class CityEntry {
     );
   }
 
-  static String _normalize(String s) => s
-      .toLowerCase()
-      .replaceAll(RegExp(r"['']"), "'")
-      .replaceAll(RegExp(r"[^\p{Letter}\p{Number}\s-]+", unicode: true), ' ')
-      .replaceAll(RegExp(r"\s+"), " ")
-      .trim();
 }
 
 class CityPostalService {
@@ -88,7 +82,7 @@ class CityPostalService {
 
   List<CityEntry> search(String query, {String? cpHint, int limit = 50}) {
     final all = _all ?? const <CityEntry>[];
-    final q = CityEntry._normalize(query);
+    final q = normalizeLocationLookupKey(query);
     if (q.isEmpty) return const <CityEntry>[];
 
     final cp = cpHint != null ? _cp5(cpHint) : null;
@@ -180,7 +174,8 @@ class _CityPostalAutocompleteFieldState
   Timer? _debounce;
   Timer? _postalDebounce;
   List<CityEntry> _options = const <CityEntry>[];
-  int _requestSerial = 0;
+  int _citySerial = 0;
+  int _postalSerial = 0;
   bool _isApplyingSelection = false;
 
   /// Vrai dès que l'utilisateur a modifié le champ ville manuellement
@@ -217,7 +212,7 @@ class _CityPostalAutocompleteFieldState
     _debounce?.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 280), () async {
-      final serial = ++_requestSerial;
+      final serial = ++_citySerial;
 
       await _localService.init();
 
@@ -225,7 +220,7 @@ class _CityPostalAutocompleteFieldState
       final cpHint = widget.postalCodeController.text.trim();
 
       if (q.isEmpty) {
-        if (!mounted || serial != _requestSerial) return;
+        if (!mounted || serial != _citySerial) return;
         setState(() => _options = const <CityEntry>[]);
         return;
       }
@@ -237,7 +232,7 @@ class _CityPostalAutocompleteFieldState
         limit: 50,
       );
 
-      if (!mounted || serial != _requestSerial) return;
+      if (!mounted || serial != _citySerial) return;
       setState(() => _options = localResults);
 
       // Geo API Gouv seulement si la recherche est assez précise.
@@ -245,7 +240,7 @@ class _CityPostalAutocompleteFieldState
 
       final geoResults = await _searchGeoApiGouv(q, cpHint: cpHint);
 
-      if (!mounted || serial != _requestSerial) return;
+      if (!mounted || serial != _citySerial) return;
 
       final merged = _mergeCityEntries(
         <CityEntry>[
@@ -266,14 +261,14 @@ class _CityPostalAutocompleteFieldState
 
     _postalDebounce?.cancel();
     _postalDebounce = Timer(const Duration(milliseconds: 280), () async {
-      final serial = ++_requestSerial;
+      final serial = ++_postalSerial;
       final cp = _extractPostalCode(widget.postalCodeController.text.trim());
 
       // UX voulue :
       // - 1 à 4 chiffres : aucune auto-complétion ville.
       // - 5 chiffres : recherche CP -> commune.
       if (cp == null || cp.length != 5) {
-        if (!mounted || serial != _requestSerial) return;
+        if (!mounted || serial != _postalSerial) return;
         setState(() => _options = const <CityEntry>[]);
         return;
       }
@@ -293,7 +288,7 @@ class _CityPostalAutocompleteFieldState
         limit: 20,
       );
 
-      if (!mounted || serial != _requestSerial) return;
+      if (!mounted || serial != _postalSerial) return;
 
       final geoResults = geoCommunes
           .map(CityEntry.fromGeoApiGouv)
@@ -492,9 +487,8 @@ class _CityPostalAutocompleteFieldState
       } finally {
         _isApplyingSelection = false;
       }
+      widget.onSelected?.call(resolved);
     }
-
-    widget.onSelected?.call(resolved);
   }
 
   @override
