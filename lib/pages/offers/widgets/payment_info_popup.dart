@@ -347,18 +347,19 @@ class _InfoBanner extends StatelessWidget {
               onTap: isLoading ? null : onToggleAudio,
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEAF3FF),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFBBD9FF)),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isLoading)
                       const SizedBox(
-                        width: 32,
-                        height: 32,
+                        width: 24,
+                        height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           color: kBlue,
@@ -370,16 +371,15 @@ class _InfoBanner extends StatelessWidget {
                             ? Icons.pause_circle_filled_rounded
                             : Icons.play_circle_fill_rounded,
                         color: kBlue,
-                        size: 32,
+                        size: 24,
                       ),
-                    const SizedBox(height: 2),
+                    const SizedBox(width: 6),
                     Text(
                       isLoading
                           ? 'Chargement…'
                           : isPlaying
-                              ? 'Pause\nlecture'
-                              : "Écouter\nl'explication",
-                      textAlign: TextAlign.center,
+                              ? 'Pause'
+                              : "Écouter",
                       style: const TextStyle(
                         color: kBlue,
                         fontSize: 11.5,
