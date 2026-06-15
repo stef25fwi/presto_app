@@ -461,6 +461,7 @@ class MarketplacePublishService {
     required double price,
     required String budgetType,
     required List<XFile> photos,
+    bool hidePhone = false,
   }) async {
     _validateDraftInputs(
       title: title,
@@ -552,6 +553,7 @@ class MarketplacePublishService {
           budgetType: budgetType,
           missionDelay: missionDelay,
           isUrgent: isUrgent,
+          hidePhone: hidePhone,
           subCategory: subCategory,
           category: resolvedCategory,
           city: resolvedCity,

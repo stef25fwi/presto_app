@@ -60,6 +60,7 @@ class MarketplaceListingDraft {
   final String? locationSource;
   final String? cityCategoryKey;
   final double? budgetValue;
+  final bool hidePhone;
 
   const MarketplaceListingDraft({
     this.id,
@@ -89,6 +90,7 @@ class MarketplaceListingDraft {
     this.locationSource,
     this.cityCategoryKey,
     this.budgetValue,
+    this.hidePhone = false,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -130,6 +132,7 @@ class MarketplaceListingDraft {
       if (cityCategoryKey != null && cityCategoryKey!.trim().isNotEmpty)
         'cityCategoryKey': cityCategoryKey!.trim(),
       if (budgetValue != null) 'budgetValue': budgetValue,
+      if (hidePhone) 'hidePhone': true,
     };
   }
 }

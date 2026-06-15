@@ -387,6 +387,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final ScrollController _scrollController = ScrollController();
 
   bool _isUrgent = false;
+  bool _hidePhone = false;
 
   // ✅ Analytics
   // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
@@ -4119,6 +4120,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         isUrgent: _isUrgent,
         price: budgetValue,
         budgetType: _budgetType,
+        hidePhone: _hidePhone,
         photos: List<XFile>.from(_selectedPhotos),
       );
 
@@ -4573,7 +4575,34 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => setState(() => _hidePhone = !_hidePhone),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 6),
+                    child: Row(
+                      children: [
+                        Switch(
+                          value: _hidePhone,
+                          onChanged: (v) =>
+                              setState(() => _hidePhone = v),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Masquer mon numéro (les visiteurs verront uniquement l\'indicatif)',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
 
                 // DÉLAI POUR EFFECTUER LA MISSION
                 _withPublishFieldHighlight(

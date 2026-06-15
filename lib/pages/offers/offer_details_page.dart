@@ -1623,6 +1623,7 @@ class _OfferUiData {
   final List<String> imageUrls;
   final int viewCount;
   final int phoneViewCount;
+  final bool hidePhone;
 
   const _OfferUiData({
     required this.offerId,
@@ -1662,6 +1663,7 @@ class _OfferUiData {
     this.imageUrls = const [],
     this.viewCount = 0,
     this.phoneViewCount = 0,
+    this.hidePhone = false,
   });
 
   String get sanitizedTitle {
@@ -1964,6 +1966,7 @@ class _OfferUiData {
             readValue('contactViews'),
         fallback: 0,
       ),
+      hidePhone: readValue('hidePhone') == true,
     );
   }
 
@@ -3202,6 +3205,7 @@ class _AdvertiserContactCard extends StatelessWidget {
               ),
               _MaskedPhoneInfoLine(
                 phone: data.phone,
+                hidePhone: data.hidePhone,
                 compact: compact,
               ),
               SizedBox(height: compact ? 12 : 14),
@@ -3528,10 +3532,12 @@ class _AdvertiserMetaLine extends StatelessWidget {
 class _MaskedPhoneInfoLine extends StatefulWidget {
   final String phone;
   final bool compact;
+  final bool hidePhone;
 
   const _MaskedPhoneInfoLine({
     required this.phone,
     this.compact = false,
+    this.hidePhone = false,
   });
 
   @override
@@ -3541,6 +3547,14 @@ class _MaskedPhoneInfoLine extends StatefulWidget {
 class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
   bool _isPhoneVisible = false;
 
+  String _indicatifOnly(String rawPhone) {
+    final normalized = rawPhone.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final match = RegExp(r'^(\+\d{1,4})').firstMatch(normalized);
+    if (match != null) return '${match.group(1)} ••••••';
+    final digits = normalized.replaceAll(RegExp(r'\D'), '');
+    return digits.isNotEmpty ? '+${digits[0]}• ••••••' : '••••••';
+  }
+
   String _maskedLabel(String rawPhone) {
     final normalized = rawPhone.trim();
     if (normalized.isEmpty) return 'Non renseigné';
@@ -3549,18 +3563,18 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     final internationalPrefix =
         RegExp(r'^(\+\d{1,4})').firstMatch(compact)?.group(1);
     if (internationalPrefix != null && internationalPrefix.isNotEmpty) {
-      return '$internationalPrefix ******';
+      return '$internationalPrefix ••••••';
     }
 
     final digitsOnly = compact.replaceAll(RegExp(r'\D'), '');
     if (digitsOnly.length >= 4) {
-      return '${digitsOnly.substring(0, 4)} ******';
+      return '${digitsOnly.substring(0, 4)} ••••••';
     }
     if (digitsOnly.isNotEmpty) {
-      return '$digitsOnly ******';
+      return '$digitsOnly ••••••';
     }
 
-    return '******';
+    return '••••••';
   }
 
   @override
@@ -3570,8 +3584,14 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     const line = Color(0xFFE6E3E6);
 
     final hasPhone = widget.phone.trim().isNotEmpty;
-    final displayedValue =
-        _isPhoneVisible ? widget.phone.trim() : _maskedLabel(widget.phone);
+
+    final String displayedValue;
+    if (widget.hidePhone) {
+      displayedValue = _indicatifOnly(widget.phone);
+    } else {
+      displayedValue =
+          _isPhoneVisible ? widget.phone.trim() : _maskedLabel(widget.phone);
+    }
 
     return Column(
       children: [
@@ -3622,23 +3642,27 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
                   ),
                 ),
               ),
-              SizedBox(width: widget.compact ? 4 : 6),
-              IconButton(
-                onPressed: hasPhone
-                    ? () => setState(() => _isPhoneVisible = !_isPhoneVisible)
-                    : null,
-                tooltip:
-                    _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
-                visualDensity: VisualDensity.compact,
-                splashRadius: widget.compact ? 18 : 20,
-                icon: Icon(
-                  _isPhoneVisible
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: hasPhone ? navy : muted,
-                  size: widget.compact ? 20 : 22,
+              if (!widget.hidePhone) ...[
+                SizedBox(width: widget.compact ? 4 : 6),
+                IconButton(
+                  onPressed: hasPhone
+                      ? () =>
+                          setState(() => _isPhoneVisible = !_isPhoneVisible)
+                      : null,
+                  tooltip: _isPhoneVisible
+                      ? 'Masquer le numéro'
+                      : 'Voir le numéro',
+                  visualDensity: VisualDensity.compact,
+                  splashRadius: widget.compact ? 18 : 20,
+                  icon: Icon(
+                    _isPhoneVisible
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: hasPhone ? navy : muted,
+                    size: widget.compact ? 20 : 22,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
