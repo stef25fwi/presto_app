@@ -14,6 +14,8 @@ Object? appCheckLastTokenRefreshError;
 const Set<String> kAppCheckKnownProdHosts = <String>{
   'ilipresto.fr',
   'www.ilipresto.fr',
+  'ilipresto.web.app',
+  'ilipresto.firebaseapp.com',
   'presto-app-74abe.web.app',
   'presto-app-74abe.firebaseapp.com',
 };
