@@ -2887,7 +2887,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   backgroundColor: kPrestoOrange,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
@@ -2899,7 +2899,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   side: BorderSide(color: Colors.grey.shade400),
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
@@ -4321,7 +4321,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         label: _requiredLabel('Catégorie'),
                         filled: true,
                         fillColor: Colors.white,
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -4364,7 +4364,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       labelText: 'Sous-catégorie',
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -4407,7 +4407,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           alignLabelWithHint: true,
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(
+                          border: const OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
@@ -4518,7 +4518,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
                         filled: true,
                         fillColor: Colors.white,
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
@@ -4540,7 +4540,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       labelText: 'Code postal',
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -4615,7 +4615,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       label: _requiredLabel('Délai pour effectuer la mission'),
                       filled: true,
                       fillColor: Colors.white,
-                      border: OutlineInputBorder(
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -4660,7 +4660,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             labelText: 'Type de budget',
                             filled: true,
                             fillColor: Colors.white,
-                            border: OutlineInputBorder(
+                            border: const OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -4698,7 +4698,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 : _requiredLabel('Budget (€)'),
                             filled: true,
                             fillColor: Colors.white,
-                            border: OutlineInputBorder(
+                            border: const OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.symmetric(
@@ -4786,7 +4786,7 @@ class _ModerationPendingDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
       ),
       child: ConstrainedBox(

@@ -1461,7 +1461,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     foregroundColor: const Color(0xFF111827),
                     side: BorderSide(color: Colors.grey.shade300),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
@@ -1481,7 +1481,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
@@ -2323,7 +2323,8 @@ class _DropdownField extends StatelessWidget {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        border: const OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: Colors.white,
       ),
@@ -2362,7 +2363,8 @@ class _NumberField extends StatelessWidget {
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        border: const OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: Colors.white,
       ),
@@ -2789,7 +2791,7 @@ class _AidStatusTile extends StatelessWidget {
                       horizontal: 12,
                       vertical: 10,
                     ),
-                    border: OutlineInputBorder(
+                    border: const OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     filled: true,
@@ -2844,7 +2846,7 @@ class _PlanTaskTile extends StatelessWidget {
             value: completed,
             onChanged: onChanged,
             activeColor: const Color(0xFF0F766E),
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
           ),
