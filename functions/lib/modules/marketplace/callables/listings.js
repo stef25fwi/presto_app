@@ -183,51 +183,30 @@ async function loadDraftSnapshot(draftId) {
     }
     throw new https_1.HttpsError("not-found", "Draft not found");
 }
-async function ensureCategoryAndCityAreActive(categoryId, cityId) {
-    const [categorySnap, citySnap] = await Promise.all([
-        firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(categoryId).get(),
-        firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(cityId).get(),
-    ]);
-    assertCategoryAndCityConfigured({
-        categoryExists: categorySnap.exists,
-        categoryActive: categorySnap.data()?.isActive !== false,
-        cityExists: citySnap.exists,
-        cityActive: citySnap.data()?.isActive !== false,
-    });
-    return {
-        category: categorySnap.data() ?? {},
-        city: citySnap.data() ?? {},
-    };
-}
 async function ensureCategoryAndCityAreResolvable(validated) {
     const [categorySnap, citySnap] = await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(validated.categoryId).get(),
         firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).get(),
     ]);
-    if (categorySnap.exists && categorySnap.data()?.isActive === false) {
+    // Catégorie : doit exister dans la taxonomie — on ne crée pas de documents
+    // fantômes depuis des labels libres envoyés par le client.
+    if (!categorySnap.exists || categorySnap.data()?.isActive === false) {
         throw new https_1.HttpsError("failed-precondition", "Category is invalid or inactive");
     }
-    let categoryData = (categorySnap.data() ?? {});
-    if (!categorySnap.exists) {
-        const fallbackCategoryLabel = normalizeString(validated.category);
-        if (!fallbackCategoryLabel) {
-            throw new https_1.HttpsError("failed-precondition", "Category is invalid or inactive");
-        }
-        categoryData = {
-            id: validated.categoryId,
-            slug: validated.categoryId,
-            label: fallbackCategoryLabel,
-            isActive: true,
-            searchableKeywords: buildCategoryKeywords(fallbackCategoryLabel, validated.categoryId),
-        };
-        await firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(validated.categoryId).set(categoryData, { merge: true });
+    const categoryData = categorySnap.data();
+    // Ville inactive (désactivée par un admin) : on rejette plutôt que de
+    // réécrire isActive:true via merge, ce qui annulerait la désactivation.
+    if (citySnap.exists && citySnap.data()?.isActive === false) {
+        throw new https_1.HttpsError("failed-precondition", "City is invalid or inactive");
     }
-    if (citySnap.exists && citySnap.data()?.isActive !== false) {
+    if (citySnap.exists) {
         return {
             category: categoryData,
             city: citySnap.data() ?? {},
         };
     }
+    // Ville inconnue de Firestore (non seedée) : on la crée à la volée depuis
+    // les données vérifiées du brouillon (CP + nom issus de geo.api.gouv.fr).
     const fallbackCityLabel = normalizeString(validated.city || validated.location);
     const fallbackPostalCode = normalizeString(validated.postalCode || validated.cp);
     if (!fallbackCityLabel || !fallbackPostalCode) {
@@ -247,7 +226,7 @@ async function ensureCategoryAndCityAreResolvable(validated) {
         regionCode: normalizeString(validated.region) || null,
         isActive: true,
     };
-    await firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).set(fallbackCityData, { merge: true });
+    await firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).set(fallbackCityData);
     return {
         category: categoryData,
         city: fallbackCityData,
