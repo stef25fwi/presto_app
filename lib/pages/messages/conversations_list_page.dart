@@ -341,8 +341,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     _unreadMessagesSub = streamInboxCount(
       userId: userId,
       type: InboxCountType.unreadMessages,
-    ).listen((count) {
-      if (count > _lastKnownUnreadMessages) {
+    ).listen((unreadCount) {
+      if (unreadCount > _lastKnownUnreadMessages) {
         // New unread message arrived — force an immediate re-poll of the list.
         if (mounted) {
           setState(() {
@@ -350,7 +350,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           });
         }
       }
-      _lastKnownUnreadMessages = count;
+      _lastKnownUnreadMessages = unreadCount;
     });
   }
 
