@@ -63,10 +63,17 @@ class OfferCard extends StatelessWidget {
     final createdAt = data['createdAt'] ?? data['created_at'];
     final ageLabel = _ageLabelFromCreatedAt(createdAt);
 
+    final budgetType = (data['budgetType'] ?? '').toString().toLowerCase();
+    final isNegotiable = budgetType.contains('négocier') ||
+        budgetType.contains('negocier') ||
+        budgetType == 'à négocier';
+    final numPrice = price is num ? price : num.tryParse(price?.toString() ?? '');
+    final showPrice = !isNegotiable && numPrice != null && numPrice > 0;
+
     final subtitleLine = [
       if (city.isNotEmpty) city,
       if (category.isNotEmpty) category,
-      if (price != null && price.toString().isNotEmpty) '${price.toString()} €',
+      if (showPrice) '${numPrice!.toStringAsFixed(numPrice % 1 == 0 ? 0 : 2)} €',
     ].join(' · ');
 
     return Padding(
