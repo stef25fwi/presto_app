@@ -1970,9 +1970,7 @@ class _OfferUiData {
       ),
       hidePhone: readValue('hidePhone') == true,
       hideBudget: o is Map
-          ? _shouldHideBudgetOnOfferDetails(
-              Map<String, dynamic>.from(
-                  (o as Map<dynamic, dynamic>).cast<dynamic, dynamic>()))
+          ? _shouldHideBudgetOnOfferDetails(Map<String, dynamic>.from(o))
           : price <= 0,
     );
   }
@@ -3335,7 +3333,6 @@ class _InfoLine extends StatelessWidget {
   final String label;
   final String value;
   final bool compact;
-  final Widget? trailing;
   final Widget? labelSuffix;
 
   const _InfoLine({
@@ -3343,7 +3340,6 @@ class _InfoLine extends StatelessWidget {
     required this.label,
     required this.value,
     this.compact = false,
-    this.trailing,
     this.labelSuffix,
   });
 
@@ -3401,10 +3397,6 @@ class _InfoLine extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) ...[
-                SizedBox(width: compact ? 6 : 8),
-                trailing!,
-              ],
             ],
           ),
         ),
