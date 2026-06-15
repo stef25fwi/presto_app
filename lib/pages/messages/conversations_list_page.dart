@@ -18,6 +18,7 @@ import '../../services/admin_access_resolver.dart';
 import '../../services/admin_web_debug_store.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
+import '../../services/inbox_counts.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
@@ -135,6 +136,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   _ConversationListFilter _activeFilter = _ConversationListFilter.all;
   Stream<_ConversationQueryState>? _conversationStateStream;
   String? _conversationStateUserId;
+  StreamSubscription<int>? _unreadMessagesSub;
+  int _lastKnownUnreadMessages = 0;
   bool? _conversationStateAdminMode;
   String? _adminStatusUid;
   bool _adminStatusReady = false;
@@ -326,6 +329,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   @override
   void dispose() {
     _initialConversationRetryTimer?.cancel();
+    _unreadMessagesSub?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -761,7 +765,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     );
   }
 
+  void _subscribeToUnreadCountForUser(String userId) {
+    if (_conversationStateUserId == userId && _unreadMessagesSub != null) return;
+    _unreadMessagesSub?.cancel();
+    _lastKnownUnreadMessages = 0;
+    _unreadMessagesSub = streamInboxCount(
+      userId: userId,
+      type: InboxCountType.unreadMessages,
+    ).listen((count) {
+      if (count > _lastKnownUnreadMessages) {
+        // Un nouveau message est arrivé — forcer un re-poll immédiat de la liste.
+        if (mounted) {
+          setState(() {
+            _conversationStateStream = null;
+          });
+        }
+      }
+      _lastKnownUnreadMessages = count;
+    });
+  }
+
   Stream<_ConversationQueryState> _conversationStateForUser(String userId) {
+    _subscribeToUnreadCountForUser(userId);
+
     if (_conversationStateUserId == userId &&
         _conversationStateAdminMode == _isAdminViewer &&
         _conversationStateStream != null) {
