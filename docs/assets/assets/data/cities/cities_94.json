@@ -1,0 +1,296 @@
+[
+  {
+    "name": "ABLON SUR SEINE",
+    "cp": "94480",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ALFORTVILLE",
+    "cp": "94140",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ARCUEIL",
+    "cp": "94110",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "BOISSY ST LEGER",
+    "cp": "94470",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "BONNEUIL SUR MARNE",
+    "cp": "94380",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "BRY SUR MARNE",
+    "cp": "94360",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CACHAN",
+    "cp": "94230",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CHAMPIGNY SUR MARNE",
+    "cp": "94500",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CHARENTON LE PONT",
+    "cp": "94220",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CHENNEVIERES SUR MARNE",
+    "cp": "94430",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CHEVILLY LARUE",
+    "cp": "94550",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CHOISY LE ROI",
+    "cp": "94600",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "CRETEIL",
+    "cp": "94000",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "FONTENAY SOUS BOIS",
+    "cp": "94120",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "FRESNES",
+    "cp": "94260",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "GENTILLY",
+    "cp": "94250",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "IVRY SUR SEINE",
+    "cp": "94200",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "JOINVILLE LE PONT",
+    "cp": "94340",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "L HAY LES ROSES",
+    "cp": "94240",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "LA QUEUE EN BRIE",
+    "cp": "94510",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "LE KREMLIN BICETRE",
+    "cp": "94270",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "LE PERREUX SUR MARNE",
+    "cp": "94170",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIS TREVISE",
+    "cp": "94420",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "LIMEIL BREVANNES",
+    "cp": "94450",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "MAISONS ALFORT",
+    "cp": "94700",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "MANDRES LES ROSES",
+    "cp": "94520",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "MAROLLES EN BRIE",
+    "cp": "94440",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "NOGENT SUR MARNE",
+    "cp": "94130",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "NOISEAU",
+    "cp": "94880",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ORLY",
+    "cp": "94310",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ORMESSON SUR MARNE",
+    "cp": "94490",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "PARAY VIEILLE POSTE",
+    "cp": "94390",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "PERIGNY",
+    "cp": "94520",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "RUNGIS",
+    "cp": "94150",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "SANTENY",
+    "cp": "94440",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ST MANDE",
+    "cp": "94160",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ST MAUR DES FOSSES",
+    "cp": "94100",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ST MAUR DES FOSSES",
+    "cp": "94210",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE",
+    "cp": "94410",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "SUCY EN BRIE",
+    "cp": "94370",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "THIAIS",
+    "cp": "94320",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VALENTON",
+    "cp": "94460",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VILLECRESNES",
+    "cp": "94440",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VILLEJUIF",
+    "cp": "94800",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE LE ROI",
+    "cp": "94290",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE ST GEORGES",
+    "cp": "94190",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VILLIERS SUR MARNE",
+    "cp": "94350",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VINCENNES",
+    "cp": "94300",
+    "dept": "94",
+    "region": ""
+  },
+  {
+    "name": "VITRY SUR SEINE",
+    "cp": "94400",
+    "dept": "94",
+    "region": ""
+  }
+]

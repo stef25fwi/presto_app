@@ -20,6 +20,7 @@ import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/inbox_counts.dart';
 import '../../services/firestore_date_parser.dart';
+import '../../services/inbox_counts.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
@@ -139,6 +140,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   StreamSubscription<int>? _unreadMessagesSub;
   int _lastKnownUnreadMessages = 0;
   bool? _conversationStateAdminMode;
+  StreamSubscription<int>? _unreadMessagesSub;
+  int _lastKnownUnreadMessages = 0;
   String? _adminStatusUid;
   bool _adminStatusReady = false;
   bool _adminStatusLoading = false;
@@ -332,6 +335,26 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     _unreadMessagesSub?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _subscribeToUnreadCountForUser(String userId) {
+    if (_conversationStateUserId == userId && _unreadMessagesSub != null) return;
+    _unreadMessagesSub?.cancel();
+    _lastKnownUnreadMessages = 0;
+    _unreadMessagesSub = streamInboxCount(
+      userId: userId,
+      type: InboxCountType.unreadMessages,
+    ).listen((count) {
+      if (count > _lastKnownUnreadMessages) {
+        // New unread message arrived — force an immediate re-poll of the list.
+        if (mounted) {
+          setState(() {
+            _conversationStateStream = null;
+          });
+        }
+      }
+      _lastKnownUnreadMessages = count;
+    });
   }
 
   bool _isPermissionDenied(Object? error) {
