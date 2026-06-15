@@ -1694,7 +1694,7 @@ class _HomePageState extends State<HomePage>
           bottomNavigationBar: isKeyboardOpen
               ? null
               : Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
