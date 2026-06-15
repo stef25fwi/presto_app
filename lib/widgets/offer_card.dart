@@ -73,7 +73,7 @@ class OfferCard extends StatelessWidget {
     final subtitleLine = [
       if (city.isNotEmpty) city,
       if (category.isNotEmpty) category,
-      if (showPrice) '${numPrice!.toStringAsFixed(numPrice % 1 == 0 ? 0 : 2)} €',
+      if (showPrice) '${numPrice.toStringAsFixed(numPrice % 1 == 0 ? 0 : 2)} €',
     ].join(' · ');
 
     return Padding(
