@@ -2420,7 +2420,12 @@ class _HeroCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            if (data.price > 0) ...[
+                            if (data.isUrgent) ...[
+                              _UrgentBadge(compact: compact),
+                              if (data.price > 0)
+                                SizedBox(width: compact ? 8 : 10),
+                            ],
+                            if (data.price > 0)
                               Text(
                                 '${data.price.toStringAsFixed(0)} €',
                                 style: TextStyle(
@@ -2431,10 +2436,6 @@ class _HeroCard extends StatelessWidget {
                                   letterSpacing: -0.6,
                                 ),
                               ),
-                              if (data.isUrgent)
-                                SizedBox(width: compact ? 8 : 10),
-                            ],
-                            if (data.isUrgent) _UrgentBadge(compact: compact),
                           ],
                         ),
                       ],
