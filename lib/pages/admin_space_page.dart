@@ -14,7 +14,7 @@ import '../constants.dart';
 import '../features/micro_ia/micro_ia_service.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/firebase_functions_region.dart';
-import 'package:presto_app/widgets/payment_info_audio_admin_section_prod.dart';
+import 'package:presto_app/pages/admin/widgets/payment_info_audio_admin_section.dart';
 
 class AdminSpacePage extends StatefulWidget {
   const AdminSpacePage({super.key});
@@ -2856,7 +2856,7 @@ class _AudioPopupAdminPage extends StatelessWidget {
       body: const SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: PaymentInfoAudioAdminSectionProd(),
+          child: PaymentInfoAudioAdminSection(),
         ),
       ),
     );
