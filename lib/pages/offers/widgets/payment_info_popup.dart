@@ -316,50 +316,28 @@ class _InfoBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFBBD9FF)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.shield_rounded, color: kBlue, size: 38),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text.rich(
-              TextSpan(
-                text:
-                    'La législation prévoit des règles différentes selon le statut du prestataire et le type de prestation.\n',
-                children: [
-                  TextSpan(
-                    text:
-                        "Voici l'essentiel à retenir pour payer en toute sécurité.",
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ],
-              ),
-              style: TextStyle(
-                color: kBlueDark,
-                fontSize: 13.5,
-                height: 1.25,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
           if (canPlay) ...[
-            const SizedBox(width: 8),
             InkWell(
               onTap: isLoading ? null : onToggleAudio,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEAF3FF),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFBBD9FF)),
                 ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (isLoading)
                       const SizedBox(
-                        width: 24,
-                        height: 24,
+                        width: 22,
+                        height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           color: kBlue,
@@ -371,18 +349,18 @@ class _InfoBanner extends StatelessWidget {
                             ? Icons.pause_circle_filled_rounded
                             : Icons.play_circle_fill_rounded,
                         color: kBlue,
-                        size: 24,
+                        size: 22,
                       ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 7),
                     Text(
                       isLoading
                           ? 'Chargement…'
                           : isPlaying
-                              ? 'Pause'
-                              : "Écouter",
+                              ? 'Pause lecture'
+                              : "Écouter l'explication",
                       style: const TextStyle(
                         color: kBlue,
-                        fontSize: 11.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -390,7 +368,35 @@ class _InfoBanner extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 10),
           ],
+          Row(
+            children: [
+              const Icon(Icons.shield_rounded, color: kBlue, size: 38),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    text:
+                        'La législation prévoit des règles différentes selon le statut du prestataire et le type de prestation.\n',
+                    children: [
+                      TextSpan(
+                        text:
+                            "Voici l'essentiel à retenir pour payer en toute sécurité.",
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ],
+                  ),
+                  style: TextStyle(
+                    color: kBlueDark,
+                    fontSize: 13.5,
+                    height: 1.25,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
