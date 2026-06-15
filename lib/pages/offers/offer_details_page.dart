@@ -1624,6 +1624,7 @@ class _OfferUiData {
   final int viewCount;
   final int phoneViewCount;
   final bool hidePhone;
+  final bool hideBudget;
 
   const _OfferUiData({
     required this.offerId,
@@ -1664,6 +1665,7 @@ class _OfferUiData {
     this.viewCount = 0,
     this.phoneViewCount = 0,
     this.hidePhone = false,
+    this.hideBudget = false,
   });
 
   String get sanitizedTitle {
@@ -1967,6 +1969,11 @@ class _OfferUiData {
         fallback: 0,
       ),
       hidePhone: readValue('hidePhone') == true,
+      hideBudget: o is Map
+          ? _shouldHideBudgetOnOfferDetails(
+              Map<String, dynamic>.from(
+                  (o as Map<dynamic, dynamic>).cast<dynamic, dynamic>()))
+          : price <= 0,
     );
   }
 
@@ -2425,10 +2432,10 @@ class _HeroCard extends StatelessWidget {
                           children: [
                             if (data.isUrgent) ...[
                               _UrgentBadge(compact: compact),
-                              if (data.price > 0)
+                              if (!data.hideBudget)
                                 SizedBox(width: compact ? 8 : 10),
                             ],
-                            if (data.price > 0)
+                            if (!data.hideBudget)
                               Text(
                                 '${data.price.toStringAsFixed(0)} €',
                                 style: TextStyle(
@@ -3075,12 +3082,14 @@ class _PracticalInfoCard extends StatelessWidget {
                     value: data.schedule,
                     compact: compact,
                   ),
-                  _InfoLine(
-                    icon: Icons.access_time_rounded,
-                    label: 'Délai',
-                    value: data.missionDelay,
-                    compact: compact,
-                  ),
+                  if (data.missionDelay.isNotEmpty &&
+                      data.missionDelay != 'Délai non précisé')
+                    _InfoLine(
+                      icon: Icons.access_time_rounded,
+                      label: 'Délai de réponse',
+                      value: data.missionDelay,
+                      compact: compact,
+                    ),
                   const Divider(height: 1, thickness: 1, color: line),
                   _InfoLine(
                     icon: Icons.account_balance_wallet_outlined,
