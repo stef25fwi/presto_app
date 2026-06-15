@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class PaymentInfoAudioConfig {
   const PaymentInfoAudioConfig({
@@ -91,6 +94,23 @@ extension PaymentInfoAudioServiceLegacyCompat on PaymentInfoAudioService {
   /// Ancienne API conservée pour les anciens widgets/popups.
   Stream<String?> watchAudioUrl() {
     return watchConfig().map((config) => config?.audioUrl);
+  }
+
+  /// Upload un fichier MP3 brut vers Firebase Storage puis publie l'URL dans Firestore.
+  Future<void> uploadAudio(Uint8List bytes, String filename) async {
+    final path = 'payment_info_audio/${DateTime.now().millisecondsSinceEpoch}_$filename';
+    final ref = FirebaseStorage.instance.ref(path);
+    await ref.putData(bytes, SettableMetadata(contentType: 'audio/mpeg'));
+    final downloadUrl = await ref.getDownloadURL();
+    await _configRef.set({
+      'enabled': true,
+      'audioUrl': downloadUrl,
+      'storagePath': path,
+      'contentType': 'audio/mpeg',
+      'version': DateTime.now().millisecondsSinceEpoch,
+      'generatedAt': FieldValue.serverTimestamp(),
+      'provider': 'manual_upload',
+    }, SetOptions(merge: true));
   }
 
   /// Ancienne API minimale : publie une URL MP3 déjà disponible.
