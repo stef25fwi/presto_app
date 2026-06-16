@@ -688,6 +688,8 @@ service cloud.firestore {
       // (conversationParticipantQueryFieldAliases). Cette clause doit rester
       // alignée avec ces alias : tout champ interrogé côté client mais absent
       // ici ferait échouer la requête en permission-denied.
+      // NB : remplace le hotfix multi-alias des PR #67/#68 par la version
+      // consolidée (un seul champ canonique après backfill).
       allow list: if canReadConversationAsAdmin()
         || (isSignedIn()
           && (resource.data.participantIds is list)
