@@ -348,19 +348,17 @@ service cloud.firestore {
 
     // ✅ [AUTORISÉ] Users — chaque utilisateur gère son doc
     match /users/{userId} {
-      // Note: hasAppCheck() retiré pour l'accès moderateur/admin car le SDK Flutter web
+      // Note: hasAppCheck() retiré pour create/update/delete car le SDK Flutter web
       // n'attache pas le token App Check aux requêtes Firestore (seulement aux Cloud Callables).
-      // Sécurité maintenue par : auth + vérification rôle moderateur/admin (claim ou user doc).
+      // Sécurité maintenue par : isSignedIn() + userId == uid() + champs protégés non modifiables.
       allow read: if isSignedIn() && (userId == uid() || isMarketplaceModerator());
-      allow create: if hasAppCheck()
-        && isSignedIn()
+      allow create: if isSignedIn()
         && userId == uid()
         && !request.resource.data.keys().hasAny(protectedUserFields());
-      allow update: if hasAppCheck()
-        && isSignedIn()
+      allow update: if isSignedIn()
         && userId == uid()
         && !changedKeys().hasAny(protectedUserFields());
-      allow delete: if hasAppCheck() && isSignedIn() && userId == uid();
+      allow delete: if isSignedIn() && userId == uid();
 
       match /push_tokens/{tokenId} {
         allow read, create, update, delete: if false;
@@ -616,7 +614,16 @@ service cloud.firestore {
           || isParticipantInConversationId()
           || (isSignedIn()
             && (
-              ((data.participantNames is map) && data.participantNames.keys().hasAny([uid()]))
+              // Champ canonique : doit rester aligné avec `allow list`.
+              // Sans cette clause, un user listé via participantIds dans l'inbox
+              // ne pouvait NI ouvrir la conversation (get) NI lire les messages
+              // (isParentConversationParticipant) -> permission-denied.
+              ((data.participantIds is list) && data.participantIds.hasAny([uid()]))
+              || ((data.participants is list) && data.participants.hasAny([uid()]))
+              || ((data.participant_ids is list) && data.participant_ids.hasAny([uid()]))
+              || ((data.userIds is list) && data.userIds.hasAny([uid()]))
+              || ((data.memberIds is list) && data.memberIds.hasAny([uid()]))
+              || ((data.participantNames is map) && data.participantNames.keys().hasAny([uid()]))
               || ((data.participant_names is map) && data.participant_names.keys().hasAny([uid()]))
               || ((data.unreadCount is map) && data.unreadCount.keys().hasAny([uid()]))
               || ((data.unread_count is map) && data.unread_count.keys().hasAny([uid()]))
