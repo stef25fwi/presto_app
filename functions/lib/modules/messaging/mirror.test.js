@@ -30,9 +30,12 @@ const mirror_1 = require("./mirror");
         archivedBy: {},
         blockedBy: {},
     });
-    strict_1.default.deepEqual(fields.participants, ["buyer_a", "seller_b"]);
-    strict_1.default.deepEqual(fields.participant_ids, ["buyer_a", "seller_b"]);
     strict_1.default.deepEqual(fields.participantIds, ["buyer_a", "seller_b"]);
+    // Les alias redondants ne sont plus écrits (champ canonique unique).
+    strict_1.default.equal(fields.participants, undefined);
+    strict_1.default.equal(fields.participant_ids, undefined);
+    strict_1.default.equal(fields.userIds, undefined);
+    strict_1.default.equal(fields.memberIds, undefined);
     strict_1.default.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
     strict_1.default.deepEqual(fields.participant_names, { buyer_a: "Alice", seller_b: "Bruno" });
     strict_1.default.equal(fields.listingId, "listing_123");
@@ -119,7 +122,7 @@ const mirror_1 = require("./mirror");
             ghost_user: "2026-01-01T00:00:00.000Z",
         },
     });
-    strict_1.default.deepEqual(fields.participants, ["buyer_a", "seller_b"]);
+    strict_1.default.deepEqual(fields.participantIds, ["buyer_a", "seller_b"]);
     strict_1.default.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
     strict_1.default.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 2 });
     strict_1.default.deepEqual(fields.archivedBy, { buyer_a: false, seller_b: true });

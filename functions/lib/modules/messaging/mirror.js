@@ -196,11 +196,10 @@ function buildConversationMirrorFields(input) {
     const archivedBy = buildBooleanMapForParticipants(input.archivedBy ?? {}, participants);
     const blockedBy = buildBooleanMapForParticipants(input.blockedBy ?? {}, participants);
     const fields = {
-        participants,
-        participant_ids: participants,
+        // Champ canonique unique. Les anciens alias (participants, participant_ids,
+        // userIds, memberIds) ne sont plus écrits : la lecture reste tolérante via
+        // readConversationParticipants, et le client n'interroge que participantIds.
         participantIds: participants,
-        userIds: participants,
-        memberIds: participants,
         participantNames,
         participant_names: participantNames,
         unreadCount,
