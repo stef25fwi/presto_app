@@ -2748,7 +2748,6 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
-  bool _isHovered = false;
 
   Widget _buildFallbackPhoto() {
     return Container(
@@ -2798,8 +2797,6 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         (widget.data.isUrgent && !widget.data.showJobDoneOverlay) ? 0.42 : 0.0;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
       child: _buildTileFrame(pulse: pulse),
     );
   }
@@ -2841,9 +2838,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
             borderRadius: BorderRadius.circular(outerRadius),
             child: Ink(
               decoration: BoxDecoration(
-                color: _isHovered
-                    ? const Color(0xFFDDEEFD)
-                    : Colors.white.withValues(alpha: 0.98),
+                color: Colors.white.withValues(alpha: 0.98),
                 borderRadius: BorderRadius.circular(outerRadius),
                 border: Border.all(
                   color: _ConsultOffersPageState._offersCardBorder,
