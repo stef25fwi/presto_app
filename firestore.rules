@@ -690,10 +690,17 @@ service cloud.firestore {
       // ici ferait échouer la requête en permission-denied.
       // NB : remplace le hotfix multi-alias des PR #67/#68 par la version
       // consolidée (un seul champ canonique après backfill).
+      // Filet de transition : on autorise aussi les anciens alias en lecture
+      // liste pour les clients web encore en cache (participants/participant_ids/
+      // userIds/memberIds). Clauses additives (mêmes participants) -> sans risque.
       allow list: if canReadConversationAsAdmin()
-        || (isSignedIn()
-          && (resource.data.participantIds is list)
-          && resource.data.participantIds.hasAny([uid()]));
+        || (isSignedIn() && (
+          ((resource.data.participantIds is list) && resource.data.participantIds.hasAny([uid()]))
+          || ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
+          || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
+          || ((resource.data.userIds is list) && resource.data.userIds.hasAny([uid()]))
+          || ((resource.data.memberIds is list) && resource.data.memberIds.hasAny([uid()]))
+        ));
       allow create, update, delete: if false;
 
       match /messages/{messageId} {
