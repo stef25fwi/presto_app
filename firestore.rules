@@ -684,19 +684,16 @@ service cloud.firestore {
       }
 
       allow get: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
-      // Doit couvrir TOUS les alias interrogés côté client
-      // (conversationParticipantQueryFieldAliases : participantIds, participants,
-      // participant_ids, userIds, memberIds). Un alias manquant ici fait échouer
-      // la requête .where(alias, arrayContains: uid) en permission-denied, ce qui
-      // déclenche la boucle de retry globale et bloque toute la messagerie.
+      // Le client n'interroge plus que le champ canonique `participantIds`
+      // (conversationParticipantQueryFieldAliases). Cette clause doit rester
+      // alignée avec ces alias : tout champ interrogé côté client mais absent
+      // ici ferait échouer la requête en permission-denied.
+      // NB : remplace le hotfix multi-alias des PR #67/#68 par la version
+      // consolidée (un seul champ canonique après backfill).
       allow list: if canReadConversationAsAdmin()
-        || (isSignedIn() && (
-          ((resource.data.participantIds is list) && resource.data.participantIds.hasAny([uid()]))
-          || ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
-          || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
-          || ((resource.data.userIds is list) && resource.data.userIds.hasAny([uid()]))
-          || ((resource.data.memberIds is list) && resource.data.memberIds.hasAny([uid()]))
-        ));
+        || (isSignedIn()
+          && (resource.data.participantIds is list)
+          && resource.data.participantIds.hasAny([uid()]));
       allow create, update, delete: if false;
 
       match /messages/{messageId} {

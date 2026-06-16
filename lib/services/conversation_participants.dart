@@ -1,15 +1,22 @@
 const conversationPrimaryParticipantField = 'participantIds';
 
+// Champ unique interrogé côté client (.where(field, arrayContains: uid)).
+// Toutes les conversations écrites par les Cloud Functions portent
+// `participantIds` ; le backfill garantit ce champ sur les documents legacy.
+// N'ajouter un alias ici que s'il est AUSSI autorisé dans firestore.rules
+// (allow list), sinon la requête échoue en permission-denied.
 const conversationParticipantQueryFieldAliases = <String>[
+  conversationPrimaryParticipantField,
+];
+
+// Côté lecture (parsing d'un document déjà chargé) on reste tolérant à tous
+// les anciens alias pour ne jamais perdre les participants d'un document legacy.
+const conversationParticipantFieldAliases = <String>[
   'participantIds',
   'participants',
   'participant_ids',
   'userIds',
   'memberIds',
-];
-
-const conversationParticipantFieldAliases = <String>[
-  ...conversationParticipantQueryFieldAliases,
 ];
 
 const conversationParticipantMapAliases = <String>[
