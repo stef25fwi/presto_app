@@ -33,34 +33,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "participants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offerId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "lastMessageAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "participantIds",
           "arrayConfig": "CONTAINS"
         },
@@ -76,160 +48,6 @@
       "fields": [
         {
           "fieldPath": "participantIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offer_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "listingId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offer_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participant_ids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "listingId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participant_ids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offerId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participant_ids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offer_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "listingId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offerId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offer_id",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "memberIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "listingId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "memberIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "offerId",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "memberIds",
           "arrayConfig": "CONTAINS"
         },
         {
@@ -661,34 +479,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "participants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "participantIds",
           "arrayConfig": "CONTAINS"
         },
@@ -704,48 +494,6 @@
       "fields": [
         {
           "fieldPath": "participantIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participant_ids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "lastMessageAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participant_ids",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "updatedAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "conversations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "participant_ids",
           "arrayConfig": "CONTAINS"
         },
         {

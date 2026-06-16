@@ -31,9 +31,12 @@ test("buildConversationMirrorFields writes critical camelCase and snake_case ali
     blockedBy: {},
   });
 
-  assert.deepEqual(fields.participants, ["buyer_a", "seller_b"]);
-  assert.deepEqual(fields.participant_ids, ["buyer_a", "seller_b"]);
   assert.deepEqual(fields.participantIds, ["buyer_a", "seller_b"]);
+  // Les alias redondants ne sont plus écrits (champ canonique unique).
+  assert.equal(fields.participants, undefined);
+  assert.equal(fields.participant_ids, undefined);
+  assert.equal(fields.userIds, undefined);
+  assert.equal(fields.memberIds, undefined);
   assert.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
   assert.deepEqual(fields.participant_names, { buyer_a: "Alice", seller_b: "Bruno" });
   assert.equal(fields.listingId, "listing_123");
@@ -127,7 +130,7 @@ test("buildConversationMirrorFields scopes participant maps to normalized partic
     },
   });
 
-  assert.deepEqual(fields.participants, ["buyer_a", "seller_b"]);
+  assert.deepEqual(fields.participantIds, ["buyer_a", "seller_b"]);
   assert.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
   assert.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 2 });
   assert.deepEqual(fields.archivedBy, { buyer_a: false, seller_b: true });
