@@ -174,6 +174,15 @@ export async function sendPushToUser({
           },
         },
       },
+      webpush: {
+        notification: {
+          icon: "/icons/Icon-192.png",
+          badge: "/icons/Icon-192.png",
+        },
+        fcmOptions: {
+          link: routeName ? `https://ilipresto.web.app${routeName}` : "https://ilipresto.web.app",
+        },
+      },
     };
 
     try {
