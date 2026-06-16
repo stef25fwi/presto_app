@@ -2886,7 +2886,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                        color: const Color(0xFFDCEEFD),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFDCEEFD),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(outerRadius),
+                            topRight: Radius.circular(outerRadius),
+                          ),
+                        ),
                         child: AutoSizeText(
                           widget.data.title.toUpperCase(),
                           maxLines: 2,
