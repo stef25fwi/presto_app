@@ -8,6 +8,7 @@
  *
  * Nécessite ./sa-key.json (jamais commitée).
  */
+const fs = require("fs");
 const path = require("path");
 const admin = require(path.join(__dirname, "..", "functions", "node_modules", "firebase-admin"));
 
@@ -22,7 +23,13 @@ const ALIASES = [
   "memberIds",
 ];
 
-admin.initializeApp({ credential: admin.credential.cert(KEY_PATH) });
+// Auth flexible : sa-key.json à la racine du repo SINON les Application
+// Default Credentials (GOOGLE_APPLICATION_CREDENTIALS / gcloud).
+if (fs.existsSync(KEY_PATH)) {
+  admin.initializeApp({ credential: admin.credential.cert(KEY_PATH) });
+} else {
+  admin.initializeApp({ credential: admin.credential.applicationDefault() });
+}
 const db = admin.firestore();
 
 async function resolveUser(arg) {
