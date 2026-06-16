@@ -130,6 +130,15 @@ async function sendPushToUser({ userId, topic, title, body, routeName, channelId
                     },
                 },
             },
+            webpush: {
+                notification: {
+                    icon: "/icons/Icon-192.png",
+                    badge: "/icons/Icon-192.png",
+                },
+                fcmOptions: {
+                    link: routeName ? `https://ilipresto.web.app${routeName}` : "https://ilipresto.web.app",
+                },
+            },
         };
         try {
             const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
