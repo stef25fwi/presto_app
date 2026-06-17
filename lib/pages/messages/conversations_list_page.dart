@@ -149,24 +149,58 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   String? _wideSelectedDraftText;
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
+  // Diagnostic pipeline visible pour TOUT utilisateur (y compris simple) quand
+  // l'URL contient ?msgdiag=1 — permet de tracer le chargement en prod sans
+  // exposer le panneau à tout le monde.
+  static final bool _pipelineDiagEnabled = () {
+    try {
+      final value = Uri.base.queryParameters['msgdiag']?.trim().toLowerCase();
+      return value == '1' || value == 'true' || value == 'on';
+    } catch (_) {
+      return false;
+    }
+  }();
+
+  bool get _diagPanelVisible => _isAdminViewer || _pipelineDiagEnabled;
+
+  String? _lastRenderDiagSig;
+
+  // Log d'étape de rendu : appelé depuis build(), donc on diffère le setState
+  // au post-frame et on dédoublonne par signature pour éviter toute boucle.
+  void _logRenderDiag(String message) {
+    if (!_diagPanelVisible) return;
+    if (message == _lastRenderDiagSig) return;
+    _lastRenderDiagSig = message;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _appendAdminConversationLog(message);
+    });
+  }
+
   void _appendAdminConversationLog(String message) {
     AdminWebDebugStore.instance.recordEvent(
       area: 'messages-list',
       message: 'admin-log',
       detail: message,
     );
-    if (!_isAdminViewer || !mounted) return;
+    if (_pipelineDiagEnabled && kIsWeb) {
+      // ignore: avoid_print
+      debugPrint('[MSGDIAG] $message');
+    }
+    if (!_diagPanelVisible || !mounted) return;
 
     final now = DateTime.now();
     String two(int v) => v.toString().padLeft(2, '0');
-    final stamp = '${two(now.hour)}:${two(now.minute)}:${two(now.second)}';
+    String three(int v) => v.toString().padLeft(3, '0');
+    final stamp =
+        '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.${three(now.millisecond)}';
     final line = '[$stamp] $message';
 
+    final maxLines = _pipelineDiagEnabled ? 40 : 12;
     setState(() {
       _adminConversationLoadLogs.insert(0, line);
-      if (_adminConversationLoadLogs.length > 12) {
+      if (_adminConversationLoadLogs.length > maxLines) {
         _adminConversationLoadLogs.removeRange(
-            12, _adminConversationLoadLogs.length);
+            maxLines, _adminConversationLoadLogs.length);
       }
     });
   }
@@ -245,7 +279,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         _conversationStateStream = null;
         _conversationStateAdminMode = null;
       }
-      if (!isAdmin) {
+      if (!isAdmin && !_pipelineDiagEnabled) {
         _adminConversationLoadLogs.clear();
       } else if (_adminConversationLoadLogs.isEmpty) {
         _adminConversationLoadLogs.add(
@@ -569,32 +603,53 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
       final myGeneration = ++_subscriptionGeneration;
+      _appendAdminConversationLog(
+          '1/6 startSubscriptions gen=$myGeneration forceRefresh=$forceRefreshTokens adminMode=$isAdminMode');
 
+      final swPrepare = DateTime.now();
       try {
         if (!isAdminMode) {
+          _appendAdminConversationLog('2/6 prepareProfileFirestoreAccess… (App Check preflight)');
           await UserProfileBootstrapService.prepareProfileFirestoreAccess(
             user: FirebaseAuth.instance.currentUser,
             forceRefreshToken: forceRefreshTokens,
             forceRefreshAppCheckToken: forceRefreshTokens,
             requireAppCheckToken: false,
           );
+          _appendAdminConversationLog(
+              '2/6 prepareProfileFirestoreAccess OK (${DateTime.now().difference(swPrepare).inMilliseconds}ms)');
         }
-      } catch (_) {
+      } catch (e) {
+        _appendAdminConversationLog(
+            '2/6 prepareProfileFirestoreAccess ÉCHEC (${DateTime.now().difference(swPrepare).inMilliseconds}ms) err=$e');
         if (myGeneration != _subscriptionGeneration ||
             isCancelled ||
-            controller.isClosed) return;
+            controller.isClosed) {
+          _appendAdminConversationLog('2/6 abandon (génération obsolète/annulée)');
+          return;
+        }
         // App Check preflight failed — subscriptions immédiates.
       }
 
       // Force Firebase Auth token refresh — ensures request.auth is valid
       // for Firestore rules even when App Check preflight failed.
+      final swToken = DateTime.now();
+      _appendAdminConversationLog('3/6 getIdToken(true)…');
       try {
         await FirebaseAuth.instance.currentUser?.getIdToken(true);
-      } catch (_) {}
+        _appendAdminConversationLog(
+            '3/6 getIdToken OK (${DateTime.now().difference(swToken).inMilliseconds}ms)');
+      } catch (e) {
+        _appendAdminConversationLog(
+            '3/6 getIdToken ÉCHEC (${DateTime.now().difference(swToken).inMilliseconds}ms) err=$e');
+      }
 
       if (myGeneration != _subscriptionGeneration ||
           isCancelled ||
-          controller.isClosed) return;
+          controller.isClosed) {
+        _appendAdminConversationLog('3/6 abandon (génération obsolète/annulée)');
+        return;
+      }
 
       void handleSnapshot(
         String field,
@@ -618,7 +673,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         );
         errorsByField.remove(field);
         _appendAdminConversationLog(
-          'mode=$mode field=$field conversations_count=${docs.length}',
+          '5/6 ✅ SNAPSHOT field=$field docs=${docs.length} ids=${docs.take(5).map((d) => d.id).toList()}',
         );
         if (kDebugMode) {
           debugPrint(
@@ -630,7 +685,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
       void handleError(String field, Object error) {
         debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
-        _appendAdminConversationLog('mode=$mode field=$field erreur=$error');
+        final isPd = _isPermissionDenied(error);
+        _appendAdminConversationLog(
+            '5/6 🔴 ERREUR field=$field type=${isPd ? 'permission-denied' : error.runtimeType} err=$error');
         if (kDebugMode) {
           debugPrint(
             '[MessagesList] mode=$mode field=$field error user=$userId error=$error',
@@ -647,6 +704,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           if (!_isRetryingPermissionDenied) {
             _isRetryingPermissionDenied = true;
             permissionDeniedRetryCount += 1;
+            _appendAdminConversationLog(
+                '5/6 ↻ retry permission-denied #$permissionDeniedRetryCount (refus transitoire, non fatal)');
 
             final retryGeneration = permissionDeniedRecoveryGeneration;
 
@@ -694,6 +753,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
 
       if (isAdminMode) {
+        _appendAdminConversationLog(
+            '4/6 requête GLOBALE admin orderBy=${queryShape['orderBy']} limit=${queryShape['limit']}');
         final query = FirebaseFirestore.instance
             .collection(queryShape['collection']! as String)
             .orderBy(queryShape['orderBy']! as String,
@@ -710,6 +771,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         );
       } else {
         for (final field in conversationParticipantQueryFieldAliases) {
+          _appendAdminConversationLog(
+              '4/6 requête where($field, arrayContains, $userId)');
           final query = FirebaseFirestore.instance
               .collection(queryShape['collection']! as String)
               .where(field, arrayContains: userId);
@@ -721,6 +784,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
       }
+      _appendAdminConversationLog('4/6 abonnement(s) actif(s)=${subscriptions.length}');
     }
 
     unawaited(startSubscriptions(forceRefreshTokens: false));
@@ -735,7 +799,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Widget _buildAdminConversationLoadLogPanel() {
-    if (!_isAdminViewer) return const SizedBox.shrink();
+    if (!_diagPanelVisible) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 4, 14, 2),
@@ -752,10 +816,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Log admin - chargement conversations',
-                    style: TextStyle(
+                    _isAdminViewer
+                        ? 'Log admin - chargement conversations'
+                        : 'Diagnostic pipeline messagerie (?msgdiag=1)',
+                    style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF1E5E28),
                     ),
@@ -1642,10 +1708,19 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       builder: (context, snapshot) {
                         final state = snapshot.data;
 
+                        _logRenderDiag(
+                          '0/6 build uid=$userId adminReady=$_adminStatusReady '
+                          'adminViewer=$_isAdminViewer conn=${snapshot.connectionState.name} '
+                          'state=${state == null ? 'null' : 'isLoading=${state.isLoading}'}',
+                        );
+
                         if ((snapshot.connectionState ==
                                     ConnectionState.waiting &&
                                 state == null) ||
                             (state?.isLoading ?? false)) {
+                          _logRenderDiag(
+                              '➡️ LOADER affiché (conn=${snapshot.connectionState.name} '
+                              'state=${state == null ? 'null' : 'isLoading=${state.isLoading}'})');
                           return const Center(
                             child: CircularProgressIndicator(
                               valueColor:
@@ -1720,6 +1795,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             .where((conversation) =>
                                 conversation.matchesQuery(userId, query))
                             .toList(growable: false);
+
+                        _logRenderDiag(
+                          '6/6 RENDU docs=${docs.length} renderable=${renderableConversations.length} '
+                          'visible=${visibleConversations.length} filtré=${filteredConversations.length} '
+                          'orphelins=$orphanCount erreurs=${errorsByField.length} filtre=${_activeFilter.name}',
+                        );
 
                         if (filteredConversations.isEmpty) {
                           final message = errorsByField.isNotEmpty &&
