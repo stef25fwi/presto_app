@@ -179,7 +179,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
   }();
 
-  bool get _diagPanelVisible => _isAdminViewer || _pipelineDiagEnabled;
+  bool get _diagPanelVisible =>
+      _isAdminViewer || _pipelineDiagEnabled || _kMessagingDiagTestPhase;
+
+  // ⚙️ PHASE DE TEST : affiche le panneau de diagnostic (menu déroulant) pour
+  // TOUS les profils, y compris les utilisateurs simples. Repasser à false
+  // pour le masquer une fois la messagerie validée en production.
+  static const bool _kMessagingDiagTestPhase = true;
+
+  // État replié/déplié du menu déroulant de diagnostic.
+  bool _diagPanelExpanded = false;
 
   String? _lastRenderDiagSig;
 
@@ -213,7 +222,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.${three(now.millisecond)}';
     final line = '[$stamp] $message';
 
-    final maxLines = _pipelineDiagEnabled ? 40 : 12;
+    final maxLines = _diagPanelVisible ? 40 : 12;
     setState(() {
       _adminConversationLoadLogs.insert(0, line);
       if (_adminConversationLoadLogs.length > maxLines) {
@@ -297,7 +306,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         _conversationStateStream = null;
         _conversationStateAdminMode = null;
       }
-      if (!isAdmin && !_pipelineDiagEnabled) {
+      if (!isAdmin && !_pipelineDiagEnabled && !_kMessagingDiagTestPhase) {
         _adminConversationLoadLogs.clear();
       } else if (_adminConversationLoadLogs.isEmpty) {
         _adminConversationLoadLogs.add(
@@ -822,85 +831,106 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   Widget _buildAdminConversationLoadLogPanel() {
     if (!_diagPanelVisible) return const SizedBox.shrink();
 
+    final logCount = _adminConversationLoadLogs.length;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 4, 14, 2),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFEFF7EE),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFCDE7C9)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _isAdminViewer
-                        ? 'Log admin - chargement conversations'
-                        : 'Diagnostic pipeline messagerie (?msgdiag=1)',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E5E28),
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: IconButton(
-                    tooltip: 'Copier les logs',
-                    padding: EdgeInsets.zero,
-                    iconSize: 16,
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(
-                      Icons.content_copy_rounded,
-                      color: Color(0xFF2F6C38),
-                    ),
-                    onPressed: () {
-                      final text = _adminConversationLoadLogs.isEmpty
-                          ? 'Aucun log.'
-                          : _adminConversationLoadLogs.join('\n');
-                      Clipboard.setData(ClipboardData(text: text));
-                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                        const SnackBar(
-                          content: Text('Logs copiés dans le presse-papiers.'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+        clipBehavior: Clip.antiAlias,
+        child: Theme(
+          // Retire les séparateurs par défaut de l'ExpansionTile.
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: _diagPanelExpanded,
+            onExpansionChanged: (value) =>
+                setState(() => _diagPanelExpanded = value),
+            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            leading: const Icon(Icons.bug_report_outlined,
+                color: Color(0xFF2F6C38), size: 18),
+            title: Text(
+              _isAdminViewer
+                  ? 'Log admin - chargement conversations'
+                  : 'Diagnostic messagerie (test)',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E5E28),
+                fontSize: 13,
+              ),
             ),
-            const SizedBox(height: 8),
-            if (_adminConversationLoadLogs.isEmpty)
-              const Text(
-                'Aucun evenement de chargement pour le moment.',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2F6C38),
-                ),
-              )
-            else
-              ..._adminConversationLoadLogs.map(
-                (line) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+            subtitle: Text(
+              '$logCount étape(s) — appuyer pour ${_diagPanelExpanded ? 'replier' : 'déplier'}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2F6C38),
+              ),
+            ),
+            trailing: IconButton(
+              tooltip: 'Copier les logs',
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.content_copy_rounded,
+                  color: Color(0xFF2F6C38)),
+              onPressed: () {
+                final text = _adminConversationLoadLogs.isEmpty
+                    ? 'Aucun log.'
+                    : _adminConversationLoadLogs.join('\n');
+                Clipboard.setData(ClipboardData(text: text));
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  const SnackBar(
+                    content: Text('Logs copiés dans le presse-papiers.'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+            children: [
+              if (_adminConversationLoadLogs.isEmpty)
+                const Align(
+                  alignment: Alignment.centerLeft,
                   child: Text(
-                    line,
-                    style: const TextStyle(
-                      fontSize: 11,
+                    'Aucun evenement de chargement pour le moment.',
+                    style: TextStyle(
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF2F6C38),
                     ),
                   ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 240),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _adminConversationLoadLogs
+                          .map(
+                            (line) => Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: SelectableText(
+                                line,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2F6C38),
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
