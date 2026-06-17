@@ -194,7 +194,6 @@
         "destination": "/index.html"
       }
     ],
-    "site": "ilipresto",
     "target": "production"
   }
 }
