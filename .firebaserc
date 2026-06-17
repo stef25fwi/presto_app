@@ -7,6 +7,9 @@
       "hosting": {
         "production": [
           "ilipresto"
+        ],
+        "mirror": [
+          "presto-app-74abe"
         ]
       }
     }
