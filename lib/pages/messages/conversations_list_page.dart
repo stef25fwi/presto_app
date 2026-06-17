@@ -190,14 +190,26 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   // État replié/déplié du menu déroulant de diagnostic.
   bool _diagPanelExpanded = false;
 
-  String? _lastRenderDiagSig;
+  // Signatures de rendu déjà journalisées. Un Set (et non une seule dernière
+  // valeur) évite la boucle infinie : build() émet PLUSIEURS messages de rendu
+  // par frame (0/6, LOADER, 6/6…) ; avec une seule signature ils s'écrasaient
+  // mutuellement -> chaque message redéclenchait un setState -> rebuild 60fps
+  // -> famine de la boucle d'événements JS -> query.get() jamais résolu.
+  final Set<String> _loggedRenderDiagSigs = <String>{};
 
   // Log d'étape de rendu : appelé depuis build(), donc on diffère le setState
-  // au post-frame et on dédoublonne par signature pour éviter toute boucle.
+  // au post-frame. On ne journalise chaque message DISTINCT qu'une seule fois
+  // (dédup par Set) tant que l'état ne change pas -> aucune boucle.
   void _logRenderDiag(String message) {
     if (!_diagPanelVisible) return;
-    if (message == _lastRenderDiagSig) return;
-    _lastRenderDiagSig = message;
+    // Déjà journalisé pour cet état -> ne rien faire (PAS de setState).
+    if (!_loggedRenderDiagSigs.add(message)) return;
+    // Cap mémoire : au-delà de 80 signatures distinctes, on repart à zéro.
+    if (_loggedRenderDiagSigs.length > 80) {
+      _loggedRenderDiagSigs
+        ..clear()
+        ..add(message);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _appendAdminConversationLog(message);
     });
