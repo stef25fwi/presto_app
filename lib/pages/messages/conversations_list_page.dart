@@ -153,9 +153,27 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   // l'URL contient ?msgdiag=1 — permet de tracer le chargement en prod sans
   // exposer le panneau à tout le monde.
   static final bool _pipelineDiagEnabled = () {
+    bool truthy(String? v) {
+      final s = v?.trim().toLowerCase();
+      return s == '1' || s == 'true' || s == 'on';
+    }
+
     try {
-      final value = Uri.base.queryParameters['msgdiag']?.trim().toLowerCase();
-      return value == '1' || value == 'true' || value == 'on';
+      final uri = Uri.base;
+      // Forme 1 : ...?msgdiag=1#/messages  (query avant le hash)
+      if (truthy(uri.queryParameters['msgdiag'])) return true;
+      // Forme 2 : ...#/messages?msgdiag=1  (query dans le fragment, routage hash)
+      final fragment = uri.fragment;
+      if (fragment.contains('msgdiag')) {
+        final qIndex = fragment.indexOf('?');
+        if (qIndex >= 0) {
+          final fragQuery = Uri.splitQueryString(fragment.substring(qIndex + 1));
+          if (truthy(fragQuery['msgdiag'])) return true;
+        }
+      }
+      // Forme 3 : toute la chaîne contient msgdiag=1 (filet de sécurité)
+      if (uri.toString().toLowerCase().contains('msgdiag=1')) return true;
+      return false;
     } catch (_) {
       return false;
     }
