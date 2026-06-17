@@ -386,15 +386,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return 'Vérification de sécurité indisponible. Rechargez la page.';
     }
     if (_isPermissionDenied(error)) {
-      // Toutes les requetes participants (participantIds, participants, ...)
-      // ont ete refusees ensemble alors que la donnee, la requete et les
-      // regles Firestore sont alignees sur participantIds. Sur web, ce blocage
-      // global des lectures vient quasi toujours d'un jeton App Check rejete
-      // (cle reCAPTCHA invalide ou domaine non autorise), pas des regles.
-      if (kIsWeb) {
-        return 'Messagerie inaccessible. Rechargez la page.';
-      }
-      return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
+      return 'Connexion à la messagerie…';
     }
     return 'Erreur de chargement des conversations. Consultez les logs de debug.';
   }
@@ -521,6 +513,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
     var permissionDeniedRetryCount = 0;
+    var permissionDeniedRecoveryGeneration = 0;
     var appCheckPrefixRetryCount = 0;
     var _subscriptionGeneration = 0;
     var _isRetryingPermissionDenied = false;
@@ -553,13 +546,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return docs;
     }
 
-    void emitState() {
+    void emitState({bool isLoading = false}) {
       if (controller.isClosed) return;
       controller.add(
         _ConversationQueryState(
           docs: mergedDocs(),
           errorsByField: Map<String, Object>.unmodifiable(errorsByField),
-          isLoading: false,
+          isLoading: isLoading,
         ),
       );
     }
@@ -607,7 +600,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
-        if (snapshot.docs.isNotEmpty) {}
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
             doc,
@@ -615,6 +607,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }).toList(growable: false);
         snapshotsByField[field] = docs;
+
+        // Toute réponse Firestore, même vide, prouve que la requête a réussi.
+        // On remet donc à zéro la séquence de refus transitoires.
+        permissionDeniedRetryCount = 0;
+        permissionDeniedRecoveryGeneration += 1;
+
+        errorsByField.removeWhere(
+          (_, value) => _isPermissionDenied(value),
+        );
         errorsByField.remove(field);
         _appendAdminConversationLog(
           'mode=$mode field=$field conversations_count=${docs.length}',
@@ -636,25 +637,53 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
 
-        if (_isPermissionDenied(error) &&
-            permissionDeniedRetryCount < 3 &&
-            !_isRetryingPermissionDenied) {
-          _isRetryingPermissionDenied = true;
-          permissionDeniedRetryCount += 1;
-          unawaited(() async {
-            final delay =
-                _permissionDeniedRetryDelay(permissionDeniedRetryCount);
-            await cancelSubscriptions();
-            // snapshotsByField intentionally NOT cleared — keep showing stale conversations during retry.
-            errorsByField.clear();
-            if (delay > Duration.zero) {
-              await Future<void>.delayed(delay);
-            }
-            _isRetryingPermissionDenied = false;
-            if (!isCancelled && !controller.isClosed) {
-              await startSubscriptions(forceRefreshTokens: true);
-            }
-          }());
+        if (_isPermissionDenied(error)) {
+          // Un permission-denied peut être transitoire pendant la restauration
+          // du jeton Firebase Auth. Il ne doit pas devenir une erreur fatale.
+          errorsByField.removeWhere(
+            (_, value) => _isPermissionDenied(value),
+          );
+
+          if (!_isRetryingPermissionDenied) {
+            _isRetryingPermissionDenied = true;
+            permissionDeniedRetryCount += 1;
+
+            final retryGeneration = permissionDeniedRecoveryGeneration;
+
+            // Conserver les conversations déjà obtenues. Si aucune donnée
+            // n'est encore disponible, afficher uniquement l'état de connexion.
+            emitState(isLoading: mergedDocs().isEmpty);
+
+            unawaited(() async {
+              final delay =
+                  _permissionDeniedRetryDelay(permissionDeniedRetryCount);
+
+              if (delay > Duration.zero) {
+                await Future<void>.delayed(delay);
+              }
+
+              // Une requête a réussi pendant l'attente : le retry est annulé.
+              if (retryGeneration != permissionDeniedRecoveryGeneration ||
+                  isCancelled ||
+                  controller.isClosed) {
+                _isRetryingPermissionDenied = false;
+                return;
+              }
+
+              try {
+                await cancelSubscriptions();
+              } finally {
+                _isRetryingPermissionDenied = false;
+              }
+
+              if (!isCancelled && !controller.isClosed) {
+                await startSubscriptions(forceRefreshTokens: true);
+              }
+            }());
+          } else if (mergedDocs().isEmpty) {
+            emitState(isLoading: true);
+          }
+
           return;
         }
 
