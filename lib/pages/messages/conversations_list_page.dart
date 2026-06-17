@@ -195,14 +195,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (!isAdmin) {
         final results = await Future.wait([
           FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
-          FirebaseFirestore.instance.collection('adminUsers').doc(user.uid).get(),
+          FirebaseFirestore.instance
+              .collection('adminUsers')
+              .doc(user.uid)
+              .get(),
         ]);
         final userData = results[0].data() ?? const <String, dynamic>{};
         final adminData = results[1].data() ?? const <String, dynamic>{};
         if (_hasAdminAccess(userData)) {
           isAdmin = true;
           adminSource = 'users/${user.uid}';
-        } else if (_hasAdminAccess(adminData) || _isEnabledAdminGrant(adminData)) {
+        } else if (_hasAdminAccess(adminData) ||
+            _isEnabledAdminGrant(adminData)) {
           isAdmin = true;
           adminSource = 'adminUsers/${user.uid}';
         }
@@ -335,7 +339,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   void _subscribeToUnreadCountForUser(String userId) {
-    if (_conversationStateUserId == userId && _unreadMessagesSub != null) return;
+    if (_conversationStateUserId == userId && _unreadMessagesSub != null)
+      return;
     _unreadMessagesSub?.cancel();
     _lastKnownUnreadMessages = 0;
     _unreadMessagesSub = streamInboxCount(
@@ -378,7 +383,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         (kIsWeb &&
             appCheckActivationAttempted &&
             !appCheckActivationSucceeded)) {
-        return 'Vérification de sécurité indisponible. Rechargez la page.';
+      return 'Vérification de sécurité indisponible. Rechargez la page.';
     }
     if (_isPermissionDenied(error)) {
       // Toutes les requetes participants (participantIds, participants, ...)
@@ -602,8 +607,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
-      if (snapshot.docs.isNotEmpty) {
-      }
+        if (snapshot.docs.isNotEmpty) {}
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
             doc,
@@ -624,7 +628,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
 
       void handleError(String field, Object error) {
-            debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
+        debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
         _appendAdminConversationLog('mode=$mode field=$field erreur=$error');
         if (kDebugMode) {
           debugPrint(
@@ -689,6 +693,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
       }
     }
+
     unawaited(startSubscriptions(forceRefreshTokens: false));
 
     controller.onCancel = () async {
