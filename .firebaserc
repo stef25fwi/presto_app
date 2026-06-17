@@ -1,1 +1,15 @@
-{"projects":{"default":"presto-app-74abe"}}
+{
+  "projects": {
+    "default": "presto-app-74abe"
+  },
+  "targets": {
+    "presto-app-74abe": {
+      "hosting": {
+        "production": [
+          "ilipresto"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
