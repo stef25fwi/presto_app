@@ -238,8 +238,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return false;
   }
 
-  /// Uploade l'audio puis demande une transcription seule afin de rendre
-  /// le préremplissage visible sans attendre le brouillon OpenAI.
+  /// Uploade l'audio, appelle microIaProcessAudio avec generateDraft:true pour
+  /// obtenir transcription + brouillon en un seul round-trip, et retourne les
+  /// deux dans une Map {text, draft?}.
   Future<Map<String, dynamic>> _transcribePublishAudio({
     required String ownerUid,
     required Uint8List audioBytes,
@@ -268,15 +269,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     _appendPublishAiTrace(
       'microia_callable',
-      'Appel microIaProcessAudio (transcription rapide uniquement) en cours',
+      'Appel microIaProcessAudio (mode combiné STT+draft) en cours',
     );
 
-    // Chemin rapide : retourner la transcription sans attendre OpenAI.
+    // Mode combiné : transcription + brouillon en un seul appel (~1-2 s gagnés)
+    final currentCity = _locationController.text.trim();
     final out = await MicroIaService.processAudio(
       storagePath: storagePath,
       languageCode: OpenAiConfig.defaultLanguageCode,
-      generateDraft: false,
-      debugLabel: 'publish_final_audio_fast_stt',
+      generateDraft: true,
+      draftCity: currentCity.isNotEmpty ? currentCity : null,
+      draftCategory: _category,
+      debugLabel: 'publish_final_audio',
     ).timeout(const Duration(seconds: 90));
 
     final transcript = (out['text'] ?? '').toString().trim();
@@ -316,117 +320,64 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     };
   }
 
-  /// Applique immédiatement la transcription au formulaire.
-  ///
-  /// L’enrichissement OpenAI est lancé ensuite sans bloquer l’écran.
+  /// Applique la transcription au formulaire.
+  /// Si [combinedDraft] est fourni (mode combiné), l'utilise directement sans
+  /// appel réseau supplémentaire. Sinon, appelle generateOfferDraftV2 en fallback.
   Future<void> _applyPublishDraftFromTranscript(
     String transcript, {
     Map<String, dynamic>? combinedDraft,
   }) async {
     _latestRecognizedTranscript = transcript;
-
     _appendPublishAiTrace(
       'draft_local',
-      'Pré-remplissage local depuis la transcription '
-          '(${transcript.length} caractères)',
+      'Pré-remplissage local depuis la transcription (${transcript.length} caractères)',
     );
-
-    // Remplit immédiatement les champs détectables localement.
     _applyFastDraftFromTranscript(transcript);
+
+    final Map<String, dynamic> draft;
+    if (combinedDraft != null) {
+      // Draft déjà généré par microIaProcessAudio — aucun appel réseau supplémentaire
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Brouillon combiné disponible — utilisation directe (0 appel supplémentaire)',
+        level: PublishAiTraceLevel.success,
+      );
+      draft = {...combinedDraft, 'success': true};
+    } else {
+      // Fallback : appel séparé avec format riche (tous les champs)
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Appel generateOfferDraftV2 depuis la transcription (fallback)',
+      );
+      draft = await _aiService.generateOfferDraftV2(text: transcript);
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Réponse generateOfferDraftV2 reçue',
+        level: draft['success'] == true
+            ? PublishAiTraceLevel.success
+            : PublishAiTraceLevel.warning,
+      );
+    }
 
     if (!mounted) return;
 
-    _appendPublishAiTrace(
-      'draft_local',
-      'Formulaire prérempli sans attendre le brouillon OpenAI',
-      level: PublishAiTraceLevel.success,
-    );
-
-    showSuccessSnackBar(
-      context,
-      'Transcription reçue — formulaire prérempli',
-    );
-
-    // L’enrichissement OpenAI continue sans bloquer l’interface.
-    unawaited(
-      _enrichPublishDraftFromTranscript(
-        transcript,
-        combinedDraft: combinedDraft,
-      ),
-    );
-  }
-
-  /// Enrichit le formulaire avec le brouillon OpenAI sans bloquer
-  /// le préremplissage déjà visible.
-  Future<void> _enrichPublishDraftFromTranscript(
-    String transcript, {
-    Map<String, dynamic>? combinedDraft,
-  }) async {
-    try {
-      final Map<String, dynamic> draft;
-
-      if (combinedDraft != null) {
-        draft = <String, dynamic>{
-          ...combinedDraft,
-          'success': true,
-        };
-
-        _appendPublishAiTrace(
-          'draft_remote',
-          'Brouillon combiné disponible — utilisation directe',
-          level: PublishAiTraceLevel.success,
-        );
-      } else {
-        _appendPublishAiTrace(
-          'draft_remote',
-          'Génération du brouillon riche en arrière-plan',
-        );
-
-        draft = await _aiService.generateOfferDraftV2(
-          text: transcript,
-        );
-      }
-
-      // Ne pas appliquer le résultat d’une ancienne transcription.
-      if (!mounted || _latestRecognizedTranscript != transcript) {
-        return;
-      }
-
-      if (draft['success'] == true) {
-        _applyDraftToForm(draft);
-
-        _appendPublishAiTrace(
-          'draft_remote',
-          'Formulaire enrichi par le brouillon IA',
-          level: PublishAiTraceLevel.success,
-        );
-
-        return;
-      }
-
-      final errorMessage =
-          (draft['error'] ?? 'Brouillon IA indisponible').toString();
-
+    if (draft['success'] == true) {
+      _applyDraftToForm(draft);
       _appendPublishAiTrace(
         'draft_remote',
-        '$errorMessage — le préremplissage local est conservé',
-        level: PublishAiTraceLevel.warning,
+        'Champs du formulaire remplis par le draft IA',
+        level: PublishAiTraceLevel.success,
       );
-    } catch (error, stackTrace) {
-      if (!mounted) return;
-
-      _appendPublishAiTrace(
-        'draft_remote',
-        'Enrichissement IA indisponible — '
-            'le préremplissage local est conservé',
-        level: PublishAiTraceLevel.warning,
-      );
-
-      debugPrint(
-        '[PublishOffer] enrichissement OpenAI non bloquant échoué: $error',
-      );
-      debugPrintStack(stackTrace: stackTrace);
+      showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+      return;
     }
+
+    final code = (draft['code'] ?? '').toString();
+    throw Exception(
+      code == 'deadline-exceeded'
+          ? 'Connexion lente, réessaie.'
+          : (draft['error'] ?? 'Erreur IA inconnue').toString(),
+    );
   }
 
   /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
@@ -4629,13 +4580,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () => setState(() => _hidePhone = !_hidePhone),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 6),
                     child: Row(
                       children: [
                         Switch(
                           value: _hidePhone,
-                          onChanged: (v) => setState(() => _hidePhone = v),
+                          onChanged: (v) =>
+                              setState(() => _hidePhone = v),
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                         ),

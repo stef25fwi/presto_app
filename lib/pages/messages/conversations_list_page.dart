@@ -195,18 +195,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (!isAdmin) {
         final results = await Future.wait([
           FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
-          FirebaseFirestore.instance
-              .collection('adminUsers')
-              .doc(user.uid)
-              .get(),
+          FirebaseFirestore.instance.collection('adminUsers').doc(user.uid).get(),
         ]);
         final userData = results[0].data() ?? const <String, dynamic>{};
         final adminData = results[1].data() ?? const <String, dynamic>{};
         if (_hasAdminAccess(userData)) {
           isAdmin = true;
           adminSource = 'users/${user.uid}';
-        } else if (_hasAdminAccess(adminData) ||
-            _isEnabledAdminGrant(adminData)) {
+        } else if (_hasAdminAccess(adminData) || _isEnabledAdminGrant(adminData)) {
           isAdmin = true;
           adminSource = 'adminUsers/${user.uid}';
         }
@@ -339,8 +335,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   void _subscribeToUnreadCountForUser(String userId) {
-    if (_conversationStateUserId == userId && _unreadMessagesSub != null)
-      return;
+    if (_conversationStateUserId == userId && _unreadMessagesSub != null) return;
     _unreadMessagesSub?.cancel();
     _lastKnownUnreadMessages = 0;
     _unreadMessagesSub = streamInboxCount(
@@ -383,10 +378,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         (kIsWeb &&
             appCheckActivationAttempted &&
             !appCheckActivationSucceeded)) {
-      return 'Vérification de sécurité indisponible. Rechargez la page.';
+        return 'Vérification de sécurité indisponible. Rechargez la page.';
     }
     if (_isPermissionDenied(error)) {
-      return 'Connexion à la messagerie…';
+      // Sur web, un permission-denied après plusieurs tentatives vient
+      // quasi toujours du réveil du jeton d'auth (et non des règles, qui
+      // sont alignées sur participantIds). On reste donc sur un message de
+      // reconnexion plutôt qu'un blocage définitif : le sondage continue et
+      // se rétablit dès qu'un jeton valide est obtenu.
+      if (kIsWeb) {
+        return 'Connexion à la messagerie en cours… Rechargez la page si cela persiste.';
+      }
+      return 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.';
     }
     return 'Erreur de chargement des conversations. Consultez les logs de debug.';
   }
@@ -513,7 +516,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
     var permissionDeniedRetryCount = 0;
-    var permissionDeniedRecoveryGeneration = 0;
     var appCheckPrefixRetryCount = 0;
     var _subscriptionGeneration = 0;
     var _isRetryingPermissionDenied = false;
@@ -546,13 +548,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return docs;
     }
 
-    void emitState({bool isLoading = false}) {
+    void emitState() {
       if (controller.isClosed) return;
       controller.add(
         _ConversationQueryState(
           docs: mergedDocs(),
           errorsByField: Map<String, Object>.unmodifiable(errorsByField),
-          isLoading: isLoading,
+          isLoading: false,
         ),
       );
     }
@@ -600,6 +602,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
+      if (snapshot.docs.isNotEmpty) {
+      }
         final docs = snapshot.docs.map((doc) {
           return ConversationSummary.fromFirestore(
             doc,
@@ -607,16 +611,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }).toList(growable: false);
         snapshotsByField[field] = docs;
-
-        // Toute réponse Firestore, même vide, prouve que la requête a réussi.
-        // On remet donc à zéro la séquence de refus transitoires.
-        permissionDeniedRetryCount = 0;
-        permissionDeniedRecoveryGeneration += 1;
-
-        errorsByField.removeWhere(
-          (_, value) => _isPermissionDenied(value),
-        );
         errorsByField.remove(field);
+        // Un sondage réussi prouve que l'auth/les règles sont OK : on réarme
+        // le budget de retry pour absorber un futur permission-denied transitoire
+        // (réveil de jeton) sans afficher d'erreur bloquante.
+        permissionDeniedRetryCount = 0;
         _appendAdminConversationLog(
           'mode=$mode field=$field conversations_count=${docs.length}',
         );
@@ -629,7 +628,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
 
       void handleError(String field, Object error) {
-        debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
+            debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
         _appendAdminConversationLog('mode=$mode field=$field erreur=$error');
         if (kDebugMode) {
           debugPrint(
@@ -637,53 +636,25 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
 
-        if (_isPermissionDenied(error)) {
-          // Un permission-denied peut être transitoire pendant la restauration
-          // du jeton Firebase Auth. Il ne doit pas devenir une erreur fatale.
-          errorsByField.removeWhere(
-            (_, value) => _isPermissionDenied(value),
-          );
-
-          if (!_isRetryingPermissionDenied) {
-            _isRetryingPermissionDenied = true;
-            permissionDeniedRetryCount += 1;
-
-            final retryGeneration = permissionDeniedRecoveryGeneration;
-
-            // Conserver les conversations déjà obtenues. Si aucune donnée
-            // n'est encore disponible, afficher uniquement l'état de connexion.
-            emitState(isLoading: mergedDocs().isEmpty);
-
-            unawaited(() async {
-              final delay =
-                  _permissionDeniedRetryDelay(permissionDeniedRetryCount);
-
-              if (delay > Duration.zero) {
-                await Future<void>.delayed(delay);
-              }
-
-              // Une requête a réussi pendant l'attente : le retry est annulé.
-              if (retryGeneration != permissionDeniedRecoveryGeneration ||
-                  isCancelled ||
-                  controller.isClosed) {
-                _isRetryingPermissionDenied = false;
-                return;
-              }
-
-              try {
-                await cancelSubscriptions();
-              } finally {
-                _isRetryingPermissionDenied = false;
-              }
-
-              if (!isCancelled && !controller.isClosed) {
-                await startSubscriptions(forceRefreshTokens: true);
-              }
-            }());
-          } else if (mergedDocs().isEmpty) {
-            emitState(isLoading: true);
-          }
-
+        if (_isPermissionDenied(error) &&
+            permissionDeniedRetryCount < 8 &&
+            !_isRetryingPermissionDenied) {
+          _isRetryingPermissionDenied = true;
+          permissionDeniedRetryCount += 1;
+          unawaited(() async {
+            final delay =
+                _permissionDeniedRetryDelay(permissionDeniedRetryCount);
+            await cancelSubscriptions();
+            // snapshotsByField intentionally NOT cleared — keep showing stale conversations during retry.
+            errorsByField.clear();
+            if (delay > Duration.zero) {
+              await Future<void>.delayed(delay);
+            }
+            _isRetryingPermissionDenied = false;
+            if (!isCancelled && !controller.isClosed) {
+              await startSubscriptions(forceRefreshTokens: true);
+            }
+          }());
           return;
         }
 
@@ -722,7 +693,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
       }
     }
-
     unawaited(startSubscriptions(forceRefreshTokens: false));
 
     controller.onCancel = () async {
