@@ -624,37 +624,40 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       _appendAdminConversationLog(
           '1/6 startSubscriptions gen=$myGeneration forceRefresh=$forceRefreshTokens adminMode=$isAdminMode');
 
-      final swPrepare = DateTime.now();
-      try {
-        if (!isAdminMode) {
-          _appendAdminConversationLog('2/6 prepareProfileFirestoreAccess… (App Check preflight)');
-          await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      // ⚠️ App Check n'est PAS requis par les règles de lecture des
+      // conversations (`allow list` ne teste que isSignedIn() + participantIds).
+      // On NE bloque donc PAS la requête sur le préflight App Check : sur web,
+      // un jeton reCAPTCHA en échec retentait jusqu'à ~42s (3 essais × 12s +
+      // backoff), gelant la liste pour les utilisateurs simples — alors que le
+      // mode admin sautait cette étape (d'où l'asymétrie admin OK / simple KO).
+      // Le préflight tourne désormais en arrière-plan (warm-up pour les
+      // Cloud Callables) sans gater l'affichage.
+      if (!isAdminMode) {
+        _appendAdminConversationLog('2/6 App Check préflight EN ARRIÈRE-PLAN (non bloquant)');
+        unawaited(
+          UserProfileBootstrapService.prepareProfileFirestoreAccess(
             user: FirebaseAuth.instance.currentUser,
             forceRefreshToken: forceRefreshTokens,
             forceRefreshAppCheckToken: forceRefreshTokens,
             requireAppCheckToken: false,
-          );
-          _appendAdminConversationLog(
-              '2/6 prepareProfileFirestoreAccess OK (${DateTime.now().difference(swPrepare).inMilliseconds}ms)');
-        }
-      } catch (e) {
-        _appendAdminConversationLog(
-            '2/6 prepareProfileFirestoreAccess ÉCHEC (${DateTime.now().difference(swPrepare).inMilliseconds}ms) err=$e');
-        if (myGeneration != _subscriptionGeneration ||
-            isCancelled ||
-            controller.isClosed) {
-          _appendAdminConversationLog('2/6 abandon (génération obsolète/annulée)');
-          return;
-        }
-        // App Check preflight failed — subscriptions immédiates.
+          ).then(
+            (_) => _appendAdminConversationLog('2/6 App Check préflight (bg) terminé'),
+            onError: (Object e) => _appendAdminConversationLog(
+                '2/6 App Check préflight (bg) échec non bloquant: $e'),
+          ),
+        );
       }
 
-      // Force Firebase Auth token refresh — ensures request.auth is valid
-      // for Firestore rules even when App Check preflight failed.
+      // Jeton d'auth (request.auth) : suffisant pour les règles conversations.
+      // Au 1er chargement on utilise le jeton en cache (instantané) ; on ne
+      // force le rafraîchissement réseau que sur les retries (forceRefreshTokens)
+      // pour éviter d'ajouter ~1s de latence avant le 1er affichage.
       final swToken = DateTime.now();
-      _appendAdminConversationLog('3/6 getIdToken(true)…');
+      _appendAdminConversationLog('3/6 getIdToken(force=$forceRefreshTokens)…');
       try {
-        await FirebaseAuth.instance.currentUser?.getIdToken(true);
+        await FirebaseAuth.instance.currentUser
+            ?.getIdToken(forceRefreshTokens)
+            .timeout(const Duration(seconds: 10));
         _appendAdminConversationLog(
             '3/6 getIdToken OK (${DateTime.now().difference(swToken).inMilliseconds}ms)');
       } catch (e) {
