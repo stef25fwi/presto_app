@@ -35,7 +35,7 @@ ThemeData _buildPrestoThemeData() {
   );
 
   return ThemeData(
-    fontFamily: 'Rubik',
+    fontFamily: 'Inter',
     useMaterial3: true,
     colorScheme: colorScheme,
     extensions: const <ThemeExtension<dynamic>>[
