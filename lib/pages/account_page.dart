@@ -39,7 +39,6 @@ import '../main.dart'
 import 'user_offers_section.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
-import 'package:presto_app/pages/admin/ad_placeholder_images_admin_page.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
@@ -581,7 +580,6 @@ class _AccountPageState extends State<AccountPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AdminPlaceholderImagesTile(),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -3604,80 +3602,6 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
               Text(_current.isEmpty ? 'Tous' : 'Valider (${_current.length})'),
         ),
       ],
-    );
-  }
-}
-
-class _AdminPlaceholderImagesTile extends StatelessWidget {
-  const _AdminPlaceholderImagesTile();
-
-  @override
-  Widget build(BuildContext context) {
-    const orange = Color(0xFFFF6600);
-    const blue = Color(0xFF1672D8);
-
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: orange.withValues(alpha: 0.28)),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const AdPlaceholderImagesAdminPage(),
-            ),
-          );
-        },
-        child: const Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: Color(0xFFFFF3EA),
-                child: Icon(
-                  Icons.photo_library_outlined,
-                  color: orange,
-                ),
-              ),
-              SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Gestion images placeholders',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Ajouter, masquer ou supprimer les images visibles dans les AdBanner de “Je consulte”.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.25,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 10),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: blue,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
