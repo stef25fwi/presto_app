@@ -107,13 +107,6 @@ function sanitizeDraftPayload(rawDraft, ownerId) {
     sanitized.ownerId = ownerId;
     sanitized.status = normalizeString(sanitized.status) || "draft";
     sanitized.media = Array.isArray(sanitized.media) ? sanitized.media : [];
-    // P0-1 : si l'utilisateur a choisi de masquer son numéro, on ne conserve
-    // PAS le téléphone dans le brouillon (qui devient l'annonce publique).
-    const hidePhone = sanitized.hidePhone === true || normalizeString(sanitized.hidePhone) === "true";
-    sanitized.hidePhone = hidePhone;
-    if (hidePhone) {
-        delete sanitized.phone;
-    }
     return sanitized;
 }
 function collectListingMediaStoragePaths(data) {
@@ -431,10 +424,10 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
                 avatarUrl: ownerIdentity.avatarUrl || null,
                 verified: ownerIdentity.verified,
             },
-            // P0-1 : le numéro n'est JAMAIS écrit dans le document public si
-            // l'utilisateur a demandé à le masquer. On stocke aussi le choix.
-            phone: validated.hidePhone ? null : (validated.phone || null),
             hidePhone: validated.hidePhone,
+            phone: firebase_admin_1.default.firestore.FieldValue.delete(),
+            telephone: firebase_admin_1.default.firestore.FieldValue.delete(),
+            contactPhone: firebase_admin_1.default.firestore.FieldValue.delete(),
             budgetType: validated.budgetType || null,
             missionDelay: validated.missionDelay || null,
             isUrgent: validated.isUrgent,
@@ -460,6 +453,20 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION,
             sourceDraftId: draftId,
             riskScore: 0,
         }, { merge: true });
+        const privateContactRef = firestore_1.db.collection("listingPrivateContacts").doc(listingId);
+        if (validated.phone) {
+            await privateContactRef.set({
+                listingId,
+                ownerId,
+                phone: validated.phone,
+                hidePhone: validated.hidePhone,
+                createdAt: now,
+                updatedAt: now,
+            }, { merge: true });
+        }
+        else {
+            await privateContactRef.delete().catch(() => undefined);
+        }
         const evaluation = await (0, moderation_1.evaluateListingRisk)({
             ownerId,
             title: validated.title,

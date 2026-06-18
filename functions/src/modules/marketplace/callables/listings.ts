@@ -126,16 +126,6 @@ function sanitizeDraftPayload(rawDraft: Record<string, unknown>, ownerId: string
   sanitized.ownerId = ownerId;
   sanitized.status = normalizeString(sanitized.status) || "draft";
   sanitized.media = Array.isArray(sanitized.media) ? sanitized.media : [];
-
-  // P0-1 : si l'utilisateur a choisi de masquer son numéro, on ne conserve
-  // PAS le téléphone dans le brouillon (qui devient l'annonce publique).
-  const hidePhone =
-    sanitized.hidePhone === true || normalizeString(sanitized.hidePhone) === "true";
-  sanitized.hidePhone = hidePhone;
-  if (hidePhone) {
-    delete sanitized.phone;
-  }
-
   return sanitized;
 }
 
@@ -535,10 +525,10 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
         avatarUrl: ownerIdentity.avatarUrl || null,
         verified: ownerIdentity.verified,
       },
-      // P0-1 : le numéro n'est JAMAIS écrit dans le document public si
-      // l'utilisateur a demandé à le masquer. On stocke aussi le choix.
-      phone: validated.hidePhone ? null : (validated.phone || null),
       hidePhone: validated.hidePhone,
+      phone: admin.firestore.FieldValue.delete(),
+      telephone: admin.firestore.FieldValue.delete(),
+      contactPhone: admin.firestore.FieldValue.delete(),
       budgetType: validated.budgetType || null,
       missionDelay: validated.missionDelay || null,
       isUrgent: validated.isUrgent,
@@ -564,6 +554,20 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
       sourceDraftId: draftId,
       riskScore: 0,
     }, { merge: true });
+
+    const privateContactRef = db.collection("listingPrivateContacts").doc(listingId);
+    if (validated.phone) {
+      await privateContactRef.set({
+        listingId,
+        ownerId,
+        phone: validated.phone,
+        hidePhone: validated.hidePhone,
+        createdAt: now,
+        updatedAt: now,
+      }, { merge: true });
+    } else {
+      await privateContactRef.delete().catch(() => undefined);
+    }
 
     const evaluation = await evaluateListingRisk({
       ownerId,
