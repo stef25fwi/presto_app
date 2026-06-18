@@ -586,7 +586,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final subscriptions =
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
-    var permissionDeniedRetryCount = 0;
+    var permissionDeniedRetryCount = 1;
     var permissionDeniedRecoveryGeneration = 0;
     var appCheckPrefixRetryCount = 0;
     var _subscriptionGeneration = 0;
@@ -711,7 +711,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
         // Toute réponse Firestore, même vide, prouve que la requête a réussi.
         // On remet donc à zéro la séquence de refus transitoires.
-        permissionDeniedRetryCount = 0;
+        permissionDeniedRetryCount = 1;
         permissionDeniedRecoveryGeneration += 1;
 
         errorsByField.removeWhere(

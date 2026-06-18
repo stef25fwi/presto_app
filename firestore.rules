@@ -703,7 +703,7 @@ service cloud.firestore {
         || (
           isSignedIn()
           && resource.data.participantIds is list
-          && resource.data.participantIds.hasAny([uid()])
+          && uid() in resource.data.participantIds
         );
 
       allow create, update, delete: if false;
