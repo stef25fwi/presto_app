@@ -1968,6 +1968,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                           ].join(' / '),
                                           publishedText: publishedText,
                                           price: budget,
+                                          hidePrice:
+                                              _shouldHideConsultTilePrice(data),
                                           missionDelayLabel: missionDelayLabel,
                                           isUrgent:
                                               isUrgent && !showJobDoneOverlay,
@@ -2710,12 +2712,82 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 }
 
+bool _shouldHideConsultTilePrice(Map data) {
+  const flagKeys = <String>[
+    'isNegotiable',
+    'negotiable',
+    'priceNegotiable',
+    'budgetNegotiable',
+    'isPriceNegotiable',
+    'isBudgetNegotiable',
+    'aNegocier',
+    'àNégocier',
+    'toNegotiate',
+    'priceToNegotiate',
+  ];
+
+  for (final key in flagKeys) {
+    final value = data[key];
+
+    if (value == true) return true;
+
+    final text = value?.toString().trim().toLowerCase() ?? '';
+    if (text == 'true' ||
+        text.contains('negocier') ||
+        text.contains('négocier') ||
+        text.contains('negotiable')) {
+      return true;
+    }
+  }
+
+  const priceKeys = <String>[
+    'price',
+    'budget',
+    'amount',
+    'tarif',
+    'prix',
+    'priceAmount',
+    'budgetAmount',
+    'estimatedBudget',
+    'proposedBudget',
+  ];
+
+  for (final key in priceKeys) {
+    final value = data[key];
+    if (value == null) continue;
+
+    if (value is num && value <= 0) return true;
+
+    final raw = value.toString().trim().toLowerCase();
+    final normalized = raw
+        .replaceAll('€', '')
+        .replaceAll('eur', '')
+        .replaceAll(',', '.')
+        .replaceAll(RegExp(r'\s+'), '');
+
+    if (raw.isEmpty ||
+        raw == '0€' ||
+        raw == '0 €' ||
+        raw.contains('negocier') ||
+        raw.contains('négocier') ||
+        raw.contains('negotiable')) {
+      return true;
+    }
+
+    final parsed = double.tryParse(normalized);
+    if (parsed != null && parsed <= 0) return true;
+  }
+
+  return false;
+}
+
 class _OfferBrowseTileData {
   final String imageUrl;
   final String title;
   final String subtitle;
   final String publishedText;
   final int price;
+  final bool hidePrice;
   final String missionDelayLabel;
   final bool isUrgent;
   final IconData icon;
@@ -2727,6 +2799,7 @@ class _OfferBrowseTileData {
     required this.subtitle,
     required this.publishedText,
     required this.price,
+    required this.hidePrice,
     required this.missionDelayLabel,
     required this.isUrgent,
     required this.icon,
@@ -2954,26 +3027,28 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                                           label: widget.data.missionDelayLabel,
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
-                                      ConstrainedBox(
-                                        constraints: const BoxConstraints(
-                                          maxWidth: 132,
-                                        ),
-                                        child: Text(
-                                          '${widget.data.price} €',
-                                          textAlign: TextAlign.right,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 26,
-                                            height: 1.0,
-                                            fontWeight: FontWeight.w700,
-                                            color: _ConsultOffersPageState
-                                                ._offersOrange,
-                                            letterSpacing: -0.9,
+                                      if (!widget.data.hidePrice) ...[
+                                        const SizedBox(width: 12),
+                                        ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 132,
+                                          ),
+                                          child: Text(
+                                            '${widget.data.price} €',
+                                            textAlign: TextAlign.right,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 26,
+                                              height: 1.0,
+                                              fontWeight: FontWeight.w700,
+                                              color: _ConsultOffersPageState
+                                                  ._offersOrange,
+                                              letterSpacing: -0.9,
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 ],
