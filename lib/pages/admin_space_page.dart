@@ -1482,92 +1482,97 @@ class _EmailDashboardPageState extends State<EmailDashboardPage> {
   }
 }
 
-class _EmailDashboardContent extends StatelessWidget {
+class _EmailDashboardContent extends StatefulWidget {
   final _EmailDashboardWindow window;
 
   const _EmailDashboardContent({required this.window});
 
+  @override
+  State<_EmailDashboardContent> createState() => _EmailDashboardContentState();
+}
+
+class _EmailDashboardContentState extends State<_EmailDashboardContent> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
+
+  // Audit (fetch-once) : lecture unique (.get()) au lieu d'écouteurs temps réel
+  // (.snapshots()), mémoïsée par fenêtre. Le contenu est rechargé quand la
+  // fenêtre change (didUpdateWidget), pas à chaque rebuild.
+  Future<List<QuerySnapshot<Map<String, dynamic>>>>? _emailFuture;
+
+  Future<List<QuerySnapshot<Map<String, dynamic>>>> _emailFor() {
+    return _emailFuture ??= _loadEmailSnapshots();
+  }
+
+  @override
+  void didUpdateWidget(covariant _EmailDashboardContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.window != widget.window) {
+      _emailFuture = _loadEmailSnapshots();
+    }
+  }
+
+  Future<List<QuerySnapshot<Map<String, dynamic>>>> _loadEmailSnapshots() {
+    final threshold =
+        DateTime.now().subtract(widget.window.duration).millisecondsSinceEpoch;
+    final firestore = FirebaseFirestore.instance;
+    return Future.wait([
+      firestore
+          .collection('email_logs')
+          .where('created_at', isGreaterThanOrEqualTo: threshold)
+          .orderBy('created_at', descending: true)
+          .limit(1000)
+          .get(),
+      firestore
+          .collection('email_jobs')
+          .where('updated_at', isGreaterThanOrEqualTo: threshold)
+          .orderBy('updated_at', descending: true)
+          .limit(60)
+          .get(),
+      firestore
+          .collection('support_tickets')
+          .orderBy('updated_at', descending: true)
+          .limit(60)
+          .get(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
     final threshold =
-        DateTime.now().subtract(window.duration).millisecondsSinceEpoch;
-    final logsStream = FirebaseFirestore.instance
-        .collection('email_logs')
-        .where('created_at', isGreaterThanOrEqualTo: threshold)
-        .orderBy('created_at', descending: true)
-        .limit(1000)
-        .snapshots();
-    final jobsStream = FirebaseFirestore.instance
-        .collection('email_jobs')
-        .where('updated_at', isGreaterThanOrEqualTo: threshold)
-        .orderBy('updated_at', descending: true)
-        .limit(60)
-        .snapshots();
-    final ticketsStream = FirebaseFirestore.instance
-        .collection('support_tickets')
-        .orderBy('updated_at', descending: true)
-        .limit(60)
-        .snapshots();
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: logsStream,
-      builder: (context, logsSnapshot) {
-        if (logsSnapshot.hasError) {
+        DateTime.now().subtract(widget.window.duration).millisecondsSinceEpoch;
+    return FutureBuilder<List<QuerySnapshot<Map<String, dynamic>>>>(
+      future: _emailFor(),
+      builder: (context, emailSnapshot) {
+        if (emailSnapshot.hasError) {
           return _AdminInfoState(
             icon: Icons.warning_amber_rounded,
             title: 'Lecture impossible',
             message:
-                'Les logs email ne sont pas accessibles. Vérifie les droits admin ou les index Firestore.',
+                'Les données email ne sont pas accessibles. Vérifie les droits admin ou les index Firestore.',
             color: Colors.red.shade700,
           );
         }
 
-        if (logsSnapshot.connectionState == ConnectionState.waiting &&
-            !logsSnapshot.hasData) {
+        if (emailSnapshot.connectionState == ConnectionState.waiting &&
+            !emailSnapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final stats =
-            _EmailDashboardStats.fromLogs(logsSnapshot.data?.docs ?? []);
+        final results = emailSnapshot.data;
+        const emptyDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        final logDocs = results != null ? results[0].docs : emptyDocs;
+        final jobDocs = results != null ? results[1].docs : emptyDocs;
+        final ticketDocs = results != null ? results[2].docs : emptyDocs;
 
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: jobsStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return _AdminInfoState(
-                icon: Icons.warning_amber_rounded,
-                title: 'Lecture impossible',
-                message:
-                    'Les jobs email ne sont pas accessibles. Vérifie les droits admin ou les index Firestore.',
-                color: Colors.red.shade700,
-              );
-            }
-
-            final deadLetters = (snapshot.data?.docs ?? [])
-                .where((doc) =>
-                    (doc.data()['status'] ?? '').toString() == 'dead_letter')
-                .toList();
-
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: ticketsStream,
-              builder: (context, ticketsSnapshot) {
-                if (ticketsSnapshot.hasError) {
-                  return _AdminInfoState(
-                    icon: Icons.warning_amber_rounded,
-                    title: 'Lecture impossible',
-                    message:
-                        'Les tickets support ne sont pas accessibles. Vérifie les droits admin.',
-                    color: Colors.red.shade700,
-                  );
-                }
-
-                final tickets = (ticketsSnapshot.data?.docs ?? [])
-                    .where(
-                        (doc) => _toInt(doc.data()['updated_at']) >= threshold)
-                    .toList();
+        final stats = _EmailDashboardStats.fromLogs(logDocs);
+        final deadLetters = jobDocs
+            .where((doc) =>
+                (doc.data()['status'] ?? '').toString() == 'dead_letter')
+            .toList();
+        final tickets = ticketDocs
+            .where((doc) => _toInt(doc.data()['updated_at']) >= threshold)
+            .toList();
                 final openTickets = tickets
                     .where((doc) =>
                         (doc.data()['status'] ?? 'open').toString() == 'open')
@@ -1820,10 +1825,6 @@ class _EmailDashboardContent extends StatelessWidget {
                     ],
                   ),
                 );
-              },
-            );
-          },
-        );
       },
     );
   }
@@ -2928,6 +2929,54 @@ class _AdminDashboardSection extends StatefulWidget {
 class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
   _AdminDashboardWindow _window = _AdminDashboardWindow.day30;
 
+  // Audit (fetch-once) : on lit les collections de métriques en une seule fois
+  // (.get()) au lieu d'écouteurs temps réel (.snapshots()) qui re-synchronisent
+  // des collections entières à chaque écriture. Le résultat est mémoïsé par
+  // fenêtre : changer de fenêtre relance le fetch, un rebuild simple non.
+  Future<List<QuerySnapshot<Map<String, dynamic>>>>? _metricsFuture;
+  _AdminDashboardWindow? _metricsFutureWindow;
+
+  Future<List<QuerySnapshot<Map<String, dynamic>>>> _metricsFor() {
+    if (_metricsFuture == null || _metricsFutureWindow != _window) {
+      _metricsFutureWindow = _window;
+      _metricsFuture = _loadMetricsSnapshots();
+    }
+    return _metricsFuture!;
+  }
+
+  Future<List<QuerySnapshot<Map<String, dynamic>>>> _loadMetricsSnapshots() {
+    final start = _startOfDay(DateTime.now())
+        .subtract(Duration(days: _window.dayCount - 1));
+    final startTimestamp = Timestamp.fromDate(start);
+    final firestore = FirebaseFirestore.instance;
+    return Future.wait([
+      firestore
+          .collection('users')
+          .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+          .get(),
+      firestore
+          .collection('users')
+          .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
+          .get(),
+      firestore
+          .collection('listings')
+          .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+          .get(),
+      firestore
+          .collection('subscriptions')
+          .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
+          .get(),
+      firestore
+          .collection('billing_invoices')
+          .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
+          .get(),
+      firestore
+          .collection('analyticsSnapshots')
+          .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
+          .get(),
+    ]);
+  }
+
   Future<void> _openDomainDetails(_AdminDomainLiveData data) async {
     final csv = _buildAdminDomainCsv(data: data, window: _window);
     await showModalBottomSheet<void>(
@@ -3013,34 +3062,6 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
 
   @override
   Widget build(BuildContext context) {
-    final start = _startOfDay(DateTime.now())
-        .subtract(Duration(days: _window.dayCount - 1));
-    final startTimestamp = Timestamp.fromDate(start);
-    final usersStream = FirebaseFirestore.instance
-        .collection('users')
-        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final activeUsersStream = FirebaseFirestore.instance
-        .collection('users')
-        .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final listingsStream = FirebaseFirestore.instance
-        .collection('listings')
-        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final subscriptionsStream = FirebaseFirestore.instance
-        .collection('subscriptions')
-        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final billingInvoicesStream = FirebaseFirestore.instance
-        .collection('billing_invoices')
-        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final analyticsStream = FirebaseFirestore.instance
-        .collection('analyticsSnapshots')
-        .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
-        .snapshots();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3081,66 +3102,33 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
           ],
         ),
         const SizedBox(height: 14),
-        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: usersStream,
-          builder: (context, usersSnapshot) {
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: activeUsersStream,
-              builder: (context, activeUsersSnapshot) {
-                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: listingsStream,
-                  builder: (context, listingsSnapshot) {
-                    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: subscriptionsStream,
-                      builder: (context, subscriptionsSnapshot) {
-                        return StreamBuilder<
-                            QuerySnapshot<Map<String, dynamic>>>(
-                          stream: billingInvoicesStream,
-                          builder: (context, billingInvoicesSnapshot) {
-                            return StreamBuilder<
-                                QuerySnapshot<Map<String, dynamic>>>(
-                              stream: analyticsStream,
-                              builder: (context, analyticsSnapshot) {
-                                final hasError = usersSnapshot.hasError ||
-                                    activeUsersSnapshot.hasError ||
-                                    listingsSnapshot.hasError ||
-                                    subscriptionsSnapshot.hasError ||
-                                    billingInvoicesSnapshot.hasError ||
-                                    analyticsSnapshot.hasError;
-                                if (hasError) {
+        FutureBuilder<List<QuerySnapshot<Map<String, dynamic>>>>(
+          future: _metricsFor(),
+          builder: (context, metricsSnapshot) {
+                                if (metricsSnapshot.hasError) {
                                   return const _SimpleAdminEmpty(
                                     message:
                                         'Impossible de charger une partie des métriques admin. Vérifie les droits et les index Firestore.',
                                   );
                                 }
 
-                                final waiting = usersSnapshot.connectionState ==
-                                        ConnectionState.waiting ||
-                                    activeUsersSnapshot.connectionState ==
-                                        ConnectionState.waiting ||
-                                    listingsSnapshot.connectionState ==
-                                        ConnectionState.waiting ||
-                                    subscriptionsSnapshot.connectionState ==
-                                        ConnectionState.waiting ||
-                                    billingInvoicesSnapshot.connectionState ==
-                                        ConnectionState.waiting ||
-                                    analyticsSnapshot.connectionState ==
-                                        ConnectionState.waiting;
-
+                                final waiting = metricsSnapshot.connectionState ==
+                                    ConnectionState.waiting;
+                                final results = metricsSnapshot.data;
+                                const emptyDocs = <QueryDocumentSnapshot<
+                                    Map<String, dynamic>>>[];
                                 final userDocs =
-                                    usersSnapshot.data?.docs ?? const [];
+                                    results != null ? results[0].docs : emptyDocs;
                                 final activeUserDocs =
-                                    activeUsersSnapshot.data?.docs ?? const [];
+                                    results != null ? results[1].docs : emptyDocs;
                                 final listingDocs =
-                                    listingsSnapshot.data?.docs ?? const [];
+                                    results != null ? results[2].docs : emptyDocs;
                                 final subscriptionDocs =
-                                    subscriptionsSnapshot.data?.docs ??
-                                        const [];
+                                    results != null ? results[3].docs : emptyDocs;
                                 final billingDocs =
-                                    billingInvoicesSnapshot.data?.docs ??
-                                        const [];
+                                    results != null ? results[4].docs : emptyDocs;
                                 final analyticsDocs =
-                                    analyticsSnapshot.data?.docs ?? const [];
+                                    results != null ? results[5].docs : emptyDocs;
 
                                 if (waiting &&
                                     userDocs.isEmpty &&
@@ -3249,16 +3237,6 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                     ),
                                   ],
                                 );
-                              },
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            );
           },
         ),
       ],
