@@ -34,7 +34,7 @@ android {
         // minSdk 23 : exigé par firebase_core 4.x / firebase_auth 6.x,
         // google_mobile_ads 7.0, recaptcha_enterprise 18.x et record 6.x.
         // (la valeur par défaut flutter.minSdkVersion = 21 ferait échouer le merge du manifest)
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
