@@ -1105,8 +1105,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             decoration: InputDecoration(
               hintText: "Ex : Créer une entreprise de vente de gâteaux",
               prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1289,10 +1289,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Widget _buildStepRegion() {
-    final regions = kFrenchCitiesData
-        .map((c) => c.region)
-        .toSet()
-        .toList()
+    final regions = kFrenchCitiesData.map((c) => c.region).toSet().toList()
       ..sort();
 
     return _Card(
@@ -1313,9 +1310,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _region.isNotEmpty
-                      ? kBlue
-                      : Colors.grey.shade400,
+                  color: _region.isNotEmpty ? kBlue : Colors.grey.shade400,
                   width: _region.isNotEmpty ? 2 : 1,
                 ),
               ),
@@ -1328,9 +1323,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _region.isNotEmpty
-                          ? _region
-                          : 'Choisir votre région...',
+                      _region.isNotEmpty ? _region : 'Choisir votre région...',
                       style: TextStyle(
                         color: _region.isNotEmpty
                             ? const Color(0xFF111827)
@@ -1352,8 +1345,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _departementCtrl,
             decoration: InputDecoration(
               labelText: "Département (ex: 971) – optionnel",
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1367,8 +1360,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _communeCtrl,
             decoration: InputDecoration(
               labelText: "Commune – optionnel",
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1766,7 +1759,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         children: [
           Text(
             "Organismes officiels pour créer votre entreprise en $_region.",
-            style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                color: Colors.grey.shade700, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
           ...resources.map(
@@ -2323,8 +2317,7 @@ class _DropdownField extends StatelessWidget {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: Colors.white,
       ),
@@ -2363,8 +2356,7 @@ class _NumberField extends StatelessWidget {
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         filled: true,
         fillColor: Colors.white,
       ),
@@ -2965,9 +2957,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
     setState(() {
       _filtered = q.isEmpty
           ? widget.regions
-          : widget.regions
-              .where((r) => r.toLowerCase().contains(q))
-              .toList();
+          : widget.regions.where((r) => r.toLowerCase().contains(q)).toList();
     });
   }
 
@@ -3055,9 +3045,8 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                       title: Text(
                         r,
                         style: TextStyle(
-                          fontWeight: selected
-                              ? FontWeight.w800
-                              : FontWeight.w600,
+                          fontWeight:
+                              selected ? FontWeight.w800 : FontWeight.w600,
                           color: selected
                               ? const Color(0xFF1A73E8)
                               : const Color(0xFF111827),

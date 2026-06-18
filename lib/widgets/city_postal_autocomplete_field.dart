@@ -54,7 +54,6 @@ class CityEntry {
       nameNorm: _normalize(commune.name),
     );
   }
-
 }
 
 class CityPostalService {
@@ -411,7 +410,8 @@ class _CityPostalAutocompleteFieldState
     // Exemple : geo.api.gouv renvoie "Paris 1er Arrondissement" mais le seed
     // utilise "PARIS 01" → cityId "75001_paris-01" (seul document existant).
     final primaryCp = c.cps.isNotEmpty ? c.cps.first : '';
-    final resolved = _localService.findByPostalCode(primaryCp, dept: c.dept) ?? c;
+    final resolved =
+        _localService.findByPostalCode(primaryCp, dept: c.dept) ?? c;
 
     // L'utilisateur a explicitement choisi une ville dans la liste →
     // on réinitialise le flag "saisie manuelle" pour que le CP puisse

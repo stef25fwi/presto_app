@@ -384,7 +384,6 @@ class UserProfileBootstrapService {
     );
     final email = freshUser.email?.trim().toLowerCase() ?? '';
     final displayName = freshUser.displayName?.trim() ?? '';
-    final photoUrl = freshUser.photoURL?.trim() ?? '';
 
     final authSyncData = <String, dynamic>{
       'uid': freshUser.uid,
@@ -393,11 +392,6 @@ class UserProfileBootstrapService {
       'lastAuthMethod': authMethod,
       if (email.isNotEmpty) 'email': email,
       if (displayName.isNotEmpty) 'displayName': displayName,
-      if (photoUrl.isNotEmpty) 'photoUrl': photoUrl,
-      if (photoUrl.isNotEmpty) 'photoURL': photoUrl,
-      if (photoUrl.isNotEmpty) 'profilePhotoUrl': photoUrl,
-      if (photoUrl.isNotEmpty) 'avatarUrl': photoUrl,
-      if (photoUrl.isNotEmpty) 'imageUrl': photoUrl,
       'emailVerified': freshUser.emailVerified,
     };
 

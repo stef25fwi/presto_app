@@ -294,11 +294,14 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(14),
-                                child: Image.asset(
-                                  'assets/images/logowebp.webp',
-                                  width: 46,
-                                  height: 46,
-                                  fit: BoxFit.cover,
+                                child: // Logo iliprestō centré et agrandi de 25 %.
+                                    Center(
+                                  child: Image.asset(
+                                    'assets/images/logowebp.webp',
+                                    width: 57.5,
+                                    height: 57.5,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 12),

@@ -67,7 +67,8 @@ class OfferCard extends StatelessWidget {
     final isNegotiable = budgetType.contains('négocier') ||
         budgetType.contains('negocier') ||
         budgetType == 'à négocier';
-    final numPrice = price is num ? price : num.tryParse(price?.toString() ?? '');
+    final numPrice =
+        price is num ? price : num.tryParse(price?.toString() ?? '');
     final showPrice = !isNegotiable && numPrice != null && numPrice > 0;
 
     final subtitleLine = [

@@ -95,8 +95,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                         color: Colors.white,
                       ),
                       child: Center(
-                        child:
-                            widget.centerChild ??
+                        child: widget.centerChild ??
                             Icon(
                               Icons.info_rounded,
                               color: kBlue,

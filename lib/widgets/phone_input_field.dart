@@ -138,7 +138,8 @@ InputDecoration _buildPhoneDecoration({
   required CountryCode selectedCountry,
   required ValueChanged<CountryCode?> onCountryChanged,
 }) {
-  final effectiveHintText = hintText ?? phoneHintForCountryCode(selectedCountry.code);
+  final effectiveHintText =
+      hintText ?? phoneHintForCountryCode(selectedCountry.code);
   final decoration = (baseDecoration ?? const InputDecoration()).copyWith(
     label: label,
     labelText: label == null ? (labelText ?? 'Téléphone') : null,

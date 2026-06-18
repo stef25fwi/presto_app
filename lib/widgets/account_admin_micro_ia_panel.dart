@@ -244,17 +244,22 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
                                       context: context,
                                       builder: (dialogContext) {
                                         return AlertDialog(
-                                          title: const Text('Effacer l\'historique ?'),
+                                          title: const Text(
+                                              'Effacer l\'historique ?'),
                                           content: const Text(
                                             'Cette action vide l\'historique runtime audio admin sur cet appareil et dans le document partagé.',
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: () => Navigator.of(dialogContext).pop(false),
+                                              onPressed: () =>
+                                                  Navigator.of(dialogContext)
+                                                      .pop(false),
                                               child: const Text('Annuler'),
                                             ),
                                             FilledButton(
-                                              onPressed: () => Navigator.of(dialogContext).pop(true),
+                                              onPressed: () =>
+                                                  Navigator.of(dialogContext)
+                                                      .pop(true),
                                               child: const Text('Effacer'),
                                             ),
                                           ],
@@ -266,7 +271,8 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
                                       runtimeStore.clearHistory();
                                     }
                                   },
-                            icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                            icon: const Icon(Icons.delete_outline_rounded,
+                                size: 16),
                             label: const Text('Vider l\'historique'),
                           ),
                         ),
@@ -868,6 +874,7 @@ Color _flowColor(String flowKey) {
       return const Color(0xFF455A64);
   }
 }
+
 class _AudioModeOption {
   final String value;
   final String label;
@@ -914,14 +921,10 @@ class _AudioModeToggleCard extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           width: double.infinity,
           decoration: BoxDecoration(
-            color: selected
-                ? accent.withOpacity(0.09)
-                : Colors.white,
+            color: selected ? accent.withOpacity(0.09) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected
-                  ? accent.withOpacity(0.85)
-                  : Colors.black12,
+              color: selected ? accent.withOpacity(0.85) : Colors.black12,
               width: selected ? 1.8 : 1.0,
             ),
             boxShadow: selected
@@ -944,9 +947,7 @@ class _AudioModeToggleCard extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: selected
-                      ? accent
-                      : Colors.transparent,
+                  color: selected ? accent : Colors.transparent,
                   border: Border.all(
                     color: selected ? accent : Colors.black26,
                     width: 2,

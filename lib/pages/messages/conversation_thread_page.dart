@@ -23,6 +23,7 @@ import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import '../../widgets/offer_network_image.dart';
 import 'package:presto_app/services/auth_guard.dart';
+import 'package:presto_app/utils/profile_avatar_resolver.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -725,7 +726,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           backgroundColor: Colors.white.withValues(alpha: 0.18),
           foregroundColor: Colors.white,
           foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
-              ? NetworkImage(_otherParticipantPhotoUrl)
+              ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
               : null,
           onForegroundImageError: (error, stackTrace) {
             debugPrint(
@@ -2085,7 +2086,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       backgroundColor: const Color(0xFFEAF2FF),
       foregroundColor: kPrestoBlue,
       foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
-          ? NetworkImage(_otherParticipantPhotoUrl)
+          ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
           : null,
       onForegroundImageError: (error, stackTrace) {
         debugPrint(

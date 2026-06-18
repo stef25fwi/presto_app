@@ -104,23 +104,23 @@ class OfferDraft {
         category: m['category']?.toString(),
         city: m['city']?.toString(),
         postalCode: m['postalCode']?.toString(),
-        shortDescription:
-            m['description_courte']?.toString() ?? m['shortDescription']?.toString(),
+        shortDescription: m['description_courte']?.toString() ??
+            m['shortDescription']?.toString(),
         sector: m['secteur']?.toString() ?? m['sector']?.toString(),
         availability:
             m['disponibilites']?.toString() ?? m['availability']?.toString(),
         bullets: _stringListOrNull(m['bullets']),
         constraints: _stringListOrNull(m['constraints']),
-        suggestedTitles:
-            _stringListOrNull(m['suggestions_titres']) ?? _stringListOrNull(m['suggestedTitles']),
+        suggestedTitles: _stringListOrNull(m['suggestions_titres']) ??
+            _stringListOrNull(m['suggestedTitles']),
         details: _stringListOrNull(m['details']),
         requiredSkills: _stringListOrNull(m['competences_requises']) ??
             _stringListOrNull(m['requiredSkills']),
         requesterMaterials: _stringListOrNull(
-            _mapOrNull(m['materiel'])?['fourni_par_demandeur']) ??
+                _mapOrNull(m['materiel'])?['fourni_par_demandeur']) ??
             _stringListOrNull(m['requesterMaterials']),
         providerMaterials: _stringListOrNull(
-            _mapOrNull(m['materiel'])?['a_prevoir_par_prestataire']) ??
+                _mapOrNull(m['materiel'])?['a_prevoir_par_prestataire']) ??
             _stringListOrNull(m['providerMaterials']),
         questions: _stringListOrNull(m['questions_a_poser']) ??
             _stringListOrNull(m['questions']),

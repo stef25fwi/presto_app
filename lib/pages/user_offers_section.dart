@@ -209,7 +209,10 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       return null;
     }
 
-    for (final collectionName in const <String>[kListingsCollection, 'offers']) {
+    for (final collectionName in const <String>[
+      kListingsCollection,
+      'offers'
+    ]) {
       try {
         final snapshot = await firestore
             .collection(collectionName)
@@ -990,10 +993,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
     final moderationStatus =
         (data['moderationStatus'] ?? '').toString().trim().toLowerCase();
-    final pendingHumanReviewCount =
-        (data['pendingHumanReviewCount'] is num)
-            ? (data['pendingHumanReviewCount'] as num).toInt()
-            : 0;
+    final pendingHumanReviewCount = (data['pendingHumanReviewCount'] is num)
+        ? (data['pendingHumanReviewCount'] as num).toInt()
+        : 0;
 
     if (moderationStatus == 'manual_review' || pendingHumanReviewCount > 0) {
       return 'En attente de validation admin. Une ou plusieurs photos nécessitent une vérification manuelle avant publication.';

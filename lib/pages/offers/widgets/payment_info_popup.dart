@@ -254,7 +254,8 @@ class _Header extends StatelessWidget {
                 color: Color(0xFFF3F6FB),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
+              child:
+                  const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
             ),
           ),
         ],
@@ -432,13 +433,26 @@ class _PaymentMethods extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final methods = [
-      const _Method(Icons.credit_card_rounded, kBlue, 'Carte bancaire', 'Paiement sécurisé en ligne'),
-      const _Method(Icons.account_balance_rounded, kGreen, 'Virement bancaire', 'Classique ou instantané'),
-      const _Method(Icons.flash_on_rounded, kOrange, 'Virement instantané', 'Rapide et sécurisé'),
-      const _Method(Icons.payments_rounded, kPurple, 'Espèces', 'Dans le cadre légal'),
-      const _Method(Icons.account_balance_wallet_rounded, kBlue, 'Portefeuille électronique ou application mobile', 'Paiement rapide et traçable'),
-      const _Method(Icons.receipt_long_rounded, Colors.pink, 'Chèque', 'Moins rapide, moins sécurisé'),
-      const _Method(Icons.shield_rounded, kBlueDark, 'Paiement sécurisé intégré iliprestō', 'Sécurisé pour les deux parties'),
+      const _Method(Icons.credit_card_rounded, kBlue, 'Carte bancaire',
+          'Paiement sécurisé en ligne'),
+      const _Method(Icons.account_balance_rounded, kGreen, 'Virement bancaire',
+          'Classique ou instantané'),
+      const _Method(Icons.flash_on_rounded, kOrange, 'Virement instantané',
+          'Rapide et sécurisé'),
+      const _Method(
+          Icons.payments_rounded, kPurple, 'Espèces', 'Dans le cadre légal'),
+      const _Method(
+          Icons.account_balance_wallet_rounded,
+          kBlue,
+          'Portefeuille électronique ou application mobile',
+          'Paiement rapide et traçable'),
+      const _Method(Icons.receipt_long_rounded, Colors.pink, 'Chèque',
+          'Moins rapide, moins sécurisé'),
+      const _Method(
+          Icons.shield_rounded,
+          kBlueDark,
+          'Paiement sécurisé intégré iliprestō',
+          'Sécurisé pour les deux parties'),
     ];
 
     return Container(

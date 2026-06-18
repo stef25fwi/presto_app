@@ -4580,14 +4580,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   borderRadius: BorderRadius.circular(10),
                   onTap: () => setState(() => _hidePhone = !_hidePhone),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                     child: Row(
                       children: [
                         Switch(
                           value: _hidePhone,
-                          onChanged: (v) =>
-                              setState(() => _hidePhone = v),
+                          onChanged: (v) => setState(() => _hidePhone = v),
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
                         ),

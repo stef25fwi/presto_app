@@ -101,7 +101,8 @@ class ProfileLocationResolution {
   final String? postalCodeSource;
 
   String get blockReason {
-    if (city.isEmpty && postalCode.isEmpty) return 'missing city and postalCode';
+    if (city.isEmpty && postalCode.isEmpty)
+      return 'missing city and postalCode';
     if (city.isEmpty) return 'missing city';
     if (postalCode.isEmpty) return 'missing postalCode';
     return 'none';

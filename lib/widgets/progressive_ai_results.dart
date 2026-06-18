@@ -280,7 +280,8 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildExtractedField(BuildContext context, String label, String value) {
+  Widget _buildExtractedField(
+      BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(

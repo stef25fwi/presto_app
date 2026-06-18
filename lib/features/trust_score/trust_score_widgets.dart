@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../app_core.dart';
 import 'trust_score_models.dart';
 import 'trust_score_service.dart';
+import 'package:presto_app/utils/profile_avatar_resolver.dart';
 
 enum FoundSomeoneOnIliPrestoAction {
   searchUser,
@@ -1100,7 +1101,8 @@ class _ResponderAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: 24,
       backgroundColor: kPrestoBlue.withOpacity(0.12),
-      backgroundImage: photoUrl == null ? null : NetworkImage(photoUrl),
+      backgroundImage:
+          photoUrl == null ? null : profileAvatarImageProvider(photoUrl),
       child: photoUrl == null
           ? Text(
               responder.pseudo.isEmpty
