@@ -1,0 +1,16 @@
+Inter font family
+Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+Inter is free and open source. You can use it for any purpose, including
+commercial projects, and embed it in apps and documents. The font may be
+modified and redistributed, but the license and copyright notice above must
+accompany any redistribution, and the fonts (or derivatives) may not be sold
+on their own.
+
+Full license text (SIL OFL 1.1):
+  https://openfontlicense.org/open-font-license-official-text/
+
+Source / canonical distribution of Inter:
+  https://github.com/rsms/inter
