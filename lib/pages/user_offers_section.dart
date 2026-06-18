@@ -441,6 +441,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
                           child: OfferNetworkImage(
                             url: selectedDoc.imageUrl,
                             fit: BoxFit.cover,
+                            cacheWidth: 240,
                             errorChild: _buildFavoritePlaceholder(),
                             loadingChild: _buildFavoritePlaceholder(),
                           ),
@@ -2064,6 +2065,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         child: OfferNetworkImage(
           url: imageUrl,
           fit: BoxFit.cover,
+          cacheWidth: 300,
           errorChild: Container(
             width: 84,
             height: 84,

@@ -28,6 +28,10 @@ Widget buildOfferNetworkImage({
   required BoxFit fit,
   required Widget errorChild,
   Widget? loadingChild,
+  // Sur le web le dimensionnement/décodage est délégué au navigateur ; ces
+  // paramètres existent pour garder une signature identique au stub mobile.
+  int? cacheWidth,
+  int? cacheHeight,
 }) {
   final trimmedUrl = url.trim();
   if (trimmedUrl.isEmpty) return errorChild;
