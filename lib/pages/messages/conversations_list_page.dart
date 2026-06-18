@@ -573,8 +573,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return conversationId.isEmpty ? null : conversationId;
   }
 
-  Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
-    final isAdminMode = _isAdminViewer;
+  Stream<_ConversationQueryState> _buildConversationStateStream(
+    String userId, {
+    required bool adminMode,
+  }) {
+    final isAdminMode = adminMode;
     final mode = isAdminMode ? 'admin_global' : 'user_participant_aliases';
     final controller = StreamController<_ConversationQueryState>();
     final queryShape = ConversationsQueryContract.shape(
@@ -968,36 +971,50 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Stream<_ConversationQueryState>? _cachedConversationStateStream;
   String? _cachedConversationStateUserId;
+  bool? _cachedConversationStateAdminMode;
 
   /// Conserve le même flux tant que l'utilisateur connecté ne change pas.
   /// Sans ce cache, chaque setState recrée le flux et réaffiche le loader.
   Stream<_ConversationQueryState> _stableConversationStateForUser(
-    String userId,
-  ) {
+    String userId, {
+    required bool adminMode,
+  }) {
     final currentStream = _cachedConversationStateStream;
 
-    if (currentStream != null && _cachedConversationStateUserId == userId) {
+    if (currentStream != null &&
+        _cachedConversationStateUserId == userId &&
+        _cachedConversationStateAdminMode == adminMode) {
       return currentStream;
     }
 
     _cachedConversationStateUserId = userId;
-    final nextStream = _conversationStateForUser(userId);
+    _cachedConversationStateAdminMode = adminMode;
+
+    final nextStream = _conversationStateForUser(
+      userId,
+      adminMode: adminMode,
+    );
+
     _cachedConversationStateStream = nextStream;
     return nextStream;
   }
 
-  Stream<_ConversationQueryState> _conversationStateForUser(String userId) {
+  Stream<_ConversationQueryState> _conversationStateForUser(
+    String userId, {
+    required bool adminMode,
+  }) {
     _subscribeToUnreadCountForUser(userId);
 
     if (_conversationStateUserId == userId &&
-        _conversationStateAdminMode == _isAdminViewer &&
+        _conversationStateAdminMode == adminMode &&
         _conversationStateStream != null) {
       return _conversationStateStream!;
     }
 
     _conversationStateUserId = userId;
-    _conversationStateAdminMode = _isAdminViewer;
-    _conversationStateStream = _buildConversationStateStream(userId);
+    _conversationStateAdminMode = adminMode;
+    _conversationStateStream =
+        _buildConversationStateStream(userId, adminMode: adminMode);
     return _conversationStateStream!;
   }
 
@@ -1805,7 +1822,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                   _buildAdminConversationLoadLogPanel(),
                   Expanded(
                     child: StreamBuilder<_ConversationQueryState>(
-                      stream: _stableConversationStateForUser(userId),
+                      stream: _stableConversationStateForUser(
+                        userId,
+                        adminMode: _adminStatusReady && _isAdminViewer,
+                      ),
                       builder: (context, snapshot) {
                         final state = snapshot.data;
 

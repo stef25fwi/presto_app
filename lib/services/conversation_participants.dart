@@ -6,7 +6,11 @@ const conversationPrimaryParticipantField = 'participantIds';
 // N'ajouter un alias ici que s'il est AUSSI autorisé dans firestore.rules
 // (allow list), sinon la requête échoue en permission-denied.
 const conversationParticipantQueryFieldAliases = <String>[
-  conversationPrimaryParticipantField,
+  'participantIds',
+  'participants',
+  'participant_ids',
+  'userIds',
+  'memberIds',
 ];
 
 // Côté lecture (parsing d'un document déjà chargé) on reste tolérant à tous
