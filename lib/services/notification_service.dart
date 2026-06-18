@@ -151,7 +151,10 @@ class NotificationService {
 
     // S'abonner aux mises à jour du token
     _messaging.onTokenRefresh.listen((newToken) async {
-      debugPrint('[Notifications] Nouveau token FCM: $newToken');
+      // 6.5 : ne jamais journaliser le token FCM complet (cible de notification).
+      debugPrint(
+          '[Notifications] Nouveau token FCM (${newToken.length} car.): '
+          '${newToken.substring(0, newToken.length < 6 ? newToken.length : 6)}…');
       _lastRegisteredToken = newToken;
       if (await hasPushPermission()) {
         await _registerPushToken(newToken);
@@ -264,7 +267,9 @@ class NotificationService {
     if (!await hasPushPermission()) return false;
 
     final token = await _fetchMessagingToken();
-    debugPrint('[Notifications] FCM Token: $token');
+    // 6.5 : token FCM masqué dans les logs.
+    debugPrint(
+        '[Notifications] Token FCM: ${token == null ? 'null' : '${token.substring(0, token.length < 6 ? token.length : 6)}…'}');
     if (token == null) return false;
 
     _lastRegisteredToken = token;

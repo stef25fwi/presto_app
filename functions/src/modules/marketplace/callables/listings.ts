@@ -95,6 +95,7 @@ function sanitizeDraftPayload(rawDraft: Record<string, unknown>, ownerId: string
     "media",
     "status",
     "phone",
+    "hidePhone",
     "budgetType",
     "missionDelay",
     "isUrgent",
@@ -125,6 +126,16 @@ function sanitizeDraftPayload(rawDraft: Record<string, unknown>, ownerId: string
   sanitized.ownerId = ownerId;
   sanitized.status = normalizeString(sanitized.status) || "draft";
   sanitized.media = Array.isArray(sanitized.media) ? sanitized.media : [];
+
+  // P0-1 : si l'utilisateur a choisi de masquer son numéro, on ne conserve
+  // PAS le téléphone dans le brouillon (qui devient l'annonce publique).
+  const hidePhone =
+    sanitized.hidePhone === true || normalizeString(sanitized.hidePhone) === "true";
+  sanitized.hidePhone = hidePhone;
+  if (hidePhone) {
+    delete sanitized.phone;
+  }
+
   return sanitized;
 }
 
@@ -524,7 +535,10 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
         avatarUrl: ownerIdentity.avatarUrl || null,
         verified: ownerIdentity.verified,
       },
-      phone: validated.phone || null,
+      // P0-1 : le numéro n'est JAMAIS écrit dans le document public si
+      // l'utilisateur a demandé à le masquer. On stocke aussi le choix.
+      phone: validated.hidePhone ? null : (validated.phone || null),
+      hidePhone: validated.hidePhone,
       budgetType: validated.budgetType || null,
       missionDelay: validated.missionDelay || null,
       isUrgent: validated.isUrgent,
