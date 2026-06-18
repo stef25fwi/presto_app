@@ -69,6 +69,7 @@ class NotificationService {
   bool _localNotificationsReady = false;
   bool _navigatorReady = false;
   bool _pendingRouteFlushScheduled = false;
+  bool _notificationActivationDialogOpen = false;
 
   /// Initialise le service de notifications
   Future<void> initialize({
@@ -138,6 +139,7 @@ class NotificationService {
         FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (user == null) return;
       await syncPushRegistrationIfAuthorized();
+      await _maybeShowNotificationActivationDialog(user.uid);
     });
 
     // Récupérer le message initial (si l'app a été lancée depuis une notification)
@@ -152,8 +154,7 @@ class NotificationService {
     // S'abonner aux mises à jour du token
     _messaging.onTokenRefresh.listen((newToken) async {
       // 6.5 : ne jamais journaliser le token FCM complet (cible de notification).
-      debugPrint(
-          '[Notifications] Nouveau token FCM (${newToken.length} car.): '
+      debugPrint('[Notifications] Nouveau token FCM (${newToken.length} car.): '
           '${newToken.substring(0, newToken.length < 6 ? newToken.length : 6)}…');
       _lastRegisteredToken = newToken;
       if (await hasPushPermission()) {
@@ -527,6 +528,89 @@ class NotificationService {
     } catch (error) {
       debugPrint('[Notifications] register push token error: $error');
     }
+  }
+
+  Future<void> _maybeShowNotificationActivationDialog(String userId) async {
+    if (_notificationActivationDialogOpen) return;
+
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) return;
+
+    final shouldPrompt =
+        await shouldPromptForMessagingPermission(normalizedUserId);
+    if (!shouldPrompt) return;
+
+    final context = _navigatorKey?.currentContext;
+    if (context == null || !context.mounted) return;
+
+    _notificationActivationDialogOpen = true;
+
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: const Text(
+            'Activer les notifications',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: const Text(
+            'Active les notifications iliprestō pour recevoir les nouveaux messages, '
+            'les réponses à tes annonces et les alertes importantes, même quand '
+            'l’application est fermée sur Android, iOS, Web ou PC.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Plus tard'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Activer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    _notificationActivationDialogOpen = false;
+
+    if (accepted == true) {
+      final activated = await requestPushPermission();
+      final currentContext = _navigatorKey?.currentContext;
+
+      if (currentContext == null || !currentContext.mounted) return;
+
+      ScaffoldMessenger.of(currentContext).showSnackBar(
+        SnackBar(
+          content: Text(
+            activated
+                ? 'Notifications iliprestō activées.'
+                : pushActivationFailureMessage(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _markMessagingPromptDismissed(normalizedUserId);
+  }
+
+  Future<void> _markMessagingPromptDismissed(String userId) async {
+    final normalizedUserId = userId.trim();
+    if (normalizedUserId.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      _messagingPromptDismissedAtKey(normalizedUserId),
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   Future<String?> _fetchMessagingToken() async {
