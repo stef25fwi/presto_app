@@ -80,7 +80,8 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
   Future<void>? _loadFuture;
   bool _loaded = false;
   bool _cloudSyncEnabled = false;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _cloudSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _cloudSubscription;
 
   String get configuredMode => _configuredMode;
   String get currentLabel => _currentLabel;
@@ -154,12 +155,11 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
       _attemptCounter = (decoded['attemptCounter'] as num?)?.toInt() ?? 0;
       _configuredMode =
           (decoded['configuredMode'] ?? 'HYBRID').toString().toUpperCase();
-      _currentLabel =
-          (decoded['currentLabel'] ?? 'Mode serveur').toString();
+      _currentLabel = (decoded['currentLabel'] ?? 'Mode serveur').toString();
       _currentDetail =
           (decoded['currentDetail'] ?? 'Aucun pipeline recent').toString();
       _backendModeUsed = decoded['backendModeUsed']?.toString();
-        _dataSource = (decoded['dataSource'] ?? 'local').toString();
+      _dataSource = (decoded['dataSource'] ?? 'local').toString();
       _lastUpdatedAt = decoded['lastUpdatedAt'] == null
           ? null
           : DateTime.tryParse(decoded['lastUpdatedAt'].toString());
@@ -212,7 +212,8 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
   }
 
   void _applyRemotePayload(Map<String, dynamic> data) {
-    _attemptCounter = (data['attemptCounter'] as num?)?.toInt() ?? _attemptCounter;
+    _attemptCounter =
+        (data['attemptCounter'] as num?)?.toInt() ?? _attemptCounter;
     _configuredMode =
         (data['configuredMode'] ?? _configuredMode).toString().toUpperCase();
     _currentLabel = (data['currentLabel'] ?? _currentLabel).toString();
@@ -281,7 +282,8 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
         'currentLabel': _currentLabel,
         'currentDetail': _currentDetail,
         'backendModeUsed': _backendModeUsed,
-        'updatedAtMs': _lastUpdatedAt?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch,
+        'updatedAtMs': _lastUpdatedAt?.millisecondsSinceEpoch ??
+            DateTime.now().millisecondsSinceEpoch,
         'updatedByUid': currentUser.uid,
         'history': _history.map((entry) => entry.toMap()).toList(),
       };
@@ -296,7 +298,8 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
   }
 
   void updateConfiguredMode(String mode) {
-    final normalized = mode.trim().isEmpty ? 'HYBRID' : mode.trim().toUpperCase();
+    final normalized =
+        mode.trim().isEmpty ? 'HYBRID' : mode.trim().toUpperCase();
     if (_configuredMode == normalized) return;
     _configuredMode = normalized;
     _dataSource = 'local';
@@ -313,9 +316,10 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
     int? transcriptLength,
   }) {
     final now = DateTime.now();
-    final normalizedBackendMode = backendModeUsed == null || backendModeUsed.trim().isEmpty
-        ? null
-        : backendModeUsed.trim().toUpperCase();
+    final normalizedBackendMode =
+        backendModeUsed == null || backendModeUsed.trim().isEmpty
+            ? null
+            : backendModeUsed.trim().toUpperCase();
     _attemptCounter += 1;
 
     _currentLabel = label;
