@@ -586,7 +586,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final subscriptions =
         <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var isCancelled = false;
-    var permissionDeniedRetryCount = 1;
+    const maxPermissionDeniedRetries = 1;
+    var permissionDeniedRetryCount = 0;
     var permissionDeniedRecoveryGeneration = 0;
     var appCheckPrefixRetryCount = 0;
     var _subscriptionGeneration = 0;
@@ -711,7 +712,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
         // Toute réponse Firestore, même vide, prouve que la requête a réussi.
         // On remet donc à zéro la séquence de refus transitoires.
-        permissionDeniedRetryCount = 1;
+        permissionDeniedRetryCount = 0;
         permissionDeniedRecoveryGeneration += 1;
 
         errorsByField.removeWhere(
@@ -747,7 +748,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             (_, value) => _isPermissionDenied(value),
           );
 
-          if (!_isRetryingPermissionDenied) {
+          if (!_isRetryingPermissionDenied &&
+              permissionDeniedRetryCount < maxPermissionDeniedRetries) {
             _isRetryingPermissionDenied = true;
             permissionDeniedRetryCount += 1;
             _appendAdminConversationLog(
@@ -785,8 +787,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 await startSubscriptions(forceRefreshTokens: true);
               }
             }());
-          } else if (mergedDocs().isEmpty) {
-            emitState(isLoading: true);
+          } else {
+            // Le seul retry autorisé a déjà été effectué.
+            // On conserve les conversations déjà chargées et on arrête
+            // définitivement la boucle de reconnexion.
+            errorsByField[field] = error;
+
+            _appendAdminConversationLog(
+              '5/6 ⛔ retry permission-denied arrêté '
+              '(maximum=$maxPermissionDeniedRetries)',
+            );
+
+            emitState(isLoading: false);
           }
 
           return;
