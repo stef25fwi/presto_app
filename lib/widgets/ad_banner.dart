@@ -1,10 +1,9 @@
-import 'dart:async';
-
+import 'dart:async' as async;
 import 'package:flutter/foundation.dart'
     show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:presto_app/widgets/random_asset_ticker.dart';
+import 'package:presto_app/widgets/managed_ad_placeholder_ticker.dart';
 
 /// Config pour les IDs pub AdMob production
 class AdConfig {
@@ -62,7 +61,7 @@ class _AdBannerState extends State<AdBanner> {
     if (_initialized) return;
     try {
       final params = ConsentRequestParameters();
-      final consentCompleter = Completer<void>();
+      final consentCompleter = async.Completer<void>();
 
       ConsentInformation.instance.requestConsentInfoUpdate(
         params,
@@ -178,18 +177,11 @@ class _AdBannerState extends State<AdBanner> {
         return Container(
           margin: margin,
           width: double.infinity,
-          child: SizedBox(
-            width: double.infinity,
-            height: ph,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: RandomAssetTicker(
-                folderPrefix: folder,
-                interval: const Duration(seconds: 4),
-                fit: BoxFit.cover,
-                enabled: widget.animatePlaceholder,
-              ),
-            ),
+          child: ManagedAdPlaceholderTicker(
+            fallbackFolderPrefix: folder,
+            borderRadius: BorderRadius.circular(18),
+            interval: const Duration(seconds: 4),
+            enabled: widget.animatePlaceholder,
           ),
         );
       }
@@ -202,19 +194,12 @@ class _AdBannerState extends State<AdBanner> {
           border: Border.all(color: const Color(0xFFE0E0E0), width: 0.75),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: SizedBox(
-          height: ph,
-          width: double.infinity,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: RandomAssetTicker(
-              folderPrefix: folder,
-              fit: BoxFit.cover,
-              interval: const Duration(seconds: 4),
-              antiRepeatWindow: 3,
-              enabled: widget.animatePlaceholder,
-            ),
-          ),
+        child: ManagedAdPlaceholderTicker(
+          fallbackFolderPrefix: folder,
+          borderRadius: BorderRadius.circular(6),
+          interval: const Duration(seconds: 4),
+          antiRepeatWindow: 3,
+          enabled: widget.animatePlaceholder,
         ),
       );
     }
