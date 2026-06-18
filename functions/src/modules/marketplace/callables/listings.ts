@@ -95,6 +95,7 @@ function sanitizeDraftPayload(rawDraft: Record<string, unknown>, ownerId: string
     "media",
     "status",
     "phone",
+    "hidePhone",
     "budgetType",
     "missionDelay",
     "isUrgent",
@@ -524,7 +525,10 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
         avatarUrl: ownerIdentity.avatarUrl || null,
         verified: ownerIdentity.verified,
       },
-      phone: validated.phone || null,
+      hidePhone: validated.hidePhone,
+      phone: admin.firestore.FieldValue.delete(),
+      telephone: admin.firestore.FieldValue.delete(),
+      contactPhone: admin.firestore.FieldValue.delete(),
       budgetType: validated.budgetType || null,
       missionDelay: validated.missionDelay || null,
       isUrgent: validated.isUrgent,
@@ -550,6 +554,20 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
       sourceDraftId: draftId,
       riskScore: 0,
     }, { merge: true });
+
+    const privateContactRef = db.collection("listingPrivateContacts").doc(listingId);
+    if (validated.phone) {
+      await privateContactRef.set({
+        listingId,
+        ownerId,
+        phone: validated.phone,
+        hidePhone: validated.hidePhone,
+        createdAt: now,
+        updatedAt: now,
+      }, { merge: true });
+    } else {
+      await privateContactRef.delete().catch(() => undefined);
+    }
 
     const evaluation = await evaluateListingRisk({
       ownerId,

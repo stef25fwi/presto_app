@@ -15,6 +15,7 @@ export interface ValidatedListingDraftPayload {
   thumbnailUrl: string;
   searchKeywords: string[];
   phone: string;
+  hidePhone: boolean;
   budgetType: string;
   missionDelay: string;
   isUrgent: boolean;
@@ -155,6 +156,7 @@ export function validateListingDraftPayload(rawDraft: UnknownRecord, maxMediaCou
     thumbnailUrl: media[0]?.thumbnailUrl || media[0]?.downloadUrl || "",
     searchKeywords: buildSearchKeywords(title, description, categoryId, cityId),
     phone: normalizeString(rawDraft.phone),
+    hidePhone: rawDraft.hidePhone === true,
     budgetType: normalizeString(rawDraft.budgetType),
     missionDelay: normalizeString(rawDraft.missionDelay),
     isUrgent: rawDraft.isUrgent === true,
