@@ -3548,34 +3548,133 @@ class _MaskedPhoneInfoLine extends StatefulWidget {
 class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
   bool _isPhoneVisible = false;
 
+  Future<void> _handlePhoneVisibility() async {
+    // L'utilisateur peut toujours remasquer un numéro déjà affiché.
+    if (_isPhoneVisible) {
+      if (!mounted) return;
+
+      setState(() {
+        _isPhoneVisible = false;
+      });
+      return;
+    }
+
+    // Le choix de l'annonceur reste prioritaire.
+    if (widget.hidePhone || widget.phone.trim().isEmpty) {
+      return;
+    }
+
+    // La révélation du numéro nécessite un compte connecté.
+    if (FirebaseAuth.instance.currentUser == null) {
+      final shouldConnect = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Connexion requise'),
+            content: const Text(
+              'Connectez-vous pour afficher le numéro de téléphone '
+              'de cette annonce.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Se connecter'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (shouldConnect != true || !mounted) {
+        return;
+      }
+
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          fullscreenDialog: true,
+          builder: (_) => const AccountPage(),
+        ),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      // Double sécurité : la route ne doit jamais autoriser la révélation
+      // si Firebase Auth ne contient finalement aucun utilisateur.
+      if (FirebaseAuth.instance.currentUser == null) {
+        return;
+      }
+    }
+
+    if (!mounted || widget.hidePhone) {
+      return;
+    }
+
+    setState(() {
+      _isPhoneVisible = true;
+    });
+  }
+
+  String _phoneIndicatif(String rawPhone) {
+    final compact = rawPhone.trim().replaceAll(RegExp(r'[\\s().-]+'), '');
+
+    if (compact.isEmpty) {
+      return '';
+    }
+
+    // Indicatifs principalement utilisés par iliprestō.
+    const supportedDialingCodes = <String>[
+      '+590', // Guadeloupe, Saint-Martin, Saint-Barthélemy
+      '+596', // Martinique
+      '+594', // Guyane
+      '+262', // La Réunion et Mayotte
+      '+508', // Saint-Pierre-et-Miquelon
+      '+681', // Wallis-et-Futuna
+      '+689', // Polynésie française
+      '+687', // Nouvelle-Calédonie
+      '+33', // France métropolitaine
+    ];
+
+    for (final dialingCode in supportedDialingCodes) {
+      if (compact.startsWith(dialingCode)) {
+        return dialingCode;
+      }
+    }
+
+    // Repli pour un numéro international non encore répertorié.
+    final fallback = RegExp(r'^(\\+\\d{1,3})').firstMatch(compact);
+    return fallback?.group(1) ?? '';
+  }
+
   String _indicatifOnly(String rawPhone) {
-    final normalized = rawPhone.trim().replaceAll(RegExp(r'\s+'), ' ');
-    final match = RegExp(r'^(\+\d{1,4})').firstMatch(normalized);
-    if (match != null) return '${match.group(1)} ••••••';
-    final digits = normalized.replaceAll(RegExp(r'\D'), '');
-    return digits.isNotEmpty ? '+${digits[0]}• ••••••' : '••••••';
+    final dialingCode = _phoneIndicatif(rawPhone);
+
+    if (dialingCode.isEmpty) {
+      return '••••••';
+    }
+
+    return '$dialingCode ••••••';
   }
 
   String _maskedLabel(String rawPhone) {
     final normalized = rawPhone.trim();
-    if (normalized.isEmpty) return 'Non renseigné';
 
-    final compact = normalized.replaceAll(RegExp(r'\s+'), ' ');
-    final internationalPrefix =
-        RegExp(r'^(\+\d{1,4})').firstMatch(compact)?.group(1);
-    if (internationalPrefix != null && internationalPrefix.isNotEmpty) {
-      return '$internationalPrefix ••••••';
+    if (normalized.isEmpty) {
+      return 'Non renseigné';
     }
 
-    final digitsOnly = compact.replaceAll(RegExp(r'\D'), '');
-    if (digitsOnly.length >= 4) {
-      return '${digitsOnly.substring(0, 4)} ••••••';
-    }
-    if (digitsOnly.isNotEmpty) {
-      return '$digitsOnly ••••••';
+    final dialingCode = _phoneIndicatif(normalized);
+
+    if (dialingCode.isEmpty) {
+      return '••••••';
     }
 
-    return '••••••';
+    return '$dialingCode ••••••';
   }
 
   @override
@@ -3646,13 +3745,9 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
               if (!widget.hidePhone) ...[
                 SizedBox(width: widget.compact ? 4 : 6),
                 IconButton(
-                  onPressed: hasPhone
-                      ? () =>
-                          setState(() => _isPhoneVisible = !_isPhoneVisible)
-                      : null,
-                  tooltip: _isPhoneVisible
-                      ? 'Masquer le numéro'
-                      : 'Voir le numéro',
+                  onPressed: hasPhone ? _handlePhoneVisibility : null,
+                  tooltip:
+                      _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
                   visualDensity: VisualDensity.compact,
                   splashRadius: widget.compact ? 18 : 20,
                   icon: Icon(
