@@ -1075,10 +1075,15 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  /// Stream d'auth mis en cache : éviter d'en créer un nouveau (et donc une
+  /// nouvelle souscription) à chaque rebuild de la cloche.
+  final Stream<User?> _authBellStream =
+      FirebaseAuth.instance.authStateChanges();
+
   /// Cloche : pastille = nombre de messages non lus + notifications d'offres
   Widget _buildNotificationBell() {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: _authBellStream,
       builder: (context, authSnapshot) {
         final user = authSnapshot.data;
 

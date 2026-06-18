@@ -366,28 +366,31 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       };
 
   void _importData(Map<String, dynamic> data) {
-    _projectCtrl.text = (data['projectText'] ?? '') as String;
-    _activityType = (data['activityType'] ?? _activityType) as String;
-    _clientele = (data['clientele'] ?? _clientele) as String;
-    _businessModel = (data['businessModel'] ?? _businessModel) as String;
+    // Casts tolérants (as String?/num?/bool?) : un champ stocké avec un type
+    // inattendu retombe sur la valeur par défaut au lieu de lever un _TypeError
+    // qui ferait échouer silencieusement tout le chargement du brouillon.
+    _projectCtrl.text = (data['projectText'] as String?) ?? '';
+    _activityType = (data['activityType'] as String?) ?? _activityType;
+    _clientele = (data['clientele'] as String?) ?? _clientele;
+    _businessModel = (data['businessModel'] as String?) ?? _businessModel;
 
-    _situation = (data['situation'] ?? '') as String;
+    _situation = (data['situation'] as String?) ?? '';
 
     final t = (data['territory'] as Map?)?.cast<String, dynamic>() ?? {};
-    _region = (t['region'] ?? '') as String;
-    _departement = (t['departement'] ?? '') as String;
-    _commune = (t['commune'] ?? '') as String;
+    _region = (t['region'] as String?) ?? '';
+    _departement = (t['departement'] as String?) ?? '';
+    _commune = (t['commune'] as String?) ?? '';
     _regionCtrl.text = _region;
     _departementCtrl.text = _departement;
     _communeCtrl.text = _commune;
 
-    _ambition = (data['ambition'] ?? _ambition) as String;
-    _caVise = ((data['caVise'] ?? 0) as num).toDouble();
-    _depensesPro = ((data['depensesPro'] ?? 0) as num).toDouble();
-    _besoinTva = (data['besoinTva'] ?? _besoinTva) as String;
-    _association = (data['association'] ?? _association) as bool;
+    _ambition = (data['ambition'] as String?) ?? _ambition;
+    _caVise = (data['caVise'] as num?)?.toDouble() ?? 0;
+    _depensesPro = (data['depensesPro'] as num?)?.toDouble() ?? 0;
+    _besoinTva = (data['besoinTva'] as String?) ?? _besoinTva;
+    _association = (data['association'] as bool?) ?? _association;
     _protectionPatrimoine =
-        (data['protectionPatrimoine'] ?? _protectionPatrimoine) as bool;
+        (data['protectionPatrimoine'] as bool?) ?? _protectionPatrimoine;
 
     _recomputeDerived();
   }

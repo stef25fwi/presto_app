@@ -370,10 +370,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return _filteredDepartmentCodes;
   }
 
+  /// Stream d'auth mis en cache : éviter d'en recréer un (nouvelle
+  /// souscription) à chaque rebuild de la barre de consultation.
+  final Stream<User?> _authBellStream =
+      FirebaseAuth.instance.authStateChanges();
+
   /// Badge = messages non lus + notifications d'annonces (dont favoris)
   Widget _buildConsultNotificationBell() {
     return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
+      stream: _authBellStream,
       builder: (context, authSnapshot) {
         final user = authSnapshot.data;
 
