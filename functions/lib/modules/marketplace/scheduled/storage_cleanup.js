@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.purgeOrphanedStorageFiles = void 0;
+exports.purgeAbandonedListingDrafts = exports.purgeOrphanedStorageFiles = void 0;
 const admin = __importStar(require("firebase-admin"));
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const env_1 = require("../../../config/env");
@@ -98,5 +98,59 @@ exports.purgeOrphanedStorageFiles = (0, scheduler_1.onSchedule)({
         scannedFiles: files.length,
         deletedCount,
     });
+});
+/**
+ * TTL — Purge les brouillons d'annonce ABANDONNÉS : documents listingDrafts
+ * encore au statut "draft" (jamais soumis) et inactifs depuis plus de 7 jours.
+ * Supprime aussi leurs médias Storage. Tourne chaque nuit à 3 h (UTC).
+ *
+ * Sécurité : ne touche QUE les brouillons explicitement "draft". Les statuts
+ * "submitted"/"pending"/etc. (devenus des annonces) sont ignorés.
+ */
+exports.purgeAbandonedListingDrafts = (0, scheduler_1.onSchedule)({
+    schedule: "0 3 * * *",
+    region: env_1.PROJECT_REGION,
+    timeoutSeconds: 540,
+}, async () => {
+    const ABANDON_AFTER_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
+    const cutoff = admin.firestore.Timestamp.fromMillis(Date.now() - ABANDON_AFTER_MS);
+    const bucket = admin.storage().bucket();
+    let scanned = 0;
+    let deletedDrafts = 0;
+    let deletedMedia = 0;
+    for (const collectionName of [constants_1.COLLECTIONS.listingDrafts, constants_1.LEGACY_COLLECTIONS.listingDrafts]) {
+        let snapshot;
+        try {
+            snapshot = await firestore_1.db
+                .collection(collectionName)
+                .where("updatedAt", "<", cutoff)
+                .limit(300)
+                .get();
+        }
+        catch (error) {
+            firebase_functions_1.logger.warn("abandoned_drafts_query_failed", { collectionName, error: String(error) });
+            continue;
+        }
+        for (const doc of snapshot.docs) {
+            scanned += 1;
+            const data = doc.data();
+            const status = String(data.status ?? "").trim().toLowerCase();
+            // On ne supprime que les brouillons jamais soumis.
+            if (status !== "draft")
+                continue;
+            for (const storagePath of collectMediaStoragePaths(data)) {
+                await bucket.file(storagePath).delete().catch((error) => {
+                    firebase_functions_1.logger.warn("abandoned_draft_media_delete_failed", { storagePath, error: String(error) });
+                });
+                deletedMedia += 1;
+            }
+            await doc.ref.delete().catch((error) => {
+                firebase_functions_1.logger.warn("abandoned_draft_delete_failed", { draftId: doc.id, error: String(error) });
+            });
+            deletedDrafts += 1;
+            firebase_functions_1.logger.info("abandoned_draft_deleted", { collectionName, draftId: doc.id });
+        }
+    }
+    firebase_functions_1.logger.info("abandoned_drafts_cleanup_complete", { scanned, deletedDrafts, deletedMedia });
 });
 //# sourceMappingURL=storage_cleanup.js.map

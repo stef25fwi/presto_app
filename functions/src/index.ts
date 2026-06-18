@@ -69,7 +69,7 @@ export {
   expireOldListings,
   publishApprovedListings,
 } from "./modules/marketplace/scheduled/listings";
-export { purgeOrphanedStorageFiles } from "./modules/marketplace/scheduled/storage_cleanup";
+export { purgeOrphanedStorageFiles, purgeAbandonedListingDrafts } from "./modules/marketplace/scheduled/storage_cleanup";
 export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
 export {
   enqueueMarketingOnboardingEmails,
