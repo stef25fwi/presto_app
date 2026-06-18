@@ -287,29 +287,33 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Image.asset(
-                                'assets/images/logowebp.webp',
-                                width: 46,
-                                height: 46,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'iliprestō',
-                                style: TextStyle(
-                                  color: textDark,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w900,
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.asset(
+                                  'assets/images/logowebp.webp',
+                                  width: 46,
+                                  height: 46,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'iliprestō',
+                                  style: TextStyle(
+                                    color: Color(0xFFFF6600),
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 24),
                         Text(

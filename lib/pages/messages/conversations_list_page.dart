@@ -180,13 +180,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
   }();
 
-  bool get _diagPanelVisible =>
-      _isAdminViewer || _pipelineDiagEnabled || _kMessagingDiagTestPhase;
-
-  // ⚙️ PHASE DE TEST : affiche le panneau de diagnostic (menu déroulant) pour
-  // TOUS les profils, y compris les utilisateurs simples. Repasser à false
-  // pour le masquer une fois la messagerie validée en production.
-  static const bool _kMessagingDiagTestPhase = true;
+  bool get _diagPanelVisible => _isAdminViewer;
 
   // État replié/déplié du menu déroulant de diagnostic.
   bool _diagPanelExpanded = false;
@@ -319,7 +313,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         _conversationStateStream = null;
         _conversationStateAdminMode = null;
       }
-      if (!isAdmin && !_pipelineDiagEnabled && !_kMessagingDiagTestPhase) {
+      if (!isAdmin) {
         _adminConversationLoadLogs.clear();
       } else if (_adminConversationLoadLogs.isEmpty) {
         _adminConversationLoadLogs.add(
