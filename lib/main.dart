@@ -991,21 +991,25 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Duration _initialSplashDuration() {
+    // Audit #4 : suppression du délai de splash artificiel (3,5 s). L'init
+    // lourde a déjà lieu avant runApp ; ce minuteur ne servait qu'à afficher
+    // le logo. On garde un flash de marque court (~0,8 s) pour éviter un
+    // clignotement brutal, sans pénaliser le démarrage perçu.
     if (!kIsWeb) {
-      return const Duration(milliseconds: 3500);
+      return const Duration(milliseconds: 800);
     }
 
     if (pendingPostAuthRoute == PostAuthNavigationIntentService.accountRoute) {
-      return const Duration(milliseconds: 1200);
+      return const Duration(milliseconds: 600);
     }
 
     final webPath = _normalizedWebPath();
     final hasDeepLink = parseAppDeepLink(Uri.base.toString()) != null;
     if (webPath == '/account' || webPath == '/publish' || hasDeepLink) {
-      return const Duration(milliseconds: 1200);
+      return const Duration(milliseconds: 600);
     }
 
-    return const Duration(milliseconds: 3500);
+    return const Duration(milliseconds: 800);
   }
 
   String _normalizedWebPath() {
