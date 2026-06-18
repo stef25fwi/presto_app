@@ -126,6 +126,8 @@ function validateListingDraftPayload(rawDraft, maxMediaCount) {
         thumbnailUrl: media[0]?.thumbnailUrl || media[0]?.downloadUrl || "",
         searchKeywords: buildSearchKeywords(title, description, categoryId, cityId),
         phone: normalizeString(rawDraft.phone),
+        // P0-1 : choix « Masquer mon numéro ». Respecté jusqu'au document public.
+        hidePhone: rawDraft.hidePhone === true || normalizeString(rawDraft.hidePhone) === "true",
         budgetType: normalizeString(rawDraft.budgetType),
         missionDelay: normalizeString(rawDraft.missionDelay),
         isUrgent: rawDraft.isUrgent === true,

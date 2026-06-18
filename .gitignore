@@ -20,7 +20,16 @@ audit_prod/
 **/doc/api/
 # Données Firestore exportées
 .DS_Store
+# 6.6 : empêcher tout commit accidentel de secrets via fichiers .env.
+# Les vrais secrets vont dans Secret Manager ; seuls les .env de config
+# Firebase Functions non secrets (.env.<projectId>) restent versionnés.
+.env
 .env.local
+.env.*.local
+*.env.local
+secrets.env
+functions/.env.local
+functions/.env.*.local
 .firebase/
 # Firebase CLI local cache
 *.firestore_backup.json
