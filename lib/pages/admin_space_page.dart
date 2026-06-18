@@ -15,6 +15,7 @@ import '../features/micro_ia/micro_ia_service.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/firebase_functions_region.dart';
 import 'package:presto_app/pages/admin/widgets/payment_info_audio_admin_section.dart';
+import 'package:presto_app/pages/admin/ad_placeholder_images_admin_page.dart';
 
 class AdminSpacePage extends StatefulWidget {
   const AdminSpacePage({super.key});
@@ -2802,6 +2803,20 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => const AdminHeroSlidesPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _KpiTile(
+                    icon: Icons.photo_library_outlined,
+                    title: 'Images placeholders',
+                    subtitle: 'AdBanner Je consulte',
+                    badge: null,
+                    iconColor: prestoOrange,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const AdPlaceholderImagesAdminPage(),
                         ),
                       );
                     },

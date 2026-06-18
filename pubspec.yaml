@@ -26,7 +26,7 @@ dependencies:
   cloud_firestore: ^6.3.0
   cloud_functions: ^6.0.5
   url_launcher: ^6.3.0
-  image_picker: ^1.1.2
+  image_picker: ^1.2.2
   firebase_storage: ^13.3.0
   firebase_messaging: ^16.1.0
   firebase_performance: ^0.11.0+1
