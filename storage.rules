@@ -56,16 +56,29 @@ service firebase.storage {
         || hasAdminDocAccess();
     }
 
+    // 6.2 : n'autoriser que des formats image rasterisés sûrs. On EXCLUT
+    // explicitement image/svg+xml (vecteur XSS) et tout autre type image
+    // exotique. Couvre les formats photo réels (web + mobile).
+    function isSafeImageContentType() {
+      return request.resource.contentType == 'image/jpeg'
+        || request.resource.contentType == 'image/png'
+        || request.resource.contentType == 'image/webp'
+        || request.resource.contentType == 'image/avif'
+        || request.resource.contentType == 'image/gif'
+        || request.resource.contentType == 'image/heic'
+        || request.resource.contentType == 'image/heif';
+    }
+
     function isImageUpload() {
       return request.resource != null
-        && request.resource.contentType.matches('image/.*')
+        && isSafeImageContentType()
         && request.resource.size < 5 * 1024 * 1024;
     }
 
     function isHeroMediaUpload() {
       return request.resource != null
         && (
-          (request.resource.contentType.matches('image/.*')
+          (isSafeImageContentType()
             && request.resource.size < 8 * 1024 * 1024)
           || (request.resource.contentType.matches('video/.*')
             && request.resource.size < 50 * 1024 * 1024)
@@ -94,12 +107,14 @@ service firebase.storage {
     }
 
     function isMessageAttachmentUpload() {
+      // 6.2 : images rasterisées sûres uniquement (pas de SVG), PDF, Word et
+      // texte brut. text/html et image/svg+xml sont refusés (vecteurs XSS).
       return request.resource != null
         && request.resource.size < 20 * 1024 * 1024
         && (
-          request.resource.contentType.matches('image/.*')
+          isSafeImageContentType()
           || request.resource.contentType == 'application/pdf'
-          || request.resource.contentType.matches('text/.*')
+          || request.resource.contentType == 'text/plain'
           || request.resource.contentType == 'application/msword'
           || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         );
@@ -143,7 +158,7 @@ service firebase.storage {
       allow write: if isSignedIn()
         && uid == request.auth.uid
         && request.resource != null
-        && request.resource.contentType.matches('image/.*')
+        && isSafeImageContentType()  // 6.2 : pas de SVG (XSS) sur photo publique
         && request.resource.size < 10 * 1024 * 1024;
       allow read: if true;  // photos de profil publiques
     }
