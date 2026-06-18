@@ -67,7 +67,11 @@ class PremiumAiButton extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: disabled ? null : () { onPressed!(); },
+            onTap: disabled
+                ? null
+                : () {
+                    onPressed!();
+                  },
             borderRadius: BorderRadius.circular(20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,

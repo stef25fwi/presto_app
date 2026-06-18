@@ -21,9 +21,9 @@ class TrustScoreService {
       name: 'closeOfferWithReason',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
-      'offerId': offerId,
-      'reason': reason,
-      'jobDone': jobDone,
+        'offerId': offerId,
+        'reason': reason,
+        'jobDone': jobDone,
       },
     );
   }
@@ -61,13 +61,13 @@ class TrustScoreService {
       name: 'submitVerifiedReview',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
-      'offerId': offerId,
-      'reviewedUserId': reviewedUserId,
-      'communicationRating': communicationRating,
-      'punctualityRating': punctualityRating,
-      'qualityRating': qualityRating,
-      'comment': comment.trim().isEmpty ? null : comment.trim(),
-      'confirmationChecked': confirmationChecked,
+        'offerId': offerId,
+        'reviewedUserId': reviewedUserId,
+        'communicationRating': communicationRating,
+        'punctualityRating': punctualityRating,
+        'qualityRating': qualityRating,
+        'comment': comment.trim().isEmpty ? null : comment.trim(),
+        'confirmationChecked': confirmationChecked,
       },
     );
     return SubmitReviewResult.fromMap(trustScoreStringMap(result.data));
@@ -93,9 +93,9 @@ class TrustScoreService {
       name: 'reportReview',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'reviewId': reviewId,
-      'reason': reason,
-      'details': details.trim().isEmpty ? null : details.trim(),
+        'reviewId': reviewId,
+        'reason': reason,
+        'details': details.trim().isEmpty ? null : details.trim(),
       },
     );
   }
@@ -109,8 +109,8 @@ class TrustScoreService {
       name: 'replyToReview',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'reviewId': reviewId,
-      'replyText': replyText.trim(),
+        'reviewId': reviewId,
+        'replyText': replyText.trim(),
       },
     );
     return trustScoreStringMap(result.data)['status']?.toString() ??

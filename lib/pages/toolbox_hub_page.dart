@@ -96,8 +96,9 @@ class ToolboxHubPage extends StatelessWidget {
             const contentPadding = EdgeInsets.fromLTRB(6, 10, 6, 18);
             const cardSpacing = 12.0;
             const minPhoneTileHeight = 292.0;
-            final availableHeight =
-                constraints.maxHeight - contentPadding.top - contentPadding.bottom;
+            final availableHeight = constraints.maxHeight -
+                contentPadding.top -
+                contentPadding.bottom;
             final equalTileHeight = (availableHeight - cardSpacing) / 2;
 
             if (isPhone) {

@@ -23,6 +23,7 @@ import '../../services/firestore_date_parser.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
+import 'package:presto_app/utils/profile_avatar_resolver.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -2561,7 +2562,8 @@ class _ConversationAvatar extends StatelessWidget {
           radius: 27,
           backgroundColor: fallbackColor,
           foregroundColor: Colors.white,
-          foregroundImage: photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+          foregroundImage:
+              photoUrl.isNotEmpty ? profileAvatarImageProvider(photoUrl) : null,
           onForegroundImageError: (error, stackTrace) {
             debugPrint(
               '[ConversationAvatar] image load failed '

@@ -38,6 +38,7 @@ import '../main.dart'
         pendingRedirectAuthError;
 import 'user_offers_section.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
+import 'package:presto_app/utils/profile_avatar_resolver.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
@@ -1035,9 +1036,14 @@ class _AccountPageState extends State<AccountPage> {
       _profileEmail = nextEmail;
     }
 
-    final nextPhotoUrl = user.photoURL?.trim() ?? '';
-    if (nextPhotoUrl.isNotEmpty) {
+    final nextPhotoUrl = customProfilePhotoUrl(user.photoURL);
+
+    if (nextPhotoUrl != null) {
+      // Une photo réellement choisie par l'utilisateur reste autorisée.
       _profilePhotoUrl = nextPhotoUrl;
+    } else if (isAutomaticGoogleProfilePhoto(_profilePhotoUrl)) {
+      // Une ancienne photo Google éventuellement chargée est neutralisée.
+      _profilePhotoUrl = '';
     }
 
     final pseudo = _deriveImmediatePseudo(user);
@@ -2524,7 +2530,7 @@ class _AccountPageState extends State<AccountPage> {
     final visibleEmail = _profileEmail.trim().isNotEmpty
         ? _profileEmail.trim()
         : (user.email ?? '');
-    final visiblePhotoUrl = (_profilePhotoUrl ?? '').trim();
+    final visiblePhotoUrl = customProfilePhotoUrl(_profilePhotoUrl) ?? '';
     // ignore: avoid_print
     print(
         '[BUILD] visiblePhotoUrl=$visiblePhotoUrl isUploading=$_isUploadingProfilePhoto');

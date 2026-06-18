@@ -63,9 +63,8 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
   Widget build(BuildContext context) {
     final color = Colors.white;
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
-    final String? badgeLabel = widget.badgeCount <= 0
-        ? null
-        : widget.badgeCount.toString();
+    final String? badgeLabel =
+        widget.badgeCount <= 0 ? null : widget.badgeCount.toString();
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,

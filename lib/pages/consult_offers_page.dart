@@ -2748,7 +2748,6 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
-
   Widget _buildFallbackPhoto() {
     return Container(
       width: 92,

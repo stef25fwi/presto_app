@@ -338,7 +338,6 @@ class AuthService {
       'emailVerified': user.emailVerified,
       'displayName': user.displayName,
       'phoneNumber': user.phoneNumber,
-      'photoUrl': user.photoURL,
       'accountStatus': 'active',
       'role': 'user',
       'updatedAt': FieldValue.serverTimestamp(),

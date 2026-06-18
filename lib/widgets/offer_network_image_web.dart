@@ -10,11 +10,16 @@ final Set<String> _registeredImageViewTypes = <String>{};
 
 String _cssObjectFit(BoxFit fit) {
   switch (fit) {
-    case BoxFit.contain:   return 'contain';
-    case BoxFit.fill:      return 'fill';
-    case BoxFit.none:      return 'none';
-    case BoxFit.scaleDown: return 'scale-down';
-    default:               return 'cover';
+    case BoxFit.contain:
+      return 'contain';
+    case BoxFit.fill:
+      return 'fill';
+    case BoxFit.none:
+      return 'none';
+    case BoxFit.scaleDown:
+      return 'scale-down';
+    default:
+      return 'cover';
   }
 }
 
@@ -43,7 +48,7 @@ Widget buildOfferNetworkImage({
 
       // Fade-in au chargement (et à l'erreur pour éviter une zone blanche)
       void onReady(JSAny? _) => image.style.opacity = '1';
-      image.addEventListener('load',  onReady.toJS);
+      image.addEventListener('load', onReady.toJS);
       image.addEventListener('error', onReady.toJS);
 
       // src défini APRÈS les listeners pour éviter la race condition

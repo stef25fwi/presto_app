@@ -62,10 +62,13 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
       return;
     }
 
-    final slide = widget.slides[_currentIndex.clamp(0, widget.slides.length - 1)];
+    final slide =
+        widget.slides[_currentIndex.clamp(0, widget.slides.length - 1)];
     final seconds = slide.durationSeconds < 1 ? 5 : slide.durationSeconds;
     _slideTimer = Timer(Duration(seconds: seconds), () {
-      if (!mounted || !_pageController.hasClients || widget.slides.length <= 1) {
+      if (!mounted ||
+          !_pageController.hasClients ||
+          widget.slides.length <= 1) {
         return;
       }
       final nextIndex = (_currentIndex + 1) % widget.slides.length;

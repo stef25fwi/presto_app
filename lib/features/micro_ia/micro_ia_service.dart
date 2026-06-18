@@ -128,7 +128,8 @@ class MicroIaService {
       if (reboundUser == null) {
         throw const MicroIaClientAuthException(
           code: 'auth-not-ready',
-          message: 'La session n’est pas encore synchronisée. Réessaie dans un instant.',
+          message:
+              'La session n’est pas encore synchronisée. Réessaie dans un instant.',
         );
       }
       _log('AUTH', 'current_user_bound=yes uid=${reboundUser.uid}');
@@ -137,7 +138,8 @@ class MicroIaService {
       _log('AUTH', 'current_user_bound=no expected=${user.uid}');
       throw const MicroIaClientAuthException(
         code: 'auth-not-ready',
-        message: 'La session n’est pas encore synchronisée. Réessaie dans un instant.',
+        message:
+            'La session n’est pas encore synchronisée. Réessaie dans un instant.',
       );
     }
   }
@@ -157,13 +159,15 @@ class MicroIaService {
         _log('TOKEN', 'fetched=no uid=${boundUser.uid}');
         throw const MicroIaClientAuthException(
           code: 'token-missing',
-          message: 'Session utilisateur invalide. Reconnecte-toi puis réessaie.',
+          message:
+              'Session utilisateur invalide. Reconnecte-toi puis réessaie.',
         );
       }
       if (forceRefreshToken) {
         _lastForcedTokenRefresh = DateTime.now();
       }
-      _log('TOKEN', 'fetched=yes uid=${boundUser.uid} forced=$forceRefreshToken');
+      _log('TOKEN',
+          'fetched=yes uid=${boundUser.uid} forced=$forceRefreshToken');
       return normalizedToken;
     } catch (error) {
       if (error is MicroIaClientAuthException) rethrow;
@@ -240,10 +244,12 @@ class MicroIaService {
       // request will reach the backend without auth (req.auth=null).
       final callableUser = FirebaseAuth.instance.currentUser;
       if (callableUser == null) {
-        _log('PROCESS', 'currentUser=null before callable label=${debugLabel ?? 'default'}');
+        _log('PROCESS',
+            'currentUser=null before callable label=${debugLabel ?? 'default'}');
         throw const MicroIaClientAuthException(
           code: 'auth-lost',
-          message: 'Session perdue avant l\'appel serveur. Reconnecte-toi puis réessaie.',
+          message:
+              'Session perdue avant l\'appel serveur. Reconnecte-toi puis réessaie.',
         );
       }
 
@@ -254,10 +260,12 @@ class MicroIaService {
       try {
         await callableUser.getIdToken(false);
       } catch (e) {
-        _log('PROCESS', 'token_prime_failed err=${e.runtimeType} label=${debugLabel ?? 'default'}');
+        _log('PROCESS',
+            'token_prime_failed err=${e.runtimeType} label=${debugLabel ?? 'default'}');
         throw const MicroIaClientAuthException(
           code: 'token-prime-failed',
-          message: 'Impossible de préparer la session. Reconnecte-toi puis réessaie.',
+          message:
+              'Impossible de préparer la session. Reconnecte-toi puis réessaie.',
         );
       }
 
