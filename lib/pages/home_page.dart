@@ -1063,7 +1063,7 @@ class _HomePageState extends State<HomePage>
                           fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                     tileColor:
-                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
+                        isHighlighted ? kPrestoBlue.withValues(alpha: 0.08) : null,
                     onTap: () => onSelected(option),
                   );
                 },
@@ -1639,7 +1639,7 @@ class _HomePageState extends State<HomePage>
                 decoration: BoxDecoration(
                   color: _currentSlide == index
                       ? Colors.white
-                      : Colors.white.withOpacity(0.4),
+                      : Colors.white.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -1889,7 +1889,7 @@ class _HomePageState extends State<HomePage>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.16),
+                          color: Colors.black.withValues(alpha: 0.16),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -2159,7 +2159,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           kPrestoOrange,
-                          kPrestoOrange.withOpacity(0.3),
+                          kPrestoOrange.withValues(alpha: 0.3),
                         ],
                       ),
                     ),
@@ -2176,7 +2176,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                   color: const Color(0xFFF7FAFF),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: kPrestoBlue.withOpacity(0.12),
+                    color: kPrestoBlue.withValues(alpha: 0.12),
                   ),
                 ),
                 padding:

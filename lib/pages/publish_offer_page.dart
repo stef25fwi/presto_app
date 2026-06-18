@@ -1048,9 +1048,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         constraints: const BoxConstraints(maxWidth: 520),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: accent.withOpacity(0.08),
+          color: accent.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withOpacity(0.24)),
+          border: Border.all(color: accent.withValues(alpha: 0.24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1074,9 +1074,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.75),
+                    color: Colors.white.withValues(alpha: 0.75),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.24)),
+                    border: Border.all(color: accent.withValues(alpha: 0.24)),
                   ),
                   child: Text(
                     stateLabel,
@@ -1110,7 +1110,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.2)),
+                    border: Border.all(color: accent.withValues(alpha: 0.2)),
                   ),
                   child: Text(
                     'Mode serveur: ${_adminAudioModeLabel(_adminAudioRuntimeMode)}',
@@ -1127,7 +1127,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.2)),
+                    border: Border.all(color: accent.withValues(alpha: 0.2)),
                   ),
                   child: Text(
                     'Etat: ${_currentPublishAiRuntimeState()}',
@@ -1199,10 +1199,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: kPrestoBlue.withOpacity(0.08),
+                              color: kPrestoBlue.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: kPrestoBlue.withOpacity(0.18),
+                                color: kPrestoBlue.withValues(alpha: 0.18),
                               ),
                             ),
                             child: Text(
@@ -1219,7 +1219,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -1236,7 +1236,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.035),
+                            color: Colors.black.withValues(alpha: 0.035),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: Colors.black12),
                           ),
@@ -1278,10 +1278,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                   return Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: color.withOpacity(0.06),
+                                      color: color.withValues(alpha: 0.06),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: color.withOpacity(0.18),
+                                        color: color.withValues(alpha: 0.18),
                                       ),
                                     ),
                                     child: Row(
@@ -3764,7 +3764,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             onTap: () => _applyCity(city, markAsUserEdited: true),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              color: selected ? kPrestoBlue.withOpacity(0.08) : null,
+              color: selected ? kPrestoBlue.withValues(alpha: 0.08) : null,
               child: Row(
                 children: [
                   Expanded(
@@ -4857,7 +4857,7 @@ class _FieldPendingDots extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(999),
       ),
       child: const Padding(

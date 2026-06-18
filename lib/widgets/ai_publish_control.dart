@@ -327,7 +327,7 @@ class _AiCircleIcon extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: gradient,
         border: Border.all(
-          color: Colors.white.withOpacity(0.18),
+          color: Colors.white.withValues(alpha: 0.18),
           width: 1.5,
         ),
       ),
@@ -375,7 +375,7 @@ class _RecordingStopCircleState extends State<_RecordingStopCircle>
         height: 58,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.20),
+          color: Colors.white.withValues(alpha: 0.20),
         ),
         child: const Icon(
           Icons.stop_rounded,
@@ -883,7 +883,7 @@ class _AnimatedProgressDotsState extends State<_AnimatedProgressDots>
                     shape: BoxShape.circle,
                     color: index < activeCount
                         ? Colors.white
-                        : Colors.white.withOpacity(0.45),
+                        : Colors.white.withValues(alpha: 0.45),
                   ),
                 ),
                 if (index != 4) const SizedBox(width: 6),
@@ -950,7 +950,7 @@ class _OrbitPainter extends CustomPainter {
     final innerRadius = size.width / 2 - 11;
 
     final strokePaint = Paint()
-      ..color = Colors.white.withOpacity(0.45)
+      ..color = Colors.white.withValues(alpha: 0.45)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 

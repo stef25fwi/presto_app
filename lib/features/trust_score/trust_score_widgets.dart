@@ -539,10 +539,10 @@ class _TrustScoreCardState extends State<TrustScoreCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: kPrestoBlue.withOpacity(0.14)),
+        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -867,8 +867,8 @@ class _TrustScoreContent extends StatelessWidget {
                 .map(
                   (badge) => Chip(
                     label: Text(trustScoreBadgeLabel(badge)),
-                    backgroundColor: kPrestoBlue.withOpacity(0.08),
-                    side: BorderSide(color: kPrestoBlue.withOpacity(0.18)),
+                    backgroundColor: kPrestoBlue.withValues(alpha: 0.08),
+                    side: BorderSide(color: kPrestoBlue.withValues(alpha: 0.18)),
                   ),
                 )
                 .toList(growable: false),
@@ -918,7 +918,7 @@ class _ReviewPreviewTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1012,7 +1012,7 @@ class _ResponderTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.black.withOpacity(0.08)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
         ),
         child: Row(
           children: [
@@ -1060,7 +1060,7 @@ class _SelectedResponderBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: kPrestoBlue.withOpacity(0.06),
+        color: kPrestoBlue.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -1100,7 +1100,7 @@ class _ResponderAvatar extends StatelessWidget {
     final photoUrl = responder.photoUrl;
     return CircleAvatar(
       radius: 24,
-      backgroundColor: kPrestoBlue.withOpacity(0.12),
+      backgroundColor: kPrestoBlue.withValues(alpha: 0.12),
       backgroundImage:
           photoUrl == null ? null : profileAvatarImageProvider(photoUrl),
       child: photoUrl == null
@@ -1175,7 +1175,7 @@ class _SmallVerifiedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: kPrestoBlue.withOpacity(0.1),
+        color: kPrestoBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
       child: const Text(
@@ -1198,7 +1198,7 @@ class _ResponderBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: kPrestoBlue.withOpacity(0.08),
+        color: kPrestoBlue.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: const Text(

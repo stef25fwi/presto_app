@@ -85,13 +85,13 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
                       color: widget.isBig
                           ? Colors.white
                           : widget.selected
-                              ? Colors.white.withOpacity(0.35)
+                              ? Colors.white.withValues(alpha: 0.35)
                               : Colors.transparent,
                       borderRadius: BorderRadius.circular(999),
                       boxShadow: widget.isBig
                           ? [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.35),
+                                color: Colors.black.withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 4),
                               ),
@@ -99,7 +99,7 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
                           : widget.selected
                               ? [
                                   BoxShadow(
-                                    color: Colors.white.withOpacity(0.5),
+                                    color: Colors.white.withValues(alpha: 0.5),
                                     blurRadius: 12,
                                     spreadRadius: 3,
                                   ),

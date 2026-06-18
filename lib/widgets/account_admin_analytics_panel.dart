@@ -50,7 +50,7 @@ class AccountAdminAnalyticsPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.teal.withOpacity(0.25)),
+        border: Border.all(color: Colors.teal.withValues(alpha: 0.25)),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -139,10 +139,10 @@ class _AccountAnalyticsMetricRow extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: item.enabled
-            ? statusColor.withOpacity(0.07)
-            : Colors.grey.withOpacity(0.05),
+            ? statusColor.withValues(alpha: 0.07)
+            : Colors.grey.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.25)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.25)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(

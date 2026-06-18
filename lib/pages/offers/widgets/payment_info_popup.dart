@@ -63,7 +63,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
             border: Border.all(color: kBorder),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 28,
                 offset: const Offset(0, 14),
               ),
@@ -399,9 +399,9 @@ class _RuleCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.25)),
+              border: Border.all(color: color.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [

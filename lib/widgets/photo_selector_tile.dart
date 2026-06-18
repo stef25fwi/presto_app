@@ -40,7 +40,7 @@ class PhotoSelectorTile extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _kAddPhotoBlue.withOpacity(0.45),
+                color: _kAddPhotoBlue.withValues(alpha: 0.45),
               ),
             ),
             child: const Icon(
@@ -121,7 +121,7 @@ class PhotoSelectorTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: localFile == null
-                    ? _kAddPhotoBlue.withOpacity(0.4)
+                    ? _kAddPhotoBlue.withValues(alpha: 0.4)
                     : Colors.black12,
               ),
             ),

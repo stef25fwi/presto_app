@@ -278,7 +278,7 @@ class _PageCaptureViewer extends StatelessWidget {
                   Expanded(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.72),
+                        color: Colors.black.withValues(alpha: 0.72),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Padding(

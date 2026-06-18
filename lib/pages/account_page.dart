@@ -626,9 +626,9 @@ class _AccountPageState extends State<AccountPage> {
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPrestoBlue.withOpacity(0.07),
+        color: kPrestoBlue.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
+        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: const [
@@ -2442,7 +2442,7 @@ class _AccountPageState extends State<AccountPage> {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: kPrestoBlue.withOpacity(0.10),
+            color: kPrestoBlue.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: kPrestoBlue, size: 20),
@@ -2487,7 +2487,7 @@ class _AccountPageState extends State<AccountPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kPrestoBlue.withOpacity(0.10)),
+        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.10)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2603,7 +2603,7 @@ class _AccountPageState extends State<AccountPage> {
                                     if (_isUploadingProfilePhoto)
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.35),
+                                          color: Colors.black.withValues(alpha: 0.35),
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Center(
@@ -3140,7 +3140,7 @@ class _AccountPageState extends State<AccountPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                border: Border.all(color: kPrestoBlue.withValues(alpha: 0.25)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3148,7 +3148,7 @@ class _AccountPageState extends State<AccountPage> {
                   Row(
                     children: [
                       Icon(Icons.admin_panel_settings,
-                          color: kPrestoBlue.withOpacity(0.95)),
+                          color: kPrestoBlue.withValues(alpha: 0.95)),
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
@@ -3229,7 +3229,7 @@ class _AccountPageState extends State<AccountPage> {
                             horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: (configLoaded ? kPrestoBlue : Colors.orange)
-                              .withOpacity(0.08),
+                              .withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -3240,7 +3240,7 @@ class _AccountPageState extends State<AccountPage> {
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
                             color: (configLoaded ? kPrestoBlue : Colors.orange)
-                                .withOpacity(0.92),
+                                .withValues(alpha: 0.92),
                           ),
                         ),
                       ),
@@ -3248,7 +3248,7 @@ class _AccountPageState extends State<AccountPage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: kPrestoOrange.withOpacity(0.08),
+                          color: kPrestoOrange.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -3256,7 +3256,7 @@ class _AccountPageState extends State<AccountPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
-                            color: kPrestoOrange.withOpacity(0.92),
+                            color: kPrestoOrange.withValues(alpha: 0.92),
                           ),
                         ),
                       ),
@@ -3336,7 +3336,7 @@ class _AccountPageState extends State<AccountPage> {
           Row(
             children: [
               Icon(Icons.admin_panel_settings,
-                  color: kPrestoBlue.withOpacity(0.95)),
+                  color: kPrestoBlue.withValues(alpha: 0.95)),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(

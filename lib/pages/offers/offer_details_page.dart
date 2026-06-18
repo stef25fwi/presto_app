@@ -2058,8 +2058,8 @@ class _BackgroundDecor extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF1976F3).withOpacity(0.12),
-                    const Color(0xFF1976F3).withOpacity(0.05),
+                    const Color(0xFF1976F3).withValues(alpha: 0.12),
+                    const Color(0xFF1976F3).withValues(alpha: 0.05),
                     Colors.transparent,
                   ],
                 ),
@@ -2400,7 +2400,7 @@ class _HeroCard extends StatelessWidget {
                     fontSize: compact ? 14 : 15,
                     height: 1.28,
                     fontWeight: FontWeight.w500,
-                    color: textPrimary.withOpacity(0.9),
+                    color: textPrimary.withValues(alpha: 0.9),
                   ),
                 ),
                 if (data.showPendingPhotoNotice) ...[
@@ -2608,8 +2608,8 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          splashColor: Colors.white.withOpacity(0.08),
-          highlightColor: Colors.white.withOpacity(0.04),
+          splashColor: Colors.white.withValues(alpha: 0.08),
+          highlightColor: Colors.white.withValues(alpha: 0.04),
         ),
       ),
     );
@@ -2651,7 +2651,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -2981,7 +2981,7 @@ class _PracticalInfoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1A73E8).withOpacity(0.20),
+              color: const Color(0xFF1A73E8).withValues(alpha: 0.20),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -3028,12 +3028,12 @@ class _PracticalInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 28 : 32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            color: const Color(0xFF9B8E86).withValues(alpha: 0.10),
             blurRadius: compact ? 18 : 22,
             offset: Offset(0, compact ? 8 : 10),
           ),
           BoxShadow(
-            color: blueSoft.withOpacity(0.55),
+            color: blueSoft.withValues(alpha: 0.55),
             blurRadius: compact ? 15 : 18,
             spreadRadius: 1,
             offset: Offset(0, compact ? 11 : 14),
@@ -3173,12 +3173,12 @@ class _AdvertiserContactCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 28 : 32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            color: const Color(0xFF9B8E86).withValues(alpha: 0.10),
             blurRadius: compact ? 18 : 22,
             offset: Offset(0, compact ? 8 : 10),
           ),
           BoxShadow(
-            color: blueSoft.withOpacity(0.55),
+            color: blueSoft.withValues(alpha: 0.55),
             blurRadius: compact ? 15 : 18,
             spreadRadius: 1,
             offset: Offset(0, compact ? 11 : 14),
@@ -3504,7 +3504,7 @@ class _AdvertiserMetaLine extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
                       BoxShadow(
-                        color: green.withOpacity(0.18),
+                        color: green.withValues(alpha: 0.18),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -3859,12 +3859,12 @@ class _InlineCta extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0A63E7).withOpacity(0.35),
+            color: const Color(0xFF0A63E7).withValues(alpha: 0.35),
             blurRadius: compact ? 15 : 18,
             offset: Offset(0, compact ? 7 : 8),
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.35),
+            color: Colors.white.withValues(alpha: 0.35),
             blurRadius: compact ? 5 : 6,
             offset: const Offset(0, -1),
           ),
@@ -4023,7 +4023,7 @@ class _AvatarFallback extends StatelessWidget {
             child: Container(
               height: 6,
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5A31).withOpacity(0.85),
+                color: const Color(0xFF8B5A31).withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(6),
               ),
             ),

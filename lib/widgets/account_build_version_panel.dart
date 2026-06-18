@@ -50,13 +50,13 @@ class AccountBuildVersionPanel extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: hasStamp
-            ? Colors.green.withOpacity(0.06)
-            : Colors.red.withOpacity(0.05),
+            ? Colors.green.withValues(alpha: 0.06)
+            : Colors.red.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: hasStamp
-              ? Colors.green.withOpacity(0.25)
-              : Colors.red.withOpacity(0.25),
+              ? Colors.green.withValues(alpha: 0.25)
+              : Colors.red.withValues(alpha: 0.25),
         ),
       ),
       padding: const EdgeInsets.all(12),

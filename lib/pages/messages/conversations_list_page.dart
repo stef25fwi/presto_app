@@ -1595,7 +1595,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               fontSize: 72,
               fontWeight: FontWeight.w800,
               letterSpacing: 2,
-              color: Colors.grey.withOpacity(0.07),
+              color: Colors.grey.withValues(alpha: 0.07),
             ),
           ),
         ),
@@ -2076,7 +2076,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           ],
                                         ),
                                         child: Material(
-                                          color: Colors.white.withOpacity(0.98),
+                                          color: Colors.white.withValues(alpha: 0.98),
                                           borderRadius:
                                               BorderRadius.circular(16),
                                           child: InkWell(
@@ -2097,14 +2097,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                               decoration: BoxDecoration(
                                                 color: unreadCount > 0
                                                     ? kWhatsappGreen
-                                                        .withOpacity(0.045)
+                                                        .withValues(alpha: 0.045)
                                                     : Colors.transparent,
                                                 borderRadius:
                                                     BorderRadius.circular(16),
                                                 border: Border(
                                                   bottom: BorderSide(
                                                     color: Colors.black
-                                                        .withOpacity(0.06),
+                                                        .withValues(alpha: 0.06),
                                                   ),
                                                 ),
                                               ),
@@ -2649,7 +2649,7 @@ class _ConversationFilterChip extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: selected
-                    ? Colors.white.withOpacity(0.22)
+                    ? Colors.white.withValues(alpha: 0.22)
                     : const Color(0xFFEAF2FF),
                 borderRadius: BorderRadius.circular(999),
               ),
@@ -2683,7 +2683,7 @@ class _ConversationStateChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

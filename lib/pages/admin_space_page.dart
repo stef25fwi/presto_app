@@ -1606,7 +1606,7 @@ class _EmailDashboardContent extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color:
                                           (hasAlert ? Colors.red : prestoBlue)
-                                              .withOpacity(0.10),
+                                              .withValues(alpha: 0.10),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: Icon(
@@ -2261,7 +2261,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: rule.color.withOpacity(0.08),
+                    color: rule.color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -2299,9 +2299,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 margin: const EdgeInsets.only(top: 10),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: rule.color.withOpacity(0.07),
+                  color: rule.color.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: rule.color.withOpacity(0.22)),
+                  border: Border.all(color: rule.color.withValues(alpha: 0.22)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2353,9 +2353,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: prestoBlue.withOpacity(0.07),
+          color: prestoBlue.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: prestoBlue.withOpacity(0.18)),
+          border: Border.all(color: prestoBlue.withValues(alpha: 0.18)),
         ),
         child: Row(
           children: const [
@@ -2453,7 +2453,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: prestoBlue.withOpacity(0.18)),
+        border: Border.all(color: prestoBlue.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2541,7 +2541,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: prestoBlue.withOpacity(0.08),
+                  color: prestoBlue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -2549,7 +2549,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: prestoBlue.withOpacity(0.92),
+                    color: prestoBlue.withValues(alpha: 0.92),
                   ),
                 ),
               ),
@@ -2557,7 +2557,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: prestoOrange.withOpacity(0.08),
+                  color: prestoOrange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -2565,7 +2565,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: prestoOrange.withOpacity(0.92),
+                    color: prestoOrange.withValues(alpha: 0.92),
                   ),
                 ),
               ),
@@ -3299,9 +3299,9 @@ class _AdminMetricDomainCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: domain.color.withOpacity(0.10),
+                      color: domain.color.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: domain.color.withOpacity(0.20)),
+                      border: Border.all(color: domain.color.withValues(alpha: 0.20)),
                     ),
                     child: Icon(domain.icon, color: domain.color, size: 20),
                   ),
@@ -3394,9 +3394,9 @@ class _AdminMiniChart extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.16)),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3437,7 +3437,7 @@ class _AdminSparklinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final axisPaint = Paint()
-      ..color = color.withOpacity(0.18)
+      ..color = color.withValues(alpha: 0.18)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawLine(
@@ -3481,7 +3481,7 @@ class _AdminSparklinePainter extends CustomPainter {
     fillPath.close();
 
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.12)
+      ..color = color.withValues(alpha: 0.12)
       ..style = PaintingStyle.fill;
     canvas.drawPath(fillPath, fillPaint);
 
@@ -3519,9 +3519,9 @@ class _AdminMetricPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
@@ -3646,9 +3646,9 @@ class _ProfileCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: prestoBlue.withOpacity(0.10),
+                    color: prestoBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: prestoBlue.withOpacity(0.20)),
+                    border: Border.all(color: prestoBlue.withValues(alpha: 0.20)),
                   ),
                   child: Text(
                     role,
@@ -3954,9 +3954,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.20)),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Text(
         label,
@@ -4026,9 +4026,9 @@ class _DashboardPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4458,7 +4458,7 @@ class _MicroIaCard extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: prestoBlue.withOpacity(0.10),
+                    color: prestoBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.autorenew_rounded,
@@ -4734,7 +4734,7 @@ class _CardShell extends StatelessWidget {
           BoxShadow(
             blurRadius: 18,
             offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
           ),
         ],
       ),
