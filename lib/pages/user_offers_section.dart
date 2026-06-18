@@ -159,14 +159,21 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
 
       final items = <_FavoriteOfferItem>[];
       final orphanFavoriteIds = <String>[];
-      for (final favoriteId in favoriteIds) {
-        final item = await _loadFavoriteOfferItem(
-          fs,
-          offerId: favoriteId,
-          addedAt: favoriteDates[favoriteId],
-        );
+      // Chargement parallèle (au lieu d'un .get() séquentiel par favori) tout
+      // en conservant l'ordre des favoris pour l'affichage.
+      final loadedItems = await Future.wait(
+        favoriteIds.map(
+          (favoriteId) => _loadFavoriteOfferItem(
+            fs,
+            offerId: favoriteId,
+            addedAt: favoriteDates[favoriteId],
+          ),
+        ),
+      );
+      for (var i = 0; i < favoriteIds.length; i++) {
+        final item = loadedItems[i];
         if (item == null) {
-          orphanFavoriteIds.add(favoriteId);
+          orphanFavoriteIds.add(favoriteIds[i]);
           continue;
         }
         items.add(item);

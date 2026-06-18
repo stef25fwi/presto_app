@@ -1119,6 +1119,14 @@ class _HomePageState extends State<HomePage>
         'userId': userId,
       },
     );
+    // Requête lancée une seule fois à l'ouverture du dialog, et non recréée à
+    // chaque rebuild de la route (sinon relecture Firestore à chaque frame).
+    final notificationsFuture = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(20)
+        .get();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1133,12 +1141,7 @@ class _HomePageState extends State<HomePage>
         content: SizedBox(
           width: double.maxFinite,
           child: FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            future: FirebaseFirestore.instance
-                .collection('notifications')
-                .where('userId', isEqualTo: userId)
-                .orderBy('createdAt', descending: true)
-                .limit(20)
-                .get(),
+            future: notificationsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
