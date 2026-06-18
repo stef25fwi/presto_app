@@ -551,6 +551,26 @@ class CardShell extends StatelessWidget {
   }
 }
 
+/// Initialise les services non requis pour le premier rendu (notifications
+/// push, etc.). Lancé sans await après runApp afin de ne pas retarder
+/// l'affichage interactif. Toute erreur est isolée pour ne pas casser l'app.
+Future<void> _initBackgroundServices() async {
+  // Notifications push (toutes plateformes). Sur Web, l'enregistrement du token
+  // dépend de FCM_WEB_VAPID_KEY.
+  try {
+    await NotificationService().initialize(
+      navigatorKey: appNavigatorKey,
+    );
+    adminWebDebugStore.recordEvent(
+      area: 'notifications',
+      message: 'initialized',
+    );
+  } catch (e) {
+    adminWebDebugStore.recordError('notifications', e, message: 'init-failed');
+    if (kDebugMode) debugPrint('[Notifications] init error: $e');
+  }
+}
+
 Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
@@ -559,6 +579,11 @@ Future<void> main() async {
       message: 'startup',
       detail: 'platform=${kIsWeb ? 'web' : defaultTargetPlatform.name}',
     );
+
+    // Audit #4 — Démarrage non bloquant : la base des villes est un asset local
+    // consommé uniquement par des écrans interactifs (recherche de ville). On la
+    // précharge en parallèle de l'init Firebase (I/O), sans bloquer le 1er rendu.
+    unawaited(CitySearch.instance.ensureLoaded());
 
     await ensureFirebaseInitialized(source: 'main');
 
@@ -731,25 +756,11 @@ Future<void> main() async {
           .setCrashlyticsCollectionEnabled(!kDebugMode);
     }
 
-    await CitySearch.instance.ensureLoaded();
-
-    // Initialisation des notifications push sur toutes les plateformes.
-    // Sur Web, l'enregistrement du token dépend de FCM_WEB_VAPID_KEY.
-    try {
-      await NotificationService().initialize(
-        navigatorKey: appNavigatorKey,
-      );
-      adminWebDebugStore.recordEvent(
-        area: 'notifications',
-        message: 'initialized',
-      );
-    } catch (e) {
-      adminWebDebugStore.recordError('notifications', e,
-          message: 'init-failed');
-      if (kDebugMode) debugPrint('[Notifications] init error: $e');
-    }
-
     runApp(const PrestoApp());
+
+    // Audit #4 — Services non essentiels au premier rendu : initialisés en
+    // arrière-plan après runApp pour afficher un shell interactif immédiat.
+    unawaited(_initBackgroundServices());
   }, (error, stack) {
     adminWebDebugStore.recordError(
       'zone',
