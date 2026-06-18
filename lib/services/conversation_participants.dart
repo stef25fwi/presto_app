@@ -7,10 +7,6 @@ const conversationPrimaryParticipantField = 'participantIds';
 // (allow list), sinon la requête échoue en permission-denied.
 const conversationParticipantQueryFieldAliases = <String>[
   'participantIds',
-  'participants',
-  'participant_ids',
-  'userIds',
-  'memberIds',
 ];
 
 // Côté lecture (parsing d'un document déjà chargé) on reste tolérant à tous

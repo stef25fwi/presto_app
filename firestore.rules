@@ -3,6 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // PRESTO_CONVERSATION_PARTICIPANT_READ_V2
+    // La requête Flutter doit imposer :
+    // where('participantIds', arrayContains: request.auth.uid)
+    match /conversations/{conversationId} {
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.participantIds;
+    }
+
+
 
 
     // Comptes professionnels ilipresto :
