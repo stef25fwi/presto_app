@@ -713,36 +713,36 @@ class _HomePageState extends State<HomePage>
 
     return RepaintBoundary(
       child: AnimatedBuilder(
-      animation: _categoryController,
-      builder: (context, child) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (var index = 0; index < compactCategories.length; index++)
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: HomeCategoryChip(
-                      icon: compactCategories[index].icon,
-                      label: compactCategories[index].label,
-                      iconScale: _categoryScaleForIndex(
-                        index,
-                        count: compactCategories.length,
-                      ),
-                      onTap: () => _goToCategoryOffers(
-                        compactCategories[index].targetCategory,
+        animation: _categoryController,
+        builder: (context, child) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < compactCategories.length; index++)
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: HomeCategoryChip(
+                        icon: compactCategories[index].icon,
+                        label: compactCategories[index].label,
+                        iconScale: _categoryScaleForIndex(
+                          index,
+                          count: compactCategories.length,
+                        ),
+                        onTap: () => _goToCategoryOffers(
+                          compactCategories[index].targetCategory,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-        );
-      },
-    ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -862,35 +862,35 @@ class _HomePageState extends State<HomePage>
                 return TickerMode(
                   enabled: _selectedIndex == 0,
                   child: RepaintBoundary(
-                  child: _AutoScrollingOffersCarousel(
-                    offers: _latestOffers,
-                    onOfferTap: (doc) {
-                      final data = doc.data();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => OfferDetailsPage(
-                            offer: buildOfferDetailsOffer(
-                              offerId: doc.id,
-                              data: data,
+                    child: _AutoScrollingOffersCarousel(
+                      offers: _latestOffers,
+                      onOfferTap: (doc) {
+                        final data = doc.data();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => OfferDetailsPage(
+                              offer: buildOfferDetailsOffer(
+                                offerId: doc.id,
+                                data: data,
+                              ),
+                              currentUserId:
+                                  FirebaseAuth.instance.currentUser?.uid ?? '',
+                              onBackToConsult: () {
+                                if (!mounted) return;
+                                setState(() {
+                                  _consultCategoryFilter = null;
+                                  _consultSearchQuery = null;
+                                  _selectedIndex = 1;
+                                });
+                                _syncCategoryAnimation();
+                                Navigator.of(context).pop();
+                              },
                             ),
-                            currentUserId:
-                                FirebaseAuth.instance.currentUser?.uid ?? '',
-                            onBackToConsult: () {
-                              if (!mounted) return;
-                              setState(() {
-                                _consultCategoryFilter = null;
-                                _consultSearchQuery = null;
-                                _selectedIndex = 1;
-                              });
-                              _syncCategoryAnimation();
-                              Navigator.of(context).pop();
-                            },
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
-                ),
                 );
               },
             ),
@@ -1845,7 +1845,7 @@ class _HomePageState extends State<HomePage>
                                   child: const Text(
                                     "iliprestō",
                                     style: TextStyle(
-                                      fontFamily: 'Inter',
+                                      fontFamily: 'Rubik',
                                       fontSize: 26,
                                       fontWeight: FontWeight.w900,
                                       color: kPrestoOrange,

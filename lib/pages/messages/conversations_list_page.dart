@@ -832,7 +832,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         );
       } else {
         // Le listener Firestore ne doit pas être créé avant App Check.
-        for (final field in conversationParticipantQueryFieldAliases) {
+        final activeParticipantQueryFields = adminMode
+            ? conversationParticipantQueryFieldAliases
+            : const <String>['participantIds'];
+
+        for (final field in activeParticipantQueryFields) {
           _appendAdminConversationLog(
               '4/6 requête where($field, arrayContains, $userId)');
           final query = FirebaseFirestore.instance
