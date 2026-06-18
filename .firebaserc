@@ -10,6 +10,9 @@
         ],
         "mirror": [
           "presto-app-74abe"
+        ],
+        "redirect": [
+          "ilipresto-fr-redirect-74abe"
         ]
       }
     }
