@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 
 /// Modèle ville minimal
 class CityRecord {
@@ -31,26 +31,29 @@ class CitySearch {
   /// ====== CHARGEMENT DES FICHIERS JSON ======
   Future<void> ensureLoaded() async {
     if (_loaded) return;
-    // même logique que ce qu'on avait déjà : boucle sur cities_XX.json
-    final List<String> files = [
-      'assets/data/cities/cities_01.json',
-      'assets/data/cities/cities_02.json',
-      'assets/data/cities/cities_03.json',
-      'assets/data/cities/cities_04.json',
-      'assets/data/cities/cities_05.json',
-      'assets/data/cities/cities_06.json',
-      'assets/data/cities/cities_07.json',
-      'assets/data/cities/cities_08.json',
-      'assets/data/cities/cities_09.json',
-      'assets/data/cities/cities_10.json',
-      // ...
-      // laisse ici tous tes fichiers jusqu'à 976
-      'assets/data/cities/cities_971.json',
-      'assets/data/cities/cities_972.json',
-      'assets/data/cities/cities_973.json',
-      'assets/data/cities/cities_974.json',
-      'assets/data/cities/cities_976.json',
-    ];
+
+    // On découvre dynamiquement TOUS les fichiers cities_*.json déclarés dans
+    // les assets (un par département/collectivité), au lieu d'une liste codée
+    // en dur qui n'en chargeait qu'une poignée — ce qui laissait la majorité
+    // des villes françaises absentes de l'autocomplétion.
+    List<String> files;
+    try {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      files = manifest
+          .listAssets()
+          .where((asset) =>
+              asset.startsWith('assets/data/cities/cities_') &&
+              asset.endsWith('.json'))
+          .toList()
+        ..sort();
+    } catch (_) {
+      // Repli défensif : si le manifest est indisponible, on retombe sur la
+      // métropole (01→95) pour ne jamais se retrouver sans aucune ville.
+      files = [
+        for (int i = 1; i <= 95; i++)
+          'assets/data/cities/cities_${i.toString().padLeft(2, '0')}.json',
+      ];
+    }
 
     for (final path in files) {
       try {

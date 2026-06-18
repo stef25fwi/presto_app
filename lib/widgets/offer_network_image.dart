@@ -9,12 +9,19 @@ class OfferNetworkImage extends StatelessWidget {
   final Widget errorChild;
   final Widget? loadingChild;
 
+  /// Largeur/hauteur de décodage cible (en pixels). À renseigner pour les
+  /// vignettes de liste afin d'éviter de décoder l'image en plein format.
+  final int? cacheWidth;
+  final int? cacheHeight;
+
   const OfferNetworkImage({
     super.key,
     required this.url,
     required this.fit,
     required this.errorChild,
     this.loadingChild,
+    this.cacheWidth,
+    this.cacheHeight,
   });
 
   @override
@@ -24,6 +31,8 @@ class OfferNetworkImage extends StatelessWidget {
       fit: fit,
       errorChild: errorChild,
       loadingChild: loadingChild,
+      cacheWidth: cacheWidth,
+      cacheHeight: cacheHeight,
     );
   }
 }

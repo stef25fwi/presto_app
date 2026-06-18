@@ -2781,6 +2781,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         child: OfferNetworkImage(
           url: imageUrl,
           fit: BoxFit.cover,
+          cacheWidth: 300,
           errorChild: _buildFallbackPhoto(),
           loadingChild: _buildFallbackPhoto(),
         ),
