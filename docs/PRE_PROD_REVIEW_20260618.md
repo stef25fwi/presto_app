@@ -19,6 +19,15 @@ configuration Cloud + un bug fonctionnel (corrigé ici).
 | Perf/Taille | Suppression de 3 PNG inutilisés (~5,7 Mo morts) : `chrono_1min.png`, `info.png`, `cadre.png` | `assets/images/` |
 | Perf/Mémoire | `cacheWidth` sur les vignettes réseau de liste (décodage borné) | `offer_network_image*.dart`, `consult_offers_page.dart`, `user_offers_section.dart` |
 
+### Optimisations sûres complémentaires (commits suivants)
+
+| Axe | Correctif | Fichier |
+|-----|-----------|---------|
+| Perf | N+1 favoris : chargement séquentiel → `Future.wait` parallèle (ordre conservé) | `lib/pages/user_offers_section.dart` |
+| Perf | Requête notifications sortie du builder du dialog (plus de relecture par rebuild) | `lib/pages/home_page.dart` |
+| Perf | `authStateChanges()` mis en cache en champ d'instance (cloches) au lieu d'être recréé à chaque rebuild | `home_page.dart`, `consult_offers_page.dart` |
+| Stabilité | `_importData` : casts tolérants (`as String?/num?/bool?`) pour éviter un `_TypeError` silencieux | `lib/pages/toolbox_je_me_lance_page.dart` |
+
 ## ⏸️ Volontairement NON appliqués (risque de régression — à décider)
 
 - **Auth sur `preVerifySiret`** : `ProSiretSignupSection` est affiché aux
