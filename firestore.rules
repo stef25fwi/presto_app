@@ -695,16 +695,21 @@ service cloud.firestore {
       }
 
       allow get: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
-      // La requête Flutter utilise exclusivement :
-      // where('participantIds', arrayContains: request.auth.uid)
-      // La règle doit utiliser exactement le même champ pour que
-      // Firestore puisse prouver que tous les résultats sont autorisés.
+      // Ces champs doivent rester alignés avec
+      // conversationParticipantQueryFieldAliases côté Flutter.
       allow list: if canReadConversationAsAdmin()
-        || (
-          isSignedIn()
-          && resource.data.participantIds is list
-          && uid() in resource.data.participantIds
-        );
+        || (isSignedIn() && (
+          ((resource.data.participantIds is list)
+            && resource.data.participantIds.hasAny([uid()]))
+          || ((resource.data.participants is list)
+            && resource.data.participants.hasAny([uid()]))
+          || ((resource.data.participant_ids is list)
+            && resource.data.participant_ids.hasAny([uid()]))
+          || ((resource.data.userIds is list)
+            && resource.data.userIds.hasAny([uid()]))
+          || ((resource.data.memberIds is list)
+            && resource.data.memberIds.hasAny([uid()]))
+        ));
 
       allow create, update, delete: if false;
 
