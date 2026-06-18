@@ -46,6 +46,7 @@ class AdminWebDebugStore extends ChangeNotifier {
     final result = _events.map((event) => event.area).toSet().toList()..sort();
     return List<String>.unmodifiable(result);
   }
+
   String get currentRoute => _currentRoute;
   DateTime? get lastRouteAt => _lastRouteAt;
   String? get currentUserId => _currentUserId;
@@ -196,7 +197,8 @@ class AdminWebDebugStore extends ChangeNotifier {
       'Timeline',
     ];
 
-    for (final event in filteredEvents(area: area, callableOnly: callableOnly)) {
+    for (final event
+        in filteredEvents(area: area, callableOnly: callableOnly)) {
       lines.add(
         '[${event.timestamp.toIso8601String()}] '
         '${event.area}/${event.level}${event.isCallable ? '/callable' : ''} ${event.message}',
