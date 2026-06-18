@@ -1875,11 +1875,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                         child: AdBanner(
                                           margin: EdgeInsets.zero,
                                           placeholderHeight:
-                                              kIsWeb ? 112.0 : 100.0,
+                                              kIsWeb ? 128.0 : 112.0,
                                           placeholderFolderPrefix:
                                               'assets/carousel_home/',
                                           flat: true,
-                                          animatePlaceholder: false,
+                                          animatePlaceholder: true,
                                         ),
                                       ),
                                     );

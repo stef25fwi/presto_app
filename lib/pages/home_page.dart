@@ -1845,7 +1845,7 @@ class _HomePageState extends State<HomePage>
                                   child: const Text(
                                     "iliprestō",
                                     style: TextStyle(
-                                      fontFamily: 'Rubik',
+                                      fontFamily: 'Inter',
                                       fontSize: 26,
                                       fontWeight: FontWeight.w900,
                                       color: kPrestoOrange,

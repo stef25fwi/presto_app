@@ -173,18 +173,20 @@ class _AdBannerState extends State<AdBanner> {
       final folder = widget.placeholderFolderPrefix ?? 'assets/carousel_home/';
 
       if (widget.flat) {
-        // Mode sans rebords: aucune décoration ni padding, l'image remplit 100% de l'espace
+        // Placeholder plein format pour la page Je consulte :
+        // même largeur que les tuiles d'annonces, image couvrante, sans bord/padding parasite.
         return Container(
           margin: margin,
+          width: double.infinity,
           child: SizedBox(
-            height: ph,
             width: double.infinity,
-            child: ClipRect(
+            height: ph,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
               child: RandomAssetTicker(
                 folderPrefix: folder,
-                fit: BoxFit.cover,
                 interval: const Duration(seconds: 4),
-                antiRepeatWindow: 3,
+                fit: BoxFit.cover,
                 enabled: widget.animatePlaceholder,
               ),
             ),
