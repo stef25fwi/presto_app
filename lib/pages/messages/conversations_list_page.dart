@@ -167,7 +167,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (fragment.contains('msgdiag')) {
         final qIndex = fragment.indexOf('?');
         if (qIndex >= 0) {
-          final fragQuery = Uri.splitQueryString(fragment.substring(qIndex + 1));
+          final fragQuery =
+              Uri.splitQueryString(fragment.substring(qIndex + 1));
           if (truthy(fragQuery['msgdiag'])) return true;
         }
       }
@@ -654,7 +655,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       // Le préflight tourne désormais en arrière-plan (warm-up pour les
       // Cloud Callables) sans gater l'affichage.
       if (!isAdminMode) {
-        _appendAdminConversationLog('2/6 App Check préflight EN ARRIÈRE-PLAN (non bloquant)');
+        _appendAdminConversationLog(
+            '2/6 App Check préflight EN ARRIÈRE-PLAN (non bloquant)');
         unawaited(
           UserProfileBootstrapService.prepareProfileFirestoreAccess(
             user: FirebaseAuth.instance.currentUser,
@@ -662,7 +664,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             forceRefreshAppCheckToken: forceRefreshTokens,
             requireAppCheckToken: false,
           ).then(
-            (_) => _appendAdminConversationLog('2/6 App Check préflight (bg) terminé'),
+            (_) => _appendAdminConversationLog(
+                '2/6 App Check préflight (bg) terminé'),
             onError: (Object e) => _appendAdminConversationLog(
                 '2/6 App Check préflight (bg) échec non bloquant: $e'),
           ),
@@ -689,7 +692,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (myGeneration != _subscriptionGeneration ||
           isCancelled ||
           controller.isClosed) {
-        _appendAdminConversationLog('3/6 abandon (génération obsolète/annulée)');
+        _appendAdminConversationLog(
+            '3/6 abandon (génération obsolète/annulée)');
         return;
       }
 
@@ -826,7 +830,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
         }
       }
-      _appendAdminConversationLog('4/6 abonnement(s) actif(s)=${subscriptions.length}');
+      _appendAdminConversationLog(
+          '4/6 abonnement(s) actif(s)=${subscriptions.length}');
     }
 
     unawaited(startSubscriptions(forceRefreshTokens: false));
@@ -862,7 +867,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             initiallyExpanded: _diagPanelExpanded,
             onExpansionChanged: (value) =>
                 setState(() => _diagPanelExpanded = value),
-            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
             childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
             leading: const Icon(Icons.bug_report_outlined,
                 color: Color(0xFF2F6C38), size: 18),
@@ -946,6 +952,26 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         ),
       ),
     );
+  }
+
+  Stream<_ConversationQueryState>? _cachedConversationStateStream;
+  String? _cachedConversationStateUserId;
+
+  /// Conserve le même flux tant que l'utilisateur connecté ne change pas.
+  /// Sans ce cache, chaque setState recrée le flux et réaffiche le loader.
+  Stream<_ConversationQueryState> _stableConversationStateForUser(
+    String userId,
+  ) {
+    final currentStream = _cachedConversationStateStream;
+
+    if (currentStream != null && _cachedConversationStateUserId == userId) {
+      return currentStream;
+    }
+
+    _cachedConversationStateUserId = userId;
+    final nextStream = _conversationStateForUser(userId);
+    _cachedConversationStateStream = nextStream;
+    return nextStream;
   }
 
   Stream<_ConversationQueryState> _conversationStateForUser(String userId) {
@@ -1767,7 +1793,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                   _buildAdminConversationLoadLogPanel(),
                   Expanded(
                     child: StreamBuilder<_ConversationQueryState>(
-                      stream: _conversationStateForUser(userId),
+                      stream: _stableConversationStateForUser(userId),
                       builder: (context, snapshot) {
                         final state = snapshot.data;
 
@@ -1777,10 +1803,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           'state=${state == null ? 'null' : 'isLoading=${state.isLoading}'}',
                         );
 
-                        if ((snapshot.connectionState ==
-                                    ConnectionState.waiting &&
-                                state == null) ||
-                            (state?.isLoading ?? false)) {
+                        // Ne jamais remplacer les conversations déjà reçues par un loader de retry.
+
+                        if (state == null) {
                           _logRenderDiag(
                               '➡️ LOADER affiché (conn=${snapshot.connectionState.name} '
                               'state=${state == null ? 'null' : 'isLoading=${state.isLoading}'})');
@@ -1792,10 +1817,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           );
                         }
 
-                        final docs =
-                            state?.docs ?? const <ConversationSummary>[];
-                        final errorsByField =
-                            state?.errorsByField ?? const <String, Object>{};
+                        final docs = state.docs;
+                        final errorsByField = state.errorsByField;
                         _maybeOpenInitialConversation(context, docs, userId);
 
                         final query =

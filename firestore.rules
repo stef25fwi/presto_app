@@ -695,23 +695,17 @@ service cloud.firestore {
       }
 
       allow get: if canReadConversationAsAdmin() || canReadConversationAsParticipant(resource.data);
-      // Le client n'interroge plus que le champ canonique `participantIds`
-      // (conversationParticipantQueryFieldAliases). Cette clause doit rester
-      // alignée avec ces alias : tout champ interrogé côté client mais absent
-      // ici ferait échouer la requête en permission-denied.
-      // NB : remplace le hotfix multi-alias des PR #67/#68 par la version
-      // consolidée (un seul champ canonique après backfill).
-      // Filet de transition : on autorise aussi les anciens alias en lecture
-      // liste pour les clients web encore en cache (participants/participant_ids/
-      // userIds/memberIds). Clauses additives (mêmes participants) -> sans risque.
+      // La requête Flutter utilise exclusivement :
+      // where('participantIds', arrayContains: request.auth.uid)
+      // La règle doit utiliser exactement le même champ pour que
+      // Firestore puisse prouver que tous les résultats sont autorisés.
       allow list: if canReadConversationAsAdmin()
-        || (isSignedIn() && (
-          ((resource.data.participantIds is list) && resource.data.participantIds.hasAny([uid()]))
-          || ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
-          || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
-          || ((resource.data.userIds is list) && resource.data.userIds.hasAny([uid()]))
-          || ((resource.data.memberIds is list) && resource.data.memberIds.hasAny([uid()]))
-        ));
+        || (
+          isSignedIn()
+          && resource.data.participantIds is list
+          && resource.data.participantIds.hasAny([uid()])
+        );
+
       allow create, update, delete: if false;
 
       match /messages/{messageId} {
