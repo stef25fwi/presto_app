@@ -2954,11 +2954,21 @@ class _BroadcastNotificationAdminPageState
         body: _bodyController.text,
       );
       if (!mounted) return;
-      showSuccessSnackBar(
-        context,
-        'Envoyé : ${result.successCount}/${result.tokenCount} appareils '
-        '(${result.userCount} utilisateurs).',
-      );
+      if (result.tokenCount == 0) {
+        showErrorSnackBar(
+          context,
+          'Aucun appareil avec notifications activées '
+          '(0 sur ${result.totalUsers} utilisateurs). '
+          'Les utilisateurs doivent activer les notifications pour recevoir un push.',
+        );
+      } else {
+        showSuccessSnackBar(
+          context,
+          'Envoyé : ${result.successCount}/${result.tokenCount} appareils '
+          '— ${result.userCount} utilisateur(s) avec notifs activées '
+          'sur ${result.totalUsers} au total.',
+        );
+      }
     } on FirebaseFunctionsException catch (error) {
       if (!mounted) return;
       final message = error.code == 'permission-denied'

@@ -122,7 +122,16 @@ export async function sendBroadcastPush({
   routeName?: string;
   collapseKey?: string;
   data?: Record<string, unknown>;
-}): Promise<{ userCount: number; tokenCount: number; successCount: number; failureCount: number }> {
+}): Promise<{ userCount: number; tokenCount: number; successCount: number; failureCount: number; totalUsers: number }> {
+  // Nombre total d'utilisateurs (contexte pour l'admin: distinguer "aucun
+  // appareil enregistré" de "aucun utilisateur").
+  let totalUsers = 0;
+  try {
+    totalUsers = (await db.collection(COLLECTIONS.users).count().get()).data().count;
+  } catch (error) {
+    logger.warn("broadcast_push_user_count_failed", { error: String(error) });
+  }
+
   // Collect every enabled push token across all users via a collection group query.
   const tokenToRef = new Map<string, FirebaseFirestore.DocumentReference>();
   const userIds = new Set<string>();
@@ -141,8 +150,8 @@ export async function sendBroadcastPush({
 
   const tokens = Array.from(tokenToRef.keys());
   if (tokens.length === 0) {
-    logger.warn("broadcast_push_no_tokens", {});
-    return { userCount: 0, tokenCount: 0, successCount: 0, failureCount: 0 };
+    logger.warn("broadcast_push_no_tokens", { totalUsers });
+    return { userCount: 0, tokenCount: 0, successCount: 0, failureCount: 0, totalUsers };
   }
 
   const invalidRefs: FirebaseFirestore.DocumentReference[] = [];
@@ -215,7 +224,7 @@ export async function sendBroadcastPush({
     invalidTokens: invalidRefs.length,
   });
 
-  return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount };
+  return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount, totalUsers };
 }
 
 export async function sendPushToUser({

@@ -9,12 +9,14 @@ class BroadcastResult {
     required this.tokenCount,
     required this.successCount,
     required this.failureCount,
+    required this.totalUsers,
   });
 
   final int userCount;
   final int tokenCount;
   final int successCount;
   final int failureCount;
+  final int totalUsers;
 
   factory BroadcastResult.fromMap(Map<String, dynamic> map) {
     int asInt(Object? value) =>
@@ -24,6 +26,7 @@ class BroadcastResult {
       tokenCount: asInt(map['tokenCount']),
       successCount: asInt(map['successCount']),
       failureCount: asInt(map['failureCount']),
+      totalUsers: asInt(map['totalUsers']),
     );
   }
 }
