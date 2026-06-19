@@ -49,38 +49,35 @@ class DefaultFirebaseOptions {
   static const String _appleBundleId = 'fr.ilipresto.app';
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: _webApiKey,
-    appId: _webAppId,
-    messagingSenderId: _messagingSenderId,
-    projectId: _projectId,
-    authDomain: _authDomain,
-    databaseURL: _databaseURL,
-    storageBucket: _storageBucket,
+    apiKey: 'AIzaSyCXzhQcvFnlcApEhk8A-Y57IdQC8uO728c',
+    appId: '1:151421230024:web:1f974719da2f98822b3efd',
+    messagingSenderId: '151421230024',
+    projectId: 'presto-app-74abe',
+    authDomain: 'presto-app-74abe.firebaseapp.com',
+    databaseURL: 'https://presto-app-74abe-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'presto-app-74abe.firebasestorage.app',
+    measurementId: 'G-NT4PEHQ3CJ',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: _androidApiKey,
-    appId: _androidAppId,
-    messagingSenderId: _messagingSenderId,
-    projectId: _projectId,
-    authDomain: _authDomain,
-    databaseURL: _databaseURL,
-    storageBucket: _storageBucket,
-    androidClientId: _androidClientId,
+    apiKey: 'AIzaSyDAKDN2nDDad4BKxbBVgfYyOqhy7nrtZsQ',
+    appId: '1:151421230024:android:339090c7418b3d7c2b3efd',
+    messagingSenderId: '151421230024',
+    projectId: 'presto-app-74abe',
+    databaseURL: 'https://presto-app-74abe-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'presto-app-74abe.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: _iosApiKey,
-    appId: _iosAppId,
-    messagingSenderId: _messagingSenderId,
-    projectId: _projectId,
-    authDomain: _authDomain,
-    databaseURL: _databaseURL,
-    storageBucket: _storageBucket,
-    iosClientId: _iosClientId,
-    iosBundleId: _appleBundleId,
+    apiKey: 'AIzaSyBuf1j4W60LqaqCdjygCJAQQUuvzYxS0tk',
+    appId: '1:151421230024:ios:c3a75745c492983d2b3efd',
+    messagingSenderId: '151421230024',
+    projectId: 'presto-app-74abe',
+    databaseURL: 'https://presto-app-74abe-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'presto-app-74abe.firebasestorage.app',
+    androidClientId: '151421230024-2hri7o8thhcjsrs56pjbq7qfgh8m9q3v.apps.googleusercontent.com',
+    iosClientId: '151421230024-m5vd41dnda0chqb1e9drm23cvp2vr00e.apps.googleusercontent.com',
+    iosBundleId: 'fr.ilipresto.app',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: _iosApiKey,
     appId: _iosAppId,
