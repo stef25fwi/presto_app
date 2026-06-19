@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createInAppNotification = createInAppNotification;
+exports.sendBroadcastPush = sendBroadcastPush;
 exports.sendPushToUser = sendPushToUser;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("../../core/firestore");
@@ -83,6 +84,96 @@ async function createInAppNotification({ notificationId, userId, title, message,
             throw error;
         }
     }
+}
+async function sendBroadcastPush({ title, body, channelId, routeName, collapseKey, data = {}, }) {
+    // Collect every enabled push token across all users via a collection group query.
+    const tokenToRef = new Map();
+    const userIds = new Set();
+    const snap = await firestore_1.db.collectionGroup(constants_1.COLLECTIONS.pushTokens).get();
+    for (const doc of snap.docs) {
+        const token = String(doc.data().token || "").trim();
+        const enabled = doc.data().enabled !== false;
+        if (!enabled || !token)
+            continue;
+        const userId = doc.ref.parent.parent?.id;
+        if (userId)
+            userIds.add(userId);
+        if (!tokenToRef.has(token)) {
+            tokenToRef.set(token, doc.ref);
+        }
+    }
+    const tokens = Array.from(tokenToRef.keys());
+    if (tokens.length === 0) {
+        logger_1.logger.warn("broadcast_push_no_tokens", {});
+        return { userCount: 0, tokenCount: 0, successCount: 0, failureCount: 0 };
+    }
+    const invalidRefs = [];
+    let successCount = 0;
+    let failureCount = 0;
+    for (let index = 0; index < tokens.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
+        const batchTokens = tokens.slice(index, index + FCM_MULTICAST_TOKEN_LIMIT);
+        const multicast = {
+            tokens: batchTokens,
+            notification: { title, body },
+            data: toStringMap({ ...data, routeName, channelId }),
+            android: {
+                priority: "high",
+                collapseKey,
+                notification: {
+                    channelId,
+                    tag: collapseKey,
+                    sound: "default",
+                    clickAction: "FLUTTER_NOTIFICATION_CLICK",
+                },
+            },
+            apns: {
+                headers: { "apns-priority": "10" },
+                payload: { aps: { sound: "default", contentAvailable: true } },
+            },
+            webpush: {
+                notification: { icon: "/icons/Icon-192.png", badge: "/icons/Icon-192.png" },
+                fcmOptions: {
+                    link: routeName ? `https://ilipresto.web.app${routeName}` : "https://ilipresto.web.app",
+                },
+            },
+        };
+        try {
+            const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
+            successCount += response.successCount;
+            failureCount += response.failureCount;
+            response.responses.forEach((result, responseIndex) => {
+                if (result.success)
+                    return;
+                const code = result.error?.code || "";
+                if (code === "messaging/registration-token-not-registered" ||
+                    code === "messaging/invalid-registration-token") {
+                    const ref = tokenToRef.get(batchTokens[responseIndex]);
+                    if (ref)
+                        invalidRefs.push(ref);
+                }
+            });
+        }
+        catch (error) {
+            failureCount += batchTokens.length;
+            logger_1.logger.warn("broadcast_push_batch_failed", { error: String(error) });
+        }
+    }
+    // Prune dead tokens so the next broadcast is cheaper and cleaner.
+    for (let index = 0; index < invalidRefs.length; index += 400) {
+        const batch = firestore_1.db.batch();
+        for (const ref of invalidRefs.slice(index, index + 400)) {
+            batch.delete(ref);
+        }
+        await batch.commit();
+    }
+    logger_1.logger.info("broadcast_push_sent", {
+        userCount: userIds.size,
+        tokenCount: tokens.length,
+        successCount,
+        failureCount,
+        invalidTokens: invalidRefs.length,
+    });
+    return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount };
 }
 async function sendPushToUser({ userId, topic, title, body, routeName, channelId, collapseKey, data = {}, }) {
     const enabled = await isPushEnabledForUser(userId, topic);
