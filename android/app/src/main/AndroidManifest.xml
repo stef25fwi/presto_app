@@ -16,6 +16,12 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-1792076968124623~9761142816"/>
+        <!-- Canal de notification par défaut (repli) pour les push reçus sans
+             channelId explicite (ex: campagnes console Firebase). Les push
+             applicatifs fournissent déjà leur propre channelId. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="ilipresto_activity"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
