@@ -40,6 +40,15 @@ const MESSAGING_CALLABLE_OPTIONS = {
   enforceAppCheck: false,
 } as const;
 
+// Chemin chaud de la messagerie : on garde 1 instance au chaud pour éliminer
+// le cold start (sinon le 1er message après inactivité met ~2-5 s à partir).
+// Appliqué uniquement aux callables critiques (envoi + marquage lu) pour
+// limiter le coût (1 instance toujours active par fonction).
+const HOT_MESSAGING_CALLABLE_OPTIONS = {
+  ...MESSAGING_CALLABLE_OPTIONS,
+  minInstances: 1,
+} as const;
+
 async function findConversationSnapshotsForParticipant(
   currentUserId: string,
   listingId?: string,
@@ -797,7 +806,7 @@ export const ensureOfferConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async 
   };
 });
 
-export const sendConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
+export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
   const text = sanitizeMessageText(request.data?.text);
@@ -940,7 +949,7 @@ export const sendConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, async 
   };
 });
 
-export const markConversationRead = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {
+export const markConversationRead = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
