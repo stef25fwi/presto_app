@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart';
@@ -1874,8 +1873,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                         width: double.infinity,
                                         child: AdBanner(
                                           margin: EdgeInsets.zero,
-                                          placeholderHeight:
-                                              kIsWeb ? 128.0 : 112.0,
                                           placeholderFolderPrefix:
                                               'assets/carousel_home/',
                                           flat: true,

@@ -115,6 +115,7 @@ class _AdPlaceholderImagesAdminPageState
     const orange = Color(0xFFFF6600);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Gestion images placeholders'),
         backgroundColor: orange,

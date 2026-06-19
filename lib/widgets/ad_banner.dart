@@ -173,19 +173,15 @@ class _AdBannerState extends State<AdBanner> {
 
       if (widget.flat) {
         // Placeholder plein format pour la page Je consulte :
-        // même largeur que les tuiles d'annonces, hauteur contrôlée par placeholderHeight.
+        // largeur pleine + hauteur automatique selon le ratio réel de l’image.
         return Container(
           margin: margin,
           width: double.infinity,
-          child: SizedBox(
-            width: double.infinity,
-            height: ph,
-            child: ManagedAdPlaceholderTicker(
-              fallbackFolderPrefix: folder,
-              borderRadius: BorderRadius.circular(18),
-              interval: const Duration(seconds: 4),
-              enabled: widget.animatePlaceholder,
-            ),
+          child: ManagedAdPlaceholderTicker(
+            fallbackFolderPrefix: folder,
+            borderRadius: BorderRadius.circular(18),
+            interval: const Duration(seconds: 4),
+            enabled: widget.animatePlaceholder,
           ),
         );
       }
