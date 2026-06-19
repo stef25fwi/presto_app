@@ -70,6 +70,10 @@ jobs:
           # public reCAPTCHA Enterprise site key. Never put a reCAPTCHA secret
           # key in a Flutter Web build variable.
           APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
+          # Public VAPID key (Firebase Console > Cloud Messaging > Web Push
+          # certificates). Required so the web bundle can register an FCM token
+          # and enable web push notifications. Safe to embed: it is public.
+          FCM_WEB_VAPID_KEY: ${{ secrets.FCM_WEB_VAPID_KEY }}
         run: |
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
