@@ -86,6 +86,15 @@ async function createInAppNotification({ notificationId, userId, title, message,
     }
 }
 async function sendBroadcastPush({ title, body, channelId, routeName, collapseKey, data = {}, }) {
+    // Nombre total d'utilisateurs (contexte pour l'admin: distinguer "aucun
+    // appareil enregistré" de "aucun utilisateur").
+    let totalUsers = 0;
+    try {
+        totalUsers = (await firestore_1.db.collection(constants_1.COLLECTIONS.users).count().get()).data().count;
+    }
+    catch (error) {
+        logger_1.logger.warn("broadcast_push_user_count_failed", { error: String(error) });
+    }
     // Collect every enabled push token across all users via a collection group query.
     const tokenToRef = new Map();
     const userIds = new Set();
@@ -104,8 +113,8 @@ async function sendBroadcastPush({ title, body, channelId, routeName, collapseKe
     }
     const tokens = Array.from(tokenToRef.keys());
     if (tokens.length === 0) {
-        logger_1.logger.warn("broadcast_push_no_tokens", {});
-        return { userCount: 0, tokenCount: 0, successCount: 0, failureCount: 0 };
+        logger_1.logger.warn("broadcast_push_no_tokens", { totalUsers });
+        return { userCount: 0, tokenCount: 0, successCount: 0, failureCount: 0, totalUsers };
     }
     const invalidRefs = [];
     let successCount = 0;
@@ -173,7 +182,7 @@ async function sendBroadcastPush({ title, body, channelId, routeName, collapseKe
         failureCount,
         invalidTokens: invalidRefs.length,
     });
-    return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount };
+    return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount, totalUsers };
 }
 async function sendPushToUser({ userId, topic, title, body, routeName, channelId, collapseKey, data = {}, ignorePreferences = false, }) {
     if (!ignorePreferences) {
