@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../services/firebase_functions_region.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -1583,6 +1584,44 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   }
 }
 
+class _ListingViewTracker {
+  static final Set<String> _countedListingIds = <String>{};
+  static final String _sessionViewerKey =
+      'session-${DateTime.now().millisecondsSinceEpoch}-${identityHashCode(_countedListingIds)}';
+
+  static Future<void> trackOnce({
+    required String listingId,
+    required bool isMarketplace,
+  }) async {
+    final id = listingId.trim();
+
+    if (id.isEmpty || !isMarketplace) return;
+
+    if (!_countedListingIds.add(id)) {
+      debugPrint('[listing-views] déjà comptée session listingId=$id');
+      return;
+    }
+
+    try {
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'incrementListingView',
+        options: HttpsCallableOptions(timeout: Duration(seconds: 10)),
+      );
+
+      await callable.call<dynamic>({
+        'listingId': id,
+        'viewerKey': _sessionViewerKey,
+        'source': 'offer_details_page',
+      });
+
+      debugPrint('[listing-views] increment-ok listingId=$id');
+    } catch (error) {
+      _countedListingIds.remove(id);
+      debugPrint('[listing-views] increment-failed listingId=$id error=$error');
+    }
+  }
+}
+
 class _OfferUiData {
   final String offerId;
   final bool isMarketplace;
@@ -1925,7 +1964,7 @@ class _OfferUiData {
       thumbnailUrl: readValue('thumbnailUrl', () => o.thumbnailUrl),
     );
 
-    return _OfferUiData(
+    final uiData = _OfferUiData(
       offerId: offerId,
       isMarketplace: isMarketplace,
       listingStatus: listingStatus,
@@ -1973,6 +2012,15 @@ class _OfferUiData {
           ? _shouldHideBudgetOnOfferDetails(Map<String, dynamic>.from(o))
           : price <= 0,
     );
+
+    unawaited(
+      _ListingViewTracker.trackOnce(
+        listingId: uiData.offerId,
+        isMarketplace: uiData.isMarketplace,
+      ),
+    );
+
+    return uiData;
   }
 
   static dynamic _read(dynamic Function() getter) {
