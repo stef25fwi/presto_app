@@ -53,7 +53,7 @@ class _AdPlaceholderImagesAdminPageState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur pendant l’ajout : $error'),
+          content: Text("Erreur pendant l'ajout : $error"),
           backgroundColor: Colors.red,
         ),
       );
@@ -170,11 +170,11 @@ class _AdPlaceholderImagesAdminPageState
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Ces images alimentent les placeholders AdBanner de la page “Je consulte”. '
-                          'Format conseillé : image horizontale, idéalement en WebP, largeur idéale 1920 px, minimum 1600 px, ratio recommandé 16:9, poids cible inférieur à 450 Ko. '
-                          'WebP est conseillé pour les meilleures performances. Pour éviter l’erreur build web, la conversion client automatique est désactivée : ajoute directement une image WebP si possible. '
-                          'Les images activées sont visibles dans le carrousel. '
-                          'S’il n’y a aucune image active ici, l’application utilise les images embarquées comme fallback.',
+                          "Ces images alimentent les placeholders AdBanner de la page “Je consulte”. "
+                          "Format conseillé : image horizontale, idéalement en WebP, largeur idéale 1920 px, minimum 1600 px, ratio recommandé 16:9, poids cible inférieur à 450 Ko. "
+                          "WebP est conseillé pour les meilleures performances. Pour éviter l'erreur build web, la conversion client automatique est désactivée : ajoute directement une image WebP si possible. "
+                          "Les images activées sont visibles dans le carrousel. "
+                          "S'il n'y a aucune image active ici, l'application utilise les images embarquées comme fallback.",
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
