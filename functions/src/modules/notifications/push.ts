@@ -227,6 +227,7 @@ export async function sendPushToUser({
   channelId,
   collapseKey,
   data = {},
+  ignorePreferences = false,
 }: {
   userId: string;
   topic: PushTopic;
@@ -236,11 +237,14 @@ export async function sendPushToUser({
   channelId: "ilipresto_messages" | "ilipresto_activity";
   collapseKey?: string;
   data?: Record<string, unknown>;
+  ignorePreferences?: boolean;
 }): Promise<void> {
-  const enabled = await isPushEnabledForUser(userId, topic);
-  if (!enabled) {
-    logger.info("push_skipped_preferences_disabled", { userId, topic });
-    return;
+  if (!ignorePreferences) {
+    const enabled = await isPushEnabledForUser(userId, topic);
+    if (!enabled) {
+      logger.info("push_skipped_preferences_disabled", { userId, topic });
+      return;
+    }
   }
 
   const tokenEntries = await listPushTokens(userId);
