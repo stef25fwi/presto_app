@@ -130,6 +130,15 @@ service firebase.storage {
       allow write: if isMarketplaceAdmin() && isHeroMediaUpload();
     }
 
+    // ✅ [AUTORISÉ] Images placeholders AdBanner — upload admin, lecture
+    // publique (affichées dans le carrousel de la page « Je consulte »).
+    // Chemin: ad_placeholders/{target}/{fileName} (cf. AdPlaceholderImageService).
+    match /ad_placeholders/{target}/{fileName} {
+      allow read: if true;
+      allow write: if isMarketplaceAdmin() && isImageUpload();
+      allow delete: if isMarketplaceAdmin();
+    }
+
     match /listingDrafts/{uid}/{draftId}/{fileName} {
       allow write: if isSignedIn() && uid == request.auth.uid && isImageUpload();
       allow read: if isSignedIn() && uid == request.auth.uid;

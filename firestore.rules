@@ -339,6 +339,13 @@ service cloud.firestore {
       allow delete: if isMarketplaceAdmin();
     }
 
+    // Images placeholders AdBanner : lecture publique des images visibles
+    // (carrousel « Je consulte »), écriture réservée aux admins.
+    match /ad_placeholder_images/{imageId} {
+      allow read: if resource.data.isVisible == true || isMarketplaceAdmin();
+      allow create, update, delete: if isMarketplaceAdmin();
+    }
+
     // ⛔ [REFUSÉ] Rate limits — server-only (Functions)
     match /_rate_limits/{docId} {
       allow read, write: if false;
