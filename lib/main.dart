@@ -853,9 +853,18 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
             : rawPath;
 
     // Sécurité Flutter Web / PWA :
-    // Si le navigateur rouvre /account ou /login, on n'affiche pas directement
-    // la page connexion. L'app démarre toujours par le splash.
-    if (normalizedPath == '/account' || normalizedPath == '/login') {
+    // /account démarre toujours par le splash/home.
+    // /login doit afficher réellement la page connexion.
+    if (normalizedPath == LoginPage.routeName) {
+      return <Route<dynamic>>[
+        MaterialPageRoute(
+          settings: const RouteSettings(name: LoginPage.routeName),
+          builder: (_) => const LoginPage(),
+        ),
+      ];
+    }
+
+    if (normalizedPath == '/account') {
       pendingPostAuthRoute = null;
     }
 
@@ -1038,14 +1047,14 @@ class _SplashScreenState extends State<SplashScreen>
 
     // ROUTAGE RACINE APRÈS SPLASH :
     // Une ouverture normale de l'application doit toujours afficher l'accueil.
-    if (webPath.isEmpty || webPath == '/' || webPath == '/login') {
+    if (webPath.isEmpty || webPath == '/') {
       pendingPostAuthRoute = null;
       return const HomePage();
     }
 
     // FIX DESTINATION SPLASH ROOT HOME :
     // Après le splash, l'ouverture normale de l'app doit aller sur l'accueil.
-    if (webPath.isEmpty || webPath == '/' || webPath == '/login') {
+    if (webPath.isEmpty || webPath == '/') {
       pendingPostAuthRoute = null;
       return const HomePage();
     }
