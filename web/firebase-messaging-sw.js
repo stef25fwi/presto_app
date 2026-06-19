@@ -12,29 +12,72 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+function normalizeRoute(data) {
+  return data.routeName ||
+    data.route_name ||
+    (data.conversationId ? `/messages/${encodeURIComponent(data.conversationId)}` : '') ||
+    (data.conversation_id ? `/messages/${encodeURIComponent(data.conversation_id)}` : '') ||
+    (data.offerId ? `/offers/${encodeURIComponent(data.offerId)}` : '') ||
+    (data.offer_id ? `/offers/${encodeURIComponent(data.offer_id)}` : '') ||
+    '/';
+}
+
+function extractNotificationData(rawData) {
+  const data = rawData || {};
+  const fcmData =
+    data.FCM_MSG && data.FCM_MSG.data && typeof data.FCM_MSG.data === 'object'
+      ? data.FCM_MSG.data
+      : {};
+  return {
+    ...fcmData,
+    ...data,
+  };
+}
+
 messaging.onBackgroundMessage((payload) => {
   const notification = payload.notification || {};
   const data = payload.data || {};
-  const title = notification.title || 'IliPresto';
-  const options = {
-    body: notification.body || '',
-    data: {
-      routeName: data.routeName || '',
-      conversationId: data.conversationId || '',
-      offerId: data.offerId || '',
-    },
-  };
 
-  self.registration.showNotification(title, options);
+  const hasFirebaseVisibleNotification =
+    Boolean(notification.title || notification.body);
+
+  // Important :
+  // Si le backend envoie un payload "notification", Firebase / le navigateur
+  // affiche déjà la notification en arrière-plan. Appeler showNotification ici
+  // crée un doublon visible. On ne montre manuellement que les messages data-only.
+  if (hasFirebaseVisibleNotification) {
+    console.debug('[FCM SW] Notification payload already visible; manual show skipped.');
+    return;
+  }
+
+  const title = data.title || 'IliPresto';
+  const body = data.body || data.message || '';
+  const routeName = normalizeRoute(data);
+  const tag =
+    data.collapseKey ||
+    data.collapse_key ||
+    data.notificationId ||
+    data.notification_id ||
+    data.conversationId ||
+    data.offerId ||
+    'ilipresto_push';
+
+  self.registration.showNotification(title, {
+    body,
+    tag,
+    renotify: false,
+    data: {
+      ...data,
+      routeName,
+    },
+  });
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const data = event.notification.data || {};
-  const routeName = data.routeName ||
-    (data.conversationId ? `/messages/${encodeURIComponent(data.conversationId)}` : '') ||
-    (data.offerId ? `/offers/${encodeURIComponent(data.offerId)}` : '') ||
-    '/';
+
+  const data = extractNotificationData(event.notification.data || {});
+  const routeName = normalizeRoute(data);
   const targetUrl = new URL(routeName, self.location.origin).href;
 
   event.waitUntil(
@@ -52,6 +95,7 @@ self.addEventListener('notificationclick', (event) => {
             return nextClient;
           });
         }
+
         if ('focus' in client) {
           client.postMessage({ routeName });
           return client.focus();
