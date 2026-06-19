@@ -3084,7 +3084,7 @@ class _PracticalInfoCard extends StatelessWidget {
                       data.missionDelay != 'Délai non précisé')
                     _InfoLine(
                       icon: Icons.access_time_rounded,
-                      label: 'Délai de réponse',
+                      label: 'Délai d’intervention',
                       value: data.missionDelay,
                       compact: compact,
                     ),
