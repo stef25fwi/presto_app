@@ -175,11 +175,13 @@ async function sendBroadcastPush({ title, body, channelId, routeName, collapseKe
     });
     return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount };
 }
-async function sendPushToUser({ userId, topic, title, body, routeName, channelId, collapseKey, data = {}, }) {
-    const enabled = await isPushEnabledForUser(userId, topic);
-    if (!enabled) {
-        logger_1.logger.info("push_skipped_preferences_disabled", { userId, topic });
-        return;
+async function sendPushToUser({ userId, topic, title, body, routeName, channelId, collapseKey, data = {}, ignorePreferences = false, }) {
+    if (!ignorePreferences) {
+        const enabled = await isPushEnabledForUser(userId, topic);
+        if (!enabled) {
+            logger_1.logger.info("push_skipped_preferences_disabled", { userId, topic });
+            return;
+        }
     }
     const tokenEntries = await listPushTokens(userId);
     if (tokenEntries.length === 0) {

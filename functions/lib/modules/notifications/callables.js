@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.unregisterPushToken = exports.broadcastTestNotification = exports.registerPushToken = void 0;
+exports.unregisterPushToken = exports.sendSelfTestNotification = exports.broadcastTestNotification = exports.registerPushToken = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
@@ -83,6 +83,34 @@ exports.broadcastTestNotification = (0, https_1.onCall)({
         ...result,
     });
     return { ok: true, ...result };
+});
+exports.sendSelfTestNotification = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK, timeoutSeconds: 30 }, async (request) => {
+    const userId = requireAuthUid(request);
+    // Compte les appareils enregistrés (enabled absent = actif) pour donner un
+    // retour clair à l'UI.
+    const tokensSnap = await firestore_1.db
+        .collection(constants_1.COLLECTIONS.users)
+        .doc(userId)
+        .collection(constants_1.COLLECTIONS.pushTokens)
+        .get();
+    const deviceCount = tokensSnap.docs.filter((doc) => doc.data().enabled !== false && String(doc.data().token || "").trim() !== "").length;
+    if (deviceCount === 0) {
+        throw new https_1.HttpsError("failed-precondition", "Aucun appareil enregistré. Active d'abord les notifications sur cet appareil.");
+    }
+    // Notification de test envoyée à TOUS les appareils de l'utilisateur,
+    // en ignorant les préférences (action explicite de l'utilisateur).
+    await (0, push_1.sendPushToUser)({
+        userId,
+        topic: "support",
+        title: "Notification test ✅",
+        body: "Si tu vois ce message sur l'écran verrouillé, les notifications fonctionnent.",
+        channelId: "ilipresto_activity",
+        collapseKey: "self_test_notification",
+        ignorePreferences: true,
+        data: { kind: "self_test_notification" },
+    });
+    logger_1.logger.info("self_test_notification_sent", { userId, deviceCount });
+    return { ok: true, deviceCount };
 });
 exports.unregisterPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const userId = requireAuthUid(request);

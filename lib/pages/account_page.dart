@@ -26,6 +26,7 @@ import '../services/user_profile_bootstrap_service.dart';
 import '../services/user_profile_save_payload.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/friendly_snackbar.dart';
+import '../widgets/account_notifications_tile.dart';
 import '../widgets/account_profile_sections.dart';
 import '../services/app_check_bootstrap.dart';
 
@@ -2925,6 +2926,8 @@ class _AccountPageState extends State<AccountPage> {
                     RepaintBoundary(
                       child: const SizedBox.shrink(),
                     ),
+                    const SizedBox(height: 24),
+                    const AccountNotificationsTile(),
                     const SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,

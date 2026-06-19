@@ -95,7 +95,7 @@ export {
   deleteConversationMessage,
   processConversationAttachmentPhoto,
 } from "./modules/messaging/callables";
-export { registerPushToken, unregisterPushToken, broadcastTestNotification } from "./modules/notifications/callables";
+export { registerPushToken, unregisterPushToken, broadcastTestNotification, sendSelfTestNotification } from "./modules/notifications/callables";
 export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
