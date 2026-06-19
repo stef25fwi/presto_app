@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/notification_service.dart';
@@ -49,6 +52,11 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
         _status = settings.authorizationStatus;
         _loading = false;
       });
+      if (_isAuthorized) {
+        // Best-effort : garantir que le token est enregistré côté serveur même
+        // si la permission avait été accordée dans une session précédente.
+        unawaited(_service.ensureDeviceRegistered());
+      }
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -103,6 +111,13 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
     if (_testing) return;
     setState(() => _testing = true);
     try {
+      // S'assure d'abord que cet appareil a bien un token enregistré.
+      final registration = await _service.ensureDeviceRegistered();
+      if (registration != DeviceRegistrationResult.registered) {
+        if (!mounted) return;
+        showErrorSnackBar(context, _registrationIssueMessage(registration));
+        return;
+      }
       final count = await _service.sendSelfTestNotification();
       if (!mounted) return;
       showSuccessSnackBar(
@@ -121,6 +136,24 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       showErrorSnackBar(context, 'Envoi du test impossible : $error');
     } finally {
       if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  String _registrationIssueMessage(DeviceRegistrationResult result) {
+    switch (result) {
+      case DeviceRegistrationResult.permissionMissing:
+        return 'Active d’abord les notifications ci-dessus.';
+      case DeviceRegistrationResult.noToken:
+        return kIsWeb
+            ? 'Recharge la page (Ctrl+Maj+R) puis réessaie : le navigateur n’a '
+                'pas encore de jeton de notification.'
+            : 'Impossible d’obtenir un jeton de notification sur cet appareil. '
+                'Réessaie.';
+      case DeviceRegistrationResult.registrationFailed:
+        return 'Échec de l’enregistrement de l’appareil. Vérifie ta connexion '
+            'et réessaie.';
+      case DeviceRegistrationResult.registered:
+        return '';
     }
   }
 
