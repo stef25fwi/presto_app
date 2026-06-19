@@ -3,13 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.unregisterPushToken = exports.registerPushToken = void 0;
+exports.unregisterPushToken = exports.broadcastTestNotification = exports.registerPushToken = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
 const logger_1 = require("../../core/logger");
 const constants_1 = require("../../shared/constants");
+const roles_1 = require("../marketplace/services/roles");
+const push_1 = require("./push");
 function requireAuthUid(request) {
     const uid = String(request.auth?.uid || "").trim();
     if (!uid) {
@@ -52,6 +54,35 @@ exports.registerPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, 
         appCheck: request.app != null,
     });
     return { ok: true, tokenId: docId };
+});
+const BROADCAST_DEFAULT_TITLE = "Notification test";
+const BROADCAST_DEFAULT_BODY = "Ceci est une notification test envoyée à tous les utilisateurs.";
+exports.broadcastTestNotification = (0, https_1.onCall)({
+    region: env_1.PROJECT_REGION,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
+    timeoutSeconds: 300,
+    memory: "512MiB",
+}, async (request) => {
+    const token = request.auth?.token;
+    if (!token) {
+        throw new https_1.HttpsError("unauthenticated", "Authentication required");
+    }
+    const roles = (0, roles_1.extractRolesFromAuthToken)(token);
+    (0, roles_1.requireAnyRole)(roles, ["admin", "superadmin"], "Admin access required");
+    const title = (String(request.data?.title || "").trim() || BROADCAST_DEFAULT_TITLE).slice(0, 120);
+    const body = (String(request.data?.body || "").trim() || BROADCAST_DEFAULT_BODY).slice(0, 500);
+    const result = await (0, push_1.sendBroadcastPush)({
+        title,
+        body,
+        channelId: "ilipresto_activity",
+        collapseKey: "admin_broadcast_test",
+        data: { kind: "admin_broadcast_test" },
+    });
+    logger_1.logger.info("admin_broadcast_test_sent", {
+        actor: request.auth?.uid ?? "unknown",
+        ...result,
+    });
+    return { ok: true, ...result };
 });
 exports.unregisterPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const userId = requireAuthUid(request);

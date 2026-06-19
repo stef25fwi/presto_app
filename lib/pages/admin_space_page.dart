@@ -13,6 +13,7 @@ import '../utils/friendly_snackbar.dart';
 import '../constants.dart';
 import '../features/micro_ia/micro_ia_service.dart';
 import '../services/admin_access_resolver.dart';
+import '../services/admin_broadcast_service.dart';
 import '../services/firebase_functions_region.dart';
 import 'package:presto_app/pages/admin/widgets/payment_info_audio_admin_section.dart';
 import 'package:presto_app/pages/admin/ad_placeholder_images_admin_page.dart';
@@ -2835,6 +2836,20 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
+                  _KpiTile(
+                    icon: Icons.notifications_active_rounded,
+                    title: "Notification test",
+                    subtitle: "Push à tous les utilisateurs",
+                    badge: null,
+                    iconColor: prestoOrange,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const _BroadcastNotificationAdminPage(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -2872,6 +2887,185 @@ class _AudioPopupAdminPage extends StatelessWidget {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: PaymentInfoAudioAdminSection(),
+        ),
+      ),
+    );
+  }
+}
+
+class _BroadcastNotificationAdminPage extends StatefulWidget {
+  const _BroadcastNotificationAdminPage();
+
+  @override
+  State<_BroadcastNotificationAdminPage> createState() =>
+      _BroadcastNotificationAdminPageState();
+}
+
+class _BroadcastNotificationAdminPageState
+    extends State<_BroadcastNotificationAdminPage> {
+  static const Color prestoOrange = Color(0xFFFF6600);
+
+  final AdminBroadcastService _service = AdminBroadcastService();
+  final TextEditingController _titleController =
+      TextEditingController(text: 'Notification test');
+  final TextEditingController _bodyController = TextEditingController(
+      text: 'Ceci est une notification test envoyée à tous les utilisateurs.');
+
+  bool _sending = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmAndSend() async {
+    if (_sending) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Envoyer à TOUS les utilisateurs ?'),
+        content: const Text(
+          'Cette notification push sera envoyée à tous les utilisateurs '
+          'possédant un appareil enregistré. Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: prestoOrange),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Envoyer à tous'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _sending = true);
+    try {
+      final result = await _service.sendTestNotificationToAllUsers(
+        title: _titleController.text,
+        body: _bodyController.text,
+      );
+      if (!mounted) return;
+      showSuccessSnackBar(
+        context,
+        'Envoyé : ${result.successCount}/${result.tokenCount} appareils '
+        '(${result.userCount} utilisateurs).',
+      );
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) return;
+      final message = error.code == 'permission-denied'
+          ? 'Accès admin requis.'
+          : (error.message ?? 'Erreur lors de l’envoi.');
+      showErrorSnackBar(context, message);
+    } catch (error) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de l’envoi : $error');
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
+        titleSpacing: 16,
+        title: const Text(
+          'Notification test',
+          style: kPrestoAppBarTitleStyle,
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Card(
+                elevation: 0,
+                color: const Color(0xFFFFF3EA),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.campaign_rounded, color: prestoOrange),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Cette notification est envoyée immédiatement à tous '
+                          'les utilisateurs ayant un appareil enregistré. '
+                          'À utiliser avec précaution.',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _titleController,
+                maxLength: 120,
+                enabled: !_sending,
+                decoration: const InputDecoration(
+                  labelText: 'Titre',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _bodyController,
+                maxLength: 500,
+                maxLines: 4,
+                enabled: !_sending,
+                decoration: const InputDecoration(
+                  labelText: 'Message',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: prestoOrange,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: _sending ? null : _confirmAndSend,
+                icon: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(
+                  _sending ? 'Envoi en cours...' : 'Envoyer à tous les utilisateurs',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
