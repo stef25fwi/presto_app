@@ -51,6 +51,7 @@ class NotificationService {
     final fromDefine = _webVapidKeyFromDefine.trim();
     return fromDefine.isNotEmpty ? fromDefine : _webVapidKeyFallback;
   }
+
   static const String _messagingPromptDismissedAtKeyPrefix =
       'notifications.messaging_prompt.dismissed_at';
   static const AndroidNotificationChannel _messagesChannel =
@@ -90,6 +91,7 @@ class NotificationService {
   String? _lastOpenedRouteName;
   DateTime? _lastOpenedRouteAt;
   AuthorizationStatus? _lastAuthorizationStatus;
+  Future<String?>? _fetchMessagingTokenInFlight;
   bool _initialized = false;
   bool _localNotificationsReady = false;
   bool _navigatorReady = false;
@@ -705,10 +707,34 @@ class NotificationService {
     );
   }
 
-  Future<String?> _fetchMessagingToken() async {
+  Future<String?> _fetchMessagingToken() {
+    final existing = _fetchMessagingTokenInFlight;
+    if (existing != null) {
+      AdminWebDebugStore.instance.recordEvent(
+        area: 'notifications',
+        level: 'info',
+        message: 'getToken-join-inflight',
+        detail: kIsWeb ? 'web' : 'native',
+      );
+      return existing;
+    }
+
+    final future = _doFetchMessagingToken();
+    _fetchMessagingTokenInFlight = future;
+
+    return future.whenComplete(() {
+      if (identical(_fetchMessagingTokenInFlight, future)) {
+        _fetchMessagingTokenInFlight = null;
+      }
+    });
+  }
+
+  Future<String?> _doFetchMessagingToken() async {
     try {
       if (kIsWeb) {
-        if (_webVapidKey.isEmpty) {
+        final vapidKey = _webVapidKey.trim();
+
+        if (vapidKey.isEmpty) {
           debugPrint(
             '[Notifications] Web push disabled: FCM_WEB_VAPID_KEY non configure.',
           );
@@ -720,10 +746,19 @@ class NotificationService {
           );
           return null;
         }
-        final token = await _messaging.getToken(vapidKey: _webVapidKey);
+
+        AdminWebDebugStore.instance.recordEvent(
+          area: 'notifications',
+          level: 'info',
+          message: 'getToken-start',
+          detail: 'web vapidLen=${vapidKey.length}',
+        );
+
+        final token = await _messaging.getToken(vapidKey: vapidKey);
+
         if (token == null) {
           debugPrint(
-            '[Notifications] Web FCM token null: permission=${_lastAuthorizationStatus ?? 'unknown'} vapidConfigured=${_webVapidKey.isNotEmpty}',
+            '[Notifications] Web FCM token null: permission=${_lastAuthorizationStatus ?? 'unknown'} vapidConfigured=${vapidKey.isNotEmpty}',
           );
           AdminWebDebugStore.instance.recordEvent(
             area: 'notifications',
@@ -731,11 +766,20 @@ class NotificationService {
             message: 'getToken-null',
             detail: 'web permission=${_lastAuthorizationStatus ?? 'unknown'}',
           );
+        } else {
+          AdminWebDebugStore.instance.recordEvent(
+            area: 'notifications',
+            level: 'info',
+            message: 'getToken-ok',
+            detail: 'web len=${token.length}',
+          );
         }
+
         return token;
       }
 
       final token = await _messaging.getToken();
+
       if (token == null) {
         AdminWebDebugStore.instance.recordEvent(
           area: 'notifications',
@@ -746,10 +790,12 @@ class NotificationService {
       } else {
         AdminWebDebugStore.instance.recordEvent(
           area: 'notifications',
+          level: 'info',
           message: 'getToken-ok',
-          detail: 'len=${token.length}',
+          detail: 'native len=${token.length}',
         );
       }
+
       return token;
     } catch (error, stackTrace) {
       debugPrint('[Notifications] getToken error: $error');
