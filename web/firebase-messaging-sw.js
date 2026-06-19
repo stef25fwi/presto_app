@@ -2,12 +2,12 @@ importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo',
+  apiKey: 'AIzaSyCXzhQcvFnlcApEhk8A-Y57IdQC8uO728c',
   authDomain: 'presto-app-74abe.firebaseapp.com',
   projectId: 'presto-app-74abe',
   storageBucket: 'presto-app-74abe.firebasestorage.app',
   messagingSenderId: '151421230024',
-  appId: '1:151421230024:web:8b83d1d11084c5a02b3efd',
+  appId: '1:151421230024:web:1f974719da2f98822b3efd',
 });
 
 const messaging = firebase.messaging();
