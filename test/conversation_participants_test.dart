@@ -2,9 +2,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/conversation_participants.dart';
 
 void main() {
-  test('expose tous les alias de requete participants attendus', () {
+  test('expose uniquement participantIds comme alias de requete', () {
+    // La requête côté client n'interroge que `participantIds` : tout autre
+    // alias doit aussi être autorisé dans firestore.rules, sinon la requête
+    // échoue en permission-denied (cf. fix "restore conversation access").
     expect(
       conversationParticipantQueryFieldAliases,
+      <String>['participantIds'],
+    );
+  });
+
+  test('expose tous les alias de lecture participants attendus', () {
+    expect(
+      conversationParticipantFieldAliases,
       <String>[
         'participantIds',
         'participants',
