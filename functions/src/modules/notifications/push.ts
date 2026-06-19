@@ -108,6 +108,116 @@ export async function createInAppNotification({
   }
 }
 
+export async function sendBroadcastPush({
+  title,
+  body,
+  channelId,
+  routeName,
+  collapseKey,
+  data = {},
+}: {
+  title: string;
+  body: string;
+  channelId: "ilipresto_messages" | "ilipresto_activity";
+  routeName?: string;
+  collapseKey?: string;
+  data?: Record<string, unknown>;
+}): Promise<{ userCount: number; tokenCount: number; successCount: number; failureCount: number }> {
+  // Collect every enabled push token across all users via a collection group query.
+  const tokenToRef = new Map<string, FirebaseFirestore.DocumentReference>();
+  const userIds = new Set<string>();
+
+  const snap = await db.collectionGroup(COLLECTIONS.pushTokens).get();
+  for (const doc of snap.docs) {
+    const token = String(doc.data().token || "").trim();
+    const enabled = doc.data().enabled !== false;
+    if (!enabled || !token) continue;
+    const userId = doc.ref.parent.parent?.id;
+    if (userId) userIds.add(userId);
+    if (!tokenToRef.has(token)) {
+      tokenToRef.set(token, doc.ref);
+    }
+  }
+
+  const tokens = Array.from(tokenToRef.keys());
+  if (tokens.length === 0) {
+    logger.warn("broadcast_push_no_tokens", {});
+    return { userCount: 0, tokenCount: 0, successCount: 0, failureCount: 0 };
+  }
+
+  const invalidRefs: FirebaseFirestore.DocumentReference[] = [];
+  let successCount = 0;
+  let failureCount = 0;
+
+  for (let index = 0; index < tokens.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
+    const batchTokens = tokens.slice(index, index + FCM_MULTICAST_TOKEN_LIMIT);
+    const multicast = {
+      tokens: batchTokens,
+      notification: { title, body },
+      data: toStringMap({ ...data, routeName, channelId }),
+      android: {
+        priority: "high" as const,
+        collapseKey,
+        notification: {
+          channelId,
+          tag: collapseKey,
+          sound: "default",
+          clickAction: "FLUTTER_NOTIFICATION_CLICK",
+        },
+      },
+      apns: {
+        headers: { "apns-priority": "10" },
+        payload: { aps: { sound: "default", contentAvailable: true } },
+      },
+      webpush: {
+        notification: { icon: "/icons/Icon-192.png", badge: "/icons/Icon-192.png" },
+        fcmOptions: {
+          link: routeName ? `https://ilipresto.web.app${routeName}` : "https://ilipresto.web.app",
+        },
+      },
+    };
+
+    try {
+      const response = await admin.messaging().sendEachForMulticast(multicast);
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+      response.responses.forEach((result, responseIndex) => {
+        if (result.success) return;
+        const code = result.error?.code || "";
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token"
+        ) {
+          const ref = tokenToRef.get(batchTokens[responseIndex]!);
+          if (ref) invalidRefs.push(ref);
+        }
+      });
+    } catch (error) {
+      failureCount += batchTokens.length;
+      logger.warn("broadcast_push_batch_failed", { error: String(error) });
+    }
+  }
+
+  // Prune dead tokens so the next broadcast is cheaper and cleaner.
+  for (let index = 0; index < invalidRefs.length; index += 400) {
+    const batch = db.batch();
+    for (const ref of invalidRefs.slice(index, index + 400)) {
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
+
+  logger.info("broadcast_push_sent", {
+    userCount: userIds.size,
+    tokenCount: tokens.length,
+    successCount,
+    failureCount,
+    invalidTokens: invalidRefs.length,
+  });
+
+  return { userCount: userIds.size, tokenCount: tokens.length, successCount, failureCount };
+}
+
 export async function sendPushToUser({
   userId,
   topic,

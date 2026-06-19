@@ -4,6 +4,8 @@ import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { COLLECTIONS } from "../../shared/constants";
+import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
+import { sendBroadcastPush } from "./push";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -55,6 +57,44 @@ export const registerPushToken = onCall({ region: PROJECT_REGION, enforceAppChec
 
   return { ok: true, tokenId: docId };
 });
+
+const BROADCAST_DEFAULT_TITLE = "Notification test";
+const BROADCAST_DEFAULT_BODY = "Ceci est une notification test envoyée à tous les utilisateurs.";
+
+export const broadcastTestNotification = onCall(
+  {
+    region: PROJECT_REGION,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
+  async (request) => {
+    const token = request.auth?.token as Record<string, unknown> | undefined;
+    if (!token) {
+      throw new HttpsError("unauthenticated", "Authentication required");
+    }
+    const roles = extractRolesFromAuthToken(token);
+    requireAnyRole(roles, ["admin", "superadmin"], "Admin access required");
+
+    const title = (String(request.data?.title || "").trim() || BROADCAST_DEFAULT_TITLE).slice(0, 120);
+    const body = (String(request.data?.body || "").trim() || BROADCAST_DEFAULT_BODY).slice(0, 500);
+
+    const result = await sendBroadcastPush({
+      title,
+      body,
+      channelId: "ilipresto_activity",
+      collapseKey: "admin_broadcast_test",
+      data: { kind: "admin_broadcast_test" },
+    });
+
+    logger.info("admin_broadcast_test_sent", {
+      actor: request.auth?.uid ?? "unknown",
+      ...result,
+    });
+
+    return { ok: true, ...result };
+  },
+);
 
 export const unregisterPushToken = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const userId = requireAuthUid(request);
