@@ -198,6 +198,13 @@ if [[ -n "${APPCHECK_RECAPTCHA_SITE_KEY:-}" ]]; then
 fi
 echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_SITE_KEY=$appcheck_status" >&2
 echo "[flutter_with_build_stamp] APPCHECK_RECAPTCHA_PROVIDER=enterprise" >&2
+# Trace de présence de la clé VAPID (longueur seulement, jamais la valeur) pour
+# diagnostiquer un build web sans notifications push.
+vapid_status="absent"
+if [[ -n "${FCM_WEB_VAPID_KEY:-}" ]]; then
+  vapid_status="present(${#FCM_WEB_VAPID_KEY} chars)"
+fi
+echo "[flutter_with_build_stamp] FCM_WEB_VAPID_KEY=$vapid_status" >&2
 
 is_web_release_build=false
 if [[ "$is_web_command" == "true" && " ${flutter_args[*]} " == *" build web "* && " ${flutter_args[*]} " == *" --release "* ]]; then
