@@ -190,20 +190,38 @@ class _AdPlaceholderImagesAdminPageState
                       fontWeight: FontWeight.w800,
                     ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                'Coche une image pour l’afficher dans le carrousel. '
+                'Les images décochées sont masquées.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                    ),
+              ),
               const SizedBox(height: 12),
               if (images.isEmpty)
                 const _EmptyPlaceholderAdminState()
               else
-                ...images.map(
-                  (image) => _AdminPlaceholderImageCard(
-                    image: image,
-                    onVisibilityChanged: (value) =>
-                        AdPlaceholderImageService.setVisible(
-                      id: image.id,
-                      isVisible: value,
-                    ),
-                    onDelete: () => _confirmDelete(image),
-                  ),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 16 / 11,
+                  children: images
+                      .map(
+                        (image) => _AdminPlaceholderImageTile(
+                          image: image,
+                          onVisibilityChanged: (value) =>
+                              AdPlaceholderImageService.setVisible(
+                            id: image.id,
+                            isVisible: value,
+                          ),
+                          onDelete: () => _confirmDelete(image),
+                        ),
+                      )
+                      .toList(),
                 ),
             ],
           );
@@ -248,8 +266,8 @@ class _EmptyPlaceholderAdminState extends StatelessWidget {
   }
 }
 
-class _AdminPlaceholderImageCard extends StatelessWidget {
-  const _AdminPlaceholderImageCard({
+class _AdminPlaceholderImageTile extends StatelessWidget {
+  const _AdminPlaceholderImageTile({
     required this.image,
     required this.onVisibilityChanged,
     required this.onDelete,
@@ -261,51 +279,97 @@ class _AdminPlaceholderImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(
-          color: image.isVisible
-              ? const Color(0xFFFF6600).withValues(alpha: 0.35)
-              : Colors.grey.shade300,
+    const orange = Color(0xFFFF6600);
+    final selected = image.isVisible;
+
+    return GestureDetector(
+      onTap: () => onVisibilityChanged(!selected),
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? orange : Colors.grey.shade300,
+            width: selected ? 2.5 : 1,
+          ),
         ),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Image.network(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
               image.imageUrl,
-              fit: BoxFit.contain,
-              alignment: Alignment.center,
+              fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => const ColoredBox(
                 color: Color(0xFFF2F4F7),
-                child: Center(
-                  child: Icon(Icons.broken_image_outlined),
+                child: Center(child: Icon(Icons.broken_image_outlined)),
+              ),
+            ),
+            // Voile blanc pour griser les images non affichées.
+            if (!selected)
+              Container(color: Colors.white.withValues(alpha: 0.5)),
+            // Encoche de sélection (en haut à droite).
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: selected ? orange : Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selected ? orange : Colors.grey.shade400,
+                    width: 2,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 4),
+                  ],
+                ),
+                child: selected
+                    ? const Icon(Icons.check, size: 18, color: Colors.white)
+                    : null,
+              ),
+            ),
+            // Bouton de suppression (en bas à droite).
+            Positioned(
+              bottom: 4,
+              right: 4,
+              child: Material(
+                color: Colors.white,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: IconButton(
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Supprimer',
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: onDelete,
                 ),
               ),
             ),
-          ),
-          ListTile(
-            title: Text(
-              image.isVisible ? 'Visible dans les AdBanner' : 'Masquée',
-              style: const TextStyle(fontWeight: FontWeight.w800),
+            // Badge d'état (en bas à gauche).
+            Positioned(
+              left: 6,
+              bottom: 6,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  selected ? 'Affichée' : 'Masquée',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
-            subtitle: const Text('Page concernée : Je consulte'),
-            leading: Switch(
-              value: image.isVisible,
-              onChanged: onVisibilityChanged,
-            ),
-            trailing: IconButton(
-              tooltip: 'Supprimer',
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: onDelete,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
