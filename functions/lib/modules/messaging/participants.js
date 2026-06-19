@@ -46,39 +46,74 @@ function readConversationParticipantIdsFromCanonicalId(conversationId) {
         .sort();
 }
 function readConversationParticipants(data, options = {}) {
-    const canonicalParticipants = readConversationParticipantIdsFromCanonicalId(options.conversationId ?? "");
-    // Les conversations 1:1 suivent l'ID canonique offer_<offerId>__<uidA>__<uidB>.
-    // Quand cet ID est présent, il est la source de vérité pour la visibilité.
-    if (canonicalParticipants.length >= 2) {
+    const canonicalParticipants = readConversationParticipantIdsFromCanonicalId(String(options.conversationId ?? ""));
+    if (canonicalParticipants.length > 0) {
         return canonicalParticipants;
     }
-    const result = [];
-    const seen = new Set();
-    const appendParticipant = (value) => {
-        const normalized = normalizeString(value);
-        if (!normalized || seen.has(normalized))
-            return;
-        seen.add(normalized);
-        result.push(normalized);
+    const participants = new Set();
+    const addValue = (value) => {
+        const normalized = String(value ?? "").trim();
+        if (normalized.length > 0) {
+            participants.add(normalized);
+        }
     };
-    for (const field of exports.CONVERSATION_PARTICIPANT_FIELD_ALIASES) {
-        const raw = data[field];
-        if (!Array.isArray(raw))
-            continue;
-        for (const value of raw) {
-            appendParticipant(value);
+    const addArray = (value) => {
+        if (!Array.isArray(value)) {
+            return;
+        }
+        for (const item of value) {
+            addValue(item);
+        }
+    };
+    const addMapKeys = (value) => {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+            return;
+        }
+        for (const key of Object.keys(value)) {
+            addValue(key);
+        }
+    };
+    const source = data || {};
+    for (const field of [
+        "participantIds",
+        "participant_ids",
+        "participants",
+        "userIds",
+        "user_ids",
+        "memberIds",
+        "member_ids",
+        "users",
+    ]) {
+        addArray(source[field]);
+    }
+    for (const field of [
+        "participantNames",
+        "participant_names",
+        "unreadCount",
+        "unread_count",
+        "lastReadAt",
+        "last_read_at",
+        "archivedBy",
+        "archived_by",
+        "blockedBy",
+        "blocked_by",
+        "participantsMap",
+        "participants_map",
+    ]) {
+        addMapKeys(source[field]);
+    }
+    const conversationId = String(options.conversationId ?? "").trim();
+    if (conversationId.startsWith("offer_") && conversationId.includes("__")) {
+        const pieces = conversationId
+            .split("__")
+            .map((piece) => piece.trim())
+            .filter((piece) => piece.length > 0);
+        if (pieces.length >= 3) {
+            addValue(pieces[pieces.length - 2]);
+            addValue(pieces[pieces.length - 1]);
         }
     }
-    for (const field of exports.CONVERSATION_PARTICIPANT_MAP_ALIASES) {
-        const raw = data[field];
-        if (!raw || typeof raw !== "object")
-            continue;
-        for (const key of Object.keys(raw)) {
-            appendParticipant(key);
-        }
-    }
-    result.sort();
-    return result;
+    return Array.from(participants).sort();
 }
 function buildConversationParticipantFields(participants) {
     const normalized = participants
