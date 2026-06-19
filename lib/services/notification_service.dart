@@ -39,9 +39,18 @@ enum DeviceRegistrationResult {
 /// Service pour gérer Firebase Cloud Messaging (notifications push)
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
-  // Must be injected at build time via --dart-define=FCM_WEB_VAPID_KEY=<key>
-  static const String _webVapidKey =
+  // Peut être injecté au build via --dart-define=FCM_WEB_VAPID_KEY=<clé>.
+  static const String _webVapidKeyFromDefine =
       String.fromEnvironment('FCM_WEB_VAPID_KEY');
+  // Clé publique VAPID Web Push du projet (Firebase > Cloud Messaging >
+  // Certificats Web Push). Fallback volontaire — comme la site key reCAPTCHA —
+  // pour qu'un build web fonctionne même si le secret est absent. PUBLIQUE.
+  static const String _webVapidKeyFallback =
+      'BHSk6FdpQVbhF9LVfIULPzzC4NljhD8ysNb9fBlRXzO18Z2f1mcDEoEoi4q7ApP7FxfJVOt38hf2usdqpr4gxvs';
+  static String get _webVapidKey {
+    final fromDefine = _webVapidKeyFromDefine.trim();
+    return fromDefine.isNotEmpty ? fromDefine : _webVapidKeyFallback;
+  }
   static const String _messagingPromptDismissedAtKeyPrefix =
       'notifications.messaging_prompt.dismissed_at';
   static const AndroidNotificationChannel _messagesChannel =
