@@ -51,7 +51,10 @@ class AccountLoginPage extends LoginPage {
 
 class _LoginPageState extends State<LoginPage> {
   static const Color _orange = Color(0xFFFF6600);
+  static const Color _blue = Color(0xFF1A73E8);
   static const Color _ink = Color(0xFF111827);
+  static const Color _muted = Color(0xFF6B7280);
+  static const Color _fieldBorder = Color(0xFFD8DEE8);
 
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
@@ -59,6 +62,15 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _obscurePassword = true;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint(
+      '✅ ACTIVE_LOGIN_PAGE_PIXEL_PERFECT_ILI_PRESTO '
+      'file=lib/pages/auth/login_page.dart route=/login',
+    );
+  }
 
   @override
   void dispose() {
@@ -75,8 +87,9 @@ class _LoginPageState extends State<LoginPage> {
     if (widget.onLogin == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Connexion prête : branche ici ton service Auth existant.'),
+          content: Text(
+            'Connexion prête : branche ici ton service Auth existant.',
+          ),
         ),
       );
       return;
@@ -126,8 +139,10 @@ class _LoginPageState extends State<LoginPage> {
                 child: Container(
                   width: cardWidth,
                   constraints: BoxConstraints(
-                    minHeight:
-                        math.min(height - media.padding.vertical - 40, 760),
+                    minHeight: math.min(
+                      height - media.padding.vertical - 40,
+                      760,
+                    ),
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -210,7 +225,8 @@ class _LoginPageState extends State<LoginPage> {
                               splashRadius: 22,
                               onPressed: () {
                                 setState(
-                                    () => _obscurePassword = !_obscurePassword);
+                                  () => _obscurePassword = !_obscurePassword,
+                                );
                               },
                               icon: Icon(
                                 _obscurePassword
@@ -325,6 +341,16 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+          const Positioned(
+            left: 12,
+            bottom: 8,
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.001,
+                child: Text('ACTIVE_LOGIN_PAGE_PIXEL_PERFECT_ILI_PRESTO'),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -407,10 +433,7 @@ class _OrangeRing extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color(0xFFFF6600),
-          width: 1.2,
-        ),
+        border: Border.all(color: const Color(0xFFFF6600), width: 1.2),
       ),
     );
   }
@@ -530,11 +553,7 @@ class _InputField extends StatelessWidget {
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
-        prefixIcon: Icon(
-          icon,
-          color: const Color(0xFF4B5563),
-          size: 24,
-        ),
+        prefixIcon: Icon(icon, color: Color(0xFF4B5563), size: 24),
         suffixIcon: suffix,
         filled: true,
         fillColor: Colors.white,
@@ -545,38 +564,23 @@ class _InputField extends StatelessWidget {
         errorMaxLines: 2,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: _fieldBorder,
-            width: 1.35,
-          ),
+          borderSide: const BorderSide(color: _fieldBorder, width: 1.35),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: _fieldBorder,
-            width: 1.35,
-          ),
+          borderSide: const BorderSide(color: _fieldBorder, width: 1.35),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFF1A73E8),
-            width: 1.55,
-          ),
+          borderSide: const BorderSide(color: Color(0xFF1A73E8), width: 1.55),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1.35,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.35),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1.55,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.55),
         ),
       ),
     );
@@ -590,12 +594,7 @@ class _DividerOr extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: const [
-        Expanded(
-          child: Divider(
-            color: Color(0xFFD9DEE8),
-            thickness: 1,
-          ),
-        ),
+        Expanded(child: Divider(color: Color(0xFFD9DEE8), thickness: 1)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 18),
           child: Text(
@@ -607,12 +606,7 @@ class _DividerOr extends StatelessWidget {
             ),
           ),
         ),
-        Expanded(
-          child: Divider(
-            color: Color(0xFFD9DEE8),
-            thickness: 1,
-          ),
-        ),
+        Expanded(child: Divider(color: Color(0xFFD9DEE8), thickness: 1)),
       ],
     );
   }
@@ -639,10 +633,7 @@ class _SocialButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: const Color(0xFF111827),
-          side: const BorderSide(
-            color: Color(0xFFD8DEE8),
-            width: 1.25,
-          ),
+          side: const BorderSide(color: Color(0xFFD8DEE8), width: 1.25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
