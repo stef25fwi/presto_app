@@ -5,7 +5,7 @@ import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { COLLECTIONS } from "../../shared/constants";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
-import { sendBroadcastPush } from "./push";
+import { sendBroadcastPush, sendPushToUser } from "./push";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -93,6 +93,48 @@ export const broadcastTestNotification = onCall(
     });
 
     return { ok: true, ...result };
+  },
+);
+
+export const sendSelfTestNotification = onCall(
+  { region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK, timeoutSeconds: 30 },
+  async (request) => {
+    const userId = requireAuthUid(request);
+
+    // Compte les appareils enregistrés (enabled absent = actif) pour donner un
+    // retour clair à l'UI.
+    const tokensSnap = await db
+      .collection(COLLECTIONS.users)
+      .doc(userId)
+      .collection(COLLECTIONS.pushTokens)
+      .get();
+    const deviceCount = tokensSnap.docs.filter(
+      (doc) => doc.data().enabled !== false && String(doc.data().token || "").trim() !== "",
+    ).length;
+
+    if (deviceCount === 0) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Aucun appareil enregistré. Active d'abord les notifications sur cet appareil.",
+      );
+    }
+
+    // Notification de test envoyée à TOUS les appareils de l'utilisateur,
+    // en ignorant les préférences (action explicite de l'utilisateur).
+    await sendPushToUser({
+      userId,
+      topic: "support",
+      title: "Notification test ✅",
+      body: "Si tu vois ce message sur l'écran verrouillé, les notifications fonctionnent.",
+      channelId: "ilipresto_activity",
+      collapseKey: "self_test_notification",
+      ignorePreferences: true,
+      data: { kind: "self_test_notification" },
+    });
+
+    logger.info("self_test_notification_sent", { userId, deviceCount });
+
+    return { ok: true, deviceCount };
   },
 );
 

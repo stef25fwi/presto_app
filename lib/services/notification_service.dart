@@ -264,6 +264,23 @@ class NotificationService {
     return granted;
   }
 
+  /// Envoie une notification test push aux appareils enregistrés de
+  /// l'utilisateur courant (via Cloud Function). Retourne le nombre
+  /// d'appareils ciblés. Lève [FirebaseFunctionsException] en cas d'échec
+  /// (ex: aucun appareil enregistré → code 'failed-precondition').
+  Future<int> sendSelfTestNotification() async {
+    final callable = _functions.httpsCallable(
+      'sendSelfTestNotification',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
+    );
+    final result = await callable.call<dynamic>(<String, dynamic>{});
+    final data = (result.data is Map)
+        ? Map<String, dynamic>.from(result.data as Map)
+        : <String, dynamic>{};
+    final count = data['deviceCount'];
+    return count is int ? count : (count is num ? count.toInt() : 0);
+  }
+
   Future<bool> syncPushRegistrationIfAuthorized() async {
     if (!await hasPushPermission()) return false;
 
