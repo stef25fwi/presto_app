@@ -38,6 +38,14 @@ const MESSAGING_CALLABLE_OPTIONS = {
     region: env_1.PROJECT_REGION,
     enforceAppCheck: false,
 };
+// Chemin chaud de la messagerie : on garde 1 instance au chaud pour éliminer
+// le cold start (sinon le 1er message après inactivité met ~2-5 s à partir).
+// Appliqué uniquement aux callables critiques (envoi + marquage lu) pour
+// limiter le coût (1 instance toujours active par fonction).
+const HOT_MESSAGING_CALLABLE_OPTIONS = {
+    ...MESSAGING_CALLABLE_OPTIONS,
+    minInstances: 1,
+};
 async function findConversationSnapshotsForParticipant(currentUserId, listingId) {
     const conversationCollection = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
     const listingFieldAliases = listingId ? ["listingId", "offerId", "offer_id"] : [null];
@@ -585,7 +593,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS
         offerTitle,
     };
 });
-exports.sendConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
+exports.sendConversationMessage = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const text = sanitizeMessageText(request.data?.text);
@@ -694,7 +702,7 @@ exports.sendConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS
         messageId: messageRef.id,
     };
 });
-exports.markConversationRead = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
+exports.markConversationRead = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
