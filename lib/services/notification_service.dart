@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase_init.dart';
 import '../utils/runtime_action_logger.dart';
+import 'admin_web_debug_store.dart';
 import 'firebase_functions_region.dart';
 
 @pragma('vm:entry-point')
@@ -702,6 +703,12 @@ class NotificationService {
           debugPrint(
             '[Notifications] Web push disabled: FCM_WEB_VAPID_KEY non configure.',
           );
+          AdminWebDebugStore.instance.recordEvent(
+            area: 'notifications',
+            level: 'warn',
+            message: 'getToken-skip',
+            detail: 'web: FCM_WEB_VAPID_KEY manquant',
+          );
           return null;
         }
         final token = await _messaging.getToken(vapidKey: _webVapidKey);
@@ -709,13 +716,40 @@ class NotificationService {
           debugPrint(
             '[Notifications] Web FCM token null: permission=${_lastAuthorizationStatus ?? 'unknown'} vapidConfigured=${_webVapidKey.isNotEmpty}',
           );
+          AdminWebDebugStore.instance.recordEvent(
+            area: 'notifications',
+            level: 'warn',
+            message: 'getToken-null',
+            detail: 'web permission=${_lastAuthorizationStatus ?? 'unknown'}',
+          );
         }
         return token;
       }
 
-      return await _messaging.getToken();
-    } catch (error) {
+      final token = await _messaging.getToken();
+      if (token == null) {
+        AdminWebDebugStore.instance.recordEvent(
+          area: 'notifications',
+          level: 'warn',
+          message: 'getToken-null',
+          detail: 'native permission=${_lastAuthorizationStatus ?? 'unknown'}',
+        );
+      } else {
+        AdminWebDebugStore.instance.recordEvent(
+          area: 'notifications',
+          message: 'getToken-ok',
+          detail: 'len=${token.length}',
+        );
+      }
+      return token;
+    } catch (error, stackTrace) {
       debugPrint('[Notifications] getToken error: $error');
+      AdminWebDebugStore.instance.recordError(
+        'notifications',
+        error,
+        stackTrace: stackTrace,
+        message: 'getToken-failed',
+      );
       return null;
     }
   }
