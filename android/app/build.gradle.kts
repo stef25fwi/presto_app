@@ -5,6 +5,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     // Google Services plugin for Firebase
     id("com.google.gms.google-services")
+    id("com.google.firebase.firebase-perf")
     // Firebase Crashlytics
     id("com.google.firebase.crashlytics")
 }
