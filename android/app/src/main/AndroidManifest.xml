@@ -21,7 +21,7 @@
              applicatifs fournissent déjà leur propre channelId. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="ilipresto_activity"/>
+            android:value="@string/default_notification_channel_id"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
