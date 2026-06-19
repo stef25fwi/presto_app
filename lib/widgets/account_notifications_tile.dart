@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:app_settings/app_settings.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +12,10 @@ const Color _kOrange = Color(0xFFFF6600);
 
 /// Carte « Notifications » de la page Mon compte.
 ///
-/// Permet à l'utilisateur de vérifier que les notifications sont autorisées,
-/// de les activer, et d'envoyer une notification test pour confirmer que le
-/// téléphone les reçoit (y compris sur l'écran verrouillé), comme les autres
-/// applications.
+/// Affiche l'état des notifications (Activées / Bloquées / Désactivées) et
+/// permet de les activer. Pour gérer/désactiver/débloquer, le toggle ouvre
+/// directement les réglages système (la permission OS ne peut pas être
+/// modifiée depuis l'app). Le test de réception vit dans l'espace admin.
 class AccountNotificationsTile extends StatefulWidget {
   const AccountNotificationsTile({super.key});
 
@@ -30,7 +30,6 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
   AuthorizationStatus? _status;
   bool _loading = true;
   bool _busy = false;
-  bool _testing = false;
 
   bool get _isAuthorized =>
       _status == AuthorizationStatus.authorized ||
@@ -66,29 +65,14 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
   Future<void> _onToggle(bool value) async {
     if (_busy) return;
 
-    if (!value) {
-      // Impossible de révoquer la permission OS depuis l'app : on guide.
-      await _showInfoDialog(
-        title: 'Désactiver les notifications',
-        message:
-            'Pour désactiver les notifications iliprestō, ouvre les réglages '
-            'de ton téléphone (ou de ton navigateur) → Notifications → '
-            'iliprestō, puis désactive-les.',
-      );
+    // Désactiver, ou débloquer une permission refusée : impossible depuis
+    // l'app → on ouvre directement les réglages système.
+    if (!value || _isBlocked) {
+      await _openSystemSettings();
       return;
     }
 
-    if (_isBlocked) {
-      await _showInfoDialog(
-        title: 'Notifications bloquées',
-        message:
-            'Les notifications sont bloquées au niveau du système. Ouvre les '
-            'réglages de ton téléphone (ou de ton navigateur) → Notifications '
-            '→ iliprestō et autorise-les, puis reviens ici.',
-      );
-      return;
-    }
-
+    // Première activation : on demande la permission OS.
     setState(() => _busy = true);
     try {
       final activated = await _service.requestPushPermission();
@@ -107,53 +91,27 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
     }
   }
 
-  Future<void> _sendTest() async {
-    if (_testing) return;
-    setState(() => _testing = true);
-    try {
-      // S'assure d'abord que cet appareil a bien un token enregistré.
-      final registration = await _service.ensureDeviceRegistered();
-      if (registration != DeviceRegistrationResult.registered) {
-        if (!mounted) return;
-        showErrorSnackBar(context, _registrationIssueMessage(registration));
-        return;
-      }
-      final count = await _service.sendSelfTestNotification();
-      if (!mounted) return;
-      showSuccessSnackBar(
-        context,
-        'Notification test envoyée à $count appareil(s). Verrouille ton écran : '
-        'tu devrais la voir apparaître dans quelques secondes.',
+  Future<void> _openSystemSettings() async {
+    if (kIsWeb) {
+      await _showInfoDialog(
+        title: 'Réglages des notifications',
+        message:
+            'Sur le web, gère les notifications dans les réglages de ton '
+            'navigateur (icône cadenas ou ⚙️ à gauche de la barre d’adresse) '
+            '→ Notifications.',
       );
-    } on FirebaseFunctionsException catch (error) {
-      if (!mounted) return;
-      final message = error.code == 'failed-precondition'
-          ? 'Aucun appareil enregistré. Active d’abord les notifications ci-dessus.'
-          : (error.message ?? 'Envoi du test impossible.');
-      showErrorSnackBar(context, message);
-    } catch (error) {
-      if (!mounted) return;
-      showErrorSnackBar(context, 'Envoi du test impossible : $error');
-    } finally {
-      if (mounted) setState(() => _testing = false);
+      return;
     }
-  }
-
-  String _registrationIssueMessage(DeviceRegistrationResult result) {
-    switch (result) {
-      case DeviceRegistrationResult.permissionMissing:
-        return 'Active d’abord les notifications ci-dessus.';
-      case DeviceRegistrationResult.noToken:
-        return kIsWeb
-            ? 'Recharge la page (Ctrl+Maj+R) puis réessaie : le navigateur n’a '
-                'pas encore de jeton de notification.'
-            : 'Impossible d’obtenir un jeton de notification sur cet appareil. '
-                'Réessaie.';
-      case DeviceRegistrationResult.registrationFailed:
-        return 'Échec de l’enregistrement de l’appareil. Vérifie ta connexion '
-            'et réessaie.';
-      case DeviceRegistrationResult.registered:
-        return '';
+    try {
+      await AppSettings.openAppSettings(type: AppSettingsType.notification);
+    } catch (_) {
+      if (!mounted) return;
+      await _showInfoDialog(
+        title: 'Réglages des notifications',
+        message:
+            'Ouvre les réglages de ton téléphone → Notifications → iliprestō '
+            'pour gérer les autorisations.',
+      );
     }
   }
 
@@ -215,8 +173,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
           children: [
             Row(
               children: [
-                const Icon(Icons.notifications_active_rounded,
-                    color: _kOrange),
+                const Icon(Icons.notifications_active_rounded, color: _kOrange),
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
@@ -263,34 +220,13 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
                     )
                   : null,
             ),
-            const Divider(height: 18),
-            Text(
-              'Vérifie que ton téléphone reçoit bien les notifications, même '
-              'écran verrouillé, comme les autres applications.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.black54),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed:
-                    (!_isAuthorized || _testing) ? null : _sendTest,
-                icon: _testing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send_rounded),
-                label: Text(
-                  _testing
-                      ? 'Envoi en cours...'
-                      : 'Envoyer une notification test',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _loading ? null : _openSystemSettings,
+                icon: const Icon(Icons.settings_outlined, size: 18),
+                label: const Text('Gérer dans les réglages système'),
               ),
             ),
           ],
