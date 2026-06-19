@@ -20,6 +20,21 @@ Future<void> prestoFirebaseMessagingBackgroundHandler(
   debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
 }
 
+/// Résultat d'une tentative d'enregistrement du token push de l'appareil.
+enum DeviceRegistrationResult {
+  /// La permission OS n'est pas accordée.
+  permissionMissing,
+
+  /// Aucun jeton FCM disponible (ex: web sans VAPID / bundle obsolète).
+  noToken,
+
+  /// L'enregistrement côté serveur a échoué (réseau, App Check…).
+  registrationFailed,
+
+  /// L'appareil est bien enregistré.
+  registered,
+}
+
 /// Service pour gérer Firebase Cloud Messaging (notifications push)
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -526,8 +541,13 @@ class NotificationService {
   }
 
   Future<void> _registerPushToken(String token) async {
+    await _registerPushTokenChecked(token);
+  }
+
+  /// Enregistre le token et retourne `true` si l'appel a réussi.
+  Future<bool> _registerPushTokenChecked(String token) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (user == null) return false;
 
     try {
       final callable = _functions.httpsCallable(
@@ -542,9 +562,30 @@ class NotificationService {
             ? 'web-${defaultTargetPlatform.name}'
             : defaultTargetPlatform.name,
       });
+      return true;
     } catch (error) {
       debugPrint('[Notifications] register push token error: $error');
+      return false;
     }
+  }
+
+  /// S'assure que cet appareil possède un token push enregistré côté serveur.
+  /// Utile avant un test de réception : la permission OS accordée ne garantit
+  /// pas que le token a réellement été créé/enregistré (ex: ancien bundle web
+  /// sans VAPID, échec App Check, etc.).
+  Future<DeviceRegistrationResult> ensureDeviceRegistered() async {
+    if (!await hasPushPermission()) {
+      return DeviceRegistrationResult.permissionMissing;
+    }
+    final token = await _fetchMessagingToken();
+    if (token == null || token.isEmpty) {
+      return DeviceRegistrationResult.noToken;
+    }
+    _lastRegisteredToken = token;
+    final ok = await _registerPushTokenChecked(token);
+    return ok
+        ? DeviceRegistrationResult.registered
+        : DeviceRegistrationResult.registrationFailed;
   }
 
   Future<void> _maybeShowNotificationActivationDialog(String userId) async {
