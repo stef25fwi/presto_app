@@ -949,7 +949,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
       onGenerateRoute: _onGenerateRoute,
       routes: {
-        LoginPage.routeName: (_) => const LoginPage(),
+        LoginPage.routeName: (_) => const HomePage(),
         RegisterPage.routeName: (_) => const RegisterPage(),
         ForgotPasswordPage.routeName: (_) => const ForgotPasswordPage(),
         VerifyEmailPage.routeName: (_) => const VerifyEmailPage(),
