@@ -171,9 +171,17 @@ class NotificationService {
       // 6.5 : ne jamais journaliser le token FCM complet (cible de notification).
       debugPrint('[Notifications] Nouveau token FCM (${newToken.length} car.): '
           '${newToken.substring(0, newToken.length < 6 ? newToken.length : 6)}…');
+      final previousToken = _lastRegisteredToken;
       _lastRegisteredToken = newToken;
       if (await hasPushPermission()) {
         await _registerPushToken(newToken);
+        // Rotation de token : détacher l'ancien pour ne pas laisser de jeton
+        // périmé dans users/{uid}/push_tokens (compteurs plus justes).
+        if (previousToken != null &&
+            previousToken.isNotEmpty &&
+            previousToken != newToken) {
+          await _unregisterToken(previousToken);
+        }
       }
     });
 
@@ -542,6 +550,22 @@ class NotificationService {
 
   Future<void> _registerPushToken(String token) async {
     await _registerPushTokenChecked(token);
+  }
+
+  /// Détache un token précis côté serveur (utilisé lors d'une rotation de token).
+  Future<void> _unregisterToken(String token) async {
+    if (token.isEmpty) return;
+    try {
+      final callable = _functions.httpsCallable(
+        'unregisterPushToken',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 10),
+        ),
+      );
+      await callable.call(<String, dynamic>{'token': token});
+    } catch (error) {
+      debugPrint('[Notifications] unregister old token error: $error');
+    }
   }
 
   /// Enregistre le token et retourne `true` si l'appel a réussi.
