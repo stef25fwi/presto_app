@@ -71,6 +71,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/icons/chrono_urgent.webp
     - assets/images/
     - assets/images/logowebp.webp
     - assets/data/cities/

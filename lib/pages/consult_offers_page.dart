@@ -2818,6 +2818,7 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
+  static const String _urgentChronoAsset = 'assets/icons/chrono_urgent.webp';
   Widget _buildFallbackPhoto() {
     return Container(
       width: 92,
@@ -2880,15 +2881,30 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
             top: 0,
             left: 0,
             child: IgnorePointer(
-              child: Container(
-                width: cornerAccentSize,
-                height: cornerAccentSize,
-                decoration: const BoxDecoration(
-                  color: kPrestoBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                  ),
-                ),
+              child: SizedBox.square(
+                dimension: cornerAccentSize,
+                child: widget.data.isUrgent && !widget.data.showJobDoneOverlay
+                    ? Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Image.asset(
+                          _urgentChronoAsset,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.timer_outlined,
+                            size: 32,
+                            color: kPrestoOrange,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        decoration: const BoxDecoration(
+                          color: kPrestoBlue,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(24),
+                          ),
+                        ),
+                      ),
               ),
             ),
           ),
