@@ -2861,28 +2861,17 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
 
   @override
   Widget build(BuildContext context) {
-    // Keep a visible urgent contour but disable continuous blink,
-    // which caused perceived flicker on the listings page.
-    final pulse =
-        (widget.data.isUrgent && !widget.data.showJobDoneOverlay) ? 0.42 : 0.0;
+    // Les annonces urgentes sont signalées par le chrono, sans contour bleu.
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: _buildTileFrame(pulse: pulse),
+      child: _buildTileFrame(),
     );
   }
 
-  Widget _buildTileFrame({required double pulse}) {
+  Widget _buildTileFrame() {
     const outerRadius = 24.0;
-    const innerUrgentInset = 3.0;
-    const innerUrgentWidth = 4.0;
     const cornerAccentSize = 54.0;
     const offerCardBorderWidth = 1.8;
-
-    final showUrgentContour = widget.data.isUrgent;
-    final blink = pulse.clamp(0.0, 1.0);
-    final urgentBorderColor = const Color(0xFF1A73E8).withValues(
-      alpha: 0.26 + (0.58 * blink),
-    );
 
     return RepaintBoundary(
       child: Stack(
@@ -2924,25 +2913,6 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
               ),
               child: Stack(
                 children: [
-                  if (showUrgentContour)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: Padding(
-                          padding: const EdgeInsets.all(innerUrgentInset),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                outerRadius - innerUrgentInset,
-                              ),
-                              border: Border.all(
-                                color: urgentBorderColor,
-                                width: innerUrgentWidth,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
