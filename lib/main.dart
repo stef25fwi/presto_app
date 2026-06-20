@@ -136,6 +136,72 @@ const String kAppBuildTimeUtc = String.fromEnvironment(
   defaultValue: '',
 );
 
+class _PrestoStartupSplashApp extends StatelessWidget {
+  const _PrestoStartupSplashApp();
+
+  static const Color _orange = Color(0xFFFF6600);
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: _PrestoStartupSplashScreen(),
+    );
+  }
+}
+
+class _PrestoStartupSplashScreen extends StatelessWidget {
+  const _PrestoStartupSplashScreen();
+
+  static const Color _orange = Color(0xFFFF6600);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: _orange,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: _orange,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: _orange,
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'iliprestō',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 42,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.0,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Prestō',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
   final isDarkBackground = estimated == Brightness.dark;
@@ -574,6 +640,10 @@ Future<void> _initBackgroundServices() async {
 Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+
+    // Affiche immédiatement un premier frame Flutter indépendant de Firebase.
+    // Les initialisations lourdes continuent ensuite, puis PrestoApp remplace ce splash.
+    runApp(const _PrestoStartupSplashApp());
     adminWebDebugStore.recordEvent(
       area: 'app',
       message: 'startup',
@@ -1012,7 +1082,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   Duration _initialSplashDuration() {
     // Audit #4 : suppression du délai de splash artificiel (3,5 s). L'init
-    // lourde a déjà lieu avant runApp ; ce minuteur ne servait qu'à afficher
+    // lourde démarre après le premier splash Flutter ; ce minuteur ne sert qu'à afficher
     // le logo. On garde un flash de marque court (~0,8 s) pour éviter un
     // clignotement brutal, sans pénaliser le démarrage perçu.
     if (!kIsWeb) {
