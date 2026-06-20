@@ -172,26 +172,11 @@ class _PrestoStartupSplashScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'iliprestō',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 42,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1.0,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Prestō',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                  ),
+                Image.asset(
+                  'assets/images/logowebp.webp',
+                  width: 220,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
                 ),
               ],
             ),
