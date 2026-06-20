@@ -158,27 +158,26 @@ class _PrestoStartupSplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
+      value: const SystemUiOverlayStyle(
         statusBarColor: _orange,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: _orange,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
-      child: Scaffold(
+      child: const Scaffold(
         backgroundColor: _orange,
         body: SafeArea(
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/logowebp.webp',
-                  width: 220,
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.high,
-                ),
-              ],
+            child: Text(
+              'iliprestō',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 44,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -1.0,
+              ),
             ),
           ),
         ),
