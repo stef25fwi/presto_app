@@ -24,12 +24,13 @@ class ReportRepository {
       name: 'reportListing',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      ...draft.toMap(),
-      'recaptchaToken': recaptchaToken,
+        ...draft.toMap(),
+        'recaptchaToken': recaptchaToken,
       },
     );
     final data = Map<String, dynamic>.from(
-      (response.data as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{},
+      (response.data as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{},
     );
     await _analytics.logEvent('listing_reported', parameters: <String, Object?>{
       'listing_id': draft.listingId,

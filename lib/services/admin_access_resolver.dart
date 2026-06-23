@@ -382,8 +382,9 @@ class AdminAccessResolver {
 
     Future<AdminAccessState> runAttempt(bool retrying) async {
       try {
+        String? preflightToken;
         try {
-          final preflightToken = await callableUser.getIdToken(true);
+          preflightToken = await callableUser.getIdToken(true);
           _diag(
             'call preflight getIdToken(true)=ok retry=$retrying '
             'len=${(preflightToken ?? '').length} '
@@ -393,6 +394,18 @@ class AdminAccessResolver {
           _diag(
             'call preflight getIdToken(true)=error retry=$retrying '
             'error=$tokenError',
+          );
+        }
+
+        if ((preflightToken ?? '').isNotEmpty) {
+          _diag(
+            'call http-fallback preferred before callable SDK '
+            'to avoid invalid App Check on APK/debug',
+          );
+          return await _verifyServerAccessHttpFallback(
+            preflightToken!,
+            callableUser,
+            state,
           );
         }
 
@@ -445,7 +458,9 @@ class AdminAccessResolver {
             'details=${error.details}',
           );
           // Fallback: appel HTTP direct avec le token rafraîchi explicitement
-          // dans Authorization header, contourne les problèmes de SDK callable v2
+          // dans l'en-tête Authorization. Ne pas ajouter X-Firebase-AppCheck ici :
+          // en mode APK/debug, un jeton App Check invalide bloque la callable,
+          // alors qu'un App Check manquant passe si Firebase est en Monitoring.
           // sur Flutter Web où req.auth peut être absent malgré un token valide.
           try {
             final freshToken = await callableUser.getIdToken(true);

@@ -2194,7 +2194,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     // ✅ Si le filtre courant pointe vers un département non disponible,
     // on remet aussi l'état interne à null (sinon on a un "ghost value").
-    if (_filterDepartmentCode != null && safeValue == null && !_departmentResetScheduled) {
+    if (_filterDepartmentCode != null &&
+        safeValue == null &&
+        !_departmentResetScheduled) {
       _departmentResetScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _departmentResetScheduled = false;

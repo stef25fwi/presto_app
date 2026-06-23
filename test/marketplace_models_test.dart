@@ -58,7 +58,8 @@ void main() {
     expect(listing.favoriteCount, 5);
   });
 
-  test('marketplace listing UI mapper exposes only canonical listing fields', () {
+  test('marketplace listing UI mapper exposes only canonical listing fields',
+      () {
     final uiData = mapMarketplaceListingToOfferUi(
       listingId: 'listing_42',
       data: <String, dynamic>{

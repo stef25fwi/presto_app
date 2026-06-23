@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'app_check_bootstrap.dart';
+
 enum AuthStatus {
   loading,
   signedOut,
@@ -13,6 +15,17 @@ enum AuthStatus {
 }
 
 class AuthService {
+  Future<void> _refreshAppCheckBeforeAuth(String reason) async {
+    try {
+      await refreshAppCheckToken(reason: reason, forceRefresh: true);
+    } catch (error) {
+      // En mode Monitoring, on ne bloque pas la connexion si App Check échoue.
+      // L'appel Firebase Auth décidera ensuite selon la configuration serveur.
+      debugPrint(
+          '[AuthService] App Check refresh skipped before $reason: $error');
+    }
+  }
+
   AuthService._();
 
   static final AuthService instance = AuthService._();
@@ -53,6 +66,8 @@ class AuthService {
   }) async {
     await _auth.setLanguageCode('fr');
 
+    await _refreshAppCheckBeforeAuth('email-register');
+
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -88,6 +103,8 @@ class AuthService {
     required String password,
   }) async {
     await _auth.setLanguageCode('fr');
+
+    await _refreshAppCheckBeforeAuth('email-login');
 
     final credential = await _auth.signInWithEmailAndPassword(
       email: email.trim(),

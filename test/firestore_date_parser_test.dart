@@ -18,7 +18,8 @@ void main() {
     expect(parseFirestoreDateTime('1711549800'), date);
   });
 
-  test('parseFirestoreDateTime supporte chaine ISO et map Firestore serialisee', () {
+  test('parseFirestoreDateTime supporte chaine ISO et map Firestore serialisee',
+      () {
     final date = DateTime(2026, 3, 27, 14, 30);
 
     expect(parseFirestoreDateTime(date.toIso8601String()), date);

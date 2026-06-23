@@ -259,7 +259,8 @@ class CitySearch {
     final scored = <({CityRecord city, int distance})>[];
 
     for (final city in _allCities) {
-      if (normalizedPostalCode.isNotEmpty && city.postalCode != normalizedPostalCode) {
+      if (normalizedPostalCode.isNotEmpty &&
+          city.postalCode != normalizedPostalCode) {
         continue;
       }
 
@@ -282,7 +283,10 @@ class CitySearch {
       return left.city.name.compareTo(right.city.name);
     });
 
-    return scored.take(limit).map((entry) => entry.city).toList(growable: false);
+    return scored
+        .take(limit)
+        .map((entry) => entry.city)
+        .toList(growable: false);
   }
 
   /// Choisit la meilleure ville pour un CP : d'abord match exact, sinon le 1er résultat

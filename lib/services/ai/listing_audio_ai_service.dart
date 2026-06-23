@@ -73,14 +73,16 @@ class ListingAudioAiService {
     );
 
     if (!secureContext.hasAppCheckToken) {
-      final refreshedContext = await MicroIaService.prepareSecureCallableContext(
+      final refreshedContext =
+          await MicroIaService.prepareSecureCallableContext(
         forceRefreshToken: true,
         forceRefreshAppCheckToken: true,
       );
       if (!refreshedContext.hasAppCheckToken) {
         throw const MicroIaClientAuthException(
           code: 'appcheck-missing',
-          message: 'La verification de securite n\'est pas disponible. Recharge la page puis reessaie.',
+          message:
+              'La verification de securite n\'est pas disponible. Recharge la page puis reessaie.',
         );
       }
     }

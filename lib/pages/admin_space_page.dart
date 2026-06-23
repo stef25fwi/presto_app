@@ -2846,7 +2846,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => const _BroadcastNotificationAdminPage(),
+                          builder: (_) =>
+                              const _BroadcastNotificationAdminPage(),
                         ),
                       );
                     },
@@ -3075,8 +3076,7 @@ class _BroadcastNotificationAdminPageState
                 selected: {_target},
                 onSelectionChanged: _sending
                     ? null
-                    : (selection) =>
-                        setState(() => _target = selection.first),
+                    : (selection) => setState(() => _target = selection.first),
               ),
               const SizedBox(height: 16),
               Card(

@@ -333,8 +333,7 @@ class PrestoOfferDetailsPage extends StatefulWidget {
   });
 
   @override
-  State<PrestoOfferDetailsPage> createState() =>
-      _PrestoOfferDetailsPageState();
+  State<PrestoOfferDetailsPage> createState() => _PrestoOfferDetailsPageState();
 }
 
 class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
@@ -368,11 +367,10 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
 
   void _initMarketplaceFuture() {
     final listingId = _extractMarketplaceListingId(widget.offer);
-    _marketplaceFuture =
-        (listingId.isNotEmpty &&
-                _shouldHydrateMarketplaceOffer(widget.offer, listingId))
-            ? _fetchMarketplaceOffer(listingId)
-            : null;
+    _marketplaceFuture = (listingId.isNotEmpty &&
+            _shouldHydrateMarketplaceOffer(widget.offer, listingId))
+        ? _fetchMarketplaceOffer(listingId)
+        : null;
   }
 
   String _extractMarketplaceListingId(Object? source) {
@@ -654,7 +652,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     User? authUser = FirebaseAuth.instance.currentUser;
-    var me = authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
+    var me =
+        authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
 
     logRuntimeAction(
       area: 'messaging',

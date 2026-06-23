@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/marketplace_publish_service.dart';
 
 void main() {
-  test('MarketplacePublishService construit le path raw canonique listingDrafts', () {
+  test(
+      'MarketplacePublishService construit le path raw canonique listingDrafts',
+      () {
     final path = MarketplacePublishService.buildRawPhotoStoragePathForTest(
       uid: 'user_1',
       draftId: 'draft_42',
@@ -16,28 +18,33 @@ void main() {
     expect(path, 'listingDrafts/user_1/draft_42/1234567890_1.jpg');
   });
 
-  test('PublishOfferPage ne contient plus les anciens symboles upload legacy', () async {
+  test('PublishOfferPage ne contient plus les anciens symboles upload legacy',
+      () async {
     final source = await File(
       'lib/pages/publish_offer_page.dart',
     ).readAsString();
 
     expect(source.contains('_uploadedPhotoUrls'), isFalse);
-    expect(source.contains('Future<List<Map<String, dynamic>>> _uploadPhotos'), isFalse);
+    expect(source.contains('Future<List<Map<String, dynamic>>> _uploadPhotos'),
+        isFalse);
   });
 
-  test('ConsultOffersPage n ecrit plus directement dans listings ou offers', () async {
+  test('ConsultOffersPage n ecrit plus directement dans listings ou offers',
+      () async {
     final source = await File(
       'lib/pages/consult_offers_page.dart',
     ).readAsString();
 
     expect(source.contains('await targetRef.update({'), isFalse);
     expect(
-      source.contains(".collection(kOffersCollection)\n            .doc(offerId)\n            .delete();"),
+      source.contains(
+          ".collection(kOffersCollection)\n            .doc(offerId)\n            .delete();"),
       isFalse,
     );
   });
 
-  test('Les pages compte et consultation ne lisent plus offers directement', () async {
+  test('Les pages compte et consultation ne lisent plus offers directement',
+      () async {
     final consultSource = await File(
       'lib/pages/consult_offers_page.dart',
     ).readAsString();

@@ -45,7 +45,7 @@ class UserProfileBootstrapService {
       'Connecté, mais le profil n\'a pas pu être synchronisé. Réessaie ou actualise la page.';
 
   static const String _webAppCheckProfileSyncWarningMessage =
-      'Connecté, mais la vérification de sécurité web a échoué. Actualise la page puis réessaie.';
+      'Connecté, mais App Check est indisponible côté client. En mode test APK, l’application continue si Firebase est en surveillance.';
 
   static const String _profileSyncTimeoutWarningMessage =
       'Connecté, mais la synchronisation du profil a expiré. Réessaie dans quelques secondes.';
@@ -139,7 +139,10 @@ class UserProfileBootstrapService {
       debugPrint('[ProfileFirestore] App Check token refresh failed: $error');
       final normalizedError = _normalizeBootstrapError(error, stackTrace);
       if (requireAppCheckToken) {
-        throw normalizedError;
+        debugPrint(
+          '[ProfileFirestore] App Check token required but unavailable; '
+          'continuing in APK/Monitoring mode: ${normalizedError.code}',
+        );
       }
       debugPrint(
         '[ProfileFirestore] App Check ignored for non-sensitive access: '
