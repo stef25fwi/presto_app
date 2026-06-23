@@ -135,6 +135,8 @@ class _HomePageState extends State<HomePage>
   final PageController _carouselController = PageController();
   final ScrollController _scrollController = ScrollController();
   final HeroSlidesService _heroSlidesService = HeroSlidesService();
+  late final Stream<List<HeroSlide>> _heroSlidesStream =
+      _heroSlidesService.watchActiveSlides();
   int _currentSlide = 0;
 
   Timer? _homeAutoSlideTimer;
@@ -1896,7 +1898,7 @@ class _HomePageState extends State<HomePage>
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(22),
                       child: StreamBuilder<List<HeroSlide>>(
-                        stream: _heroSlidesService.watchActiveSlides(),
+                        stream: _heroSlidesStream,
                         builder: (context, snapshot) {
                           final fallback = _buildFallbackHomeHeroSlider();
                           final slides = snapshot.data ?? const <HeroSlide>[];

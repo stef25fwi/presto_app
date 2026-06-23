@@ -551,9 +551,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void _notifyPublishAiTraceChanged() {
     if (_publishAiTraceDisposed) return;
     _publishAiTraceVersion.value++;
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   void _resetPublishAiTrace(String flowLabel) {

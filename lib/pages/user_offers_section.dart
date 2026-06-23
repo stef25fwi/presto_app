@@ -157,16 +157,21 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return;
       }
 
-      final items = <_FavoriteOfferItem>[];
       final orphanFavoriteIds = <String>[];
-      for (final favoriteId in favoriteIds) {
-        final item = await _loadFavoriteOfferItem(
-          fs,
-          offerId: favoriteId,
-          addedAt: favoriteDates[favoriteId],
-        );
+      final results = await Future.wait(
+        favoriteIds.map(
+          (id) => _loadFavoriteOfferItem(
+            fs,
+            offerId: id,
+            addedAt: favoriteDates[id],
+          ),
+        ),
+      );
+      final items = <_FavoriteOfferItem>[];
+      for (var i = 0; i < favoriteIds.length; i++) {
+        final item = results[i];
         if (item == null) {
-          orphanFavoriteIds.add(favoriteId);
+          orphanFavoriteIds.add(favoriteIds[i]);
           continue;
         }
         items.add(item);
