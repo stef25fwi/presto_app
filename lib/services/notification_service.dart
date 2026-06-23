@@ -143,7 +143,7 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen((message) async {
       final currentUser = FirebaseAuth.instance.currentUser;
       debugPrint(
-        '[Notifications-Foreground] currentUser=${currentUser?.uid} email=${currentUser?.email}',
+        '[Notifications-Foreground] authenticated=${currentUser != null}',
       );
       debugPrint(
         '[Notifications-Foreground] route=${_resolveRouteName(message)} data=${message.data}',

@@ -14,7 +14,7 @@ class DebugAuth {
 
     _authStateSub = FirebaseAuth.instance.authStateChanges().listen((user) {
       debugPrint(
-        '[AUTH] authStateChanges: user=${user?.uid} email=${user?.email}',
+        '[AUTH] authStateChanges: authenticated=${user != null}',
       );
     }, onError: (e) {
       debugPrint('[AUTH] authStateChanges ERROR: $e');
