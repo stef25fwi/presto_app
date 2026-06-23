@@ -58,6 +58,13 @@ class UserProfileBootstrapService {
   static final Map<String, DateTime> _lastSuccessByUid = <String, DateTime>{};
   static const Duration _recentSuccessTtl = Duration(minutes: 5);
 
+  /// Timestamp of the last successful App Check token fetch. Firebase App Check
+  /// tokens are valid for ~1 hour; we cache the result for 45 minutes so that
+  /// callers passing [forceRefreshAppCheckToken: true] don't trigger a redundant
+  /// network round-trip to Google when the token is already warm.
+  static DateTime? _lastAppCheckTokenTime;
+  static const Duration _appCheckCacheDuration = Duration(minutes: 45);
+
   /// Returns true when [ensureUserDocument] is allowed to short-circuit:
   /// same uid was successfully synchronised within [_recentSuccessTtl] and
   /// the caller did not request a forced refresh.
@@ -157,6 +164,15 @@ class UserProfileBootstrapService {
       );
     }
 
+    // If the caller requested a force-refresh but we already obtained a valid
+    // token within the cache window, downgrade to a passive fetch. App Check
+    // tokens are valid for ~1 h; re-fetching them on every profile page open
+    // causes unnecessary round-trips to Google reCAPTCHA / Play Integrity.
+    final effectiveForceRefresh = forceRefreshToken &&
+        (_lastAppCheckTokenTime == null ||
+            DateTime.now().difference(_lastAppCheckTokenTime!) >
+                _appCheckCacheDuration);
+
     // reCAPTCHA Enterprise (web) can take 2–5 s on first call. Three attempts
     // with exponential spacing let the token arrive without blocking the UI.
     // Native providers (Play Integrity / App Attest) are faster; one retry at
@@ -180,7 +196,7 @@ class UserProfileBootstrapService {
 
       try {
         final appCheckToken = await FirebaseAppCheck.instance
-            .getToken(forceRefreshToken || attempt > 0)
+            .getToken(effectiveForceRefresh || attempt > 0)
             .timeout(const Duration(seconds: 12));
         if ((appCheckToken ?? '').trim().isEmpty) {
           throw UserProfileBootstrapException(
@@ -188,6 +204,7 @@ class UserProfileBootstrapService {
             'Jeton App Check absent pour Firestore profil.',
           );
         }
+        _lastAppCheckTokenTime = DateTime.now();
         appCheckActivationSucceeded = true;
         appCheckActivationError = null;
         appCheckActivationStackTrace = null;

@@ -323,7 +323,7 @@ class _HomePageState extends State<HomePage>
 
     // ✅ Présence initiale avec statut "online"
     _touchPresence(status: 'online');
-    _presenceTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+    _presenceTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       _touchPresence();
     });
 

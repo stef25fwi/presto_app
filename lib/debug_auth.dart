@@ -1,9 +1,18 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class DebugAuth {
+  static StreamSubscription<User?>? _authStateSub;
+  static StreamSubscription<User?>? _idTokenSub;
+
   static void installAuthStateLogs() {
-    FirebaseAuth.instance.authStateChanges().listen((user) {
+    // Cancel before re-installing — avoids listener accumulation on hot reload.
+    _authStateSub?.cancel();
+    _idTokenSub?.cancel();
+
+    _authStateSub = FirebaseAuth.instance.authStateChanges().listen((user) {
       debugPrint(
         '[AUTH] authStateChanges: user=${user?.uid} email=${user?.email}',
       );
@@ -11,7 +20,7 @@ class DebugAuth {
       debugPrint('[AUTH] authStateChanges ERROR: $e');
     });
 
-    FirebaseAuth.instance.idTokenChanges().listen((user) async {
+    _idTokenSub = FirebaseAuth.instance.idTokenChanges().listen((user) async {
       final token = user == null ? null : await user.getIdToken();
       final tokenLabel = token == null
           ? 'null'
