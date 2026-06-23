@@ -320,11 +320,24 @@ class OfferDetailsPage extends StatelessWidget {
   }
 }
 
-class PrestoOfferDetailsPage extends StatelessWidget {
+class PrestoOfferDetailsPage extends StatefulWidget {
   final Object? offer;
   final String currentUserId;
   final VoidCallback? onBackToConsult;
 
+  const PrestoOfferDetailsPage({
+    super.key,
+    this.offer,
+    required this.currentUserId,
+    this.onBackToConsult,
+  });
+
+  @override
+  State<PrestoOfferDetailsPage> createState() =>
+      _PrestoOfferDetailsPageState();
+}
+
+class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
   static const Color _headerOrange = Color(0xFFFF6600);
   static const Color _statusBarBlue = Color(0xFF1A73E8);
   static const SystemUiOverlayStyle _statusBarStyle = SystemUiOverlayStyle(
@@ -337,12 +350,30 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   static const MarketplaceHumanVerification _verification =
       MarketplaceHumanVerification();
 
-  const PrestoOfferDetailsPage({
-    super.key,
-    this.offer,
-    required this.currentUserId,
-    this.onBackToConsult,
-  });
+  Future<Map<String, dynamic>?>? _marketplaceFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initMarketplaceFuture();
+  }
+
+  @override
+  void didUpdateWidget(PrestoOfferDetailsPage old) {
+    super.didUpdateWidget(old);
+    if (widget.offer != old.offer) {
+      _initMarketplaceFuture();
+    }
+  }
+
+  void _initMarketplaceFuture() {
+    final listingId = _extractMarketplaceListingId(widget.offer);
+    _marketplaceFuture =
+        (listingId.isNotEmpty &&
+                _shouldHydrateMarketplaceOffer(widget.offer, listingId))
+            ? _fetchMarketplaceOffer(listingId)
+            : null;
+  }
 
   String _extractMarketplaceListingId(Object? source) {
     final dynamic dynamicSource = source;
@@ -623,7 +654,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     User? authUser = FirebaseAuth.instance.currentUser;
-    var me = authUser?.uid.isNotEmpty == true ? authUser!.uid : currentUserId;
+    var me = authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
 
     logRuntimeAction(
       area: 'messaging',
@@ -1383,7 +1414,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   }
 
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
-    final dynamic rawOffer = offer;
+    final dynamic rawOffer = widget.offer;
     final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
                     _OfferUiData._read(() => rawOffer.imageUrls))
                 as List<dynamic>? ??
@@ -1478,8 +1509,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           leading: IconButton(
             tooltip: 'Retour',
             onPressed: () {
-              if (onBackToConsult != null) {
-                onBackToConsult!();
+              if (widget.onBackToConsult != null) {
+                widget.onBackToConsult!();
                 return;
               }
               Navigator.of(context).maybePop();
@@ -1560,16 +1591,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       );
     }
 
-    final listingId = _extractMarketplaceListingId(offer);
-    if (!_shouldHydrateMarketplaceOffer(offer, listingId)) {
-      return buildPage(offer);
+    if (_marketplaceFuture == null) {
+      return buildPage(widget.offer);
     }
 
     return FutureBuilder<Map<String, dynamic>?>(
-      future: _fetchMarketplaceOffer(listingId),
+      future: _marketplaceFuture,
       builder: (context, snapshot) {
+        final listingId = _extractMarketplaceListingId(widget.offer);
         final mergedOffer = _mergeMarketplaceOffer(
-          offer,
+          widget.offer,
           snapshot.data,
           listingId,
         );
