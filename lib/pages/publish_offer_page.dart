@@ -531,6 +531,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
+  // Délai de préparation entre le clic sur le bouton IA et le démarrage réel
+  // de la capture audio : laisse 1 seconde à l'utilisateur pour se préparer
+  // à parler (évite de couper le premier mot).
+  static const Duration _micStartDelay = Duration(seconds: 1);
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
   int _adminAudioRuntimeAccessState = 0;
@@ -2628,6 +2632,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await CrashlyticsContext.setUserId(uid);
         await CrashlyticsContext.setKey('flow', 'webMic');
 
+        // Déclenchement de l'enregistrement 1 seconde après le clic IA.
+        _appendPublishAiTrace(
+          'start_mic',
+          'Démarrage du micro web dans ${_micStartDelay.inSeconds}s',
+        );
+        await Future.delayed(_micStartDelay);
+        if (!mounted) return;
+
         await _webRec.start();
         _rememberAdminAudioRuntime(
           flowKey: 'classic_web',
@@ -2677,6 +2689,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (secureContext == null) return;
 
       if (await _recorder.hasPermission()) {
+        // Déclenchement de l'enregistrement 1 seconde après le clic IA.
+        _appendPublishAiTrace(
+          'start_mic',
+          'Démarrage du micro mobile dans ${_micStartDelay.inSeconds}s',
+        );
+        await Future.delayed(_micStartDelay);
+        if (!mounted) return;
+
         final filePath =
             await createTempAudioPath(prefix: 'presto', extension: 'm4a');
         await _recorder.start(
