@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -22,13 +23,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    // Aligne la cible JVM de Kotlin sur Java 17 — sinon "Inconsistent JVM-target
-    // compatibility detected" entre compileXJavaWithJavac (17) et compileXKotlin.
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
 
     defaultConfig {
         applicationId = "fr.ilipresto.app"
@@ -82,9 +76,53 @@ android {
     }
 }
 
+// Built-in Kotlin : le bloc `kotlinOptions {}` (déprécié dans KGP 2.x et supprimé
+// avec le Kotlin intégré d'AGP 9) est remplacé par le DSL top-level ci-dessous.
+// On aligne la cible JVM de Kotlin sur Java 17 — sinon "Inconsistent JVM-target
+// compatibility detected" entre compileXJavaWithJavac (17) et compileXKotlin.
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
 flutter {
     source = "../.."
 }
+
+// ── Garde-fou ressources ─────────────────────────────────────────────
+// Le « resource merger » d'AGP rejette tout fichier parasite dans res/ :
+//   - dans res/values/, seul le .xml est accepté ;
+//   - les sauvegardes (strings.xml.bak_..., image.jpg.bak_..., *.orig, etc.)
+//     laissées dans res/ font échouer mergeXxxResources.
+// Cette tâche les efface AVANT la fusion, pour de bon — quelle que soit
+// l'extension d'origine (.xml, .jpg, .png...).
+val cleanStrayResFiles by tasks.registering(Delete::class) {
+    val resDir = file("src/main/res")
+    // Token de sauvegarde (.bak, .bad, .orig…) suivi d'un caractère non alphabétique
+    // (underscore, chiffre, point, tiret) ou de la fin du nom — ce qui couvre
+    // « strings.xml.bak_fcm_channel_20260619_164831 » et « google-services.json.bad_cli_x.bak ».
+    val backupRegex = Regex("""\.(bak|bad|orig|tmp|old|save|swp)([^A-Za-z]|$)|~$""", RegexOption.IGNORE_CASE)
+    val stray = resDir.walkTopDown()
+        .filter { it.isFile }
+        .filter { f ->
+            // Toute sauvegarde reconnue, où qu'elle soit sous res/…
+            backupRegex.containsMatchIn(f.name) ||
+            // …ou tout fichier non-.xml directement dans un dossier values*/
+            (f.parentFile?.name?.startsWith("values") == true &&
+                !f.name.endsWith(".xml", ignoreCase = true))
+        }
+        .toList()
+    delete(stray)
+    doFirst {
+        stray.forEach { logger.lifecycle("cleanStrayResFiles: suppression du fichier parasite ${it.relativeTo(rootDir)}") }
+    }
+}
+
+// Branche le garde-fou sur toutes les tâches de fusion de ressources
+// (mergeDebugResources, mergeReleaseResources, mergeProfileResources…).
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Resources") }
+    .configureEach { dependsOn(cleanStrayResFiles) }
 
 
 dependencies {
