@@ -1,0 +1,4 @@
+Signer #1 certificate DN: CN=Stef Stefan, OU=ilipresto, O=ilipresto, L=Guadeloupe, ST=Guadeloupe, C=FR
+Signer #1 certificate SHA-256 digest: 127f9c8e960556effcb2e9eb52e898b51b5b09ea6e8c601da247be016608cfbc
+Signer #1 certificate SHA-1 digest: 37c41a3947967a59e3efbd21e67c97d75fdcdd62
+Signer #1 certificate MD5 digest: 0ac16f5e832832812f13b4bb6ccaa0d8

@@ -1,0 +1,90 @@
+==================================================
+ VERIFICATION APP CHECK POUR APK ANDROID
+ Date: Tue Jun 23 05:34:28 PM UTC 2026
+==================================================
+
+=== 1. Recherche APK ===
+✅ APK trouvé : release_apk/ilipresto_arm64-v8a_release_20260623_161452.apk
+-rw-rw-rw- 1 root root 39M Jun 23 16:26 release_apk/ilipresto_arm64-v8a_release_20260623_161452.apk
+
+=== 2. Lecture applicationId Android ===
+✅ applicationId APK/Gradle : com.presto.app
+
+=== 3. Vérification google-services.json ===
+project_id: presto-app-74abe
+project_number: 151421230024
+Client 1: package_name=com.presto.app app_id=1:151421230024:android:c07e48f2a8df85842b3efd
+Client 2: package_name=fr.ilipresto.app app_id=1:151421230024:android:339090c7418b3d7c2b3efd
+✅ google-services.json contient bien le package Android demandé
+
+=== 4. Extraction app_id Firebase correspondant au package ===
+PROJECT_ID=presto-app-74abe
+PROJECT_NUMBER=151421230024
+APP_ID=1:151421230024:android:c07e48f2a8df85842b3efd
+
+=== 5. SHA-256 réel de l'APK signé ===
+apksigner: /opt/android-sdk-linux/build-tools/36.0.0/apksigner
+SHA-256 brut : 127f9c8e960556effcb2e9eb52e898b51b5b09ea6e8c601da247be016608cfbc
+SHA-256 Firebase : 12:7f:9c:8e:96:05:56:ef:fc:b2:e9:eb:52:e8:98:b5:1b:5b:09:ea:6e:8c:60:1d:a2:47:be:01:66:08:cf:bc
+
+=== 6. Vérification locale App Check dans le code Flutter ===
+lib/main.dart:644:    await bootstrapAppCheck();
+lib/main.dart.bak_presplash_minimal_20260620_023904:645:    await bootstrapAppCheck();
+lib/main.dart.bak_logo_startup_20260620_023136:660:    await bootstrapAppCheck();
+lib/main.dart.bak_activate_login_page_20260619_211830:590:    await bootstrapAppCheck();
+lib/main.dart.bak_startup_splash_20260620_021812:590:    await bootstrapAppCheck();
+lib/main.dart.bak_before_restore_previous_login_20260619_215007:590:    await bootstrapAppCheck();
+lib/services/user_profile_bootstrap_service.dart.bak_no_google_avatar_20260618_150924:182:        final appCheckToken = await FirebaseAppCheck.instance
+lib/services/user_profile_bootstrap_service.dart:198:        final appCheckToken = await FirebaseAppCheck.instance
+lib/services/ai/firebase_gemini_service.dart:14:              appCheck: FirebaseAppCheck.instance,
+lib/services/app_check_bootstrap.dart:39:      final token = await FirebaseAppCheck.instance
+lib/services/app_check_bootstrap.dart:83:Future<void> bootstrapAppCheck() async {
+lib/services/app_check_bootstrap.dart:153:      await FirebaseAppCheck.instance.activate(
+lib/services/app_check_bootstrap.dart:157:            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+lib/services/app_check_bootstrap.dart:161:      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+lib/services/app_check_bootstrap.dart:172:    await FirebaseAppCheck.instance.activate(
+lib/services/app_check_bootstrap.dart:174:          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+lib/services/app_check_bootstrap.dart:177:    await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+lib/services/public_offers_query_helpers.dart:175:  // App Check must be activated once from bootstrapAppCheck(); this helper only
+lib/services/public_offers_query_helpers.dart:195:    final token = await FirebaseAppCheck.instance
+lib/config/app_check_state.dart:82:  return FirebaseAppCheck.instance.activate(
+lib/main.dart.bak_system_nav_white_20260614_110218:537:    await bootstrapAppCheck();
+lib/pages/publish_offer_page.dart.bak_no_geo_conflict_20260613_102855:177:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_audio_fast_final_20260616_155634:179:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_ai_city_dept_region_geo_20260613_114247:177:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_city_widget_20260613_102311:176:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_fix_cityentry_region_20260613_104856:177:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_admin_only_diag_20260614_105926:179:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_audio_fast_20260616_152648:179:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_city_postal_widget_20260613_101951:176:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_audio_fast_20260616_152054:179:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_onselected_20260613_104737:177:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart:164:      final appCheckToken = await FirebaseAppCheck.instance
+lib/pages/publish_offer_page.dart.bak_delai_intervention_20260619_220416:179:      final appCheckToken = await FirebaseAppCheck.instance
+lib/main.dart.bak_fix_analyze_20260619_213838:590:    await bootstrapAppCheck();
+lib/main.dart.bak_before_definitive_restore_20260619_215456:590:    await bootstrapAppCheck();
+lib/main.dart.bak_force_login_visible_20260619_212510:590:    await bootstrapAppCheck();
+lib/features/micro_ia/micro_ia_service.dart:186:      final token = await FirebaseAppCheck.instance.getToken(forceRefresh);
+lib/main.dart.bak_force_exact_login_route_20260619_212908:590:    await bootstrapAppCheck();
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java:59:      flutterEngine.getPlugins().add(new io.flutter.plugins.firebase.appcheck.FirebaseAppCheckPlugin());
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java:61:      Log.e(TAG, "Error registering plugin firebase_app_check, io.flutter.plugins.firebase.appcheck.FirebaseAppCheckPlugin", e);
+✅ Code App Check détecté côté Flutter
+
+=== 7. Vérification Firebase serveur si gcloud est connecté ===
+⚠️ gcloud non connecté ou token indisponible.
+   Vérification serveur Firebase ignorée.
+   Pour l'activer : gcloud auth login
+
+==================================================
+ RESULTAT A CONTROLER
+==================================================
+Package attendu Firebase : com.presto.app
+App Firebase ID          : 1:151421230024:android:c07e48f2a8df85842b3efd
+SHA-256 à avoir Firebase : 12:7f:9c:8e:96:05:56:ef:fc:b2:e9:eb:52:e8:98:b5:1b:5b:09:ea:6e:8c:60:1d:a2:47:be:01:66:08:cf:bc
+
+Si l'app bloque encore :
+1. vérifier que ce SHA est sur fr.ilipresto.app
+2. vérifier que Play Integrity est enregistré
+3. pour APK installé hors Play Store, vérifier les paramètres avancés
+4. mettre Firestore/Storage/Functions en Monitoring pour test immédiat
+==================================================

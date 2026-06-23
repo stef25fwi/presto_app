@@ -1,0 +1,64 @@
+==================================================
+ VERIFICATION PROPRE APP CHECK APK - iliprestō
+ Date: Tue Jun 23 05:35:50 PM UTC 2026
+==================================================
+
+=== 1. Fichiers Gradle ACTIFS uniquement ===
+-rw-rw-rw- 1 root root 3.4K Jun 19 15:46 android/app/build.gradle.kts
+
+=== 2. applicationId dans Gradle actif ===
+✅ applicationId Gradle actif : fr.ilipresto.app
+
+=== 3. Recherche APK ===
+✅ APK trouvé : release_apk/ilipresto_arm64-v8a_release_20260623_161452.apk
+-rw-rw-rw- 1 root root 39M Jun 23 16:26 release_apk/ilipresto_arm64-v8a_release_20260623_161452.apk
+
+=== 4. Package réel contenu dans l'APK ===
+Package APK réel : fr.ilipresto.app
+✅ Le package APK correspond à Gradle
+
+=== 5. Vérification google-services.json ===
+Project ID Firebase : presto-app-74abe
+Project Number      : 151421230024
+Firebase App ID     : 1:151421230024:android:339090c7418b3d7c2b3efd
+✅ google-services.json contient bien : fr.ilipresto.app
+
+=== 6. Tous les clients Android présents dans google-services.json ===
+Client 1
+  package_name: com.presto.app
+  app_id: 1:151421230024:android:c07e48f2a8df85842b3efd
+Client 2
+  package_name: fr.ilipresto.app
+  app_id: 1:151421230024:android:339090c7418b3d7c2b3efd
+
+=== 7. SHA-256 réel de l'APK signé ===
+SHA-256 brut Firebase API : 127f9c8e960556effcb2e9eb52e898b51b5b09ea6e8c601da247be016608cfbc
+SHA-256 à copier Firebase : 12:7f:9c:8e:96:05:56:ef:fc:b2:e9:eb:52:e8:98:b5:1b:5b:09:ea:6e:8c:60:1d:a2:47:be:01:66:08:cf:bc
+
+=== 8. App Check dans le code Flutter ===
+lib/services/app_check_bootstrap.dart:39:      final token = await FirebaseAppCheck.instance
+lib/services/app_check_bootstrap.dart:83:Future<void> bootstrapAppCheck() async {
+lib/services/app_check_bootstrap.dart:153:      await FirebaseAppCheck.instance.activate(
+lib/services/app_check_bootstrap.dart:157:            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+lib/services/app_check_bootstrap.dart:161:      await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+lib/services/app_check_bootstrap.dart:172:    await FirebaseAppCheck.instance.activate(
+lib/services/app_check_bootstrap.dart:174:          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+lib/services/app_check_bootstrap.dart:177:    await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+lib/main.dart:644:    await bootstrapAppCheck();
+✅ AndroidProvider.playIntegrity détecté
+
+==================================================
+ RESULTAT FINAL
+==================================================
+Package à vérifier dans Firebase App Check : fr.ilipresto.app
+Firebase App ID correspondant              : 1:151421230024:android:339090c7418b3d7c2b3efd
+SHA-256 APK à avoir dans Play Integrity    : 12:7f:9c:8e:96:05:56:ef:fc:b2:e9:eb:52:e8:98:b5:1b:5b:09:ea:6e:8c:60:1d:a2:47:be:01:66:08:cf:bc
+
+Dans Firebase Console, vérifie exactement :
+App Check > application Android > fr.ilipresto.app
+Fournisseur : Play Integrity
+SHA-256     : 12:7f:9c:8e:96:05:56:ef:fc:b2:e9:eb:52:e8:98:b5:1b:5b:09:ea:6e:8c:60:1d:a2:47:be:01:66:08:cf:bc
+
+Si fr.ilipresto.app est fr.ilipresto.app, il faut vérifier la fiche fr.ilipresto.app.
+Si fr.ilipresto.app est com.presto.app, l'APK a été généré avec l'ancien package.
+==================================================
