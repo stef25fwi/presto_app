@@ -88,4 +88,5 @@ jobs:
           fi
 
           firebase deploy --project presto-app-74abe \
-            --only hosting,functions,firestore:rules,firestore:indexes,storage
+            --only hosting,functions,firestore:rules,firestore:indexes,storage \
+            --force
