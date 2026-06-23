@@ -98,7 +98,8 @@ extension PaymentInfoAudioServiceLegacyCompat on PaymentInfoAudioService {
 
   /// Upload un fichier MP3 brut vers Firebase Storage puis publie l'URL dans Firestore.
   Future<void> uploadAudio(Uint8List bytes, String filename) async {
-    final path = 'payment_info_audio/${DateTime.now().millisecondsSinceEpoch}_$filename';
+    final path =
+        'payment_info_audio/${DateTime.now().millisecondsSinceEpoch}_$filename';
     final ref = FirebaseStorage.instance.ref(path);
     await ref.putData(bytes, SettableMetadata(contentType: 'audio/mpeg'));
     final downloadUrl = await ref.getDownloadURL();

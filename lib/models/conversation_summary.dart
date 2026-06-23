@@ -162,9 +162,9 @@ class ConversationSummary {
         lastMessage.isNotEmpty ||
         lastMessageAt != null ||
         offerTitle.trim().isNotEmpty ||
-      otherUserName.trim().isNotEmpty ||
-      participants.isNotEmpty ||
-      id.trim().isNotEmpty;
+        otherUserName.trim().isNotEmpty ||
+        participants.isNotEmpty ||
+        id.trim().isNotEmpty;
   }
 
   DateTime? get sortDate {
@@ -184,7 +184,8 @@ class ConversationSummary {
       if (value.isNotEmpty) return value;
     }
 
-    if (participants.any((participant) => participant.trim() != userId.trim())) {
+    if (participants
+        .any((participant) => participant.trim() != userId.trim())) {
       return 'Conversation en cours';
     }
 

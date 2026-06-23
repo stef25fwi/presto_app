@@ -1025,7 +1025,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       theme: buildPrestoTheme(),
       // L'application doit toujours démarrer par le splash puis la home.
       // Les pages protégées gèrent elles-mêmes la demande de connexion.
-      home: _buildInitialHome(),
+      home: null, // Fix: onGenerateInitialRoutes gère déjà la route initiale.
     );
   }
 }

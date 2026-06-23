@@ -19,11 +19,13 @@ class StoragePaths {
     required String uid,
     required String draftId,
     required String fileName,
-  }) => 'listingDrafts/$uid/$draftId/$fileName';
+  }) =>
+      'listingDrafts/$uid/$draftId/$fileName';
 
   static String listingFinal({
     required String uid,
     required String listingId,
     required String fileName,
-  }) => 'listings/$uid/$listingId/$fileName';
+  }) =>
+      'listings/$uid/$listingId/$fileName';
 }

@@ -28,9 +28,9 @@ class ChatRepository {
       name: 'createChatThreadFromListing',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'listingId': listingId,
-      'message': firstMessage,
-      'recaptchaToken': token,
+        'listingId': listingId,
+        'message': firstMessage,
+        'recaptchaToken': token,
       },
     );
     final data = Map<String, dynamic>.from(
@@ -49,8 +49,8 @@ class ChatRepository {
       name: 'sendChatMessage',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'threadId': threadId,
-      'message': message,
+        'threadId': threadId,
+        'message': message,
       },
     );
   }

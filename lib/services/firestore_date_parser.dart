@@ -12,9 +12,8 @@ DateTime? parseFirestoreDateTime(Object? value) {
   if (value is double) {
     if (!value.isFinite || value <= 0) return null;
     final integerValue = value.floor();
-    final normalized = integerValue < 1000000000000
-        ? integerValue * 1000
-        : integerValue;
+    final normalized =
+        integerValue < 1000000000000 ? integerValue * 1000 : integerValue;
     return DateTime.fromMillisecondsSinceEpoch(normalized);
   }
   if (value is String) {
