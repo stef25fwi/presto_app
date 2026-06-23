@@ -130,6 +130,7 @@ class _HomePageState extends State<HomePage>
   ];
 
   int _selectedIndex = 0;
+  final Set<int> _mountedTabs = <int>{};
   String? _consultCategoryFilter;
   String? _consultSearchQuery;
   final PageController _carouselController = PageController();
@@ -228,6 +229,7 @@ class _HomePageState extends State<HomePage>
       _consultCategoryFilter = null;
       _consultSearchQuery = q;
       _selectedIndex = 1;
+      _mountedTabs.add(1);
     });
     _syncCategoryAnimation();
   }
@@ -248,6 +250,7 @@ class _HomePageState extends State<HomePage>
       _consultCategoryFilter = normalizedCategory;
       _consultSearchQuery = null;
       _selectedIndex = 1;
+      _mountedTabs.add(1);
     });
     _syncCategoryAnimation();
   }
@@ -293,7 +296,10 @@ class _HomePageState extends State<HomePage>
     );
     */
 
-    setState(() => _selectedIndex = index);
+    setState(() {
+      _selectedIndex = index;
+      _mountedTabs.add(index);
+    });
     _syncCategoryAnimation();
 
     if (index == 3) {
@@ -309,6 +315,7 @@ class _HomePageState extends State<HomePage>
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
     _selectedIndex = widget.initialIndex;
+    _mountedTabs.add(_selectedIndex);
     _consultCategoryFilter = widget.initialConsultCategoryFilter;
     _consultSearchQuery = widget.initialConsultSearchQuery;
     _sessionStartTime = DateTime.now();
@@ -883,6 +890,7 @@ class _HomePageState extends State<HomePage>
                                   _consultCategoryFilter = null;
                                   _consultSearchQuery = null;
                                   _selectedIndex = 1;
+                                  _mountedTabs.add(1);
                                 });
                                 _syncCategoryAnimation();
                                 Navigator.of(context).pop();
@@ -1121,6 +1129,13 @@ class _HomePageState extends State<HomePage>
         'userId': userId,
       },
     );
+    final notificationsFuture = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(20)
+        .get();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1135,12 +1150,7 @@ class _HomePageState extends State<HomePage>
         content: SizedBox(
           width: double.maxFinite,
           child: FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            future: FirebaseFirestore.instance
-                .collection('notifications')
-                .where('userId', isEqualTo: userId)
-                .orderBy('createdAt', descending: true)
-                .limit(20)
-                .get(),
+            future: notificationsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -1670,25 +1680,29 @@ class _HomePageState extends State<HomePage>
             index: _selectedIndex,
             children: [
               _buildHomeContent(),
-              ConsultOffersPage(
-                key: ValueKey<String>(
-                  'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                ),
-                onScroll: (_) {},
-                categoryFilter: _consultCategoryFilter,
-                searchQuery: _consultSearchQuery,
-              ),
-              // 🔒 Lazy mount : PublishOfferPage monte uniquement
-              // quand l'onglet est actif — évite le guard auth
-              // qui poussait HomePage(initialIndex:4) au démarrage.
+              _mountedTabs.contains(1)
+                  ? ConsultOffersPage(
+                      key: ValueKey<String>(
+                        'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
+                      ),
+                      onScroll: (_) {},
+                      categoryFilter: _consultCategoryFilter,
+                      searchQuery: _consultSearchQuery,
+                    )
+                  : const SizedBox.shrink(),
               _selectedIndex == 2
                   ? PublishOfferPage(onScroll: (_) {})
                   : const SizedBox.shrink(),
-              MessagesPageV2(
-                initialConversationId: widget.initialMessagesConversationId,
-                initialDraftText: widget.initialMessagesDraftText,
-              ),
-              const AccountPage(),
+              _mountedTabs.contains(3)
+                  ? MessagesPageV2(
+                      initialConversationId:
+                          widget.initialMessagesConversationId,
+                      initialDraftText: widget.initialMessagesDraftText,
+                    )
+                  : const SizedBox.shrink(),
+              _mountedTabs.contains(4)
+                  ? const AccountPage()
+                  : const SizedBox.shrink(),
             ],
           ),
           // Masquee tant que le clavier est ouvert : elle ne flotte plus a

@@ -1712,8 +1712,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     super.initState();
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
-    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
-    unawaited(_prefillPublishLocationFromProfileIfNeeded());
+    unawaited(_prefillPublishFromProfile());
     unawaited(_refreshAdminAudioRuntimeAccess());
 
     _scrollController.addListener(() {
@@ -1840,8 +1839,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _phoneController.text = localDigits.isNotEmpty ? localDigits : trimmed;
   }
 
-  Future<void> _prefillPublishPhoneFromProfileIfNeeded() async {
-    if (_phoneController.text.trim().isNotEmpty) return;
+  Future<void> _prefillPublishFromProfile() async {
+    final phoneNeeded = _phoneController.text.trim().isEmpty;
+    final locationNeeded = !_locationEditedByUser &&
+        !_postalCodeEditedByUser &&
+        _locationController.text.trim().isEmpty &&
+        _postalCodeController.text.trim().isEmpty;
+    if (!phoneNeeded && !locationNeeded) return;
 
     final user = _authOrNull?.currentUser;
     if (user == null) return;
@@ -1860,7 +1864,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       } catch (error) {
         debugPrint(
-          '[Publish] Préparation accès profil téléphone échouée, fallback cache/Auth: $error',
+          '[Publish] Préparation accès profil échouée, fallback cache/Auth: $error',
         );
       }
 
@@ -1871,7 +1875,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             .timeout(const Duration(seconds: 5));
       } catch (serverError) {
         debugPrint(
-          '[Publish] Lecture serveur téléphone profil impossible, fallback cache: $serverError',
+          '[Publish] Lecture serveur profil impossible, fallback cache: $serverError',
         );
         try {
           doc = await userRef
@@ -1879,150 +1883,97 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               .timeout(const Duration(seconds: 3));
         } catch (cacheError) {
           debugPrint(
-            '[Publish] Lecture cache téléphone profil impossible, fallback Auth: $cacheError',
+            '[Publish] Lecture cache profil impossible, fallback Auth: $cacheError',
           );
         }
       }
 
       final data = doc?.data();
-      final rawPhone = _firstNonEmptyPublishPhone(
-        data,
-        const ['phone', 'phoneNumber', 'phone_number'],
-        fallbackValues: <String>[user.phoneNumber ?? ''],
-      );
-      final phoneCountryCode =
-          data == null ? null : data['phoneCountryCode']?.toString().trim();
 
-      if (rawPhone.isEmpty ||
-          !mounted ||
-          _phoneController.text.trim().isNotEmpty) {
-        return;
+      if (phoneNeeded && data != null && mounted && _phoneController.text.trim().isEmpty) {
+        final rawPhone = _firstNonEmptyPublishPhone(
+          data,
+          const ['phone', 'phoneNumber', 'phone_number'],
+          fallbackValues: <String>[user.phoneNumber ?? ''],
+        );
+        final phoneCountryCode = data['phoneCountryCode']?.toString().trim();
+        if (rawPhone.isNotEmpty) {
+          setState(() {
+            _applyPublishPhoneFromProfile(
+              rawPhone,
+              explicitCountryCode: phoneCountryCode,
+            );
+          });
+          _recompute();
+        }
       }
 
-      setState(() {
-        _applyPublishPhoneFromProfile(
-          rawPhone,
-          explicitCountryCode: phoneCountryCode,
-        );
-      });
-      _recompute();
-    } catch (error) {
-      debugPrint('[Publish] Préremplissage téléphone impossible: $error');
-    }
-  }
+      if (locationNeeded && data != null && mounted) {
+        final location = ProfileReadinessChecker.resolveLocation(data);
+        final profileCity = location.city.trim();
+        final profilePostalCode = location.postalCode.trim();
 
-  Future<void> _prefillPublishLocationFromProfileIfNeeded() async {
-    final locationAlreadyFilled = _locationController.text.trim().isNotEmpty;
-    final postalCodeAlreadyFilled =
-        _postalCodeController.text.trim().isNotEmpty;
-    final locationHasUserInput = locationAlreadyFilled || _locationEditedByUser;
-    final postalCodeHasUserInput =
-        postalCodeAlreadyFilled || _postalCodeEditedByUser;
+        if (profileCity.isNotEmpty || profilePostalCode.isNotEmpty) {
+          CityRecord? cityRecord;
+          if (profilePostalCode.isNotEmpty) {
+            cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+              city: profileCity,
+              postalCode: profilePostalCode,
+            );
+          }
+          if (cityRecord == null && profileCity.isNotEmpty) {
+            final matches = FrenchCityPostalValidator.instance.searchSuggestions(
+              profileCity,
+              postalCodeHint: profilePostalCode,
+              limit: 5,
+            );
+            for (final candidate in matches) {
+              if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
+                cityRecord = candidate;
+                break;
+              }
+            }
+          }
 
-    // Ne jamais compléter à moitié depuis le profil au moment de publier.
-    // Sinon une ville saisie manuellement peut être combinée avec un CP profil
-    // d'une autre commune, puis la validation bloque la publication.
-    if (locationHasUserInput || postalCodeHasUserInput) {
-      return;
-    }
+          final resolvedCity = cityRecord?.name.trim().isNotEmpty == true
+              ? cityRecord!.name.trim()
+              : profileCity;
+          final resolvedPostalCode = cityRecord?.cp.trim().isNotEmpty == true
+              ? cityRecord!.cp.trim()
+              : profilePostalCode;
 
-    final user = _authOrNull?.currentUser;
-    if (user == null) return;
-
-    final firestore = _firestoreOrNull;
-    if (firestore == null) return;
-
-    final userRef = firestore.collection('users').doc(user.uid);
-
-    try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
-      DocumentSnapshot<Map<String, dynamic>> doc;
-      try {
-        doc = await userRef
-            .get(const GetOptions(source: Source.server))
-            .timeout(const Duration(seconds: 5));
-      } catch (_) {
-        doc = await userRef
-            .get(const GetOptions(source: Source.cache))
-            .timeout(const Duration(seconds: 3));
-      }
-
-      final data = doc.data();
-      if (data == null) return;
-
-      final location = ProfileReadinessChecker.resolveLocation(data);
-      final profileCity = location.city.trim();
-      final profilePostalCode = location.postalCode.trim();
-      if (profileCity.isEmpty && profilePostalCode.isEmpty) return;
-
-      CityRecord? cityRecord;
-      if (profilePostalCode.isNotEmpty) {
-        cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-          city: profileCity,
-          postalCode: profilePostalCode,
-        );
-      }
-      if (cityRecord == null && profileCity.isNotEmpty) {
-        final matches = FrenchCityPostalValidator.instance.searchSuggestions(
-          profileCity,
-          postalCodeHint: profilePostalCode,
-          limit: 5,
-        );
-        for (final candidate in matches) {
-          if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
-            cityRecord = candidate;
-            break;
+          if (mounted) {
+            var changed = false;
+            setState(() {
+              if (!_locationEditedByUser &&
+                  _locationController.text.trim().isEmpty &&
+                  resolvedCity.isNotEmpty) {
+                _setControllerText(_locationController, resolvedCity);
+                changed = true;
+              }
+              if (!_postalCodeEditedByUser &&
+                  _postalCodeController.text.trim().isEmpty &&
+                  resolvedPostalCode.isNotEmpty) {
+                _setControllerText(_postalCodeController, resolvedPostalCode);
+                changed = true;
+              }
+              final dept = cityRecord?.dept ??
+                  departmentFromPostalCode(resolvedPostalCode);
+              if (dept != null && dept.isNotEmpty) {
+                _selectedDeptCode = dept;
+                _selectedPhoneCountryCode = _countryCodeForDept(dept);
+              }
+              final region = cityRecord?.region;
+              if (region != null && region.isNotEmpty) {
+                _selectedRegionCode = region;
+              }
+            });
+            if (changed) _recompute();
           }
         }
       }
-
-      final resolvedCity = cityRecord?.name.trim().isNotEmpty == true
-          ? cityRecord!.name.trim()
-          : profileCity;
-      final resolvedPostalCode = cityRecord?.cp.trim().isNotEmpty == true
-          ? cityRecord!.cp.trim()
-          : profilePostalCode;
-
-      if (!mounted) return;
-
-      var changed = false;
-      setState(() {
-        if (!_locationEditedByUser &&
-            _locationController.text.trim().isEmpty &&
-            resolvedCity.isNotEmpty) {
-          _setControllerText(_locationController, resolvedCity);
-          changed = true;
-        }
-        if (!_postalCodeEditedByUser &&
-            _postalCodeController.text.trim().isEmpty &&
-            resolvedPostalCode.isNotEmpty) {
-          _setControllerText(_postalCodeController, resolvedPostalCode);
-          changed = true;
-        }
-
-        final dept = cityRecord?.dept ??
-            departmentFromPostalCode(
-              resolvedPostalCode,
-            );
-        if (dept != null && dept.isNotEmpty) {
-          _selectedDeptCode = dept;
-          _selectedPhoneCountryCode = _countryCodeForDept(dept);
-        }
-        final region = cityRecord?.region;
-        if (region != null && region.isNotEmpty) {
-          _selectedRegionCode = region;
-        }
-      });
-
-      if (changed) {
-        _recompute();
-      }
     } catch (error) {
-      debugPrint('[Publish] Préremplissage ville/CP impossible: $error');
+      debugPrint('[Publish] Préremplissage profil impossible: $error');
     }
   }
 
@@ -2588,8 +2539,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Si l'utilisateur est déjà connecté, on peut préremplir les données profil
     // avant validation. Sinon on affiche d'abord les erreurs du formulaire.
     if (_authOrNull?.currentUser != null) {
-      await _prefillPublishPhoneFromProfileIfNeeded();
-      await _prefillPublishLocationFromProfileIfNeeded();
+      await _prefillPublishFromProfile();
       if (!mounted) return;
       _canonicalizeLocationInputs();
     }
@@ -2618,8 +2568,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    await _prefillPublishPhoneFromProfileIfNeeded();
-    await _prefillPublishLocationFromProfileIfNeeded();
+    await _prefillPublishFromProfile();
     if (!mounted) return;
     _canonicalizeLocationInputs();
 
@@ -3174,8 +3123,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _canPublish = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
-    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
-    unawaited(_prefillPublishLocationFromProfileIfNeeded());
+    unawaited(_prefillPublishFromProfile());
     showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
