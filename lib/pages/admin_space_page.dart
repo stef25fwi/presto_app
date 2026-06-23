@@ -3238,6 +3238,49 @@ class _AdminDashboardSection extends StatefulWidget {
 class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
   _AdminDashboardWindow _window = _AdminDashboardWindow.day30;
 
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _usersStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _activeUsersStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _listingsStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _subscriptionsStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _billingInvoicesStream;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _analyticsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _rebuildStreams();
+  }
+
+  void _rebuildStreams() {
+    final start = _startOfDay(DateTime.now())
+        .subtract(Duration(days: _window.dayCount - 1));
+    final startTimestamp = Timestamp.fromDate(start);
+    _usersStream = FirebaseFirestore.instance
+        .collection('users')
+        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    _activeUsersStream = FirebaseFirestore.instance
+        .collection('users')
+        .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    _listingsStream = FirebaseFirestore.instance
+        .collection('listings')
+        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    _subscriptionsStream = FirebaseFirestore.instance
+        .collection('subscriptions')
+        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    _billingInvoicesStream = FirebaseFirestore.instance
+        .collection('billing_invoices')
+        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    _analyticsStream = FirebaseFirestore.instance
+        .collection('analyticsSnapshots')
+        .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
+        .snapshots();
+  }
+
   Future<void> _openDomainDetails(_AdminDomainLiveData data) async {
     final csv = _buildAdminDomainCsv(data: data, window: _window);
     await showModalBottomSheet<void>(
@@ -3323,34 +3366,6 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
 
   @override
   Widget build(BuildContext context) {
-    final start = _startOfDay(DateTime.now())
-        .subtract(Duration(days: _window.dayCount - 1));
-    final startTimestamp = Timestamp.fromDate(start);
-    final usersStream = FirebaseFirestore.instance
-        .collection('users')
-        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final activeUsersStream = FirebaseFirestore.instance
-        .collection('users')
-        .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final listingsStream = FirebaseFirestore.instance
-        .collection('listings')
-        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final subscriptionsStream = FirebaseFirestore.instance
-        .collection('subscriptions')
-        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final billingInvoicesStream = FirebaseFirestore.instance
-        .collection('billing_invoices')
-        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
-    final analyticsStream = FirebaseFirestore.instance
-        .collection('analyticsSnapshots')
-        .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
-        .snapshots();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3386,30 +3401,33 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
               _WindowChip(
                 label: window.label,
                 selected: window == _window,
-                onTap: () => setState(() => _window = window),
+                onTap: () => setState(() {
+                  _window = window;
+                  _rebuildStreams();
+                }),
               ),
           ],
         ),
         const SizedBox(height: 14),
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: usersStream,
+          stream: _usersStream,
           builder: (context, usersSnapshot) {
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: activeUsersStream,
+              stream: _activeUsersStream,
               builder: (context, activeUsersSnapshot) {
                 return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: listingsStream,
+                  stream: _listingsStream,
                   builder: (context, listingsSnapshot) {
                     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: subscriptionsStream,
+                      stream: _subscriptionsStream,
                       builder: (context, subscriptionsSnapshot) {
                         return StreamBuilder<
                             QuerySnapshot<Map<String, dynamic>>>(
-                          stream: billingInvoicesStream,
+                          stream: _billingInvoicesStream,
                           builder: (context, billingInvoicesSnapshot) {
                             return StreamBuilder<
                                 QuerySnapshot<Map<String, dynamic>>>(
-                              stream: analyticsStream,
+                              stream: _analyticsStream,
                               builder: (context, analyticsSnapshot) {
                                 final hasError = usersSnapshot.hasError ||
                                     activeUsersSnapshot.hasError ||

@@ -145,6 +145,10 @@ class _HomePageState extends State<HomePage>
   DateTime? _lastPresenceUpdate;
   DateTime? _sessionStartTime;
   bool _isMessagingPermissionPromptVisible = false;
+
+  Future<QuerySnapshot<Map<String, dynamic>>>? _notificationsFuture;
+  DateTime? _notificationsLastFetchAt;
+  String? _notificationsCachedUserId;
   // Bottom bar désormais fixe (ne se masque plus au scroll/clavier)
 
   late final AnimationController _categoryController;
@@ -1129,12 +1133,21 @@ class _HomePageState extends State<HomePage>
         'userId': userId,
       },
     );
-    final notificationsFuture = FirebaseFirestore.instance
-        .collection('notifications')
-        .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .limit(20)
-        .get();
+    final now = DateTime.now();
+    final cacheValid = _notificationsLastFetchAt != null &&
+        now.difference(_notificationsLastFetchAt!).inSeconds < 60 &&
+        _notificationsCachedUserId == userId;
+    if (!cacheValid) {
+      _notificationsFuture = FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(20)
+          .get();
+      _notificationsLastFetchAt = now;
+      _notificationsCachedUserId = userId;
+    }
+    final notificationsFuture = _notificationsFuture!;
 
     showDialog(
       context: context,
