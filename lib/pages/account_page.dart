@@ -790,7 +790,7 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.addListener(_handleProfileCompletenessChanged);
     _profileCityController.addListener(_handleProfileCompletenessChanged);
     _profilePhoneController.addListener(_handleProfileCompletenessChanged);
-    _profileAuthSub = _auth.idTokenChanges().listen((user) {
+    _profileAuthSub = _auth.authStateChanges().listen((user) {
       if (!mounted) return;
       unawaited(_handleProfileAuthStateChanged(user));
     });
@@ -1349,9 +1349,8 @@ class _AccountPageState extends State<AccountPage> {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
     _profileDocSub =
         userRef.snapshots(includeMetadataChanges: true).listen((snapshot) {
-      if (!mounted || _activeProfileUid != uid) {
-        return;
-      }
+      if (!mounted || _activeProfileUid != uid) return;
+      if (snapshot.metadata.hasPendingWrites) return;
 
       final previousPseudo = _profilePseudoController.text.trim();
       final previousCity = _profileCityController.text.trim();

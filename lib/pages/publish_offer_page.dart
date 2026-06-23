@@ -50,27 +50,12 @@ import '../utils/recording_path_web.dart'
     if (dart.library.io) '../utils/recording_path_io.dart';
 import '../widgets/ai_publish_control.dart';
 import '../widgets/city_postal_autocomplete_field.dart';
+import 'publish_offer_widgets.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/photo_selector_tile.dart';
 
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
-
-enum PublishAiTraceLevel { info, success, warning, error }
-
-class PublishAiTraceEntry {
-  const PublishAiTraceEntry({
-    required this.timestamp,
-    required this.level,
-    required this.stage,
-    required this.detail,
-  });
-
-  final DateTime timestamp;
-  final PublishAiTraceLevel level;
-  final String stage;
-  final String detail;
-}
 
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
@@ -566,9 +551,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void _notifyPublishAiTraceChanged() {
     if (_publishAiTraceDisposed) return;
     _publishAiTraceVersion.value++;
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   void _resetPublishAiTrace(String flowLabel) {
@@ -694,38 +676,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Vérification admin indisponible (${state.serverErrorCode})';
     }
     return 'Accès admin non confirmé';
-  }
-
-  String _formatPublishAiTraceTime(DateTime value) {
-    String two(int v) => v.toString().padLeft(2, '0');
-    String three(int v) => v.toString().padLeft(3, '0');
-    return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}.${three(value.millisecond)}';
-  }
-
-  IconData _iconForPublishAiTraceLevel(PublishAiTraceLevel level) {
-    switch (level) {
-      case PublishAiTraceLevel.success:
-        return Icons.check_circle_rounded;
-      case PublishAiTraceLevel.warning:
-        return Icons.warning_amber_rounded;
-      case PublishAiTraceLevel.error:
-        return Icons.error_rounded;
-      case PublishAiTraceLevel.info:
-        return Icons.radio_button_checked_rounded;
-    }
-  }
-
-  Color _colorForPublishAiTraceLevel(PublishAiTraceLevel level) {
-    switch (level) {
-      case PublishAiTraceLevel.success:
-        return const Color(0xFF2E7D32);
-      case PublishAiTraceLevel.warning:
-        return const Color(0xFFF9A825);
-      case PublishAiTraceLevel.error:
-        return const Color(0xFFC62828);
-      case PublishAiTraceLevel.info:
-        return kPrestoBlue;
-    }
   }
 
   String _currentPublishAiRuntimeState() {
@@ -1032,123 +982,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
-  Widget _buildAdminAudioRuntimeIndicator() {
-    if (_adminAudioRuntimeAccessState != 1) {
-      return const SizedBox.shrink();
-    }
-
-    final accent = _isListening
-        ? kPrestoOrange
-        : (_isAnalyzing ? kPrestoBlue : const Color(0xFF455A64));
-    final stateLabel =
-        _isListening ? 'LIVE' : (_isAnalyzing ? 'ANALYSE' : 'ADMIN');
-
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: accent.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withOpacity(0.24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.tune_rounded, size: 16, color: accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _adminAudioRuntimeLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: accent,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.24)),
-                  ),
-                  child: Text(
-                    stateLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: accent,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _adminAudioRuntimeDetail,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.2)),
-                  ),
-                  child: Text(
-                    'Mode serveur: ${_adminAudioModeLabel(_adminAudioRuntimeMode)}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: accent.withOpacity(0.2)),
-                  ),
-                  child: Text(
-                    'Etat: ${_currentPublishAiRuntimeState()}',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _showPublishAiTraceDialog() async {
     if (!mounted) return;
-    final overlayTheme = context.prestoOverlayTheme;
 
     await showDialog<void>(
       context: context,
@@ -1156,204 +991,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return ValueListenableBuilder<int>(
           valueListenable: _publishAiTraceVersion,
           builder: (context, _, __) {
-            final entries = List<PublishAiTraceEntry>.unmodifiable(
-              _publishAiTraceEntries,
-            );
-
-            return Dialog(
-              backgroundColor: overlayTheme.surfaceColor,
-              surfaceTintColor: overlayTheme.surfaceTintColor,
-              insetPadding: const EdgeInsets.all(16),
-              shape: overlayTheme.dialogShape,
-              child: ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 760, maxHeight: 680),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Diagnostic micro IA',
-                              style: kPrestoSectionTitleStyle,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Fermer',
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: kPrestoBlue.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: kPrestoBlue.withOpacity(0.18),
-                              ),
-                            ),
-                            child: Text(
-                              'Etat: ${_currentPublishAiRuntimeState()}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: kPrestoBlue,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.04),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              'Entrees: ${entries.length}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (_latestRecognizedTranscript.trim().isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.035),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.black12),
-                          ),
-                          child: Text(
-                            'Dernière transcription: ${_latestRecognizedTranscript.trim()}',
-                            style: const TextStyle(fontSize: 12, height: 1.35),
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          TextButton.icon(
-                            onPressed:
-                                entries.isEmpty ? null : _clearPublishAiTrace,
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Effacer'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: entries.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'Aucun diagnostic pour le moment.',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              )
-                            : ListView.separated(
-                                itemCount: entries.length,
-                                separatorBuilder: (_, __) =>
-                                    const SizedBox(height: 8),
-                                itemBuilder: (context, index) {
-                                  final entry = entries[index];
-                                  final color = _colorForPublishAiTraceLevel(
-                                    entry.level,
-                                  );
-                                  return Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: color.withOpacity(0.06),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: color.withOpacity(0.18),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 2),
-                                          child: Icon(
-                                            _iconForPublishAiTraceLevel(
-                                                entry.level),
-                                            color: color,
-                                            size: 18,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${_formatPublishAiTraceTime(entry.timestamp)}  ${entry.stage}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  color: color,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                entry.detail,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  height: 1.35,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
+            return PublishAiTraceDiagnosticDialog(
+              entries: List<PublishAiTraceEntry>.unmodifiable(
+                _publishAiTraceEntries,
               ),
+              runtimeState: _currentPublishAiRuntimeState(),
+              latestTranscript: _latestRecognizedTranscript,
+              onClear: _clearPublishAiTrace,
             );
           },
         );
       },
-    );
-  }
-
-  Widget _buildPublishAiTraceActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TextButton.icon(
-          onPressed: _showPublishAiTraceDialog,
-          icon: const Icon(Icons.bug_report_outlined),
-          label: const Text('Diagnostic IA'),
-        ),
-        if (_publishAiTraceEntries.isNotEmpty)
-          TextButton(
-            onPressed: _clearPublishAiTrace,
-            child: const Text('Effacer'),
-          ),
-      ],
     );
   }
 
@@ -2064,8 +1712,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     super.initState();
     unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
-    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
-    unawaited(_prefillPublishLocationFromProfileIfNeeded());
+    unawaited(_prefillPublishFromProfile());
     unawaited(_refreshAdminAudioRuntimeAccess());
 
     _scrollController.addListener(() {
@@ -2192,8 +1839,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _phoneController.text = localDigits.isNotEmpty ? localDigits : trimmed;
   }
 
-  Future<void> _prefillPublishPhoneFromProfileIfNeeded() async {
-    if (_phoneController.text.trim().isNotEmpty) return;
+  Future<void> _prefillPublishFromProfile() async {
+    final phoneNeeded = _phoneController.text.trim().isEmpty;
+    final locationNeeded = !_locationEditedByUser &&
+        !_postalCodeEditedByUser &&
+        _locationController.text.trim().isEmpty &&
+        _postalCodeController.text.trim().isEmpty;
+    if (!phoneNeeded && !locationNeeded) return;
 
     final user = _authOrNull?.currentUser;
     if (user == null) return;
@@ -2212,7 +1864,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       } catch (error) {
         debugPrint(
-          '[Publish] Préparation accès profil téléphone échouée, fallback cache/Auth: $error',
+          '[Publish] Préparation accès profil échouée, fallback cache/Auth: $error',
         );
       }
 
@@ -2223,7 +1875,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             .timeout(const Duration(seconds: 5));
       } catch (serverError) {
         debugPrint(
-          '[Publish] Lecture serveur téléphone profil impossible, fallback cache: $serverError',
+          '[Publish] Lecture serveur profil impossible, fallback cache: $serverError',
         );
         try {
           doc = await userRef
@@ -2231,150 +1883,97 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               .timeout(const Duration(seconds: 3));
         } catch (cacheError) {
           debugPrint(
-            '[Publish] Lecture cache téléphone profil impossible, fallback Auth: $cacheError',
+            '[Publish] Lecture cache profil impossible, fallback Auth: $cacheError',
           );
         }
       }
 
       final data = doc?.data();
-      final rawPhone = _firstNonEmptyPublishPhone(
-        data,
-        const ['phone', 'phoneNumber', 'phone_number'],
-        fallbackValues: <String>[user.phoneNumber ?? ''],
-      );
-      final phoneCountryCode =
-          data == null ? null : data['phoneCountryCode']?.toString().trim();
 
-      if (rawPhone.isEmpty ||
-          !mounted ||
-          _phoneController.text.trim().isNotEmpty) {
-        return;
+      if (phoneNeeded && data != null && mounted && _phoneController.text.trim().isEmpty) {
+        final rawPhone = _firstNonEmptyPublishPhone(
+          data,
+          const ['phone', 'phoneNumber', 'phone_number'],
+          fallbackValues: <String>[user.phoneNumber ?? ''],
+        );
+        final phoneCountryCode = data['phoneCountryCode']?.toString().trim();
+        if (rawPhone.isNotEmpty) {
+          setState(() {
+            _applyPublishPhoneFromProfile(
+              rawPhone,
+              explicitCountryCode: phoneCountryCode,
+            );
+          });
+          _recompute();
+        }
       }
 
-      setState(() {
-        _applyPublishPhoneFromProfile(
-          rawPhone,
-          explicitCountryCode: phoneCountryCode,
-        );
-      });
-      _recompute();
-    } catch (error) {
-      debugPrint('[Publish] Préremplissage téléphone impossible: $error');
-    }
-  }
+      if (locationNeeded && data != null && mounted) {
+        final location = ProfileReadinessChecker.resolveLocation(data);
+        final profileCity = location.city.trim();
+        final profilePostalCode = location.postalCode.trim();
 
-  Future<void> _prefillPublishLocationFromProfileIfNeeded() async {
-    final locationAlreadyFilled = _locationController.text.trim().isNotEmpty;
-    final postalCodeAlreadyFilled =
-        _postalCodeController.text.trim().isNotEmpty;
-    final locationHasUserInput = locationAlreadyFilled || _locationEditedByUser;
-    final postalCodeHasUserInput =
-        postalCodeAlreadyFilled || _postalCodeEditedByUser;
+        if (profileCity.isNotEmpty || profilePostalCode.isNotEmpty) {
+          CityRecord? cityRecord;
+          if (profilePostalCode.isNotEmpty) {
+            cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+              city: profileCity,
+              postalCode: profilePostalCode,
+            );
+          }
+          if (cityRecord == null && profileCity.isNotEmpty) {
+            final matches = FrenchCityPostalValidator.instance.searchSuggestions(
+              profileCity,
+              postalCodeHint: profilePostalCode,
+              limit: 5,
+            );
+            for (final candidate in matches) {
+              if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
+                cityRecord = candidate;
+                break;
+              }
+            }
+          }
 
-    // Ne jamais compléter à moitié depuis le profil au moment de publier.
-    // Sinon une ville saisie manuellement peut être combinée avec un CP profil
-    // d'une autre commune, puis la validation bloque la publication.
-    if (locationHasUserInput || postalCodeHasUserInput) {
-      return;
-    }
+          final resolvedCity = cityRecord?.name.trim().isNotEmpty == true
+              ? cityRecord!.name.trim()
+              : profileCity;
+          final resolvedPostalCode = cityRecord?.cp.trim().isNotEmpty == true
+              ? cityRecord!.cp.trim()
+              : profilePostalCode;
 
-    final user = _authOrNull?.currentUser;
-    if (user == null) return;
-
-    final firestore = _firestoreOrNull;
-    if (firestore == null) return;
-
-    final userRef = firestore.collection('users').doc(user.uid);
-
-    try {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-        user: user,
-        forceRefreshToken: true,
-        forceRefreshAppCheckToken: true,
-      );
-      DocumentSnapshot<Map<String, dynamic>> doc;
-      try {
-        doc = await userRef
-            .get(const GetOptions(source: Source.server))
-            .timeout(const Duration(seconds: 5));
-      } catch (_) {
-        doc = await userRef
-            .get(const GetOptions(source: Source.cache))
-            .timeout(const Duration(seconds: 3));
-      }
-
-      final data = doc.data();
-      if (data == null) return;
-
-      final location = ProfileReadinessChecker.resolveLocation(data);
-      final profileCity = location.city.trim();
-      final profilePostalCode = location.postalCode.trim();
-      if (profileCity.isEmpty && profilePostalCode.isEmpty) return;
-
-      CityRecord? cityRecord;
-      if (profilePostalCode.isNotEmpty) {
-        cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
-          city: profileCity,
-          postalCode: profilePostalCode,
-        );
-      }
-      if (cityRecord == null && profileCity.isNotEmpty) {
-        final matches = FrenchCityPostalValidator.instance.searchSuggestions(
-          profileCity,
-          postalCodeHint: profilePostalCode,
-          limit: 5,
-        );
-        for (final candidate in matches) {
-          if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
-            cityRecord = candidate;
-            break;
+          if (mounted) {
+            var changed = false;
+            setState(() {
+              if (!_locationEditedByUser &&
+                  _locationController.text.trim().isEmpty &&
+                  resolvedCity.isNotEmpty) {
+                _setControllerText(_locationController, resolvedCity);
+                changed = true;
+              }
+              if (!_postalCodeEditedByUser &&
+                  _postalCodeController.text.trim().isEmpty &&
+                  resolvedPostalCode.isNotEmpty) {
+                _setControllerText(_postalCodeController, resolvedPostalCode);
+                changed = true;
+              }
+              final dept = cityRecord?.dept ??
+                  departmentFromPostalCode(resolvedPostalCode);
+              if (dept != null && dept.isNotEmpty) {
+                _selectedDeptCode = dept;
+                _selectedPhoneCountryCode = _countryCodeForDept(dept);
+              }
+              final region = cityRecord?.region;
+              if (region != null && region.isNotEmpty) {
+                _selectedRegionCode = region;
+              }
+            });
+            if (changed) _recompute();
           }
         }
       }
-
-      final resolvedCity = cityRecord?.name.trim().isNotEmpty == true
-          ? cityRecord!.name.trim()
-          : profileCity;
-      final resolvedPostalCode = cityRecord?.cp.trim().isNotEmpty == true
-          ? cityRecord!.cp.trim()
-          : profilePostalCode;
-
-      if (!mounted) return;
-
-      var changed = false;
-      setState(() {
-        if (!_locationEditedByUser &&
-            _locationController.text.trim().isEmpty &&
-            resolvedCity.isNotEmpty) {
-          _setControllerText(_locationController, resolvedCity);
-          changed = true;
-        }
-        if (!_postalCodeEditedByUser &&
-            _postalCodeController.text.trim().isEmpty &&
-            resolvedPostalCode.isNotEmpty) {
-          _setControllerText(_postalCodeController, resolvedPostalCode);
-          changed = true;
-        }
-
-        final dept = cityRecord?.dept ??
-            departmentFromPostalCode(
-              resolvedPostalCode,
-            );
-        if (dept != null && dept.isNotEmpty) {
-          _selectedDeptCode = dept;
-          _selectedPhoneCountryCode = _countryCodeForDept(dept);
-        }
-        final region = cityRecord?.region;
-        if (region != null && region.isNotEmpty) {
-          _selectedRegionCode = region;
-        }
-      });
-
-      if (changed) {
-        _recompute();
-      }
     } catch (error) {
-      debugPrint('[Publish] Préremplissage ville/CP impossible: $error');
+      debugPrint('[Publish] Préremplissage profil impossible: $error');
     }
   }
 
@@ -2792,48 +2391,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
-  Widget _buildPublishValidationBanner() {
-    final missing = _missingPublishFieldLabels();
-    if (!_attemptedSubmit || missing.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E6),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFC78F)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(
-              Icons.error_outline_rounded,
-              color: Color(0xFFB45309),
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Complète les champs mis en évidence : ${missing.join(', ')}.',
-              style: const TextStyle(
-                fontSize: 12,
-                height: 1.35,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF92400E),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _recompute() {
     final ok = _requiredOk();
     if (!mounted) return;
@@ -2982,8 +2539,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Si l'utilisateur est déjà connecté, on peut préremplir les données profil
     // avant validation. Sinon on affiche d'abord les erreurs du formulaire.
     if (_authOrNull?.currentUser != null) {
-      await _prefillPublishPhoneFromProfileIfNeeded();
-      await _prefillPublishLocationFromProfileIfNeeded();
+      await _prefillPublishFromProfile();
       if (!mounted) return;
       _canonicalizeLocationInputs();
     }
@@ -3012,8 +2568,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    await _prefillPublishPhoneFromProfileIfNeeded();
-    await _prefillPublishLocationFromProfileIfNeeded();
+    await _prefillPublishFromProfile();
     if (!mounted) return;
     _canonicalizeLocationInputs();
 
@@ -3568,8 +3123,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _canPublish = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
-    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
-    unawaited(_prefillPublishLocationFromProfileIfNeeded());
+    unawaited(_prefillPublishFromProfile());
     showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
@@ -3725,63 +3279,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (dept.startsWith('976')) return '+262'; // Mayotte
     if (dept.startsWith('987')) return '+689'; // Polynésie
     return '+33'; // Métropole par défaut
-  }
-
-  Widget _buildCitySuggestionsOverlay() {
-    if (_citySuggestions.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.only(top: 4),
-      constraints: const BoxConstraints(maxHeight: 220),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: const [
-          BoxShadow(
-            blurRadius: 10,
-            spreadRadius: 1,
-            color: Colors.black12,
-          ),
-        ],
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: _citySuggestions.length,
-        itemBuilder: (context, index) {
-          final city = _citySuggestions[index];
-          final selected = index == _highlightedIndex;
-
-          return InkWell(
-            onTap: () => _applyCity(city, markAsUserEdited: true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              color: selected ? kPrestoBlue.withOpacity(0.08) : null,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${city.name} (${city.cp})',
-                      style: TextStyle(
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Dept ${city.dept}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 
   // --- GESTION DES PHOTOS ---
@@ -4714,7 +4211,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   style: TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 10),
-                _buildPublishValidationBanner(),
+                PublishValidationBanner(
+                  missingFields: _attemptedSubmit
+                      ? _missingPublishFieldLabels()
+                      : const [],
+                ),
                 if (_attemptedSubmit && _missingPublishFieldLabels().isNotEmpty)
                   const SizedBox(height: 10),
 

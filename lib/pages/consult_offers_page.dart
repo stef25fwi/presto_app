@@ -258,6 +258,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   String? _filterRegionCode;
   String? _filterDepartmentCode;
   String? _filterCityName;
+  bool _departmentResetScheduled = false;
 
   // Pagination / loading state
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
@@ -1856,7 +1857,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                 ),
                                 padding:
                                     const EdgeInsets.fromLTRB(6, 0, 6, 132),
-                                addAutomaticKeepAlives: true,
+                                addAutomaticKeepAlives: false,
                                 addRepaintBoundaries: true,
                                 itemCount: _totalItems,
                                 itemBuilder: (context, index) {
@@ -2193,17 +2194,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     // ✅ Si le filtre courant pointe vers un département non disponible,
     // on remet aussi l'état interne à null (sinon on a un "ghost value").
-    if (_filterDepartmentCode != null && safeValue == null) {
+    if (_filterDepartmentCode != null && safeValue == null && !_departmentResetScheduled) {
+      _departmentResetScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (_filterDepartmentCode == null) return;
-
-        final stillInvalid = !allowedCodes.contains(_filterDepartmentCode);
-        if (!stillInvalid) return;
+        _departmentResetScheduled = false;
+        if (!mounted || _filterDepartmentCode == null) return;
+        if (allowedCodes.contains(_filterDepartmentCode)) return;
 
         setState(() {
           _filterDepartmentCode = null;
-
           _filterCityController.clear();
           _filterPostalCodeController.clear();
           _filterCityName = null;
