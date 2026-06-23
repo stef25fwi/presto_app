@@ -485,15 +485,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     if (currentUser != null) {
       return currentUser;
     }
-
-    try {
-      return await auth
-          .authStateChanges()
-          .firstWhere((candidate) => candidate != null)
-          .timeout(const Duration(seconds: 5));
-    } catch (_) {
-      return null;
-    }
+    // Auth state is fully settled by the time the user interacts with a button.
+    // Waiting on authStateChanges() here would block for up to 5 s when the
+    // user is simply not signed in, delaying the auth popup unnecessarily.
+    return null;
   }
 
   Future<User?> _ensureSignedInForOfferAction(
