@@ -20,7 +20,7 @@ class _PaymentInfoAudioAdminSectionState
   bool _generating = false;
 
   Future<void> _pickAndUploadMp3() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['mp3'],
       withData: true,
