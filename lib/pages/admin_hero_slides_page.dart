@@ -67,7 +67,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             Future<void> pickMedia() async {
-              final result = await FilePicker.platform.pickFiles(
+              final result = await FilePicker.pickFiles(
                 type: FileType.custom,
                 allowedExtensions: <String>[
                   ..._imageExtensions,
