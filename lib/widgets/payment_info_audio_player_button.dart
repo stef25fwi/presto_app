@@ -42,7 +42,6 @@ class _PaymentInfoAudioPlayerButtonState
 
     _stateSubscription = _player.onPlayerStateChanged.listen((state) {
       if (!mounted) return;
-
       setState(() {
         _playerState = state;
         _isLoading = false;
@@ -51,13 +50,26 @@ class _PaymentInfoAudioPlayerButtonState
 
     _completeSubscription = _player.onPlayerComplete.listen((_) {
       if (!mounted) return;
-
       setState(() {
         _playerState = PlayerState.stopped;
         _isLoading = false;
         _sourceLoaded = false;
       });
     });
+
+    // Précharge le source dès l'affichage pour supprimer le délai au premier tap.
+    _preloadSource();
+  }
+
+  Future<void> _preloadSource() async {
+    final url = widget.audioUrl.trim();
+    if (url.isEmpty) return;
+    try {
+      await _player.setSource(UrlSource(url));
+      if (mounted) setState(() => _sourceLoaded = true);
+    } catch (_) {
+      // Échec silencieux : la lecture tentera un play() classique.
+    }
   }
 
   @override
@@ -111,9 +123,14 @@ class _PaymentInfoAudioPlayerButtonState
         return;
       }
 
-      await _player.stop();
-      _sourceLoaded = true;
-      await _player.play(UrlSource(audioUrl));
+      if (_sourceLoaded) {
+        // Source préchargée : lecture immédiate sans réseau.
+        await _player.seek(Duration.zero);
+        await _player.resume();
+      } else {
+        _sourceLoaded = true;
+        await _player.play(UrlSource(audioUrl));
+      }
     } catch (error) {
       if (!mounted) return;
 

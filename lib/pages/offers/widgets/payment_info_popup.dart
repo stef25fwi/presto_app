@@ -114,7 +114,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                           crossAxisCount: 2,
                           mainAxisSpacing: 10,
                           crossAxisSpacing: 10,
-                          childAspectRatio: 0.58,
+                          childAspectRatio: 0.387,
                           children: const [
                             _RuleCard(
                               number: '1',
@@ -162,8 +162,6 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        const _PaymentMethods(),
                         const SizedBox(height: 12),
                         const _ImportantBox(),
                         const SizedBox(height: 10),
@@ -219,7 +217,15 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.people_alt_rounded, color: kBlue, size: 34),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/images/logowebp.webp',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+            ),
+          ),
           const SizedBox(width: 8),
           const Text(
             'iliprestō',
