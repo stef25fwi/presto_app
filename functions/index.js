@@ -2066,12 +2066,16 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
+      const _tDownload = Date.now();
       let audioBuffer = await loadAudioBufferFromStorage(storagePath);
       let audioInfo = parseWavHeader(audioBuffer);
+      const downloadMs = Date.now() - _tDownload;
 
       // Si ce n'est pas un WAV PCM16 exploitable (ex: WEBM/OPUS), on convertit côté serveur.
+      let ffmpegMs = 0;
       const shouldConvertToWav = !audioInfo?.isWav || audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16;
       if (shouldConvertToWav) {
+        const _tFfmpeg = Date.now();
         const tmpDir = path.join(os.tmpdir(), 'presto_microia');
         const ext = isWebmPath
           ? '.webm'
@@ -2092,6 +2096,7 @@ exports.microIaProcessAudio = onCall(
           await runFfmpegToWav16kMono({ inputPath, outputPath });
           audioBuffer = await fs.readFile(outputPath);
           audioInfo = parseWavHeader(audioBuffer);
+          ffmpegMs = Date.now() - _tFfmpeg;
         } finally {
           // Best-effort cleanup
           await fs.unlink(inputPath).catch(() => {});
@@ -2152,6 +2157,7 @@ exports.microIaProcessAudio = onCall(
 
       let best = null;
       let lastErr = null;
+      const _tStt = Date.now();
 
       for (let i = 0; i < tryOrder.length; i++) {
         const attemptMode = tryOrder[i];
@@ -2222,6 +2228,9 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
+      const sttMs = Date.now() - _tStt;
+      let draftMs = 0;
+
       console.log("[microIaProcessAudio] DONE", {
         modeUsed: best?.modeUsed,
         score: best?.quality?.score,
@@ -2229,6 +2238,7 @@ exports.microIaProcessAudio = onCall(
 
       // ⚡ Mode combiné: STT + Draft en un seul round-trip (objectif <4s)
       if (wantDraft && best.text && best.text.trim().length > 0) {
+        const _tDraft = Date.now();
         try {
           const draftOpenai = openai || new OpenAI({ apiKey: OPENAI_API_KEY.value() });
           const draftResult = await withTimeout(
@@ -2243,6 +2253,7 @@ exports.microIaProcessAudio = onCall(
             'generate_draft'
           );
           best.draft = draftResult;
+          draftMs = Date.now() - _tDraft;
         } catch (draftErr) {
           console.warn("[microIaProcessAudio] DRAFT_ERROR", {
             requestId,
@@ -2265,6 +2276,20 @@ exports.microIaProcessAudio = onCall(
           err: cleanupErr?.message || String(cleanupErr),
         });
       }
+
+      // 📊 Décomposition des durées par étape (diagnostic latence pipeline).
+      const totalMs = downloadMs + ffmpegMs + sttMs + draftMs;
+      best.timings = { downloadMs, ffmpegMs, sttMs, draftMs, totalMs };
+      console.log("[microIaProcessAudio] TIMINGS", {
+        requestId,
+        downloadMs,
+        ffmpegMs,
+        sttMs,
+        draftMs,
+        totalMs,
+        modeUsed: best?.modeUsed,
+        audioBytes: objectBytes,
+      });
 
       return best;
     } catch (error) {
