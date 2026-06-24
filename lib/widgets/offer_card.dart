@@ -9,7 +9,7 @@ class OfferCard extends StatelessWidget {
   final String offerId;
   final Map<String, dynamic> data;
 
-  static const Color _kPrestoBlue = Color(0xFF2196F3);
+  static const Color _kPrestoBlue = Color(0xFF1A73E8);
 
   /// ✅ Mettre false dans "Je consulte les offres"
   /// ✅ Mettre true dans Profil / "Mes messages"
