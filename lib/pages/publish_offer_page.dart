@@ -29,7 +29,6 @@ import '../features/publish_ai/profile_readiness.dart';
 import '../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.js_interop) '../features/micro_ia/web_audio_recorder.dart';
 import '../models/admin_access_state.dart';
-import '../pages/offers/offer_details_page.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/admin_web_debug_store.dart';
 import '../services/ai/listing_audio_ai_service.dart';
@@ -3539,95 +3538,170 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isSubmitting = true;
     });
 
+    // Préflight auth / App Check / profil — bloquant car nécessaire avant de
+    // pouvoir publier. En cas d'échec on s'arrête sans afficher le popup.
+    User? maybeUser;
     try {
-      final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
-      if (user == null) {
-        throw Exception('Utilisateur non connecté');
-      }
-      try {
-        await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-          user: user,
-          forceRefreshToken: true,
-          forceRefreshAppCheckToken: false,
-        );
-      } catch (error, stackTrace) {
-        await CrashlyticsContext.recordError(
-          error,
-          stackTrace,
-          reason:
-              'publish blocked before submit: auth/appcheck/profile preflight failed',
-          fatal: false,
-          keys: <String, String>{
-            'component': 'PublishOfferPage',
-            'step': 'submit-preflight',
-            'uid': user.uid,
-          },
-        );
-        if (UserProfileBootstrapService.isAppCheckFailure(error)) {
-          debugPrint(
-            '[PublishOffer] App Check preflight failed; continuing to protected draft write retry: $error',
-          );
-        } else {
-          if (mounted) {
-            showErrorSnackBar(
-              context,
-              'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
-            );
-          }
-          return;
-        }
-      }
+      maybeUser = await _ensureProtectedSessionReady(forceRefreshToken: true);
+    } catch (e) {
       logRuntimeAction(
         area: 'publish',
-        action: 'submit-start',
+        action: 'submit-failure',
         details: <String, Object?>{
-          'userId': user.uid,
-          'category': _category ?? '',
-          'city': _locationController.text.trim(),
-          'hasPhotos': _selectedPhotos.isNotEmpty,
+          'errorType': e.runtimeType,
+          'message': e,
+          'phase': 'preflight',
         },
       );
-      final budgetValue = _budgetType == 'À négocier'
-          ? 0.0
-          : (_parseBudget(_budgetController.text) ?? 0.0);
-      final publishService =
-          _marketplacePublishService ??= MarketplacePublishService();
-      final publishResult = await publishService.publish(
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Erreur lors de la publication : ${_formatPublishError(e)}',
+        );
+        setState(() => _isSubmitting = false);
+      }
+      return;
+    }
+    if (maybeUser == null) {
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Erreur lors de la publication : utilisateur non connecté.',
+        );
+        setState(() => _isSubmitting = false);
+      }
+      return;
+    }
+    final user = maybeUser;
+
+    try {
+      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: true,
+        forceRefreshAppCheckToken: false,
+      );
+    } catch (error, stackTrace) {
+      await CrashlyticsContext.recordError(
+        error,
+        stackTrace,
+        reason:
+            'publish blocked before submit: auth/appcheck/profile preflight failed',
+        fatal: false,
+        keys: <String, String>{
+          'component': 'PublishOfferPage',
+          'step': 'submit-preflight',
+          'uid': user.uid,
+        },
+      );
+      if (UserProfileBootstrapService.isAppCheckFailure(error)) {
+        debugPrint(
+          '[PublishOffer] App Check preflight failed; continuing to protected draft write retry: $error',
+        );
+      } else {
+        if (mounted) {
+          showErrorSnackBar(
+            context,
+            'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+          );
+          setState(() => _isSubmitting = false);
+        }
+        return;
+      }
+    }
+
+    logRuntimeAction(
+      area: 'publish',
+      action: 'submit-start',
+      details: <String, Object?>{
+        'userId': user.uid,
+        'category': _category ?? '',
+        'city': _locationController.text.trim(),
+        'hasPhotos': _selectedPhotos.isNotEmpty,
+      },
+    );
+
+    final budgetValue = _budgetType == 'À négocier'
+        ? 0.0
+        : (_parseBudget(_budgetController.text) ?? 0.0);
+    final publishService =
+        _marketplacePublishService ??= MarketplacePublishService();
+
+    // UX « instantané » : on lance l'envoi (upload photos + création annonce)
+    // en arrière-plan, puis on affiche immédiatement le popup « en attente de
+    // validation » et on route vers « Je consulte » (onglet 1). Le suivi
+    // (analytics, notifications, erreurs) est traité quand le Future se résout.
+    final publishFuture = publishService.publish(
+      ownerId: user.uid,
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      category:
+          _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
+      city: _locationController.text.trim(),
+      postalCode: _postalCodeController.text.trim(),
+      phone:
+          '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'
+              .trim(),
+      subCategory: _selectedSubCategory,
+      missionDelay: _missionDelay,
+      isUrgent: _isUrgent,
+      price: budgetValue,
+      budgetType: _budgetType,
+      hidePhone: _hidePhone,
+      photos: List<XFile>.from(_selectedPhotos),
+    );
+
+    unawaited(
+      _finalizePublishInBackground(
+        publishFuture,
         ownerId: user.uid,
         title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        category:
-            _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
-        city: _locationController.text.trim(),
-        postalCode: _postalCodeController.text.trim(),
-        phone:
-            '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'
-                .trim(),
+        category: (_category ?? '').toString().trim(),
         subCategory: _selectedSubCategory,
-        missionDelay: _missionDelay,
-        isUrgent: _isUrgent,
-        price: budgetValue,
+        budget: _budgetController.text.trim(),
         budgetType: _budgetType,
-        hidePhone: _hidePhone,
-        photos: List<XFile>.from(_selectedPhotos),
-      );
+      ),
+    );
+
+    if (!mounted) return;
+    await showModerationPendingDialog(context);
+    appNavigatorKey.currentState?.pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const HomePage(initialIndex: 1),
+      ),
+    );
+  }
+
+  /// Termine la publication lancée en arrière-plan (flux UX instantané).
+  /// Succès : analytics + notifications. Échec : log + report d'erreur via le
+  /// navigateur global, car la page de publication a déjà été quittée.
+  Future<void> _finalizePublishInBackground(
+    Future<MarketplacePublishResult> publishFuture, {
+    required String ownerId,
+    required String title,
+    required String category,
+    required String? subCategory,
+    required String budget,
+    required String budgetType,
+  }) async {
+    try {
+      final publishResult = await publishFuture;
 
       // ✅ Analytics: publication
       await _logOfferPublished(
         offerId: publishResult.listingId,
-        title: _titleController.text.trim(),
-        category: (_category ?? '').toString().trim(),
-        budget: _budgetController.text.trim(),
-        budgetType: _budgetType,
+        title: title,
+        category: category,
+        budget: budget,
+        budgetType: budgetType,
       );
 
-      // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
+      // Notifications favoris (création côté serveur — no-op client)
       await _createNotificationsForFavorites(
         publishResult.listingId,
-        _category ?? '',
-        _selectedSubCategory,
-        _titleController.text.trim(),
-        user.uid,
+        category,
+        subCategory,
+        title,
+        ownerId,
       );
 
       logRuntimeAction(
@@ -3635,38 +3709,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         action: 'submit-success',
         details: <String, Object?>{
           'listingId': publishResult.listingId,
-          'category': _category ?? '',
-          'city': _locationController.text.trim(),
+          'category': category,
         },
-      );
-
-      if (!mounted) return;
-
-      if (!publishResult.isPubliclyVisible) {
-        await showModerationPendingDialog(context);
-        if (!mounted) return;
-        appNavigatorKey.currentState?.pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const HomePage(initialIndex: 4),
-          ),
-        );
-        return;
-      }
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => OfferDetailsPage(
-            offer: publishResult.detailData,
-            currentUserId: user.uid,
-            onBackToConsult: () {
-              appNavigatorKey.currentState?.pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => const HomePage(initialIndex: 4),
-                ),
-              );
-            },
-          ),
-        ),
       );
     } catch (e) {
       logRuntimeAction(
@@ -3675,16 +3719,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         details: <String, Object?>{
           'errorType': e.runtimeType,
           'message': e,
+          'phase': 'background',
         },
       );
-      if (!mounted) return;
-      final message = _formatPublishError(e);
-      showErrorSnackBar(context, 'Erreur lors de la publication : $message');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
+      final ctx = appNavigatorKey.currentContext;
+      if (ctx != null && ScaffoldMessenger.maybeOf(ctx) != null) {
+        showErrorSnackBar(
+          ctx,
+          'Échec de la publication : ${_formatPublishError(e)}',
+        );
       }
     }
   }
