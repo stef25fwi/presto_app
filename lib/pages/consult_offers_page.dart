@@ -1676,7 +1676,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final initialOfferDocs = _offersWarmCache[currentOffersStreamKey];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: prestoOverlayStyleFor(kPrestoBlue),
+      // Status bar OS alignée sur le header orange (kPrestoOrange) de la page.
+      value: prestoOverlayStyleFor(kPrestoOrange),
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
