@@ -806,6 +806,18 @@ exports.openAiExtractListingFields = onCall(
 // =====================================================
 
 const speech = require("@google-cloud/speech");
+
+// Clients lourds réutilisés entre invocations : évite de réétablir le canal
+// gRPC (Speech) / le handshake TLS (OpenAI) à CHAQUE appel, ce qui coûtait
+// plusieurs secondes sur le chemin chaud micro-IA.
+let _speechClientSingleton = null;
+function getSpeechClient() {
+  return (_speechClientSingleton ||= new speech.SpeechClient());
+}
+let _openAiSingleton = null;
+function getOpenAiClient() {
+  return (_openAiSingleton ||= new OpenAI({ apiKey: OPENAI_API_KEY.value() }));
+}
 const { toFile } = require("openai");
 
 exports.moderateNewOffer = createModerateNewOffer({
@@ -1518,7 +1530,7 @@ function canUseGoogleStt(audioInfo) {
 }
 
 async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
-  const speechClient = new speech.SpeechClient();
+  const speechClient = getSpeechClient();
 
   if (!canUseGoogleStt(audioInfo)) {
     return {
@@ -1544,6 +1556,9 @@ async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
       audioChannelCount,
       languageCode,
       enableAutomaticPunctuation: true,
+      // Modèle optimisé pour les énoncés courts (< 60 s) : nettement plus
+      // rapide que le modèle par défaut sur la dictée d'annonce.
+      model: "latest_short",
     },
     audio: { content: audioBuffer.toString("base64") },
   };
@@ -2159,7 +2174,7 @@ exports.microIaProcessAudio = onCall(
       const fallbackEnabled = ultraFastEnabled ? true : cfg.fallbackEnabled;
 
       const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY") || wantDraft;
-      const openai = needsOpenAI ? new OpenAI({ apiKey: OPENAI_API_KEY.value() }) : null;
+      const openai = needsOpenAI ? getOpenAiClient() : null;
 
       let best = null;
       let lastErr = null;
@@ -2246,7 +2261,7 @@ exports.microIaProcessAudio = onCall(
       if (wantDraft && best.text && best.text.trim().length > 0) {
         const _tDraft = Date.now();
         try {
-          const draftOpenai = openai || new OpenAI({ apiKey: OPENAI_API_KEY.value() });
+          const draftOpenai = openai || getOpenAiClient();
           const draftResult = await withTimeout(
             _internalGenerateDraft({
               openai: draftOpenai,
