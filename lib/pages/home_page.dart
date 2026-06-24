@@ -1870,8 +1870,8 @@ class _HomePageState extends State<HomePage>
               // SLIDER
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: SizedBox(
-                  height: 220,
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(22),
