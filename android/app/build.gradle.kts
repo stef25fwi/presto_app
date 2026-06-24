@@ -16,7 +16,7 @@ android {
     compileSdk = flutter.compileSdkVersion
     // NDK requis par les plugins Firebase (firebase_core 4.x), google_mobile_ads 7
     // et recaptcha_enterprise. Évite l'erreur "depend on a different Android NDK version".
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
