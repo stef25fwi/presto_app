@@ -612,7 +612,7 @@ class _AccountPageState extends State<AccountPage> {
           SelectableText(
             lines.join('\n'),
             style: const TextStyle(
-              fontFamily: 'monospace',
+              fontFamily: 'Inter',
               fontSize: 12,
               height: 1.35,
               color: Colors.black87,
