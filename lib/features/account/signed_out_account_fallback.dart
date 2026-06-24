@@ -451,14 +451,16 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                           onFieldSubmitted: (_) =>
                               _isLoading ? null : _submitEmailAuth(),
                         ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _isLoading ? null : _resetPassword,
-                            child: const Text('Mot de passe oublié ?'),
+                        if (!_isSignup) ...[
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _isLoading ? null : _resetPassword,
+                              child: const Text('Mot de passe oublié ?'),
+                            ),
                           ),
-                        ),
+                        ],
                         if (_isSignup) ...[
                           const SizedBox(height: 12),
                           AuthTextField(
