@@ -1676,8 +1676,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final initialOfferDocs = _offersWarmCache[currentOffersStreamKey];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Status bar OS alignée sur le header orange (kPrestoOrange) de la page.
-      value: prestoOverlayStyleFor(kPrestoOrange),
+      // Status bar par plateforme : orange sur l'APK natif (alignée sur le
+      // header orange), bleue sur le web. NB : sur web en navigateur, Flutter
+      // ne peint pas de status bar OS — l'effet visible reste surtout natif.
+      value: prestoOverlayStyleFor(kIsWeb ? kPrestoBlue : kPrestoOrange),
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
