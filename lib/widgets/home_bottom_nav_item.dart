@@ -74,71 +74,77 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ScaleTransition(
-              scale: _scaleAnimation,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(widget.isBig ? 7 : 5),
-                    decoration: BoxDecoration(
-                      color: widget.isBig
-                          ? Colors.white
-                          : widget.selected
-                              ? Colors.white.withOpacity(0.35)
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: widget.isBig
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.35),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : widget.selected
+            SizedBox(
+              height: 46,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(widget.isBig ? 7 : 5),
+                        decoration: BoxDecoration(
+                          color: widget.isBig
+                              ? Colors.white
+                              : widget.selected
+                                  ? Colors.white.withOpacity(0.35)
+                                  : Colors.transparent,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: widget.isBig
                               ? [
                                   BoxShadow(
-                                    color: Colors.white.withOpacity(0.5),
-                                    blurRadius: 12,
-                                    spreadRadius: 3,
+                                    color: Colors.black.withOpacity(0.35),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ]
-                              : null,
-                    ),
-                    child: Icon(
-                      widget.icon,
-                      size: widget.isBig ? 32 : 27,
-                      color: widget.isBig ? _kPrestoOrange : color,
-                    ),
-                  ),
-                  if (badgeLabel != null)
-                    Positioned(
-                      right: -6,
-                      top: -4,
-                      child: Container(
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
+                              : widget.selected
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.5),
+                                        blurRadius: 12,
+                                        spreadRadius: 3,
+                                      ),
+                                    ]
+                                  : null,
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          badgeLabel,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        child: Icon(
+                          widget.icon,
+                          size: widget.isBig ? 32 : 27,
+                          color: widget.isBig ? _kPrestoOrange : color,
                         ),
                       ),
-                    ),
-                ],
+                      if (badgeLabel != null)
+                        Positioned(
+                          right: -6,
+                          top: -4,
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              badgeLabel,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 3),
