@@ -290,29 +290,23 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                         Center(
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: // Logo iliprestō centré et agrandi de 25 %.
-                                    Center(
-                                  child: Image.asset(
-                                    'assets/images/logowebp.webp',
-                                    width: 57.5,
-                                    height: 57.5,
-                                    fit: BoxFit.cover,
-                                  ),
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.asset(
+                                  'assets/images/logowebp.webp',
+                                  width: 72,
+                                  height: 72,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'iliprestō',
-                                  style: TextStyle(
-                                    color: Color(0xFFFF6600),
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                              const SizedBox(width: 14),
+                              const Text(
+                                'iliprestō',
+                                style: TextStyle(
+                                  color: Color(0xFFFF6600),
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ],
