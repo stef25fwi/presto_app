@@ -1043,25 +1043,42 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                     label: const Text('Envoyer un message'),
                   ),
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(sheetContext).pop();
-                      _callPhone(context, data.phone);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0459D9),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                // Bouton « Appeler » masqué si l'annonceur a caché son numéro
+                // (hidePhone) : un numéro masqué ne doit jamais être composable.
+                if (!data.hidePhone) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.of(sheetContext).pop();
+                        // Connexion requise avant de composer, cohérent avec la
+                        // révélation du numéro par l'œil.
+                        final signedInUser =
+                            await _ensureSignedInForOfferAction(
+                          context,
+                          area: 'offer_call',
+                          offerId: data.offerId,
+                          title: 'Connectez-vous pour appeler l\'annonceur',
+                          description:
+                              'La connexion est nécessaire pour afficher et composer le numéro de cette annonce.',
+                        );
+                        if (signedInUser == null) return;
+                        if (!context.mounted) return;
+                        await _callPhone(context, data.phone);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0459D9),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
+                      icon: const Icon(Icons.call_outlined),
+                      label: const Text('Appeler'),
                     ),
-                    icon: const Icon(Icons.call_outlined),
-                    label: const Text('Appeler'),
                   ),
-                ),
+                ],
               ],
             ),
           ),
