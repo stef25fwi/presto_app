@@ -1933,6 +1933,9 @@ exports.microIaProcessAudio = onCall(
   {
     region: PROJECT_REGION,
     timeoutSeconds: 120,
+    // Instance toujours chaude : élimine le cold start (~3–6 s) qui dominait
+    // la latence du remplissage IA (objectif ≤ 5 s du stop au remplissage).
+    minInstances: 1,
     secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
