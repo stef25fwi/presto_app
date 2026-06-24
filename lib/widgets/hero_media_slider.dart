@@ -7,7 +7,6 @@ import '../models/hero_slide.dart';
 
 class HeroMediaSlider extends StatefulWidget {
   final List<HeroSlide> slides;
-  final Widget Function(BuildContext context)? overlayBuilder;
   final Widget fallback;
   final double borderRadius;
 
@@ -15,7 +14,6 @@ class HeroMediaSlider extends StatefulWidget {
     super.key,
     required this.slides,
     required this.fallback,
-    this.overlayBuilder,
     this.borderRadius = 22,
   });
 
@@ -121,20 +119,6 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
               );
             },
           ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x26000000),
-                  Color(0x40000000),
-                  Color(0x73000000),
-                ],
-              ),
-            ),
-          ),
-          if (widget.overlayBuilder != null) widget.overlayBuilder!(context),
           if (activeSlides.length > 1)
             Positioned(
               bottom: 8,
@@ -248,16 +232,19 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
   @override
   Widget build(BuildContext context) {
     if (!widget.slide.isVideo) {
-      return Image.network(
-        widget.slide.mediaUrl,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            return child;
-          }
-          return const _HeroMediaLoadingFallback();
-        },
+      return ColoredBox(
+        color: Colors.black,
+        child: Image.network(
+          widget.slide.mediaUrl,
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const _HeroMediaLoadingFallback();
+          },
+        ),
       );
     }
 
