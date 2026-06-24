@@ -174,6 +174,7 @@ class _PrestoStartupSplashScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
+                fontFamily: 'Inter',
                 fontSize: 44,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -1.0,
