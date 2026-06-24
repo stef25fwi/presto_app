@@ -230,6 +230,7 @@ service cloud.firestore {
         'roles',
         'role',
         'primaryRole',
+        'adminRole',
         'verified',
         'isVerified',
         'status',
