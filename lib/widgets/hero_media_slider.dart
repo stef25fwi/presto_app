@@ -89,61 +89,78 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(widget.borderRadius),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: activeSlides.length,
-            onPageChanged: (index) {
-              setState(() => _currentIndex = index);
-              _scheduleNextSlide();
-            },
-            itemBuilder: (context, index) {
-              final slide = activeSlides[index];
-              return _HeroMediaSlideView(
-                slide: slide,
-                onVideoError: activeSlides.length <= 1
-                    ? null
-                    : () {
-                        if (!_pageController.hasClients) {
-                          return;
-                        }
-                        final nextIndex = (index + 1) % activeSlides.length;
-                        _pageController.animateToPage(
-                          nextIndex,
-                          duration: const Duration(milliseconds: 360),
-                          curve: Curves.easeOutCubic,
-                        );
-                      },
-              );
-            },
-          ),
-          if (activeSlides.length > 1)
-            Positioned(
-              bottom: 8,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  activeSlides.length,
-                  (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: _currentIndex == index ? 16 : 8,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      color: _currentIndex == index
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(999),
+      child: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          if (!_pageController.hasClients || activeSlides.length <= 1) return;
+          final v = details.primaryVelocity ?? 0;
+          if (v < -200) {
+            _pageController.animateToPage(
+              (_currentIndex + 1) % activeSlides.length,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+            );
+          } else if (v > 200) {
+            _pageController.animateToPage(
+              (_currentIndex - 1 + activeSlides.length) % activeSlides.length,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOutCubic,
+            );
+          }
+        },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: activeSlides.length,
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+                _scheduleNextSlide();
+              },
+              itemBuilder: (context, index) {
+                final slide = activeSlides[index];
+                return _HeroMediaSlideView(
+                  slide: slide,
+                  onVideoError: activeSlides.length <= 1
+                      ? null
+                      : () {
+                          if (!_pageController.hasClients) return;
+                          _pageController.animateToPage(
+                            (index + 1) % activeSlides.length,
+                            duration: const Duration(milliseconds: 360),
+                            curve: Curves.easeOutCubic,
+                          );
+                        },
+                );
+              },
+            ),
+            if (activeSlides.length > 1)
+              Positioned(
+                bottom: 8,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    activeSlides.length,
+                    (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: _currentIndex == index ? 16 : 8,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: _currentIndex == index
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

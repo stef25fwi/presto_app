@@ -1408,16 +1408,35 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildFallbackHomeHeroSlider() {
-    return Stack(
-      children: [
-        PageView.builder(
-          controller: _carouselController,
-          itemCount: _slides.length,
-          onPageChanged: (index) {
-            setState(() {
-              _currentSlide = index;
-            });
-          },
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (!_carouselController.hasClients || _slides.length <= 1) return;
+        final v = details.primaryVelocity ?? 0;
+        if (v < -200) {
+          _carouselController.animateToPage(
+            (_currentSlide + 1) % _slides.length,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+          );
+        } else if (v > 200) {
+          _carouselController.animateToPage(
+            (_currentSlide - 1 + _slides.length) % _slides.length,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      },
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _carouselController,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _slides.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentSlide = index;
+              });
+            },
           itemBuilder: (context, index) {
             final slideIndex = index;
             final slide = _slides[slideIndex];
@@ -1614,7 +1633,8 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 
