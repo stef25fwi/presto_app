@@ -1734,7 +1734,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return;
     }
 
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
       withData: true,

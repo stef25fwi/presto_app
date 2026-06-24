@@ -399,7 +399,7 @@ class NotificationService {
     );
 
     await _localNotifications.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (response) {
         final payload = (response.payload ?? '').trim();
         if (payload.isNotEmpty) {
@@ -470,10 +470,10 @@ class NotificationService {
     );
 
     await _localNotifications.show(
-      message.messageId.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
+      id: message.messageId.hashCode,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channel.id,
           channel.name,
