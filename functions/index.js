@@ -1936,6 +1936,12 @@ exports.microIaProcessAudio = onCall(
     // Instance toujours chaude : élimine le cold start (~3–6 s) qui dominait
     // la latence du remplissage IA (objectif ≤ 5 s du stop au remplissage).
     minInstances: 1,
+    // Plus de mémoire = plus de vCPU (Cloud Run alloue le CPU proportionnellement).
+    // Accélère à la fois le cold start (chargement des modules lourds : ffmpeg,
+    // @google-cloud/speech, openai) ET le traitement CPU-bound (conversion
+    // ffmpeg m4a→wav, manipulation du buffer audio).
+    memory: "1GiB",
+    cpu: 1,
     secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
