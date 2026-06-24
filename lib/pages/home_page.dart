@@ -1407,55 +1407,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildDynamicHeroOverlay(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
-            "Trouvez immédiatement quelqu'un pour faire le job !",
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              height: 1.18,
-              shadows: [
-                Shadow(
-                  color: Color(0x66000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 1.5),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Une personne près de chez vous, en quelques minutes.',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 1.3,
-              shadows: [
-                Shadow(
-                  color: Color(0x59000000),
-                  blurRadius: 5,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildFallbackHomeHeroSlider() {
     return Stack(
       children: [
@@ -1937,7 +1888,6 @@ class _HomePageState extends State<HomePage>
                             slides: slides,
                             fallback: fallback,
                             borderRadius: 0,
-                            overlayBuilder: _buildDynamicHeroOverlay,
                           );
                         },
                       ),
