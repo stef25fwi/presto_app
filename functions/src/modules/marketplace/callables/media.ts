@@ -129,13 +129,18 @@ export async function processOfferPhotoStoragePath({
   let height = 0;
 
   try {
+    // Redimensionnement SANS recadrage : l'image est mise à l'échelle pour
+    // tenir dans une boîte STANDARDIZED_LISTING_IMAGE_SIZE × SIZE en conservant
+    // son ratio d'origine ("inside"). Aucune partie n'est coupée, et on
+    // n'agrandit jamais une image plus petite ("withoutEnlargement"). La photo
+    // s'affiche ainsi en entier en plein écran dans l'annonce.
     const resized = await sharp(srcBuffer)
       .rotate()
       .resize({
         width: STANDARDIZED_LISTING_IMAGE_SIZE,
         height: STANDARDIZED_LISTING_IMAGE_SIZE,
-        fit: "cover",
-        position: "attention",
+        fit: "inside",
+        withoutEnlargement: true,
       })
       .webp({ quality: 82, effort: 5 })
       .toBuffer({ resolveWithObject: true });

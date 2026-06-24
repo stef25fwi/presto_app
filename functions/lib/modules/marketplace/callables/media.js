@@ -86,8 +86,8 @@ async function processOfferPhotoStoragePath({ uid, draftId, listingId, storagePa
             .resize({
             width: exports.STANDARDIZED_LISTING_IMAGE_SIZE,
             height: exports.STANDARDIZED_LISTING_IMAGE_SIZE,
-            fit: "cover",
-            position: "attention",
+            fit: "inside",
+            withoutEnlargement: true,
         })
             .webp({ quality: 82, effort: 5 })
             .toBuffer({ resolveWithObject: true });
