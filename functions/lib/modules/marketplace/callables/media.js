@@ -81,6 +81,11 @@ async function processOfferPhotoStoragePath({ uid, draftId, listingId, storagePa
     let width = 0;
     let height = 0;
     try {
+        // Redimensionnement SANS recadrage : l'image est mise à l'échelle pour
+        // tenir dans une boîte STANDARDIZED_LISTING_IMAGE_SIZE × SIZE en conservant
+        // son ratio d'origine ("inside"). Aucune partie n'est coupée, et on
+        // n'agrandit jamais une image plus petite ("withoutEnlargement"). La photo
+        // s'affiche ainsi en entier en plein écran dans l'annonce.
         const resized = await (0, sharp_1.default)(srcBuffer)
             .rotate()
             .resize({
