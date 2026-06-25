@@ -3031,6 +3031,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         };
         final beforeCategory = _category;
 
+        // Always allow the AI to rewrite the description in the writing-assistant
+        // flow (the user explicitly asked for their text to be reformulated).
+        setState(() => _descriptionEditedByUser = false);
         _applyDraftToForm(draft);
         _applyKeywordCategoryPairFromText(input);
         _markLocationPostalPrefilledByAiIfChanged(beforeSnapshot);
@@ -3842,7 +3845,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.fromLTRB(
-                              12, 14, 12, 70,
+                              12, 14, 12, 108,
                             ),
                           ),
                           minLines: 4,
@@ -3853,7 +3856,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           bottom: 8,
                           left: 8,
                           right: 8,
-                          child: _AiWritingAssistantButton(
+                          child: AiWritingButton(
+                            isAnalyzing: _isAnalyzing,
                             onTap: !_isAnalyzing && !_isListening
                                 ? _onTapAiAnalyze
                                 : null,
@@ -4459,111 +4463,3 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
   }
 }
 
-class _AiWritingAssistantButton extends StatelessWidget {
-  const _AiWritingAssistantButton({required this.onTap});
-
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0A7CFF),
-            Color(0xFF0058E8),
-            Color(0xFF1434D9),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x66005BEA),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Tooltip(
-        message: "Remplir les champs avec l'IA",
-        child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: const SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Row(
-                children: [
-                  _AiWritingCircleIcon(),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Assistant de rédaction IA',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1.05,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          "Décrivez votre besoin, l'IA complète votre annonce",
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xE0FFFFFF),
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-    );
-  }
-}
-
-class _AiWritingCircleIcon extends StatelessWidget {
-  const _AiWritingCircleIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const RadialGradient(
-          colors: [Color(0xFF2EA7FF), Color(0xFF005BEA)],
-        ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.18),
-          width: 1.5,
-        ),
-      ),
-      child: const Icon(Icons.edit_rounded, size: 18, color: Colors.white),
-    );
-  }
-}
