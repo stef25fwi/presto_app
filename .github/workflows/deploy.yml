@@ -90,6 +90,10 @@ jobs:
           gcloud auth activate-service-account \
             --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
 
+          mkdir -p ~/.config/gcloud
+          cp "$GOOGLE_APPLICATION_CREDENTIALS" \
+            ~/.config/gcloud/application_default_credentials.json
+
           firebase deploy --project presto-app-74abe \
             --only hosting,functions,firestore:rules,firestore:indexes,storage \
             --force
