@@ -72,6 +72,11 @@ flutter:
           weight: 800
         - asset: assets/fonts/Inter-Black.ttf
           weight: 900
+    - family: Rubik
+      fonts:
+        - asset: assets/fonts/Rubik-Variable.ttf
+        - asset: assets/fonts/Rubik-Italic-Variable.ttf
+          style: italic
   uses-material-design: true
 
   assets:
