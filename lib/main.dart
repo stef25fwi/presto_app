@@ -372,7 +372,7 @@ Offer buildOfferDetailsOffer({
       ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
   final category = (data['category'] ?? '').toString().trim();
   final description = (data['description'] ?? '').toString().trim();
-  final isUrgent = (data['urgent'] as bool?) ?? false;
+  final isUrgent = (data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false;
   final budget = data['budget'];
   final price = budget is num ? budget.toDouble() : 0.0;
   final rawMedia = (data['media'] as List<dynamic>? ?? const <dynamic>[])
@@ -444,7 +444,7 @@ Offer buildOfferDetailsOffer({
     thumbnailUrl: thumbnailUrl,
     statusBadges: <String>[
       'Disponible',
-      if ((data['urgent'] as bool?) ?? false) 'Urgent',
+      if ((data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false) 'Urgent',
       if ((data['verified'] as bool?) ?? false) 'Verifie',
       'Nouveau',
     ],

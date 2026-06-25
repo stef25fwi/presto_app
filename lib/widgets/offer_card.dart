@@ -58,7 +58,7 @@ class OfferCard extends StatelessWidget {
     final city = (data['city'] ?? '').toString().trim();
     final category = (data['category'] ?? '').toString().trim();
     final price = data['price'];
-    final bool isUrgent = data['urgent'] == true;
+    final bool isUrgent = data['isUrgent'] == true || data['urgent'] == true;
 
     final createdAt = data['createdAt'] ?? data['created_at'];
     final ageLabel = _ageLabelFromCreatedAt(createdAt);
