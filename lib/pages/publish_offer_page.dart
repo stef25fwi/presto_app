@@ -3821,17 +3821,74 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 const SizedBox(height: 16),
 
+                // DESCRIPTION
+                // ListenableBuilder permet de rafraîchir le bouton IA
+                // dynamiquement à chaque frappe, sans reconstruire la page entière.
+                ListenableBuilder(
+                  listenable: _descriptionController,
+                  builder: (context, _) {
+                    final showAiButton =
+                        _descriptionController.text.trim().isNotEmpty &&
+                            !_isAnalyzing &&
+                            !_isListening;
+                    return _withPublishFieldHighlight(
+                      fieldId: ‘description’,
+                      child: _withAiPendingOverlay(
+                        showPending:
+                            _showAiPendingForController(_descriptionController),
+                        alignment: Alignment.topRight,
+                        padding: const EdgeInsets.only(top: 14, right: 12),
+                        child: Stack(
+                          children: [
+                            TextFormField(
+                              controller: _descriptionController,
+                              decoration: InputDecoration(
+                                label: _requiredLabel(‘Description détaillée’),
+                                alignLabelWithHint: true,
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: EdgeInsets.fromLTRB(
+                                  12,
+                                  14,
+                                  12,
+                                  showAiButton ? 70 : 14,
+                                ),
+                              ),
+                              minLines: 4,
+                              maxLines: 8,
+                              validator: _validatePublishDescription,
+                            ),
+                            if (showAiButton)
+                              Positioned(
+                                bottom: 8,
+                                left: 8,
+                                right: 8,
+                                child: _AiWritingAssistantButton(
+                                  onTap: _onTapAiAnalyze,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+
                 // TITRE
                 _withPublishFieldHighlight(
-                  fieldId: 'title',
+                  fieldId: ‘title’,
                   child: _withAiPendingOverlay(
                     showPending: _showAiPendingForController(_titleController),
                     child: TextFormField(
                       controller: _titleController,
                       decoration: InputDecoration(
-                        label: _requiredLabel('Titre de l’offre'),
+                        label: _requiredLabel(‘Titre de l’offre’),
                         border: const OutlineInputBorder(),
-                        hintText: 'Ex : Monter un meuble IKEA',
+                        hintText: ‘Ex : Monter un meuble IKEA’,
                       ),
                       validator: _validatePublishTitle,
                     ),
@@ -3918,57 +3975,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     validator: (_) => null,
                   ),
                 if (_category != null) const SizedBox(height: 16),
-
-                // DESCRIPTION
-                // ListenableBuilder permet de rafraîchir le suffixIcon IA
-                // dynamiquement à chaque frappe, sans reconstruire la page entière.
-                ListenableBuilder(
-                  listenable: _descriptionController,
-                  builder: (context, _) => _withPublishFieldHighlight(
-                    fieldId: 'description',
-                    child: _withAiPendingOverlay(
-                      showPending:
-                          _showAiPendingForController(_descriptionController),
-                      alignment: Alignment.topRight,
-                      padding: const EdgeInsets.only(top: 14, right: 42),
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        decoration: InputDecoration(
-                          label: _requiredLabel('Description détaillée'),
-                          alignLabelWithHint: true,
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
-                          // Bouton IA textuel (✨) : visible dès que l'utilisateur
-                          // a saisi du texte. Déclenche l'analyse IA sans micro.
-                          suffixIcon:
-                              (_descriptionController.text.trim().isNotEmpty &&
-                                      !_isAnalyzing &&
-                                      !_isListening)
-                                  ? Tooltip(
-                                      message: 'Remplir les champs avec l\'IA',
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          Icons.auto_awesome,
-                                          color: Color(0xFF2D84F6),
-                                        ),
-                                        onPressed: _onTapAiAnalyze,
-                                      ),
-                                    )
-                                  : null,
-                        ),
-                        minLines: 4,
-                        maxLines: 8,
-                        validator: _validatePublishDescription,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
 
                 // PHOTOS
                 Row(
@@ -4462,6 +4468,112 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
           shape: BoxShape.circle,
         ),
       ),
+    );
+  }
+}
+
+class _AiWritingAssistantButton extends StatelessWidget {
+  const _AiWritingAssistantButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0A7CFF),
+            Color(0xFF0058E8),
+            Color(0xFF1434D9),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x66005BEA),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: const SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  _AiWritingCircleIcon(),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Assistant de rédaction IA',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1.05,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'IA analyse et améliore votre texte',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xE0FFFFFF),
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AiWritingCircleIcon extends StatelessWidget {
+  const _AiWritingCircleIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const RadialGradient(
+          colors: [Color(0xFF2EA7FF), Color(0xFF005BEA)],
+        ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.18),
+          width: 1.5,
+        ),
+      ),
+      child: const Icon(Icons.edit_rounded, size: 18, color: Colors.white),
     );
   }
 }
