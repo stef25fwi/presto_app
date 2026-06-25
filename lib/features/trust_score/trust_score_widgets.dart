@@ -16,11 +16,10 @@ class CloseOfferReasonDialog extends StatefulWidget {
   const CloseOfferReasonDialog({super.key});
 
   static const reasons = <String>[
-    'J’ai trouvé quelqu’un sur iliprestō',
-    'J’ai trouvé quelqu’un ailleurs',
-    'Je n’ai plus besoin',
-    'Je veux modifier l’annonce',
-    'Autre raison',
+    ‘J’ai trouvé quelqu’un sur iliprestō’,
+    ‘J’ai trouvé quelqu’un ailleurs’,
+    ‘Je n’ai plus besoin’,
+    ‘Autre raison’,
   ];
 
   @override

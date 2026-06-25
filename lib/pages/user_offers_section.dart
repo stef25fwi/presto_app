@@ -3196,11 +3196,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       return;
     }
 
-    if (reason == 'Je veux modifier l’annonce') {
-      await _showEditOfferDialog(context, item);
-      return;
-    }
-
     setState(() => _busyOfferId = item.offerId);
 
     try {
