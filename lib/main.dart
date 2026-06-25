@@ -33,6 +33,7 @@ import 'services/admin_audio_runtime_store.dart';
 import 'services/admin_web_debug_store.dart';
 import 'services/post_auth_navigation_intent_service.dart';
 import 'widgets/admin_web_debug_panel.dart';
+import 'widgets/typography_floating_panel.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/auth/register_page.dart';
 import 'pages/auth/forgot_password_page.dart';
@@ -1000,20 +1001,28 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           listenable: typographySettings,
           builder: (ctx, __) {
             final base = Theme.of(ctx);
+            final delta = typographySettings.fontWeightDelta;
+            final withFamily = base.textTheme
+                .apply(fontFamily: typographySettings.fontFamily);
+            final withWeight = shiftTextThemeWeight(withFamily, delta);
+            final primaryWithFamily = base.primaryTextTheme
+                .apply(fontFamily: typographySettings.fontFamily);
+            final primaryWithWeight =
+                shiftTextThemeWeight(primaryWithFamily, delta);
             return Theme(
               data: base.copyWith(
-                textTheme:
-                    base.textTheme.apply(fontFamily: typographySettings.fontFamily),
-                primaryTextTheme: base.primaryTextTheme
-                    .apply(fontFamily: typographySettings.fontFamily),
+                textTheme: withWeight,
+                primaryTextTheme: primaryWithWeight,
               ),
               child: MediaQuery(
                 data: MediaQuery.of(ctx).copyWith(
                   textScaler: TextScaler.linear(typographySettings.scale),
                 ),
                 child: AdminWebDebugPanel(
-                  child: _PrestoResponsiveFrame(
-                    child: child ?? const SizedBox.shrink(),
+                  child: TypographyFloatingPanel(
+                    child: _PrestoResponsiveFrame(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),

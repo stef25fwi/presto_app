@@ -2943,22 +2943,29 @@ class _TypographyAdminPanel extends StatefulWidget {
 class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
   late double _pendingScale;
   late String _pendingFont;
+  late int _pendingWeightDelta;
 
   @override
   void initState() {
     super.initState();
     _pendingScale = typographySettings.scale;
     _pendingFont = typographySettings.fontFamily;
+    _pendingWeightDelta = typographySettings.fontWeightDelta;
   }
 
   void _apply() {
-    typographySettings.apply(scale: _pendingScale, fontFamily: _pendingFont);
+    typographySettings.apply(
+      scale: _pendingScale,
+      fontFamily: _pendingFont,
+      fontWeightDelta: _pendingWeightDelta,
+    );
   }
 
   void _reset() {
     setState(() {
       _pendingScale = 1.0;
       _pendingFont = 'Inter';
+      _pendingWeightDelta = 0;
     });
     typographySettings.reset();
   }
@@ -2967,9 +2974,11 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
   Widget build(BuildContext context) {
     const prestoBlue = Color(0xFF1A73E8);
     final bool isModified = _pendingScale != typographySettings.scale ||
-        _pendingFont != typographySettings.fontFamily;
-    final bool isDefault =
-        typographySettings.scale == 1.0 && typographySettings.fontFamily == 'Inter';
+        _pendingFont != typographySettings.fontFamily ||
+        _pendingWeightDelta != typographySettings.fontWeightDelta;
+    final bool isDefault = typographySettings.scale == 1.0 &&
+        typographySettings.fontFamily == 'Inter' &&
+        typographySettings.fontWeightDelta == 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -3054,6 +3063,48 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
             ),
           ),
 
+          // Weight delta slider
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Text('Graisse',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Slider(
+                    value: _pendingWeightDelta.toDouble(),
+                    min: -2,
+                    max: 2,
+                    divisions: 4,
+                    activeColor: prestoBlue,
+                    label: _pendingWeightDelta == 0
+                        ? 'Normal'
+                        : (_pendingWeightDelta > 0
+                            ? '+$_pendingWeightDelta'
+                            : '$_pendingWeightDelta'),
+                    onChanged: (v) =>
+                        setState(() => _pendingWeightDelta = v.round()),
+                  ),
+                ),
+                SizedBox(
+                  width: 52,
+                  child: Text(
+                    _pendingWeightDelta == 0
+                        ? 'Normal'
+                        : (_pendingWeightDelta > 0
+                            ? '+$_pendingWeightDelta gras'
+                            : '$_pendingWeightDelta fin'),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Font family selector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -3108,7 +3159,9 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Aperçu — $_pendingFont ${(_pendingScale * 100).round()}%',
+                  Text(
+                      'Aperçu — $_pendingFont ${(_pendingScale * 100).round()}%'
+                      '${_pendingWeightDelta != 0 ? ' graisse${_pendingWeightDelta > 0 ? '+' : ''}$_pendingWeightDelta' : ''}',
                       style: TextStyle(
                         fontFamily: _pendingFont,
                         fontSize: 11,
@@ -3120,25 +3173,29 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 18,
-                          fontWeight: FontWeight.w700)),
+                          fontWeight: shiftFontWeight(
+                              FontWeight.w700, _pendingWeightDelta))),
                   Text('Titre de carte',
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 16,
-                          fontWeight: FontWeight.w700)),
+                          fontWeight: shiftFontWeight(
+                              FontWeight.w700, _pendingWeightDelta))),
                   Text(
                       'Texte courant — iliprestō propose des services entre particuliers à proximité.',
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: shiftFontWeight(
+                              FontWeight.w500, _pendingWeightDelta),
                           height: 1.35)),
                   const SizedBox(height: 2),
                   Text('Méta / label 12 px',
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: shiftFontWeight(
+                              FontWeight.w500, _pendingWeightDelta),
                           color: Colors.black54)),
                 ],
               ),
