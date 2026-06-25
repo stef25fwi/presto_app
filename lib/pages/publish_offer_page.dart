@@ -3821,60 +3821,47 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // DESCRIPTION
-                // ListenableBuilder permet de rafraîchir le bouton IA
-                // dynamiquement à chaque frappe, sans reconstruire la page entière.
-                ListenableBuilder(
-                  listenable: _descriptionController,
-                  builder: (context, _) {
-                    final showAiButton =
-                        _descriptionController.text.trim().isNotEmpty &&
-                            !_isAnalyzing &&
-                            !_isListening;
-                    return _withPublishFieldHighlight(
-                      fieldId: ‘description’,
-                      child: _withAiPendingOverlay(
-                        showPending:
-                            _showAiPendingForController(_descriptionController),
-                        alignment: Alignment.topRight,
-                        padding: const EdgeInsets.only(top: 14, right: 12),
-                        child: Stack(
-                          children: [
-                            TextFormField(
-                              controller: _descriptionController,
-                              decoration: InputDecoration(
-                                label: _requiredLabel(‘Description détaillée’),
-                                alignLabelWithHint: true,
-                                filled: true,
-                                fillColor: Colors.white,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: EdgeInsets.fromLTRB(
-                                  12,
-                                  14,
-                                  12,
-                                  showAiButton ? 70 : 14,
-                                ),
-                              ),
-                              minLines: 4,
-                              maxLines: 8,
-                              validator: _validatePublishDescription,
+                // DESCRIPTION — le bouton IA est toujours visible en bas du cadre.
+                _withPublishFieldHighlight(
+                  fieldId: ‘description’,
+                  child: _withAiPendingOverlay(
+                    showPending:
+                        _showAiPendingForController(_descriptionController),
+                    alignment: Alignment.topRight,
+                    padding: const EdgeInsets.only(top: 14, right: 12),
+                    child: Stack(
+                      children: [
+                        TextFormField(
+                          controller: _descriptionController,
+                          decoration: InputDecoration(
+                            label: _requiredLabel(‘Description détaillée’),
+                            alignLabelWithHint: true,
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            if (showAiButton)
-                              Positioned(
-                                bottom: 8,
-                                left: 8,
-                                right: 8,
-                                child: _AiWritingAssistantButton(
-                                  onTap: _onTapAiAnalyze,
-                                ),
-                              ),
-                          ],
+                            contentPadding: const EdgeInsets.fromLTRB(
+                              12, 14, 12, 70,
+                            ),
+                          ),
+                          minLines: 4,
+                          maxLines: 8,
+                          validator: _validatePublishDescription,
                         ),
-                      ),
-                    );
-                  },
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          right: 8,
+                          child: _AiWritingAssistantButton(
+                            onTap: !_isAnalyzing && !_isListening
+                                ? _onTapAiAnalyze
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -4475,7 +4462,7 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
 class _AiWritingAssistantButton extends StatelessWidget {
   const _AiWritingAssistantButton({required this.onTap});
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
