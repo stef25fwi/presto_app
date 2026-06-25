@@ -249,19 +249,16 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
   @override
   Widget build(BuildContext context) {
     if (!widget.slide.isVideo) {
-      return ColoredBox(
-        color: Colors.black,
-        child: Image.network(
-          widget.slide.mediaUrl,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: double.infinity,
-          errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const _HeroMediaLoadingFallback();
-          },
-        ),
+      return Image.network(
+        widget.slide.mediaUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const _HeroMediaLoadingFallback();
+        },
       );
     }
 

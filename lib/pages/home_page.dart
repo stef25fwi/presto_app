@@ -1871,7 +1871,7 @@ class _HomePageState extends State<HomePage>
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: AspectRatio(
-                  aspectRatio: 16 / 9,
+                  aspectRatio: 4 / 3,
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(22),
