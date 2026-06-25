@@ -256,31 +256,36 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
         .take(24)
         .toList(growable: false);
 
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFD1D5DB)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 18,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: DefaultTextStyle(
-          style: TextStyle(
-            color: const Color(0xFF111827),
-            fontSize: isSmallScreen ? 11 : 12,
-            height: 1.35,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * (isSmallScreen ? 0.65 : 0.75),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.all(isSmallScreen ? 10 : 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFD1D5DB)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          child: DefaultTextStyle(
+            style: TextStyle(
+              color: const Color(0xFF111827),
+              fontSize: isSmallScreen ? 11 : 12,
+              height: 1.35,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -582,8 +587,10 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
             ],
           ),
         ),
+        ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSection(String title, List<String> lines) {
