@@ -10,6 +10,7 @@ import 'admin_photo_reviews_page.dart';
 import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 
+import '../app/typography_settings.dart';
 import '../constants.dart';
 import '../features/micro_ia/micro_ia_service.dart';
 import '../services/admin_access_resolver.dart';
@@ -2914,6 +2915,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 ],
               ),
               const SizedBox(height: 18),
+              const _TypographyAdminPanel(),
+              const SizedBox(height: 18),
               _AdminDashboardSection(
                 userStats: _userStats,
                 userStatsLoading: _userStatsLoading,
@@ -2923,6 +2926,250 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Typography Admin Panel ──────────────────────────────────────────────────
+
+class _TypographyAdminPanel extends StatefulWidget {
+  const _TypographyAdminPanel();
+
+  @override
+  State<_TypographyAdminPanel> createState() => _TypographyAdminPanelState();
+}
+
+class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
+  late double _pendingScale;
+  late String _pendingFont;
+
+  @override
+  void initState() {
+    super.initState();
+    _pendingScale = typographySettings.scale;
+    _pendingFont = typographySettings.fontFamily;
+  }
+
+  void _apply() {
+    typographySettings.apply(scale: _pendingScale, fontFamily: _pendingFont);
+  }
+
+  void _reset() {
+    setState(() {
+      _pendingScale = 1.0;
+      _pendingFont = 'Inter';
+    });
+    typographySettings.reset();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const prestoBlue = Color(0xFF1A73E8);
+    final bool isModified = _pendingScale != typographySettings.scale ||
+        _pendingFont != typographySettings.fontFamily;
+    final bool isDefault =
+        typographySettings.scale == 1.0 && typographySettings.fontFamily == 'Inter';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD7DEE8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              children: [
+                const Icon(Icons.text_fields_rounded,
+                    size: 20, color: prestoBlue),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Typographie',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                if (!isDefault)
+                  TextButton(
+                    onPressed: _reset,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Réinitialiser',
+                        style: TextStyle(fontSize: 12)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Scale slider
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Text('Taille',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Slider(
+                    value: _pendingScale,
+                    min: 0.8,
+                    max: 1.4,
+                    divisions: 12,
+                    activeColor: prestoBlue,
+                    label: '${(_pendingScale * 100).round()}%',
+                    onChanged: (v) => setState(() => _pendingScale = v),
+                  ),
+                ),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    '${(_pendingScale * 100).round()}%',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700),
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Font family selector
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Text('Police',
+                    style:
+                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(width: 12),
+                ...kAvailableFontFamilies.map((f) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(f,
+                            style: TextStyle(
+                                fontFamily: f,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600)),
+                        selected: _pendingFont == f,
+                        selectedColor: const Color(0xFFE8F0FE),
+                        onSelected: (_) => setState(() => _pendingFont = f),
+                        side: BorderSide(
+                          color: _pendingFont == f
+                              ? prestoBlue
+                              : const Color(0xFFD7DEE8),
+                        ),
+                        labelPadding:
+                            const EdgeInsets.symmetric(horizontal: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    )),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Live preview
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(_pendingScale),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Aperçu — $_pendingFont ${(_pendingScale * 100).round()}%',
+                      style: TextStyle(
+                        fontFamily: _pendingFont,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black38,
+                      )),
+                  const SizedBox(height: 6),
+                  Text('Titre de section',
+                      style: TextStyle(
+                          fontFamily: _pendingFont,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700)),
+                  Text('Titre de carte',
+                      style: TextStyle(
+                          fontFamily: _pendingFont,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700)),
+                  Text(
+                      'Texte courant — iliprestō propose des services entre particuliers à proximité.',
+                      style: TextStyle(
+                          fontFamily: _pendingFont,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35)),
+                  const SizedBox(height: 2),
+                  Text('Méta / label 12 px',
+                      style: TextStyle(
+                          fontFamily: _pendingFont,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black54)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Apply button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: isModified ? _apply : null,
+                icon: const Icon(Icons.check_rounded, size: 18),
+                label: const Text('Appliquer à toute l\'app'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: prestoBlue,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

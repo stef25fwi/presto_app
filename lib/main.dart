@@ -13,6 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app/app_globals.dart';
 import 'app/secondary_named_routes.dart';
 import 'app/theme.dart';
+import 'app/typography_settings.dart';
 import 'app_core.dart';
 import 'firebase_init.dart';
 import 'dev/page_capture_catalog_page.dart';
@@ -995,10 +996,29 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           if (!mounted) return;
           _signalNavigatorReady();
         });
-        return AdminWebDebugPanel(
-          child: _PrestoResponsiveFrame(
-            child: child ?? const SizedBox.shrink(),
-          ),
+        return ListenableBuilder(
+          listenable: typographySettings,
+          builder: (ctx, __) {
+            final base = Theme.of(ctx);
+            return Theme(
+              data: base.copyWith(
+                textTheme:
+                    base.textTheme.apply(fontFamily: typographySettings.fontFamily),
+                primaryTextTheme: base.primaryTextTheme
+                    .apply(fontFamily: typographySettings.fontFamily),
+              ),
+              child: MediaQuery(
+                data: MediaQuery.of(ctx).copyWith(
+                  textScaler: TextScaler.linear(typographySettings.scale),
+                ),
+                child: AdminWebDebugPanel(
+                  child: _PrestoResponsiveFrame(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
       onGenerateInitialRoutes: _onGenerateInitialRoutes,
