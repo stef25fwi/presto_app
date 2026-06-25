@@ -33,7 +33,6 @@ import 'services/admin_audio_runtime_store.dart';
 import 'services/admin_web_debug_store.dart';
 import 'services/post_auth_navigation_intent_service.dart';
 import 'widgets/admin_web_debug_panel.dart';
-import 'widgets/typography_floating_panel.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/auth/register_page.dart';
 import 'pages/auth/forgot_password_page.dart';
@@ -1019,10 +1018,8 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
                   textScaler: TextScaler.linear(typographySettings.scale),
                 ),
                 child: AdminWebDebugPanel(
-                  child: TypographyFloatingPanel(
-                    child: _PrestoResponsiveFrame(
-                      child: child ?? const SizedBox.shrink(),
-                    ),
+                  child: _PrestoResponsiveFrame(
+                    child: child ?? const SizedBox.shrink(),
                   ),
                 ),
               ),
