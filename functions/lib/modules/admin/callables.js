@@ -26,7 +26,7 @@ Quatrième règle : Pour plus de sécurité. Privilégiez toujours un paiement t
 
 Les moyens de paiement acceptés sur iliprestō sont : la carte bancaire, le virement bancaire classique ou instantané, les espèces dans le cadre légal, le portefeuille électronique ou application mobile, le chèque, et le paiement sécurisé intégré iliprestō.
 
-Important : iliprestō informe les utilisateurs, mais ne remplace pas un conseil juridique, fiscal ou comptable. Chaque utilisateur reste responsable de respecter les obligations liées à son statut.`;
+Important : ilipresto.fr est un outil de communication et de petites annonces. La plateforme facilite la visibilité des offres et demandes, mais les relations, accords et prestations restent exclusivement conclus et gérés entre les utilisateurs.`;
 exports.generatePaymentInfoAudio = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
     enforceAppCheck: env_1.ENFORCE_APP_CHECK,
