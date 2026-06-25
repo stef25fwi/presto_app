@@ -4486,7 +4486,9 @@ class _AiWritingAssistantButton extends StatelessWidget {
           ),
         ],
       ),
-      child: Material(
+      child: Tooltip(
+        message: "Remplir les champs avec l'IA",
+        child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -4538,6 +4540,7 @@ class _AiWritingAssistantButton extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

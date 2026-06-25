@@ -90,30 +90,30 @@ void main() {
   });
 
   testWidgets(
-      'Le bouton IA sparkle (✨) apparaît dans le champ description quand du texte est saisi',
+      'Le bouton IA assistant (✨) est toujours visible dans le champ description',
       (WidgetTester tester) async {
     await pumpPublishPage(tester);
 
-    // Avant toute saisie, le Tooltip "Remplir les champs avec l'IA" ne doit pas exister.
+    // Le bouton assistant IA est toujours visible (même sans saisie).
+    // Ordre des TextFormFields : 0=Description, 1=Titre (description déplacée au-dessus)
     expect(
-      find.byTooltip('Remplir les champs avec l\'IA'),
-      findsNothing,
-      reason: 'Le bouton ✨ ne doit pas être visible sans description saisie',
+      find.byTooltip("Remplir les champs avec l'IA"),
+      findsOneWidget,
+      reason: 'Le bouton ✨ doit être visible dès l\'affichage du champ description',
     );
 
-    // Saisir du texte dans le champ description (second TextFormField).
-    // Ordre des TextFormFields : 0=Titre, 1=Description
+    // Saisir du texte dans le champ description (premier TextFormField).
     await tester.enterText(
-      find.byType(TextFormField).at(1),
-      'J\'ai besoin de monter des meubles IKEA dans mon appartement parisien.',
+      find.byType(TextFormField).first,
+      "J'ai besoin de monter des meubles IKEA dans mon appartement parisien.",
     );
     await tester.pump();
 
-    // Après saisie, le Tooltip du bouton ✨ doit être visible.
+    // Le bouton reste visible après saisie.
     expect(
-      find.byTooltip('Remplir les champs avec l\'IA'),
+      find.byTooltip("Remplir les champs avec l'IA"),
       findsOneWidget,
-      reason: 'Le bouton ✨ doit apparaître une fois la description remplie',
+      reason: "Le bouton ✨ reste visible après saisie dans la description",
     );
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -227,15 +227,16 @@ void main() {
 
     const testTitle = 'Monter un meuble IKEA dans mon salon';
     const testDescription =
-        'J\'ai besoin d\'aide pour monter un meuble IKEA PAX de grande taille. '
+        "J'ai besoin d'aide pour monter un meuble IKEA PAX de grande taille. "
         'La mission est à effectuer à Paris 15ème dans la semaine.';
 
-    // Remplir le titre
-    await tester.enterText(find.byType(TextFormField).first, testTitle);
+    // Ordre des TextFormFields : 0=Description, 1=Titre (description déplacée au-dessus du titre)
+    // Remplir la description (premier TextFormField)
+    await tester.enterText(find.byType(TextFormField).first, testDescription);
     await tester.pump();
 
-    // Remplir la description (second TextFormField)
-    await tester.enterText(find.byType(TextFormField).at(1), testDescription);
+    // Remplir le titre (second TextFormField)
+    await tester.enterText(find.byType(TextFormField).at(1), testTitle);
     await tester.pump();
 
     // Le titre doit être présent dans le widget
