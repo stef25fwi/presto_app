@@ -4516,7 +4516,7 @@ class _AiWritingAssistantButton extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'IA analyse et améliore votre texte',
+                          'Décrivez votre besoin, l'IA complète votre annonce',
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w500,
