@@ -78,7 +78,7 @@ jobs:
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@13
 
       - name: Deploy Firebase Hosting, Functions, Firestore and Storage
         run: |
