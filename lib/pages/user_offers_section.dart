@@ -2915,261 +2915,255 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: isSaving
-                                      ? null
-                                      : () => Navigator.of(dialogContext).pop(),
-                                  child: const Text('Annuler'),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoOrange,
+                                  foregroundColor: Colors.white,
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.red,
-                                  ),
-                                  onPressed: isSaving
-                                      ? null
-                                      : () async {
-                                          Navigator.of(dialogContext).pop();
-                                          await _deleteOffer(item);
-                                        },
-                                  icon: const Icon(Icons.delete_outline),
-                                  label: const Text('Supprimer'),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                flex: 2,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: kPrestoOrange,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  onPressed: isSaving
-                                      ? null
-                                      : () async {
-                                          if (!(formKey.currentState
-                                                  ?.validate() ??
-                                              false)) {
+                                onPressed: isSaving
+                                    ? null
+                                    : () async {
+                                        if (!(formKey.currentState
+                                                ?.validate() ??
+                                            false)) {
+                                          return;
+                                        }
+
+                                        final newBudgetText =
+                                            budgetController.text.trim();
+                                        final parsedBudget =
+                                            newBudgetText.isEmpty
+                                                ? null
+                                                : num.tryParse(
+                                                    newBudgetText.replaceAll(
+                                                        ',', '.'),
+                                                  );
+                                        final existingBudget =
+                                            _numericFromDynamic(
+                                          data['budget'] ??
+                                              data['price'] ??
+                                              data['budgetValue'],
+                                        );
+                                        final effectiveBudget =
+                                            selectedBudgetType == 'À négocier'
+                                                ? 0.0
+                                                : (parsedBudget ??
+                                                    existingBudget);
+                                        final trimmedCategory =
+                                            (selectedCategory ?? '').trim();
+                                        final trimmedLocation =
+                                            locationController.text.trim();
+                                        final trimmedPostalCode =
+                                            postalCodeController.text.trim();
+                                        final trimmedMissionDelay =
+                                            selectedMissionDelay.trim();
+                                        final trimmedAverageDelay =
+                                            averageDelayController.text
+                                                .trim();
+                                        final trimmedSubCategory =
+                                            selectedSubCategory.trim();
+                                        final trimmedAvailability =
+                                            availabilityController.text
+                                                .trim();
+                                        final trimmedServiceArea =
+                                            serviceAreaController.text.trim();
+                                        final trimmedSchedule =
+                                            scheduleController.text.trim();
+                                        final trimmedPaymentMethod =
+                                            paymentMethodController.text
+                                                .trim();
+                                        final trimmedServiceType =
+                                            serviceTypeController.text.trim();
+                                        final trimmedPhoneNumber =
+                                            phoneController.text.trim();
+                                        final fullPhone = trimmedPhoneNumber
+                                                .isEmpty
+                                            ? ''
+                                            : '${selectedPhoneCountryCode.trim()} $trimmedPhoneNumber'
+                                                .trim();
+
+                                        final indexed = buildOfferIndexFields(
+                                          category: trimmedCategory,
+                                          city: trimmedLocation,
+                                          postalCode: trimmedPostalCode,
+                                          budget: effectiveBudget,
+                                        );
+
+                                        setDialogState(() => isSaving = true);
+
+                                        try {
+                                          final listingsRef =
+                                              FirebaseFirestore.instance
+                                                  .collection(
+                                                      kListingsCollection)
+                                                  .doc(item.offerId);
+                                          final listingsSnap =
+                                              await listingsRef.get();
+                                          if (!listingsSnap.exists) {
+                                            throw StateError(
+                                              'Annonce legacy non modifiable depuis l’UI : migration listings requise',
+                                            );
+                                          }
+                                          final update = <String, dynamic>{
+                                            'title':
+                                                titleController.text.trim(),
+                                            'description':
+                                                descController.text.trim(),
+                                            'category': indexed['category'] ??
+                                                trimmedCategory,
+                                            'location': indexed['location'] ??
+                                                trimmedLocation,
+                                            'city': indexed['city'] ??
+                                                trimmedLocation,
+                                            'budgetType': selectedBudgetType,
+                                            'canTravel': canTravel,
+                                            'urgent': isUrgent,
+                                            'isUrgent': isUrgent,
+                                            'updatedAt':
+                                                FieldValue.serverTimestamp(),
+                                            'postalCode':
+                                                trimmedPostalCode.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedPostalCode,
+                                            'cp': trimmedPostalCode.isEmpty
+                                                ? FieldValue.delete()
+                                                : trimmedPostalCode,
+                                            'phone': fullPhone.isEmpty
+                                                ? FieldValue.delete()
+                                                : fullPhone,
+                                            'missionDelay':
+                                                trimmedMissionDelay.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedMissionDelay,
+                                            'averageDelay': trimmedAverageDelay
+                                                    .isNotEmpty
+                                                ? trimmedAverageDelay
+                                                : (trimmedMissionDelay.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedMissionDelay),
+                                            'availability':
+                                                trimmedAvailability.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedAvailability,
+                                            'serviceArea':
+                                                trimmedServiceArea.isEmpty
+                                                    ? (trimmedLocation.isEmpty
+                                                        ? FieldValue.delete()
+                                                        : trimmedLocation)
+                                                    : trimmedServiceArea,
+                                            'schedule':
+                                                trimmedSchedule.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedSchedule,
+                                            'paymentMethod':
+                                                trimmedPaymentMethod.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedPaymentMethod,
+                                            'serviceType':
+                                                trimmedServiceType.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedServiceType,
+                                            'subCategory':
+                                                trimmedSubCategory.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedSubCategory,
+                                            'subcategory':
+                                                trimmedSubCategory.isEmpty
+                                                    ? FieldValue.delete()
+                                                    : trimmedSubCategory,
+                                            'categoryId':
+                                                indexed['categoryId'] ??
+                                                    FieldValue.delete(),
+                                            'cityId': indexed['cityId'] ??
+                                                FieldValue.delete(),
+                                            'cityCategoryKey':
+                                                indexed['cityCategoryKey'] ??
+                                                    FieldValue.delete(),
+                                            'dept': indexed['dept'] ??
+                                                FieldValue.delete(),
+                                          };
+
+                                          if (effectiveBudget != null) {
+                                            update['budget'] =
+                                                effectiveBudget;
+                                            update['price'] =
+                                                effectiveBudget.toDouble();
+                                            update['budgetValue'] =
+                                                (indexed['budgetValue'] ??
+                                                        effectiveBudget)
+                                                    .toDouble();
+                                          }
+
+                                          await listingsRef.update(update);
+
+                                          if (dialogContext.mounted) {
+                                            Navigator.of(dialogContext).pop();
+                                          }
+                                          await _loadOffers();
+                                          if (!mounted || !context.mounted) {
                                             return;
                                           }
-
-                                          final newBudgetText =
-                                              budgetController.text.trim();
-                                          final parsedBudget =
-                                              newBudgetText.isEmpty
-                                                  ? null
-                                                  : num.tryParse(
-                                                      newBudgetText.replaceAll(
-                                                          ',', '.'),
-                                                    );
-                                          final existingBudget =
-                                              _numericFromDynamic(
-                                            data['budget'] ??
-                                                data['price'] ??
-                                                data['budgetValue'],
+                                          showSuccessSnackBar(
+                                            context,
+                                            'Annonce mise à jour ✅',
                                           );
-                                          final effectiveBudget =
-                                              selectedBudgetType == 'À négocier'
-                                                  ? 0.0
-                                                  : (parsedBudget ??
-                                                      existingBudget);
-                                          final trimmedCategory =
-                                              (selectedCategory ?? '').trim();
-                                          final trimmedLocation =
-                                              locationController.text.trim();
-                                          final trimmedPostalCode =
-                                              postalCodeController.text.trim();
-                                          final trimmedMissionDelay =
-                                              selectedMissionDelay.trim();
-                                          final trimmedAverageDelay =
-                                              averageDelayController.text
-                                                  .trim();
-                                          final trimmedSubCategory =
-                                              selectedSubCategory.trim();
-                                          final trimmedAvailability =
-                                              availabilityController.text
-                                                  .trim();
-                                          final trimmedServiceArea =
-                                              serviceAreaController.text.trim();
-                                          final trimmedSchedule =
-                                              scheduleController.text.trim();
-                                          final trimmedPaymentMethod =
-                                              paymentMethodController.text
-                                                  .trim();
-                                          final trimmedServiceType =
-                                              serviceTypeController.text.trim();
-                                          final trimmedPhoneNumber =
-                                              phoneController.text.trim();
-                                          final fullPhone = trimmedPhoneNumber
-                                                  .isEmpty
-                                              ? ''
-                                              : '${selectedPhoneCountryCode.trim()} $trimmedPhoneNumber'
-                                                  .trim();
-
-                                          final indexed = buildOfferIndexFields(
-                                            category: trimmedCategory,
-                                            city: trimmedLocation,
-                                            postalCode: trimmedPostalCode,
-                                            budget: effectiveBudget,
-                                          );
-
-                                          setDialogState(() => isSaving = true);
-
-                                          try {
-                                            final listingsRef =
-                                                FirebaseFirestore.instance
-                                                    .collection(
-                                                        kListingsCollection)
-                                                    .doc(item.offerId);
-                                            final listingsSnap =
-                                                await listingsRef.get();
-                                            if (!listingsSnap.exists) {
-                                              throw StateError(
-                                                'Annonce legacy non modifiable depuis l’UI : migration listings requise',
-                                              );
-                                            }
-                                            final update = <String, dynamic>{
-                                              'title':
-                                                  titleController.text.trim(),
-                                              'description':
-                                                  descController.text.trim(),
-                                              'category': indexed['category'] ??
-                                                  trimmedCategory,
-                                              'location': indexed['location'] ??
-                                                  trimmedLocation,
-                                              'city': indexed['city'] ??
-                                                  trimmedLocation,
-                                              'budgetType': selectedBudgetType,
-                                              'canTravel': canTravel,
-                                              'urgent': isUrgent,
-                                              'isUrgent': isUrgent,
-                                              'updatedAt':
-                                                  FieldValue.serverTimestamp(),
-                                              'postalCode':
-                                                  trimmedPostalCode.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedPostalCode,
-                                              'cp': trimmedPostalCode.isEmpty
-                                                  ? FieldValue.delete()
-                                                  : trimmedPostalCode,
-                                              'phone': fullPhone.isEmpty
-                                                  ? FieldValue.delete()
-                                                  : fullPhone,
-                                              'missionDelay':
-                                                  trimmedMissionDelay.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedMissionDelay,
-                                              'averageDelay': trimmedAverageDelay
-                                                      .isNotEmpty
-                                                  ? trimmedAverageDelay
-                                                  : (trimmedMissionDelay.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedMissionDelay),
-                                              'availability':
-                                                  trimmedAvailability.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedAvailability,
-                                              'serviceArea':
-                                                  trimmedServiceArea.isEmpty
-                                                      ? (trimmedLocation.isEmpty
-                                                          ? FieldValue.delete()
-                                                          : trimmedLocation)
-                                                      : trimmedServiceArea,
-                                              'schedule':
-                                                  trimmedSchedule.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedSchedule,
-                                              'paymentMethod':
-                                                  trimmedPaymentMethod.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedPaymentMethod,
-                                              'serviceType':
-                                                  trimmedServiceType.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedServiceType,
-                                              'subCategory':
-                                                  trimmedSubCategory.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedSubCategory,
-                                              'subcategory':
-                                                  trimmedSubCategory.isEmpty
-                                                      ? FieldValue.delete()
-                                                      : trimmedSubCategory,
-                                              'categoryId':
-                                                  indexed['categoryId'] ??
-                                                      FieldValue.delete(),
-                                              'cityId': indexed['cityId'] ??
-                                                  FieldValue.delete(),
-                                              'cityCategoryKey':
-                                                  indexed['cityCategoryKey'] ??
-                                                      FieldValue.delete(),
-                                              'dept': indexed['dept'] ??
-                                                  FieldValue.delete(),
-                                            };
-
-                                            if (effectiveBudget != null) {
-                                              update['budget'] =
-                                                  effectiveBudget;
-                                              update['price'] =
-                                                  effectiveBudget.toDouble();
-                                              update['budgetValue'] =
-                                                  (indexed['budgetValue'] ??
-                                                          effectiveBudget)
-                                                      .toDouble();
-                                            }
-
-                                            await listingsRef.update(update);
-
-                                            if (dialogContext.mounted) {
-                                              Navigator.of(dialogContext).pop();
-                                            }
-                                            await _loadOffers();
-                                            if (!mounted || !context.mounted) {
-                                              return;
-                                            }
-                                            showSuccessSnackBar(
-                                              context,
-                                              'Annonce mise à jour ✅',
-                                            );
-                                          } catch (e) {
-                                            if (dialogContext.mounted) {
-                                              setDialogState(
-                                                () => isSaving = false,
-                                              );
-                                            }
-                                            if (!mounted || !context.mounted) {
-                                              return;
-                                            }
-                                            showErrorSnackBar(
-                                              context,
-                                              'Erreur lors de la mise à jour',
+                                        } catch (e) {
+                                          if (dialogContext.mounted) {
+                                            setDialogState(
+                                              () => isSaving = false,
                                             );
                                           }
-                                        },
-                                  icon: isSaving
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
+                                          if (!mounted || !context.mounted) {
+                                            return;
+                                          }
+                                          showErrorSnackBar(
+                                            context,
+                                            'Erreur lors de la mise à jour',
+                                          );
+                                        }
+                                      },
+                                icon: isSaving
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
                                           ),
-                                        )
-                                      : const Icon(Icons.save_outlined),
-                                  label: Text(
-                                    isSaving
-                                        ? 'Enregistrement...'
-                                        : 'Modifier l’annonce',
-                                  ),
+                                        ),
+                                      )
+                                    : const Icon(Icons.save_outlined),
+                                label: Text(
+                                  isSaving
+                                      ? 'Enregistrement...'
+                                      : 'Modifier l’annonce',
                                 ),
+                              ),
+                              const SizedBox(height: 8),
+                              OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                onPressed: isSaving
+                                    ? null
+                                    : () async {
+                                        Navigator.of(dialogContext).pop();
+                                        await _deleteOffer(item);
+                                      },
+                                icon: const Icon(Icons.delete_outline),
+                                label: const Text('Supprimer'),
+                              ),
+                              const SizedBox(height: 8),
+                              OutlinedButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => Navigator.of(dialogContext).pop(),
+                                child: const Text('Annuler'),
                               ),
                             ],
                           ),
