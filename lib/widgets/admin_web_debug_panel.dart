@@ -10,6 +10,7 @@ import '../models/admin_access_state.dart';
 import '../services/admin_audio_runtime_store.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/admin_web_debug_store.dart';
+import 'typography_audit_debug_chip.dart';
 
 class AdminWebDebugPanel extends StatefulWidget {
   const AdminWebDebugPanel({
@@ -386,6 +387,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                             child: Row(
                               children: [
                                 Icon(Icons.data_object_rounded, size: 16),
+                                const TypographyAuditDebugChip(),
+                                const SizedBox(width: 6),
                                 SizedBox(width: 8),
                                 Text('JSON', style: TextStyle(fontSize: 12)),
                               ],

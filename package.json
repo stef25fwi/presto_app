@@ -6,5 +6,29 @@
     "firebase-admin": "^13.10.0",
     "firebase-functions": "^7.2.5",
     "openai": "^6.15.0"
-  }
+  },
+  "name": "presto_app",
+  "version": "1.0.0",
+  "description": "A new Flutter project.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stef25fwi/presto_app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stef25fwi/presto_app/issues"
+  },
+  "homepage": "https://github.com/stef25fwi/presto_app#readme"
 }
