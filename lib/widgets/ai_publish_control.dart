@@ -205,7 +205,7 @@ class _ReadyButtonContent extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text(
-                'Parlez ou écrivez, IA analyse et vous aide',
+                'Parlez, l'assistant IA analyse et complète votre annonce !',
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
