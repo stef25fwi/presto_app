@@ -19,7 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Authenticate to Google Cloud
+
+      - name: Decode Google Credentials
         env:
           GOOGLE_CREDENTIALS_B64: ${{ secrets.GOOGLE_CREDENTIALS_B64 }}
         run: |
@@ -33,19 +34,25 @@ jobs:
             | base64 -d > "$RUNNER_TEMP/google-credentials.json"
 
           python3 -m json.tool "$RUNNER_TEMP/google-credentials.json" >/dev/null
-
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/google-credentials.json" >> "$GITHUB_ENV"
           echo "✅ Google credentials JSON décodé et validé"
 
-      
+          echo "GOOGLE_CREDENTIALS_JSON<<HEREDOC_EOF" >> "$GITHUB_ENV"
+          cat "$RUNNER_TEMP/google-credentials.json" >> "$GITHUB_ENV"
+          echo "HEREDOC_EOF" >> "$GITHUB_ENV"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ env.GOOGLE_CREDENTIALS_JSON }}'
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      
+
       - name: Enable Flutter web
         run: flutter config --enable-web
-      
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -63,17 +70,10 @@ jobs:
 
       - name: Test Functions
         run: npm --prefix functions test
-      
+
       - name: Build Web for Firebase Hosting
         env:
-          # GitHub stores this as an Actions secret, but the value must be the
-          # public reCAPTCHA Enterprise site key. Never put a reCAPTCHA secret
-          # key in a Flutter Web build variable.
           APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
-          # La clé VAPID Web Push est PUBLIQUE et versionnée en dur dans
-          # NotificationService (_webVapidKeyFallback). On ne dépend donc plus
-          # d'un secret pour le push web. Pour la changer : éditer la constante,
-          # ou (optionnel) passer --dart-define=FCM_WEB_VAPID_KEY=<clé>.
         run: |
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
@@ -82,18 +82,6 @@ jobs:
 
       - name: Deploy Firebase Hosting, Functions, Firestore and Storage
         run: |
-          if [ -z "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]; then
-            echo "❌ GOOGLE_APPLICATION_CREDENTIALS est vide. Vérifie le secret GOOGLE_CREDENTIALS dans l'environnement recaptcha."
-            exit 1
-          fi
-
-          gcloud auth activate-service-account \
-            --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-
-          mkdir -p ~/.config/gcloud
-          cp "$GOOGLE_APPLICATION_CREDENTIALS" \
-            ~/.config/gcloud/application_default_credentials.json
-
           firebase deploy --project presto-app-74abe \
             --only hosting,functions,firestore:rules,firestore:indexes,storage \
             --force
