@@ -87,6 +87,9 @@ jobs:
             exit 1
           fi
 
+          gcloud auth activate-service-account \
+            --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+
           firebase deploy --project presto-app-74abe \
             --only hosting,functions,firestore:rules,firestore:indexes,storage \
             --force
