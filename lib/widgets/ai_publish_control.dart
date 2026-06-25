@@ -205,7 +205,7 @@ class _ReadyButtonContent extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text(
-                'Parlez, l'assistant IA analyse et complète votre annonce !',
+                "Parlez, l'assistant IA analyse et complète votre annonce !",
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
@@ -413,7 +413,7 @@ class _StatusPill extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Plus c'est précis, meilleurs sont les résultats.',
+                  "Plus c'est précis, meilleurs sont les résultats.",
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
