@@ -413,7 +413,7 @@ class _StatusPill extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Plus c’est précis, meilleurs sont les résultats.',
+                  'Plus c'est précis, meilleurs sont les résultats.',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

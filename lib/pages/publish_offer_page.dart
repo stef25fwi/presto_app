@@ -108,7 +108,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (error.code == 'network-error' ||
           error.code == 'retry-limit-exceeded' ||
           error.code == 'unknown') {
-        return 'Erreur réseau lors de l’envoi de l’audio. Vérifie ta connexion puis réessaie.';
+        return 'Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.';
       }
       if (error.code == 'unauthorized' || error.code == 'permission-denied') {
         return 'Accès au stockage refusé. Recharge la page puis réessaie.';
@@ -129,7 +129,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (normalized.contains('unable to decode audio data') ||
         normalized.contains('unknown content type') ||
         normalized.contains('not supported')) {
-      return 'Le navigateur n’a pas pu lire l’audio. Réessaie ou recharge la page.';
+      return 'Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.';
     }
     if (normalized.contains('network') ||
         normalized.contains('connection') ||
@@ -1314,7 +1314,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
     final m = RegExp(
-      r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{2,40})\b",
+      r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ''\-\s]{2,40})\b",
       caseSensitive: false,
     ).firstMatch(transcript);
 
@@ -1693,7 +1693,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     // PRESTO_AUTH_PAGE_GUARD_PUBLICATION
-    // Désactivé : l’onglet Publier une offre doit s’ouvrir sans afficher la connexion.
+    // Désactivé : l'onglet Publier une offre doit s'ouvrir sans afficher la connexion.
 
     // La vérification de connexion doit rester au moment de la publication.
 
@@ -1703,7 +1703,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     //       if (!mounted) return;
 
-    // Désactivé : ne pas afficher la connexion à l’ouverture de l’onglet Publier.
+    // Désactivé : ne pas afficher la connexion à l'ouverture de l'onglet Publier.
     // //       await AuthGuard.requireVerifiedEmail(context);
 
     //     });
@@ -2124,14 +2124,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     if (trimmed == 'Category is invalid or inactive' ||
         trimmed == 'category is invalid or inactive') {
-      return 'La catégorie sélectionnée n’est plus disponible. Choisissez une autre catégorie.';
+      return 'La catégorie sélectionnée n'est plus disponible. Choisissez une autre catégorie.';
     }
     if (trimmed == 'cityId is required') {
       return 'Choisissez une ville valide.';
     }
     if (trimmed == 'City is invalid or inactive' ||
         trimmed == 'city is invalid or inactive') {
-      return 'La ville sélectionnée n’est plus disponible. Choisissez une ville valide dans la liste.';
+      return 'La ville sélectionnée n'est plus disponible. Choisissez une ville valide dans la liste.';
     }
     if (trimmed == 'reCAPTCHA assessment rejected the listing submission') {
       return 'La vérification anti-abus a échoué. Réessaie dans quelques secondes.';
@@ -3601,7 +3601,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (mounted) {
           showErrorSnackBar(
             context,
-            'Synchronisation de ton profil impossible. Recharge l’application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+            'Synchronisation de ton profil impossible. Recharge l'application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
           );
           setState(() => _isSubmitting = false);
         }
@@ -3823,7 +3823,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
                 // DESCRIPTION — le bouton IA est toujours visible en bas du cadre.
                 _withPublishFieldHighlight(
-                  fieldId: ‘description’,
+                  fieldId: 'description',
                   child: _withAiPendingOverlay(
                     showPending:
                         _showAiPendingForController(_descriptionController),
@@ -3834,7 +3834,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         TextFormField(
                           controller: _descriptionController,
                           decoration: InputDecoration(
-                            label: _requiredLabel(‘Description détaillée’),
+                            label: _requiredLabel('Description détaillée'),
                             alignLabelWithHint: true,
                             filled: true,
                             fillColor: Colors.white,
@@ -3867,15 +3867,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
                 // TITRE
                 _withPublishFieldHighlight(
-                  fieldId: ‘title’,
+                  fieldId: 'title',
                   child: _withAiPendingOverlay(
                     showPending: _showAiPendingForController(_titleController),
                     child: TextFormField(
                       controller: _titleController,
                       decoration: InputDecoration(
-                        label: _requiredLabel(‘Titre de l’offre’),
+                        label: _requiredLabel('Titre de l'offre'),
                         border: const OutlineInputBorder(),
-                        hintText: ‘Ex : Monter un meuble IKEA’,
+                        hintText: 'Ex : Monter un meuble IKEA',
                       ),
                       validator: _validatePublishTitle,
                     ),
