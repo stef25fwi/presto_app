@@ -3065,6 +3065,22 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                         ),
                       ),
                     ),
+                  if (widget.data.isUrgent && !widget.data.showJobDoneOverlay)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: IgnorePointer(
+                        child: Opacity(
+                          opacity: 0.88,
+                          child: Image.asset(
+                            'assets/images/stamp_urgent.png',
+                            width: 88,
+                            height: 88,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (widget.onTap != null)
                     Positioned.fill(
                       child: Material(
