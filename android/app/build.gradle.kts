@@ -53,9 +53,9 @@ android {
                 keyPassword = keystoreProperties["keyPassword"] as String
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
-                // PKCS12 est le format par défaut de keytool depuis JDK 9+.
-                // Sans cette ligne, AGP suppose JKS et échoue avec "Invalid keystore format".
-                storeType = keystoreProperties.getProperty("storeType", "PKCS12")
+                // Lit le type de keystore depuis key.properties (JKS ou PKCS12).
+                // Défaut JKS : format généré par generate_keystore.sh (magic FE ED FE ED).
+                storeType = keystoreProperties.getProperty("storeType", "JKS")
             }
         }
     }
