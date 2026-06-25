@@ -92,4 +92,4 @@ jobs:
 
           firebase deploy --project presto-app-74abe \
             --only hosting,functions,firestore:rules,firestore:indexes,storage \
-            --force --debug 2>&1 | head -60
+            --force
