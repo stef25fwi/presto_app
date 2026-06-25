@@ -62,7 +62,15 @@ jobs:
             echo "❌ Keystore trop petit (${SIZE} octets) — KEYSTORE_B64 vide ou invalide"
             exit 1
           fi
-          echo "✅ Keystore décodé (${SIZE} octets)"
+          # Détecte le format : JKS = magic FEEDFEED, sinon PKCS12
+          MAGIC=$(xxd -l 4 -p "$RUNNER_TEMP/upload-keystore.jks" | tr '[:upper:]' '[:lower:]')
+          if [[ "$MAGIC" == "feedfeed" ]]; then
+            STORE_TYPE="JKS"
+          else
+            STORE_TYPE="PKCS12"
+          fi
+          echo "✅ Keystore décodé (${SIZE} octets) — format détecté : ${STORE_TYPE} (magic: ${MAGIC})"
+          echo "STORE_TYPE=${STORE_TYPE}" >> "$GITHUB_ENV"
 
       - name: Write key.properties
         env:
@@ -75,9 +83,9 @@ jobs:
           keyPassword=${KEY_PASSWORD}
           keyAlias=${KEY_ALIAS}
           storeFile=$RUNNER_TEMP/upload-keystore.jks
-          storeType=JKS
+          storeType=${STORE_TYPE}
           EOF
-          echo "✅ key.properties écrit"
+          echo "✅ key.properties écrit (storeType=${STORE_TYPE})"
 
       - name: Verify keystore alias
         env:
@@ -86,11 +94,11 @@ jobs:
         run: |
           keytool -list \
             -keystore "$RUNNER_TEMP/upload-keystore.jks" \
-            -storetype JKS \
+            -storetype "${STORE_TYPE}" \
             -storepass "${KEYSTORE_PASSWORD}" \
             -alias "${KEY_ALIAS}" \
             -v 2>&1 | head -20
-          echo "✅ Alias ${KEY_ALIAS} trouvé dans le keystore JKS"
+          echo "✅ Alias ${KEY_ALIAS} trouvé dans le keystore ${STORE_TYPE}"
 
       - name: Build APK arm64 release
         run: |
