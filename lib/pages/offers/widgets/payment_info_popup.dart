@@ -230,20 +230,7 @@ class _Header extends StatelessWidget {
               letterSpacing: -1.4,
             ),
           ),
-          const SizedBox(width: 10),
-          Container(width: 1, height: 34, color: kBorder),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'La confiance pour\nchaque prestation',
-              style: TextStyle(
-                color: kBlue,
-                fontSize: 14,
-                height: 1.15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
+          const Spacer(),
           InkWell(
             onTap: onClose,
             borderRadius: BorderRadius.circular(24),
@@ -561,7 +548,7 @@ class _ImportantBox extends StatelessWidget {
                 children: [
                   TextSpan(
                     text:
-                        'iliprestō informe les utilisateurs, mais ne remplace pas un conseil juridique, fiscal ou comptable. Chaque utilisateur reste responsable de respecter les obligations liées à son statut.',
+                        'ilipresto.fr est un outil de communication et de petites annonces. La plateforme facilite la visibilité des offres et demandes, mais les relations, accords et prestations restent exclusivement conclus et gérés entre les utilisateurs.',
                     style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ],
