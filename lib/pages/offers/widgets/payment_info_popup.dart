@@ -384,6 +384,7 @@ class _RuleCard extends StatelessWidget {
           ),
           Container(
             width: double.infinity,
+            constraints: const BoxConstraints(minHeight: 78),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.08),
@@ -391,6 +392,7 @@ class _RuleCard extends StatelessWidget {
               border: Border.all(color: color.withOpacity(0.25)),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(badgeIcon, color: color, size: 26),
                 const SizedBox(width: 6),
