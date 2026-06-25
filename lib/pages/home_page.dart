@@ -1806,14 +1806,14 @@ class _HomePageState extends State<HomePage>
           controller: _scrollController,
           physics: const ClampingScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.fromLTRB(0, 8, 0, bottomPadding),
+          padding: EdgeInsets.fromLTRB(0, 5, 0, bottomPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 14),
+                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
