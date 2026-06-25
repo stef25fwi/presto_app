@@ -1918,7 +1918,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   final publishedText = publishedAge.isEmpty
                                       ? 'Publication récente'
                                       : 'Publié il y a $publishedAge';
-                                  final isUrgent = data['urgent'] == true;
+                                  final isUrgent = data['isUrgent'] == true || data['urgent'] == true;
                                   final showJobDoneOverlay =
                                       isOfferJobDoneOverlayVisible(data);
                                   final imageUrl =
