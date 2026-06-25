@@ -108,7 +108,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (error.code == 'network-error' ||
           error.code == 'retry-limit-exceeded' ||
           error.code == 'unknown') {
-        return 'Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.';
+        return "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.";
       }
       if (error.code == 'unauthorized' || error.code == 'permission-denied') {
         return 'Accès au stockage refusé. Recharge la page puis réessaie.';
@@ -129,7 +129,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (normalized.contains('unable to decode audio data') ||
         normalized.contains('unknown content type') ||
         normalized.contains('not supported')) {
-      return 'Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.';
+      return "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.";
     }
     if (normalized.contains('network') ||
         normalized.contains('connection') ||
@@ -2124,14 +2124,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     if (trimmed == 'Category is invalid or inactive' ||
         trimmed == 'category is invalid or inactive') {
-      return 'La catégorie sélectionnée n'est plus disponible. Choisissez une autre catégorie.';
+      return "La catégorie sélectionnée n'est plus disponible. Choisissez une autre catégorie.";
     }
     if (trimmed == 'cityId is required') {
       return 'Choisissez une ville valide.';
     }
     if (trimmed == 'City is invalid or inactive' ||
         trimmed == 'city is invalid or inactive') {
-      return 'La ville sélectionnée n'est plus disponible. Choisissez une ville valide dans la liste.';
+      return "La ville sélectionnée n'est plus disponible. Choisissez une ville valide dans la liste.";
     }
     if (trimmed == 'reCAPTCHA assessment rejected the listing submission') {
       return 'La vérification anti-abus a échoué. Réessaie dans quelques secondes.';
@@ -3601,7 +3601,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (mounted) {
           showErrorSnackBar(
             context,
-            'Synchronisation de ton profil impossible. Recharge l'application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.',
+            "Synchronisation de ton profil impossible. Recharge l'application puis réessaie. Si le blocage continue, vérifie App Check et tes droits utilisateur.",
           );
           setState(() => _isSubmitting = false);
         }
@@ -3873,7 +3873,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: TextFormField(
                       controller: _titleController,
                       decoration: InputDecoration(
-                        label: _requiredLabel('Titre de l'offre'),
+                        label: _requiredLabel("Titre de l'offre"),
                         border: const OutlineInputBorder(),
                         hintText: 'Ex : Monter un meuble IKEA',
                       ),
@@ -4516,7 +4516,7 @@ class _AiWritingAssistantButton extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Décrivez votre besoin, l'IA complète votre annonce',
+                          "Décrivez votre besoin, l'IA complète votre annonce",
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w500,
