@@ -1000,12 +1000,18 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           listenable: typographySettings,
           builder: (ctx, __) {
             final base = Theme.of(ctx);
+            final delta = typographySettings.fontWeightDelta;
+            final withFamily = base.textTheme
+                .apply(fontFamily: typographySettings.fontFamily);
+            final withWeight = shiftTextThemeWeight(withFamily, delta);
+            final primaryWithFamily = base.primaryTextTheme
+                .apply(fontFamily: typographySettings.fontFamily);
+            final primaryWithWeight =
+                shiftTextThemeWeight(primaryWithFamily, delta);
             return Theme(
               data: base.copyWith(
-                textTheme:
-                    base.textTheme.apply(fontFamily: typographySettings.fontFamily),
-                primaryTextTheme: base.primaryTextTheme
-                    .apply(fontFamily: typographySettings.fontFamily),
+                textTheme: withWeight,
+                primaryTextTheme: primaryWithWeight,
               ),
               child: MediaQuery(
                 data: MediaQuery.of(ctx).copyWith(
