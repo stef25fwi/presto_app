@@ -304,6 +304,11 @@ class _HomePageState extends State<HomePage>
       _selectedIndex = index;
       _mountedTabs.add(index);
     });
+    if (!kIsWeb) {
+      SystemChrome.setSystemUIOverlayStyle(
+        prestoOverlayStyleFor(index == 1 ? kPrestoOrange : kPrestoBlue),
+      );
+    }
     _syncCategoryAnimation();
 
     if (index == 3) {
@@ -1648,8 +1653,10 @@ class _HomePageState extends State<HomePage>
     // A la fermeture du clavier, la barre reapparait normalement en bas.
     final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
+    final _statusBarColor =
+        (!kIsWeb && _selectedIndex == 1) ? kPrestoOrange : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: prestoOverlayStyleFor(kPrestoBlue),
+      value: prestoOverlayStyleFor(_statusBarColor),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
