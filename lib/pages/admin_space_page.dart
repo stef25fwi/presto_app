@@ -823,28 +823,64 @@ class _AdminDomainLiveData {
   });
 }
 
+class _AdminKpiSnapshot {
+  final int publishedListings;
+  final int activeListings;
+  final int expiredListings;
+  final int messagesStarted;
+  final int reportedListings;
+  final int blockedListings;
+  final int manualReviewListings;
+  final int activeSubscriptions;
+  final int premiumUpgrades;
+
+  const _AdminKpiSnapshot({
+    required this.publishedListings,
+    required this.activeListings,
+    required this.expiredListings,
+    required this.messagesStarted,
+    required this.reportedListings,
+    required this.blockedListings,
+    required this.manualReviewListings,
+    required this.activeSubscriptions,
+    required this.premiumUpgrades,
+  });
+}
+
 class _AdminDashboardComputed {
   final int newUsers;
   final int activeUsers;
   final int publishedListings;
+  final int activeListings;
+  final int expiredListings;
   final int listingViews;
   final int messagesStarted;
   final int premiumUpgrades;
   final int paidInvoices;
   final int failedInvoices;
   final double revenueAmount;
+  final int reportedListings;
+  final int blockedListings;
+  final int manualReviewListings;
+  final int activeSubscriptions;
   final List<_AdminDomainLiveData> domains;
 
   const _AdminDashboardComputed({
     required this.newUsers,
     required this.activeUsers,
     required this.publishedListings,
+    required this.activeListings,
+    required this.expiredListings,
     required this.listingViews,
     required this.messagesStarted,
     required this.premiumUpgrades,
     required this.paidInvoices,
     required this.failedInvoices,
     required this.revenueAmount,
+    required this.reportedListings,
+    required this.blockedListings,
+    required this.manualReviewListings,
+    required this.activeSubscriptions,
     required this.domains,
   });
 
@@ -1303,12 +1339,18 @@ class _AdminDashboardComputed {
       newUsers: userDocs.length,
       activeUsers: activeUsers,
       publishedListings: listingDocs.length,
+      activeListings: activeListings,
+      expiredListings: expiredListings,
       listingViews: totalViews,
       messagesStarted: messagesStarted,
       premiumUpgrades: premiumUpgrades,
       paidInvoices: paidInvoices,
       failedInvoices: failedInvoices,
       revenueAmount: totalRevenue,
+      reportedListings: reportedListings,
+      blockedListings: blockedListings,
+      manualReviewListings: manualReviewListings,
+      activeSubscriptions: activeSubscriptions,
       domains: liveDomains,
     );
   }
@@ -1930,6 +1972,11 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   AdminAccessState? _adminAccessState;
   bool _userStatsLoading = true;
   Map<String, dynamic>? _userStats;
+  _AdminKpiSnapshot? _kpiSnapshot;
+
+  void _onKpiComputed(_AdminKpiSnapshot snapshot) {
+    if (mounted) setState(() => _kpiSnapshot = snapshot);
+  }
 
   @override
   void initState() {
@@ -2730,24 +2777,35 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     badge: null,
                     iconColor: prestoBlue,
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.campaign_rounded,
                     title: 'Offres',
-                    subtitle: '—',
+                    subtitle: _kpiSnapshot == null
+                        ? 'Chargement…'
+                        : 'Actives: ${_formatCompactNumber(_kpiSnapshot!.activeListings)}\nTotal: ${_formatCompactNumber(_kpiSnapshot!.publishedListings)}\nExpirées: ${_formatCompactNumber(_kpiSnapshot!.expiredListings)}',
                     badge: null,
                     iconColor: prestoOrange,
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.chat_bubble_rounded,
                     title: 'Messages',
-                    subtitle: '—',
+                    subtitle: _kpiSnapshot == null
+                        ? 'Chargement…'
+                        : _kpiSnapshot!.messagesStarted == 0
+                            ? 'Aucun message\nenregistré'
+                            : '${_formatCompactNumber(_kpiSnapshot!.messagesStarted)}\ndémarrés',
                     badge: null,
                     iconColor: prestoBlue,
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.verified_user_rounded,
                     title: 'Modération',
-                    subtitle: '—',
+                    subtitle: _kpiSnapshot == null
+                        ? 'Chargement…'
+                        : (_kpiSnapshot!.reportedListings == 0 &&
+                                _kpiSnapshot!.blockedListings == 0)
+                            ? 'Aucune alerte\nen cours'
+                            : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
                     badge: null,
                     iconColor: prestoBlue,
                   ),
@@ -2765,10 +2823,12 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.workspace_premium_rounded,
                     title: 'Premium',
-                    subtitle: '—',
+                    subtitle: _kpiSnapshot == null
+                        ? 'Chargement…'
+                        : 'Abonnements: ${_formatCompactNumber(_kpiSnapshot!.activeSubscriptions)}\nUpgrades: ${_formatCompactNumber(_kpiSnapshot!.premiumUpgrades)}',
                     badge: null,
                     iconColor: prestoOrange,
                   ),
@@ -2858,6 +2918,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 userStats: _userStats,
                 userStatsLoading: _userStatsLoading,
                 domains: _kAdminDashboardMetricDomains,
+                onComputed: _onKpiComputed,
               ),
             ],
           ),
@@ -3224,11 +3285,13 @@ class _AdminDashboardSection extends StatefulWidget {
   final Map<String, dynamic>? userStats;
   final bool userStatsLoading;
   final List<_AdminMetricDomain> domains;
+  final void Function(_AdminKpiSnapshot)? onComputed;
 
   const _AdminDashboardSection({
     required this.userStats,
     required this.userStatsLoading,
     required this.domains,
+    this.onComputed,
   });
 
   @override
@@ -3497,6 +3560,28 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                   window: _window,
                                   domains: widget.domains,
                                 );
+
+                                if (widget.onComputed != null) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    if (!mounted) return;
+                                    widget.onComputed!(_AdminKpiSnapshot(
+                                      publishedListings:
+                                          computed.publishedListings,
+                                      activeListings: computed.activeListings,
+                                      expiredListings: computed.expiredListings,
+                                      messagesStarted: computed.messagesStarted,
+                                      reportedListings:
+                                          computed.reportedListings,
+                                      blockedListings: computed.blockedListings,
+                                      manualReviewListings:
+                                          computed.manualReviewListings,
+                                      activeSubscriptions:
+                                          computed.activeSubscriptions,
+                                      premiumUpgrades: computed.premiumUpgrades,
+                                    ));
+                                  });
+                                }
 
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
