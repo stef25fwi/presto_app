@@ -981,3 +981,112 @@ class _OrbitPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+/// Button that visually matches [AiPublishControl]'s primary button.
+/// Used for the text-based writing assistant inside the description field.
+/// Shows the same analyzing animation when [isAnalyzing] is true.
+class AiWritingButton extends StatelessWidget {
+  const AiWritingButton({
+    super.key,
+    required this.isAnalyzing,
+    required this.onTap,
+  });
+
+  final bool isAnalyzing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final gradient = isAnalyzing
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF13C8FF), Color(0xFF0078FF), Color(0xFF004BE8)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0A7CFF), Color(0xFF0058E8), Color(0xFF1434D9)],
+          );
+    final shadowColor =
+        isAnalyzing ? const Color(0x6613A8FF) : const Color(0x66005BEA);
+
+    return Tooltip(
+      message: "Remplir les champs avec l'IA",
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 24, offset: const Offset(0, 12)),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: onTap,
+            child: SizedBox(
+              width: double.infinity,
+              height: 88,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                child: isAnalyzing
+                    ? const _AnalyzingButtonContent()
+                    : const _WritingAssistantReadyContent(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WritingAssistantReadyContent extends StatelessWidget {
+  const _WritingAssistantReadyContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        _AiCircleIcon(
+          icon: Icons.auto_awesome,
+          gradient: RadialGradient(
+            colors: [Color(0xFF2EA7FF), Color(0xFF005BEA)],
+          ),
+        ),
+        SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Assistant de rédaction IA',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.05,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                "Votre texte est reformulé et l'annonce complétée",
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xE0FFFFFF),
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 8),
+        Icon(Icons.edit_note_rounded, color: Colors.white, size: 24),
+      ],
+    );
+  }
+}
