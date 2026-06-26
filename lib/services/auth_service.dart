@@ -50,6 +50,8 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
+    String? fullName,
+    String? pseudo,
   }) async {
     await _auth.setLanguageCode('fr');
 
@@ -66,14 +68,21 @@ class AuthService {
       );
     }
 
-    if (displayName.trim().isNotEmpty) {
-      await user.updateDisplayName(displayName.trim());
+    final resolvedPseudo = (pseudo?.trim().isNotEmpty == true)
+        ? pseudo!.trim()
+        : displayName.trim();
+
+    if (resolvedPseudo.isNotEmpty) {
+      await user.updateDisplayName(resolvedPseudo);
     }
 
     await _upsertUserProfile(
       user,
       extra: {
-        'displayName': displayName.trim(),
+        'displayName': resolvedPseudo,
+        'pseudo': resolvedPseudo,
+        if (fullName != null && fullName.trim().isNotEmpty)
+          'fullName': fullName.trim(),
         'authProvider': 'password',
       },
     );
