@@ -50,6 +50,7 @@ dependencies:
   just_audio: ^0.10.5
   audioplayers: ^6.7.1
   app_settings: ^7.0.0
+  flutter_app_badger: ^3.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

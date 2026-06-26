@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,6 +13,7 @@ import '../firebase_init.dart';
 import '../utils/runtime_action_logger.dart';
 import 'admin_web_debug_store.dart';
 import 'firebase_functions_region.dart';
+import 'inbox_counts.dart';
 
 @pragma('vm:entry-point')
 Future<void> prestoFirebaseMessagingBackgroundHandler(
@@ -81,6 +83,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<int>? _badgeCountSubscription;
   GlobalKey<NavigatorState>? _navigatorKey;
   RemoteMessage? _initialMessage;
   String? _pendingRouteName;
@@ -164,7 +167,11 @@ class NotificationService {
 
     _authSubscription ??=
         FirebaseAuth.instance.authStateChanges().listen((user) async {
-      if (user == null) return;
+      if (user == null) {
+        _stopBadgeUpdates();
+        return;
+      }
+      _startBadgeUpdates(user.uid);
       await syncPushRegistrationIfAuthorized();
       await _maybeShowNotificationActivationDialog(user.uid);
     });
@@ -418,6 +425,35 @@ class NotificationService {
         ?.createNotificationChannel(_activityChannel);
 
     _localNotificationsReady = true;
+  }
+
+  void _startBadgeUpdates(String userId) {
+    if (kIsWeb) return;
+    _badgeCountSubscription?.cancel();
+    _badgeCountSubscription = streamInboxCount(userId: userId)
+        .distinct()
+        .listen((count) async {
+      try {
+        final supported = await FlutterAppBadger.isAppBadgeSupported();
+        if (!supported) return;
+        if (count > 0) {
+          FlutterAppBadger.updateBadgeCount(count);
+        } else {
+          FlutterAppBadger.removeBadge();
+        }
+      } catch (error) {
+        debugPrint('[Badge] update error: $error');
+      }
+    });
+  }
+
+  void _stopBadgeUpdates() {
+    _badgeCountSubscription?.cancel();
+    _badgeCountSubscription = null;
+    if (kIsWeb) return;
+    try {
+      FlutterAppBadger.removeBadge();
+    } catch (_) {}
   }
 
   /// Handler pour les messages reçus en background (app fermée)
