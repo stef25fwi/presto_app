@@ -3836,6 +3836,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       children: [
                         TextFormField(
                           controller: _descriptionController,
+                          textAlignVertical: TextAlignVertical.top,
                           decoration: InputDecoration(
                             label: _requiredLabel('Description détaillée'),
                             alignLabelWithHint: true,
