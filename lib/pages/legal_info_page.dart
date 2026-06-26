@@ -3,7 +3,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants.dart';
 
 class LegalInfoPage extends StatefulWidget {
-  const LegalInfoPage({super.key});
+  const LegalInfoPage({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   @override
   State<LegalInfoPage> createState() => _LegalInfoPageState();
@@ -12,11 +14,11 @@ class LegalInfoPage extends StatefulWidget {
 class _LegalInfoPageState extends State<LegalInfoPage> {
   static const Color kOrange = Color(0xFFFF6600);
   static const Color kBg = Color(0xFFFFFFFF);
-  static const String kContactEmail = 'contact@ilipresto.fr';
+  static const String kContactEmail = ‘contact@ilipresto.fr’;
   static const String kSupportProcess =
-      'Depuis Mon profil, vous pouvez créer une demande support, une demande d’export ou une demande de suppression. L’e-mail reste un canal de secours.';
+      ‘Depuis Mon profil, vous pouvez créer une demande support, une demande d’export ou une demande de suppression. L’e-mail reste un canal de secours.’;
 
-  int _tab = 0; // 0=Mentions, 1=Confidentialité, 2=CGU
+  late int _tab = widget.initialTab; // 0=Mentions, 1=Confidentialité, 2=CGU
 
   String _formatDateFr(DateTime d) {
     const months = [
