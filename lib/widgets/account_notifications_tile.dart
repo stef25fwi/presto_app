@@ -162,6 +162,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
 
     return Card(
       elevation: 0,
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         side: BorderSide(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(18),
