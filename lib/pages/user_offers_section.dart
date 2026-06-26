@@ -770,6 +770,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _archivedSectionExpanded = false;
   final TrustScoreService _trustScoreService = TrustScoreService();
 
+  Set<String> _knownPublishedIds = {};
+  bool _initialLoadDone = false;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _offersStream;
+
   void _logUserOffersLoad(
     String action, {
     Map<String, Object?> details = const <String, Object?>{},
@@ -1120,6 +1124,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   @override
   void initState() {
     super.initState();
+    _bindOffersStream();
     unawaited(_loadOffers());
   }
 
@@ -1129,7 +1134,54 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (oldWidget.userId == widget.userId) {
       return;
     }
+    _knownPublishedIds = {};
+    _initialLoadDone = false;
+    _bindOffersStream();
     unawaited(_loadOffers());
+  }
+
+  @override
+  void dispose() {
+    _offersStream?.cancel();
+    super.dispose();
+  }
+
+  void _bindOffersStream() {
+    _offersStream?.cancel();
+    final userId = widget.userId.trim();
+    if (userId.isEmpty) {
+      _offersStream = null;
+      return;
+    }
+
+    _offersStream = FirebaseFirestore.instance
+        .collection(kListingsCollection)
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .listen((snapshot) {
+      if (!mounted) return;
+      _onOffersSnapshot(snapshot);
+    }, onError: (_) {});
+  }
+
+  void _onOffersSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
+    final currentPublishedIds = <String>{};
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (_resolveSection(data) == _OfferManagementSection.published) {
+        currentPublishedIds.add(doc.id);
+      }
+    }
+
+    if (_initialLoadDone) {
+      final newlyPublished = currentPublishedIds.difference(_knownPublishedIds);
+      if (newlyPublished.isNotEmpty && mounted) {
+        showPrestoSnackBar(context, 'Votre annonce est publiee !');
+        unawaited(_loadOffers());
+      }
+    }
+
+    _knownPublishedIds = currentPublishedIds;
   }
 
   Future<void> _loadOffers() async {
@@ -1182,6 +1234,16 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         );
 
       if (!mounted) return;
+
+      final publishedIds = docs
+          .where((d) => d.section == _OfferManagementSection.published)
+          .map((d) => d.offerId)
+          .toSet();
+
+      if (!_initialLoadDone) {
+        _knownPublishedIds = publishedIds;
+        _initialLoadDone = true;
+      }
 
       setState(() {
         _offers = docs;
