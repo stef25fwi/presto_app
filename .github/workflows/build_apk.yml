@@ -57,6 +57,20 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
+          # Diagnostic secrets
+          echo "KEYSTORE_PASSWORD length: ${#KEYSTORE_PASSWORD}"
+          echo "KEY_PASSWORD length: ${#KEY_PASSWORD}"
+          echo "KEY_ALIAS: ${KEY_ALIAS}"
+          echo "KEYSTORE_B64 length: ${#KEYSTORE_B64}"
+          if [[ -z "${KEYSTORE_PASSWORD}" ]]; then
+            echo "❌ KEYSTORE_PASSWORD vide — secret non configuré dans l'environnement recaptcha"
+            exit 1
+          fi
+          if [[ "${#KEYSTORE_PASSWORD}" -lt 6 ]]; then
+            echo "❌ KEYSTORE_PASSWORD trop court (${#KEYSTORE_PASSWORD} chars < 6)"
+            exit 1
+          fi
+
           # 1. Décode le keystore brut
           printf "%s" "$KEYSTORE_B64" \
             | tr -d '\r\n[:space:]' \
