@@ -1044,8 +1044,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                   ),
                 ),
                 // Bouton « Appeler » masqué si l'annonceur a caché son numéro
-                // (hidePhone) : un numéro masqué ne doit jamais être composable.
-                if (!data.hidePhone) ...[
+                // (hidePhone) ou si le numéro est vide.
+                if (!data.hidePhone && data.phone.trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 50,
@@ -1065,6 +1065,13 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                         );
                         if (signedInUser == null) return;
                         if (!context.mounted) return;
+                        if (data.offerId.isNotEmpty) {
+                          FirebaseFirestore.instance
+                              .collection('listings')
+                              .doc(data.offerId)
+                              .update({'phoneViewCount': FieldValue.increment(1)})
+                              .ignore();
+                        }
                         await _callPhone(context, data.phone);
                       },
                       style: ElevatedButton.styleFrom(
@@ -3303,6 +3310,7 @@ class _AdvertiserContactCard extends StatelessWidget {
               ),
               _MaskedPhoneInfoLine(
                 phone: data.phone,
+                offerId: data.offerId,
                 hidePhone: data.hidePhone,
                 compact: compact,
               ),
@@ -3625,9 +3633,11 @@ class _MaskedPhoneInfoLine extends StatefulWidget {
   final String phone;
   final bool compact;
   final bool hidePhone;
+  final String offerId;
 
   const _MaskedPhoneInfoLine({
     required this.phone,
+    required this.offerId,
     this.compact = false,
     this.hidePhone = false,
   });
@@ -3709,10 +3719,19 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     setState(() {
       _isPhoneVisible = true;
     });
+
+    // Increment the view counter asynchronously; ignore errors silently.
+    if (widget.offerId.isNotEmpty) {
+      FirebaseFirestore.instance
+          .collection('listings')
+          .doc(widget.offerId)
+          .update({'phoneViewCount': FieldValue.increment(1)})
+          .ignore();
+    }
   }
 
   String _phoneIndicatif(String rawPhone) {
-    final compact = rawPhone.trim().replaceAll(RegExp(r'[\\s().-]+'), '');
+    final compact = rawPhone.trim().replaceAll(RegExp(r'[\s().-]+'), '');
 
     if (compact.isEmpty) {
       return '';
