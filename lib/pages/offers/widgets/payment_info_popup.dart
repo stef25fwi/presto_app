@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:presto_app/pages/legal_info_page.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
 import 'package:presto_app/widgets/payment_info_audio_player_button.dart';
 
@@ -165,7 +166,14 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                         const SizedBox(height: 12),
                         const _ImportantBox(),
                         const SizedBox(height: 10),
-                        _MoreInfoTile(onTap: () => _showMoreInfo(context)),
+                        _MoreInfoTile(onTap: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LegalInfoPage(initialTab: 2),
+                            ),
+                          );
+                        }),
                         const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
@@ -215,40 +223,47 @@ class _Header extends StatelessWidget {
         color: Colors.white,
         border: Border(bottom: BorderSide(color: kBorder)),
       ),
-      child: Row(
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              'assets/images/logowebp.webp',
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'iliprestō',
-            style: TextStyle(
-              color: kBlueDark,
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1.4,
-            ),
-          ),
-          const Spacer(),
-          InkWell(
-            onTap: onClose,
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              width: 46,
-              height: 46,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF3F6FB),
-                shape: BoxShape.circle,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  'assets/images/logowebp.webp',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
               ),
-              child:
-                  const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
+              const SizedBox(width: 8),
+              const Text(
+                'iliprestō',
+                style: TextStyle(
+                  color: Color(0xFFFF6600),
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1.4,
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            right: 0,
+            child: InkWell(
+              onTap: onClose,
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF3F6FB),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
+              ),
             ),
           ),
         ],
@@ -545,6 +560,7 @@ class _ImportantBox extends StatelessWidget {
         border: Border.all(color: const Color(0xFFFFD18A)),
       ),
       child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.warning_amber_rounded, color: Color(0xFFC47A00), size: 40),
           SizedBox(width: 10),
@@ -568,8 +584,6 @@ class _ImportantBox extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 8),
-          Icon(Icons.balance_rounded, color: Color(0xFFC47A00), size: 34),
         ],
       ),
     );
@@ -616,58 +630,3 @@ class _MoreInfoTile extends StatelessWidget {
   }
 }
 
-void _showMoreInfo(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-    ),
-    builder: (_) => Padding(
-      padding: const EdgeInsets.all(22),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'À retenir',
-            style: TextStyle(
-              color: kBlueDark,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            "iliprestō vous informe sur les moyens de paiement possibles, mais ne remplace pas un conseil juridique, fiscal ou comptable. En cas de doute, rapprochez-vous d'un organisme compétent ou d'un professionnel.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: kTextSecondary,
-              fontSize: 15,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kBlue,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'Fermer',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
