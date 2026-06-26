@@ -22,6 +22,7 @@ echo ""
 
 keytool -genkey -v \
   -keystore "$KEYSTORE_FILE" \
+  -storetype JKS \
   -alias "$KEY_ALIAS" \
   -keyalg RSA \
   -keysize 2048 \
