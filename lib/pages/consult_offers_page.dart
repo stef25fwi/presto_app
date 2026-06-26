@@ -1677,39 +1677,44 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final initialOfferDocs = _offersWarmCache[currentOffersStreamKey];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Status bar par plateforme : orange sur l'APK natif (alignée sur le
-      // header orange), bleue sur le web. NB : sur web en navigateur, Flutter
-      // ne peint pas de status bar OS — l'effet visible reste surtout natif.
-      value: prestoOverlayStyleFor(kIsWeb ? kPrestoBlue : kPrestoOrange),
+      value: prestoOverlayStyleFor(kPrestoOrange),
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           resizeToAvoidBottomInset: true,
           backgroundColor: _offersBg,
-          body: SafeArea(
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  height: kToolbarHeight,
-                  color: kPrestoOrange,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Center(
-                    child: Text(
-                      baseTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: kPrestoAppBarTitleStyle.copyWith(
-                        color: Colors.white,
+          body: Column(
+            children: [
+              // Header orange qui s'étend derrière la status bar
+              Container(
+                width: double.infinity,
+                color: kPrestoOrange,
+                child: SafeArea(
+                  bottom: false,
+                  child: SizedBox(
+                    height: kToolbarHeight,
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Text(
+                          baseTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: kPrestoAppBarTitleStyle.copyWith(
+                            color: Colors.white,
+                            fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-                // ✅ Tuiles cliquables pour filtres actifs
-                _buildActiveFilterChips(),
-                _buildFilterPanel(),
-                Expanded(
+              ),
+              // ✅ Tuiles cliquables pour filtres actifs
+              _buildActiveFilterChips(),
+              _buildFilterPanel(),
+              Expanded(
                   child: StreamBuilder<
                       List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
                     stream: _getOffersStream(),
@@ -1995,7 +2000,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
             ),
           ),
         ),
-      ),
     );
   }
 
