@@ -2723,7 +2723,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          padding: const EdgeInsets.fromLTRB(8, 16, 8, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
