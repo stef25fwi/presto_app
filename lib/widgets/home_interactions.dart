@@ -81,8 +81,8 @@ class HomeCategoryChip extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 62,
-            height: 62,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: _homePrestoOrange,
               shape: BoxShape.circle,
@@ -110,21 +110,21 @@ class HomeCategoryChip extends StatelessWidget {
                 child: Icon(
                   icon,
                   color: Colors.white,
-                  size: 30,
+                  size: 25,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SizedBox(
-            width: 74,
+            width: 64,
             child: Text(
               label,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 12.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 height: 1.15,
               ),

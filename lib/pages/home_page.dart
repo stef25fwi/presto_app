@@ -134,7 +134,6 @@ class _HomePageState extends State<HomePage>
   String? _consultCategoryFilter;
   String? _consultSearchQuery;
   final PageController _carouselController = PageController();
-  final ScrollController _scrollController = ScrollController();
   final HeroSlidesService _heroSlidesService = HeroSlidesService();
   late final Stream<List<HeroSlide>> _heroSlidesStream =
       _heroSlidesService.watchActiveSlides();
@@ -576,7 +575,6 @@ class _HomePageState extends State<HomePage>
     _touchPresence(status: 'offline');
 
     _carouselController.dispose();
-    _scrollController.dispose();
     _categoryController.dispose();
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
@@ -1790,8 +1788,6 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
-    const double bottomPadding = 16;
-
     return SafeArea(
       bottom: false,
       child: Container(
@@ -1802,137 +1798,131 @@ class _HomePageState extends State<HomePage>
             end: Alignment.bottomCenter,
           ),
         ),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          physics: const ClampingScrollPhysics(),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.fromLTRB(0, 5, 0, bottomPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(6, 10, 6, 8),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0x331A73E8),
-                        Color(0x141A73E8),
-                        Color(0x0DFFFFFF),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: const Color(0x331A73E8),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onLongPress: _seedSampleOffers,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 46,
-                                  height: 40,
-                                  child: Image.asset(
-                                    'assets/images/logowebp.webp',
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                                Transform.translate(
-                                  offset: const Offset(-4, 0),
-                                  child: const Text(
-                                    "iliprestō",
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w900,
-                                      color: kPrestoOrange,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _buildSmartSearchBar(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header : logo + recherche ──────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 5, 6, 0),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0x331A73E8),
+                      Color(0x141A73E8),
+                      Color(0x0DFFFFFF),
                     ],
                   ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: const Color(0x331A73E8),
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // SLIDER
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: AspectRatio(
-                  aspectRatio: 4 / 3,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: const Color(0x331A73E8),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.16),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                        BoxShadow(
-                          color: const Color(0x331A73E8),
-                          blurRadius: 26,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 10),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onLongPress: _seedSampleOffers,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 40,
+                                height: 34,
+                                child: Image.asset(
+                                  'assets/images/logowebp.webp',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              Transform.translate(
+                                offset: const Offset(-4, 0),
+                                child: const Text(
+                                  "iliprestō",
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    color: kPrestoOrange,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: StreamBuilder<List<HeroSlide>>(
-                        stream: _heroSlidesStream,
-                        builder: (context, snapshot) {
-                          final fallback = _buildFallbackHomeHeroSlider();
-                          final slides = snapshot.data ?? const <HeroSlide>[];
-                          if (snapshot.hasError || slides.isEmpty) {
-                            return fallback;
-                          }
+                    const SizedBox(height: 6),
+                    _buildSmartSearchBar(),
+                  ],
+                ),
+              ),
+            ),
 
-                          return HeroMediaSlider(
-                            slides: slides,
-                            fallback: fallback,
-                            borderRadius: 0,
-                          );
-                        },
+            const SizedBox(height: 6),
+
+            // ── Hero slider — prend tout l'espace restant ──────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: const Color(0x331A73E8),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.16),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
+                      BoxShadow(
+                        color: const Color(0x331A73E8),
+                        blurRadius: 26,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: StreamBuilder<List<HeroSlide>>(
+                      stream: _heroSlidesStream,
+                      builder: (context, snapshot) {
+                        final fallback = _buildFallbackHomeHeroSlider();
+                        final slides = snapshot.data ?? const <HeroSlide>[];
+                        if (snapshot.hasError || slides.isEmpty) {
+                          return fallback;
+                        }
+                        return HeroMediaSlider(
+                          slides: slides,
+                          fallback: fallback,
+                          borderRadius: 0,
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+            ),
 
-              _buildHomeCategoriesSection(),
+            const SizedBox(height: 6),
 
-              const SizedBox(height: 6),
+            _buildHomeCategoriesSection(),
 
-              _buildLatestOffersSection(),
+            const SizedBox(height: 6),
 
-              const SizedBox(height: 20),
-            ],
-          ),
+            _buildLatestOffersSection(),
+
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
@@ -2568,7 +2558,7 @@ class _AutoScrollingOffersCarouselState
         return false;
       },
       child: SizedBox(
-        height: 104,
+        height: 88,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
