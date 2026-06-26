@@ -3737,7 +3737,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       return '';
     }
 
-    // Indicatifs principalement utilisés par iliprestō.
+    // Indicatifs internationaux principalement utilisés par iliprestō.
     const supportedDialingCodes = <String>[
       '+590', // Guadeloupe, Saint-Martin, Saint-Barthélemy
       '+596', // Martinique
@@ -3757,8 +3757,39 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     }
 
     // Repli pour un numéro international non encore répertorié.
-    final fallback = RegExp(r'^(\\+\\d{1,3})').firstMatch(compact);
-    return fallback?.group(1) ?? '';
+    final fallback = RegExp(r'^(\+\d{1,3})').firstMatch(compact);
+    if (fallback != null) return fallback.group(1)!;
+
+    // Inférence depuis le format local (numéro sans préfixe +).
+    const localPrefixToDialingCode = <String, String>{
+      '0590': '+590', // Guadeloupe
+      '0596': '+596', // Martinique
+      '0594': '+594', // Guyane
+      '0262': '+262', // La Réunion / Mayotte
+      '0269': '+262', // Mayotte (variante)
+      '0508': '+508', // Saint-Pierre-et-Miquelon
+      '0681': '+681', // Wallis-et-Futuna
+      '0689': '+689', // Polynésie française
+      '0687': '+687', // Nouvelle-Calédonie
+    };
+
+    for (final entry in localPrefixToDialingCode.entries) {
+      if (compact.startsWith(entry.key)) {
+        return entry.value;
+      }
+    }
+
+    // Numéro à 10 chiffres commençant par 0 → France métropolitaine.
+    if (compact.length == 10 && compact.startsWith('0')) {
+      return '+33';
+    }
+    // Numéro à 9 chiffres commençant par 6 ou 7 → France mobile.
+    if (compact.length == 9 &&
+        (compact.startsWith('6') || compact.startsWith('7'))) {
+      return '+33';
+    }
+
+    return '';
   }
 
   String _indicatifOnly(String rawPhone) {
