@@ -2448,6 +2448,7 @@ class _AutoScrollingOffersCarouselState
       onTap: () => widget.onOfferTap?.call(doc),
       child: Container(
         width: 280,
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -2561,7 +2562,7 @@ class _AutoScrollingOffersCarouselState
         return false;
       },
       child: SizedBox(
-        height: 88,
+        height: 110,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
