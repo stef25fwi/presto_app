@@ -168,28 +168,74 @@ class _PrestoStartupSplashScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: _orange,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/logowebp.webp',
-                width: 80,
-                height: 80,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'iliprestō',
+                    style: TextStyle(
+                      fontSize: 54,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Trouvez un prestataire\nillico presto!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      height: 1.25,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 46),
+                  SizedBox(
+                    width: 260,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: const Text(
+                        "J'offre un job",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      onPressed: () {},
+                      child: const Text(
+                        "Je consulte les offres",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'iliprestō',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Inter',
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1099,29 +1145,19 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    _scheduleNavigation(_initialSplashDuration());
+    // Pour le lancement racine ("/" ou mobile), l'utilisateur navigue
+    // en cliquant l'un des 2 boutons. L'auto-timer ne s'active que pour
+    // les deep links et chemins spéciaux (ex: /publish).
+    if (_shouldAutoNavigate()) {
+      _scheduleNavigation(const Duration(milliseconds: 600));
+    }
   }
 
-  Duration _initialSplashDuration() {
-    // Audit #4 : suppression du délai de splash artificiel (3,5 s). L'init
-    // lourde démarre après le premier splash Flutter ; ce minuteur ne sert qu'à afficher
-    // le logo. On garde un flash de marque court (~0,8 s) pour éviter un
-    // clignotement brutal, sans pénaliser le démarrage perçu.
-    if (!kIsWeb) {
-      return const Duration(milliseconds: 800);
-    }
-
-    if (pendingPostAuthRoute == PostAuthNavigationIntentService.accountRoute) {
-      return const Duration(milliseconds: 600);
-    }
-
+  bool _shouldAutoNavigate() {
+    if (!kIsWeb) return false;
     final webPath = _normalizedWebPath();
-    final hasDeepLink = parseAppDeepLink(Uri.base.toString()) != null;
-    if (webPath == '/account' || webPath == '/publish' || hasDeepLink) {
-      return const Duration(milliseconds: 600);
-    }
-
-    return const Duration(milliseconds: 800);
+    if (webPath.isEmpty || webPath == '/') return false;
+    return true;
   }
 
   String _normalizedWebPath() {
