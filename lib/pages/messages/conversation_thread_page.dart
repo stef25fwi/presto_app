@@ -1980,7 +1980,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     } catch (_) {
       recorder.dispose();
       if (mounted) {
-        showErrorSnackBar(context, 'Impossible de démarrer l'enregistrement.');
+        showErrorSnackBar(context, "Impossible de démarrer l'enregistrement.");
       }
       return;
     }
