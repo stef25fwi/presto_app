@@ -1256,16 +1256,16 @@ class _SplashScreenState extends State<SplashScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      ‘assets/images/logowebp.webp’,
+                      'assets/images/logowebp.webp',
                       width: 80,
                       height: 80,
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      ‘iliprestō’,
+                      'iliprestō',
                       style: TextStyle(
                         color: Colors.white,
-                        fontFamily: ‘Inter’,
+                        fontFamily: 'Inter',
                         fontSize: 48,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5,
