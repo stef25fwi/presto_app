@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Available font families selectable from the admin typography panel.
 const List<String> kAvailableFontFamilies = ['Inter', 'Rubik'];
+
+const _kPrefScale = 'typo_scale';
+const _kPrefFamily = 'typo_family';
+const _kPrefWeightDelta = 'typo_weight_delta';
 
 class TypographySettings extends ChangeNotifier {
   double _scale = 1.0;
@@ -15,6 +20,14 @@ class TypographySettings extends ChangeNotifier {
   /// Each step moves one slot in the w100…w900 ladder.
   int get fontWeightDelta => _fontWeightDelta;
 
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    _scale = prefs.getDouble(_kPrefScale) ?? 1.0;
+    _fontFamily = prefs.getString(_kPrefFamily) ?? 'Inter';
+    _fontWeightDelta = prefs.getInt(_kPrefWeightDelta) ?? 0;
+    notifyListeners();
+  }
+
   void apply({
     required double scale,
     required String fontFamily,
@@ -24,6 +37,7 @@ class TypographySettings extends ChangeNotifier {
     _fontFamily = fontFamily;
     _fontWeightDelta = fontWeightDelta;
     notifyListeners();
+    _persist(scale: scale, fontFamily: fontFamily, fontWeightDelta: fontWeightDelta);
   }
 
   void reset() {
@@ -31,6 +45,18 @@ class TypographySettings extends ChangeNotifier {
     _fontFamily = 'Inter';
     _fontWeightDelta = 0;
     notifyListeners();
+    _persist(scale: 1.0, fontFamily: 'Inter', fontWeightDelta: 0);
+  }
+
+  Future<void> _persist({
+    required double scale,
+    required String fontFamily,
+    required int fontWeightDelta,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_kPrefScale, scale);
+    await prefs.setString(_kPrefFamily, fontFamily);
+    await prefs.setInt(_kPrefWeightDelta, fontWeightDelta);
   }
 }
 

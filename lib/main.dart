@@ -641,6 +641,8 @@ Future<void> main() async {
     // précharge en parallèle de l'init Firebase (I/O), sans bloquer le 1er rendu.
     unawaited(CitySearch.instance.ensureLoaded());
 
+    await typographySettings.load();
+
     await ensureFirebaseInitialized(source: 'main');
 
     await bootstrapAppCheck();
