@@ -90,3 +90,4 @@ verify_fr_ilipresto_*.txt
 android/app/google-services.json.bad_cli_*.bak
 audit_push_web_notifications_*.txt
 android/.kotlin/
+android/app/upload-keystore.jks
