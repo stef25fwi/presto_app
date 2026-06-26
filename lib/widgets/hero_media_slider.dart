@@ -1,9 +1,13 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 
 import '../models/hero_slide.dart';
+
+String _muteKey(String uid) => 'hero_video_muted_$uid';
 
 class HeroMediaSlider extends StatefulWidget {
   final List<HeroSlide> slides;
@@ -25,10 +29,12 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
   final PageController _pageController = PageController();
   Timer? _slideTimer;
   int _currentIndex = 0;
+  bool _isMuted = false; // sound on by default
 
   @override
   void initState() {
     super.initState();
+    _loadMutePreference();
     _scheduleNextSlide();
   }
 
@@ -52,6 +58,26 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
     _slideTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadMutePreference() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // non-logged-in: always start unmuted
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getBool(_muteKey(user.uid));
+    if (saved != null && mounted) {
+      setState(() => _isMuted = saved);
+    }
+  }
+
+  Future<void> _toggleMute() async {
+    final newMuted = !_isMuted;
+    setState(() => _isMuted = newMuted);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_muteKey(user.uid), newMuted);
+    }
   }
 
   void _scheduleNextSlide() {
@@ -86,6 +112,9 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
     if (activeSlides.isEmpty) {
       return widget.fallback;
     }
+
+    final safeIndex = _currentIndex.clamp(0, activeSlides.length - 1);
+    final currentSlideIsVideo = activeSlides[safeIndex].isVideo;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -122,6 +151,7 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
                 final slide = activeSlides[index];
                 return _HeroMediaSlideView(
                   slide: slide,
+                  isMuted: _isMuted,
                   onVideoError: activeSlides.length <= 1
                       ? null
                       : () {
@@ -159,7 +189,43 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
                   ),
                 ),
               ),
+            if (currentSlideIsVideo)
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: _MuteToggleButton(
+                  isMuted: _isMuted,
+                  onToggle: _toggleMute,
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MuteToggleButton extends StatelessWidget {
+  final bool isMuted;
+  final VoidCallback onToggle;
+
+  const _MuteToggleButton({required this.isMuted, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          isMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+          color: Colors.white,
+          size: 17,
         ),
       ),
     );
@@ -169,9 +235,11 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
 class _HeroMediaSlideView extends StatefulWidget {
   final HeroSlide slide;
   final VoidCallback? onVideoError;
+  final bool isMuted;
 
   const _HeroMediaSlideView({
     required this.slide,
+    required this.isMuted,
     this.onVideoError,
   });
 
@@ -197,6 +265,8 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
       _disposeVideo();
       _hasVideoError = false;
       _initVideoIfNeeded();
+    } else if (oldWidget.isMuted != widget.isMuted) {
+      _videoController?.setVolume(widget.isMuted ? 0.0 : 1.0);
     }
   }
 
@@ -221,7 +291,7 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
     _videoController = controller;
     try {
       await controller.initialize();
-      await controller.setVolume(0);
+      await controller.setVolume(widget.isMuted ? 0.0 : 1.0);
       await controller.setLooping(true);
       await controller.play();
       if (mounted) {
