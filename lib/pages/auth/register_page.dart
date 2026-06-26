@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../pages/legal_info_page.dart';
 import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 import 'verify_email_page.dart';
@@ -187,6 +188,26 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: _loading
                             ? const CircularProgressIndicator()
                             : const Text('Créer mon compte'),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const LegalInfoPage(initialTab: 2),
+                          ),
+                        ),
+                        child: const Text(
+                          'Mentions légales',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFFFF6600),
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFFFF6600),
+                          ),
+                        ),
                       ),
                     ),
                   ],
