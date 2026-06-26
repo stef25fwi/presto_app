@@ -40,7 +40,7 @@ void showPrestoSnackBar(BuildContext context, String message) {
             child: Text(
               message,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFF1A202C),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -48,7 +48,7 @@ void showPrestoSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: Colors.grey.shade800,
+      backgroundColor: const Color(0xFFF2F3F5),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -87,7 +87,7 @@ void showErrorSnackBar(BuildContext context, String message) {
             child: Text(
               message,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFF1A202C),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -95,7 +95,7 @@ void showErrorSnackBar(BuildContext context, String message) {
           ),
         ],
       ),
-      backgroundColor: Colors.grey.shade800,
+      backgroundColor: const Color(0xFFF2F3F5),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

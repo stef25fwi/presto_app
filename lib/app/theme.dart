@@ -131,6 +131,13 @@ ThemeData _buildPrestoThemeData() {
       ),
     ),
     snackBarTheme: SnackBarThemeData(
+      backgroundColor: const Color(0xFFF2F3F5),
+      contentTextStyle: const TextStyle(
+        color: Color(0xFF1A202C),
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
       ),
