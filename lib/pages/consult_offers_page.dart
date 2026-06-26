@@ -2824,13 +2824,7 @@ class _OfferBrowseTile extends StatefulWidget {
 }
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
-  static const String _urgentChronoAsset = 'assets/icons/chrono_urgent.webp';
   Widget _buildFallbackPhoto() {
-    final fallbackAsset =
-        widget.data.isUrgent && !widget.data.showJobDoneOverlay
-            ? _urgentChronoAsset
-            : 'assets/images/logowebp.webp';
-
     return Container(
       width: 92,
       height: 92,
@@ -2842,11 +2836,11 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: Image.asset(
-          fallbackAsset,
+          'assets/images/logowebp.webp',
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
           errorBuilder: (_, __, ___) => const Icon(
-            Icons.timer_outlined,
+            Icons.image_outlined,
             size: 42,
             color: kPrestoOrange,
           ),
@@ -2879,7 +2873,6 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
 
   @override
   Widget build(BuildContext context) {
-    // Les annonces urgentes sont signalées par le chrono, sans contour bleu.
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: _buildTileFrame(),
@@ -3069,17 +3062,24 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       ),
                     ),
                   if (widget.data.isUrgent && !widget.data.showJobDoneOverlay)
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: IgnorePointer(
-                        child: Opacity(
-                          opacity: 0.88,
-                          child: Image.asset(
-                            'assets/images/stamp_urgent.png',
-                            width: 88,
-                            height: 88,
-                            fit: BoxFit.contain,
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: IgnorePointer(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.78),
+                              borderRadius: BorderRadius.circular(outerRadius),
+                            ),
+                            alignment: Alignment.center,
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Image.asset(
+                                'assets/images/urgent_stamp.webp',
+                                height: 132,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.none,
+                              ),
+                            ),
                           ),
                         ),
                       ),
