@@ -35,62 +35,6 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
-Stream<QuerySnapshot<Map<String, dynamic>>> _pollConversationQuerySnapshots(
-  Query<Map<String, dynamic>> query, {
-  Duration interval = const Duration(seconds: 5),
-}) {
-  late StreamController<QuerySnapshot<Map<String, dynamic>>> controller;
-  bool cancelled = false;
-
-  Future<void> poll() async {
-    while (!cancelled) {
-      try {
-        if (!controller.isClosed) controller.add(await query.get());
-      } catch (error, stack) {
-        // Émet l'erreur au listener (→ handleError → emitState)
-        // sans fermer le stream → le poll continue
-        if (!cancelled && !controller.isClosed) {
-          controller.addError(error, stack);
-        }
-      }
-      if (!cancelled) await Future<void>.delayed(interval);
-    }
-  }
-
-  controller = StreamController(
-    onListen: () => poll(),
-    onCancel: () => cancelled = true,
-  );
-  return controller.stream;
-}
-
-Stream<DocumentSnapshot<Map<String, dynamic>>>
-    _pollConversationDocumentSnapshot(
-  DocumentReference<Map<String, dynamic>> document, {
-  Duration interval = const Duration(seconds: 15),
-}) {
-  late StreamController<DocumentSnapshot<Map<String, dynamic>>> controller;
-  bool cancelled = false;
-
-  Future<void> poll() async {
-    while (!cancelled) {
-      try {
-        if (!controller.isClosed) controller.add(await document.get());
-      } catch (error, stack) {
-        if (!cancelled && !controller.isClosed) {
-          controller.addError(error, stack);
-        }
-      }
-      if (!cancelled) await Future<void>.delayed(interval);
-    }
-  }
-
-  controller = StreamController(
-    onListen: () => poll(),
-    onCancel: () => cancelled = true,
-  );
-  return controller.stream;
-}
 
 class ConversationsQueryContract {
   const ConversationsQueryContract._();
@@ -817,12 +761,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 descending: queryShape['descending']! as bool)
             .limit(queryShape['limit']! as int);
         subscriptions.add(
-          _pollConversationQuerySnapshots(
-            query,
-            interval: const Duration(seconds: 8),
-          ).listen(
+          query.snapshots().listen(
             (snapshot) => handleSnapshot('admin_global', snapshot),
             onError: (error, stackTrace) => handleError('admin_global', error),
+            cancelOnError: true,
           ),
         );
       } else {
@@ -838,9 +780,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               .collection(queryShape['collection']! as String)
               .where(field, arrayContains: userId);
           subscriptions.add(
-            _pollConversationQuerySnapshots(query).listen(
+            query.snapshots().listen(
               (snapshot) => handleSnapshot(field, snapshot),
               onError: (error, stackTrace) => handleError(field, error),
+              cancelOnError: true,
             ),
           );
         }
@@ -2468,9 +2411,7 @@ class _ConversationAvatar extends StatelessWidget {
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: _pollConversationDocumentSnapshot(
-        FirebaseFirestore.instance.collection('users').doc(userId),
-      ),
+      stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? const <String, dynamic>{};
         final status = (data['status'] ?? '').toString().trim().toLowerCase();
