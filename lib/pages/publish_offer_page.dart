@@ -3996,9 +3996,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   itemCount: _visiblePhotoTileCount,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 1.8,
                   ),
                   itemBuilder: (context, index) {
                     final hasPhoto = index < _selectedPhotos.length;

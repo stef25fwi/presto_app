@@ -34,26 +34,26 @@ class PhotoSelectorTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _kAddPhotoBlue.withOpacity(0.45),
               ),
             ),
             child: const Icon(
               Icons.add_a_photo_outlined,
-              size: 26,
+              size: 18,
               color: _kAddPhotoBlue,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: Colors.black54,
             ),
