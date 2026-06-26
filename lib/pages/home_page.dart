@@ -1651,8 +1651,11 @@ class _HomePageState extends State<HomePage>
     // A la fermeture du clavier, la barre reapparait normalement en bas.
     final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
-    final _statusBarColor =
-        (!kIsWeb && _selectedIndex == 1) ? kPrestoOrange : kPrestoBlue;
+    final _statusBarColor = _selectedIndex == 0
+        ? Colors.white // home tab: scaffold blanc → icônes sombres
+        : (!kIsWeb && _selectedIndex == 1)
+            ? kPrestoOrange
+            : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(_statusBarColor),
       child: GestureDetector(
