@@ -2719,7 +2719,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               SafeArea(
                 top: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -2741,13 +2741,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                       ],
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
                           IconButton.filledTonal(
                             tooltip: 'Ajouter une pièce jointe',
+                            visualDensity: VisualDensity.compact,
                             onPressed: (_isBlocked ||
                                     _isUploadingAttachment ||
                                     _isSending)
@@ -2755,7 +2756,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 : _showAttachmentSheet,
                             icon: const Icon(Icons.add_rounded),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
@@ -2800,14 +2801,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   ),
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                                    horizontal: 10,
                                     vertical: 13,
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           FilledButton(
                             onPressed: (_isSending ||
                                     _isUploadingAttachment ||
@@ -2820,7 +2821,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               backgroundColor: kWhatsappGreen,
                               foregroundColor: Colors.white,
                               shape: const CircleBorder(),
-                              padding: const EdgeInsets.all(14),
+                              padding: const EdgeInsets.all(11),
                             ),
                             child: (_isSending || _isUploadingAttachment)
                                 ? const SizedBox(
