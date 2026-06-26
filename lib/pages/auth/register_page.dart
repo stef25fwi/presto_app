@@ -15,7 +15,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
+  final _fullNameCtrl = TextEditingController();
+  final _pseudoCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
 
@@ -24,7 +25,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
+    _fullNameCtrl.dispose();
+    _pseudoCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
@@ -39,7 +41,9 @@ class _RegisterPageState extends State<RegisterPage> {
       await AuthService.instance.registerWithEmail(
         email: _emailCtrl.text,
         password: _passwordCtrl.text,
-        displayName: _nameCtrl.text,
+        displayName: _pseudoCtrl.text.trim(),
+        fullName: _fullNameCtrl.text.trim(),
+        pseudo: _pseudoCtrl.text.trim(),
       );
 
       if (!mounted) return;
@@ -58,8 +62,15 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  String? _nameValidator(String? value) {
-    if ((value ?? '').trim().length < 2) return 'Nom obligatoire.';
+  String? _fullNameValidator(String? value) {
+    if ((value ?? '').trim().length < 2) return 'Nom et prénom obligatoires.';
+    return null;
+  }
+
+  String? _pseudoValidator(String? value) {
+    final text = (value ?? '').trim();
+    if (text.length < 2) return 'Pseudo obligatoire (2 caractères minimum).';
+    if (text.length > 30) return 'Pseudo trop long (30 caractères maximum).';
     return null;
   }
 
@@ -73,8 +84,7 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _passwordValidator(String? value) {
     final text = value ?? '';
     if (text.length < 8) return '8 caractères minimum.';
-    if (!RegExp(r'[A-Za-z]').hasMatch(text))
-      return 'Ajoute au moins une lettre.';
+    if (!RegExp(r'[A-Za-z]').hasMatch(text)) return 'Ajoute au moins une lettre.';
     if (!RegExp(r'[0-9]').hasMatch(text)) return 'Ajoute au moins un chiffre.';
     return null;
   }
@@ -94,20 +104,48 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Form(
                 key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Bienvenue sur Prestō',
-                      style:
-                          TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _nameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Nom affiché',
-                        border: OutlineInputBorder(),
+                    const Center(
+                      child: Text(
+                        'Bienvenue sur Prestō',
+                        style: TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.w800),
                       ),
-                      validator: _nameValidator,
+                    ),
+                    const SizedBox(height: 8),
+                    const Center(
+                      child: Text(
+                        'Particulier',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFFF6600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    TextFormField(
+                      controller: _fullNameCtrl,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Nom + Prénom',
+                        hintText: 'Ex : Martin Dupont',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: _fullNameValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _pseudoCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Pseudo',
+                        hintText: 'Votre nom affiché publiquement',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.alternate_email),
+                      ),
+                      validator: _pseudoValidator,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -116,6 +154,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
                       validator: _emailValidator,
                     ),
@@ -126,6 +165,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
                         border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(_hidePassword
                               ? Icons.visibility
@@ -141,8 +181,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        style:
-                            ElevatedButton.styleFrom(backgroundColor: orange),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: orange),
                         onPressed: _loading ? null : _register,
                         child: _loading
                             ? const CircularProgressIndicator()
