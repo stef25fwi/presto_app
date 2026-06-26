@@ -3067,7 +3067,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                         child: IgnorePointer(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.78),
+                              color: Colors.white.withValues(alpha: 0.40),
                               borderRadius: BorderRadius.circular(outerRadius),
                             ),
                             alignment: Alignment.center,
@@ -3075,7 +3075,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                               padding: const EdgeInsets.all(18),
                               child: Image.asset(
                                 'assets/images/urgent_stamp.webp',
-                                height: 132,
+                                height: 72,
                                 fit: BoxFit.contain,
                                 filterQuality: FilterQuality.none,
                               ),
@@ -3091,6 +3091,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(outerRadius),
                           onTap: widget.onTap,
+                          hoverColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
                         ),
                       ),
                     ),
