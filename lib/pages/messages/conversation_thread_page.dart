@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/presto_overlay_theme.dart';
@@ -24,6 +26,10 @@ import '../../utils/friendly_snackbar.dart';
 import '../../widgets/offer_network_image.dart';
 import 'package:presto_app/services/auth_guard.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
+import '../../utils/recording_path_web.dart'
+    if (dart.library.io) '../../utils/recording_path_io.dart';
+import '../../utils/temp_file_helper_web.dart'
+    if (dart.library.io) '../../utils/temp_file_helper_io.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -128,6 +134,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   String _otherParticipantPhotoUrl = '';
   String _otherPresenceStatus = '';
   DateTime? _otherLastSeenAt;
+  bool _isRecording = false;
+  Timer? _recordingTimer;
+  Duration _recordingDuration = Duration.zero;
+  AudioRecorder? _voiceRecorder;
+  String? _currentRecordingPath;
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
@@ -298,6 +309,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _conversationSubscription?.cancel();
     _presenceSubscription?.cancel();
     _typingStopTimer?.cancel();
+    _recordingTimer?.cancel();
+    _voiceRecorder?.dispose();
     unawaited(_publishTyping(false));
     _controller.removeListener(_handleDraftChanged);
     _controller.dispose();
@@ -1697,9 +1710,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   String _attachmentMessageText(_MessageAttachment attachment) {
-    return attachment.type == 'image'
-        ? 'Photo : ${attachment.name}'
-        : 'Document : ${attachment.name}';
+    if (attachment.type == 'image') return 'Photo : ${attachment.name}';
+    if (attachment.type == 'audio') return 'Note vocale';
+    return 'Document : ${attachment.name}';
   }
 
   Future<void> _pickAndSendPhoto() async {
@@ -1933,10 +1946,155 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  void _showVoiceNotePlaceholder() {
-    showSuccessSnackBar(
-      context,
-      'Les notes vocales seront activées dans la prochaine étape.',
+  Future<void> _showVoiceRecordingSheet() async {
+    if (kIsWeb) {
+      showErrorSnackBar(
+        context,
+        'Les notes vocales ne sont pas disponibles dans le navigateur.',
+      );
+      return;
+    }
+    final recorder = AudioRecorder();
+    final hasPermission = await recorder.hasPermission();
+    if (!hasPermission) {
+      recorder.dispose();
+      if (mounted) {
+        showErrorSnackBar(context, 'Permission microphone refusée.');
+      }
+      return;
+    }
+    String path;
+    try {
+      path = await createTempAudioPath(
+        prefix: 'note_vocale',
+        extension: 'm4a',
+      );
+      await recorder.start(
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          sampleRate: 44100,
+          numChannels: 1,
+        ),
+        path: path,
+      );
+    } catch (_) {
+      recorder.dispose();
+      if (mounted) {
+        showErrorSnackBar(context, 'Impossible de démarrer l'enregistrement.');
+      }
+      return;
+    }
+    if (!mounted) {
+      try {
+        await recorder.stop();
+      } catch (_) {}
+      recorder.dispose();
+      return;
+    }
+    setState(() {
+      _isRecording = true;
+      _voiceRecorder = recorder;
+      _currentRecordingPath = path;
+      _recordingDuration = Duration.zero;
+    });
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _recordingDuration += const Duration(seconds: 1));
+    });
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _VoiceRecordingSheet(
+        onCancel: () {
+          Navigator.of(ctx).pop();
+          unawaited(_cancelVoiceRecording());
+        },
+        onSend: () {
+          Navigator.of(ctx).pop();
+          unawaited(_stopAndSendVoiceNote());
+        },
+      ),
+    );
+    if (_isRecording) {
+      unawaited(_cancelVoiceRecording());
+    }
+  }
+
+  Future<void> _cancelVoiceRecording() async {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+    final recorder = _voiceRecorder;
+    final path = _currentRecordingPath;
+    if (mounted) {
+      setState(() {
+        _isRecording = false;
+        _voiceRecorder = null;
+        _currentRecordingPath = null;
+        _recordingDuration = Duration.zero;
+      });
+    }
+    if (recorder != null) {
+      try {
+        await recorder.stop();
+      } catch (_) {}
+      recorder.dispose();
+    }
+    if (path != null) {
+      deleteTempFile(path);
+    }
+  }
+
+  Future<void> _stopAndSendVoiceNote() async {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+    final recorder = _voiceRecorder;
+    final path = _currentRecordingPath;
+    final duration = _recordingDuration;
+    if (mounted) {
+      setState(() {
+        _isRecording = false;
+        _voiceRecorder = null;
+        _currentRecordingPath = null;
+        _recordingDuration = Duration.zero;
+      });
+    }
+    if (recorder == null || path == null) return;
+    try {
+      await recorder.stop();
+    } catch (_) {}
+    recorder.dispose();
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) {
+      deleteTempFile(path);
+      if (mounted) {
+        showErrorSnackBar(context, 'Connectez-vous pour envoyer une note vocale.');
+      }
+      return;
+    }
+    Uint8List bytes;
+    try {
+      bytes = await readTempFile(path);
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Erreur lors de la lecture de la note vocale.');
+      }
+      return;
+    } finally {
+      deleteTempFile(path);
+    }
+    final secs = duration.inSeconds;
+    final name = 'note_vocale_${secs}s.m4a';
+    await _uploadAndSendAttachment(
+      uid: authUser.uid,
+      type: 'audio',
+      name: name,
+      bytes: bytes,
+      mimeType: 'audio/mp4',
     );
   }
 
@@ -2030,6 +2188,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ),
         ),
       );
+    }
+
+    if (attachment.type == 'audio') {
+      return _VoiceNotePlayer(url: attachment.url);
     }
 
     return InkWell(
@@ -2816,7 +2978,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 ? null
                                 : _hasDraftText
                                     ? _sendMessage
-                                    : _showVoiceNotePlaceholder,
+                                    : () => unawaited(_showVoiceRecordingSheet()),
                             style: FilledButton.styleFrom(
                               backgroundColor: kWhatsappGreen,
                               foregroundColor: Colors.white,
@@ -2925,13 +3087,19 @@ class _MessageAttachment {
     final sizeBytes = (data['sizeBytes'] is num)
         ? (data['sizeBytes'] as num).round()
         : int.tryParse((data['sizeBytes'] ?? '').toString()) ?? 0;
-    if ((type != 'image' && type != 'document') || url.trim().isEmpty) {
+    if ((type != 'image' && type != 'document' && type != 'audio') ||
+        url.trim().isEmpty) {
       return null;
     }
     return _MessageAttachment(
       type: type,
-      name:
-          name.trim().isEmpty ? (type == 'image' ? 'Photo' : 'Document') : name,
+      name: name.trim().isEmpty
+          ? (type == 'image'
+              ? 'Photo'
+              : type == 'audio'
+                  ? 'Note vocale'
+                  : 'Document')
+          : name,
       url: url,
       thumbnailUrl: thumbnailUrl.trim().isEmpty ? url : thumbnailUrl,
       storagePath: storagePath,
@@ -3127,6 +3295,265 @@ class _ConversationPatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _VoiceRecordingSheet extends StatefulWidget {
+  final VoidCallback onCancel;
+  final VoidCallback onSend;
+
+  const _VoiceRecordingSheet({required this.onCancel, required this.onSend});
+
+  @override
+  State<_VoiceRecordingSheet> createState() => _VoiceRecordingSheetState();
+}
+
+class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
+    with SingleTickerProviderStateMixin {
+  Timer? _displayTimer;
+  Duration _elapsed = Duration.zero;
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+    _displayTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsed += const Duration(seconds: 1));
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _displayTimer?.cancel();
+    super.dispose();
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FadeTransition(
+                  opacity: _pulseController,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  _fmt(_elapsed),
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Enregistrement en cours…',
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: widget.onCancel,
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Annuler'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: widget.onSend,
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text('Envoyer'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: kWhatsappGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VoiceNotePlayer extends StatefulWidget {
+  final String url;
+
+  const _VoiceNotePlayer({required this.url});
+
+  @override
+  State<_VoiceNotePlayer> createState() => _VoiceNotePlayerState();
+}
+
+class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
+  late final AudioPlayer _player;
+  StreamSubscription<PlayerState>? _stateSub;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration>? _durationSub;
+  StreamSubscription<void>? _completeSub;
+
+  PlayerState _state = PlayerState.stopped;
+  Duration _position = Duration.zero;
+  Duration _total = Duration.zero;
+  bool _isLoading = false;
+
+  bool get _isPlaying => _state == PlayerState.playing;
+  bool get _isPaused => _state == PlayerState.paused;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+    _stateSub = _player.onPlayerStateChanged.listen((s) {
+      if (!mounted) return;
+      setState(() {
+        _state = s;
+        _isLoading = false;
+      });
+    });
+    _positionSub = _player.onPositionChanged.listen((p) {
+      if (!mounted) return;
+      setState(() => _position = p);
+    });
+    _durationSub = _player.onDurationChanged.listen((d) {
+      if (!mounted) return;
+      setState(() => _total = d);
+    });
+    _completeSub = _player.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      setState(() {
+        _state = PlayerState.stopped;
+        _position = Duration.zero;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _stateSub?.cancel();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _completeSub?.cancel();
+    _player.dispose();
+    super.dispose();
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  Future<void> _toggle() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      if (_isPlaying) {
+        await _player.pause();
+      } else if (_isPaused) {
+        await _player.resume();
+      } else {
+        await _player.play(UrlSource(widget.url));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _state = PlayerState.stopped;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _total.inMilliseconds > 0
+        ? (_position.inMilliseconds / _total.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 240, minWidth: 180),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : IconButton.filled(
+                    padding: EdgeInsets.zero,
+                    iconSize: 20,
+                    onPressed: _toggle,
+                    icon: Icon(
+                      _isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 3,
+                  backgroundColor: const Color(0x33000000),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _total > Duration.zero
+                      ? '${_fmt(_position)} / ${_fmt(_total)}'
+                      : _fmt(_position),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 String _formatMessageTimestamp(DateTime? date) {
