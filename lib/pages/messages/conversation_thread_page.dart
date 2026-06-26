@@ -43,25 +43,6 @@ const kConversationThreadStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
-Stream<QuerySnapshot<Map<String, dynamic>>> _pollFirestoreQuerySnapshots(
-  Query<Map<String, dynamic>> query, {
-  Duration interval = const Duration(seconds: 4),
-}) async* {
-  while (true) {
-    yield await query.get();
-    await Future<void>.delayed(interval);
-  }
-}
-
-Stream<DocumentSnapshot<Map<String, dynamic>>> _pollFirestoreDocumentSnapshot(
-  DocumentReference<Map<String, dynamic>> document, {
-  Duration interval = const Duration(seconds: 6),
-}) async* {
-  while (true) {
-    yield await document.get();
-    await Future<void>.delayed(interval);
-  }
-}
 
 class ConversationThreadPage extends StatefulWidget {
   final String conversationId;
@@ -287,7 +268,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     } else {
       query = query.limit(_messagePageSize);
     }
-    return _pollFirestoreQuerySnapshots(query);
+    return query.snapshots();
   }
 
   @override
@@ -626,10 +607,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _presenceSubscription?.cancel();
     final userDocument =
         FirebaseFirestore.instance.collection('users').doc(participantId);
-    _presenceSubscription = _pollFirestoreDocumentSnapshot(
-      userDocument,
-      interval: const Duration(seconds: 12),
-    ).listen((snapshot) {
+    _presenceSubscription = userDocument.snapshots().listen((snapshot) {
       final data = snapshot.data();
       if (data == null) return;
       final rawPhotoValue = _firstProfilePhotoValue(data);
@@ -937,10 +915,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final conversationDocument = FirebaseFirestore.instance
         .collection('conversations')
         .doc(widget.conversationId);
-    _conversationSubscription = _pollFirestoreDocumentSnapshot(
-      conversationDocument,
-      interval: const Duration(seconds: 4),
-    ).listen((snapshot) {
+    _conversationSubscription = conversationDocument.snapshots().listen((snapshot) {
       if (!snapshot.exists) {
         _debugMessagingAccess(
           'conversation-document-not-found',
@@ -1730,6 +1705,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (picked == null) return;
 
     final bytes = await picked.readAsBytes();
+    if (!mounted) return;
     final name = _safeAttachmentName(picked.name, 'photo.jpg');
     await _uploadAndSendAttachment(
       uid: authUser.uid,
@@ -1753,6 +1729,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
+    if (!mounted) return;
 
     final file = result.files.single;
     final bytes = file.bytes;
