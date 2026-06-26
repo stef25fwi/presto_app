@@ -14,11 +14,17 @@ class LegalInfoPage extends StatefulWidget {
 class _LegalInfoPageState extends State<LegalInfoPage> {
   static const Color kOrange = Color(0xFFFF6600);
   static const Color kBg = Color(0xFFFFFFFF);
-  static const String kContactEmail = ‘contact@ilipresto.fr’;
+  static const String kContactEmail = "contact@ilipresto.fr";
   static const String kSupportProcess =
-      ‘Depuis Mon profil, vous pouvez créer une demande support, une demande d’export ou une demande de suppression. L’e-mail reste un canal de secours.’;
+      "Depuis Mon profil, vous pouvez créer une demande support, une demande d’export ou une demande de suppression. L’e-mail reste un canal de secours.";
 
-  late int _tab = widget.initialTab; // 0=Mentions, 1=Confidentialité, 2=CGU
+  int _tab = 0; // 0=Mentions, 1=Confidentialité, 2=CGU
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = widget.initialTab;
+  }
 
   String _formatDateFr(DateTime d) {
     const months = [
