@@ -3848,6 +3848,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             contentPadding: const EdgeInsets.fromLTRB(
                               12, 14, 12, 108,
                             ),
+                            hintText:
+                                'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
+                            hintStyle: const TextStyle(
+                              fontStyle: FontStyle.italic,
+                              color: Color(0xFFBBC0CF),
+                              fontSize: 13.5,
+                              height: 1.4,
+                            ),
                           ),
                           minLines: 4,
                           maxLines: 8,
