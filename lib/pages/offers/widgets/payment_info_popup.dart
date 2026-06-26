@@ -223,47 +223,39 @@ class _Header extends StatelessWidget {
         color: Colors.white,
         border: Border(bottom: BorderSide(color: kBorder)),
       ),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Row(
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'assets/images/logowebp.webp',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'iliprestō',
-                style: TextStyle(
-                  color: Color(0xFFFF6600),
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1.4,
-                ),
-              ),
-            ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/images/logowebp.webp',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+            ),
           ),
-          Positioned(
-            right: 0,
-            child: InkWell(
-              onTap: onClose,
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                width: 46,
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF3F6FB),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
+          const SizedBox(width: 8),
+          const Text(
+            'iliprestō',
+            style: TextStyle(
+              color: Color(0xFFFF6600),
+              fontSize: 30,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -1.4,
+            ),
+          ),
+          const Spacer(),
+          InkWell(
+            onTap: onClose,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF3F6FB),
+                shape: BoxShape.circle,
               ),
+              child: const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
             ),
           ),
         ],
