@@ -3066,10 +3066,6 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       child: RepaintBoundary(
                         child: IgnorePointer(
                           child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.40),
-                              borderRadius: BorderRadius.circular(outerRadius),
-                            ),
                             alignment: Alignment.center,
                             child: Padding(
                               padding: const EdgeInsets.all(18),
