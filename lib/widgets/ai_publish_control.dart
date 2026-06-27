@@ -14,6 +14,7 @@ class AiPublishControl extends StatelessWidget {
     required this.state,
     required this.onStartRecording,
     required this.onStopRecording,
+    required this.onStartWriting,
     required this.onDiagnostic,
     required this.onClear,
     this.showAdminDiagnostics = false,
@@ -22,6 +23,7 @@ class AiPublishControl extends StatelessWidget {
   final AiPublishState state;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
+  final VoidCallback onStartWriting;
   final VoidCallback onDiagnostic;
   final VoidCallback onClear;
   final bool showAdminDiagnostics;
@@ -41,10 +43,13 @@ class AiPublishControl extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PrimaryAiButton(
-          state: state,
-          onTap: _primaryAction,
-        ),
+        if (_isReady)
+          _AiChoiceCard(
+            onParler: onStartRecording,
+            onEcrire: onStartWriting,
+          )
+        else
+          _PrimaryAiButton(state: state, onTap: _primaryAction),
         const SizedBox(height: 18),
         _StatusPill(state: state),
         if (showAdminDiagnostics) ...[
@@ -69,6 +74,183 @@ class AiPublishControl extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+// ─── Nouvelle disposition 2 choix ────────────────────────────────────────────
+
+class _AiChoiceCard extends StatelessWidget {
+  const _AiChoiceCard({
+    required this.onParler,
+    required this.onEcrire,
+  });
+
+  final VoidCallback onParler;
+  final VoidCallback onEcrire;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ChoicePanel(
+                    colors: const [Color(0xFF1A6FFF), Color(0xFF0052E0)],
+                    icon: Icons.mic_rounded,
+                    title: 'Parler à l\'IA',
+                    subtitle: 'L\'IA remplit l\'annonce',
+                    buttonLabel: 'Parler à l\'IA',
+                    onTap: onParler,
+                  ),
+                ),
+                Expanded(
+                  child: _ChoicePanel(
+                    colors: const [Color(0xFF1145C8), Color(0xFF0D2FA8)],
+                    icon: Icons.edit_rounded,
+                    title: 'Écrire + améliorer',
+                    subtitle: 'Je remplis, l\'IA reformule',
+                    buttonLabel: 'Commencer à écrire',
+                    onTap: onEcrire,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Cercle "ou" centré entre les deux panneaux
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: const Text(
+              'ou',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1A3A8F),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChoicePanel extends StatelessWidget {
+  const _ChoicePanel({
+    required this.colors,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.onTap,
+  });
+
+  final List<Color> colors;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String buttonLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: colors,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 22, 14, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      width: 1.5,
+                    ),
+                    color: Colors.white.withValues(alpha: 0.14),
+                  ),
+                  child: Icon(icon, size: 30, color: Colors.white),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.82),
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        buttonLabel,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A3A8F),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF1A3A8F),
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
