@@ -2825,6 +2825,35 @@ class _OfferBrowseTile extends StatefulWidget {
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   Widget _buildFallbackPhoto() {
+    if (widget.data.isUrgent) {
+      return Container(
+        width: 92,
+        height: 92,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3E0),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFFFB74D), width: 1.6),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.bolt_rounded, color: Color(0xFFE65100), size: 28),
+            SizedBox(height: 4),
+            Text(
+              'URGENT',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFE65100),
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: 92,
       height: 92,
@@ -2832,19 +2861,11 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         color: const Color(0xFFF4F4F5),
         borderRadius: BorderRadius.circular(18),
       ),
-      padding: const EdgeInsets.all(10),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Image.asset(
-          'assets/images/logowebp.webp',
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (_, __, ___) => const Icon(
-            Icons.image_outlined,
-            size: 42,
-            color: kPrestoOrange,
-          ),
-        ),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        size: 36,
+        color: Color(0xFFBBBFC9),
       ),
     );
   }
