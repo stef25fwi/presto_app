@@ -168,73 +168,14 @@ class _PrestoStartupSplashScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: _orange,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'iliprestō',
-                    style: TextStyle(
-                      fontSize: 54,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  const Text(
-                    'Trouvez un prestataire\nillico presto!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      height: 1.25,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 46),
-                  SizedBox(
-                    width: 260,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white, width: 2),
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      onPressed: () {},
-                      child: const Text(
-                        "J'offre un job",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                        backgroundColor: kPrestoBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      onPressed: () {},
-                      child: const Text(
-                        "Je consulte les offres",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        body: const Center(
+          child: Text(
+            'iliprestō',
+            style: TextStyle(
+              fontSize: 54,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 1.3,
             ),
           ),
         ),
@@ -1145,19 +1086,16 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    // Pour le lancement racine ("/" ou mobile), l'utilisateur navigue
-    // en cliquant l'un des 2 boutons. L'auto-timer ne s'active que pour
-    // les deep links et chemins spéciaux (ex: /publish).
-    if (_shouldAutoNavigate()) {
-      _scheduleNavigation(const Duration(milliseconds: 600));
-    }
-  }
-
-  bool _shouldAutoNavigate() {
-    if (!kIsWeb) return false;
-    final webPath = _normalizedWebPath();
-    if (webPath.isEmpty || webPath == '/') return false;
-    return true;
+    // Racine "/" ou mobile → HomePage après 3s (la home se charge en arrière-plan).
+    // Deep links → destination directe après 600ms.
+    final isRoot = !kIsWeb ||
+        _normalizedWebPath().isEmpty ||
+        _normalizedWebPath() == '/';
+    _scheduleNavigation(
+      isRoot
+          ? const Duration(seconds: 3)
+          : const Duration(milliseconds: 600),
+    );
   }
 
   String _normalizedWebPath() {
