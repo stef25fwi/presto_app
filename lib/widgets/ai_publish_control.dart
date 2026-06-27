@@ -103,6 +103,7 @@ class _AiChoiceCard extends StatelessWidget {
                 Expanded(
                   child: _ChoicePanel(
                     colors: const [Color(0xFF1A6FFF), Color(0xFF0052E0)],
+                    buttonTextColor: const Color(0xFF1A3A8F),
                     icon: Icons.mic_rounded,
                     title: 'Parler à l\'IA',
                     subtitle: 'L\'IA remplit l\'annonce',
@@ -112,7 +113,8 @@ class _AiChoiceCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: _ChoicePanel(
-                    colors: const [Color(0xFF1145C8), Color(0xFF0D2FA8)],
+                    colors: const [Color(0xFFFF6600), Color(0xFFE04E00)],
+                    buttonTextColor: const Color(0xFFCC4400),
                     icon: Icons.edit_rounded,
                     title: 'Écrire + améliorer',
                     subtitle: 'Je remplis, l\'IA reformule',
@@ -137,7 +139,7 @@ class _AiChoiceCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF1A3A8F),
+                color: Color(0xFF333333),
               ),
             ),
           ),
@@ -150,6 +152,7 @@ class _AiChoiceCard extends StatelessWidget {
 class _ChoicePanel extends StatelessWidget {
   const _ChoicePanel({
     required this.colors,
+    required this.buttonTextColor,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -158,6 +161,7 @@ class _ChoicePanel extends StatelessWidget {
   });
 
   final List<Color> colors;
+  final Color buttonTextColor;
   final IconData icon;
   final String title;
   final String subtitle;
@@ -228,16 +232,16 @@ class _ChoicePanel extends StatelessWidget {
                 children: [
                   Text(
                     buttonLabel,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A3A8F),
+                      color: buttonTextColor,
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
-                    color: Color(0xFF1A3A8F),
+                    color: buttonTextColor,
                     size: 18,
                   ),
                 ],
