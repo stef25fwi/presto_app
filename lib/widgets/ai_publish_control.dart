@@ -8,7 +8,11 @@ enum AiPublishState {
   analyzing,
 }
 
-class AiPublishControl extends StatelessWidget {
+enum _AiMethod { vocal, texte }
+
+// ─── AiPublishControl ─────────────────────────────────────────────────────────
+
+class AiPublishControl extends StatefulWidget {
   const AiPublishControl({
     super.key,
     required this.state,
@@ -28,14 +32,23 @@ class AiPublishControl extends StatelessWidget {
   final VoidCallback onClear;
   final bool showAdminDiagnostics;
 
-  bool get _isReady => state == AiPublishState.ready;
-  bool get _isRecording => state == AiPublishState.recording;
-  bool get _isAnalyzing => state == AiPublishState.analyzing;
+  @override
+  State<AiPublishControl> createState() => _AiPublishControlState();
+}
 
-  VoidCallback? get _primaryAction {
-    if (_isRecording) return onStopRecording;
-    if (_isAnalyzing) return null;
-    return onStartRecording;
+class _AiPublishControlState extends State<AiPublishControl> {
+  _AiMethod _method = _AiMethod.vocal;
+
+  bool get _isReady => widget.state == AiPublishState.ready;
+
+  @override
+  void didUpdateWidget(covariant AiPublishControl oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si un enregistrement démarre depuis le mode texte, on revient au mode vocal.
+    if (oldWidget.state == AiPublishState.ready &&
+        widget.state != AiPublishState.ready) {
+      setState(() => _method = _AiMethod.vocal);
+    }
   }
 
   @override
@@ -43,18 +56,35 @@ class AiPublishControl extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_isReady)
-          _AiChoiceCard(
-            onParler: onStartRecording,
-            onEcrire: onStartWriting,
-          )
-        else
-          _PrimaryAiButton(state: state, onTap: _primaryAction),
-        const SizedBox(height: 18),
-        _StatusPill(state: state),
-        if (showAdminDiagnostics) ...[
+        const Text(
+          'Choisissez votre méthode',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1A2238),
+          ),
+        ),
+        const SizedBox(height: 14),
+        _MethodTabRow(
+          method: _method,
+          enabled: _isReady,
+          onSelectVocal: () => setState(() => _method = _AiMethod.vocal),
+          onSelectTexte: () {
+            setState(() => _method = _AiMethod.texte);
+            widget.onStartWriting();
+          },
+        ),
+        const SizedBox(height: 16),
+        _VocalModeCard(
+          state: widget.state,
+          visible: _method == _AiMethod.vocal,
+          onStartRecording: widget.onStartRecording,
+          onStopRecording: widget.onStopRecording,
+        ),
+        if (widget.showAdminDiagnostics) ...[
           const SizedBox(height: 20),
-          _MicroStateCard(state: state),
+          _MicroStateCard(state: widget.state),
           const SizedBox(height: 18),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -62,13 +92,13 @@ class AiPublishControl extends StatelessWidget {
               _AiTextAction(
                 icon: Icons.bug_report_outlined,
                 label: 'Diagnostic IA',
-                onTap: onDiagnostic,
+                onTap: widget.onDiagnostic,
               ),
               const SizedBox(width: 28),
               _AiTextAction(
                 icon: Icons.delete_outline,
                 label: 'Effacer',
-                onTap: onClear,
+                onTap: widget.onClear,
               ),
             ],
           ),
@@ -78,173 +108,146 @@ class AiPublishControl extends StatelessWidget {
   }
 }
 
-// ─── Nouvelle disposition 2 choix ────────────────────────────────────────────
+// ─── Tab switcher ─────────────────────────────────────────────────────────────
 
-class _AiChoiceCard extends StatelessWidget {
-  const _AiChoiceCard({
-    required this.onParler,
-    required this.onEcrire,
+class _MethodTabRow extends StatelessWidget {
+  const _MethodTabRow({
+    required this.method,
+    required this.enabled,
+    required this.onSelectVocal,
+    required this.onSelectTexte,
   });
 
-  final VoidCallback onParler;
-  final VoidCallback onEcrire;
+  final _AiMethod method;
+  final bool enabled;
+  final VoidCallback onSelectVocal;
+  final VoidCallback onSelectTexte;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _ChoicePanel(
-                    colors: const [Color(0xFF1A6FFF), Color(0xFF0052E0)],
-                    buttonTextColor: const Color(0xFF1A3A8F),
-                    icon: Icons.mic_rounded,
-                    title: 'Parler à l\'IA',
-                    subtitle: 'L\'IA remplit l\'annonce',
-                    buttonLabel: 'Parler à l\'IA',
-                    onTap: onParler,
-                  ),
-                ),
-                Expanded(
-                  child: _ChoicePanel(
-                    colors: const [Color(0xFFFF6600), Color(0xFFE04E00)],
-                    buttonTextColor: const Color(0xFFCC4400),
-                    icon: Icons.edit_rounded,
-                    title: 'Écrire + améliorer',
-                    subtitle: 'Je remplis, l\'IA reformule',
-                    buttonLabel: 'Commencer à écrire',
-                    onTap: onEcrire,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Cercle "ou" centré entre les deux panneaux
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: const Text(
-              'ou',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF333333),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _MethodTabButton(
+                icon: Icons.mic_rounded,
+                label: 'IA vocale',
+                selected: method == _AiMethod.vocal,
+                enabled: enabled,
+                onTap: onSelectVocal,
               ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MethodTabButton(
+                icon: Icons.edit_rounded,
+                label: 'Texte + IA',
+                selected: method == _AiMethod.texte,
+                enabled: enabled,
+                onTap: onSelectTexte,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                "Parlez, l'IA complète l'annonce pour vous.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: method == _AiMethod.vocal
+                      ? const Color(0xFF1A6FFF)
+                      : const Color(0xFF9CA3AF),
+                  height: 1.3,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Écrivez votre annonce puis améliorez-la avec l'IA.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: method == _AiMethod.texte
+                      ? const Color(0xFF1A6FFF)
+                      : const Color(0xFF9CA3AF),
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-class _ChoicePanel extends StatelessWidget {
-  const _ChoicePanel({
-    required this.colors,
-    required this.buttonTextColor,
+class _MethodTabButton extends StatelessWidget {
+  const _MethodTabButton({
     required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.buttonLabel,
+    required this.label,
+    required this.selected,
+    required this.enabled,
     required this.onTap,
   });
 
-  final List<Color> colors;
-  final Color buttonTextColor;
   final IconData icon;
-  final String title;
-  final String subtitle;
-  final String buttonLabel;
+  final String label;
+  final bool selected;
+  final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTap: enabled ? onTap : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 52,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: colors,
+          color: selected ? const Color(0xFF1A6FFF) : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? const Color(0xFF1A6FFF) : const Color(0xFFD1D5DB),
+            width: 1.5,
           ),
         ),
-        padding: const EdgeInsets.fromLTRB(14, 22, 14, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 62,
-              height: 62,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  width: 1.5,
+                color: selected
+                    ? Colors.white.withValues(alpha: 0.22)
+                    : const Color(0xFFF3F4F6),
+              ),
+              child: Icon(
+                icon,
+                size: 16,
+                color: selected ? Colors.white : const Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: selected ? Colors.white : const Color(0xFF111827),
                 ),
-                color: Colors.white.withValues(alpha: 0.14),
-              ),
-              child: Icon(icon, size: 30, color: Colors.white),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                height: 1.15,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.82),
-                height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    buttonLabel,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                      color: buttonTextColor,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: buttonTextColor,
-                    size: 18,
-                  ),
-                ],
               ),
             ),
           ],
@@ -254,425 +257,300 @@ class _ChoicePanel extends StatelessWidget {
   }
 }
 
-class _PrimaryAiButton extends StatelessWidget {
-  const _PrimaryAiButton({
+// ─── Carte mode vocal ─────────────────────────────────────────────────────────
+
+class _VocalModeCard extends StatelessWidget {
+  const _VocalModeCard({
     required this.state,
-    required this.onTap,
+    required this.visible,
+    required this.onStartRecording,
+    required this.onStopRecording,
   });
 
   final AiPublishState state;
+  final bool visible;
+  final VoidCallback onStartRecording;
+  final VoidCallback onStopRecording;
+
+  bool get _isRecording => state == AiPublishState.recording;
+  bool get _isAnalyzing => state == AiPublishState.analyzing;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!visible) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF4FF),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFC8D9FF), width: 1),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      child: Column(
+        children: [
+          // En-tête : icône + titre + sous-titre
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFD6E6FF),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Color(0xFF1A6FFF),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Parlez, l'IA complète l'annonce",
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0A1F44),
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "Décrivez votre offre à l'oral. L'IA structure et rédige une annonce prête à publier.",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF6B7280),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+
+          // Bouton microphone central
+          GestureDetector(
+            onTap: _isAnalyzing
+                ? null
+                : (_isRecording ? onStopRecording : onStartRecording),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isRecording
+                    ? const Color(0xFFFF3B35)
+                    : _isAnalyzing
+                        ? const Color(0xFF13C8FF)
+                        : const Color(0xFF1A6FFF),
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isRecording
+                            ? const Color(0xFFFF3B35)
+                            : const Color(0xFF1A6FFF))
+                        .withValues(alpha: 0.38),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
+              ),
+              child: _isAnalyzing
+                  ? const Center(
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Texte d'état sous le bouton
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              _isRecording
+                  ? 'Appuyez pour arrêter'
+                  : _isAnalyzing
+                      ? 'Analyse en cours…'
+                      : 'Appuyez pour parler',
+              key: ValueKey(state),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: _isRecording
+                    ? const Color(0xFFFF3B35)
+                    : const Color(0xFF1A6FFF),
+              ),
+            ),
+          ),
+
+          if (_isRecording) ...[
+            const SizedBox(height: 10),
+            const _AnimatedWaveform(
+              width: 100,
+              height: 22,
+              barColor: Color(0xBFFF3B35),
+              barWidth: 3,
+              barRadius: 8,
+              baseHeights: [6, 14, 9, 20, 12, 18, 8, 22, 14, 16, 9, 18],
+              duration: Duration(milliseconds: 900),
+            ),
+          ],
+
+          const SizedBox(height: 14),
+
+          // Mention sécurité
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.security_rounded, size: 12, color: Color(0xFF9CA3AF)),
+              SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  'Vos données vocales sont sécurisées et non conservées.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF9CA3AF),
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── AiWritingButton (bouton "Améliorer ma description avec l'IA") ────────────
+
+class AiWritingButton extends StatelessWidget {
+  const AiWritingButton({
+    super.key,
+    required this.isAnalyzing,
+    required this.onTap,
+  });
+
+  final bool isAnalyzing;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final config = _PrimaryAiButtonConfig.fromState(state);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: config.gradient,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: config.shadowColor,
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(28),
-          onTap: onTap,
-          child: SizedBox(
-            width: double.infinity,
-            height: 88,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              child: switch (state) {
-                AiPublishState.ready => const _ReadyButtonContent(),
-                AiPublishState.recording => const _RecordingButtonContent(),
-                AiPublishState.analyzing => const _AnalyzingButtonContent(),
-              },
+    return Tooltip(
+      message: "Remplir les champs avec l'IA",
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: double.infinity,
+          height: 46,
+          decoration: BoxDecoration(
+            color: isAnalyzing
+                ? const Color(0xFFEEF4FF)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF1A6FFF),
+              width: 1.5,
             ),
           ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isAnalyzing)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF1A6FFF),
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 16,
+                  color: Color(0xFF1A6FFF),
+                ),
+              const SizedBox(width: 8),
+              Text(
+                isAnalyzing
+                    ? 'Amélioration en cours…'
+                    : 'Améliorer ma description avec l\'IA',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A6FFF),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _PrimaryAiButtonConfig {
-  const _PrimaryAiButtonConfig({
-    required this.gradient,
-    required this.shadowColor,
-  });
+// ─── Admin diagnostics ────────────────────────────────────────────────────────
 
-  final LinearGradient gradient;
-  final Color shadowColor;
-
-  factory _PrimaryAiButtonConfig.fromState(AiPublishState state) {
-    return switch (state) {
-      AiPublishState.ready => const _PrimaryAiButtonConfig(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0A7CFF),
-              Color(0xFF0058E8),
-              Color(0xFF1434D9),
-            ],
-          ),
-          shadowColor: Color(0x66005BEA),
-        ),
-      AiPublishState.recording => const _PrimaryAiButtonConfig(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFF5F57),
-              Color(0xFFFF3B35),
-              Color(0xFFE91F2A),
-            ],
-          ),
-          shadowColor: Color(0x66FF2D2D),
-        ),
-      AiPublishState.analyzing => const _PrimaryAiButtonConfig(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF13C8FF),
-              Color(0xFF0078FF),
-              Color(0xFF004BE8),
-            ],
-          ),
-          shadowColor: Color(0x6613A8FF),
-        ),
-    };
-  }
-}
-
-class _ReadyButtonContent extends StatelessWidget {
-  const _ReadyButtonContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        _AiCircleIcon(
-          icon: Icons.auto_awesome,
-          gradient: RadialGradient(
-            colors: [
-              Color(0xFF2EA7FF),
-              Color(0xFF005BEA),
-            ],
-          ),
-        ),
-        SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Décrire mon besoin (IA)',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.05,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                "Parlez, l'assistant IA analyse et complète votre annonce !",
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xE0FFFFFF),
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RecordingButtonContent extends StatelessWidget {
-  const _RecordingButtonContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        _RecordingStopCircle(),
-        SizedBox(width: 14),
-        Expanded(
-          child: Text(
-            'Arrêter',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 1.05,
-            ),
-          ),
-        ),
-        SizedBox(width: 12),
-        _AnimatedWaveform(
-          width: 82,
-          height: 32,
-          barColor: Color(0x59FFFFFF),
-          barWidth: 3,
-          barRadius: 8,
-          baseHeights: [8, 18, 12, 26, 14, 22, 10, 28, 16, 20, 11, 24],
-          duration: Duration(milliseconds: 900),
-        ),
-      ],
-    );
-  }
-}
-
-class _AnalyzingButtonContent extends StatelessWidget {
-  const _AnalyzingButtonContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        _AiCircleIcon(
-          icon: Icons.auto_awesome,
-          gradient: RadialGradient(
-            colors: [
-              Color(0xFF42D8FF),
-              Color(0xFF0078FF),
-            ],
-          ),
-        ),
-        SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Analyse IA en cours',
-                style: TextStyle(
-                  fontSize: 18.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.05,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Nous analysons votre demande…',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xE0FFFFFF),
-                  height: 1.2,
-                ),
-              ),
-              SizedBox(height: 8),
-              _AnimatedProgressDots(),
-            ],
-          ),
-        ),
-        SizedBox(width: 12),
-        _OrbitingAiVisual(),
-      ],
-    );
-  }
-}
-
-class _AiCircleIcon extends StatelessWidget {
-  const _AiCircleIcon({
+class _AiTextAction extends StatelessWidget {
+  const _AiTextAction({
     required this.icon,
-    required this.gradient,
+    required this.label,
+    required this.onTap,
   });
 
   final IconData icon;
-  final Gradient gradient;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 58,
-      height: 58,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: gradient,
-        border: Border.all(
-          color: Colors.white.withOpacity(0.18),
-          width: 1.5,
-        ),
-      ),
-      child: Icon(icon, size: 30, color: Colors.white),
-    );
-  }
-}
-
-class _RecordingStopCircle extends StatefulWidget {
-  const _RecordingStopCircle();
-
-  @override
-  State<_RecordingStopCircle> createState() => _RecordingStopCircleState();
-}
-
-class _RecordingStopCircleState extends State<_RecordingStopCircle>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final scale = 1 + (_controller.value * 0.05);
-        return Transform.scale(scale: scale, child: child);
-      },
-      child: Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.20),
-        ),
-        child: const Icon(
-          Icons.stop_rounded,
-          size: 26,
-          color: Colors.white,
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 21, color: const Color(0xFF1672D8)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1672D8),
+              ),
+            ),
+          ],
         ),
       ),
     );
-  }
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.state});
-
-  final AiPublishState state;
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (state) {
-      AiPublishState.ready => Container(
-          height: 38,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7FBFF),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFD5E7FA)),
-          ),
-          child: Row(
-            children: const [
-              Icon(
-                Icons.lightbulb_outline,
-                size: 18,
-                color: Color(0xFF6B7F93),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  "Plus c'est précis, meilleurs sont les résultats.",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF52677D),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      AiPublishState.recording => Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF3F2),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFFFC6C2)),
-          ),
-          child: Row(
-            children: const [
-              Icon(
-                Icons.mic,
-                size: 18,
-                color: Color(0xFFE92828),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Enregistrement en cours',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFE92828),
-                  ),
-                ),
-              ),
-              _AnimatedWaveform(
-                width: 45,
-                height: 18,
-                barColor: Color(0xBFE92828),
-                barWidth: 2,
-                barRadius: 6,
-                baseHeights: [5, 9, 7, 14, 8, 12, 6, 13],
-                duration: Duration(milliseconds: 900),
-              ),
-            ],
-          ),
-        ),
-      AiPublishState.analyzing => Container(
-          height: 38,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F8FF),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFC9E2FF)),
-          ),
-          child: Row(
-            children: const [
-              Icon(
-                Icons.auto_awesome,
-                size: 17,
-                color: Color(0xFF0078FF),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'IA en action : compréhension & suggestions',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1672D8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-    };
   }
 }
 
@@ -895,43 +773,7 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _AiTextAction extends StatelessWidget {
-  const _AiTextAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 21, color: const Color(0xFF1672D8)),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1672D8),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// ─── Animations ───────────────────────────────────────────────────────────────
 
 class _AnimatedWaveform extends StatefulWidget {
   const _AnimatedWaveform({
@@ -986,7 +828,9 @@ class _AnimatedWaveformState extends State<_AnimatedWaveform>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              for (var index = 0; index < widget.baseHeights.length; index += 1)
+              for (var index = 0;
+                  index < widget.baseHeights.length;
+                  index += 1)
                 Container(
                   width: widget.barWidth,
                   height: _animatedBarHeight(
@@ -1052,7 +896,8 @@ class _AnimatedProgressDotsState extends State<_AnimatedProgressDots>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
-          final activeCount = 1 + (_controller.value * 5).floor().clamp(0, 4);
+          final activeCount =
+              1 + (_controller.value * 5).floor().clamp(0, 4);
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1064,7 +909,7 @@ class _AnimatedProgressDotsState extends State<_AnimatedProgressDots>
                     shape: BoxShape.circle,
                     color: index < activeCount
                         ? Colors.white
-                        : Colors.white.withOpacity(0.45),
+                        : Colors.white.withValues(alpha: 0.45),
                   ),
                 ),
                 if (index != 4) const SizedBox(width: 6),
@@ -1073,201 +918,6 @@ class _AnimatedProgressDotsState extends State<_AnimatedProgressDots>
           );
         },
       ),
-    );
-  }
-}
-
-class _OrbitingAiVisual extends StatefulWidget {
-  const _OrbitingAiVisual();
-
-  @override
-  State<_OrbitingAiVisual> createState() => _OrbitingAiVisualState();
-}
-
-class _OrbitingAiVisualState extends State<_OrbitingAiVisual>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2800),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 54,
-      height: 54,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return Transform.rotate(
-            angle: _controller.value * math.pi * 2,
-            child: CustomPaint(
-              painter: _OrbitPainter(),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _OrbitPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = size.width / 2 - 3;
-    final innerRadius = size.width / 2 - 11;
-
-    final strokePaint = Paint()
-      ..color = Colors.white.withOpacity(0.45)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    canvas.drawCircle(center, outerRadius, strokePaint);
-    canvas.drawCircle(center, innerRadius, strokePaint);
-
-    final dotPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    final positions = [
-      Offset(center.dx + outerRadius, center.dy),
-      Offset(
-        center.dx + (innerRadius * math.cos(math.pi * 0.75)),
-        center.dy + (innerRadius * math.sin(math.pi * 0.75)),
-      ),
-      Offset(
-        center.dx + (outerRadius * math.cos(math.pi * 1.4)),
-        center.dy + (outerRadius * math.sin(math.pi * 1.4)),
-      ),
-    ];
-
-    for (final position in positions) {
-      canvas.drawCircle(position, 2.6, dotPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Button that visually matches [AiPublishControl]'s primary button.
-/// Used for the text-based writing assistant inside the description field.
-/// Shows the same analyzing animation when [isAnalyzing] is true.
-class AiWritingButton extends StatelessWidget {
-  const AiWritingButton({
-    super.key,
-    required this.isAnalyzing,
-    required this.onTap,
-  });
-
-  final bool isAnalyzing;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final gradient = isAnalyzing
-        ? const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF13C8FF), Color(0xFF0078FF), Color(0xFF004BE8)],
-          )
-        : const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A7CFF), Color(0xFF0058E8), Color(0xFF1434D9)],
-          );
-    final shadowColor =
-        isAnalyzing ? const Color(0x6613A8FF) : const Color(0x66005BEA);
-
-    return Tooltip(
-      message: "Remplir les champs avec l'IA",
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(color: shadowColor, blurRadius: 24, offset: const Offset(0, 12)),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(28),
-            onTap: onTap,
-            child: SizedBox(
-              width: double.infinity,
-              height: 88,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                child: isAnalyzing
-                    ? const _AnalyzingButtonContent()
-                    : const _WritingAssistantReadyContent(),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WritingAssistantReadyContent extends StatelessWidget {
-  const _WritingAssistantReadyContent();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        _AiCircleIcon(
-          icon: Icons.auto_awesome,
-          gradient: RadialGradient(
-            colors: [Color(0xFF2EA7FF), Color(0xFF005BEA)],
-          ),
-        ),
-        SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Assistant de rédaction IA',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.05,
-                ),
-              ),
-              SizedBox(height: 4),
-              Text(
-                "Votre texte est reformulé et l'annonce complétée",
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xE0FFFFFF),
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(width: 8),
-        Icon(Icons.edit_note_rounded, color: Colors.white, size: 24),
-      ],
     );
   }
 }

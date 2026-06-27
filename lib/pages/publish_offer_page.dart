@@ -3840,7 +3840,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // DESCRIPTION — le bouton IA est toujours visible en bas du cadre.
+                // DESCRIPTION
                 _withPublishFieldHighlight(
                   fieldId: 'description',
                   child: _withAiPendingOverlay(
@@ -3848,7 +3848,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         _showAiPendingForController(_descriptionController),
                     alignment: Alignment.topRight,
                     padding: const EdgeInsets.only(top: 14, right: 12),
-                    child: Stack(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         TextFormField(
                           controller: _descriptionController,
@@ -3862,7 +3863,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.fromLTRB(
-                              12, 14, 12, 108,
+                              12, 14, 12, 14,
                             ),
                             hintText:
                                 'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
@@ -3877,16 +3878,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           maxLines: 8,
                           validator: _validatePublishDescription,
                         ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          right: 8,
-                          child: AiWritingButton(
-                            isAnalyzing: _isAnalyzing,
-                            onTap: !_isAnalyzing && !_isListening
-                                ? _onTapAiAnalyze
-                                : null,
-                          ),
+                        const SizedBox(height: 8),
+                        AiWritingButton(
+                          isAnalyzing: _isAnalyzing,
+                          onTap: !_isAnalyzing && !_isListening
+                              ? _onTapAiAnalyze
+                              : null,
                         ),
                       ],
                     ),
