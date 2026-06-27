@@ -55,6 +55,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     bool isFirst = existing?.isFirst ?? false;
     String previewWarning = '';
     String localError = '';
+    bool isPickingFile = false;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -68,6 +69,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             Future<void> pickMedia() async {
+              setSheetState(() => isPickingFile = true);
               try {
                 final result = await FilePicker.pickFiles(
                   type: FileType.custom,
@@ -136,6 +138,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 setSheetState(() {
                   localError = 'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
                 });
+              } finally {
+                setSheetState(() => isPickingFile = false);
               }
             }
 
@@ -172,7 +176,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       ),
                       const SizedBox(height: 18),
                       InkWell(
-                        onTap: _isSubmitting ? null : pickMedia,
+                        onTap: (_isSubmitting || isPickingFile) ? null : pickMedia,
                         borderRadius: BorderRadius.circular(18),
                         child: Ink(
                           width: double.infinity,
@@ -193,7 +197,20 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                       : const Color(0xFFFFEFE5),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: Icon(
+                                child: isPickingFile
+                                    ? Center(
+                                        child: SizedBox(
+                                          width: 26,
+                                          height: 26,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            color: selectedMediaType == 'video'
+                                                ? _kAdminHeroBlue
+                                                : _kAdminHeroOrange,
+                                          ),
+                                        ),
+                                      )
+                                    : Icon(
                                   selectedMediaType == 'video'
                                       ? Icons.video_library_rounded
                                       : Icons.image_rounded,
@@ -209,9 +226,11 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      selectedFileName.isEmpty
-                                          ? 'Choisir une image ou une vidéo'
-                                          : selectedFileName,
+                                      isPickingFile
+                                          ? 'Lecture du fichier…'
+                                          : selectedFileName.isEmpty
+                                              ? 'Choisir une image ou une vidéo'
+                                              : selectedFileName,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -221,9 +240,11 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      selectedFileName.isEmpty
-                                          ? 'Formats image: jpg, jpeg, png, webp. Formats vidéo: mp4, mov, webm.'
-                                          : 'Type détecté: ${selectedMediaType == 'video' ? 'Vidéo' : 'Image'}',
+                                      isPickingFile
+                                          ? 'Chargement en cours, veuillez patienter…'
+                                          : selectedFileName.isEmpty
+                                              ? 'Formats image: jpg, jpeg, png, webp. Formats vidéo: mp4, mov, webm.'
+                                              : 'Type détecté: ${selectedMediaType == 'video' ? 'Vidéo' : 'Image'}',
                                       style: const TextStyle(
                                         color: Color(0xFF6B7280),
                                         fontSize: 12.5,
@@ -233,7 +254,17 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.upload_file_rounded),
+                              if (isPickingFile)
+                                const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                )
+                              else
+                                const Icon(Icons.upload_file_rounded),
                             ],
                           ),
                         ),
