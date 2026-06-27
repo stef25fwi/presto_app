@@ -2833,12 +2833,6 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_outlined,
-        size: 36,
-        color: Color(0xFFBBBFC9),
-      ),
     );
   }
 
