@@ -2832,24 +2832,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFFFB74D), width: 1.6),
         ),
+        padding: const EdgeInsets.all(10),
         alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.bolt_rounded, color: Color(0xFFE65100), size: 28),
-            SizedBox(height: 4),
-            Text(
-              'URGENT',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFE65100),
-                letterSpacing: 1.2,
-              ),
-            ),
-          ],
+        child: Image.asset(
+          'assets/images/urgent_stamp.webp',
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.none,
         ),
       );
     }
