@@ -2830,7 +2830,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         width: 92,
         height: 92,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF3E0),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: const Color(0xFFFFB74D), width: 1.6),
         ),
@@ -2858,7 +2858,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
       width: 92,
       height: 92,
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F5),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
       alignment: Alignment.center,
