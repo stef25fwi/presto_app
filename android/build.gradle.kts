@@ -32,6 +32,20 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// AGP 8+ requires every library module to declare a namespace.
+// Older plugins (e.g. flutter_app_badger 1.5.0) omit it — inject it
+// from the group attribute which mirrors the manifest package attribute.
+subprojects {
+    afterEvaluate {
+        (extensions.findByName("android") as? com.android.build.gradle.LibraryExtension)
+            ?.apply {
+                if (namespace == null) {
+                    namespace = project.group.toString()
+                }
+            }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
