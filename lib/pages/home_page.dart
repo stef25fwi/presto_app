@@ -137,6 +137,7 @@ class _HomePageState extends State<HomePage>
   final HeroSlidesService _heroSlidesService = HeroSlidesService();
   late final Stream<List<HeroSlide>> _heroSlidesStream =
       _heroSlidesService.watchActiveSlides();
+  List<HeroSlide> _cachedHeroSlides = const <HeroSlide>[];
   int _currentSlide = 0;
 
   Timer? _homeAutoSlideTimer;
@@ -318,6 +319,14 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+
+    // Charge les slides en cache (SharedPreferences) pour affichage immédiat
+    // avant que le stream Firestore ne réponde.
+    _heroSlidesService.loadCachedSlides().then((cached) {
+      if (mounted && cached.isNotEmpty) {
+        setState(() => _cachedHeroSlides = cached);
+      }
+    });
 
     // Assure la barre de statut bleue dès que l'accueil est actif
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
@@ -1900,7 +1909,7 @@ class _HomePageState extends State<HomePage>
                       stream: _heroSlidesStream,
                       builder: (context, snapshot) {
                         final fallback = _buildFallbackHomeHeroSlider();
-                        final slides = snapshot.data ?? const <HeroSlide>[];
+                        final slides = snapshot.data ?? _cachedHeroSlides;
                         if (snapshot.hasError || slides.isEmpty) {
                           return fallback;
                         }
