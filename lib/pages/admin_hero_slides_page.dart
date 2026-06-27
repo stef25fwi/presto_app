@@ -59,6 +59,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -67,26 +68,39 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             Future<void> pickMedia() async {
-              final result = await FilePicker.pickFiles(
-                type: FileType.custom,
-                allowedExtensions: <String>[
-                  ..._imageExtensions,
-                  ..._videoExtensions,
-                ],
-                withData: true,
-              );
-              if (result == null || result.files.isEmpty) {
-                return;
-              }
+              try {
+                final result = await FilePicker.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: <String>[
+                    ..._imageExtensions,
+                    ..._videoExtensions,
+                  ],
+                  withData: true,
+                );
+                if (result == null || result.files.isEmpty) {
+                  return;
+                }
 
-              final file = result.files.single;
-              final bytes = file.bytes;
-              if (bytes == null) {
-                setSheetState(() {
-                  localError = 'Ce fichier ne peut pas être lu.';
-                });
-                return;
-              }
+                final file = result.files.single;
+                var bytes = file.bytes;
+                if (bytes == null) {
+                  final stream = file.readStream;
+                  if (stream != null) {
+                    final chunks = <int>[];
+                    await for (final chunk in stream) {
+                      chunks.addAll(chunk);
+                    }
+                    if (chunks.isNotEmpty) {
+                      bytes = Uint8List.fromList(chunks);
+                    }
+                  }
+                }
+                if (bytes == null) {
+                  setSheetState(() {
+                    localError = 'Ce fichier ne peut pas être lu.';
+                  });
+                  return;
+                }
 
               final mediaType = _mediaTypeFromName(file.name);
               if (!_isSupportedHeroMedia(file.name)) {
@@ -117,6 +131,11 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   durationController.text = mediaType == 'video' ? '10' : '5';
                 }
               });
+              } catch (error) {
+                setSheetState(() {
+                  localError = 'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
+                });
+              }
             }
 
             return SafeArea(
