@@ -3167,12 +3167,6 @@ class _PracticalInfoCard extends StatelessWidget {
                     compact: compact,
                   ),
                   _InfoLine(
-                    icon: Icons.check_circle_outline_rounded,
-                    label: 'Déplacement possible',
-                    value: data.canTravel ? 'Oui' : 'Non',
-                    compact: compact,
-                  ),
-                  _InfoLine(
                     icon: Icons.access_time_rounded,
                     label: 'Horaires',
                     value: data.schedule,
