@@ -35,8 +35,10 @@ subprojects {
 // AGP 8+ requires every library module to declare a namespace.
 // Older plugins (e.g. flutter_app_badger 1.5.0) omit it — inject it
 // from the group attribute which mirrors the manifest package attribute.
+// Use plugins.withId so this runs when the plugin is applied (not afterEvaluate,
+// which fails when evaluationDependsOn has already forced evaluation).
 subprojects {
-    afterEvaluate {
+    plugins.withId("com.android.library") {
         (extensions.findByName("android") as? com.android.build.gradle.LibraryExtension)
             ?.apply {
                 if (namespace == null) {
