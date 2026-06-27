@@ -2825,23 +2825,6 @@ class _OfferBrowseTile extends StatefulWidget {
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   Widget _buildFallbackPhoto() {
-    if (widget.data.isUrgent) {
-      return Container(
-        width: 92,
-        height: 92,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        padding: const EdgeInsets.all(10),
-        alignment: Alignment.center,
-        child: Image.asset(
-          'assets/images/urgent_stamp.webp',
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.none,
-        ),
-      );
-    }
 
     return Container(
       width: 92,
@@ -2860,9 +2843,6 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   }
 
   Widget _buildPhoto() {
-    if (widget.data.isUrgent) {
-      return _buildFallbackPhoto();
-    }
     final imageUrl = widget.data.imageUrl.trim();
     if (imageUrl.isEmpty) {
       return _buildFallbackPhoto();
