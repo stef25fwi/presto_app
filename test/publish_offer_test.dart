@@ -84,7 +84,7 @@ void main() {
 
     // Le AiPublishControl principal (dictée vocale) doit être présent.
     expect(find.byType(AiPublishControl), findsOneWidget);
-    expect(find.text('Décrire mon besoin (IA)'), findsOneWidget);
+    expect(find.text('Parler à l\'IA'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -291,7 +291,7 @@ void main() {
 
     // Bouton IA dictée
     expect(find.byType(AiPublishControl), findsOneWidget);
-    expect(find.text('Décrire mon besoin (IA)'), findsOneWidget);
+    expect(find.text('Parler à l\'IA'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
