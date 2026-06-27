@@ -95,6 +95,7 @@ class NotificationService {
   DateTime? _lastOpenedRouteAt;
   AuthorizationStatus? _lastAuthorizationStatus;
   Future<String?>? _fetchMessagingTokenInFlight;
+  DateTime? _lastGetTokenFailedAt;
   bool _initialized = false;
   bool _localNotificationsReady = false;
   bool _navigatorReady = false;
@@ -325,6 +326,14 @@ class NotificationService {
 
   Future<bool> syncPushRegistrationIfAuthorized() async {
     if (!await hasPushPermission()) return false;
+
+    // If the push service rejected us recently, back off for 10 minutes to
+    // avoid hammering FCM on every resume.
+    final lastFailed = _lastGetTokenFailedAt;
+    if (lastFailed != null &&
+        DateTime.now().difference(lastFailed) < const Duration(minutes: 10)) {
+      return false;
+    }
 
     final token = await _fetchMessagingToken();
     // 6.5 : token FCM masqué dans les logs.
@@ -835,12 +844,27 @@ class NotificationService {
       return token;
     } catch (error, stackTrace) {
       debugPrint('[Notifications] getToken error: $error');
-      AdminWebDebugStore.instance.recordError(
-        'notifications',
-        error,
-        stackTrace: stackTrace,
-        message: 'getToken-failed',
-      );
+      _lastGetTokenFailedAt = DateTime.now();
+      // AbortError means the browser's push service rejected the subscription
+      // (network restriction, browser mode, etc.) — not an app bug. Log as
+      // warn so it doesn't pollute the error panel.
+      final isAbortError = error.toString().contains('AbortError') ||
+          error.toString().contains('push service error');
+      if (isAbortError) {
+        AdminWebDebugStore.instance.recordEvent(
+          area: 'notifications',
+          level: 'warn',
+          message: 'getToken-failed',
+          detail: error.toString().replaceAll('\n', ' '),
+        );
+      } else {
+        AdminWebDebugStore.instance.recordError(
+          'notifications',
+          error,
+          stackTrace: stackTrace,
+          message: 'getToken-failed',
+        );
+      }
       return null;
     }
   }
