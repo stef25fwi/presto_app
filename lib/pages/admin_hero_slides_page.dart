@@ -97,7 +97,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 }
                 if (bytes == null) {
                   setSheetState(() {
-                    localError = ‘Ce fichier ne peut pas être lu.’;
+                    localError = 'Ce fichier ne peut pas être lu.';
                   });
                   return;
                 }
@@ -107,16 +107,16 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 if (!_isSupportedHeroMedia(file.name)) {
                   setSheetState(() {
                     localError =
-                        ‘Format non supporté. Utilisez une image JPG, PNG, WEBP ou une vidéo MP4.’;
+                        'Format non supporté. Utilisez une image JPG, PNG, WEBP ou une vidéo MP4.';
                   });
                   return;
                 }
                 final byteLimit =
-                    mediaType == ‘video’ ? _maxVideoBytes : _maxImageBytes;
+                    mediaType == 'video' ? _maxVideoBytes : _maxImageBytes;
                 if (nonNullBytes.lengthInBytes > byteLimit) {
                   setSheetState(() {
                     localError =
-                        ‘Fichier trop lourd. Réduisez la taille du média avant l\’envoi.’;
+                        'Fichier trop lourd. Réduisez la taille du média avant l\'envoi.';
                   });
                   return;
                 }
@@ -556,7 +556,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         showErrorSnackBar(
                                           context,
                                           existing == null
-                                              ? 'Impossible d’ajouter le slide : $readableError'
+                                              ? 'Impossible d'ajouter le slide : $readableError'
                                               : 'Impossible de modifier le slide : $readableError',
                                         );
                                       } finally {
@@ -1183,7 +1183,7 @@ class _HeroIntroCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Text(
-                      'Hero de la page d’accueil',
+                      'Hero de la page d'accueil',
                       style: TextStyle(
                         fontSize: 21,
                         fontWeight: FontWeight.w900,
@@ -1195,7 +1195,7 @@ class _HeroIntroCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Gérez ici les images et vidéos affichées dans le Hero de la page Home. Vous pouvez choisir le premier média affiché, définir la durée, modifier l’ordre et activer ou désactiver chaque slide.',
+                'Gérez ici les images et vidéos affichées dans le Hero de la page Home. Vous pouvez choisir le premier média affiché, définir la durée, modifier l'ordre et activer ou désactiver chaque slide.',
                 style: TextStyle(
                   color: Color(0xFF6B7280),
                   fontWeight: FontWeight.w600,
