@@ -2871,6 +2871,9 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   }
 
   Widget _buildPhoto() {
+    if (widget.data.isUrgent) {
+      return _buildFallbackPhoto();
+    }
     final imageUrl = widget.data.imageUrl.trim();
     if (imageUrl.isEmpty) {
       return _buildFallbackPhoto();
