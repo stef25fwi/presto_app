@@ -97,40 +97,41 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 }
                 if (bytes == null) {
                   setSheetState(() {
-                    localError = 'Ce fichier ne peut pas être lu.';
+                    localError = ‘Ce fichier ne peut pas être lu.’;
                   });
                   return;
                 }
 
-              final mediaType = _mediaTypeFromName(file.name);
-              if (!_isSupportedHeroMedia(file.name)) {
-                setSheetState(() {
-                  localError =
-                      'Format non supporté. Utilisez une image JPG, PNG, WEBP ou une vidéo MP4.';
-                });
-                return;
-              }
-              final byteLimit =
-                  mediaType == 'video' ? _maxVideoBytes : _maxImageBytes;
-              if (bytes.lengthInBytes > byteLimit) {
-                setSheetState(() {
-                  localError =
-                      'Fichier trop lourd. Réduisez la taille du média avant l’envoi.';
-                });
-                return;
-              }
-
-              setSheetState(() {
-                selectedBytes = bytes;
-                selectedFileName = file.name;
-                selectedMediaType = mediaType;
-                selectedContentType = _contentTypeForName(file.name, mediaType);
-                previewWarning = '';
-                localError = '';
-                if (existing == null) {
-                  durationController.text = mediaType == 'video' ? '10' : '5';
+                final nonNullBytes = bytes;
+                final mediaType = _mediaTypeFromName(file.name);
+                if (!_isSupportedHeroMedia(file.name)) {
+                  setSheetState(() {
+                    localError =
+                        ‘Format non supporté. Utilisez une image JPG, PNG, WEBP ou une vidéo MP4.’;
+                  });
+                  return;
                 }
-              });
+                final byteLimit =
+                    mediaType == ‘video’ ? _maxVideoBytes : _maxImageBytes;
+                if (nonNullBytes.lengthInBytes > byteLimit) {
+                  setSheetState(() {
+                    localError =
+                        ‘Fichier trop lourd. Réduisez la taille du média avant l\’envoi.’;
+                  });
+                  return;
+                }
+
+                setSheetState(() {
+                  selectedBytes = nonNullBytes;
+                  selectedFileName = file.name;
+                  selectedMediaType = mediaType;
+                  selectedContentType = _contentTypeForName(file.name, mediaType);
+                  previewWarning = '';
+                  localError = '';
+                  if (existing == null) {
+                    durationController.text = mediaType == 'video' ? '10' : '5';
+                  }
+                });
               } catch (error) {
                 setSheetState(() {
                   localError = 'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
