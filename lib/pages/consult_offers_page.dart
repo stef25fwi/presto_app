@@ -2850,7 +2850,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(5),
       alignment: Alignment.center,
       child: Image.asset(
         'assets/images/urgent_stamp.webp',
