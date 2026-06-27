@@ -36,6 +36,7 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
     super.initState();
     _loadMutePreference();
     _scheduleNextSlide();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _precacheSlideImages());
   }
 
   @override
@@ -47,10 +48,19 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
       if (_pageController.hasClients) {
         _pageController.jumpToPage(0);
       }
+      _precacheSlideImages();
     } else if (_currentIndex >= widget.slides.length) {
       _currentIndex = 0;
     }
     _scheduleNextSlide();
+  }
+
+  void _precacheSlideImages() {
+    for (final slide in widget.slides) {
+      if (!slide.isVideo && slide.mediaUrl.isNotEmpty) {
+        precacheImage(NetworkImage(slide.mediaUrl), context);
+      }
+    }
   }
 
   @override
@@ -325,8 +335,9 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          // Image already in cache → affichage instantané, zéro placeholder.
+          if (wasSynchronouslyLoaded || frame != null) return child;
           return const _HeroMediaLoadingFallback();
         },
       );

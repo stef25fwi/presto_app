@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/hero_slide.dart';
 
@@ -35,11 +37,47 @@ class HeroSlidesService {
     return user;
   }
 
+  static const _kSlidesCacheKey = 'hero_slides_cache_v1';
+
+  /// Renvoie les slides sauvegardées localement (SharedPreferences).
+  /// Retourne une liste vide si aucun cache n'existe encore.
+  Future<List<HeroSlide>> loadCachedSlides() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString(_kSlidesCacheKey);
+      if (jsonStr == null) return const [];
+      final list = jsonDecode(jsonStr) as List<dynamic>;
+      return list
+          .map((e) {
+            final map = e as Map<String, dynamic>;
+            return HeroSlide.fromMap(map['id']?.toString() ?? '', map);
+          })
+          .where((s) => s.mediaUrl.isNotEmpty && s.isActive)
+          .toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<void> _persistSlidesCache(List<HeroSlide> slides) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final json = jsonEncode(slides.map((s) => s.toJson()).toList());
+      await prefs.setString(_kSlidesCacheKey, json);
+    } catch (_) {
+      // cache facultatif — aucune action requise en cas d'erreur
+    }
+  }
+
   Stream<List<HeroSlide>> watchActiveSlides() {
     return _slidesCollection
         .where('isActive', isEqualTo: true)
         .snapshots()
-        .map(_mapSnapshot);
+        .map((snapshot) {
+          final slides = _mapSnapshot(snapshot);
+          _persistSlidesCache(slides); // fire-and-forget, non bloquant
+          return slides;
+        });
   }
 
   Stream<List<HeroSlide>> watchAllSlidesForAdmin() {

@@ -74,6 +74,23 @@ class HeroSlide {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'title': title,
+      'mediaUrl': mediaUrl,
+      'storagePath': storagePath,
+      'mediaType': mediaType,
+      'durationSeconds': durationSeconds,
+      'order': order,
+      'isActive': isActive,
+      'isFirst': isFirst,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'createdBy': createdBy,
+    };
+  }
+
   HeroSlide copyWith({
     String? id,
     String? title,
