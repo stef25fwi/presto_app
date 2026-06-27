@@ -2313,6 +2313,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .toList(growable: false);
   }
 
+  Future<void> _scrollToDescription() async {
+    final ctx = _descriptionFieldKey.currentContext;
+    if (ctx == null) return;
+    await Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      alignment: 0.1,
+    );
+    _descriptionController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _descriptionController.text.length),
+    );
+    FocusScope.of(ctx).requestFocus(FocusNode());
+  }
+
   Future<void> _scrollToFirstInvalidPublishField() async {
     for (final fieldId in _requiredPublishFieldOrder) {
       if (!_isPublishFieldInvalid(fieldId)) continue;
@@ -3818,6 +3833,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   state: _aiPublishState,
                   onStartRecording: _startMic,
                   onStopRecording: _stopMic,
+                  onStartWriting: _scrollToDescription,
                   onDiagnostic: _showPublishAiTraceDialog,
                   onClear: _clearPublishAiTrace,
                   showAdminDiagnostics: _adminAudioRuntimeAccessState == 1,
