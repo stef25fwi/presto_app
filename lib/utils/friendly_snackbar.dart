@@ -39,6 +39,7 @@ void showPrestoSnackBar(BuildContext context, String message) {
           Expanded(
             child: Text(
               message,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Color(0xFF1A202C),
                 fontSize: 14,
@@ -86,6 +87,7 @@ void showErrorSnackBar(BuildContext context, String message) {
           Expanded(
             child: Text(
               message,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Color(0xFF1A202C),
                 fontSize: 14,
