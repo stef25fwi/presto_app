@@ -2673,7 +2673,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _formatMicroIaRuntimeError(e),
           level: PublishAiTraceLevel.error,
         );
-        showSuccessSnackBar(
+        showErrorSnackBar(
           context,
           'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}',
         );
@@ -2808,7 +2808,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final blob = await _webRec.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(
           blob,
-          preferRawBytes: true,
+          preferRawBytes: false,
         );
         _appendPublishAiTrace(
           'web_audio',
@@ -2857,7 +2857,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showSuccessSnackBar(
+          showErrorSnackBar(
             context,
             'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}',
           );
