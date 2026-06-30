@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/je_me_lance_region_contacts.dart';
+import 'je_me_lance_dynamic_engine_card.dart';
 
 class JeMeLanceModelSection extends StatelessWidget {
   const JeMeLanceModelSection({super.key});
@@ -15,6 +16,8 @@ class JeMeLanceModelSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
         _RegionSelectorCard(),
+        SizedBox(height: 14),
+        JeMeLanceDynamicEngineCard(),
         SizedBox(height: 14),
         _IntroCard(),
         SizedBox(height: 14),
