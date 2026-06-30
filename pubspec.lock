@@ -526,6 +526,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_app_badger:
+    dependency: "direct main"
+    description:
+      path: "third_party/flutter_app_badger"
+      relative: true
+    source: path
+    version: "1.5.0"
   flutter_lints:
     dependency: "direct dev"
     description:
