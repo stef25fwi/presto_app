@@ -74,10 +74,10 @@ class HeroSlidesService {
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
-          final slides = _mapSnapshot(snapshot);
-          _persistSlidesCache(slides); // fire-and-forget, non bloquant
-          return slides;
-        });
+      final slides = _mapSnapshot(snapshot);
+      _persistSlidesCache(slides); // fire-and-forget, non bloquant
+      return slides;
+    });
   }
 
   Stream<List<HeroSlide>> watchAllSlidesForAdmin() {

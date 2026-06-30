@@ -113,7 +113,7 @@ bool isVisibleInPublicBrowse(
   }
 
   return isPublishedOfferData(data);
- }
+}
 
 String offerDetailsPublishedLabel(dynamic raw) {
   if (raw is Timestamp) {

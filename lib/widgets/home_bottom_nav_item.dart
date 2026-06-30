@@ -129,7 +129,8 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
                             decoration: BoxDecoration(
                               color: Colors.red,
                               borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: Colors.white, width: 1.5),
+                              border:
+                                  Border.all(color: Colors.white, width: 1.5),
                             ),
                             alignment: Alignment.center,
                             child: Text(

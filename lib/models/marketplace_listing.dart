@@ -75,10 +75,12 @@ class MarketplaceListing {
       cityId: (data['cityId'] ?? '').toString().trim(),
       media: ((data['media'] as List?) ?? const <dynamic>[])
           .whereType<Map>()
-          .map((entry) => Map<String, dynamic>.from(entry.cast<String, dynamic>()))
+          .map((entry) =>
+              Map<String, dynamic>.from(entry.cast<String, dynamic>()))
           .toList(growable: false),
       thumbnailUrl: (data['thumbnailUrl'] ?? '').toString().trim(),
-      status: ListingStatusParsing.fromString((data['status'] ?? '').toString()),
+      status:
+          ListingStatusParsing.fromString((data['status'] ?? '').toString()),
       moderationStatus: ModerationStatusParsing.fromString(
         (data['moderationStatus'] ?? '').toString(),
       ),
@@ -89,18 +91,27 @@ class MarketplaceListing {
       updatedAt: parseFirestoreDateTime(data['updatedAt']),
       publishedAt: parseFirestoreDateTime(data['publishedAt']),
       expiresAt: parseFirestoreDateTime(data['expiresAt']),
-      reportCount: (data['reportCount'] is num) ? (data['reportCount'] as num).toInt() : 0,
-      favoriteCount: (data['favoriteCount'] is num) ? (data['favoriteCount'] as num).toInt() : 0,
-      viewCount: (data['viewCount'] is num) ? (data['viewCount'] as num).toInt() : 0,
-      contactCount: (data['contactCount'] is num) ? (data['contactCount'] as num).toInt() : 0,
+      reportCount: (data['reportCount'] is num)
+          ? (data['reportCount'] as num).toInt()
+          : 0,
+      favoriteCount: (data['favoriteCount'] is num)
+          ? (data['favoriteCount'] as num).toInt()
+          : 0,
+      viewCount:
+          (data['viewCount'] is num) ? (data['viewCount'] as num).toInt() : 0,
+      contactCount: (data['contactCount'] is num)
+          ? (data['contactCount'] as num).toInt()
+          : 0,
       isBoosted: data['isBoosted'] == true,
       boostExpiresAt: parseFirestoreDateTime(data['boostExpiresAt']),
-      riskScore: (data['riskScore'] is num) ? (data['riskScore'] as num).toInt() : 0,
+      riskScore:
+          (data['riskScore'] is num) ? (data['riskScore'] as num).toInt() : 0,
     );
   }
 
   bool get isPubliclyVisible {
-    return status == ListingStatus.active && visibility == ListingVisibility.public;
+    return status == ListingStatus.active &&
+        visibility == ListingVisibility.public;
   }
 }
 
@@ -126,16 +137,20 @@ class ListingSubmissionResult {
   factory ListingSubmissionResult.fromMap(Map<String, dynamic> data) {
     return ListingSubmissionResult(
       listingId: (data['listingId'] ?? '').toString().trim(),
-      status: ListingStatusParsing.fromString((data['status'] ?? '').toString()),
+      status:
+          ListingStatusParsing.fromString((data['status'] ?? '').toString()),
       moderationStatus: ModerationStatusParsing.fromString(
         (data['moderationStatus'] ?? '').toString(),
       ),
-      visibility: ListingVisibilityParsing.fromString((data['visibility'] ?? '').toString()),
-      riskScore: (data['riskScore'] is num) ? (data['riskScore'] as num).toInt() : 0,
+      visibility: ListingVisibilityParsing.fromString(
+          (data['visibility'] ?? '').toString()),
+      riskScore:
+          (data['riskScore'] is num) ? (data['riskScore'] as num).toInt() : 0,
       thumbnailUrl: (data['thumbnailUrl'] ?? '').toString().trim(),
       media: ((data['media'] as List?) ?? const <dynamic>[])
           .whereType<Map>()
-          .map((entry) => Map<String, dynamic>.from(entry.cast<String, dynamic>()))
+          .map((entry) =>
+              Map<String, dynamic>.from(entry.cast<String, dynamic>()))
           .toList(growable: false),
     );
   }

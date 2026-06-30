@@ -35,7 +35,6 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
-
 class ConversationsQueryContract {
   const ConversationsQueryContract._();
 
@@ -762,10 +761,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             .limit(queryShape['limit']! as int);
         subscriptions.add(
           query.snapshots().listen(
-            (snapshot) => handleSnapshot('admin_global', snapshot),
-            onError: (error, stackTrace) => handleError('admin_global', error),
-            cancelOnError: true,
-          ),
+                (snapshot) => handleSnapshot('admin_global', snapshot),
+                onError: (error, stackTrace) =>
+                    handleError('admin_global', error),
+                cancelOnError: true,
+              ),
         );
       } else {
         // Le listener Firestore ne doit pas être créé avant App Check.
@@ -781,10 +781,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               .where(field, arrayContains: userId);
           subscriptions.add(
             query.snapshots().listen(
-              (snapshot) => handleSnapshot(field, snapshot),
-              onError: (error, stackTrace) => handleError(field, error),
-              cancelOnError: true,
-            ),
+                  (snapshot) => handleSnapshot(field, snapshot),
+                  onError: (error, stackTrace) => handleError(field, error),
+                  cancelOnError: true,
+                ),
           );
         }
       }
@@ -2411,7 +2411,10 @@ class _ConversationAvatar extends StatelessWidget {
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? const <String, dynamic>{};
         final status = (data['status'] ?? '').toString().trim().toLowerCase();
