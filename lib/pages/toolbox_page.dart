@@ -3,6 +3,7 @@ import 'package:presto_app/pages/pricing_calculator_page.dart';
 import 'package:presto_app/pages/toolbox_hub_page.dart';
 
 import '../constants.dart';
+import '../widgets/je_me_lance_model_section.dart';
 
 /// Prestō / IliPrestō - Boîte à outils (présentation premium)
 /// - Gradient orange en haut
@@ -36,6 +37,8 @@ class ToolboxPage extends StatelessWidget {
       ),
       body: Stack(
         children: [
+          const JeMeLanceModelSection(),
+          const SizedBox(height: 16),
           // Header dégradé orange -> transparent (effet premium)
           const _TopGradient(),
           SafeArea(
