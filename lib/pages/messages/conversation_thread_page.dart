@@ -2176,36 +2176,21 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return _VoiceNotePlayer(url: attachment.url);
     }
 
-    return InkWell(
-      onTap: () => unawaited(_openAttachment(attachment)),
-      borderRadius: BorderRadius.circular(26),
-      child: Container(
-        width: 240,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.description_outlined, color: kPrestoBlue),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                attachment.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: kPrestoBodyTextStyle.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.open_in_new_rounded, size: 16),
-          ],
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Material(
+        color: const Color(0xFFE5E7EB),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: null,
+          customBorder: const CircleBorder(),
+          child: Icon(
+            Icons.attach_file_rounded,
+            color: const Color(0xFF9CA3AF),
+            size: 22,
+          ),
         ),
       ),
     );
