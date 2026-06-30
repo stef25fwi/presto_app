@@ -155,6 +155,17 @@ class AdPlaceholderImageService {
     });
   }
 
+  static Future<void> reorderImages(List<String> orderedIds) async {
+    final batch = _firestore.batch();
+    for (var i = 0; i < orderedIds.length; i++) {
+      batch.update(_collection.doc(orderedIds[i]), {
+        'sortOrder': i * 1000,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
   static Future<void> deleteImage(AdPlaceholderImage image) async {
     if (image.storagePath.isNotEmpty) {
       try {
