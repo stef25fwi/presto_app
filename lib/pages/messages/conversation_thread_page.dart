@@ -3016,15 +3016,39 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          IconButton.filledTonal(
-                            tooltip: 'Ajouter une pièce jointe',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: (_isBlocked ||
-                                    _isUploadingAttachment ||
-                                    _isSending)
-                                ? null
-                                : _showAttachmentSheet,
-                            icon: const Icon(Icons.attach_file_rounded),
+                          Tooltip(
+                            message: 'Ajouter une pièce jointe',
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: Material(
+                                color: Colors.white,
+                                shape: const CircleBorder(
+                                  side: BorderSide(
+                                    color: Color(0xFFD1D5DB),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: (_isBlocked ||
+                                          _isUploadingAttachment ||
+                                          _isSending)
+                                      ? null
+                                      : _showAttachmentSheet,
+                                  child: Icon(
+                                    Icons.attach_file_rounded,
+                                    color: (_isBlocked ||
+                                            _isUploadingAttachment ||
+                                            _isSending)
+                                        ? const Color(0xFFCBD5E1)
+                                        : const Color(0xFF6B7280),
+                                    size: 22,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Expanded(
