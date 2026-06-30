@@ -31,7 +31,8 @@ class _AdPlaceholderImagesAdminPageState
     setState(() => _isUploading = true);
     try {
       for (final file in files) {
-        await AdPlaceholderImageService.uploadImage(file: file, target: _target);
+        await AdPlaceholderImageService.uploadImage(
+            file: file, target: _target);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -239,7 +240,8 @@ class _AdPlaceholderImagesAdminPageState
           final images =
               _isReordering ? (_reorderBuffer ?? streamImages) : streamImages;
 
-          final visibleCount = streamImages.where((img) => img.isVisible).length;
+          final visibleCount =
+              streamImages.where((img) => img.isVisible).length;
 
           if (snapshot.connectionState == ConnectionState.waiting &&
               streamImages.isEmpty) {
@@ -278,7 +280,7 @@ class _AdPlaceholderImagesAdminPageState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "Ces images alimentent les placeholders AdBanner de la page "Je consulte". "
+                    "Ces images alimentent les placeholders AdBanner de la page « Je consulte ». "
                     "Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. "
                     "S'il n'y a aucune image active, l'app utilise ses images embarquées.",
                     style: Theme.of(context).textTheme.bodyMedium,
@@ -482,8 +484,7 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
             left: 6,
             bottom: 6,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(999),
@@ -532,8 +533,8 @@ class _ReorderTile extends StatelessWidget {
           // Poignée drag
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(Icons.drag_handle_rounded,
-                color: Colors.grey, size: 26),
+            child:
+                Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 26),
           ),
           // Aperçu image
           GestureDetector(
@@ -578,8 +579,8 @@ class _ReorderTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: image.isVisible
                         ? const Color(0xFFE8F5E9)
