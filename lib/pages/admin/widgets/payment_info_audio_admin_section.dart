@@ -1,9 +1,19 @@
-import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:presto_app/services/firebase_functions_region.dart';
+
 import 'package:presto_app/services/payment_info_audio_service.dart';
+import 'package:presto_app/widgets/payment_info_audio_player_button.dart';
+
+const String _defaultPaymentInfoPopupAudioText = '''
+Important : ilipresto.fr est un outil de communication et de petites annonces. La plateforme facilite la visibilité des offres et demandes, mais les relations, accords et prestations restent exclusivement conclus et gérés entre les utilisateurs.
+
+Avant toute intervention, échangez clairement sur le prix, le mode de paiement, le délai, les frais éventuels et les conditions d’annulation.
+
+Privilégiez un paiement traçable lorsque c’est possible. En cas de paiement en espèces, demandez ou remettez une preuve écrite simple indiquant la date, le montant et la prestation concernée.
+
+Ne versez pas d’acompte important sans avoir vérifié l’identité du prestataire, les détails de l’intervention et les garanties proposées.
+
+ilipresto.fr ne conserve pas les fonds, ne garantit pas la réalisation de la prestation et n’intervient pas dans les litiges de paiement entre utilisateurs.
+''';
 
 class PaymentInfoAudioAdminSection extends StatefulWidget {
   const PaymentInfoAudioAdminSection({super.key});
@@ -15,151 +25,386 @@ class PaymentInfoAudioAdminSection extends StatefulWidget {
 
 class _PaymentInfoAudioAdminSectionState
     extends State<PaymentInfoAudioAdminSection> {
-  final _service = PaymentInfoAudioService();
-  bool _uploading = false;
-  bool _generating = false;
+  late final PaymentInfoAudioService _service;
+  late final TextEditingController _textController;
 
-  Future<void> _pickAndUploadMp3() async {
-    final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3'],
-      withData: true,
+  bool _didHydrateText = false;
+  bool _isSavingText = false;
+  bool _isGeneratingDraft = false;
+  bool _isPublishingDraft = false;
+  bool _hasPreviewedDraft = false;
+  String? _lastPreviewedDraftUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = PaymentInfoAudioService();
+    _textController = TextEditingController(
+      text: _defaultPaymentInfoPopupAudioText.trim(),
     );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.single;
-    final Uint8List? bytes = file.bytes;
-    if (bytes == null) {
-      if (mounted) _showSnack('Fichier MP3 non lisible.');
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  void _hydrateTextFromSettings(PaymentInfoAudioAdminSettings settings) {
+    if (_didHydrateText) return;
+
+    final savedText = settings.text.trim();
+
+    if (savedText.isEmpty) {
+      _didHydrateText = true;
       return;
     }
-    setState(() => _uploading = true);
-    String? snackMessage;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _didHydrateText) return;
+
+      _textController.text = savedText;
+
+      setState(() {
+        _didHydrateText = true;
+      });
+    });
+  }
+
+  String _cleanText() => _textController.text.trim();
+
+  Future<void> _saveText() async {
+    final text = _cleanText();
+
+    if (text.isEmpty) {
+      _showSnack('Le texte audio ne peut pas être vide.', isError: true);
+      return;
+    }
+
+    setState(() => _isSavingText = true);
+
     try {
-      await _service.uploadAudio(bytes, file.name);
-      snackMessage = 'Audio du popup mis à jour.';
-    } catch (e) {
-      snackMessage = 'Erreur upload audio : $e';
+      await _service.saveAdminText(text);
+
+      if (!mounted) return;
+
+      _showSnack('Texte Infos paiement sauvegardé.');
+    } catch (error) {
+      if (!mounted) return;
+
+      _showSnack('Sauvegarde impossible : $error', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _uploading = false);
-        if (snackMessage != null) _showSnack(snackMessage);
-      }
+      if (mounted) setState(() => _isSavingText = false);
     }
   }
 
-  Future<void> _generateMp3FromText() async {
-    setState(() => _generating = true);
-    String? snackMessage;
+  Future<void> _generateDraft() async {
+    final text = _cleanText();
+
+    if (text.isEmpty) {
+      _showSnack('Le texte audio ne peut pas être vide.', isError: true);
+      return;
+    }
+
+    setState(() {
+      _isGeneratingDraft = true;
+      _hasPreviewedDraft = false;
+      _lastPreviewedDraftUrl = null;
+    });
+
     try {
-      await callPrestoFunction<dynamic>(
-        functions: prestoFirebaseFunctions,
-        name: 'generatePaymentInfoAudio',
-        timeout: const Duration(seconds: 120),
-        area: 'admin-audio',
+      await _service.saveAdminText(text);
+
+      final settings = await _service.generatePaymentInfoAudioDraft(
+        text: text,
       );
-      snackMessage = 'MP3 régénéré depuis le texte du popup.';
-    } on FirebaseFunctionsException catch (e) {
-      snackMessage = 'Erreur génération : ${e.message ?? e.code}';
-    } catch (e) {
-      snackMessage = 'Erreur génération : $e';
+
+      if (!mounted) return;
+
+      setState(() {
+        _lastPreviewedDraftUrl = settings.draftAudioUrl;
+        _hasPreviewedDraft = false;
+      });
+
+      _showSnack('MP3 brouillon généré. Pré-écoute-le avant validation.');
+    } catch (error) {
+      if (!mounted) return;
+
+      _showSnack('Génération MP3 impossible : $error', isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _generating = false);
-        if (snackMessage != null) _showSnack(snackMessage);
-      }
+      if (mounted) setState(() => _isGeneratingDraft = false);
     }
   }
 
-  void _showSnack(String message) {
+  Future<void> _publishDraft() async {
+    if (!_hasPreviewedDraft) {
+      _showSnack(
+        'Pré-écoute obligatoire : écoute le MP3 avant de le publier.',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() => _isPublishingDraft = true);
+
+    try {
+      await _service.publishPaymentInfoAudioDraft();
+
+      if (!mounted) return;
+
+      _showSnack('MP3 Infos paiement validé et publié dans le popup.');
+    } catch (error) {
+      if (!mounted) return;
+
+      _showSnack('Publication impossible : $error', isError: true);
+    } finally {
+      if (mounted) setState(() => _isPublishingDraft = false);
+    }
+  }
+
+  void _markDraftPreviewed(String audioUrl) {
+    setState(() {
+      _hasPreviewedDraft = true;
+      _lastPreviewedDraftUrl = audioUrl;
+    });
+  }
+
+  void _showSnack(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : null,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<String?>(
-      stream: _service.watchAudioUrl(),
+    return StreamBuilder<PaymentInfoAudioAdminSettings>(
+      stream: _service.watchAdminSettings(),
       builder: (context, snapshot) {
-        final audioUrl = snapshot.data;
-        final hasAudio = audioUrl?.isNotEmpty == true;
-        final busy = _uploading || _generating;
+        final settings = snapshot.data;
+
+        if (settings != null) {
+          _hydrateTextFromSettings(settings);
+        }
+
+        final draftAudioUrl = settings?.draftAudioUrl?.trim().isNotEmpty == true
+            ? settings!.draftAudioUrl!.trim()
+            : _lastPreviewedDraftUrl;
+
+        final canPreview = draftAudioUrl != null && draftAudioUrl.isNotEmpty;
+        final previewConfirmed =
+            _hasPreviewedDraft && _lastPreviewedDraftUrl == draftAudioUrl;
+
         return Card(
           elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Lecture popup paiement',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF07184A),
-                  ),
+                const Row(
+                  children: [
+                    Icon(
+                      Icons.record_voice_over_rounded,
+                      color: Color(0xFFFF6600),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Audio popup « Infos paiement »',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Mets à jour le fichier MP3 lu dans le popup "Infos paiement".\n'
-                  'Tu peux importer un MP3 manuellement ou régénérer depuis le texte du popup via IA (OpenAI TTS).',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF4A5878)),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  hasAudio
-                      ? 'MP3 configuré dans Firebase Storage.'
-                      : 'Aucun MP3 configuré.',
+                  'Le texte ci-dessous reprend le message du popup Infos paiement. Modifie-le, génère un MP3 brouillon, puis pré-écoute avant validation.',
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: hasAudio ? Colors.green : Colors.orange,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
                   ),
                 ),
                 const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: busy ? null : _generateMp3FromText,
-                    icon: _generating
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.auto_awesome_rounded),
-                    label: Text(
-                      _generating
-                          ? 'Génération en cours...'
-                          : 'Régénérer le MP3 depuis le texte (IA)',
+                TextField(
+                  controller: _textController,
+                  minLines: 8,
+                  maxLines: 16,
+                  decoration: const InputDecoration(
+                    labelText: 'Texte qui servira de base à l’audio',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(),
+                    helperText:
+                        'Toute modification annule la pré-écoute précédente.',
+                  ),
+                  onChanged: (_) {
+                    if (_hasPreviewedDraft || _lastPreviewedDraftUrl != null) {
+                      setState(() {
+                        _hasPreviewedDraft = false;
+                        _lastPreviewedDraftUrl = null;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _isSavingText ? null : _saveText,
+                      icon: _isSavingText
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_outlined),
+                      label: Text(
+                        _isSavingText ? 'Sauvegarde...' : 'Sauvegarder texte',
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _isGeneratingDraft ? null : _generateDraft,
+                      icon: _isGeneratingDraft
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.graphic_eq_rounded),
+                      label: Text(
+                        _isGeneratingDraft
+                            ? 'Génération MP3...'
+                            : 'Générer pré-écoute MP3',
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isGeneratingDraft) ...[
+                  const SizedBox(height: 12),
+                  const LinearProgressIndicator(
+                    backgroundColor: Color(0xFFE5E7EB),
+                    color: Color(0xFF1A73E8),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Conversion du texte en MP3...',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: busy ? null : _pickAndUploadMp3,
-                    icon: _uploading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.upload_file_rounded),
-                    label: Text(
-                      _uploading
-                          ? 'Upload en cours...'
-                          : 'Importer un MP3 manuellement',
+                ],
+                if (canPreview) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.headphones_rounded,
+                              color: Color(0xFF1A73E8),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Pré-écoute du MP3 brouillon',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        PaymentInfoAudioPlayerButton(
+                          audioUrl: draftAudioUrl,
+                          label: 'Pré-écouter le MP3',
+                          onPlayed: () => _markDraftPreviewed(draftAudioUrl),
+                        ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: () => _markDraftPreviewed(draftAudioUrl),
+                          icon: Icon(
+                            previewConfirmed
+                                ? Icons.check_circle_rounded
+                                : Icons.hearing_rounded,
+                          ),
+                          label: Text(
+                            previewConfirmed
+                                ? 'Pré-écoute confirmée'
+                                : 'J’ai pré-écouté ce MP3',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        FilledButton.icon(
+                          onPressed: _isPublishingDraft ? null : _publishDraft,
+                          icon: _isPublishingDraft
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.cloud_done_rounded),
+                          label: Text(
+                            _isPublishingDraft
+                                ? 'Publication...'
+                                : 'Valider et publier le MP3',
+                          ),
+                        ),
+                        if (!previewConfirmed) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Validation bloquée tant que la pré-écoute n’est pas confirmée.',
+                            style: TextStyle(
+                              color: Color(0xFFC47A00),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ),
+                ],
+                if (settings?.lastPublishedDate != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Dernière publication : ${settings!.lastPublishedDate}',
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

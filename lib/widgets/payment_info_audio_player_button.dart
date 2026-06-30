@@ -9,11 +9,13 @@ class PaymentInfoAudioPlayerButton extends StatefulWidget {
     required this.audioUrl,
     this.label = 'Écouter l’explication paiement',
     this.compact = false,
+    this.onPlayed,
   });
 
   final String audioUrl;
   final String label;
   final bool compact;
+  final VoidCallback? onPlayed;
 
   @override
   State<PaymentInfoAudioPlayerButton> createState() =>
@@ -119,6 +121,7 @@ class _PaymentInfoAudioPlayerButtonState
       }
 
       if (_isPaused && _sourceLoaded) {
+        widget.onPlayed?.call();
         await _player.resume();
         return;
       }
@@ -126,9 +129,11 @@ class _PaymentInfoAudioPlayerButtonState
       if (_sourceLoaded) {
         // Source préchargée : lecture immédiate sans réseau.
         await _player.seek(Duration.zero);
+        widget.onPlayed?.call();
         await _player.resume();
       } else {
         _sourceLoaded = true;
+        widget.onPlayed?.call();
         await _player.play(UrlSource(audioUrl));
       }
     } catch (error) {
