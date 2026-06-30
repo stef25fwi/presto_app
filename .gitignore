@@ -71,7 +71,6 @@ service-account.json
 zicAlExN
 *.zip
 build_logs/
-
 # Secrets Firebase / Google Cloud - ne jamais commit
 lib/services/service-account.json
 **/service-account.json
@@ -90,3 +89,9 @@ verify_fr_ilipresto_*.txt
 android/app/google-services.json.bad_cli_*.bak
 audit_push_web_notifications_*.txt
 android/.kotlin/
+# Local generated logs / audits / backups
+backups/
+release_apk/
+downloads/
+flutter_analyze_*.log
+*.tmp

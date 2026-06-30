@@ -22,6 +22,7 @@ import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
 import 'dart:async';
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
+import 'package:presto_app/widgets/deleted_user_profile.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -4180,4 +4181,30 @@ class _AvatarFallback extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _isDeletedUserMap(Map<String, dynamic>? data) {
+  return DeletedUserProfile.isDeletedMap(data);
+}
+
+String _deletedAwareDisplayName(
+  Map<String, dynamic>? data,
+  String? fallbackName,
+) {
+  return DeletedUserProfile.displayName(
+    isDeleted: _isDeletedUserMap(data),
+    fallbackName: fallbackName,
+  );
+}
+
+Widget _deletedAwareAvatar({
+  required Map<String, dynamic>? data,
+  required Widget fallback,
+  double radius = 22,
+}) {
+  if (_isDeletedUserMap(data)) {
+    return DeletedUserAvatar(radius: radius);
+  }
+
+  return fallback;
 }
