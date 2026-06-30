@@ -736,7 +736,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 )
               : null,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 6),
         Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -789,7 +789,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(26),
               border: Border.all(color: const Color(0xFFE5E7EB)),
               boxShadow: [
                 BoxShadow(
@@ -802,7 +802,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(26),
                   child: SizedBox(
                     width: 42,
                     height: 42,
@@ -829,7 +829,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                           ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1534,7 +1534,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         decoration: BoxDecoration(
           color: const Color(0xFFFFF7ED),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(26),
           border: Border.all(color: const Color(0xFFFFD7AE)),
         ),
         child: Row(
@@ -1544,7 +1544,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               color: kPrestoOrange,
               size: 20,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 'Ne partagez jamais de codes, mots de passe ou informations bancaires.',
@@ -1608,7 +1608,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(26),
             border: Border.all(color: const Color(0xFFE5E7EB)),
             boxShadow: [
               BoxShadow(
@@ -2143,7 +2143,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(26),
           child: SizedBox(
             width: 240,
             height: 170,
@@ -2176,20 +2176,20 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
     return InkWell(
       onTap: () => unawaited(_openAttachment(attachment)),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(26),
       child: Container(
         width: 240,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(26),
           border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.description_outlined, color: kPrestoBlue),
-            const SizedBox(width: 10),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 attachment.name,
@@ -2201,7 +2201,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             const Icon(Icons.open_in_new_rounded, size: 16),
           ],
         ),
@@ -2348,7 +2348,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   ),
                 ),
                 if (failed && onRetry != null) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   InkWell(
                     onTap: onRetry,
                     borderRadius: BorderRadius.circular(999),
@@ -2380,7 +2380,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   _buildOtherParticipantMessageAvatar(),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   Flexible(child: bubbleContent),
                 ],
               ),
@@ -2876,7 +2876,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 4),
                             Text(
                               'Envoi de la pièce jointe...',
                               style: kPrestoMetaTextStyle.copyWith(
@@ -3221,13 +3221,13 @@ class _ConversationBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Row(
         children: [
           Icon(icon, size: 18, color: color),
-          const SizedBox(width: 10),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               message,
@@ -3344,7 +3344,7 @@ class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 6),
                 Text(
                   _fmt(_elapsed),
                   style: const TextStyle(
@@ -3373,7 +3373,7 @@ class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 6),
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: widget.onSend,
@@ -3509,7 +3509,7 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
                     ),
                   ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
