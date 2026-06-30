@@ -43,6 +43,7 @@ import '../widgets/home_interactions.dart';
 import '../widgets/offer_network_image.dart';
 import 'messages/messages_page_v2.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
+import 'package:presto_app/services/profile_department_resolver.dart';
 
 class ConsultOffersPage extends StatefulWidget {
   final String? categoryFilter;
@@ -445,6 +446,83 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         hasBudgetRange;
   }
 
+  bool _didApplyProfileDepartmentDefaultFilter = false;
+
+  Future<void> _applyProfileDepartmentFilterByDefault() async {
+    if (_didApplyProfileDepartmentDefaultFilter) return;
+
+    _didApplyProfileDepartmentDefaultFilter = true;
+
+    final hasExplicitEntryFilter =
+        widget.categoryFilter?.trim().isNotEmpty == true ||
+            widget.searchQuery?.trim().isNotEmpty == true;
+
+    final hasManualLocationFilter =
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            (_filterCityName != null && _filterCityName!.isNotEmpty) ||
+            _filterPostalCodeController.text.trim().isNotEmpty ||
+            _postalCodeController.text.trim().isNotEmpty;
+
+    if (hasExplicitEntryFilter || hasManualLocationFilter) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final data = snapshot.data();
+
+      if (data == null) return;
+
+      final departmentCode = ProfileDepartmentResolver.resolveDepartmentCode(
+        departmentCode: data['departmentCode'] ?? data['department_code'],
+        departmentLabel:
+            data['department'] ?? data['departement'] ?? data['departmentName'],
+        city: data['city'] ?? data['ville'],
+        postalCode: data['postalCode'] ??
+            data['postal_code'] ??
+            data['zipCode'] ??
+            data['zip'],
+      );
+
+      if (departmentCode == null || departmentCode.isEmpty) return;
+
+      final regionCode = _deptToRegion[departmentCode];
+
+      if (!mounted) return;
+
+      setState(() {
+        _filterDepartmentCode = departmentCode;
+
+        if (regionCode != null && regionCode.isNotEmpty) {
+          _filterRegionCode = regionCode;
+
+          _selectedRegionCode = regionCode;
+        }
+
+        _showFilters = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+          content: Text(
+            'Par défaut, les offres sont filtrées sur votre département : '
+            '${ProfileDepartmentResolver.departmentDisplayName(departmentCode)}.',
+          ),
+        ),
+      );
+    } catch (error) {
+      debugPrint('[ConsultOffers] Filtre département profil ignoré: $error');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -510,6 +588,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     // ✅ Précharger les données région/département
     _preloadRegionDeptData();
+    unawaited(_applyProfileDepartmentFilterByDefault());
 
     // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
     _filterCityController.addListener(_syncLocationFieldFromFilter);

@@ -40,6 +40,7 @@ import '../main.dart'
 import 'user_offers_section.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
+import 'package:presto_app/services/profile_department_resolver.dart';
 
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
@@ -116,6 +117,7 @@ class _AccountPageState extends State<AccountPage> {
   // final _emailController = TextEditingController();
   // final _passwordController = TextEditingController();
   // final _passwordConfirmController = TextEditingController();
+  final _departmentController = TextEditingController();
 
   // Profil utilisateur
   final TextEditingController _profilePseudoController =
@@ -782,6 +784,10 @@ class _AccountPageState extends State<AccountPage> {
   @override
   void initState() {
     super.initState();
+    _profileCityController.addListener(_syncProfileDepartmentFromLocation);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncProfileDepartmentFromLocation();
+    });
     unawaited(adminAudioRuntimeStore.ensureInitialized());
     // _isLoginMode = !widget.startInSignup; // Plus utilisé avec PrestoPremiumAuthPage
     _scrollController.addListener(() {
@@ -1468,6 +1474,7 @@ class _AccountPageState extends State<AccountPage> {
       );
       if (_canHydrateProfileField(_profileCityController)) {
         _profileCityController.text = nextCity;
+        _syncProfileDepartmentFromLocation();
       }
 
       final loadedPhone = _firstNonEmptyProfileValue(
@@ -1671,6 +1678,7 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   void dispose() {
+    _departmentController.dispose();
     _adminLoadingTimeoutTimer?.cancel();
     _profileAuthSub?.cancel();
     _profileDocSub?.cancel();
@@ -1691,6 +1699,14 @@ class _AccountPageState extends State<AccountPage> {
   bool _validateProfile() {
     final pseudo = _profilePseudoController.text.trim();
     final city = _profileCityController.text.trim();
+    final departmentCode =
+        ProfileDepartmentResolver.resolveDepartmentCode(city: city);
+    final departmentLabel = departmentCode == null
+        ? ''
+        : ProfileDepartmentResolver.departmentDisplayName(departmentCode);
+    if (_departmentController.text != departmentLabel) {
+      _departmentController.text = departmentLabel;
+    }
     final phone = _profilePhoneController.text.trim();
     final normalizedPhone =
         _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
@@ -1772,6 +1788,15 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
+
+      final departmentCode =
+          ProfileDepartmentResolver.resolveDepartmentCode(city: city);
+
+      final departmentLabel = departmentCode == null
+          ? ''
+          : ProfileDepartmentResolver.departmentDisplayName(departmentCode);
+
+      _departmentController.text = departmentLabel;
       final phone = _profilePhoneController.text.trim();
       final normalizedPhone =
           _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
@@ -1787,6 +1812,9 @@ class _AccountPageState extends State<AccountPage> {
         selectedFavoriteSubcategories: _selectedFavoriteSubcategories.toList(),
         selectedFavoriteDepartements: _selectedFavoriteDepartements.toList(),
       );
+
+      profileData['departmentCode'] = departmentCode;
+      profileData['department'] = departmentLabel;
 
       // Rafraîchir le token App Check avant l'écriture (non bloquant)
       try {
@@ -2822,6 +2850,9 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     const SizedBox(height: 24),
                     AccountProfileFormSection(
+                      firstName: _profileFirstName,
+                      lastName: _profileLastName,
+                      departmentController: _departmentController,
                       pseudoController: _profilePseudoController,
                       cityController: _profileCityController,
                       phoneController: _profilePhoneController,
@@ -3483,6 +3514,34 @@ class _AccountPageState extends State<AccountPage> {
       allSubcats.addAll(subcats);
     }
     return allSubcats.toList();
+  }
+
+  String get _profileFirstName {
+    final pseudo = _profilePseudoController.text.trim();
+    final parts =
+        pseudo.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return '';
+    return parts.first;
+  }
+
+  String get _profileLastName {
+    final pseudo = _profilePseudoController.text.trim();
+    final parts =
+        pseudo.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.length <= 1) return '';
+    return parts.skip(1).join(' ');
+  }
+
+  void _syncProfileDepartmentFromLocation() {
+    final code = ProfileDepartmentResolver.resolveDepartmentCode(
+      city: _profileCityController.text,
+    );
+    final label = code == null
+        ? ''
+        : ProfileDepartmentResolver.departmentDisplayName(code);
+    if (_departmentController.text != label) {
+      _departmentController.text = label;
+    }
   }
 
   @override
