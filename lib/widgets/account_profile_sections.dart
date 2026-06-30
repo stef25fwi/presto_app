@@ -113,6 +113,56 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
           ),
           child: Column(
             children: [
+              TextFormField(
+                initialValue: widget.lastName.trim().isEmpty
+                    ? 'Non renseigné'
+                    : widget.lastName.trim(),
+                enabled: false,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Nom',
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: widget.firstName.trim().isEmpty
+                    ? 'Non renseigné'
+                    : widget.firstName.trim(),
+                enabled: false,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Prénom',
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
               TextField(
                 controller: widget.pseudoController,
                 enabled: widget.isEditing,
@@ -205,56 +255,6 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                       );
                     },
                   ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                initialValue: widget.firstName.trim().isEmpty
-                    ? 'Non renseigné'
-                    : widget.firstName.trim(),
-                enabled: false,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Prénom',
-                  prefixIcon: const Icon(Icons.person_outline_rounded),
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                style: const TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                initialValue: widget.lastName.trim().isEmpty
-                    ? 'Non renseigné'
-                    : widget.lastName.trim(),
-                enabled: false,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'Nom',
-                  prefixIcon: const Icon(Icons.badge_outlined),
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  disabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                style: const TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
