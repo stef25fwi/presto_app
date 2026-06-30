@@ -811,7 +811,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final logCount = _adminConversationLoadLogs.length;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 2),
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 2),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -1383,7 +1383,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 8),
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
       child: Row(
         children: [
           _ConversationFilterChip(
@@ -1416,7 +1416,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Widget _buildInboxHeader({required int unreadCount}) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+      padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
       child: Row(
         children: [
           const Expanded(
@@ -1487,7 +1487,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      padding: const EdgeInsets.fromLTRB(6, 12, 6, 8),
       child: TextField(
         controller: _searchController,
         onChanged: (_) => setState(() {}),
@@ -1604,10 +1604,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+      padding: const EdgeInsets.fromLTRB(6, 2, 6, 8),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFFFF4E8),
           borderRadius: BorderRadius.circular(14),
@@ -1640,10 +1640,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final copyValue = 'email=${email.isEmpty ? 'aucun' : email}\nuid=$uid';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFEAF2FF),
           borderRadius: BorderRadius.circular(14),
@@ -2573,7 +2573,7 @@ class _ConversationFilterChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
         decoration: BoxDecoration(
           color: selected ? kPrestoBlue : Colors.white,
           borderRadius: BorderRadius.circular(999),
