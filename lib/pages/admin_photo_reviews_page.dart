@@ -179,8 +179,8 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
       backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
         title: const Text('Photos à valider'),
-        backgroundColor: Colors.white,
-        foregroundColor: kPrestoBlue,
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(

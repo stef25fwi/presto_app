@@ -52,6 +52,7 @@ import '../widgets/city_postal_autocomplete_field.dart';
 import 'publish_offer_widgets.dart';
 import '../widgets/phone_input_field.dart';
 import '../widgets/photo_selector_tile.dart';
+import '../widgets/orbiting_ai_visual.dart';
 
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
@@ -3755,6 +3756,67 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  Widget _buildPublishAiAnalyzingBanner() {
+    if (!_isAnalyzing) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 0, 0, 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF13C8FF),
+              Color(0xFF0078FF),
+              Color(0xFF004BE8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x6613A8FF),
+              blurRadius: 22,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: const Row(
+          children: [
+            OrbitingAiVisual(size: 60),
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Analyse IA en cours...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Nous préparons automatiquement votre annonce.',
+                    style: TextStyle(
+                      color: Color(0xE6FFFFFF),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final publishVisuallyDisabled = !_canPublish || _isSubmitting;
@@ -3843,6 +3905,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   onClear: _clearPublishAiTrace,
                   showAdminDiagnostics: _adminAudioRuntimeAccessState == 1,
                 ),
+                _buildPublishAiAnalyzingBanner(),
                 const SizedBox(height: 16),
 
                 // DESCRIPTION
