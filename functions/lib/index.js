@@ -144,3 +144,24 @@ Object.defineProperty(exports, "verifySiret", { enumerable: true, get: function 
 var preVerifySiret_1 = require("./modules/pro/preVerifySiret");
 Object.defineProperty(exports, "preVerifySiret", { enumerable: true, get: function () { return preVerifySiret_1.preVerifySiret; } });
 //# sourceMappingURL=index.js.map
+
+
+
+
+// Payment popup MP3 draft workflow exports (safe getter version).
+const paymentInfoAudioDraftWorkflowExportsSafe = require("./payment_info_audio_pipeline");
+
+Object.defineProperty(exports, "generatePaymentInfoAudioDraft", {
+  enumerable: true,
+  get: function () {
+    return paymentInfoAudioDraftWorkflowExportsSafe.generatePaymentInfoAudioDraft;
+  },
+});
+
+Object.defineProperty(exports, "publishPaymentInfoAudioDraft", {
+  enumerable: true,
+  get: function () {
+    return paymentInfoAudioDraftWorkflowExportsSafe.publishPaymentInfoAudioDraft;
+  },
+});
+

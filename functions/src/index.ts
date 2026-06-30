@@ -118,3 +118,15 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
+
+
+// Payment popup MP3 draft workflow exports.
+// Kept in source so npm build does not remove the callable exports.
+const paymentInfoAudioDraftWorkflowExports = require("../payment_info_audio_pipeline");
+
+export const generatePaymentInfoAudioDraft =
+  paymentInfoAudioDraftWorkflowExports.generatePaymentInfoAudioDraft;
+
+export const publishPaymentInfoAudioDraft =
+  paymentInfoAudioDraftWorkflowExports.publishPaymentInfoAudioDraft;
+
