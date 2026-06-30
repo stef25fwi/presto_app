@@ -151,6 +151,7 @@ class _MethodTabRow extends StatelessWidget {
               child: _MethodTabButton(
                 icon: Icons.edit_rounded,
                 label: 'Texte + IA',
+                selectedColor: const Color(0xFFFF6600),
                 selected: method == _AiMethod.texte,
                 enabled: enabled,
                 onTap: onSelectTexte,
@@ -204,6 +205,7 @@ class _MethodTabButton extends StatelessWidget {
     required this.selected,
     required this.enabled,
     required this.onTap,
+    this.selectedColor = const Color(0xFF1A6FFF),
     this.showOrbit = false,
   });
 
@@ -212,6 +214,7 @@ class _MethodTabButton extends StatelessWidget {
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
+  final Color selectedColor;
   final bool showOrbit;
 
   bool get _isTextAiButton => label == 'Texte + IA';
