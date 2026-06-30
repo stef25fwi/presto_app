@@ -1480,7 +1480,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
         child: _ConversationBanner(
           icon: Icons.block_rounded,
-          color: const Color(0xFFB91C1C),
+          color: const Color(0xFFFF0000),
           message: _isBlockedForCurrentUser
               ? 'Vous avez bloque cette conversation. Debloquez-la pour reprendre les echanges.'
               : _isBlockedByAnotherParticipant
@@ -1537,13 +1537,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+          border: Border.all(color: const Color(0xFFFF0000), width: 1.2),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.shield_outlined,
-              color: Color(0xFFB91C1C),
+              color: Color(0xFFFF0000),
               size: 20,
             ),
             const SizedBox(width: 6),
@@ -1551,7 +1551,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               child: Text(
                 'Ne partagez jamais de codes, mots de passe ou informations bancaires.',
                 style: kPrestoMetaTextStyle.copyWith(
-                  color: const Color(0xFFB91C1C),
+                  color: const Color(0xFFFF0000),
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -1563,7 +1563,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               icon: const Icon(
                 Icons.close_rounded,
                 size: 18,
-                color: Color(0xFFB91C1C),
+                color: Color(0xFFFF0000),
               ),
             ),
           ],
@@ -2353,7 +2353,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       child: Icon(
                         Icons.refresh_rounded,
                         size: 15,
-                        color: Color(0xFFB91C1C),
+                        color: Color(0xFFFF0000),
                       ),
                     ),
                   ),
