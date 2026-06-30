@@ -258,7 +258,8 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
 
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * (isSmallScreen ? 0.65 : 0.75),
+        maxHeight:
+            MediaQuery.of(context).size.height * (isSmallScreen ? 0.65 : 0.75),
       ),
       child: Material(
         color: Colors.transparent,
@@ -286,311 +287,318 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Diagnostic admin web',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Diagnostic admin web',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  if (!isSmallScreen) ...[
-                    IconButton(
-                      tooltip: 'Rafraichir droits admin',
-                      onPressed: _refreshAdminAccess,
-                      iconSize: 18,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.refresh_rounded),
-                    ),
-                    IconButton(
-                      tooltip: 'Vider les evenements',
-                      onPressed: _debugStore.clear,
-                      iconSize: 18,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.delete_sweep_outlined),
-                    ),
-                    IconButton(
-                      tooltip: 'Copier le diagnostic',
-                      onPressed: () => _copyReport(context),
-                      iconSize: 18,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.copy_all_rounded),
-                    ),
-                    IconButton(
-                      tooltip: 'Copier le diagnostic JSON',
-                      onPressed: () => _copyJsonReport(context),
-                      iconSize: 18,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.data_object_rounded),
-                    ),
-                    IconButton(
-                      tooltip: 'Copier le contenu des logs',
-                      onPressed: () => _copyLogContent(context),
-                      iconSize: 18,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.content_copy_rounded),
-                    ),
-                  ] else ...[
-                    SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert_rounded, size: 18),
-                        onSelected: (action) {
-                          if (action == 'refresh') {
-                            _refreshAdminAccess();
-                          } else if (action == 'clear') {
-                            _debugStore.clear();
-                          } else if (action == 'copy') {
-                            _copyReport(context);
-                          } else if (action == 'copy-json') {
-                            _copyJsonReport(context);
-                          } else if (action == 'copy-logs') {
-                            _copyLogContent(context);
-                          }
-                        },
-                        itemBuilder: (BuildContext context) =>
-                            <PopupMenuEntry<String>>[
-                          const PopupMenuItem(
-                            value: 'refresh',
-                            child: Row(
-                              children: [
-                                Icon(Icons.refresh_rounded, size: 16),
-                                SizedBox(width: 8),
-                                Text('Rafraichir',
-                                    style: TextStyle(fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'clear',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_sweep_outlined, size: 16),
-                                SizedBox(width: 8),
-                                Text('Vider', style: TextStyle(fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'copy',
-                            child: Row(
-                              children: [
-                                Icon(Icons.copy_all_rounded, size: 16),
-                                SizedBox(width: 8),
-                                Text('Copier', style: TextStyle(fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'copy-json',
-                            child: Row(
-                              children: [
-                                Icon(Icons.data_object_rounded, size: 16),
-                                SizedBox(width: 8),
-                                Text('JSON', style: TextStyle(fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'copy-logs',
-                            child: Row(
-                              children: [
-                                Icon(Icons.content_copy_rounded, size: 16),
-                                SizedBox(width: 8),
-                                Text('Logs', style: TextStyle(fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 6 : 8),
-              _buildSection(
-                'Contexte',
-                <String>[
-                  'route=${_debugStore.currentRoute}',
-                  'host=$host class=$hostClass',
-                  'user=${_debugStore.currentUserId ?? 'null'} ${_debugStore.currentUserEmail ?? ''}'
-                      .trim(),
-                ],
-              ),
-              _buildSection(
-                'Admin',
-                <String>[
-                  'access=${adminState.hasConfirmedAdminAccess}',
-                  'source=${adminState.consolidatedSourceOfTruth}',
-                  'stage=${adminState.lastStage}',
-                  if ((adminState.serverErrorCode ?? '').toString().isNotEmpty)
-                    'serverError=${adminState.serverErrorCode}',
-                ],
-              ),
-              _buildSection(
-                'App Check',
-                <String>[
-                  'attempted=$appCheckActivationAttempted success=$appCheckActivationSucceeded',
-                  'provider=$kAppCheckWebRecaptchaProviderLabel siteKeySet=${kAppCheckWebRecaptchaSiteKey.trim().isNotEmpty}',
-                  'lastRefresh=${_formatTime(appCheckLastTokenRefreshAt)}',
-                  if (activationError.isNotEmpty)
-                    'activationError=$activationError',
-                  if (refreshError.isNotEmpty) 'refreshError=$refreshError',
-                ],
-              ),
-              _buildSection(
-                'Runtime IA',
-                <String>[
-                  'configuredMode=${_audioRuntimeStore.configuredMode}',
-                  'current=${_audioRuntimeStore.currentLabel}',
-                  'detail=${_audioRuntimeStore.currentDetail}',
-                  if (latestAudio != null)
-                    'latest=${latestAudio.flowKey} ${latestAudio.status} #${latestAudio.attemptNumber}',
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 6 : 8),
-              Row(
-                children: [
-                  Text(
-                    'Timeline',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: isSmallScreen ? 11 : 12,
-                    ),
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: IconButton(
-                      tooltip: 'Copier les logs',
-                      padding: EdgeInsets.zero,
-                      iconSize: 15,
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.content_copy_rounded),
-                      onPressed: () => _copyLogContent(context),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 4 : 6),
-              Wrap(
-                spacing: isSmallScreen ? 4 : 6,
-                runSpacing: isSmallScreen ? 4 : 6,
-                children: [
-                  for (final area in areaOptions)
-                    ChoiceChip(
-                      label: Text(area == 'all' ? 'Toutes zones' : area),
-                      selected: _selectedArea == area,
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedArea = area;
-                        });
-                      },
-                      labelStyle: TextStyle(fontSize: isSmallScreen ? 10 : 11),
-                      materialTapTargetSize: isSmallScreen
-                          ? MaterialTapTargetSize.shrinkWrap
-                          : MaterialTapTargetSize.padded,
-                    ),
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 6 : 8),
-              Wrap(
-                spacing: isSmallScreen ? 4 : 6,
-                runSpacing: isSmallScreen ? 4 : 6,
-                children: [
-                  FilterChip(
-                    label: Text(
-                      _callableOnly
-                          ? 'Callables uniquement'
-                          : 'Tous evenements',
-                      style: TextStyle(fontSize: isSmallScreen ? 10 : 11),
-                    ),
-                    avatar: Icon(Icons.cloud_done_outlined,
-                        size: isSmallScreen ? 14 : 18),
-                    selected: _callableOnly,
-                    onSelected: (selected) {
-                      setState(() {
-                        _callableOnly = selected;
-                      });
-                    },
-                    materialTapTargetSize: isSmallScreen
-                        ? MaterialTapTargetSize.shrinkWrap
-                        : MaterialTapTargetSize.padded,
-                  ),
-                  if (_callableOnly)
-                    Text(
-                      '${events.length} evt',
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 9 : 11,
-                        color: const Color(0xFF6B7280),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                ],
-              ),
-              SizedBox(height: isSmallScreen ? 6 : 8),
-              ConstrainedBox(
-                constraints:
-                    BoxConstraints(maxHeight: isSmallScreen ? 200 : 260),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6, vertical: isSmallScreen ? 6 : 8),
-                    itemCount: events.length,
-                    separatorBuilder: (_, __) => const Divider(height: 10),
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 3),
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: _colorForLevel(event.level),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: isSmallScreen ? 6 : 8),
-                          Expanded(
-                            child: Text(
-                              '[${_formatTime(event.timestamp)}] '
-                              '${event.area}/${event.level} ${event.message}'
-                              '${event.detail == null || event.detail!.isEmpty ? '' : '\n${event.detail}'}',
-                              style: TextStyle(
-                                fontSize: isSmallScreen ? 10 : 11,
-                                color: event.level == 'error'
-                                    ? const Color(0xFF991B1B)
-                                    : const Color(0xFF111827),
+                      if (!isSmallScreen) ...[
+                        IconButton(
+                          tooltip: 'Rafraichir droits admin',
+                          onPressed: _refreshAdminAccess,
+                          iconSize: 18,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.refresh_rounded),
+                        ),
+                        IconButton(
+                          tooltip: 'Vider les evenements',
+                          onPressed: _debugStore.clear,
+                          iconSize: 18,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.delete_sweep_outlined),
+                        ),
+                        IconButton(
+                          tooltip: 'Copier le diagnostic',
+                          onPressed: () => _copyReport(context),
+                          iconSize: 18,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.copy_all_rounded),
+                        ),
+                        IconButton(
+                          tooltip: 'Copier le diagnostic JSON',
+                          onPressed: () => _copyJsonReport(context),
+                          iconSize: 18,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.data_object_rounded),
+                        ),
+                        IconButton(
+                          tooltip: 'Copier le contenu des logs',
+                          onPressed: () => _copyLogContent(context),
+                          iconSize: 18,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.content_copy_rounded),
+                        ),
+                      ] else ...[
+                        SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert_rounded, size: 18),
+                            onSelected: (action) {
+                              if (action == 'refresh') {
+                                _refreshAdminAccess();
+                              } else if (action == 'clear') {
+                                _debugStore.clear();
+                              } else if (action == 'copy') {
+                                _copyReport(context);
+                              } else if (action == 'copy-json') {
+                                _copyJsonReport(context);
+                              } else if (action == 'copy-logs') {
+                                _copyLogContent(context);
+                              }
+                            },
+                            itemBuilder: (BuildContext context) =>
+                                <PopupMenuEntry<String>>[
+                              const PopupMenuItem(
+                                value: 'refresh',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.refresh_rounded, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Rafraichir',
+                                        style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
                               ),
-                            ),
+                              const PopupMenuItem(
+                                value: 'clear',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_sweep_outlined, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Vider',
+                                        style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'copy',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.copy_all_rounded, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Copier',
+                                        style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'copy-json',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.data_object_rounded, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('JSON',
+                                        style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'copy-logs',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.content_copy_rounded, size: 16),
+                                    SizedBox(width: 8),
+                                    Text('Logs',
+                                        style: TextStyle(fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      );
-                    },
+                        ),
+                      ],
+                    ],
                   ),
-                ),
+                  SizedBox(height: isSmallScreen ? 6 : 8),
+                  _buildSection(
+                    'Contexte',
+                    <String>[
+                      'route=${_debugStore.currentRoute}',
+                      'host=$host class=$hostClass',
+                      'user=${_debugStore.currentUserId ?? 'null'} ${_debugStore.currentUserEmail ?? ''}'
+                          .trim(),
+                    ],
+                  ),
+                  _buildSection(
+                    'Admin',
+                    <String>[
+                      'access=${adminState.hasConfirmedAdminAccess}',
+                      'source=${adminState.consolidatedSourceOfTruth}',
+                      'stage=${adminState.lastStage}',
+                      if ((adminState.serverErrorCode ?? '')
+                          .toString()
+                          .isNotEmpty)
+                        'serverError=${adminState.serverErrorCode}',
+                    ],
+                  ),
+                  _buildSection(
+                    'App Check',
+                    <String>[
+                      'attempted=$appCheckActivationAttempted success=$appCheckActivationSucceeded',
+                      'provider=$kAppCheckWebRecaptchaProviderLabel siteKeySet=${kAppCheckWebRecaptchaSiteKey.trim().isNotEmpty}',
+                      'lastRefresh=${_formatTime(appCheckLastTokenRefreshAt)}',
+                      if (activationError.isNotEmpty)
+                        'activationError=$activationError',
+                      if (refreshError.isNotEmpty) 'refreshError=$refreshError',
+                    ],
+                  ),
+                  _buildSection(
+                    'Runtime IA',
+                    <String>[
+                      'configuredMode=${_audioRuntimeStore.configuredMode}',
+                      'current=${_audioRuntimeStore.currentLabel}',
+                      'detail=${_audioRuntimeStore.currentDetail}',
+                      if (latestAudio != null)
+                        'latest=${latestAudio.flowKey} ${latestAudio.status} #${latestAudio.attemptNumber}',
+                    ],
+                  ),
+                  SizedBox(height: isSmallScreen ? 6 : 8),
+                  Row(
+                    children: [
+                      Text(
+                        'Timeline',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: isSmallScreen ? 11 : 12,
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: IconButton(
+                          tooltip: 'Copier les logs',
+                          padding: EdgeInsets.zero,
+                          iconSize: 15,
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.content_copy_rounded),
+                          onPressed: () => _copyLogContent(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isSmallScreen ? 4 : 6),
+                  Wrap(
+                    spacing: isSmallScreen ? 4 : 6,
+                    runSpacing: isSmallScreen ? 4 : 6,
+                    children: [
+                      for (final area in areaOptions)
+                        ChoiceChip(
+                          label: Text(area == 'all' ? 'Toutes zones' : area),
+                          selected: _selectedArea == area,
+                          onSelected: (_) {
+                            setState(() {
+                              _selectedArea = area;
+                            });
+                          },
+                          labelStyle:
+                              TextStyle(fontSize: isSmallScreen ? 10 : 11),
+                          materialTapTargetSize: isSmallScreen
+                              ? MaterialTapTargetSize.shrinkWrap
+                              : MaterialTapTargetSize.padded,
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: isSmallScreen ? 6 : 8),
+                  Wrap(
+                    spacing: isSmallScreen ? 4 : 6,
+                    runSpacing: isSmallScreen ? 4 : 6,
+                    children: [
+                      FilterChip(
+                        label: Text(
+                          _callableOnly
+                              ? 'Callables uniquement'
+                              : 'Tous evenements',
+                          style: TextStyle(fontSize: isSmallScreen ? 10 : 11),
+                        ),
+                        avatar: Icon(Icons.cloud_done_outlined,
+                            size: isSmallScreen ? 14 : 18),
+                        selected: _callableOnly,
+                        onSelected: (selected) {
+                          setState(() {
+                            _callableOnly = selected;
+                          });
+                        },
+                        materialTapTargetSize: isSmallScreen
+                            ? MaterialTapTargetSize.shrinkWrap
+                            : MaterialTapTargetSize.padded,
+                      ),
+                      if (_callableOnly)
+                        Text(
+                          '${events.length} evt',
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 9 : 11,
+                            color: const Color(0xFF6B7280),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: isSmallScreen ? 6 : 8),
+                  ConstrainedBox(
+                    constraints:
+                        BoxConstraints(maxHeight: isSmallScreen ? 200 : 260),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 6, vertical: isSmallScreen ? 6 : 8),
+                        itemCount: events.length,
+                        separatorBuilder: (_, __) => const Divider(height: 10),
+                        itemBuilder: (context, index) {
+                          final event = events[index];
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(top: 3),
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: _colorForLevel(event.level),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: isSmallScreen ? 6 : 8),
+                              Expanded(
+                                child: Text(
+                                  '[${_formatTime(event.timestamp)}] '
+                                  '${event.area}/${event.level} ${event.message}'
+                                  '${event.detail == null || event.detail!.isEmpty ? '' : '\n${event.detail}'}',
+                                  style: TextStyle(
+                                    fontSize: isSmallScreen ? 10 : 11,
+                                    color: event.level == 'error'
+                                        ? const Color(0xFF991B1B)
+                                        : const Color(0xFF111827),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildSection(String title, List<String> lines) {

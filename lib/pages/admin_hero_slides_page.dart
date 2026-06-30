@@ -127,7 +127,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   selectedBytes = nonNullBytes;
                   selectedFileName = file.name;
                   selectedMediaType = mediaType;
-                  selectedContentType = _contentTypeForName(file.name, mediaType);
+                  selectedContentType =
+                      _contentTypeForName(file.name, mediaType);
                   previewWarning = '';
                   localError = '';
                   if (existing == null) {
@@ -136,7 +137,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 });
               } catch (error) {
                 setSheetState(() {
-                  localError = 'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
+                  localError =
+                      'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
                 });
               } finally {
                 setSheetState(() => isPickingFile = false);
@@ -176,7 +178,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       ),
                       const SizedBox(height: 18),
                       InkWell(
-                        onTap: (_isSubmitting || isPickingFile) ? null : pickMedia,
+                        onTap:
+                            (_isSubmitting || isPickingFile) ? null : pickMedia,
                         borderRadius: BorderRadius.circular(18),
                         child: Ink(
                           width: double.infinity,
@@ -211,14 +214,14 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         ),
                                       )
                                     : Icon(
-                                  selectedMediaType == 'video'
-                                      ? Icons.video_library_rounded
-                                      : Icons.image_rounded,
-                                  color: selectedMediaType == 'video'
-                                      ? _kAdminHeroBlue
-                                      : _kAdminHeroOrange,
-                                  size: 28,
-                                ),
+                                        selectedMediaType == 'video'
+                                            ? Icons.video_library_rounded
+                                            : Icons.image_rounded,
+                                        color: selectedMediaType == 'video'
+                                            ? _kAdminHeroBlue
+                                            : _kAdminHeroOrange,
+                                        size: 28,
+                                      ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(

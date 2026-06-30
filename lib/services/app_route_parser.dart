@@ -39,8 +39,7 @@ class AppDeepLinkTarget {
   const AppDeepLinkTarget.messageThread(
     String conversationId, {
     String? initialDraftText,
-  })
-      : this._(
+  }) : this._(
           routeName: messagesRouteName,
           conversationId: conversationId,
           initialDraftText: initialDraftText,
@@ -49,8 +48,7 @@ class AppDeepLinkTarget {
   const AppDeepLinkTarget.messageThreadV2(
     String conversationId, {
     String? initialDraftText,
-  })
-      : this._(
+  }) : this._(
           routeName: messagesV2RouteName,
           conversationId: conversationId,
           initialDraftText: initialDraftText,
@@ -128,9 +126,8 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
   }
 
   if (uri.pathSegments.isEmpty && uri.fragment.isNotEmpty) {
-    final fragment = uri.fragment.startsWith('/')
-        ? uri.fragment
-        : '/${uri.fragment}';
+    final fragment =
+        uri.fragment.startsWith('/') ? uri.fragment : '/${uri.fragment}';
     try {
       uri = Uri.parse(fragment);
     } catch (_) {
@@ -143,7 +140,8 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       .where((segment) => segment.isNotEmpty)
       .toList(growable: false);
   final initialDraftText = (uri.queryParameters['draft'] ?? '').trim();
-  final normalizedDraftText = initialDraftText.isEmpty ? null : initialDraftText;
+  final normalizedDraftText =
+      initialDraftText.isEmpty ? null : initialDraftText;
 
   if (segments.length == 1 && segments.first == 'messages') {
     return AppDeepLinkTarget.messages(initialDraftText: normalizedDraftText);

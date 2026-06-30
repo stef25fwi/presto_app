@@ -85,7 +85,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _passwordValidator(String? value) {
     final text = value ?? '';
     if (text.length < 8) return '8 caractères minimum.';
-    if (!RegExp(r'[A-Za-z]').hasMatch(text)) return 'Ajoute au moins une lettre.';
+    if (!RegExp(r'[A-Za-z]').hasMatch(text))
+      return 'Ajoute au moins une lettre.';
     if (!RegExp(r'[0-9]').hasMatch(text)) return 'Ajoute au moins un chiffre.';
     return null;
   }
@@ -182,8 +183,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: orange),
+                        style:
+                            ElevatedButton.styleFrom(backgroundColor: orange),
                         onPressed: _loading ? null : _register,
                         child: _loading
                             ? const CircularProgressIndicator()

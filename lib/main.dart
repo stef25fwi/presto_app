@@ -369,7 +369,8 @@ Offer buildOfferDetailsOffer({
       ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
   final category = (data['category'] ?? '').toString().trim();
   final description = (data['description'] ?? '').toString().trim();
-  final isUrgent = (data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false;
+  final isUrgent =
+      (data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false;
   final budget = data['budget'];
   final price = budget is num ? budget.toDouble() : 0.0;
   final rawMedia = (data['media'] as List<dynamic>? ?? const <dynamic>[])
@@ -441,7 +442,8 @@ Offer buildOfferDetailsOffer({
     thumbnailUrl: thumbnailUrl,
     statusBadges: <String>[
       'Disponible',
-      if ((data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false) 'Urgent',
+      if ((data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false)
+        'Urgent',
       if ((data['verified'] as bool?) ?? false) 'Verifie',
       'Nouveau',
     ],
@@ -999,8 +1001,8 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           builder: (ctx, __) {
             final base = Theme.of(ctx);
             final delta = typographySettings.fontWeightDelta;
-            final withFamily = base.textTheme
-                .apply(fontFamily: typographySettings.fontFamily);
+            final withFamily =
+                base.textTheme.apply(fontFamily: typographySettings.fontFamily);
             final withWeight = shiftTextThemeWeight(withFamily, delta);
             final primaryWithFamily = base.primaryTextTheme
                 .apply(fontFamily: typographySettings.fontFamily);
@@ -1088,13 +1090,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Racine "/" ou mobile → HomePage après 3s (la home se charge en arrière-plan).
     // Deep links → destination directe après 600ms.
-    final isRoot = !kIsWeb ||
-        _normalizedWebPath().isEmpty ||
-        _normalizedWebPath() == '/';
+    final isRoot =
+        !kIsWeb || _normalizedWebPath().isEmpty || _normalizedWebPath() == '/';
     _scheduleNavigation(
-      isRoot
-          ? const Duration(seconds: 3)
-          : const Duration(milliseconds: 600),
+      isRoot ? const Duration(seconds: 3) : const Duration(milliseconds: 600),
     );
   }
 
@@ -1258,7 +1257,8 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 260,
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white, width: 2),
+                            side:
+                                const BorderSide(color: Colors.white, width: 2),
                             padding: const EdgeInsets.symmetric(
                                 vertical: 14, horizontal: 8),
                             foregroundColor: Colors.white,

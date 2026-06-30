@@ -43,7 +43,6 @@ const kConversationThreadStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
-
 class ConversationThreadPage extends StatefulWidget {
   final String conversationId;
   final String offerTitle;
@@ -915,7 +914,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final conversationDocument = FirebaseFirestore.instance
         .collection('conversations')
         .doc(widget.conversationId);
-    _conversationSubscription = conversationDocument.snapshots().listen((snapshot) {
+    _conversationSubscription =
+        conversationDocument.snapshots().listen((snapshot) {
       if (!snapshot.exists) {
         _debugMessagingAccess(
           'conversation-document-not-found',
@@ -2049,7 +2049,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (authUser == null) {
       deleteTempFile(path);
       if (mounted) {
-        showErrorSnackBar(context, 'Connectez-vous pour envoyer une note vocale.');
+        showErrorSnackBar(
+            context, 'Connectez-vous pour envoyer une note vocale.');
       }
       return;
     }
@@ -2058,7 +2059,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       bytes = await readTempFile(path);
     } catch (_) {
       if (mounted) {
-        showErrorSnackBar(context, 'Erreur lors de la lecture de la note vocale.');
+        showErrorSnackBar(
+            context, 'Erreur lors de la lecture de la note vocale.');
       }
       return;
     } finally {
@@ -2955,7 +2957,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 ? null
                                 : _hasDraftText
                                     ? _sendMessage
-                                    : () => unawaited(_showVoiceRecordingSheet()),
+                                    : () =>
+                                        unawaited(_showVoiceRecordingSheet()),
                             style: FilledButton.styleFrom(
                               backgroundColor: kWhatsappGreen,
                               foregroundColor: Colors.white,

@@ -14,8 +14,7 @@ class PlaceSuggestion {
 }
 
 class GooglePlacesService {
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
   // Conserve l'import http si d'autres fichiers l'utilisent; ici on passe par Cloud Functions.
 
   /// Autocomplétion de lieux avec paramètres personnalisables

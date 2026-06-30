@@ -13,7 +13,7 @@ extension WebSafeQuerySnapshots on Query<Map<String, dynamic>> {
     while (true) {
       try {
         yield await get();
-      } catch (_) { /* erreur transitoire — stream reste ouvert */ }
+      } catch (_) {/* erreur transitoire — stream reste ouvert */}
       await Future<void>.delayed(interval);
     }
   }
@@ -27,7 +27,7 @@ extension WebSafeDocumentSnapshots on DocumentReference<Map<String, dynamic>> {
     while (true) {
       try {
         yield await get();
-      } catch (_) { /* erreur transitoire — stream reste ouvert */ }
+      } catch (_) {/* erreur transitoire — stream reste ouvert */}
       await Future<void>.delayed(interval);
     }
   }

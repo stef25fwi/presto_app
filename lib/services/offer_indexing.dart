@@ -162,13 +162,14 @@ Map<String, dynamic> buildOfferIndexFields({
   final canonicalCategory = canonicalizeOfferCategory(category) ?? 'Autre';
   final safeCity = (city ?? '').trim();
   final safePostalCode = (postalCode ?? '').trim();
-  final categoryId = resolveOfferCategoryId(canonicalCategory) ?? offerSlugify(canonicalCategory);
-  final cityId =
-      safeCity.isNotEmpty && safePostalCode.length >= 3
-          ? '${safePostalCode}_${offerSlugify(safeCity)}'
-          : null;
+  final categoryId = resolveOfferCategoryId(canonicalCategory) ??
+      offerSlugify(canonicalCategory);
+  final cityId = safeCity.isNotEmpty && safePostalCode.length >= 3
+      ? '${safePostalCode}_${offerSlugify(safeCity)}'
+      : null;
 
-  final active = isActive ?? ((status ?? 'active').trim().toLowerCase() == 'active');
+  final active =
+      isActive ?? ((status ?? 'active').trim().toLowerCase() == 'active');
   final budgetValue = budgetValueFromDynamic(budget);
   final dept = departmentFromPostalCode(safePostalCode);
 
@@ -180,8 +181,7 @@ Map<String, dynamic> buildOfferIndexFields({
     'cp': safePostalCode.isEmpty ? null : safePostalCode,
     'postalCode': safePostalCode.isEmpty ? null : safePostalCode,
     'cityId': cityId,
-    'cityCategoryKey':
-        cityId == null ? null : '${cityId}_$categoryId',
+    'cityCategoryKey': cityId == null ? null : '${cityId}_$categoryId',
     'dept': dept,
     'budgetValue': budgetValue,
     'isActive': active,
