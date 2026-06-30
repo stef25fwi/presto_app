@@ -13,56 +13,40 @@ class AdPlaceholderImagesAdminPage extends StatefulWidget {
 class _AdPlaceholderImagesAdminPageState
     extends State<AdPlaceholderImagesAdminPage> {
   static const String _target = 'consult_offers';
+  static const _orange = Color(0xFFFF6600);
 
   final ImagePicker _picker = ImagePicker();
 
   bool _isUploading = false;
+  bool _isReordering = false;
+  bool _isSavingOrder = false;
+
+  // Snapshot local pour le réordre (manipulé avant sauvegarde).
+  List<AdPlaceholderImage>? _reorderBuffer;
 
   Future<void> _pickAndUploadImages() async {
     if (_isUploading) return;
-
     final files = await _picker.pickMultiImage(imageQuality: 92);
-
     if (files.isEmpty) return;
-
-    setState(() {
-      _isUploading = true;
-    });
-
+    setState(() => _isUploading = true);
     try {
       for (final file in files) {
-        await AdPlaceholderImageService.uploadImage(
-          file: file,
-          target: _target,
-        );
+        await AdPlaceholderImageService.uploadImage(file: file, target: _target);
       }
-
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            files.length == 1
-                ? 'Image ajoutée aux placeholders.'
-                : '${files.length} images ajoutées aux placeholders.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(files.length == 1
+            ? 'Image ajoutée aux placeholders.'
+            : '${files.length} images ajoutées aux placeholders.'),
+      ));
     } catch (error) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur pendant l'ajout : $error"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Erreur pendant l'ajout : $error"),
+        backgroundColor: Colors.red,
+      ));
     } finally {
-      if (mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-      }
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -87,193 +71,323 @@ class _AdPlaceholderImagesAdminPageState
         ],
       ),
     );
-
     if (confirmed != true) return;
-
     try {
       await AdPlaceholderImageService.deleteImage(image);
-
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image supprimée.')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Image supprimée.')));
     } catch (error) {
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Suppression impossible : $error'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Suppression impossible : $error'),
+        backgroundColor: Colors.red,
+      ));
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    const orange = Color(0xFFFF6600);
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Gestion images placeholders'),
-        backgroundColor: orange,
-        foregroundColor: Colors.white,
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: orange,
-        foregroundColor: Colors.white,
-        onPressed: _isUploading ? null : _pickAndUploadImages,
-        icon: _isUploading
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.add_photo_alternate_outlined),
-        label:
-            Text(_isUploading ? 'Conversion...' : 'Ajouter + convertir WebP'),
-      ),
-      body: StreamBuilder<List<AdPlaceholderImage>>(
-        stream: AdPlaceholderImageService.watchAll(target: _target),
-        builder: (context, snapshot) {
-          final images = snapshot.data ?? <AdPlaceholderImage>[];
-          final visibleCount = images.where((image) => image.isVisible).length;
-
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              images.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-            children: [
-              Card(
-                elevation: 0,
-                color: const Color(0xFFFFF3EA),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.image_search_outlined,
-                        color: orange,
-                        size: 30,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          "Ces images alimentent les placeholders AdBanner de la page “Je consulte”. "
-                          "Format conseillé : image horizontale, idéalement en WebP, largeur idéale 1920 px, minimum 1600 px, ratio recommandé 16:9, poids cible inférieur à 450 Ko. "
-                          "WebP est conseillé pour les meilleures performances. Pour éviter l'erreur build web, la conversion client automatique est désactivée : ajoute directement une image WebP si possible. "
-                          "Les images activées sont visibles dans le carrousel. "
-                          "S'il n'y a aucune image active ici, l'application utilise les images embarquées comme fallback.",
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ),
-                    ],
+  void _openViewer(String imageUrl) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 6,
+              child: Center(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white,
+                    size: 64,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                '$visibleCount image(s) active(s) sur ${images.length}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Coche une image pour l’afficher dans le carrousel. '
-                'Les images décochées sont masquées.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.black54,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              if (images.isEmpty)
-                const _EmptyPlaceholderAdminState()
-              else
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 16 / 11,
-                  children: images
-                      .map(
-                        (image) => _AdminPlaceholderImageTile(
-                          image: image,
-                          onVisibilityChanged: (value) =>
-                              AdPlaceholderImageService.setVisible(
-                            id: image.id,
-                            isVisible: value,
-                          ),
-                          onDelete: () => _confirmDelete(image),
-                        ),
-                      )
-                      .toList(),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _EmptyPlaceholderAdminState extends StatelessWidget {
-  const _EmptyPlaceholderAdminState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Icon(Icons.collections_outlined, size: 44, color: Colors.grey),
-            SizedBox(height: 12),
-            Text(
-              'Aucune image admin pour le moment.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontWeight: FontWeight.w800),
             ),
-            SizedBox(height: 6),
-            Text(
-              'Ajoute des images avec le bouton en bas à droite. '
-              'En attendant, les images assets actuelles restent visibles.',
-              textAlign: TextAlign.center,
+            Positioned(
+              top: 40,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  void _enterReorderMode(List<AdPlaceholderImage> images) {
+    setState(() {
+      _isReordering = true;
+      _reorderBuffer = List.of(images);
+    });
+  }
+
+  Future<void> _saveReorder() async {
+    final buffer = _reorderBuffer;
+    if (buffer == null) return;
+    setState(() => _isSavingOrder = true);
+    try {
+      await AdPlaceholderImageService.reorderImages(
+        buffer.map((img) => img.id).toList(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _isReordering = false;
+        _reorderBuffer = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ordre sauvegardé.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Erreur sauvegarde : $error'),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) setState(() => _isSavingOrder = false);
+    }
+  }
+
+  void _cancelReorder() {
+    setState(() {
+      _isReordering = false;
+      _reorderBuffer = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(_isReordering
+            ? 'Réorganiser les images'
+            : 'Gestion images placeholders'),
+        backgroundColor: _orange,
+        foregroundColor: Colors.white,
+        actions: _isReordering
+            ? [
+                if (_isSavingOrder)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                else ...[
+                  TextButton(
+                    onPressed: _cancelReorder,
+                    child: const Text('Annuler',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  TextButton(
+                    onPressed: _saveReorder,
+                    child: const Text('Enregistrer',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ]
+            : null,
+      ),
+      floatingActionButton: _isReordering
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: _orange,
+              foregroundColor: Colors.white,
+              onPressed: _isUploading ? null : _pickAndUploadImages,
+              icon: _isUploading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(_isUploading ? 'Upload...' : 'Ajouter'),
+            ),
+      body: StreamBuilder<List<AdPlaceholderImage>>(
+        stream: AdPlaceholderImageService.watchAll(target: _target),
+        builder: (context, snapshot) {
+          // En mode réordre on utilise le buffer local, pas le stream.
+          final streamImages = snapshot.data ?? <AdPlaceholderImage>[];
+          final images =
+              _isReordering ? (_reorderBuffer ?? streamImages) : streamImages;
+
+          final visibleCount = streamImages.where((img) => img.isVisible).length;
+
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              streamImages.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return _isReordering
+              ? _buildReorderList(images)
+              : _buildGridView(context, images, visibleCount);
+        },
+      ),
+    );
+  }
+
+  Widget _buildGridView(
+    BuildContext context,
+    List<AdPlaceholderImage> images,
+    int visibleCount,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      children: [
+        // Carte info
+        Card(
+          elevation: 0,
+          color: const Color(0xFFFFF3EA),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.image_search_outlined,
+                    color: _orange, size: 30),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Ces images alimentent les placeholders AdBanner de la page "Je consulte". "
+                    "Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. "
+                    "S'il n'y a aucune image active, l'app utilise ses images embarquées.",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$visibleCount image(s) active(s) sur ${images.length}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Coche pour afficher · Appuie sur l\'image pour l\'agrandir',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            if (images.isNotEmpty)
+              TextButton.icon(
+                onPressed: () => _enterReorderMode(images),
+                icon: const Icon(Icons.swap_vert_rounded, size: 18),
+                label: const Text('Réorganiser'),
+                style: TextButton.styleFrom(foregroundColor: _orange),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (images.isEmpty)
+          const _EmptyPlaceholderAdminState()
+        else
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 16 / 11,
+            children: images
+                .map(
+                  (image) => _AdminPlaceholderImageTile(
+                    image: image,
+                    onTapImage: () => _openViewer(image.imageUrl),
+                    onVisibilityChanged: (value) =>
+                        AdPlaceholderImageService.setVisible(
+                      id: image.id,
+                      isVisible: value,
+                    ),
+                    onDelete: () => _confirmDelete(image),
+                  ),
+                )
+                .toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildReorderList(List<AdPlaceholderImage> images) {
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+      itemCount: images.length,
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) newIndex--;
+          final item = _reorderBuffer!.removeAt(oldIndex);
+          _reorderBuffer!.insert(newIndex, item);
+        });
+      },
+      itemBuilder: (context, index) {
+        final image = images[index];
+        return _ReorderTile(
+          key: ValueKey(image.id),
+          image: image,
+          index: index,
+          onTapImage: () => _openViewer(image.imageUrl),
+        );
+      },
+    );
+  }
 }
+
+// ── Tile grille ──────────────────────────────────────────────────────────────
 
 class _AdminPlaceholderImageTile extends StatelessWidget {
   const _AdminPlaceholderImageTile({
     required this.image,
+    required this.onTapImage,
     required this.onVisibilityChanged,
     required this.onDelete,
   });
 
   final AdPlaceholderImage image;
+  final VoidCallback onTapImage;
   final ValueChanged<bool> onVisibilityChanged;
   final VoidCallback onDelete;
 
@@ -282,21 +396,22 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
     const orange = Color(0xFFFF6600);
     final selected = image.isVisible;
 
-    return GestureDetector(
-      onTap: () => onVisibilityChanged(!selected),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? orange : Colors.grey.shade300,
-            width: selected ? 2.5 : 1,
-          ),
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? orange : Colors.grey.shade300,
+          width: selected ? 2.5 : 1,
         ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Image — tap pour viewer
+          GestureDetector(
+            onTap: onTapImage,
+            child: Image.network(
               image.imageUrl,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => const ColoredBox(
@@ -304,13 +419,27 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                 child: Center(child: Icon(Icons.broken_image_outlined)),
               ),
             ),
-            // Voile blanc pour griser les images non affichées.
-            if (!selected)
-              Container(color: Colors.white.withValues(alpha: 0.5)),
-            // Encoche de sélection (en haut à droite).
-            Positioned(
-              top: 6,
-              right: 6,
+          ),
+          // Voile pour images masquées
+          if (!selected) Container(color: Colors.white.withValues(alpha: 0.5)),
+          // Icône zoom (centre)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.black38,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.zoom_in_rounded,
+                  color: Colors.white, size: 18),
+            ),
+          ),
+          // Checkbox visibilité (haut droite)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: GestureDetector(
+              onTap: () => onVisibilityChanged(!selected),
               child: Container(
                 width: 26,
                 height: 26,
@@ -330,43 +459,182 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                     : null,
               ),
             ),
-            // Bouton de suppression (en bas à droite).
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Material(
-                color: Colors.white,
-                shape: const CircleBorder(),
-                clipBehavior: Clip.antiAlias,
-                child: IconButton(
-                  iconSize: 18,
-                  visualDensity: VisualDensity.compact,
-                  tooltip: 'Supprimer',
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: onDelete,
+          ),
+          // Bouton supprimer (bas droite)
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Material(
+              color: Colors.white,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                iconSize: 18,
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Supprimer',
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: onDelete,
+              ),
+            ),
+          ),
+          // Badge état (bas gauche)
+          Positioned(
+            left: 6,
+            bottom: 6,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                selected ? 'Affichée' : 'Masquée',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            // Badge d'état (en bas à gauche).
-            Positioned(
-              left: 6,
-              bottom: 6,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(999),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Tile liste de réordre ────────────────────────────────────────────────────
+
+class _ReorderTile extends StatelessWidget {
+  const _ReorderTile({
+    super.key,
+    required this.image,
+    required this.index,
+    required this.onTapImage,
+  });
+
+  final AdPlaceholderImage image;
+  final int index;
+  final VoidCallback onTapImage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          // Poignée drag
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(Icons.drag_handle_rounded,
+                color: Colors.grey, size: 26),
+          ),
+          // Aperçu image
+          GestureDetector(
+            onTap: onTapImage,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 72,
+                height: 50,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      image.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const ColoredBox(
+                        color: Color(0xFFF2F4F7),
+                        child: Icon(Icons.broken_image_outlined, size: 20),
+                      ),
+                    ),
+                    const Center(
+                      child: Icon(Icons.zoom_in_rounded,
+                          color: Colors.white70, size: 16),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  selected ? 'Affichée' : 'Masquée',
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Numéro d'ordre + état
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Position ${index + 1}',
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: image.isVisible
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    image.isVisible ? 'Affichée' : 'Masquée',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: image.isVisible
+                          ? Colors.green.shade700
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── État vide ────────────────────────────────────────────────────────────────
+
+class _EmptyPlaceholderAdminState extends StatelessWidget {
+  const _EmptyPlaceholderAdminState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Icon(Icons.collections_outlined, size: 44, color: Colors.grey),
+            SizedBox(height: 12),
+            Text(
+              'Aucune image pour le moment.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Ajoute des images avec le bouton en bas à droite. '
+              'En attendant, les images assets actuelles restent visibles.',
+              textAlign: TextAlign.center,
             ),
           ],
         ),
