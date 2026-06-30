@@ -2564,4 +2564,6 @@ exports.processOfferPhoto = onCall(
  */
 const paymentInfoAudioPipeline = require("./payment_info_audio_pipeline");
 exports.generatePaymentInfoAudio = paymentInfoAudioPipeline.generatePaymentInfoAudio;
+exports.generatePaymentInfoAudioDraft = paymentInfoAudioPipeline.generatePaymentInfoAudioDraft;
+exports.publishPaymentInfoAudioDraft = paymentInfoAudioPipeline.publishPaymentInfoAudioDraft;
 

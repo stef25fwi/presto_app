@@ -13,6 +13,8 @@ class PaymentInfoAudioConfig {
     required this.version,
     required this.generatedAt,
     required this.generatedBy,
+    this.voice,
+    this.textHash,
   });
 
   final bool enabled;
@@ -22,6 +24,8 @@ class PaymentInfoAudioConfig {
   final int? version;
   final Timestamp? generatedAt;
   final String? generatedBy;
+  final String? voice;
+  final String? textHash;
 
   bool get canPlay =>
       enabled && audioUrl != null && audioUrl!.trim().isNotEmpty;
@@ -41,6 +45,68 @@ class PaymentInfoAudioConfig {
           ? map['generatedAt'] as Timestamp
           : null,
       generatedBy: map['generatedBy'] as String?,
+      voice: map['voice'] as String?,
+      textHash: map['textHash'] as String?,
+    );
+  }
+}
+
+class PaymentInfoAudioAdminSettings {
+  const PaymentInfoAudioAdminSettings({
+    required this.text,
+    required this.draftAudioUrl,
+    required this.draftStoragePath,
+    required this.draftContentType,
+    required this.draftVersion,
+    required this.draftGeneratedAt,
+    required this.draftGeneratedBy,
+    required this.draftVoice,
+    required this.draftTextHash,
+    required this.lastGeneratedAt,
+    required this.lastPublishedAt,
+  });
+
+  final String text;
+  final String? draftAudioUrl;
+  final String? draftStoragePath;
+  final String? draftContentType;
+  final int? draftVersion;
+  final Timestamp? draftGeneratedAt;
+  final String? draftGeneratedBy;
+  final String? draftVoice;
+  final String? draftTextHash;
+  final Timestamp? lastGeneratedAt;
+  final Timestamp? lastPublishedAt;
+
+  bool get canPreviewDraft =>
+      draftAudioUrl != null && draftAudioUrl!.trim().isNotEmpty;
+
+  DateTime? get draftGeneratedDate => draftGeneratedAt?.toDate();
+  DateTime? get lastPublishedDate => lastPublishedAt?.toDate();
+
+  factory PaymentInfoAudioAdminSettings.fromMap(Map<String, dynamic>? data) {
+    final map = data ?? <String, dynamic>{};
+
+    return PaymentInfoAudioAdminSettings(
+      text: (map['text'] ?? map['paymentText'] ?? map['audioText'] ?? '')
+          .toString(),
+      draftAudioUrl: map['draftAudioUrl'] as String?,
+      draftStoragePath: map['draftStoragePath'] as String?,
+      draftContentType: map['draftContentType'] as String?,
+      draftVersion:
+          map['draftVersion'] is int ? map['draftVersion'] as int : null,
+      draftGeneratedAt: map['draftGeneratedAt'] is Timestamp
+          ? map['draftGeneratedAt'] as Timestamp
+          : null,
+      draftGeneratedBy: map['draftGeneratedBy'] as String?,
+      draftVoice: map['draftVoice'] as String?,
+      draftTextHash: map['draftTextHash'] as String?,
+      lastGeneratedAt: map['lastGeneratedAt'] is Timestamp
+          ? map['lastGeneratedAt'] as Timestamp
+          : null,
+      lastPublishedAt: map['lastPublishedAt'] is Timestamp
+          ? map['lastPublishedAt'] as Timestamp
+          : null,
     );
   }
 }
@@ -59,10 +125,19 @@ class PaymentInfoAudioService {
   DocumentReference<Map<String, dynamic>> get _configRef =>
       _firestore.collection('public_config').doc('payment_info_audio');
 
+  DocumentReference<Map<String, dynamic>> get _settingsRef =>
+      _firestore.collection('admin_settings').doc('payment_info_audio');
+
   Stream<PaymentInfoAudioConfig?> watchConfig() {
     return _configRef.snapshots().map((snapshot) {
       if (!snapshot.exists) return null;
       return PaymentInfoAudioConfig.fromMap(snapshot.data());
+    });
+  }
+
+  Stream<PaymentInfoAudioAdminSettings> watchAdminSettings() {
+    return _settingsRef.snapshots().map((snapshot) {
+      return PaymentInfoAudioAdminSettings.fromMap(snapshot.data());
     });
   }
 
@@ -72,6 +147,21 @@ class PaymentInfoAudioService {
     return PaymentInfoAudioConfig.fromMap(snapshot.data());
   }
 
+  Future<PaymentInfoAudioAdminSettings> getAdminSettings() async {
+    final snapshot = await _settingsRef.get();
+    return PaymentInfoAudioAdminSettings.fromMap(snapshot.data());
+  }
+
+  Future<void> saveAdminText(String text) async {
+    await _settingsRef.set({
+      'text': text.trim(),
+      'paymentText': text.trim(),
+      'audioText': text.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Ancienne API conservée : génère et publie directement.
   Future<PaymentInfoAudioConfig?> generatePaymentInfoAudio({
     String? text,
     String voice = 'alloy',
@@ -86,6 +176,37 @@ class PaymentInfoAudioService {
       'format': 'mp3',
     });
 
+    return getConfig();
+  }
+
+  /// Nouveau workflow : génère un MP3 brouillon sans le publier dans le popup.
+  Future<PaymentInfoAudioAdminSettings> generatePaymentInfoAudioDraft({
+    required String text,
+    String voice = 'alloy',
+    String locale = 'fr-FR',
+  }) async {
+    final cleanText = text.trim();
+
+    if (cleanText.isEmpty) {
+      throw ArgumentError('Le texte audio ne peut pas être vide.');
+    }
+
+    final callable = _functions.httpsCallable('generatePaymentInfoAudioDraft');
+
+    await callable.call(<String, dynamic>{
+      'text': cleanText,
+      'voice': voice,
+      'locale': locale,
+      'format': 'mp3',
+    });
+
+    return getAdminSettings();
+  }
+
+  /// Publie le dernier brouillon validé dans public_config/payment_info_audio.
+  Future<PaymentInfoAudioConfig?> publishPaymentInfoAudioDraft() async {
+    final callable = _functions.httpsCallable('publishPaymentInfoAudioDraft');
+    await callable.call(<String, dynamic>{});
     return getConfig();
   }
 }
@@ -103,6 +224,7 @@ extension PaymentInfoAudioServiceLegacyCompat on PaymentInfoAudioService {
     final ref = FirebaseStorage.instance.ref(path);
     await ref.putData(bytes, SettableMetadata(contentType: 'audio/mpeg'));
     final downloadUrl = await ref.getDownloadURL();
+
     await _configRef.set({
       'enabled': true,
       'audioUrl': downloadUrl,
