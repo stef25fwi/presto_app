@@ -2464,7 +2464,7 @@ class _AutoScrollingOffersCarouselState
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0x551A73E8),
+            color: kPrestoBlue,
             width: 1.8,
           ),
         ),
