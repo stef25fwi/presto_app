@@ -476,8 +476,8 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
         leading: IconButton(
@@ -1489,8 +1489,8 @@ class _EmailDashboardPageState extends State<EmailDashboardPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
         title: const Text(
@@ -2702,8 +2702,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
         title: const Text(
@@ -3239,8 +3239,8 @@ class _AudioPopupAdminPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
         title: const Text(
@@ -3408,8 +3408,8 @@ class _BroadcastNotificationAdminPageState
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
         title: const Text(

@@ -3024,7 +3024,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     _isSending)
                                 ? null
                                 : _showAttachmentSheet,
-                            icon: const Icon(Icons.add_rounded),
+                            icon: const Icon(Icons.attach_file_rounded),
                           ),
                           const SizedBox(width: 4),
                           Expanded(

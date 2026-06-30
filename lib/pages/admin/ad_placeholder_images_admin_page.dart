@@ -182,7 +182,7 @@ class _AdPlaceholderImagesAdminPageState
         title: Text(_isReordering
             ? 'Réorganiser les images'
             : 'Gestion images placeholders'),
-        backgroundColor: _orange,
+        backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
         actions: _isReordering
             ? [

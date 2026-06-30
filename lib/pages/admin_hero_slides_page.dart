@@ -787,8 +787,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     return Scaffold(
       backgroundColor: _kAdminHeroPageBackground,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
+        backgroundColor: const Color(0xFF1A73E8),
+        foregroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         shadowColor: Colors.black.withValues(alpha: 0.08),
         elevation: 1,
