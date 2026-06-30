@@ -447,11 +447,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   bool _didApplyProfileDepartmentDefaultFilter = false;
-
+  bool _didShowProfileDepartmentInfoPopup = false;
   Future<void> _applyProfileDepartmentFilterByDefault() async {
     if (_didApplyProfileDepartmentDefaultFilter) return;
-
     _didApplyProfileDepartmentDefaultFilter = true;
+
     final hasManualLocationFilter =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
             (_filterCityName != null && _filterCityName!.isNotEmpty) ||
@@ -463,12 +463,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     try {
       await Future.sync(_preloadRegionDeptData);
     } catch (error) {
-      debugPrint(
-          '[ConsultOffers] Préchargement région/département ignoré: $error');
+      debugPrint('[ConsultOffers] Préchargement région/département ignoré: $error');
     }
 
     final user = FirebaseAuth.instance.currentUser;
-
     if (user == null) return;
 
     try {
@@ -478,7 +476,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           .get();
 
       final data = snapshot.data();
-
       if (data == null) return;
 
       final departmentCode = ProfileDepartmentResolver.resolveDepartmentCode(
@@ -509,21 +506,98 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         _filterCityName = null;
         _filterPostalCodeController.clear();
         _postalCodeController.clear();
-        _showFilters = true;
+
+        // Le filtre est appliqué, mais le panneau reste replié à l'ouverture.
+        _showFilters = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-          content: Text(
-            'Par défaut, les offres sont synchronisées avec votre région et votre département : '
-            '${ProfileDepartmentResolver.departmentDisplayName(departmentCode)}.',
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          _showProfileDepartmentInfoPopupOnce(
+            departmentCode: departmentCode,
+            regionCode: regionCode,
           ),
-        ),
-      );
+        );
+      });
     } catch (error) {
       debugPrint('[ConsultOffers] Filtre département profil ignoré: $error');
+    }
+  }
+
+
+  Future<void> _showProfileDepartmentInfoPopupOnce({
+    required String departmentCode,
+    String? regionCode,
+  }) async {
+    if (_didShowProfileDepartmentInfoPopup || !mounted) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _didShowProfileDepartmentInfoPopup = true;
+
+    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    try {
+      final snapshot = await userRef.get();
+      final data = snapshot.data();
+      if (data?['consultProfileFilterInfoDismissed'] == true) return;
+    } catch (error) {
+      debugPrint('[ConsultOffers] Lecture popup filtre profil ignorée: $error');
+    }
+
+    if (!mounted) return;
+
+    final departmentLabel =
+        ProfileDepartmentResolver.departmentDisplayName(departmentCode);
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: const Text(
+            'Offres synchronisées',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          content: Text(
+            'À l’ouverture de cette page, les offres sont automatiquement '
+            'synchronisées avec la région et le département enregistrés dans '
+            'votre profil : $departmentLabel.\n\n'
+            'Le panneau de filtres reste replié. Vous pouvez l’ouvrir à tout '
+            'moment pour modifier votre recherche.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6600),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('J’ai compris'),
+            ),
+          ],
+        );
+      },
+    );
+
+    try {
+      await userRef.set(
+        {
+          'consultProfileFilterInfoDismissed': true,
+          'consultProfileFilterInfoDismissedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (error) {
+      debugPrint('[ConsultOffers] Sauvegarde fermeture popup ignorée: $error');
     }
   }
 
@@ -1345,10 +1419,40 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     _refreshPublishedOffersCountIfNeeded();
   }
-
   Widget _buildRemovableFilterChip({
     required String label,
     required VoidCallback onDeleted,
+  }) {
+    final lowerLabel = label.toLowerCase();
+    final isDelayInterventionChip =
+        lowerLabel.contains('délai') ||
+        lowerLabel.contains('delai') ||
+        lowerLabel.contains('intervention');
+
+    return InputChip(
+      label: Text(label),
+      onDeleted: onDeleted,
+      deleteIcon: const Icon(Icons.close_rounded, size: 16),
+      deleteIconColor:
+          isDelayInterventionChip ? Colors.white : const Color(0xFF1F4E95),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        color: isDelayInterventionChip
+            ? Colors.white
+            : const Color(0xFF1F4E95),
+      ),
+      backgroundColor: isDelayInterventionChip
+          ? const Color(0xFFFF6600)
+          : const Color(0xFFF4F8FF),
+      side: BorderSide(
+        color: isDelayInterventionChip
+            ? const Color(0xFFFF6600)
+            : const Color(0xFFBED5F8),
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
+      ),
+    );
   }) {
     final lowerLabel = label.toLowerCase();
     final isDelayInterventionChip = lowerLabel.contains('délai') ||
