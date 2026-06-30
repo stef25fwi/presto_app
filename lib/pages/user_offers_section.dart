@@ -3023,20 +3023,17 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                         final trimmedMissionDelay =
                                             selectedMissionDelay.trim();
                                         final trimmedAverageDelay =
-                                            averageDelayController.text
-                                                .trim();
+                                            averageDelayController.text.trim();
                                         final trimmedSubCategory =
                                             selectedSubCategory.trim();
                                         final trimmedAvailability =
-                                            availabilityController.text
-                                                .trim();
+                                            availabilityController.text.trim();
                                         final trimmedServiceArea =
                                             serviceAreaController.text.trim();
                                         final trimmedSchedule =
                                             scheduleController.text.trim();
                                         final trimmedPaymentMethod =
-                                            paymentMethodController.text
-                                                .trim();
+                                            paymentMethodController.text.trim();
                                         final trimmedServiceType =
                                             serviceTypeController.text.trim();
                                         final trimmedPhoneNumber =
@@ -3057,11 +3054,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                         setDialogState(() => isSaving = true);
 
                                         try {
-                                          final listingsRef =
-                                              FirebaseFirestore.instance
-                                                  .collection(
-                                                      kListingsCollection)
-                                                  .doc(item.offerId);
+                                          final listingsRef = FirebaseFirestore
+                                              .instance
+                                              .collection(kListingsCollection)
+                                              .doc(item.offerId);
                                           final listingsSnap =
                                               await listingsRef.get();
                                           if (!listingsSnap.exists) {
@@ -3116,10 +3112,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                                         ? FieldValue.delete()
                                                         : trimmedLocation)
                                                     : trimmedServiceArea,
-                                            'schedule':
-                                                trimmedSchedule.isEmpty
-                                                    ? FieldValue.delete()
-                                                    : trimmedSchedule,
+                                            'schedule': trimmedSchedule.isEmpty
+                                                ? FieldValue.delete()
+                                                : trimmedSchedule,
                                             'paymentMethod':
                                                 trimmedPaymentMethod.isEmpty
                                                     ? FieldValue.delete()
@@ -3149,8 +3144,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                                           };
 
                                           if (effectiveBudget != null) {
-                                            update['budget'] =
-                                                effectiveBudget;
+                                            update['budget'] = effectiveBudget;
                                             update['price'] =
                                                 effectiveBudget.toDouble();
                                             update['budgetValue'] =

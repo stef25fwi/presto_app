@@ -37,7 +37,8 @@ class TypographySettings extends ChangeNotifier {
     _fontFamily = fontFamily;
     _fontWeightDelta = fontWeightDelta;
     notifyListeners();
-    _persist(scale: scale, fontFamily: fontFamily, fontWeightDelta: fontWeightDelta);
+    _persist(
+        scale: scale, fontFamily: fontFamily, fontWeightDelta: fontWeightDelta);
   }
 
   void reset() {

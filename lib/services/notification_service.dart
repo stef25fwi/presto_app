@@ -439,9 +439,8 @@ class NotificationService {
   void _startBadgeUpdates(String userId) {
     if (kIsWeb) return;
     _badgeCountSubscription?.cancel();
-    _badgeCountSubscription = streamInboxCount(userId: userId)
-        .distinct()
-        .listen((count) async {
+    _badgeCountSubscription =
+        streamInboxCount(userId: userId).distinct().listen((count) async {
       try {
         final supported = await FlutterAppBadger.isAppBadgeSupported();
         if (!supported) return;

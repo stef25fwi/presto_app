@@ -1889,7 +1889,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       final data = doc?.data();
 
-      if (phoneNeeded && data != null && mounted && _phoneController.text.trim().isEmpty) {
+      if (phoneNeeded &&
+          data != null &&
+          mounted &&
+          _phoneController.text.trim().isEmpty) {
         final rawPhone = _firstNonEmptyPublishPhone(
           data,
           const ['phone', 'phoneNumber', 'phone_number'],
@@ -1915,19 +1918,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (profileCity.isNotEmpty || profilePostalCode.isNotEmpty) {
           CityRecord? cityRecord;
           if (profilePostalCode.isNotEmpty) {
-            cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+            cityRecord =
+                FrenchCityPostalValidator.instance.resolveCanonicalCity(
               city: profileCity,
               postalCode: profilePostalCode,
             );
           }
           if (cityRecord == null && profileCity.isNotEmpty) {
-            final matches = FrenchCityPostalValidator.instance.searchSuggestions(
+            final matches =
+                FrenchCityPostalValidator.instance.searchSuggestions(
               profileCity,
               postalCodeHint: profilePostalCode,
               limit: 5,
             );
             for (final candidate in matches) {
-              if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
+              if (profilePostalCode.isEmpty ||
+                  candidate.cp == profilePostalCode) {
                 cityRecord = candidate;
                 break;
               }
@@ -3863,7 +3869,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.fromLTRB(
-                              12, 14, 12, 14,
+                              12,
+                              14,
+                              12,
+                              14,
                             ),
                             hintText:
                                 'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
@@ -4484,4 +4493,3 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
     );
   }
 }
-

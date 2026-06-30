@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'app/presto_overlay_theme.dart';
 
-const String kPrestoCanonicalWebOrigin =
-  'https://ilipresto.fr';
+const String kPrestoCanonicalWebOrigin = 'https://ilipresto.fr';
 
 String prestoPublicAppOrigin() {
   if (!kIsWeb) {

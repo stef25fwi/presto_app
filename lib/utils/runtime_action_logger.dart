@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 String _normalizeRuntimeActionValue(Object? value) {
-  final text = (value ?? 'null').toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+  final text =
+      (value ?? 'null').toString().replaceAll(RegExp(r'\s+'), ' ').trim();
   if (text.isEmpty) return 'empty';
   if (text.length <= 96) return text;
   return '${text.substring(0, 93)}...';
