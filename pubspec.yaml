@@ -86,3 +86,7 @@ flutter:
     - assets/data/cities/
     - assets/data/cities_compact.json
     - assets/carousel_home/
+
+dependency_overrides:
+  flutter_app_badger:
+    path: third_party/flutter_app_badger
