@@ -3901,15 +3901,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
               children: [
                 const SizedBox(height: 6),
-                AiPublishControl(
-                  state: _aiPublishState,
-                  isAudioAnalyzing: _isAnalyzing,
-                  onStartRecording: _startMic,
-                  onStopRecording: _stopMic,
-                  onStartWriting: _scrollToDescription,
-                  onDiagnostic: _showPublishAiTraceDialog,
-                  onClear: _clearPublishAiTrace,
-                  showAdminDiagnostics: _adminAudioRuntimeAccessState == 1,
+                ClipRRect(
+                  // _publishAiMicroOrbitFocusStack
+                  borderRadius: BorderRadius.circular(28),
+                  child: Stack(
+                    children: [
+                      AiPublishControl(
+                        state: _aiPublishState,
+                        isAudioAnalyzing: _isAnalyzing,
+                        onStartRecording: _startMic,
+                        onStopRecording: _stopMic,
+                        onStartWriting: _scrollToDescription,
+                        onDiagnostic: _showPublishAiTraceDialog,
+                        onClear: _clearPublishAiTrace,
+                        showAdminDiagnostics:
+                            _adminAudioRuntimeAccessState == 1,
+                      ),
+                      if (_isAnalyzing)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.54),
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_isAnalyzing)
+                        const Positioned.fill(
+                          child: IgnorePointer(
+                            child: _PublishAiMicroOrbitFocus(),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -4385,6 +4410,47 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PublishAiMicroOrbitFocus extends StatelessWidget {
+  const _PublishAiMicroOrbitFocus();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 132,
+        height: 132,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.10),
+          border: Border.all(
+            color: Colors.white,
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.85),
+              blurRadius: 30,
+              spreadRadius: 5,
+            ),
+            BoxShadow(
+              color: const Color(0xFF13A8FF).withValues(alpha: 0.70),
+              blurRadius: 48,
+              spreadRadius: 10,
+            ),
+          ],
+        ),
+        child: const Center(
+          child: OrbitingAiVisual(
+            size: 88,
+            strokeColor: Color(0xDDFFFFFF),
+            dotColor: Colors.white,
           ),
         ),
       ),
