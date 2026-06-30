@@ -91,6 +91,7 @@ class AdPlaceholderImageService {
   static Future<void> uploadImage({
     required XFile file,
     String target = 'consult_offers',
+    void Function(double progress)? onUploadProgress,
   }) async {
     final Uint8List bytes = await file.readAsBytes();
 
@@ -106,7 +107,7 @@ class AdPlaceholderImageService {
 
     final ref = _storage.ref(storagePath);
 
-    await ref.putData(
+    final uploadTask = ref.putData(
       bytes,
       SettableMetadata(
         contentType: contentType,
@@ -122,6 +123,20 @@ class AdPlaceholderImageService {
         },
       ),
     );
+
+    final subscription = uploadTask.snapshotEvents.listen((snapshot) {
+      final total = snapshot.totalBytes;
+      if (total > 0) {
+        onUploadProgress?.call(snapshot.bytesTransferred / total);
+      }
+    });
+
+    try {
+      await uploadTask;
+      onUploadProgress?.call(1);
+    } finally {
+      await subscription.cancel();
+    }
 
     final url = await ref.getDownloadURL();
 
