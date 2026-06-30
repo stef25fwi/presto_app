@@ -2841,6 +2841,75 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     const SizedBox(height: 24),
                     _buildAccountSectionCard(
+                      icon: Icons.tune_rounded,
+                      title: 'Mes alertes "Nouvelle annonce"',
+                      description:
+                          'Organise les alertes qui correspondent à tes préférences.',
+                      child: RepaintBoundary(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F0FE),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Ne ratez plus aucune offre : choisissez au moins 2 catégories et recevez instantanément les opportunités disponibles dans votre secteur.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF1A3A5C),
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            AccountFavoriteCategoriesSection(
+                              categoriesCount: draftCategoryLabels.length,
+                              subcategoriesCount: draftSubcategoryLabels.length,
+                              selectedCategories: draftCategoryLabels,
+                              selectedSubcategories: draftSubcategoryLabels,
+                              selectedDepartements:
+                                  _selectedFavoriteDepartements.toList()
+                                    ..sort(),
+                              departementsCount:
+                                  _selectedFavoriteDepartements.length,
+                              isSaving: _isSavingProfile,
+                              showTitle: false,
+                              onOpenCategoryPicker: _openCategoryPickerSheet,
+                              onOpenSubcategoryPicker:
+                                  _openSubcategoryPickerSheet,
+                              onOpenDeptPicker: _openDeptPicker,
+                              onApply: () => _applyDraftFavorites(user),
+                              onRemoveCategory: (category) {
+                                setState(() {
+                                  _draftFavoriteSelections.remove(category);
+                                  _draftFavoriteSelections.removeWhere(
+                                      (e) => e.startsWith('\$category — '));
+                                });
+                                unawaited(_applyDraftFavorites(user));
+                              },
+                              onRemoveSubcategory: (label) {
+                                setState(() =>
+                                    _draftFavoriteSelections.remove(label));
+                                unawaited(_applyDraftFavorites(user));
+                              },
+                              onRemoveDepartement: (code) {
+                                setState(() =>
+                                    _selectedFavoriteDepartements.remove(code));
+                                unawaited(_applyDraftFavorites(user));
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildAccountSectionCard(
                       icon: Icons.campaign_outlined,
                       title: 'Gérer mes annonces',
                       description:
@@ -2876,49 +2945,6 @@ class _AccountPageState extends State<AccountPage> {
                         child: FavoriteOffersSection(
                           userId: user.uid,
                           showTitle: false,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildAccountSectionCard(
-                      icon: Icons.tune_rounded,
-                      title: 'Mes alertes "Nouvelle annonce"',
-                      description:
-                          'Organise les alertes qui correspondent à tes préférences.',
-                      child: RepaintBoundary(
-                        child: AccountFavoriteCategoriesSection(
-                          categoriesCount: draftCategoryLabels.length,
-                          subcategoriesCount: draftSubcategoryLabels.length,
-                          selectedCategories: draftCategoryLabels,
-                          selectedSubcategories: draftSubcategoryLabels,
-                          selectedDepartements:
-                              _selectedFavoriteDepartements.toList()..sort(),
-                          departementsCount:
-                              _selectedFavoriteDepartements.length,
-                          isSaving: _isSavingProfile,
-                          showTitle: false,
-                          onOpenCategoryPicker: _openCategoryPickerSheet,
-                          onOpenSubcategoryPicker: _openSubcategoryPickerSheet,
-                          onOpenDeptPicker: _openDeptPicker,
-                          onApply: () => _applyDraftFavorites(user),
-                          onRemoveCategory: (category) {
-                            setState(() {
-                              _draftFavoriteSelections.remove(category);
-                              _draftFavoriteSelections.removeWhere(
-                                  (e) => e.startsWith('\$category — '));
-                            });
-                            unawaited(_applyDraftFavorites(user));
-                          },
-                          onRemoveSubcategory: (label) {
-                            setState(
-                                () => _draftFavoriteSelections.remove(label));
-                            unawaited(_applyDraftFavorites(user));
-                          },
-                          onRemoveDepartement: (code) {
-                            setState(() =>
-                                _selectedFavoriteDepartements.remove(code));
-                            unawaited(_applyDraftFavorites(user));
-                          },
                         ),
                       ),
                     ),
