@@ -350,9 +350,15 @@ class NotificationService {
     if (_lastAuthorizationStatus == AuthorizationStatus.denied) {
       return 'Les notifications sont bloquées dans ce navigateur. Autorisez-les dans les réglages du site puis réessayez.';
     }
+
     if (kIsWeb && _webVapidKey.isEmpty) {
-      return 'Les notifications web ne peuvent pas être activées tant que FCM_WEB_VAPID_KEY n’est pas configurée au build.';
+      return 'Notifications web indisponibles : la clé FCM_WEB_VAPID_KEY n’a pas été injectée au build. Relance le build web avec la clé VAPID.';
     }
+
+    if (kIsWeb) {
+      return 'Impossible d’obtenir un jeton de notification sur cet appareil. Recharge complètement la page, puis réessaie. Si le problème persiste, vérifie que les notifications sont autorisées pour ce site.';
+    }
+
     return 'La permission a été accordée, mais le canal push n’a pas pu être finalisé. Réessayez ou vérifiez la configuration FCM.';
   }
 
