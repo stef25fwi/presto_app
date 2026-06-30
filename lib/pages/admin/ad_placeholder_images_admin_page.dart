@@ -328,6 +328,11 @@ class _AdPlaceholderImagesAdminPageState
     List<AdPlaceholderImage> images,
     int visibleCount,
   ) {
+    final activeImages = images.where((img) => img.isVisible).toList();
+    final activePositionById = <String, int>{
+      for (var i = 0; i < activeImages.length; i++) activeImages[i].id: i + 1,
+    };
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
@@ -358,6 +363,15 @@ class _AdPlaceholderImagesAdminPageState
           ),
         ),
         const SizedBox(height: 16),
+        if (images.isNotEmpty) ...[
+          _LatestPlaceholderReceivedCard(
+            image: images.first,
+            totalCount: images.length,
+            activeCount: visibleCount,
+            onOpen: () => _openViewer(images.first.imageUrl),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (_uploadPreviewBytes != null || _isUploading) ...[
           _SelectedAdPlaceholderPreview(
             fileBytes: _uploadPreviewBytes,
@@ -391,7 +405,11 @@ class _AdPlaceholderImagesAdminPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$visibleCount image(s) active(s) sur ${images.length}',
+                    visibleCount == 0
+                        ? 'Aucune image active sur ${images.length}'
+                        : visibleCount == 1
+                            ? '1 image active sur ${images.length}'
+                            : '$visibleCount images actives sur ${images.length}',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -432,6 +450,8 @@ class _AdPlaceholderImagesAdminPageState
                 .map(
                   (image) => _AdminPlaceholderImageTile(
                     image: image,
+                    activePosition: activePositionById[image.id],
+                    activeTotal: visibleCount,
                     onTapImage: () => _openViewer(image.imageUrl),
                     onVisibilityChanged: (value) =>
                         AdPlaceholderImageService.setVisible(
@@ -467,6 +487,105 @@ class _AdPlaceholderImagesAdminPageState
           onTapImage: () => _openViewer(image.imageUrl),
         );
       },
+    );
+  }
+}
+
+class _LatestPlaceholderReceivedCard extends StatelessWidget {
+  const _LatestPlaceholderReceivedCard({
+    required this.image,
+    required this.totalCount,
+    required this.activeCount,
+    required this.onOpen,
+  });
+
+  final AdPlaceholderImage image;
+  final int totalCount;
+  final int activeCount;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = image.isVisible;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFFEFFAF3) : const Color(0xFFFFF7E8),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isActive ? const Color(0xFF8DD7A5) : const Color(0xFFFFD18A),
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 96,
+              height: 60,
+              child: Image.network(
+                image.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const ColoredBox(
+                  color: Color(0xFFF2F4F7),
+                  child: Center(child: Icon(Icons.broken_image_outlined)),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isActive
+                      ? 'Dernière image reçue par la page : ACTIVE'
+                      : 'Dernière image reçue par la page : MASQUÉE',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$activeCount image(s) active(s) sur $totalCount',
+                  style: const TextStyle(
+                    color: Color(0xFF475569),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'ID : ${image.id}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: onOpen,
+                    icon: const Icon(Icons.open_in_full_rounded, size: 16),
+                    label: const Text('Ouvrir l’image reçue'),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -691,17 +810,26 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
     required this.onTapImage,
     required this.onVisibilityChanged,
     required this.onDelete,
+    this.activePosition,
+    this.activeTotal = 0,
   });
 
   final AdPlaceholderImage image;
   final VoidCallback onTapImage;
   final ValueChanged<bool> onVisibilityChanged;
   final VoidCallback onDelete;
+  final int? activePosition;
+  final int activeTotal;
 
   @override
   Widget build(BuildContext context) {
     const orange = Color(0xFFFF6600);
     final selected = image.isVisible;
+    final activeLabel = selected && activePosition != null && activeTotal > 0
+        ? 'Active $activePosition/$activeTotal'
+        : selected
+            ? 'Affichée'
+            : 'Masquée';
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -795,7 +923,7 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                selected ? 'Affichée' : 'Masquée',
+                activeLabel,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 11,
