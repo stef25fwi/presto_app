@@ -452,18 +452,19 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     if (_didApplyProfileDepartmentDefaultFilter) return;
 
     _didApplyProfileDepartmentDefaultFilter = true;
-
-    final hasExplicitEntryFilter =
-        widget.categoryFilter?.trim().isNotEmpty == true ||
-            widget.searchQuery?.trim().isNotEmpty == true;
-
     final hasManualLocationFilter =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
             (_filterCityName != null && _filterCityName!.isNotEmpty) ||
             _filterPostalCodeController.text.trim().isNotEmpty ||
             _postalCodeController.text.trim().isNotEmpty;
 
-    if (hasExplicitEntryFilter || hasManualLocationFilter) return;
+    if (hasManualLocationFilter) return;
+
+    try {
+      await Future.sync(_preloadRegionDeptData);
+    } catch (error) {
+      debugPrint('[ConsultOffers] Préchargement région/département ignoré: $error');
+    }
 
     final user = FirebaseAuth.instance.currentUser;
 
@@ -501,10 +502,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
         if (regionCode != null && regionCode.isNotEmpty) {
           _filterRegionCode = regionCode;
-
           _selectedRegionCode = regionCode;
         }
 
+        _filterCityName = null;
+        _filterPostalCodeController.clear();
+        _postalCodeController.clear();
         _showFilters = true;
       });
 
@@ -513,7 +516,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
           content: Text(
-            'Par défaut, les offres sont filtrées sur votre département : '
+            'Par défaut, les offres sont synchronisées avec votre région et votre département : '
             '${ProfileDepartmentResolver.departmentDisplayName(departmentCode)}.',
           ),
         ),
@@ -1343,6 +1346,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Widget _buildRemovableFilterChip({
+  final isDelayInterventionChip = label.toLowerCase().contains('délai') || label.toLowerCase().contains('delai') || label.toLowerCase().contains('intervention');
+
     required String label,
     required VoidCallback onDeleted,
   }) {
@@ -1358,8 +1363,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         fontWeight: FontWeight.w700,
         color: Color(0xFF1F4E95),
       ),
-      backgroundColor: const Color(0xFFF4F8FF),
-      side: const BorderSide(color: Color(0xFFBED5F8)),
+      backgroundColor: isDelayInterventionChip ? const Color(0xFFFF6600) : Colors.white,
+      side: BorderSide(color: isDelayInterventionChip ? const Color(0xFFFF6600) : const Color(0xFFE5E7EB)),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999),
       ),
