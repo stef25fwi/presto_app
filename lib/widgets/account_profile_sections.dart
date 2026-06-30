@@ -7,6 +7,9 @@ import 'phone_input_field.dart';
 const double _kAccountSectionTileHorizontalPadding = 10;
 
 class AccountProfileFormSection extends StatefulWidget {
+  final String firstName;
+  final String lastName;
+  final TextEditingController departmentController;
   final TextEditingController pseudoController;
   final TextEditingController cityController;
   final TextEditingController phoneController;
@@ -19,6 +22,9 @@ class AccountProfileFormSection extends StatefulWidget {
 
   const AccountProfileFormSection({
     super.key,
+    required this.firstName,
+    required this.lastName,
+    required this.departmentController,
     required this.pseudoController,
     required this.cityController,
     required this.phoneController,
@@ -199,6 +205,80 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                       );
                     },
                   ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: widget.firstName.trim().isEmpty
+                    ? 'Non renseigné'
+                    : widget.firstName.trim(),
+                enabled: false,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Prénom',
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue: widget.lastName.trim().isEmpty
+                    ? 'Non renseigné'
+                    : widget.lastName.trim(),
+                enabled: false,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Nom',
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: widget.departmentController,
+                enabled: false,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Département',
+                  hintText: 'Département détecté automatiquement',
+                  prefixIcon: const Icon(Icons.map_outlined),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  disabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 10),
