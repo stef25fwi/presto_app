@@ -1533,15 +1533,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF7ED),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: const Color(0xFFFFD7AE)),
+          border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.shield_outlined,
-              color: kPrestoOrange,
+              color: Color(0xFFB91C1C),
               size: 20,
             ),
             const SizedBox(width: 6),
@@ -1549,8 +1549,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               child: Text(
                 'Ne partagez jamais de codes, mots de passe ou informations bancaires.',
                 style: kPrestoMetaTextStyle.copyWith(
-                  color: const Color(0xFF92400E),
-                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFFB91C1C),
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
@@ -1561,7 +1561,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               icon: const Icon(
                 Icons.close_rounded,
                 size: 18,
-                color: Color(0xFF92400E),
+                color: Color(0xFFB91C1C),
               ),
             ),
           ],
