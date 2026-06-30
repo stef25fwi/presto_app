@@ -2183,13 +2183,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         color: const Color(0xFFE5E7EB),
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: null,
-          customBorder: const CircleBorder(),
-          child: Icon(
-            Icons.attach_file_rounded,
-            color: const Color(0xFF9CA3AF),
-            size: 22,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Material(
+            color: const Color(0xFFE5E7EB),
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: null,
+              customBorder: const CircleBorder(),
+              child: Icon(
+                Icons.attach_file_rounded,
+                color: const Color(0xFF9CA3AF),
+                size: 22,
+              ),
+            ),
           ),
         ),
       ),
