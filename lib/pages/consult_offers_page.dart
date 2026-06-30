@@ -1847,10 +1847,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       );
                     }
 
-                    const int _adsEvery =
+                    const int adsEvery =
                         8; // Bandeau pub après chaque 8 annonces
-                    final int _adSlots = docs.length ~/ _adsEvery;
-                    final int _totalItems = docs.length + _adSlots;
+                    final int adSlots = docs.length ~/ adsEvery;
+                    final int totalItems = docs.length + adSlots;
 
                     return Column(
                       children: [
@@ -1869,10 +1869,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                               padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
                               addAutomaticKeepAlives: false,
                               addRepaintBoundaries: true,
-                              itemCount: _totalItems,
+                              itemCount: totalItems,
                               itemBuilder: (context, index) {
                                 final bool isAd =
-                                    (index + 1) % (_adsEvery + 1) == 0;
+                                    (index + 1) % (adsEvery + 1) == 0;
                                 if (isAd) {
                                   return Padding(
                                     padding: const EdgeInsets.only(
@@ -1893,7 +1893,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                   );
                                 }
 
-                                final adOffset = index ~/ (_adsEvery + 1);
+                                final adOffset = index ~/ (adsEvery + 1);
                                 final docIndex = index - adOffset;
                                 final doc = docs[docIndex];
                                 final data = doc.data();
@@ -2140,7 +2140,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return Focus(
       focusNode: _regionFocus,
       child: DropdownButtonFormField<String?>(
-        value: _filterRegionCode,
+        initialValue: _filterRegionCode,
         isDense: true,
         dropdownColor: const Color(0xFFF4F8FF),
         borderRadius: BorderRadius.circular(16),
@@ -2225,7 +2225,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return Focus(
       focusNode: _deptFocus,
       child: DropdownButtonFormField<String?>(
-        value: safeValue,
+        initialValue: safeValue,
         isDense: true,
         dropdownColor: const Color(0xFFF4F8FF),
         borderRadius: BorderRadius.circular(16),
@@ -2426,7 +2426,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   Widget _buildCategoryDropdown() {
     return DropdownButtonFormField<String>(
-      value: _filterCategory,
+      initialValue: _filterCategory,
       isDense: true,
       dropdownColor: const Color(0xFFF4F8FF),
       borderRadius: BorderRadius.circular(16),
@@ -3710,7 +3710,7 @@ class _UserOfferMiniCard extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               width: 1.4,
             ),
           ),

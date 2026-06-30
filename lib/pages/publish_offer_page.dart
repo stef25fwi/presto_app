@@ -2805,11 +2805,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           showUserMessage: false,
         );
         final uid = secureContext?.uid;
-        if (uid == null)
+        if (uid == null) {
           throw const MicroIaClientAuthException(
             code: 'auth-missing',
             message: 'Connecte-toi pour utiliser la dictée IA.',
           );
+        }
 
         final blob = await _webRec.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(
@@ -2877,9 +2878,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     String? recordedPath;
     try {
       recordedPath = await _recorder.stop();
-      if (recordedPath == null) {
-        recordedPath = _recordingPath;
-      }
+      recordedPath ??= _recordingPath;
       _recordingPath = null;
       _appendPublishAiTrace(
         'mobile_audio',
@@ -3924,7 +3923,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: _withAiPendingOverlay(
                     showPending: _showAiPendingForCategory,
                     child: DropdownButtonFormField<String>(
-                      value: _category,
+                      initialValue: _category,
                       dropdownColor: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       decoration: InputDecoration(
@@ -3967,7 +3966,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 // SOUS-CATÉGORIE (dropdown dynamique)
                 if (_category != null)
                   DropdownButtonFormField<String>(
-                    value: _selectedSubCategory,
+                    initialValue: _selectedSubCategory,
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     decoration: InputDecoration(
@@ -4166,7 +4165,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 _withPublishFieldHighlight(
                   fieldId: 'delay',
                   child: DropdownButtonFormField<String>(
-                    value: _missionDelay,
+                    initialValue: _missionDelay,
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     decoration: InputDecoration(
@@ -4211,7 +4210,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       Expanded(
                         flex: 2,
                         child: DropdownButtonFormField<String>(
-                          value: _budgetType,
+                          initialValue: _budgetType,
                           dropdownColor: Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           decoration: InputDecoration(
@@ -4420,7 +4419,7 @@ class _FieldPendingDots extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(999),
       ),
       child: const Padding(

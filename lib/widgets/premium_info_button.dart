@@ -82,7 +82,7 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: kPrestoBlue.withOpacity(0.16),
+                    color: kPrestoBlue.withValues(alpha: 0.16),
                     blurRadius: 26,
                     spreadRadius: 2,
                   ),
@@ -94,8 +94,8 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
               child: InkWell(
                 onTap: widget.onTap,
                 borderRadius: BorderRadius.circular(s),
-                splashColor: Colors.white.withOpacity(0.18),
-                highlightColor: Colors.white.withOpacity(0.08),
+                splashColor: Colors.white.withValues(alpha: 0.18),
+                highlightColor: Colors.white.withValues(alpha: 0.08),
                 child: Container(
                   width: s,
                   height: s,
@@ -149,7 +149,7 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
                       ),
                     ],
                     border: Border.all(
-                        color: Colors.white.withOpacity(0.55), width: 1),
+                        color: Colors.white.withValues(alpha: 0.55), width: 1),
                   ),
                   child: Text(
                     widget.chipText!,
@@ -189,11 +189,11 @@ class _RotatingHaloPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..shader = SweepGradient(
         colors: [
-          color.withOpacity(0.0),
-          color.withOpacity(0.10),
-          color.withOpacity(0.90),
-          color.withOpacity(0.15),
-          color.withOpacity(0.0),
+          color.withValues(alpha: 0.0),
+          color.withValues(alpha: 0.10),
+          color.withValues(alpha: 0.90),
+          color.withValues(alpha: 0.15),
+          color.withValues(alpha: 0.0),
         ],
         stops: const [0.00, 0.18, 0.30, 0.48, 1.00],
       ).createShader(Rect.fromCircle(center: c, radius: r));
@@ -206,7 +206,7 @@ class _RotatingHaloPainter extends CustomPainter {
       haloPaint,
     );
 
-    final dotPaint = Paint()..color = color.withOpacity(0.55);
+    final dotPaint = Paint()..color = color.withValues(alpha: 0.55);
     for (final a in <double>[0.15, 0.32, 0.52]) {
       final ang = -math.pi / 2 + a * 2 * math.pi;
       final p = Offset(c.dx + math.cos(ang) * r, c.dy + math.sin(ang) * r);

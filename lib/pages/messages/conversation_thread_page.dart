@@ -2790,8 +2790,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                   );
                                                 },
                                               );
-                                              if (confirmed != true || !mounted)
+                                              if (confirmed != true ||
+                                                  !mounted) {
                                                 return;
+                                              }
                                               try {
                                                 await ConversationService
                                                     .deleteMessage(

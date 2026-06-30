@@ -92,7 +92,7 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: selected,
+                    initialValue: selected,
                     items: predefinedReasons
                         .map(
                           (value) => DropdownMenuItem<String>(

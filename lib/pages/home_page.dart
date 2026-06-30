@@ -1088,8 +1088,9 @@ class _HomePageState extends State<HomePage>
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w500),
                     ),
-                    tileColor:
-                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
+                    tileColor: isHighlighted
+                        ? kPrestoBlue.withValues(alpha: 0.08)
+                        : null,
                     onTap: () => onSelected(option),
                   );
                 },
@@ -1639,7 +1640,7 @@ class _HomePageState extends State<HomePage>
                   decoration: BoxDecoration(
                     color: _currentSlide == index
                         ? Colors.white
-                        : Colors.white.withOpacity(0.4),
+                        : Colors.white.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -1661,13 +1662,13 @@ class _HomePageState extends State<HomePage>
     // A la fermeture du clavier, la barre reapparait normalement en bas.
     final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
-    final _statusBarColor = _selectedIndex == 0
+    final statusBarColor = _selectedIndex == 0
         ? Colors.white // home tab: scaffold blanc → icônes sombres
         : (!kIsWeb && _selectedIndex == 1)
             ? kPrestoOrange
             : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: prestoOverlayStyleFor(_statusBarColor),
+      value: prestoOverlayStyleFor(statusBarColor),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
@@ -1892,7 +1893,7 @@ class _HomePageState extends State<HomePage>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.16),
+                        color: Colors.black.withValues(alpha: 0.16),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -2077,12 +2078,12 @@ class UnreadInboxBell extends StatelessWidget {
   final Widget Function(BuildContext context, int badgeCount) builder;
 
   const UnreadInboxBell({
-    Key? key,
+    super.key,
     required this.userId,
     required this.builder,
     this.monitoringKeyPrefix,
     this.countType = InboxCountType.totalUnread,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2160,7 +2161,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           kPrestoOrange,
-                          kPrestoOrange.withOpacity(0.3),
+                          kPrestoOrange.withValues(alpha: 0.3),
                         ],
                       ),
                     ),
@@ -2177,7 +2178,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                   color: const Color(0xFFF7FAFF),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: kPrestoBlue.withOpacity(0.12),
+                    color: kPrestoBlue.withValues(alpha: 0.12),
                   ),
                 ),
                 padding:
