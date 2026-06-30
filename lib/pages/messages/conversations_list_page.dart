@@ -24,6 +24,7 @@ import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
+import 'package:presto_app/widgets/deleted_user_profile.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -2643,4 +2644,30 @@ class _ConversationStateChip extends StatelessWidget {
       ),
     );
   }
+}
+
+bool _isDeletedUserMap(Map<String, dynamic>? data) {
+  return DeletedUserProfile.isDeletedMap(data);
+}
+
+String _deletedAwareDisplayName(
+  Map<String, dynamic>? data,
+  String? fallbackName,
+) {
+  return DeletedUserProfile.displayName(
+    isDeleted: _isDeletedUserMap(data),
+    fallbackName: fallbackName,
+  );
+}
+
+Widget _deletedAwareAvatar({
+  required Map<String, dynamic>? data,
+  required Widget fallback,
+  double radius = 22,
+}) {
+  if (_isDeletedUserMap(data)) {
+    return DeletedUserAvatar(radius: radius);
+  }
+
+  return fallback;
 }

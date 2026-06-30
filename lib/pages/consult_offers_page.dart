@@ -42,6 +42,7 @@ import '../widgets/ad_banner.dart';
 import '../widgets/home_interactions.dart';
 import '../widgets/offer_network_image.dart';
 import 'messages/messages_page_v2.dart';
+import 'package:presto_app/widgets/deleted_user_profile.dart';
 
 class ConsultOffersPage extends StatefulWidget {
   final String? categoryFilter;
@@ -3804,4 +3805,30 @@ String formatAgeSince(Timestamp? ts) {
 
   final d = diff.inDays;
   return "il y a $d j";
+}
+
+bool _isDeletedUserMap(Map<String, dynamic>? data) {
+  return DeletedUserProfile.isDeletedMap(data);
+}
+
+String _deletedAwareDisplayName(
+  Map<String, dynamic>? data,
+  String? fallbackName,
+) {
+  return DeletedUserProfile.displayName(
+    isDeleted: _isDeletedUserMap(data),
+    fallbackName: fallbackName,
+  );
+}
+
+Widget _deletedAwareAvatar({
+  required Map<String, dynamic>? data,
+  required Widget fallback,
+  double radius = 22,
+}) {
+  if (_isDeletedUserMap(data)) {
+    return DeletedUserAvatar(radius: radius);
+  }
+
+  return fallback;
 }

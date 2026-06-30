@@ -30,6 +30,7 @@ import '../../utils/recording_path_web.dart'
     if (dart.library.io) '../../utils/recording_path_io.dart';
 import '../../utils/temp_file_helper_web.dart'
     if (dart.library.io) '../../utils/temp_file_helper_io.dart';
+import 'package:presto_app/widgets/deleted_user_profile.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -3567,4 +3568,30 @@ String _formatPresenceSeenAt(DateTime date) {
   if (diff.inHours < 24) return 'il y a ${diff.inHours} h';
   if (diff.inDays == 1) return 'hier';
   return 'le ${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}';
+}
+
+bool _isDeletedUserMap(Map<String, dynamic>? data) {
+  return DeletedUserProfile.isDeletedMap(data);
+}
+
+String _deletedAwareDisplayName(
+  Map<String, dynamic>? data,
+  String? fallbackName,
+) {
+  return DeletedUserProfile.displayName(
+    isDeleted: _isDeletedUserMap(data),
+    fallbackName: fallbackName,
+  );
+}
+
+Widget _deletedAwareAvatar({
+  required Map<String, dynamic>? data,
+  required Widget fallback,
+  double radius = 22,
+}) {
+  if (_isDeletedUserMap(data)) {
+    return DeletedUserAvatar(radius: radius);
+  }
+
+  return fallback;
 }
