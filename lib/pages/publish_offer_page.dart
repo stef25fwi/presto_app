@@ -3765,7 +3765,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         resizeToAvoidBottomInset: true,
         backgroundColor: Colors.white,
         appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
           backgroundColor: kPrestoOrange,
           foregroundColor: Colors.white,
           iconTheme: const IconThemeData(color: Colors.white),
