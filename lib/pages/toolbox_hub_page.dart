@@ -173,7 +173,7 @@ class _ToolCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -221,7 +221,7 @@ class _ToolCard extends StatelessWidget {
                         description,
                         style: kPrestoMetaTextStyle.copyWith(
                           fontSize: compact ? 13 : 13.5,
-                          color: Colors.black.withOpacity(0.70),
+                          color: Colors.black.withValues(alpha: 0.70),
                           height: 1.35,
                         ),
                       ),
@@ -243,7 +243,7 @@ class _ToolCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: buttonGradient.colors.last.withOpacity(0.35),
+                      color: buttonGradient.colors.last.withValues(alpha: 0.35),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),

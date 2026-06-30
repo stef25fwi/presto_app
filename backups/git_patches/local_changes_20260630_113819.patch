@@ -1,0 +1,2414 @@
+diff --git a/lib/app/theme.dart b/lib/app/theme.dart
+index 8922d48e..695ba7d0 100644
+--- a/lib/app/theme.dart
++++ b/lib/app/theme.dart
+@@ -43,7 +43,6 @@ ThemeData _buildPrestoThemeData() {
+     ],
+     canvasColor: overlayTheme.surfaceColor,
+     cardColor: overlayTheme.surfaceColor,
+-    dialogBackgroundColor: overlayTheme.surfaceColor,
+     splashColor: overlayTheme.selectionFillColor,
+     highlightColor: overlayTheme.selectionFillColor,
+     hoverColor: const Color(0xFFF1F5F9),
+diff --git a/lib/constants.dart b/lib/constants.dart
+index e9d7962f..e8c06a88 100644
+--- a/lib/constants.dart
++++ b/lib/constants.dart
+@@ -182,7 +182,7 @@ Widget buildRegionDropdown({
+       }
+ 
+       return DropdownButtonFormField<RegionItem>(
+-        value: value,
++        initialValue: value,
+         isExpanded: true,
+         dropdownColor: overlayTheme.surfaceColor,
+         borderRadius: overlayTheme.popupRadius,
+diff --git a/lib/data/city_postal_data.dart b/lib/data/city_postal_data.dart
+index b665488e..e09ae5fb 100644
+--- a/lib/data/city_postal_data.dart
++++ b/lib/data/city_postal_data.dart
+@@ -1,7 +1,7 @@
+ /// Données locales des villes et codes postaux français
+ /// Peut servir de fallback si l'API Google Places est indisponible
+ 
+-library city_postal_data;
++library;
+ 
+ class CityPostalData {
+   final String city;
+diff --git a/lib/dev/page_capture_catalog_page.dart b/lib/dev/page_capture_catalog_page.dart
+index b2e655e3..86499210 100644
+--- a/lib/dev/page_capture_catalog_page.dart
++++ b/lib/dev/page_capture_catalog_page.dart
+@@ -280,7 +280,7 @@ class _PageCaptureViewer extends StatelessWidget {
+                   Expanded(
+                     child: DecoratedBox(
+                       decoration: BoxDecoration(
+-                        color: Colors.black.withOpacity(0.72),
++                        color: Colors.black.withValues(alpha: 0.72),
+                         borderRadius: BorderRadius.circular(14),
+                       ),
+                       child: Padding(
+diff --git a/lib/dev/seed_offers.dart b/lib/dev/seed_offers.dart
+index 0af51710..8b6425ef 100644
+--- a/lib/dev/seed_offers.dart
++++ b/lib/dev/seed_offers.dart
+@@ -13,8 +13,9 @@ String normalize(String s) => s
+ /// Déduit dept depuis CP (DOM/TOM: 971/..., Corse 20xxx -> 2A/2B (heuristique))
+ String deptFromCp(String cp) {
+   if (cp.startsWith('97') || cp.startsWith('98')) return cp.substring(0, 3);
+-  if (cp.startsWith('20'))
++  if (cp.startsWith('20')) {
+     return '2A'; // fallback (si besoin tu gères 2A/2B au choix)
++  }
+   return cp.substring(0, 2);
+ }
+ 
+diff --git a/lib/features/publish_ai/profile_readiness.dart b/lib/features/publish_ai/profile_readiness.dart
+index 19d6bc7f..0c5da977 100644
+--- a/lib/features/publish_ai/profile_readiness.dart
++++ b/lib/features/publish_ai/profile_readiness.dart
+@@ -101,8 +101,9 @@ class ProfileLocationResolution {
+   final String? postalCodeSource;
+ 
+   String get blockReason {
+-    if (city.isEmpty && postalCode.isEmpty)
++    if (city.isEmpty && postalCode.isEmpty) {
+       return 'missing city and postalCode';
++    }
+     if (city.isEmpty) return 'missing city';
+     if (postalCode.isEmpty) return 'missing postalCode';
+     return 'none';
+diff --git a/lib/features/trust_score/trust_score_widgets.dart b/lib/features/trust_score/trust_score_widgets.dart
+index 288b270e..c97168ab 100644
+--- a/lib/features/trust_score/trust_score_widgets.dart
++++ b/lib/features/trust_score/trust_score_widgets.dart
+@@ -538,10 +538,10 @@ class _TrustScoreCardState extends State<TrustScoreCard> {
+       decoration: BoxDecoration(
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(18),
+-        border: Border.all(color: kPrestoBlue.withOpacity(0.14)),
++        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.14)),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.06),
++            color: Colors.black.withValues(alpha: 0.06),
+             blurRadius: 18,
+             offset: const Offset(0, 8),
+           ),
+@@ -866,8 +866,9 @@ class _TrustScoreContent extends StatelessWidget {
+                 .map(
+                   (badge) => Chip(
+                     label: Text(trustScoreBadgeLabel(badge)),
+-                    backgroundColor: kPrestoBlue.withOpacity(0.08),
+-                    side: BorderSide(color: kPrestoBlue.withOpacity(0.18)),
++                    backgroundColor: kPrestoBlue.withValues(alpha: 0.08),
++                    side:
++                        BorderSide(color: kPrestoBlue.withValues(alpha: 0.18)),
+                   ),
+                 )
+                 .toList(growable: false),
+@@ -917,7 +918,7 @@ class _ReviewPreviewTile extends StatelessWidget {
+       decoration: BoxDecoration(
+         color: const Color(0xFFF8FAFC),
+         borderRadius: BorderRadius.circular(14),
+-        border: Border.all(color: Colors.black.withOpacity(0.06)),
++        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -1011,7 +1012,7 @@ class _ResponderTile extends StatelessWidget {
+         decoration: BoxDecoration(
+           color: Colors.white,
+           borderRadius: BorderRadius.circular(14),
+-          border: Border.all(color: Colors.black.withOpacity(0.08)),
++          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+         ),
+         child: Row(
+           children: [
+@@ -1059,7 +1060,7 @@ class _SelectedResponderBlock extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.all(12),
+       decoration: BoxDecoration(
+-        color: kPrestoBlue.withOpacity(0.06),
++        color: kPrestoBlue.withValues(alpha: 0.06),
+         borderRadius: BorderRadius.circular(14),
+       ),
+       child: Row(
+@@ -1099,7 +1100,7 @@ class _ResponderAvatar extends StatelessWidget {
+     final photoUrl = responder.photoUrl;
+     return CircleAvatar(
+       radius: 24,
+-      backgroundColor: kPrestoBlue.withOpacity(0.12),
++      backgroundColor: kPrestoBlue.withValues(alpha: 0.12),
+       backgroundImage:
+           photoUrl == null ? null : profileAvatarImageProvider(photoUrl),
+       child: photoUrl == null
+@@ -1174,7 +1175,7 @@ class _SmallVerifiedBadge extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+       decoration: BoxDecoration(
+-        color: kPrestoBlue.withOpacity(0.1),
++        color: kPrestoBlue.withValues(alpha: 0.1),
+         borderRadius: BorderRadius.circular(999),
+       ),
+       child: const Text(
+@@ -1197,7 +1198,7 @@ class _ResponderBadge extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+       decoration: BoxDecoration(
+-        color: kPrestoBlue.withOpacity(0.08),
++        color: kPrestoBlue.withValues(alpha: 0.08),
+         borderRadius: BorderRadius.circular(999),
+       ),
+       child: const Text(
+diff --git a/lib/main.dart b/lib/main.dart
+index 2652111d..cd6219a8 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -525,9 +525,9 @@ class AudioPipelineBadge extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+       decoration: BoxDecoration(
+-        color: c.withOpacity(0.12),
++        color: c.withValues(alpha: 0.12),
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: c.withOpacity(0.28)),
++        border: Border.all(color: c.withValues(alpha: 0.28)),
+       ),
+       child: Row(
+         mainAxisSize: MainAxisSize.min,
+@@ -578,7 +578,7 @@ class _PrestoResponsiveFrame extends StatelessWidget {
+ 
+ class CardShell extends StatelessWidget {
+   final Widget child;
+-  const CardShell({Key? key, required this.child}) : super(key: key);
++  const CardShell({super.key, required this.child});
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -590,7 +590,7 @@ class CardShell extends StatelessWidget {
+         borderRadius: BorderRadius.circular(18),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.06),
++            color: Colors.black.withValues(alpha: 0.06),
+             blurRadius: 18,
+             offset: const Offset(0, 8),
+           ),
+@@ -678,8 +678,9 @@ Future<void> main() async {
+       }
+     } else {
+       // Web: persistance auto si IndexedDB disponible
+-      if (kDebugMode)
++      if (kDebugMode) {
+         debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
++      }
+     }
+ 
+     // ✅ Initialiser le service Firebase centralisé avec optimisations
+@@ -687,8 +688,9 @@ Future<void> main() async {
+ 
+     // ✅ Remote Config: charger le pipeline audio
+     await PrestoRemoteConfig.init();
+-    if (kDebugMode)
++    if (kDebugMode) {
+       debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
++    }
+     adminWebDebugStore.recordEvent(
+       area: 'remote-config',
+       message: 'initialized',
+@@ -753,8 +755,9 @@ Future<void> main() async {
+ 
+       // Ne force plus signInAnonymously() au démarrage
+       if (auth.currentUser != null) {
+-        if (kDebugMode)
++        if (kDebugMode) {
+           debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
++        }
+         SessionState.userId = auth.currentUser!.uid;
+       } else {
+         if (kDebugMode) debugPrint('[Auth] No user signed in at startup (OK)');
+@@ -766,8 +769,9 @@ Future<void> main() async {
+       FirebaseAuth.instance.authStateChanges().listen((User? user) {
+         SessionState.userId = user?.uid;
+         adminWebDebugStore.updateAuth(user);
+-        if (kDebugMode)
++        if (kDebugMode) {
+           debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
++        }
+       });
+     } catch (e) {
+       adminWebDebugStore.recordError('auth', e,
+@@ -1339,9 +1343,9 @@ class _SplashBuildStamp extends StatelessWidget {
+         child: Container(
+           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+           decoration: BoxDecoration(
+-            color: Colors.black.withOpacity(0.18),
++            color: Colors.black.withValues(alpha: 0.18),
+             borderRadius: BorderRadius.circular(14),
+-            border: Border.all(color: Colors.white.withOpacity(0.18)),
++            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+           ),
+           child: Column(
+             mainAxisSize: MainAxisSize.min,
+diff --git a/lib/pages/account/change_password_page.dart b/lib/pages/account/change_password_page.dart
+index 85723fd6..5413238b 100644
+--- a/lib/pages/account/change_password_page.dart
++++ b/lib/pages/account/change_password_page.dart
+@@ -59,8 +59,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
+   String? _passwordValidator(String? value) {
+     final text = value ?? '';
+     if (text.length < 8) return '8 caractères minimum.';
+-    if (!RegExp(r'[A-Za-z]').hasMatch(text))
++    if (!RegExp(r'[A-Za-z]').hasMatch(text)) {
+       return 'Ajoute au moins une lettre.';
++    }
+     if (!RegExp(r'[0-9]').hasMatch(text)) return 'Ajoute au moins un chiffre.';
+     return null;
+   }
+@@ -97,8 +98,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
+                   ),
+                 ),
+                 validator: (value) {
+-                  if ((value ?? '').isEmpty)
++                  if ((value ?? '').isEmpty) {
+                     return 'Mot de passe actuel obligatoire.';
++                  }
+                   return null;
+                 },
+               ),
+diff --git a/lib/pages/account_page.dart b/lib/pages/account_page.dart
+index a4cb6a76..e55fc61f 100644
+--- a/lib/pages/account_page.dart
++++ b/lib/pages/account_page.dart
+@@ -628,9 +628,9 @@ class _AccountPageState extends State<AccountPage> {
+       margin: const EdgeInsets.only(bottom: 18),
+       padding: const EdgeInsets.all(14),
+       decoration: BoxDecoration(
+-        color: kPrestoBlue.withOpacity(0.07),
++        color: kPrestoBlue.withValues(alpha: 0.07),
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
++        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.18)),
+       ),
+       child: Row(
+         children: const [
+@@ -1301,9 +1301,9 @@ class _AccountPageState extends State<AccountPage> {
+       return;
+     }
+ 
+-    final _oldSub = _profileDocSub;
++    final oldSub = _profileDocSub;
+     _profileDocSub = null;
+-    await _oldSub?.cancel();
++    await oldSub?.cancel();
+     if (!mounted) return;
+ 
+     setState(() {
+@@ -1392,10 +1392,10 @@ class _AccountPageState extends State<AccountPage> {
+             _profileEmail = hydratedEmail;
+           }
+           hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+-          final _photoUploadedRecently = _profilePhotoUploadedAt != null &&
++          final photoUploadedRecently = _profilePhotoUploadedAt != null &&
+               DateTime.now().difference(_profilePhotoUploadedAt!) <
+                   const Duration(seconds: 10);
+-          if (hydratedPhotoUrl.isNotEmpty && !_photoUploadedRecently) {
++          if (hydratedPhotoUrl.isNotEmpty && !photoUploadedRecently) {
+             _profilePhotoUrl = hydratedPhotoUrl;
+           }
+         }
+@@ -2443,7 +2443,7 @@ class _AccountPageState extends State<AccountPage> {
+           width: 38,
+           height: 38,
+           decoration: BoxDecoration(
+-            color: kPrestoBlue.withOpacity(0.10),
++            color: kPrestoBlue.withValues(alpha: 0.10),
+             borderRadius: BorderRadius.circular(12),
+           ),
+           child: Icon(icon, color: kPrestoBlue, size: 20),
+@@ -2488,7 +2488,7 @@ class _AccountPageState extends State<AccountPage> {
+       decoration: BoxDecoration(
+         color: const Color(0xFFF8FAFD),
+         borderRadius: BorderRadius.circular(20),
+-        border: Border.all(color: kPrestoBlue.withOpacity(0.10)),
++        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.10)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -2604,7 +2604,8 @@ class _AccountPageState extends State<AccountPage> {
+                                     if (_isUploadingProfilePhoto)
+                                       Container(
+                                         decoration: BoxDecoration(
+-                                          color: Colors.black.withOpacity(0.35),
++                                          color: Colors.black
++                                              .withValues(alpha: 0.35),
+                                           shape: BoxShape.circle,
+                                         ),
+                                         child: const Center(
+@@ -2831,8 +2832,9 @@ class _AccountPageState extends State<AccountPage> {
+                         setState(() => _isEditingProfile = true);
+                       },
+                       onPhoneCountryCodeChanged: (code) {
+-                        if (!mounted || _profilePhoneCountryCode == code)
++                        if (!mounted || _profilePhoneCountryCode == code) {
+                           return;
++                        }
+                         setState(() => _profilePhoneCountryCode = code);
+                       },
+                       onSave: () async {
+@@ -3169,7 +3171,7 @@ class _AccountPageState extends State<AccountPage> {
+               decoration: BoxDecoration(
+                 color: Colors.white,
+                 borderRadius: BorderRadius.circular(16),
+-                border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
++                border: Border.all(color: kPrestoBlue.withValues(alpha: 0.25)),
+               ),
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+@@ -3177,7 +3179,7 @@ class _AccountPageState extends State<AccountPage> {
+                   Row(
+                     children: [
+                       Icon(Icons.admin_panel_settings,
+-                          color: kPrestoBlue.withOpacity(0.95)),
++                          color: kPrestoBlue.withValues(alpha: 0.95)),
+                       const SizedBox(width: 10),
+                       const Expanded(
+                         child: Text(
+@@ -3258,7 +3260,7 @@ class _AccountPageState extends State<AccountPage> {
+                             horizontal: 10, vertical: 6),
+                         decoration: BoxDecoration(
+                           color: (configLoaded ? kPrestoBlue : Colors.orange)
+-                              .withOpacity(0.08),
++                              .withValues(alpha: 0.08),
+                           borderRadius: BorderRadius.circular(999),
+                         ),
+                         child: Text(
+@@ -3269,7 +3271,7 @@ class _AccountPageState extends State<AccountPage> {
+                             fontWeight: FontWeight.w700,
+                             fontSize: 12,
+                             color: (configLoaded ? kPrestoBlue : Colors.orange)
+-                                .withOpacity(0.92),
++                                .withValues(alpha: 0.92),
+                           ),
+                         ),
+                       ),
+@@ -3277,7 +3279,7 @@ class _AccountPageState extends State<AccountPage> {
+                         padding: const EdgeInsets.symmetric(
+                             horizontal: 10, vertical: 6),
+                         decoration: BoxDecoration(
+-                          color: kPrestoOrange.withOpacity(0.08),
++                          color: kPrestoOrange.withValues(alpha: 0.08),
+                           borderRadius: BorderRadius.circular(999),
+                         ),
+                         child: Text(
+@@ -3285,7 +3287,7 @@ class _AccountPageState extends State<AccountPage> {
+                           style: TextStyle(
+                             fontWeight: FontWeight.w700,
+                             fontSize: 12,
+-                            color: kPrestoOrange.withOpacity(0.92),
++                            color: kPrestoOrange.withValues(alpha: 0.92),
+                           ),
+                         ),
+                       ),
+@@ -3365,7 +3367,7 @@ class _AccountPageState extends State<AccountPage> {
+           Row(
+             children: [
+               Icon(Icons.admin_panel_settings,
+-                  color: kPrestoBlue.withOpacity(0.95)),
++                  color: kPrestoBlue.withValues(alpha: 0.95)),
+               const SizedBox(width: 10),
+               const Expanded(
+                 child: Text(
+diff --git a/lib/pages/admin_photo_reviews_page.dart b/lib/pages/admin_photo_reviews_page.dart
+index 26c4a160..5a99613a 100644
+--- a/lib/pages/admin_photo_reviews_page.dart
++++ b/lib/pages/admin_photo_reviews_page.dart
+@@ -92,7 +92,7 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   DropdownButtonFormField<String>(
+-                    value: selected,
++                    initialValue: selected,
+                     items: predefinedReasons
+                         .map(
+                           (value) => DropdownMenuItem<String>(
+diff --git a/lib/pages/admin_space_page.dart b/lib/pages/admin_space_page.dart
+index f9d5126a..e64e1740 100644
+--- a/lib/pages/admin_space_page.dart
++++ b/lib/pages/admin_space_page.dart
+@@ -1052,7 +1052,7 @@ class _AdminDashboardComputed {
+     final totalTrackedEvents = analyticsTotals.values
+         .fold<int>(0, (runningTotal, value) => runningTotal + value);
+ 
+-    int _sumByKeyPattern(RegExp pattern) {
++    int sumByKeyPattern(RegExp pattern) {
+       var sum = 0;
+       analyticsTotals.forEach((key, value) {
+         if (pattern.hasMatch(key)) {
+@@ -1063,11 +1063,10 @@ class _AdminDashboardComputed {
+     }
+ 
+     final errorEvents =
+-        _sumByKeyPattern(RegExp(r'error|failed', caseSensitive: false));
+-    final crashEvents =
+-        _sumByKeyPattern(RegExp(r'crash', caseSensitive: false));
++        sumByKeyPattern(RegExp(r'error|failed', caseSensitive: false));
++    final crashEvents = sumByKeyPattern(RegExp(r'crash', caseSensitive: false));
+ 
+-    double? _metricFromMap(Map<String, dynamic> metrics, List<String> keys) {
++    double? metricFromMap(Map<String, dynamic> metrics, List<String> keys) {
+       for (final key in keys) {
+         if (metrics.containsKey(key)) {
+           final value = _toDouble(metrics[key]);
+@@ -1085,7 +1084,7 @@ class _AdminDashboardComputed {
+       final data = doc.data();
+       if ((data['metricGroup'] ?? '').toString() != 'marketplace') continue;
+       final metrics = _stringKeyMap(data['metrics']);
+-      final latency = _metricFromMap(
++      final latency = metricFromMap(
+         metrics,
+         const [
+           'api_latency_ms_avg',
+@@ -1098,7 +1097,7 @@ class _AdminDashboardComputed {
+         latencySum += latency;
+         latencyCount += 1;
+       }
+-      final load = _metricFromMap(
++      final load = metricFromMap(
+         metrics,
+         const [
+           'app_load_ms_avg',
+@@ -1652,7 +1651,7 @@ class _EmailDashboardContent extends StatelessWidget {
+                                     decoration: BoxDecoration(
+                                       color:
+                                           (hasAlert ? Colors.red : prestoBlue)
+-                                              .withOpacity(0.10),
++                                              .withValues(alpha: 0.10),
+                                       borderRadius: BorderRadius.circular(14),
+                                     ),
+                                     child: Icon(
+@@ -2312,7 +2311,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+                   padding:
+                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                   decoration: BoxDecoration(
+-                    color: rule.color.withOpacity(0.08),
++                    color: rule.color.withValues(alpha: 0.08),
+                     borderRadius: BorderRadius.circular(999),
+                   ),
+                   child: Text(
+@@ -2350,9 +2349,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+                 margin: const EdgeInsets.only(top: 10),
+                 padding: const EdgeInsets.all(12),
+                 decoration: BoxDecoration(
+-                  color: rule.color.withOpacity(0.07),
++                  color: rule.color.withValues(alpha: 0.07),
+                   borderRadius: BorderRadius.circular(14),
+-                  border: Border.all(color: rule.color.withOpacity(0.22)),
++                  border: Border.all(color: rule.color.withValues(alpha: 0.22)),
+                 ),
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+@@ -2404,9 +2403,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+         width: double.infinity,
+         padding: const EdgeInsets.all(14),
+         decoration: BoxDecoration(
+-          color: prestoBlue.withOpacity(0.07),
++          color: prestoBlue.withValues(alpha: 0.07),
+           borderRadius: BorderRadius.circular(16),
+-          border: Border.all(color: prestoBlue.withOpacity(0.18)),
++          border: Border.all(color: prestoBlue.withValues(alpha: 0.18)),
+         ),
+         child: Row(
+           children: const [
+@@ -2504,7 +2503,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+       decoration: BoxDecoration(
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: prestoBlue.withOpacity(0.18)),
++        border: Border.all(color: prestoBlue.withValues(alpha: 0.18)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -2592,7 +2591,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                 decoration: BoxDecoration(
+-                  color: prestoBlue.withOpacity(0.08),
++                  color: prestoBlue.withValues(alpha: 0.08),
+                   borderRadius: BorderRadius.circular(999),
+                 ),
+                 child: Text(
+@@ -2600,7 +2599,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+                   style: TextStyle(
+                     fontWeight: FontWeight.w700,
+                     fontSize: 12,
+-                    color: prestoBlue.withOpacity(0.92),
++                    color: prestoBlue.withValues(alpha: 0.92),
+                   ),
+                 ),
+               ),
+@@ -2608,7 +2607,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                 decoration: BoxDecoration(
+-                  color: prestoOrange.withOpacity(0.08),
++                  color: prestoOrange.withValues(alpha: 0.08),
+                   borderRadius: BorderRadius.circular(999),
+                 ),
+                 child: Text(
+@@ -2616,7 +2615,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
+                   style: TextStyle(
+                     fontWeight: FontWeight.w700,
+                     fontSize: 12,
+-                    color: prestoOrange.withOpacity(0.92),
++                    color: prestoOrange.withValues(alpha: 0.92),
+                   ),
+                 ),
+               ),
+@@ -4015,9 +4014,10 @@ class _AdminMetricDomainCard extends StatelessWidget {
+                   Container(
+                     padding: const EdgeInsets.all(10),
+                     decoration: BoxDecoration(
+-                      color: domain.color.withOpacity(0.10),
++                      color: domain.color.withValues(alpha: 0.10),
+                       borderRadius: BorderRadius.circular(14),
+-                      border: Border.all(color: domain.color.withOpacity(0.20)),
++                      border: Border.all(
++                          color: domain.color.withValues(alpha: 0.20)),
+                     ),
+                     child: Icon(domain.icon, color: domain.color, size: 20),
+                   ),
+@@ -4110,9 +4110,9 @@ class _AdminMiniChart extends StatelessWidget {
+       width: double.infinity,
+       padding: const EdgeInsets.all(12),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.06),
++        color: color.withValues(alpha: 0.06),
+         borderRadius: BorderRadius.circular(14),
+-        border: Border.all(color: color.withOpacity(0.16)),
++        border: Border.all(color: color.withValues(alpha: 0.16)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -4153,7 +4153,7 @@ class _AdminSparklinePainter extends CustomPainter {
+   @override
+   void paint(Canvas canvas, Size size) {
+     final axisPaint = Paint()
+-      ..color = color.withOpacity(0.18)
++      ..color = color.withValues(alpha: 0.18)
+       ..style = PaintingStyle.stroke
+       ..strokeWidth = 1;
+     canvas.drawLine(
+@@ -4197,7 +4197,7 @@ class _AdminSparklinePainter extends CustomPainter {
+     fillPath.close();
+ 
+     final fillPaint = Paint()
+-      ..color = color.withOpacity(0.12)
++      ..color = color.withValues(alpha: 0.12)
+       ..style = PaintingStyle.fill;
+     canvas.drawPath(fillPath, fillPaint);
+ 
+@@ -4235,9 +4235,9 @@ class _AdminMetricPill extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.08),
++        color: color.withValues(alpha: 0.08),
+         borderRadius: BorderRadius.circular(14),
+-        border: Border.all(color: color.withOpacity(0.18)),
++        border: Border.all(color: color.withValues(alpha: 0.18)),
+       ),
+       child: Text(
+         label,
+@@ -4362,9 +4362,10 @@ class _ProfileCard extends StatelessWidget {
+                   padding:
+                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                   decoration: BoxDecoration(
+-                    color: prestoBlue.withOpacity(0.10),
++                    color: prestoBlue.withValues(alpha: 0.10),
+                     borderRadius: BorderRadius.circular(999),
+-                    border: Border.all(color: prestoBlue.withOpacity(0.20)),
++                    border:
++                        Border.all(color: prestoBlue.withValues(alpha: 0.20)),
+                   ),
+                   child: Text(
+                     role,
+@@ -4670,9 +4671,9 @@ class _StatusBadge extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.10),
++        color: color.withValues(alpha: 0.10),
+         borderRadius: BorderRadius.circular(999),
+-        border: Border.all(color: color.withOpacity(0.20)),
++        border: Border.all(color: color.withValues(alpha: 0.20)),
+       ),
+       child: Text(
+         label,
+@@ -4742,9 +4743,9 @@ class _DashboardPill extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.10),
++        color: color.withValues(alpha: 0.10),
+         borderRadius: BorderRadius.circular(14),
+-        border: Border.all(color: color.withOpacity(0.18)),
++        border: Border.all(color: color.withValues(alpha: 0.18)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -5106,7 +5107,7 @@ class _MicroIaCard extends StatelessWidget {
+                                 scale: 0.85,
+                                 child: Switch(
+                                   value: ultraFastEnabled,
+-                                  activeColor: prestoOrange,
++                                  activeThumbColor: prestoOrange,
+                                   onChanged: onUltraFastChanged,
+                                 ),
+                               ),
+@@ -5174,7 +5175,7 @@ class _MicroIaCard extends StatelessWidget {
+                   width: 32,
+                   height: 32,
+                   decoration: BoxDecoration(
+-                    color: prestoBlue.withOpacity(0.10),
++                    color: prestoBlue.withValues(alpha: 0.10),
+                     borderRadius: BorderRadius.circular(10),
+                   ),
+                   child: Icon(Icons.autorenew_rounded,
+@@ -5206,7 +5207,7 @@ class _MicroIaCard extends StatelessWidget {
+                 Switch(
+                   value: fallback,
+                   onChanged: onFallbackChanged,
+-                  activeColor: prestoOrange,
++                  activeThumbColor: prestoOrange,
+                 ),
+               ],
+             ),
+@@ -5450,7 +5451,7 @@ class _CardShell extends StatelessWidget {
+           BoxShadow(
+             blurRadius: 18,
+             offset: const Offset(0, 8),
+-            color: Colors.black.withOpacity(0.08),
++            color: Colors.black.withValues(alpha: 0.08),
+           ),
+         ],
+       ),
+diff --git a/lib/pages/auth/register_page.dart b/lib/pages/auth/register_page.dart
+index 058a12a2..adc77086 100644
+--- a/lib/pages/auth/register_page.dart
++++ b/lib/pages/auth/register_page.dart
+@@ -85,8 +85,9 @@ class _RegisterPageState extends State<RegisterPage> {
+   String? _passwordValidator(String? value) {
+     final text = value ?? '';
+     if (text.length < 8) return '8 caractères minimum.';
+-    if (!RegExp(r'[A-Za-z]').hasMatch(text))
++    if (!RegExp(r'[A-Za-z]').hasMatch(text)) {
+       return 'Ajoute au moins une lettre.';
++    }
+     if (!RegExp(r'[0-9]').hasMatch(text)) return 'Ajoute au moins un chiffre.';
+     return null;
+   }
+diff --git a/lib/pages/consult_offers_page.dart b/lib/pages/consult_offers_page.dart
+index 0421b6ff..cd9c28dc 100644
+--- a/lib/pages/consult_offers_page.dart
++++ b/lib/pages/consult_offers_page.dart
+@@ -1847,10 +1847,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
+                       );
+                     }
+ 
+-                    const int _adsEvery =
++                    const int adsEvery =
+                         8; // Bandeau pub après chaque 8 annonces
+-                    final int _adSlots = docs.length ~/ _adsEvery;
+-                    final int _totalItems = docs.length + _adSlots;
++                    final int adSlots = docs.length ~/ adsEvery;
++                    final int totalItems = docs.length + adSlots;
+ 
+                     return Column(
+                       children: [
+@@ -1869,10 +1869,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
+                               padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                               addAutomaticKeepAlives: false,
+                               addRepaintBoundaries: true,
+-                              itemCount: _totalItems,
++                              itemCount: totalItems,
+                               itemBuilder: (context, index) {
+                                 final bool isAd =
+-                                    (index + 1) % (_adsEvery + 1) == 0;
++                                    (index + 1) % (adsEvery + 1) == 0;
+                                 if (isAd) {
+                                   return Padding(
+                                     padding: const EdgeInsets.only(
+@@ -1893,7 +1893,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
+                                   );
+                                 }
+ 
+-                                final adOffset = index ~/ (_adsEvery + 1);
++                                final adOffset = index ~/ (adsEvery + 1);
+                                 final docIndex = index - adOffset;
+                                 final doc = docs[docIndex];
+                                 final data = doc.data();
+@@ -2140,7 +2140,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
+     return Focus(
+       focusNode: _regionFocus,
+       child: DropdownButtonFormField<String?>(
+-        value: _filterRegionCode,
++        initialValue: _filterRegionCode,
+         isDense: true,
+         dropdownColor: const Color(0xFFF4F8FF),
+         borderRadius: BorderRadius.circular(16),
+@@ -2225,7 +2225,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
+     return Focus(
+       focusNode: _deptFocus,
+       child: DropdownButtonFormField<String?>(
+-        value: safeValue,
++        initialValue: safeValue,
+         isDense: true,
+         dropdownColor: const Color(0xFFF4F8FF),
+         borderRadius: BorderRadius.circular(16),
+@@ -2426,7 +2426,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
+ 
+   Widget _buildCategoryDropdown() {
+     return DropdownButtonFormField<String>(
+-      value: _filterCategory,
++      initialValue: _filterCategory,
+       isDense: true,
+       dropdownColor: const Color(0xFFF4F8FF),
+       borderRadius: BorderRadius.circular(16),
+@@ -3710,7 +3710,7 @@ class _UserOfferMiniCard extends StatelessWidget {
+             color: Colors.white,
+             borderRadius: BorderRadius.circular(16),
+             border: Border.all(
+-              color: Colors.black.withOpacity(0.1),
++              color: Colors.black.withValues(alpha: 0.1),
+               width: 1.4,
+             ),
+           ),
+diff --git a/lib/pages/home_page.dart b/lib/pages/home_page.dart
+index 2ff0cf9c..02c398a6 100644
+--- a/lib/pages/home_page.dart
++++ b/lib/pages/home_page.dart
+@@ -1088,8 +1088,9 @@ class _HomePageState extends State<HomePage>
+                       style: const TextStyle(
+                           fontSize: 13, fontWeight: FontWeight.w500),
+                     ),
+-                    tileColor:
+-                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
++                    tileColor: isHighlighted
++                        ? kPrestoBlue.withValues(alpha: 0.08)
++                        : null,
+                     onTap: () => onSelected(option),
+                   );
+                 },
+@@ -1639,7 +1640,7 @@ class _HomePageState extends State<HomePage>
+                   decoration: BoxDecoration(
+                     color: _currentSlide == index
+                         ? Colors.white
+-                        : Colors.white.withOpacity(0.4),
++                        : Colors.white.withValues(alpha: 0.4),
+                     borderRadius: BorderRadius.circular(999),
+                   ),
+                 ),
+@@ -1661,13 +1662,13 @@ class _HomePageState extends State<HomePage>
+     // A la fermeture du clavier, la barre reapparait normalement en bas.
+     final isKeyboardOpen = mq.viewInsets.bottom > 0;
+ 
+-    final _statusBarColor = _selectedIndex == 0
++    final statusBarColor = _selectedIndex == 0
+         ? Colors.white // home tab: scaffold blanc → icônes sombres
+         : (!kIsWeb && _selectedIndex == 1)
+             ? kPrestoOrange
+             : kPrestoBlue;
+     return AnnotatedRegion<SystemUiOverlayStyle>(
+-      value: prestoOverlayStyleFor(_statusBarColor),
++      value: prestoOverlayStyleFor(statusBarColor),
+       child: GestureDetector(
+         behavior: HitTestBehavior.translucent,
+         onTap: () => FocusScope.of(context).unfocus(),
+@@ -1892,7 +1893,7 @@ class _HomePageState extends State<HomePage>
+                     ),
+                     boxShadow: [
+                       BoxShadow(
+-                        color: Colors.black.withOpacity(0.16),
++                        color: Colors.black.withValues(alpha: 0.16),
+                         blurRadius: 20,
+                         offset: const Offset(0, 8),
+                       ),
+@@ -2077,12 +2078,12 @@ class UnreadInboxBell extends StatelessWidget {
+   final Widget Function(BuildContext context, int badgeCount) builder;
+ 
+   const UnreadInboxBell({
+-    Key? key,
++    super.key,
+     required this.userId,
+     required this.builder,
+     this.monitoringKeyPrefix,
+     this.countType = InboxCountType.totalUnread,
+-  }) : super(key: key);
++  });
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -2160,7 +2161,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
+                         end: Alignment.bottomCenter,
+                         colors: [
+                           kPrestoOrange,
+-                          kPrestoOrange.withOpacity(0.3),
++                          kPrestoOrange.withValues(alpha: 0.3),
+                         ],
+                       ),
+                     ),
+@@ -2177,7 +2178,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
+                   color: const Color(0xFFF7FAFF),
+                   borderRadius: BorderRadius.circular(12),
+                   border: Border.all(
+-                    color: kPrestoBlue.withOpacity(0.12),
++                    color: kPrestoBlue.withValues(alpha: 0.12),
+                   ),
+                 ),
+                 padding:
+diff --git a/lib/pages/legal_info_page.dart b/lib/pages/legal_info_page.dart
+index 511885b5..348ec8c6 100644
+--- a/lib/pages/legal_info_page.dart
++++ b/lib/pages/legal_info_page.dart
+@@ -545,7 +545,7 @@ class _SegmentTabs extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.all(6),
+       decoration: BoxDecoration(
+-        color: Colors.white.withOpacity(0.72),
++        color: Colors.white.withValues(alpha: 0.72),
+         borderRadius: BorderRadius.circular(18),
+         border: Border.all(color: const Color(0xFFE6E1DC)),
+       ),
+@@ -564,8 +564,9 @@ class _SegmentTabs extends StatelessWidget {
+                 duration: const Duration(milliseconds: 180),
+                 padding: const EdgeInsets.symmetric(vertical: 10),
+                 decoration: BoxDecoration(
+-                  color:
+-                      isActive ? orange.withOpacity(0.12) : Colors.transparent,
++                  color: isActive
++                      ? orange.withValues(alpha: 0.12)
++                      : Colors.transparent,
+                   borderRadius: BorderRadius.circular(14),
+                   border: Border.all(
+                     color: isActive ? orange : Colors.transparent,
+@@ -573,7 +574,7 @@ class _SegmentTabs extends StatelessWidget {
+                   boxShadow: isActive
+                       ? [
+                           BoxShadow(
+-                            color: Colors.black.withOpacity(0.06),
++                            color: Colors.black.withValues(alpha: 0.06),
+                             blurRadius: 10,
+                             offset: const Offset(0, 4),
+                           )
+@@ -806,7 +807,7 @@ class _CardShell extends StatelessWidget {
+         borderRadius: BorderRadius.circular(18),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.06),
++            color: Colors.black.withValues(alpha: 0.06),
+             blurRadius: 16,
+             offset: const Offset(0, 8),
+           ),
+diff --git a/lib/pages/messages/conversation_thread_page.dart b/lib/pages/messages/conversation_thread_page.dart
+index 0d5e56b0..024bdaa7 100644
+--- a/lib/pages/messages/conversation_thread_page.dart
++++ b/lib/pages/messages/conversation_thread_page.dart
+@@ -2790,8 +2790,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
+                                                   );
+                                                 },
+                                               );
+-                                              if (confirmed != true || !mounted)
++                                              if (confirmed != true ||
++                                                  !mounted) {
+                                                 return;
++                                              }
+                                               try {
+                                                 await ConversationService
+                                                     .deleteMessage(
+diff --git a/lib/pages/messages/conversations_list_page.dart b/lib/pages/messages/conversations_list_page.dart
+index b5f361ce..ca7d8220 100644
+--- a/lib/pages/messages/conversations_list_page.dart
++++ b/lib/pages/messages/conversations_list_page.dart
+@@ -351,8 +351,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+   }
+ 
+   void _subscribeToUnreadCountForUser(String userId) {
+-    if (_conversationStateUserId == userId && _unreadMessagesSub != null)
++    if (_conversationStateUserId == userId && _unreadMessagesSub != null) {
+       return;
++    }
+     _unreadMessagesSub?.cancel();
+     _lastKnownUnreadMessages = 0;
+     _unreadMessagesSub = streamInboxCount(
+@@ -531,8 +532,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+     var permissionDeniedRetryCount = 0;
+     var permissionDeniedRecoveryGeneration = 0;
+     var appCheckPrefixRetryCount = 0;
+-    var _subscriptionGeneration = 0;
+-    var _isRetryingPermissionDenied = false;
++    var subscriptionGeneration = 0;
++    var isRetryingPermissionDenied = false;
+ 
+     _appendAdminConversationLog('mode=$mode user=$userId');
+     if (kDebugMode) {
+@@ -584,7 +585,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+     }
+ 
+     Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
+-      final myGeneration = ++_subscriptionGeneration;
++      final myGeneration = ++subscriptionGeneration;
+       _appendAdminConversationLog(
+           '1/6 startSubscriptions gen=$myGeneration forceRefresh=$forceRefreshTokens adminMode=$isAdminMode');
+ 
+@@ -631,7 +632,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+             '3/6 getIdToken ÉCHEC (${DateTime.now().difference(swToken).inMilliseconds}ms) err=$e');
+       }
+ 
+-      if (myGeneration != _subscriptionGeneration ||
++      if (myGeneration != subscriptionGeneration ||
+           isCancelled ||
+           controller.isClosed) {
+         _appendAdminConversationLog(
+@@ -689,9 +690,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+             (_, value) => _isPermissionDenied(value),
+           );
+ 
+-          if (!_isRetryingPermissionDenied &&
++          if (!isRetryingPermissionDenied &&
+               permissionDeniedRetryCount < maxPermissionDeniedRetries) {
+-            _isRetryingPermissionDenied = true;
++            isRetryingPermissionDenied = true;
+             permissionDeniedRetryCount += 1;
+             _appendAdminConversationLog(
+                 '5/6 ↻ retry permission-denied #$permissionDeniedRetryCount (refus transitoire, non fatal)');
+@@ -714,14 +715,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+               if (retryGeneration != permissionDeniedRecoveryGeneration ||
+                   isCancelled ||
+                   controller.isClosed) {
+-                _isRetryingPermissionDenied = false;
++                isRetryingPermissionDenied = false;
+                 return;
+               }
+ 
+               try {
+                 await cancelSubscriptions();
+               } finally {
+-                _isRetryingPermissionDenied = false;
++                isRetryingPermissionDenied = false;
+               }
+ 
+               if (!isCancelled && !controller.isClosed) {
+@@ -1538,7 +1539,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+               fontSize: 72,
+               fontWeight: FontWeight.w800,
+               letterSpacing: 2,
+-              color: Colors.grey.withOpacity(0.07),
++              color: Colors.grey.withValues(alpha: 0.07),
+             ),
+           ),
+         ),
+@@ -2019,7 +2020,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+                                           ],
+                                         ),
+                                         child: Material(
+-                                          color: Colors.white.withOpacity(0.98),
++                                          color: Colors.white
++                                              .withValues(alpha: 0.98),
+                                           borderRadius:
+                                               BorderRadius.circular(16),
+                                           child: InkWell(
+@@ -2039,15 +2041,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
+                                                       8, 12, 8, 12),
+                                               decoration: BoxDecoration(
+                                                 color: unreadCount > 0
+-                                                    ? kWhatsappGreen
+-                                                        .withOpacity(0.045)
++                                                    ? kWhatsappGreen.withValues(
++                                                        alpha: 0.045)
+                                                     : Colors.transparent,
+                                                 borderRadius:
+                                                     BorderRadius.circular(16),
+                                                 border: Border(
+                                                   bottom: BorderSide(
+                                                     color: Colors.black
+-                                                        .withOpacity(0.06),
++                                                        .withValues(
++                                                            alpha: 0.06),
+                                                   ),
+                                                 ),
+                                               ),
+@@ -2593,7 +2596,7 @@ class _ConversationFilterChip extends StatelessWidget {
+               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+               decoration: BoxDecoration(
+                 color: selected
+-                    ? Colors.white.withOpacity(0.22)
++                    ? Colors.white.withValues(alpha: 0.22)
+                     : const Color(0xFFEAF2FF),
+                 borderRadius: BorderRadius.circular(999),
+               ),
+@@ -2627,7 +2630,7 @@ class _ConversationStateChip extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.12),
++        color: color.withValues(alpha: 0.12),
+         borderRadius: BorderRadius.circular(999),
+       ),
+       child: Text(
+diff --git a/lib/pages/offers/offer_details_page.dart b/lib/pages/offers/offer_details_page.dart
+index 42de2323..4b6bfe19 100644
+--- a/lib/pages/offers/offer_details_page.dart
++++ b/lib/pages/offers/offer_details_page.dart
+@@ -501,10 +501,13 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
+ 
+     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+     if (digits.isEmpty) return '';
+-    if (digits.length == 10 && digits.startsWith('0'))
++    if (digits.length == 10 && digits.startsWith('0')) {
+       return '+33${digits.substring(1)}';
++    }
+     if (digits.length == 9 &&
+-        (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
++        (digits.startsWith('6') || digits.startsWith('7'))) {
++      return '+33$digits';
++    }
+     return digits;
+   }
+ 
+@@ -2156,8 +2159,8 @@ class _BackgroundDecor extends StatelessWidget {
+                 shape: BoxShape.circle,
+                 gradient: RadialGradient(
+                   colors: [
+-                    const Color(0xFF1976F3).withOpacity(0.12),
+-                    const Color(0xFF1976F3).withOpacity(0.05),
++                    const Color(0xFF1976F3).withValues(alpha: 0.12),
++                    const Color(0xFF1976F3).withValues(alpha: 0.05),
+                     Colors.transparent,
+                   ],
+                 ),
+@@ -2498,7 +2501,7 @@ class _HeroCard extends StatelessWidget {
+                     fontSize: compact ? 14 : 15,
+                     height: 1.28,
+                     fontWeight: FontWeight.w500,
+-                    color: textPrimary.withOpacity(0.9),
++                    color: textPrimary.withValues(alpha: 0.9),
+                   ),
+                 ),
+                 if (data.showPendingPhotoNotice) ...[
+@@ -2706,8 +2709,8 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
+         color: Colors.transparent,
+         child: InkWell(
+           onTap: onTap,
+-          splashColor: Colors.white.withOpacity(0.08),
+-          highlightColor: Colors.white.withOpacity(0.04),
++          splashColor: Colors.white.withValues(alpha: 0.08),
++          highlightColor: Colors.white.withValues(alpha: 0.04),
+         ),
+       ),
+     );
+@@ -2749,7 +2752,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
+               ),
+               boxShadow: [
+                 BoxShadow(
+-                  color: Colors.black.withOpacity(0.06),
++                  color: Colors.black.withValues(alpha: 0.06),
+                   blurRadius: 6,
+                   offset: const Offset(0, 2),
+                 ),
+@@ -3079,7 +3082,7 @@ class _PracticalInfoCard extends StatelessWidget {
+           borderRadius: BorderRadius.circular(999),
+           boxShadow: [
+             BoxShadow(
+-              color: const Color(0xFF1A73E8).withOpacity(0.20),
++              color: const Color(0xFF1A73E8).withValues(alpha: 0.20),
+               blurRadius: 8,
+               offset: const Offset(0, 2),
+             ),
+@@ -3126,12 +3129,12 @@ class _PracticalInfoCard extends StatelessWidget {
+         borderRadius: BorderRadius.circular(compact ? 28 : 32),
+         boxShadow: [
+           BoxShadow(
+-            color: const Color(0xFF9B8E86).withOpacity(0.10),
++            color: const Color(0xFF9B8E86).withValues(alpha: 0.10),
+             blurRadius: compact ? 18 : 22,
+             offset: Offset(0, compact ? 8 : 10),
+           ),
+           BoxShadow(
+-            color: blueSoft.withOpacity(0.55),
++            color: blueSoft.withValues(alpha: 0.55),
+             blurRadius: compact ? 15 : 18,
+             spreadRadius: 1,
+             offset: Offset(0, compact ? 11 : 14),
+@@ -3265,12 +3268,12 @@ class _AdvertiserContactCard extends StatelessWidget {
+         borderRadius: BorderRadius.circular(compact ? 28 : 32),
+         boxShadow: [
+           BoxShadow(
+-            color: const Color(0xFF9B8E86).withOpacity(0.10),
++            color: const Color(0xFF9B8E86).withValues(alpha: 0.10),
+             blurRadius: compact ? 18 : 22,
+             offset: Offset(0, compact ? 8 : 10),
+           ),
+           BoxShadow(
+-            color: blueSoft.withOpacity(0.55),
++            color: blueSoft.withValues(alpha: 0.55),
+             blurRadius: compact ? 15 : 18,
+             spreadRadius: 1,
+             offset: Offset(0, compact ? 11 : 14),
+@@ -3597,7 +3600,7 @@ class _AdvertiserMetaLine extends StatelessWidget {
+                     borderRadius: BorderRadius.circular(999),
+                     boxShadow: [
+                       BoxShadow(
+-                        color: green.withOpacity(0.18),
++                        color: green.withValues(alpha: 0.18),
+                         blurRadius: 8,
+                         offset: const Offset(0, 2),
+                       ),
+@@ -3993,12 +3996,12 @@ class _InlineCta extends StatelessWidget {
+         borderRadius: BorderRadius.circular(100),
+         boxShadow: [
+           BoxShadow(
+-            color: const Color(0xFF0A63E7).withOpacity(0.35),
++            color: const Color(0xFF0A63E7).withValues(alpha: 0.35),
+             blurRadius: compact ? 15 : 18,
+             offset: Offset(0, compact ? 7 : 8),
+           ),
+           BoxShadow(
+-            color: Colors.white.withOpacity(0.35),
++            color: Colors.white.withValues(alpha: 0.35),
+             blurRadius: compact ? 5 : 6,
+             offset: const Offset(0, -1),
+           ),
+@@ -4157,7 +4160,7 @@ class _AvatarFallback extends StatelessWidget {
+             child: Container(
+               height: 6,
+               decoration: BoxDecoration(
+-                color: const Color(0xFF8B5A31).withOpacity(0.85),
++                color: const Color(0xFF8B5A31).withValues(alpha: 0.85),
+                 borderRadius: BorderRadius.circular(6),
+               ),
+             ),
+diff --git a/lib/pages/offers/widgets/payment_info_popup.dart b/lib/pages/offers/widgets/payment_info_popup.dart
+index 23fac1e6..3c09b3f6 100644
+--- a/lib/pages/offers/widgets/payment_info_popup.dart
++++ b/lib/pages/offers/widgets/payment_info_popup.dart
+@@ -64,7 +64,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
+             border: Border.all(color: kBorder),
+             boxShadow: [
+               BoxShadow(
+-                color: Colors.black.withOpacity(0.18),
++                color: Colors.black.withValues(alpha: 0.18),
+                 blurRadius: 28,
+                 offset: const Offset(0, 14),
+               ),
+@@ -402,9 +402,9 @@ class _RuleCard extends StatelessWidget {
+             constraints: const BoxConstraints(minHeight: 78),
+             padding: const EdgeInsets.all(8),
+             decoration: BoxDecoration(
+-              color: color.withOpacity(0.08),
++              color: color.withValues(alpha: 0.08),
+               borderRadius: BorderRadius.circular(12),
+-              border: Border.all(color: color.withOpacity(0.25)),
++              border: Border.all(color: color.withValues(alpha: 0.25)),
+             ),
+             child: Row(
+               crossAxisAlignment: CrossAxisAlignment.start,
+diff --git a/lib/pages/pricing_calculator_page.dart b/lib/pages/pricing_calculator_page.dart
+index 7e868eed..fb0c55f3 100644
+--- a/lib/pages/pricing_calculator_page.dart
++++ b/lib/pages/pricing_calculator_page.dart
+@@ -198,7 +198,7 @@ class _ModeCard extends StatelessWidget {
+   Widget build(BuildContext context) {
+     final accent = option.accent;
+     final border = selected ? accent : const Color(0xFFE5E7EB);
+-    final fill = selected ? accent.withOpacity(0.10) : Colors.white;
++    final fill = selected ? accent.withValues(alpha: 0.10) : Colors.white;
+ 
+     return InkWell(
+       borderRadius: BorderRadius.circular(18),
+@@ -239,7 +239,7 @@ class _ModeCard extends StatelessWidget {
+                           vertical: 5,
+                         ),
+                         decoration: BoxDecoration(
+-                          color: accent.withOpacity(0.12),
++                          color: accent.withValues(alpha: 0.12),
+                           borderRadius: BorderRadius.circular(999),
+                         ),
+                         child: Text(
+@@ -305,7 +305,7 @@ class _ModeMetaChip extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+       decoration: BoxDecoration(
+-        color: accent.withOpacity(0.08),
++        color: accent.withValues(alpha: 0.08),
+         borderRadius: BorderRadius.circular(999),
+       ),
+       child: Text(
+@@ -983,7 +983,7 @@ class _SectionCard extends StatelessWidget {
+           Container(
+             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+             decoration: BoxDecoration(
+-              color: headerColor.withOpacity(0.12),
++              color: headerColor.withValues(alpha: 0.12),
+               borderRadius:
+                   const BorderRadius.vertical(top: Radius.circular(18)),
+             ),
+@@ -1270,7 +1270,7 @@ class _PrestoPrimaryButton extends StatelessWidget {
+       child: Container(
+         height: 54,
+         decoration: BoxDecoration(
+-          color: enabled ? background : background.withOpacity(0.35),
++          color: enabled ? background : background.withValues(alpha: 0.35),
+           borderRadius: BorderRadius.circular(18),
+           boxShadow: enabled
+               ? const [
+@@ -1338,7 +1338,7 @@ class _ResultSummaryCard extends StatelessWidget {
+             decoration: BoxDecoration(
+               color: const Color(0xFFFFF3E8),
+               borderRadius: BorderRadius.circular(16),
+-              border: Border.all(color: kPrestoOrange.withOpacity(0.25)),
++              border: Border.all(color: kPrestoOrange.withValues(alpha: 0.25)),
+             ),
+             child: Row(
+               children: [
+@@ -1451,9 +1451,9 @@ class _MarketCard extends StatelessWidget {
+           Container(
+             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+             decoration: BoxDecoration(
+-              color: levelColor.withOpacity(0.12),
++              color: levelColor.withValues(alpha: 0.12),
+               borderRadius: BorderRadius.circular(16),
+-              border: Border.all(color: levelColor.withOpacity(0.25)),
++              border: Border.all(color: levelColor.withValues(alpha: 0.25)),
+             ),
+             child: Row(
+               children: [
+diff --git a/lib/pages/pro_profile_page.dart b/lib/pages/pro_profile_page.dart
+index 2f4ce910..33f8586b 100644
+--- a/lib/pages/pro_profile_page.dart
++++ b/lib/pages/pro_profile_page.dart
+@@ -372,9 +372,9 @@ class _ProProfilePageState extends State<ProProfilePage> {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.08),
++        color: color.withValues(alpha: 0.08),
+         borderRadius: BorderRadius.circular(14),
+-        border: Border.all(color: color.withOpacity(0.28)),
++        border: Border.all(color: color.withValues(alpha: 0.28)),
+       ),
+       child: Row(
+         children: [
+diff --git a/lib/pages/publish_offer_page.dart b/lib/pages/publish_offer_page.dart
+index 817d54bb..2cb2b1bb 100644
+--- a/lib/pages/publish_offer_page.dart
++++ b/lib/pages/publish_offer_page.dart
+@@ -2805,11 +2805,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
+           showUserMessage: false,
+         );
+         final uid = secureContext?.uid;
+-        if (uid == null)
++        if (uid == null) {
+           throw const MicroIaClientAuthException(
+             code: 'auth-missing',
+             message: 'Connecte-toi pour utiliser la dictée IA.',
+           );
++        }
+ 
+         final blob = await _webRec.stopToBlob();
+         final audioUpload = await webBlobToMicroIaUpload(
+@@ -2877,9 +2878,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
+     String? recordedPath;
+     try {
+       recordedPath = await _recorder.stop();
+-      if (recordedPath == null) {
+-        recordedPath = _recordingPath;
+-      }
++      recordedPath ??= _recordingPath;
+       _recordingPath = null;
+       _appendPublishAiTrace(
+         'mobile_audio',
+@@ -3924,7 +3923,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
+                   child: _withAiPendingOverlay(
+                     showPending: _showAiPendingForCategory,
+                     child: DropdownButtonFormField<String>(
+-                      value: _category,
++                      initialValue: _category,
+                       dropdownColor: Colors.white,
+                       borderRadius: BorderRadius.circular(14),
+                       decoration: InputDecoration(
+@@ -3967,7 +3966,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
+                 // SOUS-CATÉGORIE (dropdown dynamique)
+                 if (_category != null)
+                   DropdownButtonFormField<String>(
+-                    value: _selectedSubCategory,
++                    initialValue: _selectedSubCategory,
+                     dropdownColor: Colors.white,
+                     borderRadius: BorderRadius.circular(14),
+                     decoration: InputDecoration(
+@@ -4166,7 +4165,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
+                 _withPublishFieldHighlight(
+                   fieldId: 'delay',
+                   child: DropdownButtonFormField<String>(
+-                    value: _missionDelay,
++                    initialValue: _missionDelay,
+                     dropdownColor: Colors.white,
+                     borderRadius: BorderRadius.circular(14),
+                     decoration: InputDecoration(
+@@ -4211,7 +4210,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
+                       Expanded(
+                         flex: 2,
+                         child: DropdownButtonFormField<String>(
+-                          value: _budgetType,
++                          initialValue: _budgetType,
+                           dropdownColor: Colors.white,
+                           borderRadius: BorderRadius.circular(14),
+                           decoration: InputDecoration(
+@@ -4420,7 +4419,7 @@ class _FieldPendingDots extends StatelessWidget {
+   Widget build(BuildContext context) {
+     return DecoratedBox(
+       decoration: BoxDecoration(
+-        color: Colors.white.withOpacity(0.92),
++        color: Colors.white.withValues(alpha: 0.92),
+         borderRadius: BorderRadius.circular(999),
+       ),
+       child: const Padding(
+diff --git a/lib/pages/publish_offer_widgets.dart b/lib/pages/publish_offer_widgets.dart
+index 1abf1e9e..96c0fd58 100644
+--- a/lib/pages/publish_offer_widgets.dart
++++ b/lib/pages/publish_offer_widgets.dart
+@@ -154,10 +154,10 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
+                       vertical: 6,
+                     ),
+                     decoration: BoxDecoration(
+-                      color: kPrestoBlue.withOpacity(0.08),
++                      color: kPrestoBlue.withValues(alpha: 0.08),
+                       borderRadius: BorderRadius.circular(999),
+                       border: Border.all(
+-                        color: kPrestoBlue.withOpacity(0.18),
++                        color: kPrestoBlue.withValues(alpha: 0.18),
+                       ),
+                     ),
+                     child: Text(
+@@ -174,7 +174,7 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
+                       vertical: 6,
+                     ),
+                     decoration: BoxDecoration(
+-                      color: Colors.black.withOpacity(0.04),
++                      color: Colors.black.withValues(alpha: 0.04),
+                       borderRadius: BorderRadius.circular(999),
+                     ),
+                     child: Text(
+@@ -190,7 +190,7 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
+                   width: double.infinity,
+                   padding: const EdgeInsets.all(12),
+                   decoration: BoxDecoration(
+-                    color: Colors.black.withOpacity(0.035),
++                    color: Colors.black.withValues(alpha: 0.035),
+                     borderRadius: BorderRadius.circular(14),
+                     border: Border.all(color: Colors.black12),
+                   ),
+@@ -229,10 +229,10 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
+                           return Container(
+                             padding: const EdgeInsets.all(12),
+                             decoration: BoxDecoration(
+-                              color: color.withOpacity(0.06),
++                              color: color.withValues(alpha: 0.06),
+                               borderRadius: BorderRadius.circular(14),
+                               border: Border.all(
+-                                color: color.withOpacity(0.18),
++                                color: color.withValues(alpha: 0.18),
+                               ),
+                             ),
+                             child: Row(
+diff --git a/lib/pages/toolbox_hub_page.dart b/lib/pages/toolbox_hub_page.dart
+index ab300ad1..80f90e1c 100644
+--- a/lib/pages/toolbox_hub_page.dart
++++ b/lib/pages/toolbox_hub_page.dart
+@@ -173,7 +173,7 @@ class _ToolCard extends StatelessWidget {
+         borderRadius: BorderRadius.circular(18),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.06),
++            color: Colors.black.withValues(alpha: 0.06),
+             blurRadius: 12,
+             offset: const Offset(0, 6),
+           ),
+@@ -221,7 +221,7 @@ class _ToolCard extends StatelessWidget {
+                         description,
+                         style: kPrestoMetaTextStyle.copyWith(
+                           fontSize: compact ? 13 : 13.5,
+-                          color: Colors.black.withOpacity(0.70),
++                          color: Colors.black.withValues(alpha: 0.70),
+                           height: 1.35,
+                         ),
+                       ),
+@@ -243,7 +243,7 @@ class _ToolCard extends StatelessWidget {
+                   borderRadius: BorderRadius.circular(28),
+                   boxShadow: [
+                     BoxShadow(
+-                      color: buttonGradient.colors.last.withOpacity(0.35),
++                      color: buttonGradient.colors.last.withValues(alpha: 0.35),
+                       blurRadius: 8,
+                       offset: const Offset(0, 4),
+                     ),
+diff --git a/lib/pages/toolbox_je_me_lance_page.dart b/lib/pages/toolbox_je_me_lance_page.dart
+index e45aa5de..50692110 100644
+--- a/lib/pages/toolbox_je_me_lance_page.dart
++++ b/lib/pages/toolbox_je_me_lance_page.dart
+@@ -661,8 +661,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
+     if (_businessModel == 'Ponctuel') p.add('Simplicité');
+     if (_protectionPatrimoine) p.add('Protection');
+     if (_depensesPro > 5000) p.add('Optimisation frais');
+-    if (_ambition.contains('Croissance') || _caVise > 60000)
++    if (_ambition.contains('Croissance') || _caVise > 60000) {
+       p.add('Croissance');
++    }
+     if (p.isEmpty) return ['Simplicité', 'Coût', 'Rapidité'];
+     return p.take(3).toList();
+   }
+@@ -1425,7 +1426,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
+         border: Border.all(color: const Color(0xFFE5E7EB)),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.04),
++            color: Colors.black.withValues(alpha: 0.04),
+             blurRadius: 16,
+             offset: const Offset(0, 8),
+           ),
+@@ -1470,7 +1471,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
+                   style: ElevatedButton.styleFrom(
+                     backgroundColor: kBlue,
+                     foregroundColor: Colors.white,
+-                    disabledBackgroundColor: kBlue.withOpacity(0.35),
++                    disabledBackgroundColor: kBlue.withValues(alpha: 0.35),
+                     disabledForegroundColor: Colors.white,
+                     elevation: 0,
+                     padding: const EdgeInsets.symmetric(vertical: 14),
+@@ -1814,7 +1815,7 @@ class _StepperBar extends StatelessWidget {
+               boxShadow: active
+                   ? [
+                       BoxShadow(
+-                        color: color.withOpacity(0.28),
++                        color: color.withValues(alpha: 0.28),
+                         blurRadius: 12,
+                         offset: const Offset(0, 6),
+                       ),
+@@ -1860,7 +1861,7 @@ class _StepperBar extends StatelessWidget {
+         border: Border.all(color: Colors.grey.shade200),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.035),
++            color: Colors.black.withValues(alpha: 0.035),
+             blurRadius: 14,
+             offset: const Offset(0, 8),
+           ),
+@@ -1904,7 +1905,7 @@ class _HeroMetricPill extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+       decoration: BoxDecoration(
+-        color: Colors.white.withOpacity(0.82),
++        color: Colors.white.withValues(alpha: 0.82),
+         borderRadius: BorderRadius.circular(16),
+         border: Border.all(color: const Color(0xFFE5E7EB)),
+       ),
+@@ -1951,9 +1952,9 @@ class _JourneyStatusChip extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.10),
++        color: color.withValues(alpha: 0.10),
+         borderRadius: BorderRadius.circular(999),
+-        border: Border.all(color: color.withOpacity(0.22)),
++        border: Border.all(color: color.withValues(alpha: 0.22)),
+       ),
+       child: Row(
+         mainAxisSize: MainAxisSize.min,
+@@ -2002,7 +2003,7 @@ class _Card extends StatelessWidget {
+         border: Border.all(color: Colors.grey.shade200),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.035),
++            color: Colors.black.withValues(alpha: 0.035),
+             blurRadius: 14,
+             offset: const Offset(0, 8),
+           ),
+@@ -2095,7 +2096,7 @@ class _HeaderInfoCard extends StatelessWidget {
+         border: Border.all(color: const Color(0xFFE5E7EB)),
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.05),
++            color: Colors.black.withValues(alpha: 0.05),
+             blurRadius: 18,
+             offset: const Offset(0, 8),
+           ),
+@@ -2111,9 +2112,9 @@ class _HeaderInfoCard extends StatelessWidget {
+                 width: 48,
+                 height: 48,
+                 decoration: BoxDecoration(
+-                  color: accent.withOpacity(0.12),
++                  color: accent.withValues(alpha: 0.12),
+                   borderRadius: BorderRadius.circular(16),
+-                  border: Border.all(color: accent.withOpacity(0.12)),
++                  border: Border.all(color: accent.withValues(alpha: 0.12)),
+                 ),
+                 alignment: Alignment.center,
+                 child: Icon(icon, color: accent, size: 22),
+@@ -2390,12 +2391,12 @@ class _RecommendationHero extends StatelessWidget {
+           begin: Alignment.topLeft,
+           end: Alignment.bottomRight,
+           colors: [
+-            color.withOpacity(0.10),
++            color.withValues(alpha: 0.10),
+             const Color(0xFFFFF7ED),
+           ],
+         ),
+         borderRadius: BorderRadius.circular(18),
+-        border: Border.all(color: color.withOpacity(0.18)),
++        border: Border.all(color: color.withValues(alpha: 0.18)),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -2406,7 +2407,7 @@ class _RecommendationHero extends StatelessWidget {
+                 width: 42,
+                 height: 42,
+                 decoration: BoxDecoration(
+-                  color: Colors.white.withOpacity(0.72),
++                  color: Colors.white.withValues(alpha: 0.72),
+                   borderRadius: BorderRadius.circular(14),
+                 ),
+                 alignment: Alignment.center,
+@@ -2534,9 +2535,9 @@ class _ResultCallout extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
+       decoration: BoxDecoration(
+-        color: tone.withOpacity(0.07),
++        color: tone.withValues(alpha: 0.07),
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: tone.withOpacity(0.16)),
++        border: Border.all(color: tone.withValues(alpha: 0.16)),
+       ),
+       child: Row(
+         crossAxisAlignment: CrossAxisAlignment.start,
+@@ -2584,9 +2585,9 @@ class _PriorityChip extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.10),
++        color: color.withValues(alpha: 0.10),
+         borderRadius: BorderRadius.circular(999),
+-        border: Border.all(color: color.withOpacity(0.18)),
++        border: Border.all(color: color.withValues(alpha: 0.18)),
+       ),
+       child: Text(
+         label,
+@@ -2716,7 +2717,7 @@ class _AidStatusTile extends StatelessWidget {
+                 width: 38,
+                 height: 38,
+                 decoration: BoxDecoration(
+-                  color: _statusColor.withOpacity(0.10),
++                  color: _statusColor.withValues(alpha: 0.10),
+                   borderRadius: BorderRadius.circular(12),
+                 ),
+                 alignment: Alignment.center,
+@@ -2759,9 +2760,10 @@ class _AidStatusTile extends StatelessWidget {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                 decoration: BoxDecoration(
+-                  color: _statusColor.withOpacity(0.10),
++                  color: _statusColor.withValues(alpha: 0.10),
+                   borderRadius: BorderRadius.circular(999),
+-                  border: Border.all(color: _statusColor.withOpacity(0.16)),
++                  border:
++                      Border.all(color: _statusColor.withValues(alpha: 0.16)),
+                 ),
+                 child: Text(
+                   status,
+@@ -2775,7 +2777,7 @@ class _AidStatusTile extends StatelessWidget {
+               const SizedBox(width: 12),
+               Expanded(
+                 child: DropdownButtonFormField<String>(
+-                  value: status,
++                  initialValue: status,
+                   decoration: InputDecoration(
+                     isDense: true,
+                     contentPadding: const EdgeInsets.symmetric(
+@@ -3033,7 +3035,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
+                         borderRadius: BorderRadius.circular(14),
+                       ),
+                       tileColor: selected
+-                          ? const Color(0xFF1A73E8).withOpacity(0.08)
++                          ? const Color(0xFF1A73E8).withValues(alpha: 0.08)
+                           : null,
+                       leading: Icon(
+                         Icons.place_outlined,
+diff --git a/lib/pages/toolbox_page.dart b/lib/pages/toolbox_page.dart
+index c8f9ab80..95859c32 100644
+--- a/lib/pages/toolbox_page.dart
++++ b/lib/pages/toolbox_page.dart
+@@ -376,7 +376,7 @@ class _CheckItem extends StatelessWidget {
+           width: 22,
+           height: 22,
+           decoration: BoxDecoration(
+-            color: ToolboxPage.success.withOpacity(0.12),
++            color: ToolboxPage.success.withValues(alpha: 0.12),
+             shape: BoxShape.circle,
+           ),
+           child: const Icon(Icons.check_rounded,
+diff --git a/lib/pages/user_offers_section.dart b/lib/pages/user_offers_section.dart
+index 8cf72728..0a9de06d 100644
+--- a/lib/pages/user_offers_section.dart
++++ b/lib/pages/user_offers_section.dart
+@@ -382,7 +382,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                 decoration: BoxDecoration(
+-                  color: kPrestoOrange.withOpacity(0.10),
++                  color: kPrestoOrange.withValues(alpha: 0.10),
+                   borderRadius: BorderRadius.circular(999),
+                 ),
+                 child: Text(
+@@ -562,7 +562,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
+       decoration: BoxDecoration(
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: Colors.black.withOpacity(0.06)),
++        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+       ),
+       child: const Center(
+         child: CircularProgressIndicator(
+@@ -655,7 +655,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
+       decoration: BoxDecoration(
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: Colors.black.withOpacity(0.06)),
++        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+       ),
+       child: Row(
+         children: [
+@@ -1342,7 +1342,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+         decoration: BoxDecoration(
+           color: Colors.white,
+           borderRadius: BorderRadius.circular(16),
+-          border: Border.all(color: Colors.black.withOpacity(0.06)),
++          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+         ),
+         child: const Text(
+           'Tu n’as pas encore d’annonce à gérer.',
+@@ -1387,7 +1387,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                 decoration: BoxDecoration(
+-                  color: kPrestoBlue.withOpacity(0.10),
++                  color: kPrestoBlue.withValues(alpha: 0.10),
+                   borderRadius: BorderRadius.circular(999),
+                 ),
+                 child: Text(
+@@ -1407,7 +1407,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+           decoration: BoxDecoration(
+             color: Colors.white,
+             borderRadius: BorderRadius.circular(18),
+-            border: Border.all(color: Colors.black.withOpacity(0.06)),
++            border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+           ),
+           child: const Text(
+             'Classe tes annonces par statut et gère les actions disponibles sans quitter ton compte.',
+@@ -1455,7 +1455,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(18),
+         border: Border.all(
+-          color: color.withOpacity(0.24),
++          color: color.withValues(alpha: 0.24),
+           width: 1.4,
+         ),
+       ),
+@@ -1477,7 +1477,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                 decoration: BoxDecoration(
+-                  color: color.withOpacity(0.10),
++                  color: color.withValues(alpha: 0.10),
+                   borderRadius: BorderRadius.circular(999),
+                 ),
+                 child: Text(
+@@ -1525,7 +1525,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(18),
+         border: Border.all(
+-          color: color.withOpacity(0.24),
++          color: color.withValues(alpha: 0.24),
+           width: 1.4,
+         ),
+       ),
+@@ -1576,7 +1576,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                         vertical: 6,
+                       ),
+                       decoration: BoxDecoration(
+-                        color: color.withOpacity(0.10),
++                        color: color.withValues(alpha: 0.10),
+                         borderRadius: BorderRadius.circular(999),
+                       ),
+                       child: Text(
+@@ -1656,7 +1656,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(18),
+         border: Border.all(
+-          color: color.withOpacity(0.24),
++          color: color.withValues(alpha: 0.24),
+           width: 1.4,
+         ),
+       ),
+@@ -1707,7 +1707,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                         vertical: 6,
+                       ),
+                       decoration: BoxDecoration(
+-                        color: color.withOpacity(0.10),
++                        color: color.withValues(alpha: 0.10),
+                         borderRadius: BorderRadius.circular(999),
+                       ),
+                       child: Text(
+@@ -1787,7 +1787,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(18),
+         border: Border.all(
+-          color: color.withOpacity(0.24),
++          color: color.withValues(alpha: 0.24),
+           width: 1.4,
+         ),
+       ),
+@@ -1838,7 +1838,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                         vertical: 6,
+                       ),
+                       decoration: BoxDecoration(
+-                        color: color.withOpacity(0.10),
++                        color: color.withValues(alpha: 0.10),
+                         borderRadius: BorderRadius.circular(999),
+                       ),
+                       child: Text(
+@@ -2069,7 +2069,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+       color: const Color(0xFFFDFDFD),
+       borderRadius: BorderRadius.circular(16),
+       border: Border.all(
+-        color: Colors.black.withOpacity(0.1),
++        color: Colors.black.withValues(alpha: 0.1),
+         width: 1.4,
+       ),
+     );
+@@ -2221,7 +2221,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                 decoration: BoxDecoration(
+-                  color: statusColor.withOpacity(0.10),
++                  color: statusColor.withValues(alpha: 0.10),
+                   borderRadius: BorderRadius.circular(999),
+                 ),
+                 child: Text(
+@@ -2305,7 +2305,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+               width: double.infinity,
+               padding: const EdgeInsets.all(10),
+               decoration: BoxDecoration(
+-                color: statusColor.withOpacity(0.08),
++                color: statusColor.withValues(alpha: 0.08),
+                 borderRadius: BorderRadius.circular(12),
+               ),
+               child: Text(
+@@ -2672,7 +2672,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                             children: [
+                               Expanded(
+                                 child: DropdownButtonFormField<String>(
+-                                  value: selectedCategory,
++                                  initialValue: selectedCategory,
+                                   decoration: buildDecoration('Catégorie *'),
+                                   items: categoryOptions
+                                       .map(
+@@ -2707,7 +2707,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                               const SizedBox(width: 12),
+                               Expanded(
+                                 child: DropdownButtonFormField<String>(
+-                                  value: selectedSubCategory.isEmpty
++                                  initialValue: selectedSubCategory.isEmpty
+                                       ? ''
+                                       : selectedSubCategory,
+                                   decoration: buildDecoration('Sous-catégorie'),
+@@ -2793,7 +2793,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                               Expanded(
+                                 flex: 2,
+                                 child: DropdownButtonFormField<String>(
+-                                  value: selectedBudgetType,
++                                  initialValue: selectedBudgetType,
+                                   decoration:
+                                       buildDecoration('Budget / tarification'),
+                                   items: budgetTypes
+@@ -2856,7 +2856,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
+                             children: [
+                               Expanded(
+                                 child: DropdownButtonFormField<String>(
+-                                  value: selectedMissionDelay.isEmpty
++                                  initialValue: selectedMissionDelay.isEmpty
+                                       ? null
+                                       : selectedMissionDelay,
+                                   decoration: buildDecoration(
+diff --git a/lib/services/city_repo_compact.dart b/lib/services/city_repo_compact.dart
+index b2a74b1f..f54e29cf 100644
+--- a/lib/services/city_repo_compact.dart
++++ b/lib/services/city_repo_compact.dart
+@@ -52,8 +52,9 @@ class CityRepoCompact {
+ 
+   /// CP -> dept candidates (Corse: 20xxx => 2A OU 2B)
+   List<String> deptCandidatesFromCp(String cp5) {
+-    if (cp5.startsWith('97') || cp5.startsWith('98'))
++    if (cp5.startsWith('97') || cp5.startsWith('98')) {
+       return [cp5.substring(0, 3)];
++    }
+     if (cp5.startsWith('20')) return ['2A', '2B'];
+     return [cp5.substring(0, 2)];
+   }
+diff --git a/lib/widgets/account_admin_analytics_panel.dart b/lib/widgets/account_admin_analytics_panel.dart
+index cf7742f4..aec91ce0 100644
+--- a/lib/widgets/account_admin_analytics_panel.dart
++++ b/lib/widgets/account_admin_analytics_panel.dart
+@@ -50,7 +50,7 @@ class AccountAdminAnalyticsPanel extends StatelessWidget {
+       decoration: BoxDecoration(
+         color: Colors.white,
+         borderRadius: BorderRadius.circular(14),
+-        border: Border.all(color: Colors.teal.withOpacity(0.25)),
++        border: Border.all(color: Colors.teal.withValues(alpha: 0.25)),
+       ),
+       padding: const EdgeInsets.all(12),
+       child: Column(
+@@ -70,7 +70,7 @@ class AccountAdminAnalyticsPanel extends StatelessWidget {
+               Switch(
+                 value: enabled,
+                 onChanged: onEnabledChanged,
+-                activeColor: Colors.teal,
++                activeThumbColor: Colors.teal,
+                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+               ),
+             ],
+@@ -114,7 +114,7 @@ class AccountAdminAnalyticsPanel extends StatelessWidget {
+                   Switch(
+                     value: verboseLogs,
+                     onChanged: onVerboseChanged,
+-                    activeColor: Colors.teal,
++                    activeThumbColor: Colors.teal,
+                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                   ),
+                 ],
+@@ -139,10 +139,10 @@ class _AccountAnalyticsMetricRow extends StatelessWidget {
+     return Container(
+       decoration: BoxDecoration(
+         color: item.enabled
+-            ? statusColor.withOpacity(0.07)
+-            : Colors.grey.withOpacity(0.05),
++            ? statusColor.withValues(alpha: 0.07)
++            : Colors.grey.withValues(alpha: 0.05),
+         borderRadius: BorderRadius.circular(12),
+-        border: Border.all(color: statusColor.withOpacity(0.25)),
++        border: Border.all(color: statusColor.withValues(alpha: 0.25)),
+       ),
+       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+       child: Row(
+@@ -202,7 +202,7 @@ class _AccountAnalyticsMetricRow extends StatelessWidget {
+               Switch(
+                 value: item.enabled,
+                 onChanged: item.onToggle,
+-                activeColor: statusColor,
++                activeThumbColor: statusColor,
+                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+               ),
+             ],
+diff --git a/lib/widgets/account_admin_micro_ia_panel.dart b/lib/widgets/account_admin_micro_ia_panel.dart
+index e035c0a1..ae90d963 100644
+--- a/lib/widgets/account_admin_micro_ia_panel.dart
++++ b/lib/widgets/account_admin_micro_ia_panel.dart
+@@ -46,7 +46,7 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
+   Widget build(BuildContext context) {
+     final normalizedMode = mode.toUpperCase();
+     final disabledHintStyle = TextStyle(
+-      color: _kPrestoBlue.withOpacity(0.65),
++      color: _kPrestoBlue.withValues(alpha: 0.65),
+       fontWeight: FontWeight.w700,
+       fontSize: 12,
+     );
+@@ -97,10 +97,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
+           decoration: BoxDecoration(
+             color: Colors.white,
+             borderRadius: BorderRadius.circular(18),
+-            border: Border.all(color: _kPrestoBlue.withOpacity(0.18)),
++            border: Border.all(color: _kPrestoBlue.withValues(alpha: 0.18)),
+             boxShadow: [
+               BoxShadow(
+-                color: _kPrestoBlue.withOpacity(0.08),
++                color: _kPrestoBlue.withValues(alpha: 0.08),
+                 blurRadius: 8,
+                 offset: const Offset(0, 3),
+               ),
+@@ -128,9 +128,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
+ 
+                   return Container(
+                     decoration: BoxDecoration(
+-                      color: _kPrestoBlue.withOpacity(0.05),
++                      color: _kPrestoBlue.withValues(alpha: 0.05),
+                       borderRadius: BorderRadius.circular(12),
+-                      border: Border.all(color: _kPrestoBlue.withOpacity(0.18)),
++                      border: Border.all(
++                          color: _kPrestoBlue.withValues(alpha: 0.18)),
+                     ),
+                     padding: const EdgeInsets.all(12),
+                     child: Column(
+@@ -302,9 +303,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
+               Container(
+                 width: double.infinity,
+                 decoration: BoxDecoration(
+-                  color: _kPrestoBlue.withOpacity(0.06),
++                  color: _kPrestoBlue.withValues(alpha: 0.06),
+                   borderRadius: BorderRadius.circular(14),
+-                  border: Border.all(color: _kPrestoBlue.withOpacity(0.18)),
++                  border:
++                      Border.all(color: _kPrestoBlue.withValues(alpha: 0.18)),
+                 ),
+                 padding: const EdgeInsets.all(12),
+                 child: Column(
+@@ -345,9 +347,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
+               const SizedBox(height: 10),
+               Container(
+                 decoration: BoxDecoration(
+-                  color: Colors.amber.withOpacity(0.08),
++                  color: Colors.amber.withValues(alpha: 0.08),
+                   borderRadius: BorderRadius.circular(12),
+-                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
++                  border:
++                      Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                 ),
+                 padding: const EdgeInsets.all(12),
+                 child: Column(
+@@ -457,9 +460,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
+               ),
+               Container(
+                 decoration: BoxDecoration(
+-                  color: Colors.blueGrey.withOpacity(0.05),
++                  color: Colors.blueGrey.withValues(alpha: 0.05),
+                   borderRadius: BorderRadius.circular(12),
+-                  border: Border.all(color: Colors.blueGrey.withOpacity(0.18)),
++                  border: Border.all(
++                      color: Colors.blueGrey.withValues(alpha: 0.18)),
+                 ),
+                 padding: const EdgeInsets.all(12),
+                 child: const Row(
+@@ -645,15 +649,16 @@ class _AudioPipelineRow extends StatelessWidget {
+   @override
+   Widget build(BuildContext context) {
+     final statusColor = isActive ? accentColor : Colors.grey;
+-    final bgColor =
+-        isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
++    final bgColor = isActive
++        ? statusColor.withValues(alpha: 0.1)
++        : Colors.grey.withValues(alpha: 0.05);
+ 
+     return Container(
+       decoration: BoxDecoration(
+         color: bgColor,
+         borderRadius: BorderRadius.circular(10),
+         border: Border.all(
+-          color: statusColor.withOpacity(0.3),
++          color: statusColor.withValues(alpha: 0.3),
+           width: 1.5,
+         ),
+       ),
+@@ -689,9 +694,9 @@ class _AudioPipelineRow extends StatelessWidget {
+           Container(
+             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+             decoration: BoxDecoration(
+-              color: statusColor.withOpacity(0.15),
++              color: statusColor.withValues(alpha: 0.15),
+               borderRadius: BorderRadius.circular(20),
+-              border: Border.all(color: statusColor.withOpacity(0.4)),
++              border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+             ),
+             child: Row(
+               mainAxisSize: MainAxisSize.min,
+@@ -736,9 +741,9 @@ class _RuntimeChip extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+       decoration: BoxDecoration(
+-        color: color.withOpacity(0.1),
++        color: color.withValues(alpha: 0.1),
+         borderRadius: BorderRadius.circular(999),
+-        border: Border.all(color: color.withOpacity(0.22)),
++        border: Border.all(color: color.withValues(alpha: 0.22)),
+       ),
+       child: Text(
+         label,
+@@ -764,9 +769,9 @@ class _RuntimeHistoryRow extends StatelessWidget {
+     return Container(
+       width: double.infinity,
+       decoration: BoxDecoration(
+-        color: flowColor.withOpacity(0.05),
++        color: flowColor.withValues(alpha: 0.05),
+         borderRadius: BorderRadius.circular(10),
+-        border: Border.all(color: flowColor.withOpacity(0.18)),
++        border: Border.all(color: flowColor.withValues(alpha: 0.18)),
+       ),
+       padding: const EdgeInsets.all(10),
+       child: Column(
+@@ -921,16 +926,16 @@ class _AudioModeToggleCard extends StatelessWidget {
+           duration: const Duration(milliseconds: 180),
+           width: double.infinity,
+           decoration: BoxDecoration(
+-            color: selected ? accent.withOpacity(0.09) : Colors.white,
++            color: selected ? accent.withValues(alpha: 0.09) : Colors.white,
+             borderRadius: BorderRadius.circular(14),
+             border: Border.all(
+-              color: selected ? accent.withOpacity(0.85) : Colors.black12,
++              color: selected ? accent.withValues(alpha: 0.85) : Colors.black12,
+               width: selected ? 1.8 : 1.0,
+             ),
+             boxShadow: selected
+                 ? [
+                     BoxShadow(
+-                      color: accent.withOpacity(0.14),
++                      color: accent.withValues(alpha: 0.14),
+                       blurRadius: 10,
+                       offset: const Offset(0, 4),
+                     ),
+@@ -985,12 +990,12 @@ class _AudioModeToggleCard extends StatelessWidget {
+                           ),
+                           decoration: BoxDecoration(
+                             color: selected
+-                                ? accent.withOpacity(0.16)
+-                                : Colors.grey.withOpacity(0.08),
++                                ? accent.withValues(alpha: 0.16)
++                                : Colors.grey.withValues(alpha: 0.08),
+                             borderRadius: BorderRadius.circular(999),
+                             border: Border.all(
+                               color: selected
+-                                  ? accent.withOpacity(0.4)
++                                  ? accent.withValues(alpha: 0.4)
+                                   : Colors.black12,
+                             ),
+                           ),
+diff --git a/lib/widgets/account_build_version_panel.dart b/lib/widgets/account_build_version_panel.dart
+index 3928f3c2..544fca96 100644
+--- a/lib/widgets/account_build_version_panel.dart
++++ b/lib/widgets/account_build_version_panel.dart
+@@ -50,13 +50,13 @@ class AccountBuildVersionPanel extends StatelessWidget {
+     return Container(
+       decoration: BoxDecoration(
+         color: hasStamp
+-            ? Colors.green.withOpacity(0.06)
+-            : Colors.red.withOpacity(0.05),
++            ? Colors.green.withValues(alpha: 0.06)
++            : Colors.red.withValues(alpha: 0.05),
+         borderRadius: BorderRadius.circular(14),
+         border: Border.all(
+           color: hasStamp
+-              ? Colors.green.withOpacity(0.25)
+-              : Colors.red.withOpacity(0.25),
++              ? Colors.green.withValues(alpha: 0.25)
++              : Colors.red.withValues(alpha: 0.25),
+         ),
+       ),
+       padding: const EdgeInsets.all(12),
+diff --git a/lib/widgets/account_profile_sections.dart b/lib/widgets/account_profile_sections.dart
+index 3f2bf63d..971ecdce 100644
+--- a/lib/widgets/account_profile_sections.dart
++++ b/lib/widgets/account_profile_sections.dart
+@@ -95,7 +95,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
+             borderRadius: BorderRadius.circular(18),
+             boxShadow: [
+               BoxShadow(
+-                color: Colors.black.withOpacity(0.06),
++                color: Colors.black.withValues(alpha: 0.06),
+                 blurRadius: 8,
+                 offset: const Offset(0, 3),
+               ),
+@@ -331,7 +331,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
+             borderRadius: BorderRadius.circular(18),
+             boxShadow: [
+               BoxShadow(
+-                color: Colors.black.withOpacity(0.06),
++                color: Colors.black.withValues(alpha: 0.06),
+                 blurRadius: 8,
+                 offset: const Offset(0, 3),
+               ),
+@@ -511,7 +511,7 @@ class AccountMessagesSection extends StatelessWidget {
+             borderRadius: BorderRadius.circular(18),
+             boxShadow: [
+               BoxShadow(
+-                color: Colors.black.withOpacity(0.06),
++                color: Colors.black.withValues(alpha: 0.06),
+                 blurRadius: 8,
+                 offset: const Offset(0, 3),
+               ),
+@@ -571,20 +571,20 @@ class AccountProUpgradeSection extends StatelessWidget {
+       decoration: BoxDecoration(
+         gradient: LinearGradient(
+           colors: [
+-            const Color(0xFFFF6600).withOpacity(0.15),
+-            const Color(0xFF1A73E8).withOpacity(0.1),
++            const Color(0xFFFF6600).withValues(alpha: 0.15),
++            const Color(0xFF1A73E8).withValues(alpha: 0.1),
+           ],
+           begin: Alignment.topLeft,
+           end: Alignment.bottomRight,
+         ),
+         borderRadius: BorderRadius.circular(16),
+         border: Border.all(
+-          color: const Color(0xFFFF6600).withOpacity(0.3),
++          color: const Color(0xFFFF6600).withValues(alpha: 0.3),
+           width: 2,
+         ),
+         boxShadow: [
+           BoxShadow(
+-            color: const Color(0xFFFF6600).withOpacity(0.15),
++            color: const Color(0xFFFF6600).withValues(alpha: 0.15),
+             blurRadius: 12,
+             offset: const Offset(0, 4),
+           ),
+diff --git a/lib/widgets/entrepreneur_toolbox_slide.dart b/lib/widgets/entrepreneur_toolbox_slide.dart
+index a6bc0ec2..45b15782 100644
+--- a/lib/widgets/entrepreneur_toolbox_slide.dart
++++ b/lib/widgets/entrepreneur_toolbox_slide.dart
+@@ -19,7 +19,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
+         borderRadius: BorderRadius.zero,
+         boxShadow: [
+           BoxShadow(
+-            color: Colors.black.withOpacity(0.10),
++            color: Colors.black.withValues(alpha: 0.10),
+             blurRadius: 10,
+             offset: const Offset(0, 4),
+           ),
+@@ -37,7 +37,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
+                 Text(
+                   "PRO",
+                   style: TextStyle(
+-                    color: Colors.white.withOpacity(0.70),
++                    color: Colors.white.withValues(alpha: 0.70),
+                     fontSize: 13,
+                     fontWeight: FontWeight.w700,
+                     letterSpacing: 0.8,
+@@ -57,7 +57,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
+                 Text(
+                   "Liens utiles CCI, Région, aides et infos clés.",
+                   style: TextStyle(
+-                    color: Colors.white.withOpacity(0.70),
++                    color: Colors.white.withValues(alpha: 0.70),
+                     fontSize: 15,
+                     height: 1.3,
+                     fontWeight: FontWeight.w500,
+diff --git a/lib/widgets/home_bottom_nav_item.dart b/lib/widgets/home_bottom_nav_item.dart
+index 8594ffb8..6c203302 100644
+--- a/lib/widgets/home_bottom_nav_item.dart
++++ b/lib/widgets/home_bottom_nav_item.dart
+@@ -89,13 +89,13 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
+                           color: widget.isBig
+                               ? Colors.white
+                               : widget.selected
+-                                  ? Colors.white.withOpacity(0.35)
++                                  ? Colors.white.withValues(alpha: 0.35)
+                                   : Colors.transparent,
+                           borderRadius: BorderRadius.circular(999),
+                           boxShadow: widget.isBig
+                               ? [
+                                   BoxShadow(
+-                                    color: Colors.black.withOpacity(0.35),
++                                    color: Colors.black.withValues(alpha: 0.35),
+                                     blurRadius: 16,
+                                     offset: const Offset(0, 4),
+                                   ),
+@@ -103,7 +103,8 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
+                               : widget.selected
+                                   ? [
+                                       BoxShadow(
+-                                        color: Colors.white.withOpacity(0.5),
++                                        color:
++                                            Colors.white.withValues(alpha: 0.5),
+                                         blurRadius: 12,
+                                         spreadRadius: 3,
+                                       ),
+diff --git a/lib/widgets/home_interactions.dart b/lib/widgets/home_interactions.dart
+index 067cb680..5ca2e4dc 100644
+--- a/lib/widgets/home_interactions.dart
++++ b/lib/widgets/home_interactions.dart
+@@ -92,7 +92,7 @@ class HomeCategoryChip extends StatelessWidget {
+               ),
+               boxShadow: [
+                 BoxShadow(
+-                  color: Colors.black.withOpacity(0.2),
++                  color: Colors.black.withValues(alpha: 0.2),
+                   blurRadius: 14,
+                   offset: const Offset(0, 5),
+                 ),
+@@ -170,7 +170,7 @@ class PrestoNotificationBellBase extends StatelessWidget {
+                   borderRadius: BorderRadius.circular(999),
+                   boxShadow: [
+                     BoxShadow(
+-                      color: Colors.black.withOpacity(0.08),
++                      color: Colors.black.withValues(alpha: 0.08),
+                       blurRadius: 8,
+                       offset: const Offset(0, 4),
+                     ),
+diff --git a/lib/widgets/keyboard_autocomplete_field.dart b/lib/widgets/keyboard_autocomplete_field.dart
+index 7cf6d2fd..a76c8afc 100644
+--- a/lib/widgets/keyboard_autocomplete_field.dart
++++ b/lib/widgets/keyboard_autocomplete_field.dart
+@@ -127,8 +127,9 @@ class _KeyboardAutocompleteFieldState<T>
+       final int myReq = ++_requestId;
+       final res = await widget.optionsBuilder(q);
+       if (!mounted) return;
+-      if (myReq != _requestId)
++      if (myReq != _requestId) {
+         return; // évite les retours async dans le désordre
++      }
+ 
+       final limited = res.length > widget.maxOptions
+           ? res.sublist(0, widget.maxOptions)
+diff --git a/lib/widgets/offline_banner.dart b/lib/widgets/offline_banner.dart
+index 7d579109..632181e1 100644
+--- a/lib/widgets/offline_banner.dart
++++ b/lib/widgets/offline_banner.dart
+@@ -44,7 +44,7 @@ class OfflineBanner extends StatelessWidget {
+                   Text(
+                     'Consultation uniquement • Les actions d\'écriture sont désactivées',
+                     style: TextStyle(
+-                      color: Colors.white.withOpacity(0.85),
++                      color: Colors.white.withValues(alpha: 0.85),
+                       fontSize: 12,
+                       fontWeight: FontWeight.w400,
+                     ),
+diff --git a/lib/widgets/photo_selector_tile.dart b/lib/widgets/photo_selector_tile.dart
+index aeec0134..258864e8 100644
+--- a/lib/widgets/photo_selector_tile.dart
++++ b/lib/widgets/photo_selector_tile.dart
+@@ -40,7 +40,7 @@ class PhotoSelectorTile extends StatelessWidget {
+               color: Colors.white,
+               borderRadius: BorderRadius.circular(10),
+               border: Border.all(
+-                color: _kAddPhotoBlue.withOpacity(0.45),
++                color: _kAddPhotoBlue.withValues(alpha: 0.45),
+               ),
+             ),
+             child: const Icon(
+@@ -121,7 +121,7 @@ class PhotoSelectorTile extends StatelessWidget {
+               borderRadius: BorderRadius.circular(16),
+               border: Border.all(
+                 color: localFile == null
+-                    ? _kAddPhotoBlue.withOpacity(0.4)
++                    ? _kAddPhotoBlue.withValues(alpha: 0.4)
+                     : Colors.black12,
+               ),
+             ),
+diff --git a/lib/widgets/premium_info_button.dart b/lib/widgets/premium_info_button.dart
+index d13ff520..b972d1ca 100644
+--- a/lib/widgets/premium_info_button.dart
++++ b/lib/widgets/premium_info_button.dart
+@@ -82,7 +82,7 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
+                 shape: BoxShape.circle,
+                 boxShadow: [
+                   BoxShadow(
+-                    color: kPrestoBlue.withOpacity(0.16),
++                    color: kPrestoBlue.withValues(alpha: 0.16),
+                     blurRadius: 26,
+                     spreadRadius: 2,
+                   ),
+@@ -94,8 +94,8 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
+               child: InkWell(
+                 onTap: widget.onTap,
+                 borderRadius: BorderRadius.circular(s),
+-                splashColor: Colors.white.withOpacity(0.18),
+-                highlightColor: Colors.white.withOpacity(0.08),
++                splashColor: Colors.white.withValues(alpha: 0.18),
++                highlightColor: Colors.white.withValues(alpha: 0.08),
+                 child: Container(
+                   width: s,
+                   height: s,
+@@ -149,7 +149,7 @@ class _PremiumInfoButtonState extends State<PremiumInfoButton>
+                       ),
+                     ],
+                     border: Border.all(
+-                        color: Colors.white.withOpacity(0.55), width: 1),
++                        color: Colors.white.withValues(alpha: 0.55), width: 1),
+                   ),
+                   child: Text(
+                     widget.chipText!,
+@@ -189,11 +189,11 @@ class _RotatingHaloPainter extends CustomPainter {
+       ..strokeWidth = strokeWidth
+       ..shader = SweepGradient(
+         colors: [
+-          color.withOpacity(0.0),
+-          color.withOpacity(0.10),
+-          color.withOpacity(0.90),
+-          color.withOpacity(0.15),
+-          color.withOpacity(0.0),
++          color.withValues(alpha: 0.0),
++          color.withValues(alpha: 0.10),
++          color.withValues(alpha: 0.90),
++          color.withValues(alpha: 0.15),
++          color.withValues(alpha: 0.0),
+         ],
+         stops: const [0.00, 0.18, 0.30, 0.48, 1.00],
+       ).createShader(Rect.fromCircle(center: c, radius: r));
+@@ -206,7 +206,7 @@ class _RotatingHaloPainter extends CustomPainter {
+       haloPaint,
+     );
+ 
+-    final dotPaint = Paint()..color = color.withOpacity(0.55);
++    final dotPaint = Paint()..color = color.withValues(alpha: 0.55);
+     for (final a in <double>[0.15, 0.32, 0.52]) {
+       final ang = -math.pi / 2 + a * 2 * math.pi;
+       final p = Offset(c.dx + math.cos(ang) * r, c.dy + math.sin(ang) * r);
+diff --git a/lib/widgets/progressive_ai_results.dart b/lib/widgets/progressive_ai_results.dart
+index 2bf82bed..debb4847 100644
+--- a/lib/widgets/progressive_ai_results.dart
++++ b/lib/widgets/progressive_ai_results.dart
+@@ -129,7 +129,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
+           child: LinearProgressIndicator(
+             value: progress,
+             minHeight: 6,
+-            backgroundColor: const Color(0xFF1A73E8).withOpacity(0.1),
++            backgroundColor: const Color(0xFF1A73E8).withValues(alpha: 0.1),
+             valueColor: const AlwaysStoppedAnimation<Color>(
+               Color(0xFF1A73E8),
+             ),
+@@ -209,7 +209,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
+           color: const Color(0xFFF2F7FF),
+           borderRadius: BorderRadius.circular(12),
+           border: Border.all(
+-            color: const Color(0xFF1A73E8).withOpacity(0.2),
++            color: const Color(0xFF1A73E8).withValues(alpha: 0.2),
+           ),
+         ),
+         child: Column(
+@@ -355,7 +355,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
+                         vertical: 6,
+                       ),
+                       decoration: BoxDecoration(
+-                        color: const Color(0xFF1A73E8).withOpacity(0.1),
++                        color: const Color(0xFF1A73E8).withValues(alpha: 0.1),
+                         borderRadius: BorderRadius.circular(6),
+                       ),
+                       child: Text(
+@@ -381,7 +381,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
+         color: const Color(0xFFFFEBEE),
+         borderRadius: BorderRadius.circular(12),
+         border: Border.all(
+-          color: const Color(0xFFE53935).withOpacity(0.3),
++          color: const Color(0xFFE53935).withValues(alpha: 0.3),
+         ),
+       ),
+       child: Column(
+diff --git a/lib/widgets/typography_floating_panel.dart b/lib/widgets/typography_floating_panel.dart
+index f41ed346..6dfe3a68 100644
+--- a/lib/widgets/typography_floating_panel.dart
++++ b/lib/widgets/typography_floating_panel.dart
+@@ -40,7 +40,7 @@ class _TypographyPillButton extends StatelessWidget {
+             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+             decoration: BoxDecoration(
+               color: isDefault
+-                  ? Colors.black.withOpacity(0.45)
++                  ? Colors.black.withValues(alpha: 0.45)
+                   : const Color(0xFF1A73E8),
+               borderRadius: BorderRadius.circular(20),
+               boxShadow: const [

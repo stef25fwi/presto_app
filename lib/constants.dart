@@ -182,7 +182,7 @@ Widget buildRegionDropdown({
       }
 
       return DropdownButtonFormField<RegionItem>(
-        value: value,
+        initialValue: value,
         isExpanded: true,
         dropdownColor: overlayTheme.surfaceColor,
         borderRadius: overlayTheme.popupRadius,

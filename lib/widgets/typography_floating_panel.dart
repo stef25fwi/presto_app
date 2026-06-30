@@ -40,7 +40,7 @@ class _TypographyPillButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: isDefault
-                  ? Colors.black.withOpacity(0.45)
+                  ? Colors.black.withValues(alpha: 0.45)
                   : const Color(0xFF1A73E8),
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [

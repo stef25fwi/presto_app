@@ -19,7 +19,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
         borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.10),
+            color: Colors.black.withValues(alpha: 0.10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -37,7 +37,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                 Text(
                   "PRO",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.70),
+                    color: Colors.white.withValues(alpha: 0.70),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -57,7 +57,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                 Text(
                   "Liens utiles CCI, Région, aides et infos clés.",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.70),
+                    color: Colors.white.withValues(alpha: 0.70),
                     fontSize: 15,
                     height: 1.3,
                     fontWeight: FontWeight.w500,

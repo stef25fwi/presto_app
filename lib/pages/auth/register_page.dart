@@ -85,8 +85,9 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _passwordValidator(String? value) {
     final text = value ?? '';
     if (text.length < 8) return '8 caractères minimum.';
-    if (!RegExp(r'[A-Za-z]').hasMatch(text))
+    if (!RegExp(r'[A-Za-z]').hasMatch(text)) {
       return 'Ajoute au moins une lettre.';
+    }
     if (!RegExp(r'[0-9]').hasMatch(text)) return 'Ajoute au moins un chiffre.';
     return null;
   }

@@ -127,8 +127,9 @@ class _KeyboardAutocompleteFieldState<T>
       final int myReq = ++_requestId;
       final res = await widget.optionsBuilder(q);
       if (!mounted) return;
-      if (myReq != _requestId)
+      if (myReq != _requestId) {
         return; // évite les retours async dans le désordre
+      }
 
       final limited = res.length > widget.maxOptions
           ? res.sublist(0, widget.maxOptions)

@@ -43,7 +43,6 @@ ThemeData _buildPrestoThemeData() {
     ],
     canvasColor: overlayTheme.surfaceColor,
     cardColor: overlayTheme.surfaceColor,
-    dialogBackgroundColor: overlayTheme.surfaceColor,
     splashColor: overlayTheme.selectionFillColor,
     highlightColor: overlayTheme.selectionFillColor,
     hoverColor: const Color(0xFFF1F5F9),

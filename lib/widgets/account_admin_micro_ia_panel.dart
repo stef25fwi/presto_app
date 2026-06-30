@@ -46,7 +46,7 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final normalizedMode = mode.toUpperCase();
     final disabledHintStyle = TextStyle(
-      color: _kPrestoBlue.withOpacity(0.65),
+      color: _kPrestoBlue.withValues(alpha: 0.65),
       fontWeight: FontWeight.w700,
       fontSize: 12,
     );
@@ -97,10 +97,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: _kPrestoBlue.withOpacity(0.18)),
+            border: Border.all(color: _kPrestoBlue.withValues(alpha: 0.18)),
             boxShadow: [
               BoxShadow(
-                color: _kPrestoBlue.withOpacity(0.08),
+                color: _kPrestoBlue.withValues(alpha: 0.08),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -128,9 +128,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: _kPrestoBlue.withOpacity(0.05),
+                      color: _kPrestoBlue.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _kPrestoBlue.withOpacity(0.18)),
+                      border: Border.all(
+                          color: _kPrestoBlue.withValues(alpha: 0.18)),
                     ),
                     padding: const EdgeInsets.all(12),
                     child: Column(
@@ -302,9 +303,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: _kPrestoBlue.withOpacity(0.06),
+                  color: _kPrestoBlue.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: _kPrestoBlue.withOpacity(0.18)),
+                  border:
+                      Border.all(color: _kPrestoBlue.withValues(alpha: 0.18)),
                 ),
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -345,9 +347,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
               const SizedBox(height: 10),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.08),
+                  color: Colors.amber.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  border:
+                      Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                 ),
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -457,9 +460,10 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.blueGrey.withOpacity(0.05),
+                  color: Colors.blueGrey.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blueGrey.withOpacity(0.18)),
+                  border: Border.all(
+                      color: Colors.blueGrey.withValues(alpha: 0.18)),
                 ),
                 padding: const EdgeInsets.all(12),
                 child: const Row(
@@ -645,15 +649,16 @@ class _AudioPipelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = isActive ? accentColor : Colors.grey;
-    final bgColor =
-        isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
+    final bgColor = isActive
+        ? statusColor.withValues(alpha: 0.1)
+        : Colors.grey.withValues(alpha: 0.05);
 
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: statusColor.withOpacity(0.3),
+          color: statusColor.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -689,9 +694,9 @@ class _AudioPipelineRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.15),
+              color: statusColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: statusColor.withOpacity(0.4)),
+              border: Border.all(color: statusColor.withValues(alpha: 0.4)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -736,9 +741,9 @@ class _RuntimeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.22)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Text(
         label,
@@ -764,9 +769,9 @@ class _RuntimeHistoryRow extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: flowColor.withOpacity(0.05),
+        color: flowColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: flowColor.withOpacity(0.18)),
+        border: Border.all(color: flowColor.withValues(alpha: 0.18)),
       ),
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -921,16 +926,16 @@ class _AudioModeToggleCard extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           width: double.infinity,
           decoration: BoxDecoration(
-            color: selected ? accent.withOpacity(0.09) : Colors.white,
+            color: selected ? accent.withValues(alpha: 0.09) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected ? accent.withOpacity(0.85) : Colors.black12,
+              color: selected ? accent.withValues(alpha: 0.85) : Colors.black12,
               width: selected ? 1.8 : 1.0,
             ),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: accent.withOpacity(0.14),
+                      color: accent.withValues(alpha: 0.14),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -985,12 +990,12 @@ class _AudioModeToggleCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: selected
-                                ? accent.withOpacity(0.16)
-                                : Colors.grey.withOpacity(0.08),
+                                ? accent.withValues(alpha: 0.16)
+                                : Colors.grey.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(
                               color: selected
-                                  ? accent.withOpacity(0.4)
+                                  ? accent.withValues(alpha: 0.4)
                                   : Colors.black12,
                             ),
                           ),

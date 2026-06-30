@@ -661,8 +661,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     if (_businessModel == 'Ponctuel') p.add('Simplicité');
     if (_protectionPatrimoine) p.add('Protection');
     if (_depensesPro > 5000) p.add('Optimisation frais');
-    if (_ambition.contains('Croissance') || _caVise > 60000)
+    if (_ambition.contains('Croissance') || _caVise > 60000) {
       p.add('Croissance');
+    }
     if (p.isEmpty) return ['Simplicité', 'Coût', 'Rapidité'];
     return p.take(3).toList();
   }
@@ -1425,7 +1426,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -1470,7 +1471,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kBlue,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: kBlue.withOpacity(0.35),
+                    disabledBackgroundColor: kBlue.withValues(alpha: 0.35),
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1814,7 +1815,7 @@ class _StepperBar extends StatelessWidget {
               boxShadow: active
                   ? [
                       BoxShadow(
-                        color: color.withOpacity(0.28),
+                        color: color.withValues(alpha: 0.28),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -1860,7 +1861,7 @@ class _StepperBar extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.035),
+            color: Colors.black.withValues(alpha: 0.035),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -1904,7 +1905,7 @@ class _HeroMetricPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.82),
+        color: Colors.white.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
@@ -1951,9 +1952,9 @@ class _JourneyStatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.22)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2002,7 +2003,7 @@ class _Card extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.035),
+            color: Colors.black.withValues(alpha: 0.035),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -2095,7 +2096,7 @@ class _HeaderInfoCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -2111,9 +2112,9 @@ class _HeaderInfoCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.12),
+                  color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: accent.withOpacity(0.12)),
+                  border: Border.all(color: accent.withValues(alpha: 0.12)),
                 ),
                 alignment: Alignment.center,
                 child: Icon(icon, color: accent, size: 22),
@@ -2390,12 +2391,12 @@ class _RecommendationHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.10),
+            color.withValues(alpha: 0.10),
             const Color(0xFFFFF7ED),
           ],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2406,7 +2407,7 @@ class _RecommendationHero extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.72),
+                  color: Colors.white.withValues(alpha: 0.72),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
@@ -2534,9 +2535,9 @@ class _ResultCallout extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
       decoration: BoxDecoration(
-        color: tone.withOpacity(0.07),
+        color: tone.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: tone.withOpacity(0.16)),
+        border: Border.all(color: tone.withValues(alpha: 0.16)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2584,9 +2585,9 @@ class _PriorityChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
@@ -2716,7 +2717,7 @@ class _AidStatusTile extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.10),
+                  color: _statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
@@ -2759,9 +2760,10 @@ class _AidStatusTile extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.10),
+                  color: _statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: _statusColor.withOpacity(0.16)),
+                  border:
+                      Border.all(color: _statusColor.withValues(alpha: 0.16)),
                 ),
                 child: Text(
                   status,
@@ -2775,7 +2777,7 @@ class _AidStatusTile extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: status,
+                  initialValue: status,
                   decoration: InputDecoration(
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
@@ -3033,7 +3035,7 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       tileColor: selected
-                          ? const Color(0xFF1A73E8).withOpacity(0.08)
+                          ? const Color(0xFF1A73E8).withValues(alpha: 0.08)
                           : null,
                       leading: Icon(
                         Icons.place_outlined,

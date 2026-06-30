@@ -382,7 +382,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: kPrestoOrange.withOpacity(0.10),
+                  color: kPrestoOrange.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -562,7 +562,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: const Center(
         child: CircularProgressIndicator(
@@ -655,7 +655,7 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Row(
         children: [
@@ -1342,7 +1342,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withOpacity(0.06)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
         ),
         child: const Text(
           'Tu n’as pas encore d’annonce à gérer.',
@@ -1387,7 +1387,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: kPrestoBlue.withOpacity(0.10),
+                  color: kPrestoBlue.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -1407,7 +1407,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.black.withOpacity(0.06)),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
           ),
           child: const Text(
             'Classe tes annonces par statut et gère les actions disponibles sans quitter ton compte.',
@@ -1455,7 +1455,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withOpacity(0.24),
+          color: color.withValues(alpha: 0.24),
           width: 1.4,
         ),
       ),
@@ -1477,7 +1477,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.10),
+                  color: color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -1525,7 +1525,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withOpacity(0.24),
+          color: color.withValues(alpha: 0.24),
           width: 1.4,
         ),
       ),
@@ -1576,7 +1576,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.10),
+                        color: color.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -1656,7 +1656,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withOpacity(0.24),
+          color: color.withValues(alpha: 0.24),
           width: 1.4,
         ),
       ),
@@ -1707,7 +1707,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.10),
+                        color: color.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -1787,7 +1787,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: color.withOpacity(0.24),
+          color: color.withValues(alpha: 0.24),
           width: 1.4,
         ),
       ),
@@ -1838,7 +1838,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.10),
+                        color: color.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
@@ -2069,7 +2069,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       color: const Color(0xFFFDFDFD),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: Colors.black.withOpacity(0.1),
+        color: Colors.black.withValues(alpha: 0.1),
         width: 1.4,
       ),
     );
@@ -2221,7 +2221,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.10),
+                  color: statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -2305,7 +2305,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.08),
+                color: statusColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -2672,7 +2672,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: selectedCategory,
+                                  initialValue: selectedCategory,
                                   decoration: buildDecoration('Catégorie *'),
                                   items: categoryOptions
                                       .map(
@@ -2707,7 +2707,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: selectedSubCategory.isEmpty
+                                  initialValue: selectedSubCategory.isEmpty
                                       ? ''
                                       : selectedSubCategory,
                                   decoration: buildDecoration('Sous-catégorie'),
@@ -2793,7 +2793,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                               Expanded(
                                 flex: 2,
                                 child: DropdownButtonFormField<String>(
-                                  value: selectedBudgetType,
+                                  initialValue: selectedBudgetType,
                                   decoration:
                                       buildDecoration('Budget / tarification'),
                                   items: budgetTypes
@@ -2856,7 +2856,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: selectedMissionDelay.isEmpty
+                                  initialValue: selectedMissionDelay.isEmpty
                                       ? null
                                       : selectedMissionDelay,
                                   decoration: buildDecoration(
