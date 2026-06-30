@@ -51,6 +51,8 @@ class AuthService {
     required String password,
     required String displayName,
     String? fullName,
+    String? firstName,
+    String? lastName,
     String? pseudo,
   }) async {
     await _auth.setLanguageCode('fr');
@@ -83,6 +85,10 @@ class AuthService {
         'pseudo': resolvedPseudo,
         if (fullName != null && fullName.trim().isNotEmpty)
           'fullName': fullName.trim(),
+        if (firstName != null && firstName.trim().isNotEmpty)
+          'firstName': firstName.trim(),
+        if (lastName != null && lastName.trim().isNotEmpty)
+          'lastName': lastName.trim(),
         'authProvider': 'password',
       },
     );

@@ -16,17 +16,31 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameCtrl = TextEditingController();
+  final _lastNameCtrl = TextEditingController();
+  final _firstNameCtrl = TextEditingController();
   final _pseudoCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+
+  String get _lastName => _lastNameCtrl.text.trim();
+  String get _firstName => _firstNameCtrl.text.trim();
+
+  String get _computedFullName {
+    final parts = <String>[
+      _firstName,
+      _lastName,
+    ].where((value) => value.trim().isNotEmpty).toList();
+
+    return parts.join(' ').trim();
+  }
 
   bool _loading = false;
   bool _hidePassword = true;
 
   @override
   void dispose() {
-    _fullNameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _firstNameCtrl.dispose();
     _pseudoCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -43,7 +57,9 @@ class _RegisterPageState extends State<RegisterPage> {
         email: _emailCtrl.text,
         password: _passwordCtrl.text,
         displayName: _pseudoCtrl.text.trim(),
-        fullName: _fullNameCtrl.text.trim(),
+        fullName: _computedFullName,
+        firstName: _firstName,
+        lastName: _lastName,
         pseudo: _pseudoCtrl.text.trim(),
       );
 
@@ -61,11 +77,6 @@ class _RegisterPageState extends State<RegisterPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  String? _fullNameValidator(String? value) {
-    if ((value ?? '').trim().length < 2) return 'Nom et prénom obligatoires.';
-    return null;
   }
 
   String? _pseudoValidator(String? value) {
@@ -128,16 +139,53 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 28),
-                    TextFormField(
-                      controller: _fullNameCtrl,
-                      textCapitalization: TextCapitalization.words,
-                      decoration: const InputDecoration(
-                        labelText: 'Nom + Prénom',
-                        hintText: 'Ex : Martin Dupont',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      validator: _fullNameValidator,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _lastNameCtrl,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            autofillHints: const [AutofillHints.familyName],
+                            decoration: const InputDecoration(
+                              labelText: 'Nom *',
+                              hintText: 'Votre nom',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.badge_outlined),
+                            ),
+                            validator: (value) {
+                              final trimmed = value?.trim() ?? '';
+                              if (trimmed.isEmpty) {
+                                return 'Nom obligatoire';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _firstNameCtrl,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            autofillHints: const [AutofillHints.givenName],
+                            decoration: const InputDecoration(
+                              labelText: 'Prénom *',
+                              hintText: 'Votre prénom',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.person_outline_rounded),
+                            ),
+                            validator: (value) {
+                              final trimmed = value?.trim() ?? '';
+                              if (trimmed.isEmpty) {
+                                return 'Prénom obligatoire';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
