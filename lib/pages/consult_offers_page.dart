@@ -447,6 +447,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   bool _didApplyProfileDepartmentDefaultFilter = false;
+  bool _didShowProfileDepartmentInfoPopup = false;
 
   Future<void> _applyProfileDepartmentFilterByDefault() async {
     if (_didApplyProfileDepartmentDefaultFilter) return;
@@ -505,21 +506,97 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           _selectedRegionCode = regionCode;
         }
 
-        _showFilters = true;
+        // Le filtre profil est appliqué, mais le panneau reste replié.
+        _showFilters = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-          content: Text(
-            'Par défaut, les offres sont filtrées sur votre département : '
-            '${ProfileDepartmentResolver.departmentDisplayName(departmentCode)}.',
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          _showProfileDepartmentInfoPopupOnce(
+            departmentCode: departmentCode,
+            regionCode: regionCode,
           ),
-        ),
-      );
+        );
+      });
     } catch (error) {
       debugPrint('[ConsultOffers] Filtre département profil ignoré: $error');
+    }
+  }
+
+  Future<void> _showProfileDepartmentInfoPopupOnce({
+    required String departmentCode,
+    String? regionCode,
+  }) async {
+    if (_didShowProfileDepartmentInfoPopup || !mounted) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    _didShowProfileDepartmentInfoPopup = true;
+
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    try {
+      final snapshot = await userRef.get();
+      final data = snapshot.data();
+      if (data?['consultProfileFilterInfoDismissed'] == true) return;
+    } catch (error) {
+      debugPrint('[ConsultOffers] Lecture popup filtre profil ignorée: $error');
+    }
+
+    if (!mounted) return;
+
+    final departmentLabel =
+        ProfileDepartmentResolver.departmentDisplayName(departmentCode);
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          title: const Text(
+            'Offres synchronisées',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          content: Text(
+            'À l’ouverture de cette page, les offres sont automatiquement '
+            'synchronisées avec la région et le département enregistrés dans '
+            'votre profil : $departmentLabel.\\n\\n'
+            'Le panneau de filtres reste replié. Vous pouvez l’ouvrir à tout '
+            'moment pour modifier votre recherche.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6600),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('J’ai compris'),
+            ),
+          ],
+        );
+      },
+    );
+
+    try {
+      await userRef.set(
+        {
+          'consultProfileFilterInfoDismissed': true,
+          'consultProfileFilterInfoDismissedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (error) {
+      debugPrint('[ConsultOffers] Sauvegarde fermeture popup ignorée: $error');
     }
   }
 
@@ -3203,53 +3280,47 @@ String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
 class _OfferMissionDelayChip extends StatelessWidget {
   final String label;
 
-  const _OfferMissionDelayChip({required this.label});
+  const _OfferMissionDelayChip({
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 132,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [
-              Color(0xFFFFC04A),
-              Color(0xFFFF7A00),
-            ],
-          ),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.65),
-            width: kMarketplaceOutlineWidth,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+    final cleanLabel =
+        label.trim().isEmpty ? 'Délai non précisé' : label.trim();
+
+    return Container(
+      constraints: const BoxConstraints(minHeight: 30),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFF6600),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0xFFFF6600),
         ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            maxLines: 1,
-            softWrap: false,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 1,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.schedule_rounded,
+            size: 14,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              cleanLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
