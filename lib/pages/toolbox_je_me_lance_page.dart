@@ -2233,8 +2233,7 @@ class _SelectRow extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w500)),
+                  style: const TextStyle(fontWeight: FontWeight.w500)),
             ),
             Icon(Icons.chevron_right, color: Colors.grey.shade600),
           ],

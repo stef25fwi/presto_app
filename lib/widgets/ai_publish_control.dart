@@ -467,9 +467,7 @@ class AiWritingButton extends StatelessWidget {
           width: double.infinity,
           height: 46,
           decoration: BoxDecoration(
-            color: isAnalyzing
-                ? const Color(0xFFEEF4FF)
-                : Colors.white,
+            color: isAnalyzing ? const Color(0xFFEEF4FF) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: const Color(0xFF1A6FFF),
@@ -828,9 +826,7 @@ class _AnimatedWaveformState extends State<_AnimatedWaveform>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              for (var index = 0;
-                  index < widget.baseHeights.length;
-                  index += 1)
+              for (var index = 0; index < widget.baseHeights.length; index += 1)
                 Container(
                   width: widget.barWidth,
                   height: _animatedBarHeight(
@@ -896,8 +892,7 @@ class _AnimatedProgressDotsState extends State<_AnimatedProgressDots>
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
-          final activeCount =
-              1 + (_controller.value * 5).floor().clamp(0, 4);
+          final activeCount = 1 + (_controller.value * 5).floor().clamp(0, 4);
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [

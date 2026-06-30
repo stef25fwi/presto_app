@@ -208,19 +208,41 @@ class PublishCategoryPairMatch {
 
 const List<PublishCategoryPairRule> kPublishCategoryPairRules = [
   PublishCategoryPairRule(
-    keywords: ['fuite d eau', 'fuite eau', 'plomberie', 'robinet', 'canalisation', 'evier bouche'],
+    keywords: [
+      'fuite d eau',
+      'fuite eau',
+      'plomberie',
+      'robinet',
+      'canalisation',
+      'evier bouche'
+    ],
     category: 'Bricolage / Travaux',
     subCategory: 'Petits travaux plomberie',
     suggestedTitle: 'Petits travaux plomberie',
   ),
   PublishCategoryPairRule(
-    keywords: ['prise electrique', 'interrupteur', 'disjoncteur', 'luminaire', 'electricite', 'tableau electrique'],
+    keywords: [
+      'prise electrique',
+      'interrupteur',
+      'disjoncteur',
+      'luminaire',
+      'electricite',
+      'tableau electrique'
+    ],
     category: 'Bricolage / Travaux',
     subCategory: 'Petits travaux électricité',
     suggestedTitle: 'Petits travaux électricité',
   ),
   PublishCategoryPairRule(
-    keywords: ['monter meuble', 'montage meuble', 'ikea', 'armoire', 'commode', 'lit a monter', 'meuble'],
+    keywords: [
+      'monter meuble',
+      'montage meuble',
+      'ikea',
+      'armoire',
+      'commode',
+      'lit a monter',
+      'meuble'
+    ],
     category: 'Bricolage / Travaux',
     subCategory: 'Montage de meubles',
     suggestedTitle: 'Montage de meubles',
@@ -274,7 +296,13 @@ const List<PublishCategoryPairRule> kPublishCategoryPairRules = [
     suggestedTitle: 'Aide aux courses',
   ),
   PublishCategoryPairRule(
-    keywords: ['garde enfant', 'garde bebe', 'baby sitting', 'babysitting', 'nounou'],
+    keywords: [
+      'garde enfant',
+      'garde bebe',
+      'baby sitting',
+      'babysitting',
+      'nounou'
+    ],
     category: 'Garde d\'enfants',
     subCategory: 'Baby-sitting soirée',
     suggestedTitle: 'Garde d\'enfants à domicile',
@@ -292,7 +320,13 @@ const List<PublishCategoryPairRule> kPublishCategoryPairRules = [
     suggestedTitle: 'Travaux de peinture intérieure',
   ),
   PublishCategoryPairRule(
-    keywords: ['demenagement', 'demenager', 'chargement', 'dechargement', 'porter des cartons'],
+    keywords: [
+      'demenagement',
+      'demenager',
+      'chargement',
+      'dechargement',
+      'porter des cartons'
+    ],
     category: 'Main-d\'oeuvre',
     subCategory: 'Aide déménagement',
     suggestedTitle: 'Aide déménagement',

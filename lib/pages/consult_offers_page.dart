@@ -1702,7 +1702,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                           textAlign: TextAlign.center,
                           style: kPrestoAppBarTitleStyle.copyWith(
                             color: Colors.white,
-                            fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+                            fontFamily: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.fontFamily,
                           ),
                         ),
                       ),
@@ -1714,291 +1717,287 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               _buildActiveFilterChips(),
               _buildFilterPanel(),
               Expanded(
-                  child: StreamBuilder<
-                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-                    stream: _getOffersStream(),
-                    initialData: initialOfferDocs,
-                    builder: (context, snapshot) {
-                      // ✅ Ne plus afficher le loader si on a déjà des données
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          !snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                          ),
-                        );
+                child: StreamBuilder<
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                  stream: _getOffersStream(),
+                  initialData: initialOfferDocs,
+                  builder: (context, snapshot) {
+                    // ✅ Ne plus afficher le loader si on a déjà des données
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                      debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                      final err = snapshot.error;
+                      if (err != null) {
+                        PrestoMonitoring.I
+                            .trackError('consult_offers.fetch', err);
                       }
 
-                      if (snapshot.hasError) {
-                        debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
-                        debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+                      final friendly = err == null
+                          ? 'Impossible de charger les annonces pour le moment.'
+                          : friendlyPublicOffersReadErrorWithAppCheck(err);
 
-                        final err = snapshot.error;
-                        if (err != null) {
-                          PrestoMonitoring.I
-                              .trackError('consult_offers.fetch', err);
-                        }
-
-                        final friendly = err == null
-                            ? 'Impossible de charger les annonces pour le moment.'
-                            : friendlyPublicOffersReadErrorWithAppCheck(err);
-
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 64,
-                                  color: Colors.red.shade300,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  "Erreur lors du chargement des offres",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.red.shade700,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  friendly,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                                if (err != null)
-                                  buildPublicOffersDebugCardWithAppCheck(
-                                    err,
-                                    source: 'consult_combined_offers',
-                                  ),
-                                const SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  onPressed: _refreshOffers,
-                                  icon: const Icon(Icons.refresh),
-                                  label: const Text('Réessayer'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: kPrestoOrange,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      final rawDocs = snapshot.data ?? const [];
-                      _lastSnapshotRawCount = rawDocs.length;
-
-                      final docs = _buildDisplayedOfferDocs(rawDocs);
-
-                      _scheduleJobDoneOverlayRefresh(rawDocs);
-
-                      if (docs.isEmpty) {
-                        return RefreshIndicator(
-                          color: kPrestoOrange,
-                          onRefresh: _refreshOffers,
-                          child: ListView(
-                            physics: const AlwaysScrollableScrollPhysics(
-                              parent: ClampingScrollPhysics(),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Padding(
-                                padding: EdgeInsets.fromLTRB(24, 18, 24, 12),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.grid_view_rounded,
-                                      size: 20,
-                                      color: _offersOrange,
-                                    ),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      '0 annonce',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: _offersNavy,
-                                      ),
-                                    ),
-                                  ],
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Erreur lors du chargement des offres",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(
-                                height: 420,
-                                child: _EmptyOffers(
-                                  onRefresh: _refreshOffers,
+                              const SizedBox(height: 8),
+                              Text(
+                                friendly,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              if (err != null)
+                                buildPublicOffersDebugCardWithAppCheck(
+                                  err,
+                                  source: 'consult_combined_offers',
+                                ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _refreshOffers,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Réessayer'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoOrange,
+                                  foregroundColor: Colors.white,
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      }
+                        ),
+                      );
+                    }
 
-                      const int _adsEvery =
-                          8; // Bandeau pub après chaque 8 annonces
-                      final int _adSlots = docs.length ~/ _adsEvery;
-                      final int _totalItems = docs.length + _adSlots;
+                    final rawDocs = snapshot.data ?? const [];
+                    _lastSnapshotRawCount = rawDocs.length;
 
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: RefreshIndicator(
-                              color: kPrestoOrange,
-                              onRefresh: _refreshOffers,
-                              child: ListView.builder(
-                                key: const PageStorageKey<String>(
-                                  'consult-offers-list',
-                                ),
-                                controller: _scrollController,
-                                physics: const AlwaysScrollableScrollPhysics(
-                                  parent: ClampingScrollPhysics(),
-                                ),
-                                padding:
-                                    const EdgeInsets.fromLTRB(6, 0, 6, 132),
-                                addAutomaticKeepAlives: false,
-                                addRepaintBoundaries: true,
-                                itemCount: _totalItems,
-                                itemBuilder: (context, index) {
-                                  final bool isAd =
-                                      (index + 1) % (_adsEvery + 1) == 0;
-                                  if (isAd) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 6,
-                                        right: 6,
-                                        bottom: 6,
-                                      ),
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: AdBanner(
-                                          margin: EdgeInsets.zero,
-                                          placeholderFolderPrefix:
-                                              'assets/carousel_home/',
-                                          flat: true,
-                                          animatePlaceholder: true,
-                                        ),
-                                      ),
-                                    );
-                                  }
+                    final docs = _buildDisplayedOfferDocs(rawDocs);
 
-                                  final adOffset = index ~/ (_adsEvery + 1);
-                                  final docIndex = index - adOffset;
-                                  final doc = docs[docIndex];
-                                  final data = doc.data();
+                    _scheduleJobDoneOverlayRefresh(rawDocs);
 
-                                  final offerId = doc.id;
-                                  final title = (data['title'] ?? 'Sans titre')
-                                      .toString();
-                                  final city =
-                                      ((data['city'] ?? data['location']) ??
-                                              'Lieu non précisé')
-                                          .toString();
-                                  final postalCode =
-                                      ((data['postalCode'] ?? data['cp']) ?? '')
-                                          .toString()
-                                          .trim();
-                                  final category = (data['category'] ??
-                                          'Catégorie non précisée')
-                                      .toString();
-                                  final budgetRaw =
-                                      data['budget'] ?? data['price'];
-                                  final int budget = budgetRaw is num
-                                      ? budgetRaw.round()
-                                      : int.tryParse(
-                                              budgetRaw?.toString() ?? '') ??
-                                          0;
-                                  final publishedAge =
-                                      _ageLabelFromCreatedAt(data['createdAt']);
-                                  final publishedText = publishedAge.isEmpty
-                                      ? 'Publication récente'
-                                      : 'Publié il y a $publishedAge';
-                                  final isUrgent = data['isUrgent'] == true || data['urgent'] == true;
-                                  final showJobDoneOverlay =
-                                      isOfferJobDoneOverlayVisible(data);
-                                  final imageUrl =
-                                      _primaryBrowseOfferImageUrl(data);
-                                  final missionDelayLabel =
-                                      _extractMissionDelayLabel(data);
-                                  final cleanTitle = _sanitizeOfferTitle(
-                                    rawTitle: title,
-                                    city: city,
-                                    postalCode: postalCode,
-                                  );
+                    if (docs.isEmpty) {
+                      return RefreshIndicator(
+                        color: kPrestoOrange,
+                        onRefresh: _refreshOffers,
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: ClampingScrollPhysics(),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(24, 18, 24, 12),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.grid_view_rounded,
+                                    size: 20,
+                                    color: _offersOrange,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    '0 annonce',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: _offersNavy,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 420,
+                              child: _EmptyOffers(
+                                onRefresh: _refreshOffers,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
-                                  return RepaintBoundary(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
-                                      child: _OfferBrowseTile(
-                                        onTap: showJobDoneOverlay
-                                            ? null
-                                            : () {
-                                                _logOfferClicked(
-                                                    offerId, title);
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        OfferDetailsPage(
-                                                      offer:
-                                                          buildOfferDetailsOffer(
-                                                        offerId: offerId,
-                                                        data: data,
-                                                      ),
-                                                      currentUserId:
-                                                          FirebaseAuth
-                                                                  .instance
-                                                                  .currentUser
-                                                                  ?.uid ??
-                                                              '',
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                        data: _OfferBrowseTileData(
-                                          imageUrl: imageUrl,
-                                          title: cleanTitle,
-                                          subtitle: [
-                                            city,
-                                            if (postalCode.isNotEmpty)
-                                              postalCode,
-                                            category,
-                                          ].join(' / '),
-                                          publishedText: publishedText,
-                                          price: budget,
-                                          hidePrice:
-                                              _shouldHideConsultTilePrice(data),
-                                          missionDelayLabel: missionDelayLabel,
-                                          isUrgent:
-                                              isUrgent && !showJobDoneOverlay,
-                                          icon: _categoryIcon(category),
-                                          showJobDoneOverlay:
-                                              showJobDoneOverlay,
-                                        ),
+                    const int _adsEvery =
+                        8; // Bandeau pub après chaque 8 annonces
+                    final int _adSlots = docs.length ~/ _adsEvery;
+                    final int _totalItems = docs.length + _adSlots;
+
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: RefreshIndicator(
+                            color: kPrestoOrange,
+                            onRefresh: _refreshOffers,
+                            child: ListView.builder(
+                              key: const PageStorageKey<String>(
+                                'consult-offers-list',
+                              ),
+                              controller: _scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: ClampingScrollPhysics(),
+                              ),
+                              padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                              addAutomaticKeepAlives: false,
+                              addRepaintBoundaries: true,
+                              itemCount: _totalItems,
+                              itemBuilder: (context, index) {
+                                final bool isAd =
+                                    (index + 1) % (_adsEvery + 1) == 0;
+                                if (isAd) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 6,
+                                      right: 6,
+                                      bottom: 6,
+                                    ),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: AdBanner(
+                                        margin: EdgeInsets.zero,
+                                        placeholderFolderPrefix:
+                                            'assets/carousel_home/',
+                                        flat: true,
+                                        animatePlaceholder: true,
                                       ),
                                     ),
                                   );
-                                },
-                              ),
+                                }
+
+                                final adOffset = index ~/ (_adsEvery + 1);
+                                final docIndex = index - adOffset;
+                                final doc = docs[docIndex];
+                                final data = doc.data();
+
+                                final offerId = doc.id;
+                                final title =
+                                    (data['title'] ?? 'Sans titre').toString();
+                                final city =
+                                    ((data['city'] ?? data['location']) ??
+                                            'Lieu non précisé')
+                                        .toString();
+                                final postalCode =
+                                    ((data['postalCode'] ?? data['cp']) ?? '')
+                                        .toString()
+                                        .trim();
+                                final category = (data['category'] ??
+                                        'Catégorie non précisée')
+                                    .toString();
+                                final budgetRaw =
+                                    data['budget'] ?? data['price'];
+                                final int budget = budgetRaw is num
+                                    ? budgetRaw.round()
+                                    : int.tryParse(
+                                            budgetRaw?.toString() ?? '') ??
+                                        0;
+                                final publishedAge =
+                                    _ageLabelFromCreatedAt(data['createdAt']);
+                                final publishedText = publishedAge.isEmpty
+                                    ? 'Publication récente'
+                                    : 'Publié il y a $publishedAge';
+                                final isUrgent = data['isUrgent'] == true ||
+                                    data['urgent'] == true;
+                                final showJobDoneOverlay =
+                                    isOfferJobDoneOverlayVisible(data);
+                                final imageUrl =
+                                    _primaryBrowseOfferImageUrl(data);
+                                final missionDelayLabel =
+                                    _extractMissionDelayLabel(data);
+                                final cleanTitle = _sanitizeOfferTitle(
+                                  rawTitle: title,
+                                  city: city,
+                                  postalCode: postalCode,
+                                );
+
+                                return RepaintBoundary(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _OfferBrowseTile(
+                                      onTap: showJobDoneOverlay
+                                          ? null
+                                          : () {
+                                              _logOfferClicked(offerId, title);
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      OfferDetailsPage(
+                                                    offer:
+                                                        buildOfferDetailsOffer(
+                                                      offerId: offerId,
+                                                      data: data,
+                                                    ),
+                                                    currentUserId: FirebaseAuth
+                                                            .instance
+                                                            .currentUser
+                                                            ?.uid ??
+                                                        '',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                      data: _OfferBrowseTileData(
+                                        imageUrl: imageUrl,
+                                        title: cleanTitle,
+                                        subtitle: [
+                                          city,
+                                          if (postalCode.isNotEmpty) postalCode,
+                                          category,
+                                        ].join(' / '),
+                                        publishedText: publishedText,
+                                        price: budget,
+                                        hidePrice:
+                                            _shouldHideConsultTilePrice(data),
+                                        missionDelayLabel: missionDelayLabel,
+                                        isUrgent:
+                                            isUrgent && !showJobDoneOverlay,
+                                        icon: _categoryIcon(category),
+                                        showJobDoneOverlay: showJobDoneOverlay,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -2201,7 +2200,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     // ✅ Si le filtre courant pointe vers un département non disponible,
     // on remet aussi l'état interne à null (sinon on a un "ghost value").
-    if (_filterDepartmentCode != null && safeValue == null && !_departmentResetScheduled) {
+    if (_filterDepartmentCode != null &&
+        safeValue == null &&
+        !_departmentResetScheduled) {
       _departmentResetScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _departmentResetScheduled = false;
@@ -2825,7 +2826,6 @@ class _OfferBrowseTile extends StatefulWidget {
 
 class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   Widget _buildFallbackPhoto() {
-
     return Container(
       width: 92,
       height: 92,

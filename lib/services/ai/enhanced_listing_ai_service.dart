@@ -39,7 +39,8 @@ class EnhancedListingAiService {
     final normalizedContentType = contentType.trim().toLowerCase();
 
     final timestamp = DateTime.now().microsecondsSinceEpoch;
-    final storagePath = 'stt/$ownerUid/${timestamp}_recording.$normalizedExtension';
+    final storagePath =
+        'stt/$ownerUid/${timestamp}_recording.$normalizedExtension';
     final ref = _storage.ref(storagePath);
 
     await retry(
@@ -156,7 +157,8 @@ class EnhancedListingAiService {
     // Préparer le prompt amélioré
     final userPrompt = AiPrompts.extractListingFieldsUserPromptTemplate
         .replaceAll('{transcript}', transcription)
-        .replaceAll('{category}', request.category.isEmpty ? 'Autre' : request.category)
+        .replaceAll(
+            '{category}', request.category.isEmpty ? 'Autre' : request.category)
         .replaceAll('{city}', request.city);
 
     final response = await retry(
@@ -211,7 +213,8 @@ class AiErrorMessages {
     return 'Une erreur est survenue. Réessaie.';
   }
 
-  static String _formatFirebaseFunctionsError(FirebaseFunctionsException error) {
+  static String _formatFirebaseFunctionsError(
+      FirebaseFunctionsException error) {
     switch (error.code) {
       case 'unauthenticated':
         return 'Reconnecte-toi pour continuer.';

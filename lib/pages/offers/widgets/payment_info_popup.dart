@@ -170,7 +170,8 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                           Navigator.of(context).pop();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const LegalInfoPage(initialTab: 2),
+                              builder: (_) =>
+                                  const LegalInfoPage(initialTab: 2),
                             ),
                           );
                         }),
@@ -255,7 +256,8 @@ class _Header extends StatelessWidget {
                 color: Color(0xFFF3F6FB),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
+              child:
+                  const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
             ),
           ),
         ],
@@ -621,4 +623,3 @@ class _MoreInfoTile extends StatelessWidget {
     );
   }
 }
-

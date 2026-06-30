@@ -2,7 +2,8 @@
 class AiPrompts {
   const AiPrompts._();
 
-  static const String extractListingFieldsSystemPrompt = '''Tu es un expert en extraction d'informations pour des annonces de service.
+  static const String extractListingFieldsSystemPrompt =
+      '''Tu es un expert en extraction d'informations pour des annonces de service.
 
 Tu dois extraire les informations clés du texte fourni et les structurer en JSON.
 
@@ -91,7 +92,8 @@ Réponds avec UNIQUEMENT le JSON, pas d'explications.''';
   static const String extractListingFieldsUserPromptTemplate =
       'Extrais les informations de cette annonce:\n\n{transcript}\n\nCatégorie suggérée: {category}\nVille: {city}';
 
-  static const String generateOfferDraftSystemPrompt = '''Tu es un expert en rédaction d'annonces de service en français.
+  static const String generateOfferDraftSystemPrompt =
+      '''Tu es un expert en rédaction d'annonces de service en français.
 
 Ton rôle est de transformer une transcription audio imprécise en une belle annonce structurée.
 
