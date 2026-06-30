@@ -1444,6 +1444,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             builder: (ctx) {
               final overlayTheme = ctx.prestoOverlayTheme;
               return AlertDialog(
+                icon: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFFF6600),
+                  size: 38,
+                ),
                 backgroundColor: overlayTheme.surfaceColor,
                 surfaceTintColor: overlayTheme.surfaceTintColor,
                 shape: overlayTheme.dialogShape,
@@ -2880,6 +2885,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                   final overlayTheme =
                                                       ctx.prestoOverlayTheme;
                                                   return AlertDialog(
+                                                    icon: const Icon(
+                                                      Icons
+                                                          .warning_amber_rounded,
+                                                      color: Color(0xFFFF6600),
+                                                      size: 38,
+                                                    ),
                                                     backgroundColor:
                                                         overlayTheme
                                                             .surfaceColor,
