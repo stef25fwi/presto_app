@@ -31,7 +31,7 @@ const kPrestoBlue = Color(0xFF1A73E8);
 const kMessagesPageBackground = Color(0xFFFFFEFE);
 const kWhatsappGreen = Color(0xFF25D366);
 const kMessagesStatusBarStyle = SystemUiOverlayStyle(
-  statusBarColor: kPrestoBlue,
+  statusBarColor: kPrestoOrange,
   statusBarIconBrightness: Brightness.light,
   statusBarBrightness: Brightness.dark,
 );

@@ -94,6 +94,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _showSafetyReminder = true;
   bool _isOfferCardExpanded = true;
   bool _showEmojiStrip = false;
+  static const List<String> _defaultQuickEmojis = [
+    '👍',
+    '🙏',
+    '😊',
+    '👌',
+    '🔥',
+    '💬',
+  ];
+  List<String> _quickEmojis = _defaultQuickEmojis;
+  Map<String, int> _emojiUsageCounts = const {};
+  bool _didLoadEmojiUsage = false;
   bool _isOtherTyping = false;
   bool _showNewMessagesButton = false;
   bool _isUploadingAttachment = false;
@@ -280,6 +291,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     });
 
     super.initState();
+    _loadMostUsedEmojis();
     _controller.addListener(_handleDraftChanged);
     unawaited(_warmMessagingAccess());
     unawaited(_resolveParticipantProfileLookupAccess());
@@ -1598,10 +1610,127 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
+  Future<void> _loadMostUsedEmojis() async {
+    if (_didLoadEmojiUsage) return;
+    _didLoadEmojiUsage = true;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) {
+      if (mounted) {
+        setState(() => _quickEmojis = _defaultQuickEmojis);
+      }
+      return;
+    }
+
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final rawUsage = snapshot.data()?['messageEmojiUsage'];
+
+      final usage = <String, int>{};
+      if (rawUsage is Map) {
+        rawUsage.forEach((key, value) {
+          final emoji = key.toString().trim();
+          if (emoji.isEmpty) return;
+
+          final count = value is num ? value.toInt() : int.tryParse('$value');
+          if (count == null || count <= 0) return;
+
+          usage[emoji] = count;
+        });
+      }
+
+      final sorted = usage.entries.toList()
+        ..sort((a, b) {
+          final byCount = b.value.compareTo(a.value);
+          if (byCount != 0) return byCount;
+          return a.key.compareTo(b.key);
+        });
+
+      final next = <String>[
+        ...sorted.map((entry) => entry.key),
+        ..._defaultQuickEmojis,
+      ];
+
+      final uniqueTop6 = <String>[];
+      for (final emoji in next) {
+        if (uniqueTop6.contains(emoji)) continue;
+        uniqueTop6.add(emoji);
+        if (uniqueTop6.length >= 6) break;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _emojiUsageCounts = usage;
+        _quickEmojis = uniqueTop6.isEmpty ? _defaultQuickEmojis : uniqueTop6;
+      });
+    } catch (error) {
+      debugPrint(
+          '[ConversationThread] Chargement emojis fréquents ignoré: $error');
+      if (!mounted) return;
+      setState(() => _quickEmojis = _defaultQuickEmojis);
+    }
+  }
+
+  Future<void> _recordEmojiUsage(String emoji) async {
+    final cleanEmoji = emoji.trim();
+    if (cleanEmoji.isEmpty) return;
+
+    final nextUsage = Map<String, int>.from(_emojiUsageCounts);
+    nextUsage[cleanEmoji] = (nextUsage[cleanEmoji] ?? 0) + 1;
+
+    final sorted = nextUsage.entries.toList()
+      ..sort((a, b) {
+        final byCount = b.value.compareTo(a.value);
+        if (byCount != 0) return byCount;
+        return a.key.compareTo(b.key);
+      });
+
+    final nextQuickEmojis = sorted.map((entry) => entry.key).take(6).toList();
+
+    if (mounted) {
+      setState(() {
+        _emojiUsageCounts = nextUsage;
+        _quickEmojis = nextQuickEmojis.isEmpty
+            ? _defaultQuickEmojis
+            : [
+                ...nextQuickEmojis,
+                ..._defaultQuickEmojis,
+              ].fold<List<String>>(
+                <String>[],
+                (list, item) {
+                  if (!list.contains(item) && list.length < 6) {
+                    list.add(item);
+                  }
+                  return list;
+                },
+              );
+      });
+    }
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return;
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).set(
+        {
+          'messageEmojiUsage': {
+            cleanEmoji: FieldValue.increment(1),
+          },
+          'messageEmojiUsageUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (error) {
+      debugPrint(
+          '[ConversationThread] Sauvegarde emoji fréquent ignorée: $error');
+    }
+  }
+
   Widget _buildEmojiStrip() {
     if (!_showEmojiStrip || _isBlocked) return const SizedBox.shrink();
 
-    const emojis = ['👍', '🙏', '😊', '👌', '🔥', '💬'];
+    final emojis = _quickEmojis.take(6).toList(growable: false);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
       child: Align(
@@ -1646,6 +1775,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   void _insertEmoji(String emoji) {
+    unawaited(_recordEmojiUsage(emoji));
     final selection = _controller.selection;
     final text = _controller.text;
     final start = selection.start >= 0 ? selection.start : text.length;
