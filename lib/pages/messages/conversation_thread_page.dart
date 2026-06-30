@@ -39,7 +39,7 @@ const kThreadOtherColor = Colors.white;
 const kThreadBackground = Color(0xFFFFFEFE);
 const kWhatsappGreen = Color(0xFF25D366);
 const kConversationThreadStatusBarStyle = SystemUiOverlayStyle(
-  statusBarColor: kPrestoBlue,
+  statusBarColor: kPrestoOrange,
   statusBarIconBrightness: Brightness.light,
   statusBarBrightness: Brightness.dark,
 );
@@ -3103,35 +3103,48 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          FilledButton(
-                            onPressed: (_isSending ||
-                                    _isUploadingAttachment ||
-                                    _isBlocked)
-                                ? null
-                                : _hasDraftText
-                                    ? _sendMessage
-                                    : () =>
-                                        unawaited(_showVoiceRecordingSheet()),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: kWhatsappGreen,
-                              foregroundColor: Colors.white,
-                              shape: const CircleBorder(),
-                              padding: const EdgeInsets.all(11),
-                            ),
-                            child: (_isSending || _isUploadingAttachment)
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                          SizedBox(
+                            width: 44,
+                            height: 44,
+                            child: FilledButton(
+                              onPressed: (_isSending ||
+                                      _isUploadingAttachment ||
+                                      _isBlocked)
+                                  ? null
+                                  : _hasDraftText
+                                      ? _sendMessage
+                                      : () => unawaited(
+                                            _showVoiceRecordingSheet(),
+                                          ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: kWhatsappGreen,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor:
+                                    const Color(0xFFE5E7EB),
+                                disabledForegroundColor:
+                                    const Color(0xFF9CA3AF),
+                                shape: const CircleBorder(),
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(44, 44),
+                                fixedSize: const Size(44, 44),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: (_isSending || _isUploadingAttachment)
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Icon(
+                                      _hasDraftText
+                                          ? Icons.send_rounded
+                                          : Icons.mic_none_rounded,
+                                      size: 22,
                                     ),
-                                  )
-                                : Icon(
-                                    _hasDraftText
-                                        ? Icons.send_rounded
-                                        : Icons.mic_none_rounded,
-                                  ),
+                            ),
                           ),
                         ],
                       ),

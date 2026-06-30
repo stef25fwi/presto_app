@@ -1685,19 +1685,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                           color: _showFilters ? null : Colors.white,
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
-                            color: _showFilters
-                                ? const Color(0x551A73E8)
-                                : const Color(0xFFE4D8DA),
+                            color: const Color(0xFFE4D8DA),
                           ),
-                          boxShadow: _showFilters
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(0x1A1A73E8),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
+                          boxShadow: null,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1705,9 +1695,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                             Icon(
                               _showFilters ? Icons.tune : Icons.tune_rounded,
                               size: 18,
-                              color: _showFilters
-                                  ? Colors.white
-                                  : const Color(0xFF585D7C),
+                              color: const Color(0xFF585D7C),
                             ),
                             const SizedBox(width: 7),
                             Text(
@@ -1715,21 +1703,49 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
-                                color: _showFilters
-                                    ? Colors.white
-                                    : const Color(0xFF474D70),
+                                color: const Color(0xFF474D70),
                                 letterSpacing: -0.1,
                               ),
                             ),
+                            if (activeFiltersCount > 0) ...[
+                              const SizedBox(width: 7),
+                              Container(
+                                constraints: const BoxConstraints(
+                                  minWidth: 20,
+                                  minHeight: 20,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF6600),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  activeFiltersCount > 9
+                                      ? '9+'
+                                      : '$activeFiltersCount',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    height: 1,
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(width: 4),
                             Icon(
                               _showFilters
                                   ? Icons.keyboard_arrow_up_rounded
                                   : Icons.keyboard_arrow_down_rounded,
                               size: 18,
-                              color: _showFilters
-                                  ? Colors.white70
-                                  : const Color(0xFF777B97),
+                              color: const Color(0xFF777B97),
                             ),
                           ],
                         ),
@@ -1750,41 +1766,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       ),
                     ),
                   ),
-                  if (activeFiltersCount > 0)
-                    Container(
-                      height: 28,
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFFFC04A),
-                            Color(0xFFFF7A00),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.75),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _offersOrange.withValues(alpha: 0.22),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$activeFiltersCount',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                 ],
               );
             },
