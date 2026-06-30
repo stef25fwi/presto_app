@@ -44,7 +44,7 @@ class OfflineBanner extends StatelessWidget {
                   Text(
                     'Consultation uniquement • Les actions d\'écriture sont désactivées',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),

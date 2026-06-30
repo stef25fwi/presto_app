@@ -53,6 +53,7 @@ String _extractOfferDetailImageUrl(dynamic entry) {
   return entry.toString().trim();
 }
 
+// ignore: unused_element
 String _firstOfferDetailPhotoField(dynamic data, List<String> keys) {
   if (data is! Map) return '';
   for (final key in keys) {
@@ -333,8 +334,7 @@ class PrestoOfferDetailsPage extends StatefulWidget {
   });
 
   @override
-  State<PrestoOfferDetailsPage> createState() =>
-      _PrestoOfferDetailsPageState();
+  State<PrestoOfferDetailsPage> createState() => _PrestoOfferDetailsPageState();
 }
 
 class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
@@ -368,11 +368,10 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
 
   void _initMarketplaceFuture() {
     final listingId = _extractMarketplaceListingId(widget.offer);
-    _marketplaceFuture =
-        (listingId.isNotEmpty &&
-                _shouldHydrateMarketplaceOffer(widget.offer, listingId))
-            ? _fetchMarketplaceOffer(listingId)
-            : null;
+    _marketplaceFuture = (listingId.isNotEmpty &&
+            _shouldHydrateMarketplaceOffer(widget.offer, listingId))
+        ? _fetchMarketplaceOffer(listingId)
+        : null;
   }
 
   String _extractMarketplaceListingId(Object? source) {
@@ -392,6 +391,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     return rawId;
   }
 
+  // ignore: unused_element
   String _extractImageUrl(dynamic entry) {
     return _extractOfferDetailImageUrl(entry);
   }
@@ -503,10 +503,13 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
 
     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '';
-    if (digits.length == 10 && digits.startsWith('0'))
+    if (digits.length == 10 && digits.startsWith('0')) {
       return '+33${digits.substring(1)}';
+    }
     if (digits.length == 9 &&
-        (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
+        (digits.startsWith('6') || digits.startsWith('7'))) {
+      return '+33$digits';
+    }
     return digits;
   }
 
@@ -654,7 +657,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     User? authUser = FirebaseAuth.instance.currentUser;
-    var me = authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
+    var me =
+        authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
 
     logRuntimeAction(
       area: 'messaging',
@@ -1069,8 +1073,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                           FirebaseFirestore.instance
                               .collection('listings')
                               .doc(data.offerId)
-                              .update({'phoneViewCount': FieldValue.increment(1)})
-                              .ignore();
+                              .update({
+                            'phoneViewCount': FieldValue.increment(1)
+                          }).ignore();
                         }
                         await _callPhone(context, data.phone);
                       },
@@ -1437,6 +1442,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     };
   }
 
+  // ignore: unused_element
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
     final dynamic rawOffer = widget.offer;
     final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
@@ -2156,8 +2162,8 @@ class _BackgroundDecor extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF1976F3).withOpacity(0.12),
-                    const Color(0xFF1976F3).withOpacity(0.05),
+                    const Color(0xFF1976F3).withValues(alpha: 0.12),
+                    const Color(0xFF1976F3).withValues(alpha: 0.05),
                     Colors.transparent,
                   ],
                 ),
@@ -2170,6 +2176,7 @@ class _BackgroundDecor extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _TopHeader extends StatelessWidget {
   final String title;
   final bool compact;
@@ -2498,7 +2505,7 @@ class _HeroCard extends StatelessWidget {
                     fontSize: compact ? 14 : 15,
                     height: 1.28,
                     fontWeight: FontWeight.w500,
-                    color: textPrimary.withOpacity(0.9),
+                    color: textPrimary.withValues(alpha: 0.9),
                   ),
                 ),
                 if (data.showPendingPhotoNotice) ...[
@@ -2647,6 +2654,7 @@ class _PendingPhotoNotice extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _HeroInfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -2706,8 +2714,8 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          splashColor: Colors.white.withOpacity(0.08),
-          highlightColor: Colors.white.withOpacity(0.04),
+          splashColor: Colors.white.withValues(alpha: 0.08),
+          highlightColor: Colors.white.withValues(alpha: 0.04),
         ),
       ),
     );
@@ -2716,6 +2724,7 @@ class _PhotoGalleryTapOverlay extends StatelessWidget {
 
 // ─── Photo gallery ───────────────────────────────────────────────────────────
 
+// ignore: unused_element
 class _PhotoThumbnailStrip extends StatelessWidget {
   final List<String> imageUrls;
 
@@ -2749,7 +2758,7 @@ class _PhotoThumbnailStrip extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -3079,7 +3088,7 @@ class _PracticalInfoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1A73E8).withOpacity(0.20),
+              color: const Color(0xFF1A73E8).withValues(alpha: 0.20),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -3113,11 +3122,15 @@ class _PracticalInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
     const navy = Color(0xFF18233D);
     const blueSoft = Color(0xFFDCEBFF);
+    // ignore: unused_local_variable
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
+    // ignore: unused_local_variable
     const orange = Color(0xFFFF7B12);
+    // ignore: unused_local_variable
     const green = Color(0xFF45B36B);
 
     return Container(
@@ -3126,12 +3139,12 @@ class _PracticalInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 28 : 32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            color: const Color(0xFF9B8E86).withValues(alpha: 0.10),
             blurRadius: compact ? 18 : 22,
             offset: Offset(0, compact ? 8 : 10),
           ),
           BoxShadow(
-            color: blueSoft.withOpacity(0.55),
+            color: blueSoft.withValues(alpha: 0.55),
             blurRadius: compact ? 15 : 18,
             spreadRadius: 1,
             offset: Offset(0, compact ? 11 : 14),
@@ -3265,12 +3278,12 @@ class _AdvertiserContactCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 28 : 32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            color: const Color(0xFF9B8E86).withValues(alpha: 0.10),
             blurRadius: compact ? 18 : 22,
             offset: Offset(0, compact ? 8 : 10),
           ),
           BoxShadow(
-            color: blueSoft.withOpacity(0.55),
+            color: blueSoft.withValues(alpha: 0.55),
             blurRadius: compact ? 15 : 18,
             spreadRadius: 1,
             offset: Offset(0, compact ? 11 : 14),
@@ -3597,7 +3610,7 @@ class _AdvertiserMetaLine extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
                       BoxShadow(
-                        color: green.withOpacity(0.18),
+                        color: green.withValues(alpha: 0.18),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -3719,8 +3732,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       FirebaseFirestore.instance
           .collection('listings')
           .doc(widget.offerId)
-          .update({'phoneViewCount': FieldValue.increment(1)})
-          .ignore();
+          .update({'phoneViewCount': FieldValue.increment(1)}).ignore();
     }
   }
 
@@ -3994,12 +4006,12 @@ class _InlineCta extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0A63E7).withOpacity(0.35),
+            color: const Color(0xFF0A63E7).withValues(alpha: 0.35),
             blurRadius: compact ? 15 : 18,
             offset: Offset(0, compact ? 7 : 8),
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.35),
+            color: Colors.white.withValues(alpha: 0.35),
             blurRadius: compact ? 5 : 6,
             offset: const Offset(0, -1),
           ),
@@ -4105,6 +4117,7 @@ class _ShareOptionTile extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _AvatarFallback extends StatelessWidget {
   final String initials;
 
@@ -4158,7 +4171,7 @@ class _AvatarFallback extends StatelessWidget {
             child: Container(
               height: 6,
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5A31).withOpacity(0.85),
+                color: const Color(0xFF8B5A31).withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(6),
               ),
             ),

@@ -76,12 +76,12 @@ class ConversationService {
       name: 'ensureOfferConversation',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'offerId': offerId,
-      'offerTitle': offerTitle,
-      'currentUserId': currentUserId,
-      'otherUserId': otherUserId,
-      'currentUserName': currentUserName,
-      'otherUserName': otherUserName,
+        'offerId': offerId,
+        'offerTitle': offerTitle,
+        'currentUserId': currentUserId,
+        'otherUserId': otherUserId,
+        'currentUserName': currentUserName,
+        'otherUserName': otherUserName,
       },
     );
 
@@ -105,10 +105,10 @@ class ConversationService {
       name: 'sendConversationMessage',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
-      'text': text,
-      if (attachments.isNotEmpty)
-        'attachments': attachments.map((entry) => entry.toJson()).toList(),
+        'conversationId': conversationId,
+        'text': text,
+        if (attachments.isNotEmpty)
+          'attachments': attachments.map((entry) => entry.toJson()).toList(),
       },
     );
   }
@@ -122,8 +122,8 @@ class ConversationService {
       name: 'processConversationAttachmentPhoto',
       timeout: const Duration(seconds: 60),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
-      'storagePath': storagePath,
+        'conversationId': conversationId,
+        'storagePath': storagePath,
       },
     );
     final data = Map<String, dynamic>.from(
@@ -145,7 +145,7 @@ class ConversationService {
       name: 'markConversationRead',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -158,7 +158,7 @@ class ConversationService {
       name: 'archiveConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -171,7 +171,7 @@ class ConversationService {
       name: 'unarchiveConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -184,7 +184,7 @@ class ConversationService {
       name: 'blockConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -197,7 +197,7 @@ class ConversationService {
       name: 'unblockConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -210,7 +210,7 @@ class ConversationService {
       name: 'adminUnblockConversation',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -223,7 +223,7 @@ class ConversationService {
       name: 'deleteConversation',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
+        'conversationId': conversationId,
       },
     );
   }
@@ -237,8 +237,8 @@ class ConversationService {
       name: 'deleteConversationMessage',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
-      'conversationId': conversationId,
-      'messageId': messageId,
+        'conversationId': conversationId,
+        'messageId': messageId,
       },
     );
   }

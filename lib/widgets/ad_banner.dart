@@ -168,6 +168,7 @@ class _AdBannerState extends State<AdBanner> {
 
     // Fonction helper: placeholder image (ticker) tant que pub non active
     Widget placeholderBanner() {
+      // ignore: unused_local_variable
       final ph = widget.placeholderHeight ?? (kIsWeb ? 90.0 : 60.0);
       final folder = widget.placeholderFolderPrefix ?? 'assets/carousel_home/';
 

@@ -198,7 +198,7 @@ class _ModeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = option.accent;
     final border = selected ? accent : const Color(0xFFE5E7EB);
-    final fill = selected ? accent.withOpacity(0.10) : Colors.white;
+    final fill = selected ? accent.withValues(alpha: 0.10) : Colors.white;
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
@@ -239,7 +239,7 @@ class _ModeCard extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: accent.withOpacity(0.12),
+                          color: accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -305,7 +305,7 @@ class _ModeMetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.08),
+        color: accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -983,7 +983,7 @@ class _SectionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             decoration: BoxDecoration(
-              color: headerColor.withOpacity(0.12),
+              color: headerColor.withValues(alpha: 0.12),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(18)),
             ),
@@ -1270,7 +1270,7 @@ class _PrestoPrimaryButton extends StatelessWidget {
       child: Container(
         height: 54,
         decoration: BoxDecoration(
-          color: enabled ? background : background.withOpacity(0.35),
+          color: enabled ? background : background.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(18),
           boxShadow: enabled
               ? const [
@@ -1338,7 +1338,7 @@ class _ResultSummaryCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFFFF3E8),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kPrestoOrange.withOpacity(0.25)),
+              border: Border.all(color: kPrestoOrange.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
@@ -1451,9 +1451,9 @@ class _MarketCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             decoration: BoxDecoration(
-              color: levelColor.withOpacity(0.12),
+              color: levelColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: levelColor.withOpacity(0.25)),
+              border: Border.all(color: levelColor.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [

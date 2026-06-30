@@ -1,7 +1,7 @@
 /// Données locales des villes et codes postaux français
 /// Peut servir de fallback si l'API Google Places est indisponible
 
-library city_postal_data;
+library;
 
 class CityPostalData {
   final String city;

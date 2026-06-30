@@ -89,7 +89,7 @@ class _PaymentInfoAudioAdminSectionProdState
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6600).withOpacity(0.12),
+                        color: const Color(0xFFFF6600).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(

@@ -154,10 +154,10 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: kPrestoBlue.withOpacity(0.08),
+                      color: kPrestoBlue.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: kPrestoBlue.withOpacity(0.18),
+                        color: kPrestoBlue.withValues(alpha: 0.18),
                       ),
                     ),
                     child: Text(
@@ -174,7 +174,7 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
@@ -190,7 +190,7 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.035),
+                    color: Colors.black.withValues(alpha: 0.035),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: Colors.black12),
                   ),
@@ -224,14 +224,15 @@ class PublishAiTraceDiagnosticDialog extends StatelessWidget {
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final entry = entries[index];
-                          final color = colorForPublishAiTraceLevel(entry.level);
+                          final color =
+                              colorForPublishAiTraceLevel(entry.level);
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.06),
+                              color: color.withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: color.withOpacity(0.18),
+                                color: color.withValues(alpha: 0.18),
                               ),
                             ),
                             child: Row(

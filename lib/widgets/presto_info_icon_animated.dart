@@ -28,6 +28,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
   late final Animation<double> _rotation;
 
   static const Color kBlue = Color(0xFF1A73E8);
+  // ignore: unused_field
   static const Color kOrange = Color(0xFFFF6600);
 
   @override

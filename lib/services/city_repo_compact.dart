@@ -52,8 +52,9 @@ class CityRepoCompact {
 
   /// CP -> dept candidates (Corse: 20xxx => 2A OU 2B)
   List<String> deptCandidatesFromCp(String cp5) {
-    if (cp5.startsWith('97') || cp5.startsWith('98'))
+    if (cp5.startsWith('97') || cp5.startsWith('98')) {
       return [cp5.substring(0, 3)];
+    }
     if (cp5.startsWith('20')) return ['2A', '2B'];
     return [cp5.substring(0, 2)];
   }

@@ -129,7 +129,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: const Color(0xFF1A73E8).withOpacity(0.1),
+            backgroundColor: const Color(0xFF1A73E8).withValues(alpha: 0.1),
             valueColor: const AlwaysStoppedAnimation<Color>(
               Color(0xFF1A73E8),
             ),
@@ -209,7 +209,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
           color: const Color(0xFFF2F7FF),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: const Color(0xFF1A73E8).withOpacity(0.2),
+            color: const Color(0xFF1A73E8).withValues(alpha: 0.2),
           ),
         ),
         child: Column(
@@ -355,7 +355,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A73E8).withOpacity(0.1),
+                        color: const Color(0xFF1A73E8).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -381,7 +381,7 @@ class ProgressiveAiResultsWidget extends StatelessWidget {
         color: const Color(0xFFFFEBEE),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFE53935).withOpacity(0.3),
+          color: const Color(0xFFE53935).withValues(alpha: 0.3),
         ),
       ),
       child: Column(

@@ -369,7 +369,8 @@ Offer buildOfferDetailsOffer({
       ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
   final category = (data['category'] ?? '').toString().trim();
   final description = (data['description'] ?? '').toString().trim();
-  final isUrgent = (data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false;
+  final isUrgent =
+      (data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false;
   final budget = data['budget'];
   final price = budget is num ? budget.toDouble() : 0.0;
   final rawMedia = (data['media'] as List<dynamic>? ?? const <dynamic>[])
@@ -441,7 +442,8 @@ Offer buildOfferDetailsOffer({
     thumbnailUrl: thumbnailUrl,
     statusBadges: <String>[
       'Disponible',
-      if ((data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false) 'Urgent',
+      if ((data['isUrgent'] as bool?) ?? (data['urgent'] as bool?) ?? false)
+        'Urgent',
       if ((data['verified'] as bool?) ?? false) 'Verifie',
       'Nouveau',
     ],
@@ -523,9 +525,9 @@ class AudioPipelineBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.12),
+        color: c.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: c.withOpacity(0.28)),
+        border: Border.all(color: c.withValues(alpha: 0.28)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -576,7 +578,7 @@ class _PrestoResponsiveFrame extends StatelessWidget {
 
 class CardShell extends StatelessWidget {
   final Widget child;
-  const CardShell({Key? key, required this.child}) : super(key: key);
+  const CardShell({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -588,7 +590,7 @@ class CardShell extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -676,8 +678,9 @@ Future<void> main() async {
       }
     } else {
       // Web: persistance auto si IndexedDB disponible
-      if (kDebugMode)
+      if (kDebugMode) {
         debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
+      }
     }
 
     // ✅ Initialiser le service Firebase centralisé avec optimisations
@@ -685,8 +688,9 @@ Future<void> main() async {
 
     // ✅ Remote Config: charger le pipeline audio
     await PrestoRemoteConfig.init();
-    if (kDebugMode)
+    if (kDebugMode) {
       debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
+    }
     adminWebDebugStore.recordEvent(
       area: 'remote-config',
       message: 'initialized',
@@ -751,8 +755,9 @@ Future<void> main() async {
 
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
-        if (kDebugMode)
+        if (kDebugMode) {
           debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+        }
         SessionState.userId = auth.currentUser!.uid;
       } else {
         if (kDebugMode) debugPrint('[Auth] No user signed in at startup (OK)');
@@ -764,8 +769,9 @@ Future<void> main() async {
       FirebaseAuth.instance.authStateChanges().listen((User? user) {
         SessionState.userId = user?.uid;
         adminWebDebugStore.updateAuth(user);
-        if (kDebugMode)
+        if (kDebugMode) {
           debugPrint('[Auth] global state changed: ${user?.uid ?? "null"}');
+        }
       });
     } catch (e) {
       adminWebDebugStore.recordError('auth', e,
@@ -999,8 +1005,8 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
           builder: (ctx, __) {
             final base = Theme.of(ctx);
             final delta = typographySettings.fontWeightDelta;
-            final withFamily = base.textTheme
-                .apply(fontFamily: typographySettings.fontFamily);
+            final withFamily =
+                base.textTheme.apply(fontFamily: typographySettings.fontFamily);
             final withWeight = shiftTextThemeWeight(withFamily, delta);
             final primaryWithFamily = base.primaryTextTheme
                 .apply(fontFamily: typographySettings.fontFamily);
@@ -1088,13 +1094,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Racine "/" ou mobile → HomePage après 3s (la home se charge en arrière-plan).
     // Deep links → destination directe après 600ms.
-    final isRoot = !kIsWeb ||
-        _normalizedWebPath().isEmpty ||
-        _normalizedWebPath() == '/';
+    final isRoot =
+        !kIsWeb || _normalizedWebPath().isEmpty || _normalizedWebPath() == '/';
     _scheduleNavigation(
-      isRoot
-          ? const Duration(seconds: 3)
-          : const Duration(milliseconds: 600),
+      isRoot ? const Duration(seconds: 3) : const Duration(milliseconds: 600),
     );
   }
 
@@ -1258,7 +1261,8 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 260,
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white, width: 2),
+                            side:
+                                const BorderSide(color: Colors.white, width: 2),
                             padding: const EdgeInsets.symmetric(
                                 vertical: 14, horizontal: 8),
                             foregroundColor: Colors.white,
@@ -1339,9 +1343,9 @@ class _SplashBuildStamp extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.18),
+            color: Colors.black.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.18)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

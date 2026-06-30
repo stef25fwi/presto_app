@@ -13,8 +13,9 @@ String normalize(String s) => s
 /// Déduit dept depuis CP (DOM/TOM: 971/..., Corse 20xxx -> 2A/2B (heuristique))
 String deptFromCp(String cp) {
   if (cp.startsWith('97') || cp.startsWith('98')) return cp.substring(0, 3);
-  if (cp.startsWith('20'))
+  if (cp.startsWith('20')) {
     return '2A'; // fallback (si besoin tu gères 2A/2B au choix)
+  }
   return cp.substring(0, 2);
 }
 

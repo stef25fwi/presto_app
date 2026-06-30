@@ -79,7 +79,8 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       await _load();
       if (!mounted) return;
       if (activated) {
-        showSuccessSnackBar(context, 'Notifications activées sur cet appareil.');
+        showSuccessSnackBar(
+            context, 'Notifications activées sur cet appareil.');
       } else {
         showErrorSnackBar(context, _service.pushActivationFailureMessage());
       }
@@ -95,8 +96,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
     if (kIsWeb) {
       await _showInfoDialog(
         title: 'Réglages des notifications',
-        message:
-            'Sur le web, gère les notifications dans les réglages de ton '
+        message: 'Sur le web, gère les notifications dans les réglages de ton '
             'navigateur (icône cadenas ou ⚙️ à gauche de la barre d’adresse) '
             '→ Notifications.',
       );

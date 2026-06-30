@@ -137,6 +137,7 @@ class MarketplacePublishService {
     );
   }
 
+  // ignore: unused_element
   String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {
     final user = currentUser ?? FirebaseAuth.instance.currentUser;
     if (user?.uid.trim() == ownerId.trim()) {
@@ -389,6 +390,7 @@ class MarketplacePublishService {
     }
   }
 
+  // ignore: unused_element
   CityRecord? _resolveCanonicalCity({
     required String city,
     required String postalCode,

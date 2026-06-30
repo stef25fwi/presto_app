@@ -35,7 +35,6 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
   statusBarBrightness: Brightness.dark,
 );
 
-
 class ConversationsQueryContract {
   const ConversationsQueryContract._();
 
@@ -352,8 +351,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   void _subscribeToUnreadCountForUser(String userId) {
-    if (_conversationStateUserId == userId && _unreadMessagesSub != null)
+    if (_conversationStateUserId == userId && _unreadMessagesSub != null) {
       return;
+    }
     _unreadMessagesSub?.cancel();
     _lastKnownUnreadMessages = 0;
     _unreadMessagesSub = streamInboxCount(
@@ -464,6 +464,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return 'Touchez pour ouvrir la conversation';
   }
 
+  // ignore: unused_element
   String _searchableConversationText(Map<String, dynamic> data, String userId) {
     return [
       _conversationTitle(data, userId),
@@ -479,6 +480,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     ].join(' ').toLowerCase();
   }
 
+  // ignore: unused_element
   DateTime? _conversationSortDate(Map<String, dynamic> data) {
     return parseFirestoreDateTime(
           _conversationValue(data, const ['lastMessageAt', 'last_message_at']),
@@ -491,6 +493,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         );
   }
 
+  // ignore: unused_element
   String? _notificationConversationId(Map<String, dynamic> data) {
     final directValue = _conversationValue(
       data,
@@ -531,9 +534,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     const maxPermissionDeniedRetries = 1;
     var permissionDeniedRetryCount = 0;
     var permissionDeniedRecoveryGeneration = 0;
+    // ignore: unused_local_variable
     var appCheckPrefixRetryCount = 0;
-    var _subscriptionGeneration = 0;
-    var _isRetryingPermissionDenied = false;
+    var subscriptionGeneration = 0;
+    var isRetryingPermissionDenied = false;
 
     _appendAdminConversationLog('mode=$mode user=$userId');
     if (kDebugMode) {
@@ -585,7 +589,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
-      final myGeneration = ++_subscriptionGeneration;
+      final myGeneration = ++subscriptionGeneration;
       _appendAdminConversationLog(
           '1/6 startSubscriptions gen=$myGeneration forceRefresh=$forceRefreshTokens adminMode=$isAdminMode');
 
@@ -632,7 +636,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             '3/6 getIdToken ÉCHEC (${DateTime.now().difference(swToken).inMilliseconds}ms) err=$e');
       }
 
-      if (myGeneration != _subscriptionGeneration ||
+      if (myGeneration != subscriptionGeneration ||
           isCancelled ||
           controller.isClosed) {
         _appendAdminConversationLog(
@@ -690,9 +694,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             (_, value) => _isPermissionDenied(value),
           );
 
-          if (!_isRetryingPermissionDenied &&
+          if (!isRetryingPermissionDenied &&
               permissionDeniedRetryCount < maxPermissionDeniedRetries) {
-            _isRetryingPermissionDenied = true;
+            isRetryingPermissionDenied = true;
             permissionDeniedRetryCount += 1;
             _appendAdminConversationLog(
                 '5/6 ↻ retry permission-denied #$permissionDeniedRetryCount (refus transitoire, non fatal)');
@@ -715,14 +719,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               if (retryGeneration != permissionDeniedRecoveryGeneration ||
                   isCancelled ||
                   controller.isClosed) {
-                _isRetryingPermissionDenied = false;
+                isRetryingPermissionDenied = false;
                 return;
               }
 
               try {
                 await cancelSubscriptions();
               } finally {
-                _isRetryingPermissionDenied = false;
+                isRetryingPermissionDenied = false;
               }
 
               if (!isCancelled && !controller.isClosed) {
@@ -762,10 +766,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             .limit(queryShape['limit']! as int);
         subscriptions.add(
           query.snapshots().listen(
-            (snapshot) => handleSnapshot('admin_global', snapshot),
-            onError: (error, stackTrace) => handleError('admin_global', error),
-            cancelOnError: true,
-          ),
+                (snapshot) => handleSnapshot('admin_global', snapshot),
+                onError: (error, stackTrace) =>
+                    handleError('admin_global', error),
+                cancelOnError: true,
+              ),
         );
       } else {
         // Le listener Firestore ne doit pas être créé avant App Check.
@@ -781,10 +786,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               .where(field, arrayContains: userId);
           subscriptions.add(
             query.snapshots().listen(
-              (snapshot) => handleSnapshot(field, snapshot),
-              onError: (error, stackTrace) => handleError(field, error),
-              cancelOnError: true,
-            ),
+                  (snapshot) => handleSnapshot(field, snapshot),
+                  onError: (error, stackTrace) => handleError(field, error),
+                  cancelOnError: true,
+                ),
           );
         }
       }
@@ -1538,7 +1543,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               fontSize: 72,
               fontWeight: FontWeight.w800,
               letterSpacing: 2,
-              color: Colors.grey.withOpacity(0.07),
+              color: Colors.grey.withValues(alpha: 0.07),
             ),
           ),
         ),
@@ -2019,7 +2024,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           ],
                                         ),
                                         child: Material(
-                                          color: Colors.white.withOpacity(0.98),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.98),
                                           borderRadius:
                                               BorderRadius.circular(16),
                                           child: InkWell(
@@ -2039,15 +2045,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                       8, 12, 8, 12),
                                               decoration: BoxDecoration(
                                                 color: unreadCount > 0
-                                                    ? kWhatsappGreen
-                                                        .withOpacity(0.045)
+                                                    ? kWhatsappGreen.withValues(
+                                                        alpha: 0.045)
                                                     : Colors.transparent,
                                                 borderRadius:
                                                     BorderRadius.circular(16),
                                                 border: Border(
                                                   bottom: BorderSide(
                                                     color: Colors.black
-                                                        .withOpacity(0.06),
+                                                        .withValues(
+                                                            alpha: 0.06),
                                                   ),
                                                 ),
                                               ),
@@ -2411,7 +2418,10 @@ class _ConversationAvatar extends StatelessWidget {
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? const <String, dynamic>{};
         final status = (data['status'] ?? '').toString().trim().toLowerCase();
@@ -2590,7 +2600,7 @@ class _ConversationFilterChip extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: selected
-                    ? Colors.white.withOpacity(0.22)
+                    ? Colors.white.withValues(alpha: 0.22)
                     : const Color(0xFFEAF2FF),
                 borderRadius: BorderRadius.circular(999),
               ),
@@ -2624,7 +2634,7 @@ class _ConversationStateChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(

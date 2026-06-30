@@ -1889,7 +1889,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       final data = doc?.data();
 
-      if (phoneNeeded && data != null && mounted && _phoneController.text.trim().isEmpty) {
+      if (phoneNeeded &&
+          data != null &&
+          mounted &&
+          _phoneController.text.trim().isEmpty) {
         final rawPhone = _firstNonEmptyPublishPhone(
           data,
           const ['phone', 'phoneNumber', 'phone_number'],
@@ -1915,19 +1918,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (profileCity.isNotEmpty || profilePostalCode.isNotEmpty) {
           CityRecord? cityRecord;
           if (profilePostalCode.isNotEmpty) {
-            cityRecord = FrenchCityPostalValidator.instance.resolveCanonicalCity(
+            cityRecord =
+                FrenchCityPostalValidator.instance.resolveCanonicalCity(
               city: profileCity,
               postalCode: profilePostalCode,
             );
           }
           if (cityRecord == null && profileCity.isNotEmpty) {
-            final matches = FrenchCityPostalValidator.instance.searchSuggestions(
+            final matches =
+                FrenchCityPostalValidator.instance.searchSuggestions(
               profileCity,
               postalCodeHint: profilePostalCode,
               limit: 5,
             );
             for (final candidate in matches) {
-              if (profilePostalCode.isEmpty || candidate.cp == profilePostalCode) {
+              if (profilePostalCode.isEmpty ||
+                  candidate.cp == profilePostalCode) {
                 cityRecord = candidate;
                 break;
               }
@@ -2325,6 +2331,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _descriptionController.selection = TextSelection.fromPosition(
       TextPosition(offset: _descriptionController.text.length),
     );
+    // ignore: use_build_context_synchronously
     FocusScope.of(ctx).requestFocus(FocusNode());
   }
 
@@ -2799,11 +2806,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           showUserMessage: false,
         );
         final uid = secureContext?.uid;
-        if (uid == null)
+        if (uid == null) {
           throw const MicroIaClientAuthException(
             code: 'auth-missing',
             message: 'Connecte-toi pour utiliser la dictée IA.',
           );
+        }
 
         final blob = await _webRec.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(
@@ -2871,9 +2879,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     String? recordedPath;
     try {
       recordedPath = await _recorder.stop();
-      if (recordedPath == null) {
-        recordedPath = _recordingPath;
-      }
+      recordedPath ??= _recordingPath;
       _recordingPath = null;
       _appendPublishAiTrace(
         'mobile_audio',
@@ -3741,8 +3747,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         },
       );
       final ctx = appNavigatorKey.currentContext;
+      // ignore: use_build_context_synchronously
       if (ctx != null && ScaffoldMessenger.maybeOf(ctx) != null) {
         showErrorSnackBar(
+          // ignore: use_build_context_synchronously
           ctx,
           'Échec de la publication : ${_formatPublishError(e)}',
         );
@@ -3863,7 +3871,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             contentPadding: const EdgeInsets.fromLTRB(
-                              12, 14, 12, 14,
+                              12,
+                              14,
+                              12,
+                              14,
                             ),
                             hintText:
                                 'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
@@ -3915,7 +3926,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: _withAiPendingOverlay(
                     showPending: _showAiPendingForCategory,
                     child: DropdownButtonFormField<String>(
-                      value: _category,
+                      initialValue: _category,
                       dropdownColor: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       decoration: InputDecoration(
@@ -3958,7 +3969,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 // SOUS-CATÉGORIE (dropdown dynamique)
                 if (_category != null)
                   DropdownButtonFormField<String>(
-                    value: _selectedSubCategory,
+                    initialValue: _selectedSubCategory,
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     decoration: InputDecoration(
@@ -4157,7 +4168,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 _withPublishFieldHighlight(
                   fieldId: 'delay',
                   child: DropdownButtonFormField<String>(
-                    value: _missionDelay,
+                    initialValue: _missionDelay,
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     decoration: InputDecoration(
@@ -4202,7 +4213,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       Expanded(
                         flex: 2,
                         child: DropdownButtonFormField<String>(
-                          value: _budgetType,
+                          initialValue: _budgetType,
                           dropdownColor: Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           decoration: InputDecoration(
@@ -4411,7 +4422,7 @@ class _FieldPendingDots extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Colors.white.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(999),
       ),
       child: const Padding(
@@ -4484,4 +4495,3 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
     );
   }
 }
-

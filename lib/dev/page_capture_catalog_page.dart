@@ -209,7 +209,8 @@ class PageCaptureCatalogPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(color: Colors.grey.shade300),
             ),
-            title: Text('${item.number.toString().padLeft(2, '0')}. ${item.title}'),
+            title: Text(
+                '${item.number.toString().padLeft(2, '0')}. ${item.title}'),
             subtitle: Text(item.note ?? route),
             trailing: FilledButton(
               onPressed: () {
@@ -270,7 +271,8 @@ class _PageCaptureViewer extends StatelessWidget {
               child: Row(
                 children: [
                   FilledButton.icon(
-                    onPressed: () => Navigator.of(context).pushReplacementNamed('/page-catalog'),
+                    onPressed: () => Navigator.of(context)
+                        .pushReplacementNamed('/page-catalog'),
                     icon: const Icon(Icons.arrow_back),
                     label: const Text('Catalogue'),
                   ),
@@ -278,11 +280,12 @@ class _PageCaptureViewer extends StatelessWidget {
                   Expanded(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.72),
+                        color: Colors.black.withValues(alpha: 0.72),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                         child: Text(
                           '${entry.number.toString().padLeft(2, '0')} - ${entry.title}',
                           style: const TextStyle(

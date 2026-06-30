@@ -439,9 +439,8 @@ class NotificationService {
   void _startBadgeUpdates(String userId) {
     if (kIsWeb) return;
     _badgeCountSubscription?.cancel();
-    _badgeCountSubscription = streamInboxCount(userId: userId)
-        .distinct()
-        .listen((count) async {
+    _badgeCountSubscription =
+        streamInboxCount(userId: userId).distinct().listen((count) async {
       try {
         final supported = await FlutterAppBadger.isAppBadgeSupported();
         if (!supported) return;
@@ -466,6 +465,7 @@ class NotificationService {
   }
 
   /// Handler pour les messages reçus en background (app fermée)
+  // ignore: unused_element
   static Future<void> _backgroundHandler(RemoteMessage message) async {
     debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
     debugPrint(

@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'app/presto_overlay_theme.dart';
 
-const String kPrestoCanonicalWebOrigin =
-  'https://ilipresto.fr';
+const String kPrestoCanonicalWebOrigin = 'https://ilipresto.fr';
 
 String prestoPublicAppOrigin() {
   if (!kIsWeb) {
@@ -183,7 +182,7 @@ Widget buildRegionDropdown({
       }
 
       return DropdownButtonFormField<RegionItem>(
-        value: value,
+        initialValue: value,
         isExpanded: true,
         dropdownColor: overlayTheme.surfaceColor,
         borderRadius: overlayTheme.popupRadius,

@@ -9,8 +9,9 @@ Map<String, dynamic> mapMarketplaceListingToOfferUi({
       .map((entry) => Map<String, dynamic>.from(entry.cast<String, dynamic>()))
       .toList(growable: false);
   final mediaUrls = media
-      .map((entry) =>
-          ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '').toString().trim())
+      .map((entry) => ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '')
+          .toString()
+          .trim())
       .where((value) => value.isNotEmpty)
       .toList(growable: false);
   final imageUrls = ((data['imageUrls'] as List?) ?? const <dynamic>[])
@@ -26,13 +27,13 @@ Map<String, dynamic> mapMarketplaceListingToOfferUi({
           'Annonceur ilipresto')
       .toString()
       .trim();
-    final ownerAvatarUrl = (data['ownerAvatarUrl'] ??
-        data['avatarUrl'] ??
-        data['photoUrl'] ??
-        data['photoURL'] ??
-        data['profilePhotoUrl'] ??
-        data['imageUrl'] ??
-        '')
+  final ownerAvatarUrl = (data['ownerAvatarUrl'] ??
+          data['avatarUrl'] ??
+          data['photoUrl'] ??
+          data['photoURL'] ??
+          data['profilePhotoUrl'] ??
+          data['imageUrl'] ??
+          '')
       .toString()
       .trim();
   final publishedAt = data['publishedAt'];
@@ -67,7 +68,8 @@ Map<String, dynamic> mapMarketplaceListingToOfferUi({
     'ownerName': ownerName.isEmpty ? 'Annonceur ilipresto' : ownerName,
     'ownerId': ownerId,
     'userId': ownerId,
-    'publishedAtLabel': publishedAt is Timestamp ? 'Annonce publiee' : 'Annonce',
+    'publishedAtLabel':
+        publishedAt is Timestamp ? 'Annonce publiee' : 'Annonce',
     'isMarketplace': true,
     'advertiser': <String, dynamic>{
       'id': ownerId,

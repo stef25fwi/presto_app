@@ -40,7 +40,7 @@ class _TypographyPillButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: isDefault
-                  ? Colors.black.withOpacity(0.45)
+                  ? Colors.black.withValues(alpha: 0.45)
                   : const Color(0xFF1A73E8),
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [
@@ -135,7 +135,13 @@ class _TypographySheetState extends State<_TypographySheet> {
   }
 
   String _weightLabel(int delta) {
-    const labels = {-2: '−2 léger', -1: '−1', 0: 'Normal', 1: '+1', 2: '+2 gras'};
+    const labels = {
+      -2: '−2 léger',
+      -1: '−1',
+      0: 'Normal',
+      1: '+1',
+      2: '+2 gras'
+    };
     return labels[delta] ?? '$delta';
   }
 
@@ -323,7 +329,8 @@ class _TypographySheetState extends State<_TypographySheet> {
                         style: TextStyle(
                           fontFamily: _font,
                           fontSize: 18,
-                          fontWeight: shiftFontWeight(FontWeight.w700, _weightDelta),
+                          fontWeight:
+                              shiftFontWeight(FontWeight.w700, _weightDelta),
                         )),
                     Text(
                       'Texte courant — iliprestō propose des services.',
@@ -393,8 +400,8 @@ class _Row extends StatelessWidget {
           SizedBox(
             width: 58,
             child: Text(label,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600)),
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           ),
           Expanded(child: child),
         ],

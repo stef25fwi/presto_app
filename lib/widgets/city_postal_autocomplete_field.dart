@@ -456,6 +456,7 @@ class _CityPostalAutocompleteFieldState
 
     // Sinon choix
     final picked = await showModalBottomSheet<String>(
+      // ignore: use_build_context_synchronously
       context: context,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),

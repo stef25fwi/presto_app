@@ -90,26 +90,70 @@ class ProSiretService {
   Future<ProSiretVerificationResult> preVerifySiret(String rawSiret) async {
     final cleaned = cleanSiret(rawSiret);
 
+    if (cleaned.isEmpty) {
+      throw const ProSiretException(
+        'Saisissez votre numéro SIRET avant de lancer la vérification.',
+      );
+    }
+
     if (!isValidSiretFormat(cleaned)) {
-      throw Exception('Le SIRET doit contenir exactement 14 chiffres.');
+      throw const ProSiretException(
+        'Le SIRET doit contenir exactement 14 chiffres.',
+      );
     }
 
     if (!isValidSiretLuhn(cleaned)) {
-      throw Exception('Le numéro SIRET n’est pas valide.');
+      throw const ProSiretException(
+        'Le numéro SIRET saisi n’est pas valide. Vérifiez les 14 chiffres.',
+      );
     }
 
-    final callable = _functions.httpsCallable('preVerifySiret');
-    final response = await callable.call(<String, dynamic>{
-      'siret': cleaned,
-    });
+    try {
+      final callable = _functions.httpsCallable('preVerifySiret');
+      final response = await callable.call(<String, dynamic>{
+        'siret': cleaned,
+      });
 
-    final rawData = response.data;
-    if (rawData is! Map) {
-      throw Exception('Réponse SIRET invalide.');
+      final rawData = response.data;
+      if (rawData is! Map) {
+        throw const ProSiretException(
+          'Réponse SIRET invalide. Réessayez dans quelques instants.',
+        );
+      }
+
+      final data = Map<String, dynamic>.from(rawData);
+      return ProSiretVerificationResult.fromMap(data);
+    } on FirebaseFunctionsException catch (error) {
+      throw ProSiretException(_friendlySiretFunctionMessage(error));
+    }
+  }
+
+  String _friendlySiretFunctionMessage(FirebaseFunctionsException error) {
+    final message = (error.message ?? '').trim();
+
+    if (message.isNotEmpty &&
+        !message.toLowerCase().contains('internal') &&
+        !message.toLowerCase().contains('firebase')) {
+      return message;
     }
 
-    final data = Map<String, dynamic>.from(rawData);
-    return ProSiretVerificationResult.fromMap(data);
+    switch (error.code) {
+      case 'invalid-argument':
+        return 'Le numéro SIRET saisi est invalide. Vérifiez les 14 chiffres.';
+      case 'not-found':
+        return 'Aucune entreprise active n’a été trouvée avec ce SIRET.';
+      case 'failed-precondition':
+        return 'Ce SIRET correspond à un établissement fermé ou inactif.';
+      case 'resource-exhausted':
+        return 'Trop de vérifications ont été effectuées. Réessayez plus tard.';
+      case 'unavailable':
+      case 'deadline-exceeded':
+        return 'La vérification SIRET est temporairement indisponible. Réessayez dans quelques instants.';
+      case 'permission-denied':
+        return 'La vérification SIRET est bloquée pour le moment. Rechargez la page puis réessayez.';
+      default:
+        return 'Impossible de vérifier ce SIRET pour le moment. Réessayez.';
+    }
   }
 
   Future<ProSiretVerificationResult> verifySiret(String rawSiret) async {

@@ -36,10 +36,8 @@ Future<String> requestMarketplaceHumanVerificationToken({
     // Un timeout est indispensable : la promesse JS peut ne jamais se regler
     // (script reCAPTCHA bloque sans onerror, grecaptcha.ready muet, execute
     // sans callback) -> sans cela le bouton "Je publie" tourne a l'infini.
-    final token = await bridge
-        .execute(siteKey.toJS, action.toJS)
-        .toDart
-        .timeout(
+    final token =
+        await bridge.execute(siteKey.toJS, action.toJS).toDart.timeout(
       const Duration(seconds: 12),
       onTimeout: () {
         debugPrint('[Marketplace reCAPTCHA] web execution timed out');

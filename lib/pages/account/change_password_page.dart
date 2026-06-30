@@ -59,8 +59,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   String? _passwordValidator(String? value) {
     final text = value ?? '';
     if (text.length < 8) return '8 caractères minimum.';
-    if (!RegExp(r'[A-Za-z]').hasMatch(text))
+    if (!RegExp(r'[A-Za-z]').hasMatch(text)) {
       return 'Ajoute au moins une lettre.';
+    }
     if (!RegExp(r'[0-9]').hasMatch(text)) return 'Ajoute au moins un chiffre.';
     return null;
   }
@@ -97,8 +98,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   ),
                 ),
                 validator: (value) {
-                  if ((value ?? '').isEmpty)
+                  if ((value ?? '').isEmpty) {
                     return 'Mot de passe actuel obligatoire.';
+                  }
                   return null;
                 },
               ),

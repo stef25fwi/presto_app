@@ -898,6 +898,7 @@ class _AdminDashboardComputed {
   }) {
     final totalAccounts = _toInt(userStats?['totalAccounts']);
     final onlineUsers = _toInt(userStats?['onlineUsers']);
+    // ignore: unused_local_variable
     final proLogins = _toInt(userStats?['proLogins']);
     final start = _startOfDay(DateTime.now())
         .subtract(Duration(days: window.dayCount - 1));
@@ -1052,7 +1053,7 @@ class _AdminDashboardComputed {
     final totalTrackedEvents = analyticsTotals.values
         .fold<int>(0, (runningTotal, value) => runningTotal + value);
 
-    int _sumByKeyPattern(RegExp pattern) {
+    int sumByKeyPattern(RegExp pattern) {
       var sum = 0;
       analyticsTotals.forEach((key, value) {
         if (pattern.hasMatch(key)) {
@@ -1063,11 +1064,10 @@ class _AdminDashboardComputed {
     }
 
     final errorEvents =
-        _sumByKeyPattern(RegExp(r'error|failed', caseSensitive: false));
-    final crashEvents =
-        _sumByKeyPattern(RegExp(r'crash', caseSensitive: false));
+        sumByKeyPattern(RegExp(r'error|failed', caseSensitive: false));
+    final crashEvents = sumByKeyPattern(RegExp(r'crash', caseSensitive: false));
 
-    double? _metricFromMap(Map<String, dynamic> metrics, List<String> keys) {
+    double? metricFromMap(Map<String, dynamic> metrics, List<String> keys) {
       for (final key in keys) {
         if (metrics.containsKey(key)) {
           final value = _toDouble(metrics[key]);
@@ -1085,7 +1085,7 @@ class _AdminDashboardComputed {
       final data = doc.data();
       if ((data['metricGroup'] ?? '').toString() != 'marketplace') continue;
       final metrics = _stringKeyMap(data['metrics']);
-      final latency = _metricFromMap(
+      final latency = metricFromMap(
         metrics,
         const [
           'api_latency_ms_avg',
@@ -1098,7 +1098,7 @@ class _AdminDashboardComputed {
         latencySum += latency;
         latencyCount += 1;
       }
-      final load = _metricFromMap(
+      final load = metricFromMap(
         metrics,
         const [
           'app_load_ms_avg',
@@ -1652,7 +1652,7 @@ class _EmailDashboardContent extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color:
                                           (hasAlert ? Colors.red : prestoBlue)
-                                              .withOpacity(0.10),
+                                              .withValues(alpha: 0.10),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: Icon(
@@ -2312,7 +2312,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: rule.color.withOpacity(0.08),
+                    color: rule.color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -2350,9 +2350,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 margin: const EdgeInsets.only(top: 10),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: rule.color.withOpacity(0.07),
+                  color: rule.color.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: rule.color.withOpacity(0.22)),
+                  border: Border.all(color: rule.color.withValues(alpha: 0.22)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2404,9 +2404,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: prestoBlue.withOpacity(0.07),
+          color: prestoBlue.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: prestoBlue.withOpacity(0.18)),
+          border: Border.all(color: prestoBlue.withValues(alpha: 0.18)),
         ),
         child: Row(
           children: const [
@@ -2504,7 +2504,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: prestoBlue.withOpacity(0.18)),
+        border: Border.all(color: prestoBlue.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2592,7 +2592,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: prestoBlue.withOpacity(0.08),
+                  color: prestoBlue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -2600,7 +2600,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: prestoBlue.withOpacity(0.92),
+                    color: prestoBlue.withValues(alpha: 0.92),
                   ),
                 ),
               ),
@@ -2608,7 +2608,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: prestoOrange.withOpacity(0.08),
+                  color: prestoOrange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -2616,7 +2616,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: prestoOrange.withOpacity(0.92),
+                    color: prestoOrange.withValues(alpha: 0.92),
                   ),
                 ),
               ),
@@ -2907,7 +2907,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => const _BroadcastNotificationAdminPage(),
+                          builder: (_) =>
+                              const _BroadcastNotificationAdminPage(),
                         ),
                       );
                     },
@@ -3130,8 +3131,7 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                               ? prestoBlue
                               : const Color(0xFFD7DEE8),
                         ),
-                        labelPadding:
-                            const EdgeInsets.symmetric(horizontal: 6),
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -3440,8 +3440,7 @@ class _BroadcastNotificationAdminPageState
                 selected: {_target},
                 onSelectionChanged: _sending
                     ? null
-                    : (selection) =>
-                        setState(() => _target = selection.first),
+                    : (selection) => setState(() => _target = selection.first),
               ),
               const SizedBox(height: 16),
               Card(
@@ -4016,9 +4015,10 @@ class _AdminMetricDomainCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: domain.color.withOpacity(0.10),
+                      color: domain.color.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: domain.color.withOpacity(0.20)),
+                      border: Border.all(
+                          color: domain.color.withValues(alpha: 0.20)),
                     ),
                     child: Icon(domain.icon, color: domain.color, size: 20),
                   ),
@@ -4111,9 +4111,9 @@ class _AdminMiniChart extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.16)),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4154,7 +4154,7 @@ class _AdminSparklinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final axisPaint = Paint()
-      ..color = color.withOpacity(0.18)
+      ..color = color.withValues(alpha: 0.18)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     canvas.drawLine(
@@ -4198,7 +4198,7 @@ class _AdminSparklinePainter extends CustomPainter {
     fillPath.close();
 
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.12)
+      ..color = color.withValues(alpha: 0.12)
       ..style = PaintingStyle.fill;
     canvas.drawPath(fillPath, fillPaint);
 
@@ -4236,9 +4236,9 @@ class _AdminMetricPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
@@ -4363,9 +4363,10 @@ class _ProfileCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: prestoBlue.withOpacity(0.10),
+                    color: prestoBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: prestoBlue.withOpacity(0.20)),
+                    border:
+                        Border.all(color: prestoBlue.withValues(alpha: 0.20)),
                   ),
                   child: Text(
                     role,
@@ -4671,9 +4672,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.20)),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
       ),
       child: Text(
         label,
@@ -4743,9 +4744,9 @@ class _DashboardPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.18)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -5107,7 +5108,7 @@ class _MicroIaCard extends StatelessWidget {
                                 scale: 0.85,
                                 child: Switch(
                                   value: ultraFastEnabled,
-                                  activeColor: prestoOrange,
+                                  activeThumbColor: prestoOrange,
                                   onChanged: onUltraFastChanged,
                                 ),
                               ),
@@ -5175,7 +5176,7 @@ class _MicroIaCard extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: prestoBlue.withOpacity(0.10),
+                    color: prestoBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.autorenew_rounded,
@@ -5207,7 +5208,7 @@ class _MicroIaCard extends StatelessWidget {
                 Switch(
                   value: fallback,
                   onChanged: onFallbackChanged,
-                  activeColor: prestoOrange,
+                  activeThumbColor: prestoOrange,
                 ),
               ],
             ),
@@ -5451,7 +5452,7 @@ class _CardShell extends StatelessWidget {
           BoxShadow(
             blurRadius: 18,
             offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
           ),
         ],
       ),

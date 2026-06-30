@@ -358,7 +358,7 @@ class _AdPlaceholderImagesAdminPageState
     return ReorderableListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       itemCount: images.length,
-      onReorder: (oldIndex, newIndex) {
+      onReorderItem: (oldIndex, newIndex) {
         setState(() {
           if (newIndex > oldIndex) newIndex--;
           final item = _reorderBuffer!.removeAt(oldIndex);

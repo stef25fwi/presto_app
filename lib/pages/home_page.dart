@@ -1088,8 +1088,9 @@ class _HomePageState extends State<HomePage>
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w500),
                     ),
-                    tileColor:
-                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
+                    tileColor: isHighlighted
+                        ? kPrestoBlue.withValues(alpha: 0.08)
+                        : null,
                     onTap: () => onSelected(option),
                   );
                 },
@@ -1449,202 +1450,203 @@ class _HomePageState extends State<HomePage>
                 _currentSlide = index;
               });
             },
-          itemBuilder: (context, index) {
-            final slideIndex = index;
-            final slide = _slides[slideIndex];
+            itemBuilder: (context, index) {
+              final slideIndex = index;
+              final slide = _slides[slideIndex];
 
-            // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-            if (slideIndex == 0) {
-              const String bigText =
-                  "Trouvez immédiatement quelqu'un pour faire le job !";
+              // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
+              if (slideIndex == 0) {
+                const String bigText =
+                    "Trouvez immédiatement quelqu'un pour faire le job !";
 
-              return Container(
+                return Container(
+                  height: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: kPrestoOrange,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 18,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        // ✅ Phrase principale en très gros sur toute la largeur
+                        Text(
+                          bigText,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            height: 1.18,
+                            shadows: [
+                              Shadow(
+                                color: Color(0x4D000000),
+                                blurRadius: 6,
+                                offset: Offset(0, 1.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          "Une personne près de chez vous, en quelques minutes.",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            height: 1.3,
+                            shadows: [
+                              Shadow(
+                                color: Color(0x40000000),
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
+              if (slideIndex == 1) {
+                return const EntrepreneurToolboxSlide();
+              }
+
+              // 🔁 Slides texte restants : layout texte + icône / image
+              final VoidCallback? onSlideTap =
+                  slideIndex == (_slides.length - 1)
+                      ? () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LegalInfoPage(),
+                            ),
+                          );
+                        }
+                      : null;
+
+              final slideBody = Container(
                 height: double.infinity,
                 decoration: const BoxDecoration(
                   color: kPrestoOrange,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 18,
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      // ✅ Phrase principale en très gros sur toute la largeur
-                      Text(
-                        bigText,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
-                          height: 1.18,
-                          shadows: [
-                            Shadow(
-                              color: Color(0x4D000000),
-                              blurRadius: 6,
-                              offset: Offset(0, 1.5),
+                  child: Row(
+                    children: [
+                      // Texte
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              slide.badge.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              slide.title,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: _homeSlideTitleFontSize,
+                                fontWeight: FontWeight.w900,
+                                height: 1.25,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0x4D000000),
+                                    blurRadius: 6,
+                                    offset: Offset(0, 1.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              slide.subtitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0x40000000),
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: 12),
-                      Text(
-                        "Une personne près de chez vous, en quelques minutes.",
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
-                          shadows: [
-                            Shadow(
-                              color: Color(0x40000000),
-                              blurRadius: 4,
-                              offset: Offset(0, 1),
-                            ),
-                          ],
+
+                      // 👉 Illustration (icône) sur les slides texte
+                      if (slideIndex != 0) ...[
+                        const SizedBox(width: 8),
+                        _buildSlideIllustration(
+                          slide,
+                          index,
+                          onTap: onSlideTap,
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
               );
-            }
 
-            // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
-            if (slideIndex == 1) {
-              return const EntrepreneurToolboxSlide();
-            }
-
-            // 🔁 Slides texte restants : layout texte + icône / image
-            final VoidCallback? onSlideTap = slideIndex == (_slides.length - 1)
-                ? () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const LegalInfoPage(),
-                      ),
-                    );
-                  }
-                : null;
-
-            final slideBody = Container(
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                color: kPrestoOrange,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    // Texte
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            slide.badge.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            slide.title,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: _homeSlideTitleFontSize,
-                              fontWeight: FontWeight.w900,
-                              height: 1.25,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0x4D000000),
-                                  blurRadius: 6,
-                                  offset: Offset(0, 1.5),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            slide.subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0x40000000),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // 👉 Illustration (icône) sur les slides texte
-                    if (slideIndex != 0) ...[
-                      const SizedBox(width: 8),
-                      _buildSlideIllustration(
-                        slide,
-                        index,
-                        onTap: onSlideTap,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            );
-
-            if (onSlideTap == null) return slideBody;
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onSlideTap,
-              child: slideBody,
-            );
-          },
-        ),
-        // Indicateurs
-        Positioned(
-          bottom: 8,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _slides.length,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: _currentSlide == index ? 16 : 8,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: _currentSlide == index
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(999),
+              if (onSlideTap == null) return slideBody;
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onSlideTap,
+                child: slideBody,
+              );
+            },
+          ),
+          // Indicateurs
+          Positioned(
+            bottom: 8,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _slides.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _currentSlide == index ? 16 : 8,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: _currentSlide == index
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         ],
       ),
     );
@@ -1660,13 +1662,13 @@ class _HomePageState extends State<HomePage>
     // A la fermeture du clavier, la barre reapparait normalement en bas.
     final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
-    final _statusBarColor = _selectedIndex == 0
+    final statusBarColor = _selectedIndex == 0
         ? Colors.white // home tab: scaffold blanc → icônes sombres
         : (!kIsWeb && _selectedIndex == 1)
             ? kPrestoOrange
             : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: prestoOverlayStyleFor(_statusBarColor),
+      value: prestoOverlayStyleFor(statusBarColor),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
@@ -1891,7 +1893,7 @@ class _HomePageState extends State<HomePage>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.16),
+                        color: Colors.black.withValues(alpha: 0.16),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -2076,12 +2078,12 @@ class UnreadInboxBell extends StatelessWidget {
   final Widget Function(BuildContext context, int badgeCount) builder;
 
   const UnreadInboxBell({
-    Key? key,
+    super.key,
     required this.userId,
     required this.builder,
     this.monitoringKeyPrefix,
     this.countType = InboxCountType.totalUnread,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2159,7 +2161,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           kPrestoOrange,
-                          kPrestoOrange.withOpacity(0.3),
+                          kPrestoOrange.withValues(alpha: 0.3),
                         ],
                       ),
                     ),
@@ -2176,7 +2178,7 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                   color: const Color(0xFFF7FAFF),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: kPrestoBlue.withOpacity(0.12),
+                    color: kPrestoBlue.withValues(alpha: 0.12),
                   ),
                 ),
                 padding:

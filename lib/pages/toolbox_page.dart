@@ -376,7 +376,7 @@ class _CheckItem extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: ToolboxPage.success.withOpacity(0.12),
+            color: ToolboxPage.success.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check_rounded,

@@ -64,7 +64,7 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
             border: Border.all(color: kBorder),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.18),
+                color: Colors.black.withValues(alpha: 0.18),
                 blurRadius: 28,
                 offset: const Offset(0, 14),
               ),
@@ -170,7 +170,8 @@ class _PaymentInfoPopupState extends State<PaymentInfoPopup> {
                           Navigator.of(context).pop();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => const LegalInfoPage(initialTab: 2),
+                              builder: (_) =>
+                                  const LegalInfoPage(initialTab: 2),
                             ),
                           );
                         }),
@@ -255,7 +256,8 @@ class _Header extends StatelessWidget {
                 color: Color(0xFFF3F6FB),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
+              child:
+                  const Icon(Icons.close_rounded, color: kBlueDark, size: 28),
             ),
           ),
         ],
@@ -400,9 +402,9 @@ class _RuleCard extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 78),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.25)),
+              border: Border.all(color: color.withValues(alpha: 0.25)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,6 +431,7 @@ class _RuleCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _PaymentMethods extends StatelessWidget {
   const _PaymentMethods();
 
@@ -621,4 +624,3 @@ class _MoreInfoTile extends StatelessWidget {
     );
   }
 }
-
