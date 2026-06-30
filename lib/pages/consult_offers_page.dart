@@ -463,7 +463,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     try {
       await Future.sync(_preloadRegionDeptData);
     } catch (error) {
-      debugPrint('[ConsultOffers] Préchargement région/département ignoré: $error');
+      debugPrint(
+          '[ConsultOffers] Préchargement région/département ignoré: $error');
     }
 
     final user = FirebaseAuth.instance.currentUser;
@@ -1346,14 +1347,18 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Widget _buildRemovableFilterChip({
-  final isDelayInterventionChip = label.toLowerCase().contains('délai') || label.toLowerCase().contains('delai') || label.toLowerCase().contains('intervention');
-
     required String label,
     required VoidCallback onDeleted,
   }) {
+    final lowerLabel = label.toLowerCase();
+    final isDelayInterventionChip = lowerLabel.contains('délai') ||
+        lowerLabel.contains('delai') ||
+        lowerLabel.contains('intervention');
     return InputChip(
       label: Text(label),
       onDeleted: onDeleted,
+      deleteIconColor:
+          isDelayInterventionChip ? Colors.white : const Color(0xFF1F4E95),
       deleteIcon: const Icon(
         Icons.close_rounded,
         size: 18,
@@ -1363,8 +1368,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         fontWeight: FontWeight.w700,
         color: Color(0xFF1F4E95),
       ),
-      backgroundColor: isDelayInterventionChip ? const Color(0xFFFF6600) : Colors.white,
-      side: BorderSide(color: isDelayInterventionChip ? const Color(0xFFFF6600) : const Color(0xFFE5E7EB)),
+      backgroundColor: isDelayInterventionChip
+          ? const Color(0xFFFF6600)
+          : const Color(0xFFF4F8FF),
+      side: BorderSide(
+          color: isDelayInterventionChip
+              ? const Color(0xFFFF6600)
+              : const Color(0xFFBED5F8)),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999),
       ),
