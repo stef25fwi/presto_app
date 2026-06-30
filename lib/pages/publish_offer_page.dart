@@ -474,7 +474,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
-  bool _isPublishAiOverlayVisible = false;
   bool _isListening = false;
 
   bool _attemptedSubmit = false; // affiche erreurs après tentative
@@ -2798,7 +2797,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       setState(() {
         _isListening = false;
         _isAnalyzing = true;
-        unawaited(_showPublishAiAudioOverlay());
       });
 
       try {
@@ -2846,6 +2844,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           audioResult['text'] as String,
           combinedDraft: audioResult['draft'] as Map<String, dynamic>?,
         );
+
+        if (mounted && _isAnalyzing) {
+          setState(() => _isAnalyzing = false);
+        }
+        // _stopPublishAiVisualAfterDraftApply
       } catch (e, st) {
         await CrashlyticsContext.recordError(
           e is Exception ? e : Exception(e.toString()),
@@ -2925,7 +2928,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           );
         }
       } finally {
-        _hidePublishAiAudioOverlay();
         if (mounted) setState(() => _isAnalyzing = false);
       }
       return;
@@ -3093,94 +3095,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
-    }
-  }
-
-  Future<void> _showPublishAiAudioOverlay() async {
-    if (!mounted || _isPublishAiOverlayVisible) return;
-    _isPublishAiOverlayVisible = true;
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (dialogContext) {
-        return PopScope(
-          canPop: false,
-          child: Dialog(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF13C8FF),
-                    Color(0xFF0078FF),
-                    Color(0xFF004BE8),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(26),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x6613A8FF),
-                    blurRadius: 26,
-                    offset: Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  OrbitingAiVisual(size: 60),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Analyse IA en cours...',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          'L’audio est transformé en annonce.',
-                          style: TextStyle(
-                            color: Color(0xE6FFFFFF),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            height: 1.25,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    _isPublishAiOverlayVisible = false;
-  }
-
-  void _hidePublishAiAudioOverlay() {
-    if (!_isPublishAiOverlayVisible) return;
-    _isPublishAiOverlayVisible = false;
-
-    final navigator = Navigator.of(context, rootNavigator: true);
-    if (navigator.canPop()) {
-      navigator.pop();
     }
   }
 
@@ -3989,6 +3903,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 const SizedBox(height: 6),
                 AiPublishControl(
                   state: _aiPublishState,
+                  isAudioAnalyzing: _isAnalyzing,
                   onStartRecording: _startMic,
                   onStopRecording: _stopMic,
                   onStartWriting: _scrollToDescription,
@@ -3996,7 +3911,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   onClear: _clearPublishAiTrace,
                   showAdminDiagnostics: _adminAudioRuntimeAccessState == 1,
                 ),
-                _buildPublishAiAnalyzingBanner(),
                 const SizedBox(height: 16),
 
                 // DESCRIPTION

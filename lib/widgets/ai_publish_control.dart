@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'orbiting_ai_visual.dart';
+
 enum AiPublishState {
   ready,
   recording,
@@ -16,6 +18,7 @@ class AiPublishControl extends StatefulWidget {
   const AiPublishControl({
     super.key,
     required this.state,
+    this.isAudioAnalyzing = false,
     required this.onStartRecording,
     required this.onStopRecording,
     required this.onStartWriting,
@@ -25,6 +28,7 @@ class AiPublishControl extends StatefulWidget {
   });
 
   final AiPublishState state;
+  final bool isAudioAnalyzing;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
   final VoidCallback onStartWriting;
@@ -67,6 +71,7 @@ class _AiPublishControlState extends State<AiPublishControl> {
         ),
         const SizedBox(height: 14),
         _MethodTabRow(
+          isAudioAnalyzing: widget.isAudioAnalyzing,
           method: _method,
           enabled: _isReady,
           onSelectVocal: () => setState(() => _method = _AiMethod.vocal),
@@ -114,12 +119,14 @@ class _MethodTabRow extends StatelessWidget {
   const _MethodTabRow({
     required this.method,
     required this.enabled,
+    required this.isAudioAnalyzing,
     required this.onSelectVocal,
     required this.onSelectTexte,
   });
 
   final _AiMethod method;
   final bool enabled;
+  final bool isAudioAnalyzing;
   final VoidCallback onSelectVocal;
   final VoidCallback onSelectTexte;
 
@@ -133,6 +140,7 @@ class _MethodTabRow extends StatelessWidget {
               child: _MethodTabButton(
                 icon: Icons.mic_rounded,
                 label: 'IA vocale',
+                showOrbit: isAudioAnalyzing,
                 selected: method == _AiMethod.vocal,
                 enabled: enabled,
                 onTap: onSelectVocal,
@@ -196,6 +204,7 @@ class _MethodTabButton extends StatelessWidget {
     required this.selected,
     required this.enabled,
     required this.onTap,
+    this.showOrbit = false,
   });
 
   final IconData icon;
@@ -203,6 +212,7 @@ class _MethodTabButton extends StatelessWidget {
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
+  final bool showOrbit;
 
   bool get _isTextAiButton => label == 'Texte + IA';
 
@@ -242,11 +252,19 @@ class _MethodTabButton extends StatelessWidget {
                     ? Colors.white.withValues(alpha: 0.22)
                     : const Color(0xFFF3F4F6),
               ),
-              child: Icon(
-                icon,
-                size: 16,
-                color: selected ? Colors.white : const Color(0xFF6B7280),
-              ),
+              child: showOrbit
+                  ? const SizedBox(
+                      width: 38,
+                      height: 38,
+                      child: Center(
+                        child: OrbitingAiVisual(size: 34),
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      size: 16,
+                      color: selected ? Colors.white : const Color(0xFF6B7280),
+                    ),
             ),
             const SizedBox(width: 8),
             Flexible(
