@@ -204,6 +204,8 @@ class _MethodTabButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback onTap;
 
+  bool get _isTextAiButton => label == 'Texte + IA';
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -212,10 +214,18 @@ class _MethodTabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 52,
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF1A6FFF) : Colors.white,
+          color: selected
+              ? (_isTextAiButton
+                  ? const Color(0xFFFF6600)
+                  : const Color(0xFF1A6FFF))
+              : Colors.white,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? const Color(0xFF1A6FFF) : const Color(0xFFD1D5DB),
+            color: selected
+                ? (_isTextAiButton
+                    ? const Color(0xFFFF6600)
+                    : const Color(0xFF1A6FFF))
+                : const Color(0xFFD1D5DB),
             width: 1.5,
           ),
         ),
