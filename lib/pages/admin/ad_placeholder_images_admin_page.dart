@@ -33,6 +33,7 @@ class _AdPlaceholderImagesAdminPageState
 
   // Snapshot local pour le réordre (manipulé avant sauvegarde).
   List<AdPlaceholderImage>? _reorderBuffer;
+  List<AdPlaceholderImage> _lastLoadedImages = const <AdPlaceholderImage>[];
 
   Future<void> _pickAndUploadImages() async {
     if (_isUploading) return;
@@ -546,8 +547,15 @@ class _AdPlaceholderImagesAdminPageState
       body: StreamBuilder<List<AdPlaceholderImage>>(
         stream: AdPlaceholderImageService.watchAll(target: _target),
         builder: (context, snapshot) {
+          final latestStreamImages = snapshot.data ?? const <AdPlaceholderImage>[];
+          if (latestStreamImages.isNotEmpty) {
+            _lastLoadedImages = latestStreamImages;
+          }
+
           // En mode réordre on utilise le buffer local, pas le stream.
-          final streamImages = snapshot.data ?? <AdPlaceholderImage>[];
+          final streamImages = latestStreamImages.isNotEmpty
+              ? latestStreamImages
+              : _lastLoadedImages;
           final images =
               _isReordering ? (_reorderBuffer ?? streamImages) : streamImages;
 
@@ -573,6 +581,8 @@ class _AdPlaceholderImagesAdminPageState
     int visibleCount,
   ) {
     final activeImages = images.where((img) => img.isVisible).toList();
+    final spotlightImage =
+        activeImages.isNotEmpty ? activeImages.first : images.first;
     final activePositionById = <String, int>{
       for (var i = 0; i < activeImages.length; i++) activeImages[i].id: i + 1,
     };
@@ -611,10 +621,10 @@ class _AdPlaceholderImagesAdminPageState
         const SizedBox(height: 16),
         if (images.isNotEmpty) ...[
           _LatestPlaceholderReceivedCard(
-            image: images.first,
+            image: spotlightImage,
             totalCount: images.length,
             activeCount: visibleCount,
-            onOpen: () => _openViewer(images.first.imageUrl),
+            onOpen: () => _openViewer(spotlightImage.imageUrl),
           ),
           const SizedBox(height: 16),
         ],
