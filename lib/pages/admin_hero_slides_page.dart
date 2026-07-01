@@ -485,8 +485,15 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         localError = '';
                                       });
 
+                                      debugPrint(
+                                        '[AdminHero] Starting save: existing=$existing, fileName=$selectedFileName, bytes=${selectedBytes.length}',
+                                      );
+
                                       try {
                                         if (existing == null) {
+                                          debugPrint(
+                                            '[AdminHero] Calling addSlide...',
+                                          );
                                           await _heroSlidesService.addSlide(
                                             fileBytes: Uint8List.fromList(
                                                 selectedBytes),
@@ -506,10 +513,19 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                   _uploadProgress = progress);
                                             },
                                           );
+                                          debugPrint(
+                                            '[AdminHero] addSlide completed successfully',
+                                          );
                                           if (!mounted) {
+                                            debugPrint(
+                                              '[AdminHero] Widget unmounted after addSlide',
+                                            );
                                             return;
                                           }
                                           if (!context.mounted) {
+                                            debugPrint(
+                                              '[AdminHero] Context unmounted after addSlide',
+                                            );
                                             return;
                                           }
                                           showSuccessSnackBar(
@@ -517,6 +533,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             'Slide Hero ajouté avec succès',
                                           );
                                         } else {
+                                          debugPrint(
+                                            '[AdminHero] Calling updateSlide...',
+                                          );
                                           await _heroSlidesService.updateSlide(
                                             existing,
                                             title: titleController.text,
@@ -549,6 +568,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                   _uploadProgress = progress);
                                             },
                                           );
+                                          debugPrint(
+                                            '[AdminHero] updateSlide completed successfully',
+                                          );
                                           if (!mounted) {
                                             return;
                                           }
@@ -562,10 +584,22 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         }
 
                                         if (!context.mounted) {
+                                          debugPrint(
+                                            '[AdminHero] Context not mounted at pop point',
+                                          );
                                           return;
                                         }
+                                        debugPrint(
+                                          '[AdminHero] About to pop dialog',
+                                        );
                                         Navigator.of(context).pop(true);
+                                        debugPrint(
+                                          '[AdminHero] Dialog popped successfully',
+                                        );
                                       } catch (error, stackTrace) {
+                                        debugPrint(
+                                          '[AdminHero] Exception caught: $error\n$stackTrace',
+                                        );
                                         logRuntimeAction(
                                           area: 'admin-hero',
                                           action: existing == null
@@ -582,20 +616,29 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                 selectedBytes.isNotEmpty,
                                           },
                                         );
-                                        debugPrint(
-                                          '[AdminHero] save failed: $error\n$stackTrace',
-                                        );
                                         if (!mounted) {
+                                          debugPrint(
+                                            '[AdminHero] Widget unmounted at error handler',
+                                          );
                                           return;
                                         }
                                         final readableError =
                                             _formatHeroSlideSaveError(error);
-                                        showErrorSnackBar(
-                                          context,
-                                          existing == null
-                                              ? "Impossible d'ajouter le slide : $readableError"
-                                              : 'Impossible de modifier le slide : $readableError',
+                                        debugPrint(
+                                          '[AdminHero] Showing error: $readableError',
                                         );
+                                        if (context.mounted) {
+                                          setSheetState(() {
+                                            localError =
+                                                "Erreur : $readableError";
+                                          });
+                                          showErrorSnackBar(
+                                            context,
+                                            existing == null
+                                                ? "Impossible d'ajouter le slide : $readableError"
+                                                : 'Impossible de modifier le slide : $readableError',
+                                          );
+                                        }
                                       } finally {
                                         if (mounted) {
                                           setState(() {
