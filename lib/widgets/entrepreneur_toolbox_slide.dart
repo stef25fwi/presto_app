@@ -52,25 +52,9 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(11),
-                      child: Image.asset(
-                        'assets/images/logowebp.webp',
-                        width: 32,
-                        height: 32,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+                  const _RocketTakeoffIcon(),
                   const Spacer(),
-                  const _VibrantPulseChip(label: 'Je me lance'),
+                  const _VibrantPulseChip(label: 'Cliquez ici'),
                 ],
               ),
             ),
@@ -78,22 +62,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
             const Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Outils business et aides',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right,
-                  size: 20,
-                  color: Colors.black38,
+                  child: _CompactTutorialBanner(),
                 ),
               ],
             ),
@@ -278,6 +247,118 @@ class _VibrantPulseChipState extends State<_VibrantPulseChip>
           fontWeight: FontWeight.w800,
         ),
       ),
+    );
+  }
+}
+
+class _CompactTutorialBanner extends StatelessWidget {
+  const _CompactTutorialBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Color(0xFFFF6600),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: const [
+          Icon(
+            Icons.play_circle_fill_rounded,
+            size: 15,
+            color: Colors.white,
+          ),
+          SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Tutoriel: je me lance!',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RocketTakeoffIcon extends StatefulWidget {
+  const _RocketTakeoffIcon();
+
+  @override
+  State<_RocketTakeoffIcon> createState() => _RocketTakeoffIconState();
+}
+
+class _RocketTakeoffIconState extends State<_RocketTakeoffIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 950),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_controller.value);
+        final dy = (1.0 - t) * 3.0;
+        final flameOpacity = 0.35 + (t * 0.55);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(
+                  Icons.rocket_launch_rounded,
+                  size: 19,
+                  color: Color(0xFFFF6600),
+                ),
+                Positioned(
+                  bottom: 4,
+                  child: Opacity(
+                    opacity: flameOpacity,
+                    child: Container(
+                      width: 7,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFA000),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
