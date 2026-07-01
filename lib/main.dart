@@ -1016,6 +1016,11 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
               data: base.copyWith(
                 textTheme: withWeight,
                 primaryTextTheme: primaryWithWeight,
+                appBarTheme: base.appBarTheme.copyWith(
+                  titleTextStyle: base.appBarTheme.titleTextStyle?.copyWith(
+                    fontFamily: typographySettings.fontFamily,
+                  ),
+                ),
               ),
               child: MediaQuery(
                 data: MediaQuery.of(ctx).copyWith(

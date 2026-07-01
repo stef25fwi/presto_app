@@ -36,6 +36,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
   final EmailAuthService _emailAuthService = EmailAuthService();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
   final TextEditingController _displayNameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordConfirmController =
@@ -64,6 +66,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
   @override
   void dispose() {
     _displayNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
@@ -110,8 +114,11 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
     });
     try {
       if (_isSignup) {
+        final displayName = _isBusinessSignup
+            ? _displayNameController.text.trim()
+            : '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
         await _emailAuthService.register(
-          displayName: _displayNameController.text,
+          displayName: displayName,
           email: email,
           password: password,
           createBusinessProfile: _isBusinessSignup,
@@ -313,14 +320,18 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        Text(
-                          _isSignup
-                              ? 'Créer un compte'
-                              : 'Connexion à mon compte',
-                          style: const TextStyle(
-                            color: textDark,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _isSignup
+                                ? 'Créer un compte'
+                                : 'Connexion à mon compte',
+                            style: const TextStyle(
+                              color: textDark,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -395,17 +406,50 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                               );
                             },
                           ),
-                          AuthTextField(
-                            controller: _displayNameController,
-                            label: _isBusinessSignup
-                                ? 'Nom du contact'
-                                : 'Nom ou pseudo',
-                            icon: Icons.badge_outlined,
-                            textInputAction: TextInputAction.next,
-                            autofillHints: const [AutofillHints.name],
-                            validator: AuthValidators.displayName,
-                            enabled: !_isLoading,
-                          ),
+                          if (_isBusinessSignup) ...[
+                            AuthTextField(
+                              controller: _displayNameController,
+                              label: 'Nom du contact',
+                              icon: Icons.badge_outlined,
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [AutofillHints.name],
+                              validator: AuthValidators.displayName,
+                              enabled: !_isLoading,
+                            ),
+                          ] else ...[
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: AuthTextField(
+                                    controller: _firstNameController,
+                                    label: 'Prénom',
+                                    icon: Icons.person_outline_rounded,
+                                    textInputAction: TextInputAction.next,
+                                    autofillHints: const [
+                                      AutofillHints.givenName,
+                                    ],
+                                    validator: AuthValidators.firstName,
+                                    enabled: !_isLoading,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: AuthTextField(
+                                    controller: _lastNameController,
+                                    label: 'Nom',
+                                    icon: Icons.person_outline_rounded,
+                                    textInputAction: TextInputAction.next,
+                                    autofillHints: const [
+                                      AutofillHints.familyName,
+                                    ],
+                                    validator: AuthValidators.lastName,
+                                    enabled: !_isLoading,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 12),
                         ],
                         AuthTextField(
