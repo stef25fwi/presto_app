@@ -540,24 +540,7 @@ class _AdPlaceholderImagesAdminPageState
                   ),
                 ],
               ]
-            : [
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Tooltip(
-                    message: 'Ajouter des images',
-                    child: FilledButton.icon(
-                      onPressed: _isUploading ? null : _pickAndUploadImages,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1A73E8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      ),
-                      icon: const Icon(Icons.add_photo_alternate_rounded, size: 20),
-                      label: const Text('Ajouter'),
-                    ),
-                  ),
-                ),
-              ],
+            : [],
       ),
       floatingActionButton: null,
       body: StreamBuilder<List<AdPlaceholderImage>>(
