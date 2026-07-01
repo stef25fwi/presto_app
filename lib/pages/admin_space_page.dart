@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'admin_hero_slides_page.dart';
 import 'admin_photo_reviews_page.dart';
 import 'admin_typography_page.dart';
-import 'entrepreneur_toolbox_page.dart';
 import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 import '../constants.dart';
@@ -17,7 +16,6 @@ import '../services/admin_access_resolver.dart';
 import '../services/admin_broadcast_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
-import 'toolbox_page.dart';
 import 'package:presto_app/pages/admin/widgets/payment_info_audio_admin_section.dart';
 import 'package:presto_app/pages/admin/ad_placeholder_images_admin_page.dart';
 
@@ -2927,20 +2925,17 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
-                  _KpiTile(
-                    icon: Icons.construction_rounded,
-                    title: 'Pages en travaux',
-                    subtitle: 'Pages non utilisées (legacy)',
-                    badge: null,
-                    iconColor: prestoOrange,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const _AdminPagesInProgressPage(),
-                        ),
-                      );
-                    },
-                  ),
+                  if (!kReleaseMode)
+                    _KpiTile(
+                      icon: Icons.layers_rounded,
+                      title: 'Catalogue pages',
+                      subtitle: 'Inventaire et rendu par page',
+                      badge: null,
+                      iconColor: prestoBlue,
+                      onTap: () {
+                        Navigator.of(context).pushNamed('/page-catalog');
+                      },
+                    ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -2953,101 +2948,6 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _AdminPageInProgressEntry {
-  final String title;
-  final String note;
-  final WidgetBuilder builder;
-
-  const _AdminPageInProgressEntry({
-    required this.title,
-    required this.note,
-    required this.builder,
-  });
-}
-
-class _AdminPagesInProgressPage extends StatelessWidget {
-  const _AdminPagesInProgressPage();
-
-  static const List<_AdminPageInProgressEntry> _entries = [
-    _AdminPageInProgressEntry(
-      title: 'ToolboxPage',
-      note: 'Ancienne page toolbox standalone (legacy).',
-      builder: _buildToolboxPage,
-    ),
-    _AdminPageInProgressEntry(
-      title: 'EntrepreneurToolboxPage',
-      note: 'Alias historique vers le parcours Je me lance.',
-      builder: _buildEntrepreneurToolboxPage,
-    ),
-  ];
-
-  static Widget _buildToolboxPage(BuildContext context) => const ToolboxPage();
-
-  static Widget _buildEntrepreneurToolboxPage(BuildContext context) =>
-      const EntrepreneurToolboxPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0.5,
-        title: const Text(
-          'Pages en travaux',
-          style: kPrestoAppBarTitleStyle,
-        ),
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(14),
-        itemCount: _entries.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final entry = _entries[index];
-          return Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: BorderSide(color: Colors.grey.shade300),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 8,
-              ),
-              leading: const Icon(
-                Icons.pending_actions_rounded,
-                color: Color(0xFFFF6600),
-              ),
-              title: Text(
-                entry.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  entry.note,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-              trailing: const Icon(Icons.open_in_new_rounded),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: entry.builder),
-                );
-              },
-            ),
-          );
-        },
       ),
     );
   }

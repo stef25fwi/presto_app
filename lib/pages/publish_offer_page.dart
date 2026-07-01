@@ -137,6 +137,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         normalized.contains('fetch')) {
       return 'Problème de connexion réseau. Vérifie ta connexion puis réessaie.';
     }
+    if (normalized.contains('403') ||
+        normalized.contains('forbidden') ||
+        normalized.contains('app check') ||
+        normalized.contains('appcheck')) {
+      return 'Vérification de sécurité échouée. Recharge la page puis réessaie.';
+    }
     return message;
   }
 
@@ -1404,6 +1410,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     for (final category in _categories) {
       if (normalizeOfferText(category) == normalizedCanonical) {
         return category;
+      }
+    }
+    // Secondary pass: match against kCategories, then find the corresponding
+    // dropdown key — guards against ligature divergence (e.g. Main-d'oeuvre vs
+    // Main-d'œuvre) between kCategorySubcategories and kCategories.
+    for (final kCat in kCategories) {
+      if (normalizeOfferText(kCat) == normalizedCanonical) {
+        for (final category in _categories) {
+          if (normalizeOfferText(category) == normalizeOfferText(kCat)) {
+            return category;
+          }
+        }
       }
     }
     return null;
@@ -2992,7 +3010,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showSuccessSnackBar(
+          showErrorSnackBar(
             context,
             'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
           );
