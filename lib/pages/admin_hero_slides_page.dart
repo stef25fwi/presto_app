@@ -804,31 +804,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
             fontWeight: FontWeight.w900,
           ),
         ),
-        actions: [
-          StreamBuilder<List<HeroSlide>>(
-            stream: _heroSlidesService.watchAllSlidesForAdmin(),
-            builder: (context, snapshot) {
-              final slides = snapshot.data ?? const <HeroSlide>[];
-              return Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Center(
-                  child: Tooltip(
-                    message: 'Ajouter un nouveau slide',
-                    child: FilledButton.icon(
-                      onPressed: _isSubmitting ? null : _openSlideEditor,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _kAdminHeroOrange,
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.add_rounded, size: 20),
-                      label: const Text('Ajouter'),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+        actions: [],
       ),
       body: StreamBuilder<List<HeroSlide>>(
         stream: _heroSlidesService.watchAllSlidesForAdmin(),
