@@ -1963,12 +1963,12 @@ class _HeroSliderWithStableHeight extends StatelessWidget {
         builder: (context, snapshot) {
           final fallback = fallbackBuilder();
           final slides = snapshot.data ?? cachedSlides;
-          
+
           if (snapshot.hasError || slides.isEmpty) {
             // Même le fallback a la hauteur stable
             return fallback;
           }
-          
+
           return HeroMediaSlider(
             slides: slides,
             fallback: fallback,
@@ -2451,11 +2451,25 @@ class _AutoScrollingOffersCarouselState
     _scrollController.jumpTo(next);
   }
 
-  String _labelWhenFromTitle(String title) {
-    final lower = title.toLowerCase();
-    if (lower.contains("aujourd'hui")) return "Aujourd'hui";
-    if (lower.contains('demain')) return 'Demain';
-    return 'Bientôt';
+  String _interventionDelayLabel(Map<String, dynamic> data) {
+    String read(String key) => (data[key] ?? '').toString().trim();
+
+    final candidates = <String>[
+      read('missionDelay'),
+      read('averageDelay'),
+      read('availability'),
+      read('delaiIntervention'),
+      read('interventionDelay'),
+      read('interventionWindow'),
+    ];
+
+    for (final value in candidates) {
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return 'Délai à confirmer';
   }
 
   String _escapeRegex(String value) {
@@ -2490,7 +2504,7 @@ class _AutoScrollingOffersCarouselState
     final title = (data['title'] ?? 'Sans titre') as String;
     final location = (data['location'] ?? 'Lieu non précisé') as String;
     final displayTitle = _displayOfferTitle(title, location);
-    final whenLabel = _labelWhenFromTitle(title);
+    final whenLabel = _interventionDelayLabel(data);
 
     return GestureDetector(
       onTap: () => widget.onOfferTap?.call(doc),
@@ -2536,10 +2550,14 @@ class _AutoScrollingOffersCarouselState
                       color: const Color(0xFFFFF3E0),
                       borderRadius: BorderRadius.circular(11),
                     ),
-                    child: const Icon(
-                      Icons.flash_on_outlined,
-                      color: kPrestoOrange,
-                      size: 20,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: Image.asset(
+                        'assets/images/logowebp.webp',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -2595,9 +2613,10 @@ class _AutoScrollingOffersCarouselState
 
   @override
   Widget build(BuildContext context) {
-    final duplicatedOffers = widget.offers.length > 1
-        ? [...widget.offers, ...widget.offers]
-        : widget.offers;
+    final carouselItems = _buildCarouselItems(widget.offers);
+    final duplicatedItems = carouselItems.length > 1
+        ? [...carouselItems, ...carouselItems]
+        : carouselItems;
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -2615,14 +2634,65 @@ class _AutoScrollingOffersCarouselState
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          itemCount: duplicatedOffers.length,
+          itemCount: duplicatedItems.length,
           addAutomaticKeepAlives: false,
           separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (_, index) => RepaintBoundary(
-            child: _buildOfferCard(duplicatedOffers[index]),
+            child: duplicatedItems[index].when(
+              offer: (doc) => _buildOfferCard(doc),
+              toolbox: () => const SizedBox(
+                width: 280,
+                child: EntrepreneurToolboxSlide(),
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  List<_CarouselItem> _buildCarouselItems(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> offers,
+  ) {
+    final items = <_CarouselItem>[];
+    final visibleOffers = offers.take(8).toList(growable: false);
+    final toolboxInsertIndex =
+        visibleOffers.length >= 4 ? 4 : visibleOffers.length;
+
+    for (var index = 0; index < visibleOffers.length; index += 1) {
+      items.add(_CarouselItem.offer(visibleOffers[index]));
+      if (index + 1 == toolboxInsertIndex) {
+        items.add(const _CarouselItem.toolbox());
+      }
+    }
+
+    if (visibleOffers.isNotEmpty &&
+        items.every((item) => item.isToolbox == false)) {
+      items.add(const _CarouselItem.toolbox());
+    }
+
+    return items;
+  }
+}
+
+class _CarouselItem {
+  final QueryDocumentSnapshot<Map<String, dynamic>>? offer;
+  final bool isToolbox;
+
+  const _CarouselItem._({this.offer, required this.isToolbox});
+
+  const _CarouselItem.offer(QueryDocumentSnapshot<Map<String, dynamic>> offer)
+      : this._(offer: offer, isToolbox: false);
+
+  const _CarouselItem.toolbox() : this._(isToolbox: true);
+
+  T when<T>({
+    required T Function(QueryDocumentSnapshot<Map<String, dynamic>> doc) offer,
+    required T Function() toolbox,
+  }) {
+    if (isToolbox) {
+      return toolbox();
+    }
+    return offer(this.offer!);
   }
 }

@@ -314,10 +314,20 @@ class HeroSlidesService {
     required String contentType,
     void Function(double progress)? onProgress,
   }) async {
+    if (fileBytes.isEmpty) {
+      throw StateError('Le fichier sélectionné est vide.');
+    }
+
+    final normalizedFileName = fileName.trim();
+    if (normalizedFileName.isEmpty) {
+      throw StateError('Nom de fichier invalide pour l\'upload Hero.');
+    }
+
     final normalizedMediaType = _normalizeMediaType(mediaType);
-    final extension = _fileExtension(fileName);
+    final extension = _fileExtension(normalizedFileName);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final safeName = _safeFileName(fileName, fallback: 'slide.$extension');
+    final safeName =
+        _safeFileName(normalizedFileName, fallback: 'slide.$extension');
     final storagePath = 'hero_slides/${timestamp}_$safeName';
     final ref = _storage.ref().child(storagePath);
 

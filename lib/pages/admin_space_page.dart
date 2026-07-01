@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'admin_hero_slides_page.dart';
 import 'admin_photo_reviews_page.dart';
 import 'admin_typography_page.dart';
+import 'entrepreneur_toolbox_page.dart';
 import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 import '../constants.dart';
@@ -16,6 +17,7 @@ import '../services/admin_access_resolver.dart';
 import '../services/admin_broadcast_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
+import 'toolbox_page.dart';
 import 'package:presto_app/pages/admin/widgets/payment_info_audio_admin_section.dart';
 import 'package:presto_app/pages/admin/ad_placeholder_images_admin_page.dart';
 
@@ -2857,7 +2859,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   _KpiTile(
                     icon: Icons.slideshow_rounded,
                     title: "Gestion du Hero",
-                    subtitle: "Images, vidéos et durée d'affichage",
+                    subtitle: "Accueil: ajouter, supprimer et réordonner",
                     badge: null,
                     iconColor: prestoOrange,
                     onTap: () {
@@ -2925,6 +2927,20 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
+                  _KpiTile(
+                    icon: Icons.construction_rounded,
+                    title: 'Pages en travaux',
+                    subtitle: 'Pages non utilisées (legacy)',
+                    badge: null,
+                    iconColor: prestoOrange,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const _AdminPagesInProgressPage(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -2937,6 +2953,101 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AdminPageInProgressEntry {
+  final String title;
+  final String note;
+  final WidgetBuilder builder;
+
+  const _AdminPageInProgressEntry({
+    required this.title,
+    required this.note,
+    required this.builder,
+  });
+}
+
+class _AdminPagesInProgressPage extends StatelessWidget {
+  const _AdminPagesInProgressPage();
+
+  static const List<_AdminPageInProgressEntry> _entries = [
+    _AdminPageInProgressEntry(
+      title: 'ToolboxPage',
+      note: 'Ancienne page toolbox standalone (legacy).',
+      builder: _buildToolboxPage,
+    ),
+    _AdminPageInProgressEntry(
+      title: 'EntrepreneurToolboxPage',
+      note: 'Alias historique vers le parcours Je me lance.',
+      builder: _buildEntrepreneurToolboxPage,
+    ),
+  ];
+
+  static Widget _buildToolboxPage(BuildContext context) => const ToolboxPage();
+
+  static Widget _buildEntrepreneurToolboxPage(BuildContext context) =>
+      const EntrepreneurToolboxPage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
+        title: const Text(
+          'Pages en travaux',
+          style: kPrestoAppBarTitleStyle,
+        ),
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(14),
+        itemCount: _entries.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final entry = _entries[index];
+          return Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 8,
+              ),
+              leading: const Icon(
+                Icons.pending_actions_rounded,
+                color: Color(0xFFFF6600),
+              ),
+              title: Text(
+                entry.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  entry.note,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              trailing: const Icon(Icons.open_in_new_rounded),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: entry.builder),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -3075,13 +3186,38 @@ class _BroadcastNotificationAdminPageState
 
   Future<void> _runSelfTest() async {
     try {
-      final registration = await NotificationService().ensureDeviceRegistered();
+      final notificationService = NotificationService();
+
+      var registration = await notificationService.ensureDeviceRegistered();
+
+      if (registration == DeviceRegistrationResult.permissionMissing) {
+        final granted = await notificationService.requestPushPermission();
+        if (!granted) {
+          if (!mounted) return;
+          showErrorSnackBar(
+            context,
+            notificationService.pushActivationFailureMessage(),
+          );
+          return;
+        }
+        registration = await notificationService.ensureDeviceRegistered();
+      }
+
+      if (registration == DeviceRegistrationResult.noToken ||
+          registration == DeviceRegistrationResult.registrationFailed) {
+        // Retry court: certains navigateurs délivrent le token après un second
+        // passage (service worker / FCM web warmup).
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        registration = await notificationService.ensureDeviceRegistered();
+      }
+
       if (registration != DeviceRegistrationResult.registered) {
         if (!mounted) return;
         showErrorSnackBar(context, _registrationIssueMessage(registration));
         return;
       }
-      final count = await NotificationService().sendSelfTestNotification();
+
+      final count = await notificationService.sendSelfTestNotification();
       if (!mounted) return;
       showSuccessSnackBar(
         context,
@@ -3091,7 +3227,7 @@ class _BroadcastNotificationAdminPageState
     } on FirebaseFunctionsException catch (error) {
       if (!mounted) return;
       final message = error.code == 'failed-precondition'
-          ? 'Aucun appareil enregistré. Active d’abord les notifications dans Mon compte.'
+          ? 'Aucun appareil enregistré. Active les notifications puis recharge la page et réessaie.'
           : (error.message ?? 'Envoi du test impossible.');
       showErrorSnackBar(context, message);
     } catch (error) {
