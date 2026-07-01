@@ -24,7 +24,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
         height: double.infinity,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: kPrestoOrange,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: kPrestoBlue,
@@ -40,7 +40,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.black87,
+                color: Colors.white,
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
                 height: 1.12,
