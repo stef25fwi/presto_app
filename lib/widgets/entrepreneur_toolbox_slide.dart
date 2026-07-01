@@ -24,7 +24,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
         height: double.infinity,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: kPrestoOrange,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: kPrestoBlue,
@@ -32,44 +32,70 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(
-              child: Text(
-                "Boites a outils de l'entrepreneur",
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
-                ),
+            const Text(
+              "Boite a outils de l'entrepreneur",
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                height: 1.12,
               ),
             ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D6EFD),
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0D6EFD).withValues(alpha: 0.45),
-                    blurRadius: 10,
-                    spreadRadius: 0.5,
-                    offset: const Offset(0, 2),
+            const Spacer(),
+            SizedBox(
+              height: 32,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: Image.asset(
+                        'assets/images/logowebp.webp',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
+                  const Spacer(),
+                  const _VibrantPulseChip(label: 'Je me lance'),
                 ],
               ),
-              child: const Text(
-                'Cliquez ici',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
+            ),
+            const SizedBox(height: 5),
+            const Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Outils business et aides',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.black38,
+                ),
+              ],
             ),
           ],
         ),
@@ -111,7 +137,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "Boites a outils de\nl'entrepreneur",
+                  "Boite a outils de\nl'entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 26,
@@ -168,6 +194,90 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
         if (isCompact) return _buildCompact(context);
         return _buildHero(context);
       },
+    );
+  }
+}
+
+class _VibrantPulseChip extends StatefulWidget {
+  const _VibrantPulseChip({required this.label});
+
+  final String label;
+
+  @override
+  State<_VibrantPulseChip> createState() => _VibrantPulseChipState();
+}
+
+class _VibrantPulseChipState extends State<_VibrantPulseChip>
+    with TickerProviderStateMixin {
+  late final AnimationController _scaleController;
+  late final Animation<double> _scale;
+  late final AnimationController _vibrationController;
+  late final Animation<double> _rotation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _scale = Tween<double>(begin: 0.96, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+
+    _vibrationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )..repeat(reverse: true);
+
+    _rotation = Tween<double>(begin: -0.02, end: 0.02).animate(
+      CurvedAnimation(parent: _vibrationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _vibrationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_scaleController, _vibrationController]),
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scale.value,
+          child: Transform.rotate(
+            angle: _rotation.value,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A73E8),
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: Text(
+        widget.label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }

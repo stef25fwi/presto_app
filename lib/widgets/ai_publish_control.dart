@@ -18,6 +18,7 @@ class AiPublishControl extends StatefulWidget {
   const AiPublishControl({
     super.key,
     required this.state,
+    required this.micAnchorLink,
     this.isAudioAnalyzing = false,
     required this.onStartRecording,
     required this.onStopRecording,
@@ -28,6 +29,7 @@ class AiPublishControl extends StatefulWidget {
   });
 
   final AiPublishState state;
+  final LayerLink micAnchorLink;
   final bool isAudioAnalyzing;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
@@ -84,6 +86,7 @@ class _AiPublishControlState extends State<AiPublishControl> {
         _VocalModeCard(
           state: widget.state,
           visible: _method == _AiMethod.vocal,
+          micAnchorLink: widget.micAnchorLink,
           onStartRecording: widget.onStartRecording,
           onStopRecording: widget.onStopRecording,
         ),
@@ -249,9 +252,11 @@ class _MethodTabButton extends StatelessWidget {
               height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.22)
-                    : const Color(0xFFF3F4F6),
+                color: _isTextAiButton
+                    ? Colors.white
+                    : (selected
+                        ? Colors.white.withValues(alpha: 0.22)
+                        : const Color(0xFFF3F4F6)),
               ),
               child: showOrbit
                   ? const SizedBox(
@@ -265,7 +270,7 @@ class _MethodTabButton extends StatelessWidget {
                       icon,
                       size: 16,
                       color: _isTextAiButton
-                          ? Colors.white
+                        ? const Color(0xFFFF6600)
                           : (selected ? Colors.white : const Color(0xFF6B7280)),
                     ),
             ),
@@ -296,12 +301,14 @@ class _VocalModeCard extends StatelessWidget {
   const _VocalModeCard({
     required this.state,
     required this.visible,
+    required this.micAnchorLink,
     required this.onStartRecording,
     required this.onStopRecording,
   });
 
   final AiPublishState state;
   final bool visible;
+  final LayerLink micAnchorLink;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
 
@@ -370,48 +377,51 @@ class _VocalModeCard extends StatelessWidget {
           const SizedBox(height: 22),
 
           // Bouton microphone central
-          GestureDetector(
-            onTap: _isAnalyzing
-                ? null
-                : (_isRecording ? onStopRecording : onStartRecording),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 68,
-              height: 68,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _isRecording
-                    ? const Color(0xFFFF3B35)
-                    : _isAnalyzing
-                        ? const Color(0xFF13C8FF)
-                        : const Color(0xFF1A6FFF),
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isRecording
-                            ? const Color(0xFFFF3B35)
-                            : const Color(0xFF1A6FFF))
-                        .withValues(alpha: 0.38),
-                    blurRadius: 18,
-                    offset: const Offset(0, 7),
-                  ),
-                ],
-              ),
-              child: _isAnalyzing
-                  ? const Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: Colors.white,
-                        ),
-                      ),
-                    )
-                  : Icon(
-                      _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
-                      color: Colors.white,
-                      size: 32,
+          CompositedTransformTarget(
+            link: micAnchorLink,
+            child: GestureDetector(
+              onTap: _isAnalyzing
+                  ? null
+                  : (_isRecording ? onStopRecording : onStartRecording),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _isRecording
+                      ? const Color(0xFFFF3B35)
+                      : _isAnalyzing
+                          ? const Color(0xFF13C8FF)
+                          : const Color(0xFF1A6FFF),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isRecording
+                              ? const Color(0xFFFF3B35)
+                              : const Color(0xFF1A6FFF))
+                          .withValues(alpha: 0.38),
+                      blurRadius: 18,
+                      offset: const Offset(0, 7),
                     ),
+                  ],
+                ),
+                child: _isAnalyzing
+                    ? const Center(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+              ),
             ),
           ),
           const SizedBox(height: 10),

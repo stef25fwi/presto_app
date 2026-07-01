@@ -2392,12 +2392,15 @@ class _AutoScrollingOffersCarouselState
   bool _isUserDragging = false;
   Duration _lastElapsed = Duration.zero;
   static const double _pixelsPerSecond = 44.0;
+  String? _renderItemsSignature;
+  List<_CarouselRenderItem> _renderItems = const <_CarouselRenderItem>[];
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     _ticker = createTicker(_onTick)..start();
+    _refreshRenderItemsIfNeeded();
   }
 
   @override
@@ -2409,6 +2412,7 @@ class _AutoScrollingOffersCarouselState
         _scrollController.jumpTo(0);
       }
     }
+    _refreshRenderItemsIfNeeded();
   }
 
   @override
@@ -2499,15 +2503,9 @@ class _AutoScrollingOffersCarouselState
     return cleanedTitle.isEmpty ? trimmedTitle : cleanedTitle;
   }
 
-  Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data();
-    final title = (data['title'] ?? 'Sans titre') as String;
-    final location = (data['location'] ?? 'Lieu non précisé') as String;
-    final displayTitle = _displayOfferTitle(title, location);
-    final whenLabel = _interventionDelayLabel(data);
-
+  Widget _buildOfferCard(_CarouselOfferCardData cardData) {
     return GestureDetector(
-      onTap: () => widget.onOfferTap?.call(doc),
+      onTap: () => widget.onOfferTap?.call(cardData.doc),
       child: Container(
         width: 280,
         clipBehavior: Clip.antiAlias,
@@ -2527,7 +2525,7 @@ class _AutoScrollingOffersCarouselState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              displayTitle,
+              cardData.displayTitle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -2571,7 +2569,7 @@ class _AutoScrollingOffersCarouselState
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      whenLabel,
+                      cardData.whenLabel,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -2587,7 +2585,7 @@ class _AutoScrollingOffersCarouselState
               children: [
                 Expanded(
                   child: Text(
-                    location,
+                    cardData.location,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -2613,10 +2611,10 @@ class _AutoScrollingOffersCarouselState
 
   @override
   Widget build(BuildContext context) {
-    final carouselItems = _buildCarouselItems(widget.offers);
-    final duplicatedItems = carouselItems.length > 1
-        ? [...carouselItems, ...carouselItems]
-        : carouselItems;
+    _refreshRenderItemsIfNeeded();
+    final duplicatedItems = _renderItems.length > 1
+        ? [..._renderItems, ..._renderItems]
+        : _renderItems;
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -2636,63 +2634,105 @@ class _AutoScrollingOffersCarouselState
           physics: const BouncingScrollPhysics(),
           itemCount: duplicatedItems.length,
           addAutomaticKeepAlives: false,
+          cacheExtent: 900,
           separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (_, index) => RepaintBoundary(
-            child: duplicatedItems[index].when(
-              offer: (doc) => _buildOfferCard(doc),
-              toolbox: () => const SizedBox(
-                width: 280,
-                child: EntrepreneurToolboxSlide(),
-              ),
-            ),
+            child: duplicatedItems[index].isToolbox
+                ? const SizedBox(
+                    width: 280,
+                    child: EntrepreneurToolboxSlide(),
+                  )
+                : _buildOfferCard(duplicatedItems[index].cardData!),
           ),
         ),
       ),
     );
   }
 
-  List<_CarouselItem> _buildCarouselItems(
+  String _offersSignature(
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> offers) {
+    if (offers.isEmpty) return '';
+    final buffer = StringBuffer();
+    for (final doc in offers.take(8)) {
+      final createdAt = doc.data()['createdAt'];
+      final createdAtMs = createdAt is Timestamp
+          ? createdAt.millisecondsSinceEpoch
+          : (createdAt is int ? createdAt : 0);
+      buffer
+        ..write(doc.id)
+        ..write(':')
+        ..write(createdAtMs)
+        ..write(';');
+    }
+    return buffer.toString();
+  }
+
+  void _refreshRenderItemsIfNeeded() {
+    final signature = _offersSignature(widget.offers);
+    if (_renderItemsSignature == signature) return;
+    _renderItemsSignature = signature;
+    _renderItems = _buildCarouselItems(widget.offers);
+  }
+
+  List<_CarouselRenderItem> _buildCarouselItems(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> offers,
   ) {
-    final items = <_CarouselItem>[];
+    final items = <_CarouselRenderItem>[];
     final visibleOffers = offers.take(8).toList(growable: false);
     final toolboxInsertIndex =
         visibleOffers.length >= 4 ? 4 : visibleOffers.length;
 
     for (var index = 0; index < visibleOffers.length; index += 1) {
-      items.add(_CarouselItem.offer(visibleOffers[index]));
+      final doc = visibleOffers[index];
+      final data = doc.data();
+      final title = (data['title'] ?? 'Sans titre').toString();
+      final location = (data['location'] ?? 'Lieu non précisé').toString();
+      items.add(
+        _CarouselRenderItem.offer(
+          _CarouselOfferCardData(
+            doc: doc,
+            displayTitle: _displayOfferTitle(title, location),
+            location: location,
+            whenLabel: _interventionDelayLabel(data),
+          ),
+        ),
+      );
       if (index + 1 == toolboxInsertIndex) {
-        items.add(const _CarouselItem.toolbox());
+        items.add(const _CarouselRenderItem.toolbox());
       }
     }
 
     if (visibleOffers.isNotEmpty &&
         items.every((item) => item.isToolbox == false)) {
-      items.add(const _CarouselItem.toolbox());
+      items.add(const _CarouselRenderItem.toolbox());
     }
 
     return items;
   }
 }
 
-class _CarouselItem {
-  final QueryDocumentSnapshot<Map<String, dynamic>>? offer;
+class _CarouselOfferCardData {
+  final QueryDocumentSnapshot<Map<String, dynamic>> doc;
+  final String displayTitle;
+  final String location;
+  final String whenLabel;
+
+  const _CarouselOfferCardData({
+    required this.doc,
+    required this.displayTitle,
+    required this.location,
+    required this.whenLabel,
+  });
+}
+
+class _CarouselRenderItem {
+  final _CarouselOfferCardData? cardData;
   final bool isToolbox;
 
-  const _CarouselItem._({this.offer, required this.isToolbox});
+  const _CarouselRenderItem._({this.cardData, required this.isToolbox});
 
-  const _CarouselItem.offer(QueryDocumentSnapshot<Map<String, dynamic>> offer)
-      : this._(offer: offer, isToolbox: false);
+  const _CarouselRenderItem.offer(_CarouselOfferCardData cardData)
+      : this._(cardData: cardData, isToolbox: false);
 
-  const _CarouselItem.toolbox() : this._(isToolbox: true);
-
-  T when<T>({
-    required T Function(QueryDocumentSnapshot<Map<String, dynamic>> doc) offer,
-    required T Function() toolbox,
-  }) {
-    if (isToolbox) {
-      return toolbox();
-    }
-    return offer(this.offer!);
-  }
+  const _CarouselRenderItem.toolbox() : this._(isToolbox: true);
 }

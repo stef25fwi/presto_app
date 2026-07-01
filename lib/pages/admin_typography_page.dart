@@ -50,9 +50,7 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
   }
 
   bool get _isDefault =>
-      typographySettings.scale == 1.0 &&
-      typographySettings.fontFamily == 'Inter' &&
-      typographySettings.fontWeightDelta == 0;
+      _scale == 1.0 && _selectedFont == 'Inter' && _weightDelta == 0;
 
   void _apply() {
     typographySettings.apply(
@@ -152,12 +150,15 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('✍️  Gestion Typographie', style: kPrestoAppBarTitleStyle),
-        backgroundColor: _prestoBlue,
-        foregroundColor: Colors.white,
-        elevation: 2,
+        title: const Text(
+          '✍️  Gestion Typographie',
+          style: kPrestoAppBarTitleStyle,
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF111827),
+        elevation: 0,
         actions: [
           if (!_isDefault)
             Padding(
@@ -168,7 +169,7 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                   onPressed: _reset,
                   child: const Text('Réinitialiser',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: _prestoBlue,
                         fontWeight: FontWeight.w600,
                       )),
                 ),
@@ -183,6 +184,10 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
           children: [
             // 📋 Résumé
             _buildInfoCard(),
+            const SizedBox(height: 20),
+
+            // ✅ Vérification portée globale
+            _buildGlobalCoverageCard(),
             const SizedBox(height: 20),
 
             // 🎚️ Contrôles (Scale, Weight)
@@ -210,7 +215,7 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                     backgroundColor: _prestoGreen,
                   ),
                   icon: const Icon(Icons.check_rounded),
-                  label: const Text('Appliquer les modifications'),
+                  label: const Text('Appliquer pour toute l\'application'),
                 ),
               ),
             const SizedBox(height: 80),
@@ -221,151 +226,219 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
   }
 
   Widget _buildInfoCard() {
-    return Card(
-      elevation: 0,
-      color: const Color(0xFFE8F0FE),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.info_rounded, color: _prestoBlue, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'État actuel',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_rounded, color: _prestoBlue, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'État actuel',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Police : ${typographySettings.fontFamily}',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Taille : ${(typographySettings.scale * 100).round()}%',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Graisse : ${_weightLabel(typographySettings.fontWeightDelta)}',
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                  ),
-                ),
-              ],
-            ),
-            if (_isModified) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.pending_outlined,
-                      size: 16, color: _prestoOrange),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Modifications en attente',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.orange.shade800,
-                    ),
-                  ),
-                ],
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildInfoPill('Police', typographySettings.fontFamily),
+              _buildInfoPill(
+                'Taille',
+                '${(typographySettings.scale * 100).round()}%',
+              ),
+              _buildInfoPill(
+                'Graisse',
+                _weightLabel(typographySettings.fontWeightDelta),
+              ),
+            ],
+          ),
+          if (_isModified) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.pending_outlined, size: 16, color: _prestoOrange),
+                const SizedBox(width: 6),
+                Text(
+                  'Modifications en attente',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange.shade800,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalCoverageCard() {
+    final sameAsApplied = _scale == typographySettings.scale &&
+        _selectedFont == typographySettings.fontFamily &&
+        _weightDelta == typographySettings.fontWeightDelta;
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                sameAsApplied
+                    ? Icons.verified_user_rounded
+                    : Icons.sync_problem_rounded,
+                color: sameAsApplied ? _prestoGreen : _prestoOrange,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Portée: toute l\'application',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            sameAsApplied
+                ? 'Réglages actifs globalement. Les pages utilisent déjà cette police et cette taille.'
+                : 'Les réglages ci-dessous ne sont pas encore appliqués globalement. Utilisez le bouton vert pour les activer partout.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoPill(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFD7DEE8)),
+      ),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Color(0xFF0F172A), fontSize: 12),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            TextSpan(
+              text: value,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFD7DEE8)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x120F172A),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: child,
       ),
     );
   }
 
   Widget _buildScaleControl() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.zoom_in_rounded,
-                    color: _prestoBlue, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Taille du texte',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.zoom_in_rounded, color: _prestoBlue, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Taille du texte',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: _scale,
+                  min: 0.8,
+                  max: 1.4,
+                  divisions: 12,
+                  activeColor: _prestoBlue,
+                  label: '${(_scale * 100).round()}%',
+                  onChanged: (v) {
+                    setState(() => _scale = v);
+                    _updateIsModified();
+                  },
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _scale,
-                    min: 0.8,
-                    max: 1.4,
-                    divisions: 12,
-                    activeColor: _prestoBlue,
-                    label: '${(_scale * 100).round()}%',
-                    onChanged: (v) {
-                      setState(() => _scale = v);
-                      _updateIsModified();
-                    },
+              ),
+              SizedBox(
+                width: 60,
+                child: Text(
+                  '${(_scale * 100).round()}%',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _prestoBlue,
                   ),
+                  textAlign: TextAlign.end,
                 ),
-                SizedBox(
-                  width: 60,
-                  child: Text(
-                    '${(_scale * 100).round()}%',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: _prestoBlue,
-                    ),
-                    textAlign: TextAlign.end,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '80% à 140% du texte de base',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '80% à 140% du texte de base',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildWeightControl() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 const Icon(Icons.format_bold_rounded,
@@ -416,8 +489,7 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
               'De très léger (−2) à très gras (+2)',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -425,14 +497,10 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
   Widget _buildFontManagement() {
     final filtered = _getFilteredFonts();
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 const Icon(Icons.text_fields_rounded,
@@ -677,21 +745,16 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                 ),
               ),
             ],
-          ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildLivePreview() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 const Icon(Icons.visibility_rounded,
@@ -767,8 +830,7 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
