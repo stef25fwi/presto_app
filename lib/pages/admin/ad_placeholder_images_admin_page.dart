@@ -231,7 +231,8 @@ class _AdPlaceholderImagesAdminPageState
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const ColoredBox(
                             color: Color(0xFFF2F4F7),
-                            child: Center(child: Icon(Icons.broken_image_outlined)),
+                            child: Center(
+                                child: Icon(Icons.broken_image_outlined)),
                           ),
                         ),
                         Center(
@@ -254,10 +255,9 @@ class _AdPlaceholderImagesAdminPageState
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () =>
-                        _replaceSlideImage(image).then((_) {
-                          if (mounted) Navigator.pop(context);
-                        }),
+                    onPressed: () => _replaceSlideImage(image).then((_) {
+                      if (mounted) Navigator.pop(context);
+                    }),
                     icon: const Icon(Icons.image_search_outlined, size: 18),
                     label: const Text('Remplacer l\'image'),
                   ),
@@ -505,9 +505,8 @@ class _AdPlaceholderImagesAdminPageState
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(_isReordering
-            ? '🔄 Réorganiser les images'
-            : '🖼️  Gestion Placeholders'),
+        title: Text(
+            _isReordering ? 'Réorganiser les images' : 'Gestion Placeholders'),
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
         elevation: 2,
@@ -535,19 +534,43 @@ class _AdPlaceholderImagesAdminPageState
                   ),
                   TextButton(
                     onPressed: _saveReorder,
-                    child: const Text('Enregistrer',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w800)),
+                    child: const Text(
+                      'Enregistrer',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ],
               ]
             : [],
       ),
-      floatingActionButton: null,
+      floatingActionButton: _isReordering
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _isUploading ? null : _pickAndUploadImages,
+              backgroundColor: _orange,
+              foregroundColor: Colors.white,
+              icon: _isUploading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.add_photo_alternate_rounded),
+              label: Text(
+                _isUploading ? 'Upload en cours…' : 'Ajouter des images',
+              ),
+            ),
       body: StreamBuilder<List<AdPlaceholderImage>>(
         stream: AdPlaceholderImageService.watchAll(target: _target),
         builder: (context, snapshot) {
-          final latestStreamImages = snapshot.data ?? const <AdPlaceholderImage>[];
+          final latestStreamImages =
+              snapshot.data ?? const <AdPlaceholderImage>[];
           if (latestStreamImages.isNotEmpty) {
             _lastLoadedImages = latestStreamImages;
           }
@@ -672,12 +695,46 @@ class _AdPlaceholderImagesAdminPageState
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: const [
+                        _PlaceholderToolChip(
+                          icon: Icons.add_photo_alternate_rounded,
+                          label: 'Ajouter image(s)',
+                        ),
+                        _PlaceholderToolChip(
+                          icon: Icons.edit_rounded,
+                          label: 'Modifier slide',
+                        ),
+                        _PlaceholderToolChip(
+                          icon: Icons.visibility_rounded,
+                          label: 'Afficher / masquer',
+                        ),
+                        _PlaceholderToolChip(
+                          icon: Icons.swap_vert_rounded,
+                          label: 'Réorganiser',
+                        ),
+                        _PlaceholderToolChip(
+                          icon: Icons.delete_rounded,
+                          label: 'Supprimer',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Text(
                     '✏️ Modifier · 👁️ Cocher pour afficher · 🔍 Zoom · 🗑️ Supprimer',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.black54, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -1191,7 +1248,8 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                 children: [
                   // Badge état (bas gauche)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: selected ? orange : Colors.grey.shade600,
                       borderRadius: BorderRadius.circular(12),
@@ -1223,7 +1281,8 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                             child: IconButton(
                               padding: EdgeInsets.zero,
                               iconSize: 16,
-                              icon: const Icon(Icons.edit_rounded, color: Colors.white),
+                              icon: const Icon(Icons.edit_rounded,
+                                  color: Colors.white),
                               onPressed: onEdit,
                             ),
                           ),
@@ -1244,7 +1303,8 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                             child: IconButton(
                               padding: EdgeInsets.zero,
                               iconSize: 16,
-                              icon: const Icon(Icons.delete_rounded, color: Colors.white),
+                              icon: const Icon(Icons.delete_rounded,
+                                  color: Colors.white),
                               onPressed: onDelete,
                             ),
                           ),
@@ -1390,12 +1450,49 @@ class _EmptyPlaceholderAdminState extends StatelessWidget {
             ),
             SizedBox(height: 6),
             Text(
-              'Ajoute des images avec le bouton en bas à droite. '
-              'En attendant, les images assets actuelles restent visibles.',
+              'Ajoute des images via le bouton "Ajouter" en haut à droite '
+              'ou le bouton orange en bas. En attendant, les images assets actuelles restent visibles.',
               textAlign: TextAlign.center,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PlaceholderToolChip extends StatelessWidget {
+  const _PlaceholderToolChip({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF475569)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
       ),
     );
   }
