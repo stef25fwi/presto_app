@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'admin_hero_slides_page.dart';
 import 'admin_photo_reviews_page.dart';
+import 'admin_typography_page.dart';
 import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 
@@ -2912,6 +2913,20 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
+                  _KpiTile(
+                    icon: Icons.text_fields_rounded,
+                    title: "Typographie",
+                    subtitle: "Polices, taille, épaisseur",
+                    badge: null,
+                    iconColor: prestoBlue,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const AdminTypographyPage(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -2944,21 +2959,61 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
   late double _pendingScale;
   late String _pendingFont;
   late int _pendingWeightDelta;
+  bool _showApplyFeedback = false;
+  bool _isApplying = false;
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentSettings();
+  }
+
+  void _loadCurrentSettings() {
     _pendingScale = typographySettings.scale;
     _pendingFont = typographySettings.fontFamily;
     _pendingWeightDelta = typographySettings.fontWeightDelta;
   }
 
-  void _apply() {
-    typographySettings.apply(
-      scale: _pendingScale,
-      fontFamily: _pendingFont,
-      fontWeightDelta: _pendingWeightDelta,
-    );
+  Future<void> _apply() async {
+    if (_isApplying) return;
+
+    setState(() => _isApplying = true);
+
+    try {
+      // Apply settings
+      typographySettings.apply(
+        scale: _pendingScale,
+        fontFamily: _pendingFont,
+        fontWeightDelta: _pendingWeightDelta,
+      );
+
+      // Verify application
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted) {
+        setState(() {
+          _showApplyFeedback = true;
+          _isApplying = false;
+        });
+
+        // Clear feedback after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() => _showApplyFeedback = false);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isApplying = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _reset() {
@@ -2968,11 +3023,22 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
       _pendingWeightDelta = 0;
     });
     typographySettings.reset();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🔄 Typographie réinitialisée'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     const prestoBlue = Color(0xFF1A73E8);
+    const prestoGreen = Color(0xFF0F9D58);
+    const prestoOrange = Color(0xFFFF6600);
+
     final bool isModified = _pendingScale != typographySettings.scale ||
         _pendingFont != typographySettings.fontFamily ||
         _pendingWeightDelta != typographySettings.fontWeightDelta;
@@ -3006,7 +3072,7 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Typographie',
+                    'Typographie — Quick Access',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -3023,22 +3089,64 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text('Réinitialiser',
-                        style: TextStyle(fontSize: 12)),
+                        style: TextStyle(fontSize: 12, color: prestoOrange)),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 12),
 
+          // Status row
+          if (isModified || _showApplyFeedback)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _showApplyFeedback
+                      ? const Color(0xFFE6F4EA)
+                      : const Color(0xFFFFF3EA),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _showApplyFeedback
+                        ? prestoGreen
+                        : prestoOrange,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showApplyFeedback ? Icons.check_circle : Icons.pending_outlined,
+                      size: 14,
+                      color: _showApplyFeedback ? prestoGreen : prestoOrange,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _showApplyFeedback
+                          ? '✅ Modifications appliquées'
+                          : '⏳ Modifications en attente',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _showApplyFeedback ? prestoGreen : Colors.orange.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Scale slider
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
-                const Text('Taille',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 58,
+                  child: Text('Taille',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
                 Expanded(
                   child: Slider(
                     value: _pendingScale,
@@ -3051,11 +3159,11 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                   ),
                 ),
                 SizedBox(
-                  width: 44,
+                  width: 48,
                   child: Text(
                     '${(_pendingScale * 100).round()}%',
                     style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700),
+                        fontSize: 13, fontWeight: FontWeight.w700, color: prestoBlue),
                     textAlign: TextAlign.end,
                   ),
                 ),
@@ -3065,13 +3173,15 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
 
           // Weight delta slider
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
-                const Text('Graisse',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 58,
+                  child: Text('Graisse',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
                 Expanded(
                   child: Slider(
                     value: _pendingWeightDelta.toDouble(),
@@ -3089,7 +3199,7 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                   ),
                 ),
                 SizedBox(
-                  width: 52,
+                  width: 72,
                   child: Text(
                     _pendingWeightDelta == 0
                         ? 'Normal'
@@ -3097,7 +3207,9 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                             ? '+$_pendingWeightDelta gras'
                             : '$_pendingWeightDelta fin'),
                     style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: prestoBlue),
                     textAlign: TextAlign.end,
                   ),
                 ),
@@ -3107,13 +3219,15 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
 
           // Font family selector
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                const Text('Police',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(width: 12),
+                const SizedBox(
+                  width: 58,
+                  child: Text('Police',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                ),
                 ...kAvailableFontFamilies.map((f) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -3129,6 +3243,7 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                           color: _pendingFont == f
                               ? prestoBlue
                               : const Color(0xFFD7DEE8),
+                          width: _pendingFont == f ? 2 : 1,
                         ),
                         labelPadding: const EdgeInsets.symmetric(horizontal: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -3140,12 +3255,12 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Live preview
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
@@ -3168,20 +3283,13 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                         color: Colors.black38,
                       )),
                   const SizedBox(height: 6),
-                  Text('Titre de section',
+                  Text('Titre section',
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 18,
                           fontWeight: shiftFontWeight(
                               FontWeight.w700, _pendingWeightDelta))),
-                  Text('Titre de carte',
-                      style: TextStyle(
-                          fontFamily: _pendingFont,
-                          fontSize: 16,
-                          fontWeight: shiftFontWeight(
-                              FontWeight.w700, _pendingWeightDelta))),
-                  Text(
-                      'Texte courant — iliprestō propose des services entre particuliers à proximité.',
+                  Text('Texte courant — Services entre professionnels.',
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 14,
@@ -3189,7 +3297,7 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
                               FontWeight.w500, _pendingWeightDelta),
                           height: 1.35)),
                   const SizedBox(height: 2),
-                  Text('Méta / label 12 px',
+                  Text('Label 12 px',
                       style: TextStyle(
                           fontFamily: _pendingFont,
                           fontSize: 12,
@@ -3200,7 +3308,7 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // Apply button
           Padding(
@@ -3208,11 +3316,22 @@ class _TypographyAdminPanelState extends State<_TypographyAdminPanel> {
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: isModified ? _apply : null,
-                icon: const Icon(Icons.check_rounded, size: 18),
-                label: const Text('Appliquer à toute l\'app'),
+                onPressed: (isModified && !_isApplying) ? _apply : null,
+                icon: _isApplying
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.check_rounded, size: 18),
+                label: Text(_isApplying ? 'Application en cours...' : '✅ Appliquer'),
                 style: FilledButton.styleFrom(
                   backgroundColor: prestoBlue,
+                  disabledBackgroundColor: Colors.grey.shade300,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

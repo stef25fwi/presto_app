@@ -432,6 +432,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final GeoApiGouvService _geoApiGouvService = GeoApiGouvService();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
+  late final FocusNode _descriptionFocusNode = FocusNode();
 
   // Indicatif téléphonique sélectionné
   String _selectedPhoneCountryCode = '+33';
@@ -1188,12 +1189,84 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return lines.join('\n').trim();
   }
 
+  String _firstNonEmptyDraftValue(
+    Map<String, dynamic> draft,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = draft[key];
+      if (value == null) continue;
+      final text = value.toString().trim();
+      if (text.isNotEmpty) return text;
+    }
+    return '';
+  }
+
   void _applyRichDraftToForm(Map<String, dynamic> draft) {
-    final title = (draft['title'] ?? draft['titre'] ?? '').toString().trim();
+    final title = _firstNonEmptyDraftValue(draft, const [
+      'title',
+      'titre',
+      'listingTitle',
+      'offerTitle',
+    ]);
     final description = _buildRichDraftDescription(draft);
     final category = _resolvePublishCategoryLabel(
-      (draft['category'] ?? draft['categorie'] ?? '').toString(),
+      _firstNonEmptyDraftValue(draft, const [
+        'category',
+        'categorie',
+        'catégorie',
+        'mainCategory',
+      ]),
     );
+    final rawLocation = _firstNonEmptyDraftValue(draft, const [
+      'city',
+      'ville',
+      'location',
+      'localisation',
+      'locality',
+      'lieu',
+      'commune',
+      'address',
+      'adresse',
+      'rawLocation',
+    ]);
+    var detectedCity = _firstNonEmptyDraftValue(draft, const [
+      'city',
+      'ville',
+      'commune',
+      'locality',
+      'locationCity',
+    ]);
+    var detectedPostalCode = _firstNonEmptyDraftValue(draft, const [
+      'postalCode',
+      'codePostal',
+      'code_postal',
+      'postal_code',
+      'zipCode',
+      'zipcode',
+      'zip',
+      'cp',
+    ]);
+
+    if (detectedCity.isEmpty && rawLocation.isNotEmpty) {
+      detectedCity = rawLocation;
+    }
+    if (detectedPostalCode.isEmpty && rawLocation.isNotEmpty) {
+      final cpFromLocation = _extractPostalCodeFromTranscript(rawLocation);
+      if ((cpFromLocation ?? '').isNotEmpty) {
+        detectedPostalCode = cpFromLocation!;
+      }
+    }
+    if (rawLocation.isNotEmpty && detectedCity.isNotEmpty) {
+      final cityWithoutCp = detectedCity
+          .replaceAll(RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (cityWithoutCp.isNotEmpty) {
+        detectedCity = cityWithoutCp;
+      }
+    }
+
     final missionDelay = _normalizeDraftMissionDelay(
       (draft['urgence'] ?? '').toString(),
     );
@@ -1269,8 +1342,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     _applyDetectedCityData(
-      city: (draft['city'] ?? draft['ville'] ?? '').toString(),
-      postalCode: (draft['postalCode'] ?? '').toString(),
+      city: detectedCity,
+      postalCode: detectedPostalCode,
       departmentHint: (draft['department'] ??
               draft['departement'] ??
               draft['departmentName'] ??
@@ -1280,12 +1353,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       regionHint:
           (draft['region'] ?? draft['regionName'] ?? draft['regionCode'] ?? '')
               .toString(),
-      locationHint: (draft['location'] ??
-              draft['adresse'] ??
-              draft['address'] ??
-              draft['rawLocation'] ??
-              '')
-          .toString(),
+      locationHint: rawLocation,
     );
     _applyKeywordCategoryPairFromText('$title\n$description');
     // Guarantee the publish button re-evaluates after AI sets state variables
@@ -2329,10 +2397,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       curve: Curves.easeOutCubic,
       alignment: 0.1,
     );
+    // Positionne le curseur au début pour que la suggestion soit visible en italique
     _descriptionController.selection = TextSelection.fromPosition(
-      TextPosition(offset: _descriptionController.text.length),
+      const TextPosition(offset: 0),
     );
-    FocusScope.of(ctx).requestFocus(FocusNode());
+    // Donne le focus au champ descriptif
+    FocusScope.of(ctx).requestFocus(_descriptionFocusNode);
   }
 
   Future<void> _scrollToFirstInvalidPublishField() async {
@@ -3104,6 +3174,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
+    _descriptionFocusNode.dispose();
     _locationController.dispose();
     _postalCodeController.dispose();
     _phoneController.dispose();
@@ -3951,6 +4022,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       children: [
                         TextFormField(
                           controller: _descriptionController,
+                          focusNode: _descriptionFocusNode,
                           textAlignVertical: TextAlignVertical.top,
                           decoration: InputDecoration(
                             label: _requiredLabel('Description détaillée'),
