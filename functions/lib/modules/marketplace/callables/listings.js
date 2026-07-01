@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.closeOfferWithReason = exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = void 0;
+exports.closeOfferWithReason = exports.deleteListing = exports.getListingContactPhone = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = void 0;
 exports.buildListingDraftDocumentPath = buildListingDraftDocumentPath;
 exports.buildListingDocumentPath = buildListingDocumentPath;
 exports.assertDraftOwnership = assertDraftOwnership;
@@ -119,6 +119,52 @@ function collectListingImageUrls(media) {
     return Array.from(new Set(media
         .map((entry) => normalizeString(entry.downloadUrl || entry.thumbnailUrl))
         .filter((url) => url.length > 0)));
+}
+function extractDialingCode(rawPhone) {
+    const compact = normalizeString(rawPhone).replace(/[\s().-]+/g, "");
+    if (!compact)
+        return "";
+    const supportedDialingCodes = [
+        "+590", // Guadeloupe, Saint-Martin, Saint-Barthélemy
+        "+596", // Martinique
+        "+594", // Guyane
+        "+262", // La Réunion et Mayotte
+        "+508", // Saint-Pierre-et-Miquelon
+        "+681", // Wallis-et-Futuna
+        "+689", // Polynésie française
+        "+687", // Nouvelle-Calédonie
+        "+33", // France métropolitaine
+    ];
+    for (const dialingCode of supportedDialingCodes) {
+        if (compact.startsWith(dialingCode)) {
+            return dialingCode;
+        }
+    }
+    const fallback = compact.match(/^(\+\d{1,3})/);
+    if (fallback?.[1])
+        return fallback[1];
+    const localPrefixToDialingCode = {
+        "0590": "+590",
+        "0596": "+596",
+        "0594": "+594",
+        "0262": "+262",
+        "0269": "+262",
+        "0508": "+508",
+        "0681": "+681",
+        "0689": "+689",
+        "0687": "+687",
+    };
+    for (const [prefix, dialingCode] of Object.entries(localPrefixToDialingCode)) {
+        if (compact.startsWith(prefix)) {
+            return dialingCode;
+        }
+    }
+    if (compact.length === 10 && compact.startsWith("0"))
+        return "+33";
+    if (compact.length === 9 && (compact.startsWith("6") || compact.startsWith("7"))) {
+        return "+33";
+    }
+    return "";
 }
 function buildAutoPublishAfterForSubmission({ mediaCount, nowMs = Date.now(), }) {
     if (mediaCount <= 0) {
@@ -623,6 +669,59 @@ exports.incrementListingView = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
         },
     });
     return { ok: true, deduplicated: false };
+});
+exports.getListingContactPhone = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
+    const listingId = normalizeString(request.data?.listingId);
+    if (!listingId) {
+        throw new https_1.HttpsError("invalid-argument", "listingId is required");
+    }
+    const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
+    const [listingSnap, privateContactSnap] = await Promise.all([
+        listingRef.get(),
+        firestore_1.db.collection("listingPrivateContacts").doc(listingId).get(),
+    ]);
+    if (!listingSnap.exists) {
+        throw new https_1.HttpsError("not-found", "Listing not found");
+    }
+    const listingData = (listingSnap.data() ?? {});
+    const status = normalizeString(listingData.status).toLowerCase();
+    const visibility = normalizeString(listingData.visibility).toLowerCase();
+    const hidePhone = listingData.hidePhone === true;
+    const uid = normalizeString(request.auth?.uid);
+    const ownerId = readListingOwnerId(listingData);
+    const isOwner = uid.length > 0 && uid === ownerId;
+    const isPublic = status === "active" && visibility === "public";
+    if (!isPublic && !isOwner) {
+        throw new https_1.HttpsError("permission-denied", "Listing is not publicly visible");
+    }
+    const privateData = (privateContactSnap.data() ?? {});
+    const phone = normalizeString(privateData.phone);
+    const dialingCode = extractDialingCode(phone);
+    if (!phone) {
+        return {
+            ok: true,
+            hidePhone,
+            dialingCode: "",
+            phone: "",
+        };
+    }
+    if (hidePhone) {
+        return {
+            ok: true,
+            hidePhone: true,
+            dialingCode,
+            phone: "",
+        };
+    }
+    if (!uid) {
+        throw new https_1.HttpsError("unauthenticated", "Authentication is required");
+    }
+    return {
+        ok: true,
+        hidePhone: false,
+        dialingCode,
+        phone,
+    };
 });
 /**
  * Valid structured reasons indicating "job done".
