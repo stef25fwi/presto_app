@@ -28,7 +28,16 @@ class AdminHeroSlidesPage extends StatefulWidget {
 }
 
 class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
-  static const List<String> _imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+  static const List<String> _imageExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'avif',
+    'gif',
+    'heic',
+    'heif',
+  ];
   static const List<String> _videoExtensions = ['mp4', 'mov', 'webm'];
   static const int _maxImageBytes = 8 * 1024 * 1024;
   static const int _maxVideoBytes = 50 * 1024 * 1024;
@@ -87,6 +96,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
 
                 final file = result.files.single;
                 var bytes = file.bytes;
+                final normalizedName =
+                    file.name.trim().isEmpty ? 'slide_upload.bin' : file.name;
                 if (bytes == null) {
                   final stream = file.readStream;
                   if (stream != null) {
@@ -107,11 +118,19 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 }
 
                 final nonNullBytes = bytes;
-                final mediaType = _mediaTypeFromName(file.name);
-                if (!_isSupportedHeroMedia(file.name)) {
+                if (nonNullBytes.isEmpty) {
                   setSheetState(() {
                     localError =
-                        'Format non supporté. Utilisez une image JPG, PNG, WEBP ou une vidéo MP4.';
+                        'Le fichier sélectionné est vide. Choisissez un autre média.';
+                  });
+                  return;
+                }
+
+                final mediaType = _mediaTypeFromName(normalizedName);
+                if (!_isSupportedHeroMedia(normalizedName)) {
+                  setSheetState(() {
+                    localError =
+                        'Format non supporté. Utilisez une image JPG/PNG/WEBP/AVIF/GIF/HEIC/HEIF ou une vidéo MP4/MOV/WEBM.';
                   });
                   return;
                 }
@@ -127,10 +146,10 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
 
                 setSheetState(() {
                   selectedBytes = nonNullBytes;
-                  selectedFileName = file.name;
+                  selectedFileName = normalizedName;
                   selectedMediaType = mediaType;
                   selectedContentType =
-                      _contentTypeForName(file.name, mediaType);
+                      _contentTypeForName(normalizedName, mediaType);
                   previewWarning = '';
                   localError = '';
                   if (existing == null) {
@@ -183,10 +202,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       ),
                       const SizedBox(height: 18),
                       InkWell(
-                        onTap:
-                            (isSubmittingSheet || isPickingFile)
-                                ? null
-                                : pickMedia,
+                        onTap: (isSubmittingSheet || isPickingFile)
+                            ? null
+                            : pickMedia,
                         borderRadius: BorderRadius.circular(18),
                         child: Ink(
                           width: double.infinity,
@@ -253,7 +271,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                       isPickingFile
                                           ? 'Chargement en cours, veuillez patienter…'
                                           : selectedFileName.isEmpty
-                                              ? 'Formats image: jpg, jpeg, png, webp. Formats vidéo: mp4, mov, webm.'
+                                              ? 'Formats image: jpg, jpeg, png, webp, avif, gif, heic, heif. Formats vidéo: mp4, mov, webm.'
                                               : 'Type détecté: ${selectedMediaType == 'video' ? 'Vidéo' : 'Image'}',
                                       style: const TextStyle(
                                         color: Color(0xFF6B7280),
@@ -844,6 +862,42 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     }
   }
 
+  Future<void> _moveSlideByDelta(
+    List<HeroSlide> slides,
+    int index,
+    int delta,
+  ) async {
+    final target = index + delta;
+    if (target < 0 || target >= slides.length || _isReordering) {
+      return;
+    }
+
+    final reordered = List<HeroSlide>.from(slides);
+    final moved = reordered.removeAt(index);
+    reordered.insert(target, moved);
+
+    setState(() => _isReordering = true);
+    try {
+      await _heroSlidesService.reorderSlides(reordered);
+      if (!mounted) {
+        return;
+      }
+      showSuccessSnackBar(context, 'Ordre des slides mis à jour');
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      showErrorSnackBar(
+        context,
+        'Impossible de modifier l\'ordre pour le moment.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isReordering = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -880,7 +934,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1100),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 260),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -888,6 +942,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       hasSlides: slides.isNotEmpty,
                       onAddPressed: _isSubmitting ? null : _openSlideEditor,
                     ),
+                    const SizedBox(height: 14),
+                    const _HeroToolsPanel(),
                     const SizedBox(height: 14),
                     Wrap(
                       spacing: 10,
@@ -958,8 +1014,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         return Card(
                                           key: ValueKey(slide.id),
                                           elevation: 0,
-                                          margin: const EdgeInsets.only(
-                                              bottom: 260),
+                                          margin:
+                                              const EdgeInsets.only(bottom: 12),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(20),
@@ -1073,9 +1129,10 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                     ReorderableDragStartListener(
                                                       index: index,
                                                       child: Container(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
-                                                            horizontal: 8),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 8),
                                                         decoration:
                                                             BoxDecoration(
                                                           color: const Color(
@@ -1151,8 +1208,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                             : () =>
                                                                 _setFirstSlide(
                                                                     slide),
-                                                        icon: const Icon(Icons
-                                                            .vertical_align_top_rounded,
+                                                        icon: const Icon(
+                                                            Icons
+                                                                .vertical_align_top_rounded,
                                                             size: 18),
                                                         label: const Text(
                                                             'Définir premier'),
@@ -1176,12 +1234,13 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                           mainAxisSize:
                                                               MainAxisSize.min,
                                                           children: [
-                                                            Icon(Icons.star_rounded,
+                                                            Icon(
+                                                                Icons
+                                                                    .star_rounded,
                                                                 size: 16,
                                                                 color: Colors
                                                                     .white),
-                                                            SizedBox(
-                                                                width: 4),
+                                                            SizedBox(width: 4),
                                                             Text(
                                                               'Premier slide',
                                                               style: TextStyle(
@@ -1199,20 +1258,62 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                     OutlinedButton.icon(
                                                       onPressed: isBusy
                                                           ? null
-                                                          : () =>
-                                                              _deleteSlide(
-                                                                  slide),
+                                                          : () => _deleteSlide(
+                                                              slide),
                                                       style: OutlinedButton
                                                           .styleFrom(
                                                         foregroundColor:
                                                             const Color(
                                                                 0xFFB91C1C),
                                                       ),
-                                                      icon: const Icon(Icons
-                                                          .delete_outline_rounded,
+                                                      icon: const Icon(
+                                                          Icons
+                                                              .delete_outline_rounded,
                                                           size: 18),
+                                                      label: Text(
+                                                        slide.isVideo
+                                                            ? 'Supprimer vidéo'
+                                                            : 'Supprimer image',
+                                                      ),
+                                                    ),
+                                                    OutlinedButton.icon(
+                                                      onPressed: isBusy ||
+                                                              index == 0
+                                                          ? null
+                                                          : () =>
+                                                              _moveSlideByDelta(
+                                                                slides,
+                                                                index,
+                                                                -1,
+                                                              ),
+                                                      icon: const Icon(
+                                                        Icons
+                                                            .arrow_upward_rounded,
+                                                        size: 18,
+                                                      ),
+                                                      label:
+                                                          const Text('Monter'),
+                                                    ),
+                                                    OutlinedButton.icon(
+                                                      onPressed: isBusy ||
+                                                              index ==
+                                                                  slides.length -
+                                                                      1
+                                                          ? null
+                                                          : () =>
+                                                              _moveSlideByDelta(
+                                                                slides,
+                                                                index,
+                                                                1,
+                                                              ),
+                                                      icon: const Icon(
+                                                        Icons
+                                                            .arrow_downward_rounded,
+                                                        size: 18,
+                                                      ),
                                                       label: const Text(
-                                                          'Supprimer'),
+                                                        'Descendre',
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
@@ -1251,6 +1352,14 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
         return 'image/png';
       case 'webp':
         return 'image/webp';
+      case 'avif':
+        return 'image/avif';
+      case 'gif':
+        return 'image/gif';
+      case 'heic':
+        return 'image/heic';
+      case 'heif':
+        return 'image/heif';
       case 'mov':
         return 'video/quicktime';
       case 'webm':
@@ -1459,6 +1568,86 @@ class _HeroStatCard extends StatelessWidget {
             style: TextStyle(
               color: foregroundColor,
               fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroToolsPanel extends StatelessWidget {
+  const _HeroToolsPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: const [
+          _HeroToolChip(label: 'Ajouter image/vidéo', icon: Icons.add_rounded),
+          _HeroToolChip(label: 'Modifier média', icon: Icons.edit_rounded),
+          _HeroToolChip(
+            label: 'Supprimer image/vidéo',
+            icon: Icons.delete_outline_rounded,
+          ),
+          _HeroToolChip(
+              label: 'Monter/descendre', icon: Icons.swap_vert_rounded),
+          _HeroToolChip(
+            label: 'Glisser-déposer',
+            icon: Icons.drag_handle_rounded,
+          ),
+          _HeroToolChip(
+            label: 'Définir premier slide',
+            icon: Icons.vertical_align_top_rounded,
+          ),
+          _HeroToolChip(
+            label: 'Activer/désactiver',
+            icon: Icons.toggle_on_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroToolChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _HeroToolChip({
+    required this.label,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF4B5563)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF374151),
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
             ),
           ),
         ],
