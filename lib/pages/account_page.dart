@@ -2569,6 +2569,10 @@ class _AccountPageState extends State<AccountPage> {
         .toList()
       ..sort();
 
+    if (_profileAccountType == 'Entreprise') {
+      return _buildEnterpriseScaffold(user, displayName, visiblePhotoUrl);
+    }
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -3582,6 +3586,412 @@ class _AccountPageState extends State<AccountPage> {
           return _buildProfile(user);
         }
       },
+    );
+  }
+
+  // ── Enterprise account layout ──────────────────────────────────────────────
+
+  Widget _buildEnterpriseScaffold(
+    User user,
+    String displayName,
+    String visiblePhotoUrl,
+  ) {
+    final city = _profileCityController.text.trim();
+    final dept = _departmentController.text.trim();
+    final locationParts = [dept, city].where((s) => s.isNotEmpty).toList();
+    final locationText = locationParts.join(' • ');
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+          title: const Text(
+            'Mon compte iliprestō',
+            style: kPrestoAppBarTitleStyle,
+          ),
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
+        ),
+        backgroundColor: const Color(0xFFF8F8F8),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildEnterpriseHeader(
+                    user,
+                    displayName,
+                    visiblePhotoUrl,
+                    locationText,
+                  ),
+                  const SizedBox(height: 28),
+                  _buildEspaceConfianceCard(),
+                  const SizedBox(height: 20),
+                  _buildEnterpriseMenuSection(user),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnterpriseHeader(
+    User user,
+    String displayName,
+    String visiblePhotoUrl,
+    String locationText,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            SizedBox(
+              width: 90,
+              height: 90,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const CircleAvatar(
+                    radius: 45,
+                    backgroundColor: Colors.white,
+                    backgroundImage:
+                        AssetImage('assets/images/logowebp.webp'),
+                  ),
+                  if (visiblePhotoUrl.isNotEmpty)
+                    ClipOval(
+                      child: Image.network(
+                        visiblePhotoUrl,
+                        fit: BoxFit.cover,
+                        width: 90,
+                        height: 90,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox.shrink(),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 2,
+              bottom: 2,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: kPrestoBlue,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                displayName,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0D1B3E),
+                ),
+              ),
+              if (locationText.isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        locationText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F0FE),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.verified_user_rounded,
+                      size: 14,
+                      color: kPrestoBlue,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Profil vérifié',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: kPrestoBlue,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEspaceConfianceCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+              child: Row(
+                children: const [
+                  Icon(
+                    Icons.shield_rounded,
+                    color: kPrestoOrange,
+                    size: 30,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Espace confiance et activité',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: kPrestoOrange,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, thickness: 1),
+            _buildOrangeMenuItem(
+              icon: Icons.badge_rounded,
+              label: 'Ma fiche Pro',
+              onTap: () => showPrestoSnackBar(
+                  context, 'Ma fiche Pro — Bientôt disponible'),
+            ),
+            const Divider(height: 1, thickness: 1, indent: 72),
+            _buildOrangeMenuItem(
+              icon: Icons.grid_view_rounded,
+              label: 'Vérifier mon SIRET',
+              onTap: () => showPrestoSnackBar(
+                  context, 'Vérification SIRET — Bientôt disponible'),
+            ),
+            const Divider(height: 1, thickness: 1, indent: 72),
+            _buildOrangeMenuItem(
+              icon: Icons.star_border_rounded,
+              label: 'Mes avis',
+              solidBackground: false,
+              onTap: () => showPrestoSnackBar(
+                  context, 'Mes avis — Bientôt disponible'),
+            ),
+            const Divider(height: 1, thickness: 1, indent: 72),
+            _buildOrangeMenuItem(
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Créer mon activité',
+              onTap: () => showPrestoSnackBar(
+                  context, 'Créer mon activité — Bientôt disponible'),
+            ),
+            const Divider(height: 1, thickness: 1, indent: 72),
+            _buildOrangeMenuItem(
+              icon: Icons.folder_rounded,
+              label: 'Ma fiche projet',
+              onTap: () => showPrestoSnackBar(
+                  context, 'Ma fiche projet — Bientôt disponible'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrangeMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool solidBackground = true,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: solidBackground
+                    ? kPrestoOrange
+                    : kPrestoOrange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: solidBackground ? Colors.white : kPrestoOrange,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey.shade400,
+              size: 22,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnterpriseMenuSection(User user) {
+    return Column(
+      children: [
+        _buildBlueMenuItem(
+          icon: Icons.chat_bubble_rounded,
+          label: 'Mes messages',
+          onTap: () => showPrestoSnackBar(
+              context, 'Messagerie — Bientôt disponible depuis ici'),
+        ),
+        const Divider(height: 1, thickness: 1, indent: 72),
+        _buildBlueMenuItem(
+          icon: Icons.campaign_rounded,
+          label: 'Mes annonces',
+          onTap: () => showPrestoSnackBar(
+              context, 'Annonces — Bientôt disponible depuis ici'),
+        ),
+        const Divider(height: 1, thickness: 1, indent: 72),
+        _buildBlueMenuItem(
+          icon: Icons.settings_rounded,
+          label: 'Paramètres',
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AccountSecurityPage(),
+              ),
+            );
+          },
+        ),
+        const Divider(height: 1, thickness: 1, indent: 72),
+        _buildBlueMenuItem(
+          icon: Icons.logout_rounded,
+          label: 'Déconnexion',
+          onTap: _isSigningOut ? () {} : _signOut,
+          trailing: _isSigningOut
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: kPrestoBlue,
+                  ),
+                )
+              : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBlueMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Widget? trailing,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: kPrestoBlue,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            trailing ??
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.grey.shade400,
+                  size: 22,
+                ),
+          ],
+        ),
+      ),
     );
   }
 }
