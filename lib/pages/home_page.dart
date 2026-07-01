@@ -1907,20 +1907,11 @@ class _HomePageState extends State<HomePage>
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(22),
-                    child: StreamBuilder<List<HeroSlide>>(
-                      stream: _heroSlidesStream,
-                      builder: (context, snapshot) {
-                        final fallback = _buildFallbackHomeHeroSlider();
-                        final slides = snapshot.data ?? _cachedHeroSlides;
-                        if (snapshot.hasError || slides.isEmpty) {
-                          return fallback;
-                        }
-                        return HeroMediaSlider(
-                          slides: slides,
-                          fallback: fallback,
-                          borderRadius: 0,
-                        );
-                      },
+                    child: _HeroSliderWithStableHeight(
+                      cachedSlides: _cachedHeroSlides,
+                      heroSlidesStream: _heroSlidesStream,
+                      fallbackBuilder: _buildFallbackHomeHeroSlider,
+                      carouselController: _carouselController,
                     ),
                   ),
                 ),
@@ -1938,6 +1929,52 @@ class _HomePageState extends State<HomePage>
             const SizedBox(height: 8),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Widget pour envelopper le hero slider avec une hauteur stable, indépendamment du contenu.
+/// Cela prévient le redimensionnement visible du hero lors du chargement des slides Firestore.
+class _HeroSliderWithStableHeight extends StatelessWidget {
+  final List<HeroSlide> cachedSlides;
+  final Stream<List<HeroSlide>> heroSlidesStream;
+  final Widget Function() fallbackBuilder;
+  final PageController carouselController;
+
+  const _HeroSliderWithStableHeight({
+    required this.cachedSlides,
+    required this.heroSlidesStream,
+    required this.fallbackBuilder,
+    required this.carouselController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    // Utilise la même formule que _PrestoStableHeroViewport dans hero_media_slider.dart
+    final stableHeight = (width * 0.52).clamp(184.0, 260.0).toDouble();
+
+    return SizedBox(
+      width: double.infinity,
+      height: stableHeight,
+      child: StreamBuilder<List<HeroSlide>>(
+        stream: heroSlidesStream,
+        builder: (context, snapshot) {
+          final fallback = fallbackBuilder();
+          final slides = snapshot.data ?? cachedSlides;
+          
+          if (snapshot.hasError || slides.isEmpty) {
+            // Même le fallback a la hauteur stable
+            return fallback;
+          }
+          
+          return HeroMediaSlider(
+            slides: slides,
+            fallback: fallback,
+            borderRadius: 0,
+          );
+        },
       ),
     );
   }
