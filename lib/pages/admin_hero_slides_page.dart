@@ -56,6 +56,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     String previewWarning = '';
     String localError = '';
     bool isPickingFile = false;
+    bool isSubmittingSheet = false;
+    double? uploadProgressSheet;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -182,7 +184,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                       const SizedBox(height: 18),
                       InkWell(
                         onTap:
-                            (_isSubmitting || isPickingFile) ? null : pickMedia,
+                            (isSubmittingSheet || isPickingFile)
+                                ? null
+                                : pickMedia,
                         borderRadius: BorderRadius.circular(18),
                         child: Ink(
                           width: double.infinity,
@@ -282,7 +286,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                           fileName: selectedFileName,
                           mediaType: selectedMediaType,
                           contentType: selectedContentType,
-                          onClear: _isSubmitting
+                          onClear: isSubmittingSheet
                               ? null
                               : () {
                                   setSheetState(() {
@@ -374,7 +378,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                             'Désactivez temporairement sans supprimer le slide.'),
                         value: isActive,
                         activeColor: _kAdminHeroOrange,
-                        onChanged: _isSubmitting
+                        onChanged: isSubmittingSheet
                             ? null
                             : (value) {
                                 setSheetState(() => isActive = value);
@@ -387,7 +391,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                             'Tous les autres slides perdront ce statut.'),
                         value: isFirst,
                         activeColor: _kAdminHeroBlue,
-                        onChanged: _isSubmitting
+                        onChanged: isSubmittingSheet
                             ? null
                             : (value) {
                                 setSheetState(() => isFirst = value);
@@ -403,18 +407,18 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                           ),
                         ),
                       ],
-                      if (_isSubmitting) ...[
+                      if (isSubmittingSheet) ...[
                         const SizedBox(height: 16),
                         LinearProgressIndicator(
-                          value: _uploadProgress,
+                          value: uploadProgressSheet,
                           backgroundColor: const Color(0xFFE5E7EB),
                           color: _kAdminHeroBlue,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _uploadProgress == null
+                          uploadProgressSheet == null
                               ? 'Upload en cours…'
-                              : 'Upload en cours… ${(_uploadProgress! * 100).round()} %',
+                              : 'Upload en cours… ${(uploadProgressSheet! * 100).round()} %',
                           style: const TextStyle(
                             color: Color(0xFF6B7280),
                             fontWeight: FontWeight.w700,
@@ -426,7 +430,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: _isSubmitting
+                              onPressed: isSubmittingSheet
                                   ? null
                                   : () => Navigator.of(context).pop(false),
                               child: const Text('Annuler'),
@@ -439,7 +443,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                 backgroundColor: _kAdminHeroOrange,
                                 foregroundColor: Colors.white,
                               ),
-                              onPressed: _isSubmitting
+                              onPressed: isSubmittingSheet
                                   ? null
                                   : () async {
                                       if (existing == null &&
@@ -482,6 +486,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         _uploadProgress = null;
                                       });
                                       setSheetState(() {
+                                        isSubmittingSheet = true;
+                                        uploadProgressSheet = null;
                                         localError = '';
                                       });
 
@@ -511,6 +517,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                               }
                                               setState(() =>
                                                   _uploadProgress = progress);
+                                              setSheetState(() {
+                                                uploadProgressSheet = progress;
+                                              });
                                             },
                                           );
                                           debugPrint(
@@ -566,6 +575,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                               }
                                               setState(() =>
                                                   _uploadProgress = progress);
+                                              setSheetState(() {
+                                                uploadProgressSheet = progress;
+                                              });
                                             },
                                           );
                                           debugPrint(
@@ -644,6 +656,10 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                           setState(() {
                                             _isSubmitting = false;
                                             _uploadProgress = null;
+                                          });
+                                          setSheetState(() {
+                                            isSubmittingSheet = false;
+                                            uploadProgressSheet = null;
                                           });
                                         }
                                       }
