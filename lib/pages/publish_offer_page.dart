@@ -376,6 +376,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
+  final LayerLink _publishAiMicAnchorLink = LayerLink();
 
   bool _isUrgent = false;
   bool _hidePhone = false;
@@ -3232,6 +3233,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _selectedRegionCode = null;
       _selectedDeptCode = null;
       _selectedPhoneCountryCode = '+33';
+      _hidePhone = false;
 
       _isUrgent = false;
 
@@ -3980,15 +3982,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ],
         ),
         body: SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode: _attemptedSubmit
-                ? AutovalidateMode.always
-                : AutovalidateMode.disabled,
-            child: ListView(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
-              children: [
+          child: Stack(
+            children: [
+              Form(
+                key: _formKey,
+                autovalidateMode: _attemptedSubmit
+                    ? AutovalidateMode.always
+                    : AutovalidateMode.disabled,
+                child: ListView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
+                  children: [
                 const SizedBox(height: 6),
                 ClipRRect(
                   // _publishAiMicroOrbitFocusStack
@@ -3997,6 +4001,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     children: [
                       AiPublishControl(
                         state: _aiPublishState,
+                        micAnchorLink: _publishAiMicAnchorLink,
                         isAudioAnalyzing: _isAnalyzing,
                         onStartRecording: _startMic,
                         onStopRecording: _stopMic,
@@ -4006,22 +4011,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         showAdminDiagnostics:
                             _adminAudioRuntimeAccessState == 1,
                       ),
-                      if (_isAnalyzing)
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.54),
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (_isAnalyzing)
-                        const Positioned.fill(
-                          child: IgnorePointer(
-                            child: _PublishAiMicroOrbitFocus(),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -4500,6 +4489,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
               ],
             ),
+              ),
+              if (_isAnalyzing)
+                Positioned.fill(
+                  child: AbsorbPointer(
+                    absorbing: true,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.54),
+                      ),
+                    ),
+                  ),
+                ),
+              if (_isAnalyzing)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CompositedTransformFollower(
+                      link: _publishAiMicAnchorLink,
+                      showWhenUnlinked: false,
+                      offset: const Offset(-32, -32),
+                      child: const _PublishAiMicroOrbitFocus(),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -4512,36 +4525,34 @@ class _PublishAiMicroOrbitFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 132,
-        height: 132,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.10),
-          border: Border.all(
-            color: Colors.white,
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.white.withValues(alpha: 0.85),
-              blurRadius: 30,
-              spreadRadius: 5,
-            ),
-            BoxShadow(
-              color: const Color(0xFF13A8FF).withValues(alpha: 0.70),
-              blurRadius: 48,
-              spreadRadius: 10,
-            ),
-          ],
+    return Container(
+      width: 132,
+      height: 132,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: 0.10),
+        border: Border.all(
+          color: Colors.white,
+          width: 3,
         ),
-        child: const Center(
-          child: OrbitingAiVisual(
-            size: 88,
-            strokeColor: Color(0xDDFFFFFF),
-            dotColor: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.85),
+            blurRadius: 30,
+            spreadRadius: 5,
           ),
+          BoxShadow(
+            color: const Color(0xFF13A8FF).withValues(alpha: 0.70),
+            blurRadius: 48,
+            spreadRadius: 10,
+          ),
+        ],
+      ),
+      child: const Center(
+        child: OrbitingAiVisual(
+          size: 88,
+          strokeColor: Color(0xDDFFFFFF),
+          dotColor: Colors.white,
         ),
       ),
     );

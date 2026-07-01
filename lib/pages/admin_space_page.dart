@@ -2915,7 +2915,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   _KpiTile(
                     icon: Icons.text_fields_rounded,
                     title: "Typographie",
-                    subtitle: "Polices, taille, épaisseur",
+                    subtitle: "Police et taille pour toute l'application",
                     badge: null,
                     iconColor: prestoBlue,
                     onTap: () {

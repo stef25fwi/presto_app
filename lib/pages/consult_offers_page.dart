@@ -35,7 +35,6 @@ import '../services/offer_indexing.dart';
 import '../services/public_offers_query_helpers.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/offer_helpers.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 
 import '../utils/runtime_action_logger.dart';
 import '../widgets/ad_banner.dart';
@@ -299,6 +298,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   // ✅ Cache de normalisation pour améliorer la performance de recherche
   final Map<String, String> _normalizedTextCache = {};
+
+  // ✅ Mémoisation UI pour éviter de recalculer filtre/tri et payload tuiles
+  String? _displayedDocsCacheSignature;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>>? _displayedDocsCache;
+  String? _renderItemsCacheSignature;
+  List<_ConsultOfferListItem>? _renderItemsCache;
 
   // ✅ Cache des résultats Firestore pour éviter les re-queries
   Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
@@ -1170,6 +1175,141 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return docs;
   }
 
+  String _makeRawDocsSignature(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> rawDocs,
+  ) {
+    final buffer = StringBuffer();
+    for (final doc in rawDocs) {
+      final createdAt = doc.data()['createdAt'];
+      final createdAtMs = createdAt is Timestamp
+          ? createdAt.millisecondsSinceEpoch
+          : (createdAt is int ? createdAt : 0);
+      buffer
+        ..write(doc.id)
+        ..write(':')
+        ..write(createdAtMs)
+        ..write(';');
+    }
+    return buffer.toString();
+  }
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _getDisplayedOfferDocsMemo(
+    String streamKey,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> rawDocs,
+  ) {
+    final signature = '$streamKey|${_makeRawDocsSignature(rawDocs)}';
+    if (_displayedDocsCacheSignature == signature && _displayedDocsCache != null) {
+      return _displayedDocsCache!;
+    }
+
+    final next = _buildDisplayedOfferDocs(rawDocs);
+    _displayedDocsCacheSignature = signature;
+    _displayedDocsCache = next;
+    return next;
+  }
+
+  String _makeDisplayedDocsSignature(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final buffer = StringBuffer();
+    for (final doc in docs) {
+      final data = doc.data();
+      final createdAt = data['createdAt'];
+      final createdAtMs = createdAt is Timestamp
+          ? createdAt.millisecondsSinceEpoch
+          : (createdAt is int ? createdAt : 0);
+      buffer
+        ..write(doc.id)
+        ..write(':')
+        ..write(createdAtMs)
+        ..write(':')
+        ..write(isOfferJobDoneOverlayVisible(data) ? '1' : '0')
+        ..write(';');
+    }
+    return buffer.toString();
+  }
+
+  List<_ConsultOfferListItem> _getOfferListItemsMemo(
+    String streamKey,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final signature = '$streamKey|${_makeDisplayedDocsSignature(docs)}';
+    if (_renderItemsCacheSignature == signature && _renderItemsCache != null) {
+      return _renderItemsCache!;
+    }
+
+    final items = _buildOfferListItems(docs);
+    _renderItemsCacheSignature = signature;
+    _renderItemsCache = items;
+    return items;
+  }
+
+  List<_ConsultOfferListItem> _buildOfferListItems(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    const adsEvery = 8;
+    final items = <_ConsultOfferListItem>[];
+
+    for (var index = 0; index < docs.length; index++) {
+      if (index > 0 && index % adsEvery == 0) {
+        items.add(const _ConsultOfferListItem.ad());
+      }
+
+      final doc = docs[index];
+      final data = doc.data();
+      final offerId = doc.id;
+      final title = (data['title'] ?? 'Sans titre').toString();
+      final city =
+          ((data['city'] ?? data['location']) ?? 'Lieu non précisé').toString();
+      final postalCode =
+          ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+      final category = (data['category'] ?? 'Catégorie non précisée').toString();
+      final budgetRaw = data['budget'] ?? data['price'];
+      final budget = budgetRaw is num
+          ? budgetRaw.round()
+          : int.tryParse(budgetRaw?.toString() ?? '') ?? 0;
+      final publishedAge = _ageLabelFromCreatedAt(data['createdAt']);
+      final publishedText = publishedAge.isEmpty
+          ? 'Publication récente'
+          : 'Publié il y a $publishedAge';
+      final isUrgent = data['isUrgent'] == true || data['urgent'] == true;
+      final showJobDoneOverlay = isOfferJobDoneOverlayVisible(data);
+      final imageUrl = _primaryBrowseOfferImageUrl(data);
+      final missionDelayLabel = _extractMissionDelayLabel(data);
+      final cleanTitle = _sanitizeOfferTitle(
+        rawTitle: title,
+        city: city,
+        postalCode: postalCode,
+      );
+
+      items.add(
+        _ConsultOfferListItem.offer(
+          offerId: offerId,
+          title: title,
+          data: data,
+          tileData: _OfferBrowseTileData(
+            imageUrl: imageUrl,
+            title: cleanTitle,
+            subtitle: [
+              city,
+              if (postalCode.isNotEmpty) postalCode,
+              category,
+            ].join(' / '),
+            publishedText: publishedText,
+            price: budget,
+            hidePrice: _shouldHideConsultTilePrice(data),
+            missionDelayLabel: missionDelayLabel,
+            isUrgent: isUrgent && !showJobDoneOverlay,
+            icon: _categoryIcon(category),
+            showJobDoneOverlay: showJobDoneOverlay,
+          ),
+        ),
+      );
+    }
+
+    return items;
+  }
+
   bool _matchesOfferFilters(Map<String, dynamic> data) {
     if (!_offerIsActive(data)) return false;
 
@@ -1941,7 +2081,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                     final rawDocs = snapshot.data ?? const [];
                     _lastSnapshotRawCount = rawDocs.length;
 
-                    final docs = _buildDisplayedOfferDocs(rawDocs);
+                    final docs = _getDisplayedOfferDocsMemo(
+                      currentOffersStreamKey,
+                      rawDocs,
+                    );
 
                     _scheduleJobDoneOverlayRefresh(rawDocs);
 
@@ -1987,10 +2130,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       );
                     }
 
-                    const int adsEvery =
-                        8; // Bandeau pub après chaque 8 annonces
-                    final int adSlots = docs.length ~/ adsEvery;
-                    final int totalItems = docs.length + adSlots;
+                    final items = _getOfferListItemsMemo(
+                      currentOffersStreamKey,
+                      docs,
+                    );
 
                     return Column(
                       children: [
@@ -2003,17 +2146,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                 'consult-offers-list',
                               ),
                               controller: _scrollController,
+                              cacheExtent: 1200,
                               physics: const AlwaysScrollableScrollPhysics(
                                 parent: ClampingScrollPhysics(),
                               ),
                               padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
                               addAutomaticKeepAlives: false,
                               addRepaintBoundaries: true,
-                              itemCount: totalItems,
+                              itemCount: items.length,
                               itemBuilder: (context, index) {
-                                final bool isAd =
-                                    (index + 1) % (adsEvery + 1) == 0;
-                                if (isAd) {
+                                final item = items[index];
+                                if (item.isAd) {
                                   return Padding(
                                     padding: const EdgeInsets.only(
                                       left: 6,
@@ -2032,57 +2175,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                     ),
                                   );
                                 }
-
-                                final adOffset = index ~/ (adsEvery + 1);
-                                final docIndex = index - adOffset;
-                                final doc = docs[docIndex];
-                                final data = doc.data();
-
-                                final offerId = doc.id;
-                                final title =
-                                    (data['title'] ?? 'Sans titre').toString();
-                                final city =
-                                    ((data['city'] ?? data['location']) ??
-                                            'Lieu non précisé')
-                                        .toString();
-                                final postalCode =
-                                    ((data['postalCode'] ?? data['cp']) ?? '')
-                                        .toString()
-                                        .trim();
-                                final category = (data['category'] ??
-                                        'Catégorie non précisée')
-                                    .toString();
-                                final budgetRaw =
-                                    data['budget'] ?? data['price'];
-                                final int budget = budgetRaw is num
-                                    ? budgetRaw.round()
-                                    : int.tryParse(
-                                            budgetRaw?.toString() ?? '') ??
-                                        0;
-                                final publishedAge =
-                                    _ageLabelFromCreatedAt(data['createdAt']);
-                                final publishedText = publishedAge.isEmpty
-                                    ? 'Publication récente'
-                                    : 'Publié il y a $publishedAge';
-                                final isUrgent = data['isUrgent'] == true ||
-                                    data['urgent'] == true;
-                                final showJobDoneOverlay =
-                                    isOfferJobDoneOverlayVisible(data);
-                                final imageUrl =
-                                    _primaryBrowseOfferImageUrl(data);
-                                final missionDelayLabel =
-                                    _extractMissionDelayLabel(data);
-                                final cleanTitle = _sanitizeOfferTitle(
-                                  rawTitle: title,
-                                  city: city,
-                                  postalCode: postalCode,
-                                );
+                                  final offerId = item.offerId!;
+                                  final title = item.title!;
+                                  final data = item.data!;
+                                  final tileData = item.tileData!;
 
                                 return RepaintBoundary(
                                   child: Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: _OfferBrowseTile(
-                                      onTap: showJobDoneOverlay
+                                      key: ValueKey<String>('offer-$offerId'),
+                                      onTap: tileData.showJobDoneOverlay
                                           ? null
                                           : () {
                                               _logOfferClicked(offerId, title);
@@ -2104,24 +2207,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                                 ),
                                               );
                                             },
-                                      data: _OfferBrowseTileData(
-                                        imageUrl: imageUrl,
-                                        title: cleanTitle,
-                                        subtitle: [
-                                          city,
-                                          if (postalCode.isNotEmpty) postalCode,
-                                          category,
-                                        ].join(' / '),
-                                        publishedText: publishedText,
-                                        price: budget,
-                                        hidePrice:
-                                            _shouldHideConsultTilePrice(data),
-                                        missionDelayLabel: missionDelayLabel,
-                                        isUrgent:
-                                            isUrgent && !showJobDoneOverlay,
-                                        icon: _categoryIcon(category),
-                                        showJobDoneOverlay: showJobDoneOverlay,
-                                      ),
+                                      data: tileData,
                                     ),
                                   ),
                                 );
@@ -2925,6 +3011,37 @@ bool _shouldHideConsultTilePrice(Map data) {
   return false;
 }
 
+class _ConsultOfferListItem {
+  final bool isAd;
+  final String? offerId;
+  final String? title;
+  final Map<String, dynamic>? data;
+  final _OfferBrowseTileData? tileData;
+
+  const _ConsultOfferListItem._({
+    required this.isAd,
+    this.offerId,
+    this.title,
+    this.data,
+    this.tileData,
+  });
+
+  const _ConsultOfferListItem.ad() : this._(isAd: true);
+
+  const _ConsultOfferListItem.offer({
+    required String offerId,
+    required String title,
+    required Map<String, dynamic> data,
+    required _OfferBrowseTileData tileData,
+  }) : this._(
+          isAd: false,
+          offerId: offerId,
+          title: title,
+          data: data,
+          tileData: tileData,
+        );
+}
+
 class _OfferBrowseTileData {
   final String imageUrl;
   final String title;
@@ -2951,20 +3068,16 @@ class _OfferBrowseTileData {
   });
 }
 
-class _OfferBrowseTile extends StatefulWidget {
+class _OfferBrowseTile extends StatelessWidget {
   final _OfferBrowseTileData data;
   final VoidCallback? onTap;
 
   const _OfferBrowseTile({
+    super.key,
     required this.data,
     this.onTap,
   });
 
-  @override
-  State<_OfferBrowseTile> createState() => _OfferBrowseTileState();
-}
-
-class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   Widget _buildFallbackPhoto() {
     return Container(
       width: 92,
@@ -2995,10 +3108,10 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
   }
 
   Widget _buildPhoto() {
-    if (widget.data.isUrgent) {
+    if (data.isUrgent) {
       return _buildUrgentPhoto();
     }
-    final imageUrl = widget.data.imageUrl.trim();
+    final imageUrl = data.imageUrl.trim();
     if (imageUrl.isEmpty) {
       return _buildFallbackPhoto();
     }
@@ -3087,11 +3200,9 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                             topRight: Radius.circular(outerRadius),
                           ),
                         ),
-                        child: AutoSizeText(
-                          widget.data.title.toUpperCase(),
+                        child: Text(
+                          data.title.toUpperCase(),
                           maxLines: 2,
-                          minFontSize: 12,
-                          maxFontSize: 17,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 17,
@@ -3119,7 +3230,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    widget.data.subtitle,
+                                    data.subtitle,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -3133,7 +3244,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    widget.data.publishedText,
+                                    data.publishedText,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -3150,17 +3261,17 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                                     children: [
                                       Expanded(
                                         child: _OfferMissionDelayChip(
-                                          label: widget.data.missionDelayLabel,
+                                          label: data.missionDelayLabel,
                                         ),
                                       ),
-                                      if (!widget.data.hidePrice) ...[
+                                      if (!data.hidePrice) ...[
                                         const SizedBox(width: 12),
                                         ConstrainedBox(
                                           constraints: const BoxConstraints(
                                             maxWidth: 132,
                                           ),
                                           child: Text(
-                                            '${widget.data.price} €',
+                                            '${data.price} €',
                                             textAlign: TextAlign.right,
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -3185,7 +3296,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                       ),
                     ],
                   ),
-                  if (widget.data.showJobDoneOverlay)
+                  if (data.showJobDoneOverlay)
                     Positioned.fill(
                       child: RepaintBoundary(
                         child: IgnorePointer(
@@ -3209,13 +3320,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile> {
                         ),
                       ),
                     ),
-                  if (widget.onTap != null)
+                  if (onTap != null)
                     Positioned.fill(
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(outerRadius),
-                          onTap: widget.onTap,
+                          onTap: onTap,
                           hoverColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                         ),

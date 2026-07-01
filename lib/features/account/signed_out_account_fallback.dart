@@ -271,43 +271,56 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final baseCardHeight = !_isSignup
-                ? 760.0
-                : (_isBusinessSignup ? 1080.0 : 980.0);
-            final scale =
-                (constraints.maxHeight / baseCardHeight).clamp(0.72, 1.0)
+            final isFullBleed = constraints.maxWidth < 700;
+            final horizontalPadding = isFullBleed ? 0.0 : 16.0;
+            final verticalPadding = isFullBleed ? 0.0 : 12.0;
+            final cardRadius = isFullBleed ? 0.0 : 24.0;
+            final maxCardWidth = isFullBleed ? constraints.maxWidth : 560.0;
+            final availableHeight =
+                (constraints.maxHeight - (verticalPadding * 2))
+                    .clamp(420.0, double.infinity)
                     as double;
 
             return Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Transform.scale(
-                    scale: scale,
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(6, 14, 6, 14),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: borderColor),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x14000000),
-                              blurRadius: 28,
-                              offset: Offset(0, 16),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
+                constraints: BoxConstraints(maxWidth: maxCardWidth),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    verticalPadding,
+                    horizontalPadding,
+                    verticalPadding,
+                  ),
+                  child: SizedBox(
+                    height: availableHeight,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(cardRadius),
+                        border: Border.all(color: borderColor),
+                        boxShadow: isFullBleed
+                            ? const []
+                            : const [
+                                BoxShadow(
+                                  color: Color(0x14000000),
+                                  blurRadius: 28,
+                                  offset: Offset(0, 16),
+                                ),
+                              ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
                           child: Form(
                             key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: availableHeight - 48,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
                                 Center(
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -639,6 +652,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                     ),
                   ),
                 ),
+              ),
               ),
             );
           },

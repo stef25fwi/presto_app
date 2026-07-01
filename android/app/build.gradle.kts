@@ -68,15 +68,23 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                throw GradleException(
-                    "key.properties introuvable : refus de signer un build release avec les clés debug"
-                )
-            }
+            // Ne bloque pas les builds debug au moment de la configuration Gradle.
+            // La vérification stricte est faite plus bas uniquement si une tâche
+            // release est réellement demandée.
+            signingConfig = signingConfigs.findByName("release")
         }
     }
+}
+
+val isReleaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    val normalized = taskName.lowercase()
+    normalized.contains("release") || normalized.contains("bundle")
+}
+
+if (isReleaseTaskRequested && !rootProject.file("key.properties").exists()) {
+    throw GradleException(
+        "key.properties introuvable : renseigne android/key.properties pour signer la release"
+    )
 }
 
 // Built-in Kotlin : le bloc `kotlinOptions {}` (déprécié dans KGP 2.x et supprimé
