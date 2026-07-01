@@ -16,6 +16,28 @@ class AuthValidators {
     return null;
   }
 
+  static String? firstName(String? value) {
+    final normalized = (value ?? '').trim();
+    if (normalized.isEmpty) {
+      return 'Le prénom est obligatoire.';
+    }
+    if (normalized.length < 2) {
+      return 'Le prénom doit contenir au moins 2 caractères.';
+    }
+    return null;
+  }
+
+  static String? lastName(String? value) {
+    final normalized = (value ?? '').trim();
+    if (normalized.isEmpty) {
+      return 'Le nom est obligatoire.';
+    }
+    if (normalized.length < 2) {
+      return 'Le nom doit contenir au moins 2 caractères.';
+    }
+    return null;
+  }
+
   static String? email(String? value) {
     final normalized = (value ?? '').trim();
     if (normalized.isEmpty || !_emailPattern.hasMatch(normalized)) {

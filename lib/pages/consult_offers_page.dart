@@ -1833,17 +1833,19 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Text(
-                          baseTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: kPrestoAppBarTitleStyle.copyWith(
-                            color: Colors.white,
-                            fontFamily: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.fontFamily,
+                        child: MediaQuery.withNoTextScaling(
+                          child: Text(
+                            baseTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: kPrestoAppBarTitleStyle.copyWith(
+                              color: Colors.white,
+                              fontFamily: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.fontFamily,
+                            ),
                           ),
                         ),
                       ),
