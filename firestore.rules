@@ -798,6 +798,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ✅ [AUTORISÉ] Réglages admin UI — lecture/écriture réservées aux admins.
+    // Utilisé notamment par l'audio du popup paiement :
+    // admin_settings/payment_info_audio
+    match /admin_settings/{settingId} {
+      allow read, write: if isMarketplaceAdmin();
+    }
+
     // Audio public du popup paiement : lecture utilisateur, écriture uniquement backend Admin SDK.
     match /public_config/payment_info_audio {
       allow read: if true;

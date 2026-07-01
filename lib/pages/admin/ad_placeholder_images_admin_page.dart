@@ -283,22 +283,7 @@ class _AdPlaceholderImagesAdminPageState
               ]
             : null,
       ),
-      floatingActionButton: _isReordering
-          ? null
-          : FloatingActionButton.extended(
-              backgroundColor: _orange,
-              foregroundColor: Colors.white,
-              onPressed: _isUploading ? null : _pickAndUploadImages,
-              icon: _isUploading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(_isUploading ? 'Upload...' : 'Ajouter'),
-            ),
+      floatingActionButton: null,
       body: StreamBuilder<List<AdPlaceholderImage>>(
         stream: AdPlaceholderImageService.watchAll(target: _target),
         builder: (context, snapshot) {
@@ -334,7 +319,9 @@ class _AdPlaceholderImagesAdminPageState
     };
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+      physics: const AlwaysScrollableScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 260),
       children: [
         // Carte info
         Card(
@@ -426,13 +413,21 @@ class _AdPlaceholderImagesAdminPageState
                 ],
               ),
             ),
-            if (images.isNotEmpty)
+            TextButton.icon(
+              onPressed: _isUploading ? null : _pickAndUploadImages,
+              icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+              label: Text(_isUploading ? 'Upload...' : 'Ajouter'),
+              style: TextButton.styleFrom(foregroundColor: _orange),
+            ),
+            if (images.isNotEmpty) ...[
+              const SizedBox(width: 8),
               TextButton.icon(
                 onPressed: () => _enterReorderMode(images),
                 icon: const Icon(Icons.swap_vert_rounded, size: 18),
                 label: const Text('Réorganiser'),
                 style: TextButton.styleFrom(foregroundColor: _orange),
               ),
+            ],
           ],
         ),
         const SizedBox(height: 12),
@@ -463,13 +458,15 @@ class _AdPlaceholderImagesAdminPageState
                 )
                 .toList(),
           ),
+        const SizedBox(height: 140),
       ],
     );
   }
 
   Widget _buildReorderList(List<AdPlaceholderImage> images) {
     return ReorderableListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 260),
       itemCount: images.length,
       onReorder: (oldIndex, newIndex) {
         setState(() {

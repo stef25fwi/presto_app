@@ -52,10 +52,23 @@ class AiDraftService {
       return {
         // Ancien format (compatibilité)
         'title': (data['title'] ?? '').toString(),
-        'category': (data['category'] ?? '').toString(),
+        'category':
+            (data['category'] ?? data['categorie'] ?? data['catégorie'] ?? '')
+                .toString(),
         'description': (data['description'] ?? '').toString(),
-        'location': (data['city'] ?? '').toString(),
-        'postalCode': (data['postalCode'] ?? '').toString(),
+        'location': (data['city'] ??
+                data['ville'] ??
+                data['commune'] ??
+                data['location'] ??
+                '')
+            .toString(),
+        'postalCode': (data['postalCode'] ??
+                data['codePostal'] ??
+                data['code_postal'] ??
+                data['postal_code'] ??
+                data['cp'] ??
+                '')
+            .toString(),
 
         // Nouveau format riche
         'titre': (data['titre'] ?? '').toString(),

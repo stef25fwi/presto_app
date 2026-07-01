@@ -32,6 +32,19 @@ Map<String, dynamic>? _mapOrNull(Object? value) {
   return null;
 }
 
+String? _firstNonEmptyStringFromMap(
+  Map<String, dynamic> data,
+  List<String> keys,
+) {
+  for (final key in keys) {
+    final value = data[key];
+    if (value == null) continue;
+    final text = value.toString().trim();
+    if (text.isNotEmpty) return text;
+  }
+  return null;
+}
+
 Map<String, dynamic> _mapStringDynamic(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return Map<String, dynamic>.from(value);
@@ -101,9 +114,31 @@ class OfferDraft {
   factory OfferDraft.fromMap(Map<String, dynamic> m) => OfferDraft(
         title: m['title']?.toString(),
         description: m['description']?.toString(),
-        category: m['category']?.toString(),
-        city: m['city']?.toString(),
-        postalCode: m['postalCode']?.toString(),
+        category: _firstNonEmptyStringFromMap(m, const [
+          'category',
+          'categorie',
+          'catégorie',
+          'mainCategory',
+          'main_category',
+        ]),
+        city: _firstNonEmptyStringFromMap(m, const [
+          'city',
+          'ville',
+          'commune',
+          'locality',
+          'location',
+          'lieu',
+        ]),
+        postalCode: _firstNonEmptyStringFromMap(m, const [
+          'postalCode',
+          'codePostal',
+          'code_postal',
+          'postal_code',
+          'zipCode',
+          'zipcode',
+          'zip',
+          'cp',
+        ]),
         shortDescription: m['description_courte']?.toString() ??
             m['shortDescription']?.toString(),
         sector: m['secteur']?.toString() ?? m['sector']?.toString(),
