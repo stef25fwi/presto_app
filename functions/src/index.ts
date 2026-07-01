@@ -39,6 +39,7 @@ export {
   updateListingDraftMedia,
   submitListingDraft,
   incrementListingView,
+  getListingContactPhone,
   deleteListing,
   closeOfferWithReason,
 } from "./modules/marketplace/callables/listings";

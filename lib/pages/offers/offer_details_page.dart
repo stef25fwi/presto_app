@@ -3645,6 +3645,84 @@ class _MaskedPhoneInfoLine extends StatefulWidget {
 
 class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
   bool _isPhoneVisible = false;
+  bool _isResolvingContact = false;
+  String? _resolvedPhone;
+  String? _resolvedDialingCode;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefetchContactPreviewIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MaskedPhoneInfoLine oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.offerId != widget.offerId ||
+        oldWidget.phone != widget.phone ||
+        oldWidget.hidePhone != widget.hidePhone) {
+      _resolvedPhone = null;
+      _resolvedDialingCode = null;
+      _isPhoneVisible = false;
+      _prefetchContactPreviewIfNeeded();
+    }
+  }
+
+  Future<void> _prefetchContactPreviewIfNeeded() async {
+    if (widget.offerId.trim().isEmpty) return;
+    if (widget.phone.trim().isNotEmpty && !widget.hidePhone) return;
+    await _resolveListingContact(allowFullPhone: false);
+  }
+
+  Future<void> _resolveListingContact({required bool allowFullPhone}) async {
+    if (_isResolvingContact || widget.offerId.trim().isEmpty) return;
+
+    setState(() {
+      _isResolvingContact = true;
+    });
+
+    try {
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'getListingContactPhone',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
+      );
+
+      final result = await callable.call<Map<String, dynamic>>({
+        'listingId': widget.offerId,
+      });
+
+      final payload = result.data;
+      final dialingCode = (payload['dialingCode'] ?? '').toString().trim();
+      final phone = (payload['phone'] ?? '').toString().trim();
+
+      if (!mounted) return;
+
+      setState(() {
+        if (dialingCode.isNotEmpty) {
+          _resolvedDialingCode = dialingCode;
+        }
+        if (allowFullPhone && phone.isNotEmpty) {
+          _resolvedPhone = phone;
+        }
+      });
+    } on FirebaseFunctionsException {
+      // L'échec de résolution ne doit pas casser l'UI contact.
+    } catch (_) {
+      // Best effort.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResolvingContact = false;
+        });
+      }
+    }
+  }
+
+  String _effectivePhone() {
+    final resolved = (_resolvedPhone ?? '').trim();
+    if (resolved.isNotEmpty) return resolved;
+    return widget.phone.trim();
+  }
 
   Future<void> _handlePhoneVisibility() async {
     // L'utilisateur peut toujours remasquer un numéro déjà affiché.
@@ -3658,7 +3736,16 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     }
 
     // Le choix de l'annonceur reste prioritaire.
-    if (widget.hidePhone || widget.phone.trim().isEmpty) {
+    if (widget.hidePhone) {
+      return;
+    }
+
+    if (_effectivePhone().isEmpty) {
+      await _resolveListingContact(allowFullPhone: true);
+    }
+
+    final effectivePhone = _effectivePhone();
+    if (effectivePhone.isEmpty) {
       return;
     }
 
@@ -3792,6 +3879,9 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     final dialingCode = _phoneIndicatif(rawPhone);
 
     if (dialingCode.isEmpty) {
+      if ((_resolvedDialingCode ?? '').isNotEmpty) {
+        return '${_resolvedDialingCode!} ••••••';
+      }
       return '••••••';
     }
 
@@ -3802,6 +3892,9 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     final normalized = rawPhone.trim();
 
     if (normalized.isEmpty) {
+      if ((_resolvedDialingCode ?? '').isNotEmpty) {
+        return '${_resolvedDialingCode!} ••••••';
+      }
       return 'Non renseigné';
     }
 
@@ -3820,14 +3913,16 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
 
-    final hasPhone = widget.phone.trim().isNotEmpty;
+    final effectivePhone = _effectivePhone();
+    final canRequestReveal = !widget.hidePhone &&
+        (effectivePhone.isNotEmpty || widget.offerId.trim().isNotEmpty);
 
     final String displayedValue;
     if (widget.hidePhone) {
-      displayedValue = _indicatifOnly(widget.phone);
+      displayedValue = _indicatifOnly(effectivePhone);
     } else {
       displayedValue =
-          _isPhoneVisible ? widget.phone.trim() : _maskedLabel(widget.phone);
+          _isPhoneVisible ? effectivePhone : _maskedLabel(effectivePhone);
     }
 
     return Column(
@@ -3861,19 +3956,23 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
               Flexible(
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      displayedValue,
-                      maxLines: 1,
-                      softWrap: false,
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                        color: navy,
-                        fontSize: widget.compact ? 15 : 16,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.15,
+                  child: GestureDetector(
+                    onTap: canRequestReveal ? _handlePhoneVisibility : null,
+                    behavior: HitTestBehavior.opaque,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        displayedValue,
+                        maxLines: 1,
+                        softWrap: false,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color: navy,
+                          fontSize: widget.compact ? 15 : 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.15,
+                        ),
                       ),
                     ),
                   ),
@@ -3882,7 +3981,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
               if (!widget.hidePhone) ...[
                 SizedBox(width: widget.compact ? 4 : 6),
                 IconButton(
-                  onPressed: hasPhone ? _handlePhoneVisibility : null,
+                  onPressed: canRequestReveal ? _handlePhoneVisibility : null,
                   tooltip:
                       _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
                   visualDensity: VisualDensity.compact,
@@ -3891,7 +3990,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
                     _isPhoneVisible
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    color: hasPhone ? navy : muted,
+                    color: canRequestReveal ? navy : muted,
                     size: widget.compact ? 20 : 22,
                   ),
                 ),

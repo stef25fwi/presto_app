@@ -269,335 +269,379 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         foregroundColor: const Color(0xFFFFFFFF),
       ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(6, 28, 6, 32),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: borderColor),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x14000000),
-                      blurRadius: 28,
-                      offset: Offset(0, 16),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.asset(
-                                  'assets/images/logowebp.webp',
-                                  width: 72,
-                                  height: 72,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              const Text(
-                                'iliprestō',
-                                style: TextStyle(
-                                  color: Color(0xFFFF6600),
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            _isSignup
-                                ? 'Créer un compte'
-                                : 'Connexion à mon compte',
-                            style: const TextStyle(
-                              color: textDark,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final baseCardHeight = !_isSignup
+                ? 760.0
+                : (_isBusinessSignup ? 1080.0 : 980.0);
+            final scale =
+                (constraints.maxHeight / baseCardHeight).clamp(0.72, 1.0)
+                    as double;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Transform.scale(
+                    scale: scale,
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 14, 6, 14),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: borderColor),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x14000000),
+                              blurRadius: 28,
+                              offset: Offset(0, 16),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _isSignup
-                              ? _isBusinessSignup
-                                  ? 'Votre espace entreprise crée un profil complet utilisable pour la vérification, les annonces, les avis et les demandes.'
-                                  : 'Créez votre profil utilisateur avec email, pseudo et vérification de compte.'
-                              : 'Retrouvez vos annonces, messages, avis et prestations depuis votre profil sécurisé.',
-                          style: const TextStyle(
-                            color: textMuted,
-                            fontSize: 14,
-                            height: 1.45,
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-                        if (_isSignup) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _AccountTypeButton(
-                                  selected: !_isBusinessSignup,
-                                  icon: Icons.person_outline_rounded,
-                                  label: 'Particulier',
-                                  onTap: _isLoading
-                                      ? null
-                                      : () => setState(
-                                            () => _isBusinessSignup = false,
-                                          ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _AccountTypeButton(
-                                  selected: _isBusinessSignup,
-                                  icon: Icons.business_center_outlined,
-                                  label: 'Entreprise',
-                                  onTap: _isLoading
-                                      ? null
-                                      : () => setState(
-                                            () => _isBusinessSignup = true,
-                                          ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          ProSiretSignupSection(
-                            visible: _isBusinessSignup,
-                            onSiretChanged: (value) {
-                              final cleaned =
-                                  value.replaceAll(RegExp(r'\D'), '');
-                              setState(() {
-                                _signupSiretRaw = value;
-                                if (_verifiedSignupSiret != cleaned) {
-                                  _verifiedSignupSiret = null;
-                                  _verifiedSignupCompanyName = null;
-                                }
-                              });
-                            },
-                            onVerified: (result) {
-                              final cleaned = _signupSiretClean;
-                              setState(() {
-                                _verifiedSignupSiret = cleaned;
-                                _verifiedSignupCompanyName = result.companyName;
-                              });
-                              showSuccessSnackBar(
-                                context,
-                                result.companyName.isNotEmpty
-                                    ? 'SIRET vérifié : ${result.companyName}'
-                                    : 'SIRET vérifié',
-                              );
-                            },
-                          ),
-                          if (_isBusinessSignup) ...[
-                            AuthTextField(
-                              controller: _displayNameController,
-                              label: 'Nom du contact',
-                              icon: Icons.badge_outlined,
-                              textInputAction: TextInputAction.next,
-                              autofillHints: const [AutofillHints.name],
-                              validator: AuthValidators.displayName,
-                              enabled: !_isLoading,
-                            ),
-                          ] else ...[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Expanded(
-                                  child: AuthTextField(
-                                    controller: _firstNameController,
-                                    label: 'Prénom',
-                                    icon: Icons.person_outline_rounded,
-                                    textInputAction: TextInputAction.next,
-                                    autofillHints: const [
-                                      AutofillHints.givenName,
+                                Center(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Image.asset(
+                                          'assets/images/logowebp.webp',
+                                          width: 72,
+                                          height: 72,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      const Text(
+                                        'iliprestō',
+                                        style: TextStyle(
+                                          color: Color(0xFFFF6600),
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
                                     ],
-                                    validator: AuthValidators.firstName,
-                                    enabled: !_isLoading,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: AuthTextField(
-                                    controller: _lastNameController,
-                                    label: 'Nom',
-                                    icon: Icons.person_outline_rounded,
-                                    textInputAction: TextInputAction.next,
-                                    autofillHints: const [
-                                      AutofillHints.familyName,
+                                const SizedBox(height: 24),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    _isSignup
+                                        ? 'Créer un compte'
+                                        : 'Connexion à mon compte',
+                                    style: const TextStyle(
+                                      color: textDark,
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _isSignup
+                                      ? _isBusinessSignup
+                                          ? 'Votre espace entreprise crée un profil complet utilisable pour la vérification, les annonces, les avis et les demandes.'
+                                          : 'Créez votre profil utilisateur avec email, pseudo et vérification de compte.'
+                                      : 'Retrouvez vos annonces, messages, avis et prestations depuis votre profil sécurisé.',
+                                  style: const TextStyle(
+                                    color: textMuted,
+                                    fontSize: 14,
+                                    height: 1.45,
+                                  ),
+                                ),
+                                const SizedBox(height: 22),
+                                if (_isSignup) ...[
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _AccountTypeButton(
+                                          selected: !_isBusinessSignup,
+                                          icon: Icons.person_outline_rounded,
+                                          label: 'Particulier',
+                                          onTap: _isLoading
+                                              ? null
+                                              : () => setState(
+                                                    () =>
+                                                        _isBusinessSignup =
+                                                            false,
+                                                  ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: _AccountTypeButton(
+                                          selected: _isBusinessSignup,
+                                          icon: Icons
+                                              .business_center_outlined,
+                                          label: 'Entreprise',
+                                          onTap: _isLoading
+                                              ? null
+                                              : () => setState(
+                                                    () =>
+                                                        _isBusinessSignup =
+                                                            true,
+                                                  ),
+                                        ),
+                                      ),
                                     ],
-                                    validator: AuthValidators.lastName,
+                                  ),
+                                  const SizedBox(height: 14),
+                                  ProSiretSignupSection(
+                                    visible: _isBusinessSignup,
+                                    onSiretChanged: (value) {
+                                      final cleaned =
+                                          value.replaceAll(RegExp(r'\D'), '');
+                                      setState(() {
+                                        _signupSiretRaw = value;
+                                        if (_verifiedSignupSiret != cleaned) {
+                                          _verifiedSignupSiret = null;
+                                          _verifiedSignupCompanyName = null;
+                                        }
+                                      });
+                                    },
+                                    onVerified: (result) {
+                                      final cleaned = _signupSiretClean;
+                                      setState(() {
+                                        _verifiedSignupSiret = cleaned;
+                                        _verifiedSignupCompanyName =
+                                            result.companyName;
+                                      });
+                                      showSuccessSnackBar(
+                                        context,
+                                        result.companyName.isNotEmpty
+                                            ? 'SIRET vérifié : ${result.companyName}'
+                                            : 'SIRET vérifié',
+                                      );
+                                    },
+                                  ),
+                                  if (_isBusinessSignup) ...[
+                                    AuthTextField(
+                                      controller: _displayNameController,
+                                      label: 'Nom du contact',
+                                      icon: Icons.badge_outlined,
+                                      textInputAction: TextInputAction.next,
+                                      autofillHints: const [
+                                        AutofillHints.name,
+                                      ],
+                                      validator: AuthValidators.displayName,
+                                      enabled: !_isLoading,
+                                    ),
+                                  ] else ...[
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: AuthTextField(
+                                            controller: _firstNameController,
+                                            label: 'Prénom',
+                                            icon:
+                                                Icons.person_outline_rounded,
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            autofillHints: const [
+                                              AutofillHints.givenName,
+                                            ],
+                                            validator:
+                                                AuthValidators.firstName,
+                                            enabled: !_isLoading,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: AuthTextField(
+                                            controller: _lastNameController,
+                                            label: 'Nom',
+                                            icon:
+                                                Icons.person_outline_rounded,
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            autofillHints: const [
+                                              AutofillHints.familyName,
+                                            ],
+                                            validator:
+                                                AuthValidators.lastName,
+                                            enabled: !_isLoading,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                  const SizedBox(height: 12),
+                                ],
+                                AuthTextField(
+                                  controller: _emailController,
+                                  label: 'Adresse email',
+                                  icon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                  autofillHints: const [AutofillHints.email],
+                                  validator: AuthValidators.email,
+                                  enabled: !_isLoading,
+                                ),
+                                const SizedBox(height: 12),
+                                AuthTextField(
+                                  controller: _passwordController,
+                                  label: 'Mot de passe',
+                                  icon: Icons.lock_outline_rounded,
+                                  obscureText: _obscurePassword,
+                                  textInputAction: _isSignup
+                                      ? TextInputAction.next
+                                      : TextInputAction.done,
+                                  autofillHints: _isSignup
+                                      ? const [AutofillHints.newPassword]
+                                      : const [AutofillHints.password],
+                                  validator: AuthValidators.password,
+                                  enabled: !_isLoading,
+                                  suffixIcon: IconButton(
+                                    tooltip: _obscurePassword
+                                        ? 'Afficher le mot de passe'
+                                        : 'Masquer le mot de passe',
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () => setState(
+                                              () => _obscurePassword =
+                                                  !_obscurePassword,
+                                            ),
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                    ),
+                                  ),
+                                  onFieldSubmitted: (_) => _isLoading
+                                      ? null
+                                      : _submitEmailAuth(),
+                                ),
+                                if (!_isSignup) ...[
+                                  const SizedBox(height: 4),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed:
+                                          _isLoading ? null : _resetPassword,
+                                      child:
+                                          const Text('Mot de passe oublié ?'),
+                                    ),
+                                  ),
+                                ],
+                                if (_isSignup) ...[
+                                  const SizedBox(height: 12),
+                                  AuthTextField(
+                                    controller: _passwordConfirmController,
+                                    label: 'Confirmer le mot de passe',
+                                    icon: Icons.lock_reset_outlined,
+                                    obscureText: _obscurePasswordConfirm,
+                                    textInputAction: TextInputAction.done,
+                                    autofillHints: const [
+                                      AutofillHints.newPassword,
+                                    ],
+                                    validator: (value) =>
+                                        AuthValidators.passwordConfirmation(
+                                      value,
+                                      _passwordController.text,
+                                    ),
                                     enabled: !_isLoading,
+                                    suffixIcon: IconButton(
+                                      tooltip: _obscurePasswordConfirm
+                                          ? 'Afficher la confirmation'
+                                          : 'Masquer la confirmation',
+                                      onPressed: _isLoading
+                                          ? null
+                                          : () => setState(
+                                                () =>
+                                                    _obscurePasswordConfirm =
+                                                        !_obscurePasswordConfirm,
+                                              ),
+                                      icon: Icon(
+                                        _obscurePasswordConfirm
+                                            ? Icons.visibility_outlined
+                                            : Icons.visibility_off_outlined,
+                                      ),
+                                    ),
+                                    onFieldSubmitted: (_) => _isLoading
+                                        ? null
+                                        : _submitEmailAuth(),
+                                  ),
+                                ],
+                                if ((_errorMessage ?? '').isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  AuthErrorBox(message: _errorMessage!),
+                                ],
+                                const SizedBox(height: 18),
+                                AuthPrimaryButton(
+                                  isLoading: _isLoading,
+                                  onPressed: _submitEmailAuth,
+                                  icon: _isSignup
+                                      ? Icons.person_add_alt_1_rounded
+                                      : Icons.login_rounded,
+                                  label: _isSignup
+                                      ? _isBusinessSignup
+                                          ? 'Créer le compte entreprise'
+                                          : 'Créer le compte'
+                                      : 'Se connecter',
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed:
+                                      _isLoading ? null : _signInWithGoogle,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: statusBlue,
+                                    side: const BorderSide(color: borderColor),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                  ),
+                                  icon: const _GoogleLogo(size: 22),
+                                  label:
+                                      const Text('Continuer avec Google'),
+                                ),
+                                if (!_isSignup) ...[
+                                  const SizedBox(height: 8),
+                                ],
+                                const Divider(height: 28),
+                                TextButton(
+                                  onPressed: _isLoading
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _isSignup = !_isSignup;
+                                            _errorMessage = null;
+                                          });
+                                        },
+                                  child: Text(
+                                    _isSignup
+                                        ? 'J’ai déjà un compte'
+                                        : 'Créer un nouveau compte',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800),
                                   ),
                                 ),
                               ],
                             ),
-                          ],
-                          const SizedBox(height: 12),
-                        ],
-                        AuthTextField(
-                          controller: _emailController,
-                          label: 'Adresse email',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
-                          validator: AuthValidators.email,
-                          enabled: !_isLoading,
-                        ),
-                        const SizedBox(height: 12),
-                        AuthTextField(
-                          controller: _passwordController,
-                          label: 'Mot de passe',
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: _obscurePassword,
-                          textInputAction: _isSignup
-                              ? TextInputAction.next
-                              : TextInputAction.done,
-                          autofillHints: _isSignup
-                              ? const [AutofillHints.newPassword]
-                              : const [AutofillHints.password],
-                          validator: AuthValidators.password,
-                          enabled: !_isLoading,
-                          suffixIcon: IconButton(
-                            tooltip: _obscurePassword
-                                ? 'Afficher le mot de passe'
-                                : 'Masquer le mot de passe',
-                            onPressed: _isLoading
-                                ? null
-                                : () => setState(
-                                      () =>
-                                          _obscurePassword = !_obscurePassword,
-                                    ),
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                            ),
-                          ),
-                          onFieldSubmitted: (_) =>
-                              _isLoading ? null : _submitEmailAuth(),
-                        ),
-                        if (!_isSignup) ...[
-                          const SizedBox(height: 4),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _isLoading ? null : _resetPassword,
-                              child: const Text('Mot de passe oublié ?'),
-                            ),
-                          ),
-                        ],
-                        if (_isSignup) ...[
-                          const SizedBox(height: 12),
-                          AuthTextField(
-                            controller: _passwordConfirmController,
-                            label: 'Confirmer le mot de passe',
-                            icon: Icons.lock_reset_outlined,
-                            obscureText: _obscurePasswordConfirm,
-                            textInputAction: TextInputAction.done,
-                            autofillHints: const [AutofillHints.newPassword],
-                            validator: (value) =>
-                                AuthValidators.passwordConfirmation(
-                              value,
-                              _passwordController.text,
-                            ),
-                            enabled: !_isLoading,
-                            suffixIcon: IconButton(
-                              tooltip: _obscurePasswordConfirm
-                                  ? 'Afficher la confirmation'
-                                  : 'Masquer la confirmation',
-                              onPressed: _isLoading
-                                  ? null
-                                  : () => setState(
-                                        () => _obscurePasswordConfirm =
-                                            !_obscurePasswordConfirm,
-                                      ),
-                              icon: Icon(
-                                _obscurePasswordConfirm
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                              ),
-                            ),
-                            onFieldSubmitted: (_) =>
-                                _isLoading ? null : _submitEmailAuth(),
-                          ),
-                        ],
-                        if ((_errorMessage ?? '').isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          AuthErrorBox(message: _errorMessage!),
-                        ],
-                        const SizedBox(height: 18),
-                        AuthPrimaryButton(
-                          isLoading: _isLoading,
-                          onPressed: _submitEmailAuth,
-                          icon: _isSignup
-                              ? Icons.person_add_alt_1_rounded
-                              : Icons.login_rounded,
-                          label: _isSignup
-                              ? _isBusinessSignup
-                                  ? 'Créer le compte entreprise'
-                                  : 'Créer le compte'
-                              : 'Se connecter',
-                        ),
-                        const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: _isLoading ? null : _signInWithGoogle,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: statusBlue,
-                            side: const BorderSide(color: borderColor),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          icon: const _GoogleLogo(size: 22),
-                          label: const Text('Continuer avec Google'),
-                        ),
-                        if (!_isSignup) ...[
-                          const SizedBox(height: 8),
-                        ],
-                        const Divider(height: 28),
-                        TextButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _isSignup = !_isSignup;
-                                    _errorMessage = null;
-                                  });
-                                },
-                          child: Text(
-                            _isSignup
-                                ? 'J’ai déjà un compte'
-                                : 'Créer un nouveau compte',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

@@ -175,7 +175,9 @@ class PageCaptureCatalogPage extends StatelessWidget {
       group: 'Authentification',
       description: 'Confirmation envoi email de réinitialisation.',
       status: PageStatus.active,
-      builder: (_) => const ResetPasswordSuccessPage(),
+      builder: (_) => const ResetPasswordSuccessPage(
+        email: 'demo@ilipresto.fr',
+      ),
     ),
     PageCaptureEntry(
       number: 12,
