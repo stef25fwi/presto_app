@@ -12,6 +12,9 @@ class AdPlaceholderImage {
     required this.isVisible,
     required this.target,
     required this.sortOrder,
+    this.title,
+    this.description,
+    this.linkUrl,
     this.createdAt,
     this.updatedAt,
   });
@@ -22,6 +25,9 @@ class AdPlaceholderImage {
   final bool isVisible;
   final String target;
   final int sortOrder;
+  final String? title;
+  final String? description;
+  final String? linkUrl;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
 
@@ -37,6 +43,9 @@ class AdPlaceholderImage {
       isVisible: data['isVisible'] == true,
       target: (data['target'] ?? 'consult_offers').toString(),
       sortOrder: data['sortOrder'] is int ? data['sortOrder'] as int : 0,
+      title: (data['title'] ?? '').toString().isEmpty ? null : (data['title'] ?? '').toString(),
+      description: (data['description'] ?? '').toString().isEmpty ? null : (data['description'] ?? '').toString(),
+      linkUrl: (data['linkUrl'] ?? '').toString().isEmpty ? null : (data['linkUrl'] ?? '').toString(),
       createdAt: data['createdAt'] is Timestamp
           ? data['createdAt'] as Timestamp
           : null,
@@ -155,6 +164,9 @@ class AdPlaceholderImageService {
       'recommendedHeight16x9Px': recommendedHeight16x9Px,
       'recommendedMaxWeightKb': recommendedMaxWeightKb,
       'clientWebpConversion': 'disabled-build-safe',
+      'title': '',
+      'description': '',
+      'linkUrl': '',
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -192,6 +204,92 @@ class AdPlaceholderImageService {
     }
 
     await _collection.doc(image.id).delete();
+  }
+
+  static Future<void> updateSlideProperties({
+    required String id,
+    String? title,
+    String? description,
+    String? linkUrl,
+  }) async {
+    await _collection.doc(id).update({
+      if (title != null) 'title': title.isEmpty ? FieldValue.delete() : title,
+      if (description != null) 'description': description.isEmpty ? FieldValue.delete() : description,
+      if (linkUrl != null) 'linkUrl': linkUrl.isEmpty ? FieldValue.delete() : linkUrl,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<void> replaceSlideImage({
+    required String id,
+    required AdPlaceholderImage currentImage,
+    required XFile newFile,
+    String target = 'consult_offers',
+    void Function(double progress)? onUploadProgress,
+  }) async {
+    // Télécharger la nouvelle image
+    final Uint8List bytes = await newFile.readAsBytes();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final safeBaseName = newFile.name
+        .replaceAll(RegExp(r'\.[^.]+$'), '')
+        .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+
+    final extension = _extensionFromName(newFile.name);
+    final contentType = _guessContentType(newFile.name);
+    final storagePath = 'ad_placeholders/$target/$now-$safeBaseName.$extension';
+    final ref = _storage.ref(storagePath);
+
+    final uploadTask = ref.putData(
+      bytes,
+      SettableMetadata(
+        contentType: contentType,
+        cacheControl: 'public,max-age=604800',
+        customMetadata: {
+          'originalName': newFile.name,
+          'recommendedFormat': 'webp',
+          'recommendedWidthPx': '$recommendedWidthPx',
+          'recommendedMinWidthPx': '$recommendedMinWidthPx',
+          'recommendedHeight16x9Px': '$recommendedHeight16x9Px',
+          'recommendedMaxWeightKb': '$recommendedMaxWeightKb',
+          'clientWebpConversion': 'disabled-build-safe',
+        },
+      ),
+    );
+
+    final subscription = uploadTask.snapshotEvents.listen((snapshot) {
+      final total = snapshot.totalBytes;
+      if (total > 0) {
+        onUploadProgress?.call(snapshot.bytesTransferred / total);
+      }
+    });
+
+    try {
+      await uploadTask;
+      onUploadProgress?.call(1);
+    } finally {
+      await subscription.cancel();
+    }
+
+    final url = await ref.getDownloadURL();
+
+    // Supprimer l'ancienne image du storage
+    if (currentImage.storagePath.isNotEmpty) {
+      try {
+        await _storage.ref(currentImage.storagePath).delete();
+      } catch (_) {
+        // Continuer même si suppression échoue
+      }
+    }
+
+    // Mettre à jour Firestore
+    await _collection.doc(id).update({
+      'imageUrl': url,
+      'storagePath': storagePath,
+      'format': extension,
+      'originalName': newFile.name,
+      'originalBytes': bytes.length,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   static String _extensionFromName(String name) {

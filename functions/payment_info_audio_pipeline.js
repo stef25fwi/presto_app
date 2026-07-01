@@ -112,54 +112,74 @@ async function generateMp3BufferWithOpenAI(text, voice) {
     );
   }
 
-  const model = process.env.OPENAI_TTS_MODEL || "tts-1";
+  const requestedModel = cleanText(process.env.OPENAI_TTS_MODEL) || "tts-1";
+  const normalizedRequestedModel = requestedModel.toLowerCase();
+  const modelCandidates =
+    requestedModel === "tts-1"
+      ? ["tts-1"]
+      : normalizedRequestedModel.includes("nano")
+          ? ["tts-1"]
+          : [requestedModel, "tts-1"];
   const safeVoice = cleanText(voice) || process.env.OPENAI_TTS_VOICE || "nova";
 
   let lastStatus = 0;
   let lastBody = "";
 
-  for (let attempt = 1; attempt <= 4; attempt += 1) {
-    const response = await fetch("https://api.openai.com/v1/audio/speech", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        voice: safeVoice,
-        input: text,
-        response_format: "mp3",
-      }),
-    });
+  for (const model of modelCandidates) {
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      const response = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          voice: safeVoice,
+          input: text,
+          response_format: "mp3",
+        }),
+      });
 
-    if (response.ok) {
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
 
-      if (!buffer.length) {
-        throw new HttpsError("internal", "Le fichier audio généré est vide.");
+        if (!buffer.length) {
+          throw new HttpsError("internal", "Le fichier audio généré est vide.");
+        }
+
+        return buffer;
       }
 
-      return buffer;
+      lastStatus = response.status;
+      lastBody = await response.text().catch(() => "");
+
+      logger.error("OpenAI TTS failed", {
+        status: lastStatus,
+        attempt,
+        model,
+        voice: safeVoice,
+        body: lastBody.slice(0, 700),
+      });
+
+      const bodyLower = lastBody.toLowerCase();
+      const modelAccessDenied =
+        response.status === 403 &&
+        (bodyLower.includes("does not have access to model") ||
+            bodyLower.includes("model_not_found") ||
+            bodyLower.includes("unsupported_model"));
+      if (modelAccessDenied) {
+        // Switch to the next candidate model (typically tts-1) instead of failing hard.
+        break;
+      }
+
+      if (response.status !== 429 || attempt === 4) {
+        break;
+      }
+
+      await sleep(2500 * attempt);
     }
-
-    lastStatus = response.status;
-    lastBody = await response.text().catch(() => "");
-
-    logger.error("OpenAI TTS failed", {
-      status: lastStatus,
-      attempt,
-      model,
-      voice: safeVoice,
-      body: lastBody.slice(0, 700),
-    });
-
-    if (response.status !== 429 || attempt === 4) {
-      break;
-    }
-
-    await sleep(2500 * attempt);
   }
 
   if (lastStatus === 429) {

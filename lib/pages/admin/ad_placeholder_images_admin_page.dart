@@ -200,6 +200,264 @@ class _AdPlaceholderImagesAdminPageState
     );
   }
 
+  Future<void> _openEditSlideDialog(AdPlaceholderImage image) async {
+    final titleController = TextEditingController(text: image.title ?? '');
+    final descriptionController =
+        TextEditingController(text: image.description ?? '');
+    final linkUrlController = TextEditingController(text: image.linkUrl ?? '');
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Modifier le slide'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Aperçu image actuelle
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 120,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.network(
+                          image.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const ColoredBox(
+                            color: Color(0xFFF2F4F7),
+                            child: Center(child: Icon(Icons.broken_image_outlined)),
+                          ),
+                        ),
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black38,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.zoom_in_rounded,
+                                color: Colors.white, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Bouton remplacer image
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () =>
+                        _replaceSlideImage(image).then((_) {
+                          if (mounted) Navigator.pop(context);
+                        }),
+                    icon: const Icon(Icons.image_search_outlined, size: 18),
+                    label: const Text('Remplacer l\'image'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Titre
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Titre (optionnel)',
+                    hintText: 'Ex: Travaux de maison',
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                  maxLines: 1,
+                ),
+                const SizedBox(height: 12),
+                // Description
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Description (optionnel)',
+                    hintText: 'Description courte du service',
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 12),
+                // URL de lien
+                TextField(
+                  controller: linkUrlController,
+                  decoration: InputDecoration(
+                    labelText: 'URL (optionnel)',
+                    hintText: 'https://exemple.com',
+                    border: const OutlineInputBorder(),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                  maxLines: 1,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: _orange),
+              onPressed: () async {
+                try {
+                  await AdPlaceholderImageService.updateSlideProperties(
+                    id: image.id,
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    linkUrl: linkUrlController.text,
+                  );
+                  if (!mounted) return;
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Slide mis à jour.')),
+                  );
+                } catch (error) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Erreur: $error'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    titleController.dispose();
+    descriptionController.dispose();
+    linkUrlController.dispose();
+  }
+
+  Future<void> _replaceSlideImage(AdPlaceholderImage image) async {
+    final file = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 92,
+    );
+    if (file == null) return;
+
+    if (!mounted) return;
+
+    bool isProcessing = false;
+    double uploadProgress = 0;
+    String uploadStatus = 'Préparation…';
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Remplacer l\'image'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isProcessing) ...[
+                const SizedBox(height: 16),
+                LinearProgressIndicator(value: uploadProgress),
+                const SizedBox(height: 12),
+                Text(
+                  uploadStatus,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ] else ...[
+                const Text('Êtes-vous sûr de vouloir remplacer cette image ?'),
+              ],
+            ],
+          ),
+          actions: [
+            if (!isProcessing)
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Annuler'),
+              ),
+            if (!isProcessing)
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: _orange),
+                onPressed: () async {
+                  setState(() {
+                    isProcessing = true;
+                    uploadStatus = 'Téléchargement…';
+                    uploadProgress = 0;
+                  });
+
+                  try {
+                    await AdPlaceholderImageService.replaceSlideImage(
+                      id: image.id,
+                      currentImage: image,
+                      newFile: file,
+                      target: _target,
+                      onUploadProgress: (progress) {
+                        if (mounted) {
+                          setState(() {
+                            uploadProgress = progress;
+                            uploadStatus =
+                                'Téléchargement… ${(progress * 100).round()}%';
+                          });
+                        }
+                      },
+                    );
+
+                    if (!mounted) return;
+                    setState(() {
+                      uploadStatus = 'Image remplacée !';
+                      uploadProgress = 1;
+                    });
+
+                    await Future.delayed(const Duration(milliseconds: 500));
+                    if (!mounted) return;
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Image remplacée.')),
+                    );
+                  } catch (error) {
+                    if (!mounted) return;
+                    setState(() {
+                      isProcessing = false;
+                    });
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur: $error'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Confirmer'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _enterReorderMode(List<AdPlaceholderImage> images) {
     setState(() {
       _isReordering = true;
@@ -247,10 +505,11 @@ class _AdPlaceholderImagesAdminPageState
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(_isReordering
-            ? 'Réorganiser les images'
-            : 'Gestion images placeholders'),
+            ? '🔄 Réorganiser les images'
+            : '🖼️  Gestion Placeholders'),
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
+        elevation: 2,
         actions: _isReordering
             ? [
                 if (_isSavingOrder)
@@ -281,7 +540,24 @@ class _AdPlaceholderImagesAdminPageState
                   ),
                 ],
               ]
-            : null,
+            : [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Tooltip(
+                    message: 'Ajouter des images',
+                    child: FilledButton.icon(
+                      onPressed: _isUploading ? null : _pickAndUploadImages,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF1A73E8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      ),
+                      icon: const Icon(Icons.add_photo_alternate_rounded, size: 20),
+                      label: const Text('Ajouter'),
+                    ),
+                  ),
+                ),
+              ],
       ),
       floatingActionButton: null,
       body: StreamBuilder<List<AdPlaceholderImage>>(
@@ -393,41 +669,38 @@ class _AdPlaceholderImagesAdminPageState
                 children: [
                   Text(
                     visibleCount == 0
-                        ? 'Aucune image active sur ${images.length}'
+                        ? '⚠️  Aucune image active sur ${images.length}'
                         : visibleCount == 1
-                            ? '1 image active sur ${images.length}'
-                            : '$visibleCount images actives sur ${images.length}',
+                            ? '✅ 1 image active sur ${images.length}'
+                            : '✅ $visibleCount images actives sur ${images.length}',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 6),
                   Text(
-                    'Coche pour afficher · Appuie sur l\'image pour l\'agrandir',
+                    '✏️ Modifier · 👁️ Cocher pour afficher · 🔍 Zoom · 🗑️ Supprimer',
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
-                        ?.copyWith(color: Colors.black54),
+                        ?.copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
-            TextButton.icon(
-              onPressed: _isUploading ? null : _pickAndUploadImages,
-              icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-              label: Text(_isUploading ? 'Upload...' : 'Ajouter'),
-              style: TextButton.styleFrom(foregroundColor: _orange),
-            ),
-            if (images.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: () => _enterReorderMode(images),
-                icon: const Icon(Icons.swap_vert_rounded, size: 18),
-                label: const Text('Réorganiser'),
-                style: TextButton.styleFrom(foregroundColor: _orange),
+            if (images.isNotEmpty)
+              Tooltip(
+                message: 'Réorganiser l\'ordre des images par glisser-déposer',
+                child: FilledButton.icon(
+                  onPressed: () => _enterReorderMode(images),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _orange,
+                  ),
+                  icon: const Icon(Icons.swap_vert_rounded, size: 18),
+                  label: const Text('Réorganiser'),
+                ),
               ),
-            ],
           ],
         ),
         const SizedBox(height: 12),
@@ -454,6 +727,7 @@ class _AdPlaceholderImagesAdminPageState
                       isVisible: value,
                     ),
                     onDelete: () => _confirmDelete(image),
+                    onEdit: () => _openEditSlideDialog(image),
                   ),
                 )
                 .toList(),
@@ -807,6 +1081,7 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
     required this.onTapImage,
     required this.onVisibilityChanged,
     required this.onDelete,
+    required this.onEdit,
     this.activePosition,
     this.activeTotal = 0,
   });
@@ -815,6 +1090,7 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
   final VoidCallback onTapImage;
   final ValueChanged<bool> onVisibilityChanged;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
   final int? activePosition;
   final int activeTotal;
 
@@ -836,6 +1112,14 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
           color: selected ? orange : Colors.grey.shade300,
           width: selected ? 2.5 : 1,
         ),
+        boxShadow: [
+          if (selected)
+            BoxShadow(
+              color: orange.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+        ],
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -857,75 +1141,125 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
           // Icône zoom (centre)
           Center(
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black38,
+                color: Colors.black54,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.zoom_in_rounded,
-                  color: Colors.white, size: 18),
+                  color: Colors.white, size: 24),
             ),
           ),
-          // Checkbox visibilité (haut droite)
+          // Checkbox visibilité (haut droite) - plus grand
           Positioned(
             top: 6,
             right: 6,
             child: GestureDetector(
               onTap: () => onVisibilityChanged(!selected),
               child: Container(
-                width: 26,
-                height: 26,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: selected ? orange : Colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: selected ? orange : Colors.grey.shade400,
-                    width: 2,
+                    width: 2.5,
                   ),
                   boxShadow: const [
                     BoxShadow(color: Colors.black26, blurRadius: 4),
                   ],
                 ),
                 child: selected
-                    ? const Icon(Icons.check, size: 18, color: Colors.white)
+                    ? const Icon(Icons.check, size: 20, color: Colors.white)
                     : null,
               ),
             ),
           ),
-          // Bouton supprimer (bas droite)
+          // Barre d'actions en bas (plus visible)
           Positioned(
-            bottom: 4,
-            right: 4,
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: IconButton(
-                iconSize: 18,
-                visualDensity: VisualDensity.compact,
-                tooltip: 'Supprimer',
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: onDelete,
-              ),
-            ),
-          ),
-          // Badge état (bas gauche)
-          Positioned(
-            left: 6,
-            bottom: 6,
+            bottom: 0,
+            left: 0,
+            right: 0,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                activeLabel,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
                 ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Badge état (bas gauche)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: selected ? orange : Colors.grey.shade600,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      activeLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  // Boutons d'action
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Bouton modifier
+                      Tooltip(
+                        message: 'Modifier',
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: orange,
+                            shape: BoxShape.circle,
+                          ),
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 16,
+                              icon: const Icon(Icons.edit_rounded, color: Colors.white),
+                              onPressed: onEdit,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Bouton supprimer
+                      Tooltip(
+                        message: 'Supprimer',
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade500,
+                            shape: BoxShape.circle,
+                          ),
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 16,
+                              icon: const Icon(Icons.delete_rounded, color: Colors.white),
+                              onPressed: onDelete,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

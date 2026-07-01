@@ -227,18 +227,16 @@ class _MethodTabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 52,
         decoration: BoxDecoration(
-          color: selected
-              ? (_isTextAiButton
-                  ? const Color(0xFFFF6600)
-                  : const Color(0xFF1A6FFF))
-              : Colors.white,
+          color: _isTextAiButton
+              ? const Color(0xFFFF6600)
+              : (selected ? const Color(0xFF1A6FFF) : Colors.white),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected
-                ? (_isTextAiButton
-                    ? const Color(0xFFFF6600)
-                    : const Color(0xFF1A6FFF))
-                : const Color(0xFFD1D5DB),
+            color: _isTextAiButton
+                ? const Color(0xFFFF6600)
+                : (selected
+                    ? const Color(0xFF1A6FFF)
+                    : const Color(0xFFD1D5DB)),
             width: 1.5,
           ),
         ),
@@ -266,7 +264,9 @@ class _MethodTabButton extends StatelessWidget {
                   : Icon(
                       icon,
                       size: 16,
-                      color: selected ? Colors.white : const Color(0xFF6B7280),
+                      color: _isTextAiButton
+                          ? Colors.white
+                          : (selected ? Colors.white : const Color(0xFF6B7280)),
                     ),
             ),
             const SizedBox(width: 8),
@@ -277,7 +277,9 @@ class _MethodTabButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w700,
-                  color: selected ? Colors.white : const Color(0xFF111827),
+                  color: _isTextAiButton
+                      ? Colors.white
+                      : (selected ? Colors.white : const Color(0xFF111827)),
                 ),
               ),
             ),

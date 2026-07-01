@@ -804,6 +804,31 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
             fontWeight: FontWeight.w900,
           ),
         ),
+        actions: [
+          StreamBuilder<List<HeroSlide>>(
+            stream: _heroSlidesService.watchAllSlidesForAdmin(),
+            builder: (context, snapshot) {
+              final slides = snapshot.data ?? const <HeroSlide>[];
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: Tooltip(
+                    message: 'Ajouter un nouveau slide',
+                    child: FilledButton.icon(
+                      onPressed: _isSubmitting ? null : _openSlideEditor,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _kAdminHeroOrange,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.add_rounded, size: 20),
+                      label: const Text('Ajouter'),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<List<HeroSlide>>(
         stream: _heroSlidesService.watchAllSlidesForAdmin(),
@@ -1012,11 +1037,29 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                     ),
                                                     ReorderableDragStartListener(
                                                       index: index,
-                                                      child: const Icon(
-                                                        Icons
-                                                            .drag_handle_rounded,
-                                                        color:
-                                                            Color(0xFF9CA3AF),
+                                                      child: Container(
+                                                        padding: const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 8),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: const Color(
+                                                              0xFFF3F4F6),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                        ),
+                                                        child: Tooltip(
+                                                          message:
+                                                              'Maintenir et glisser pour réordonner',
+                                                          child: const Icon(
+                                                            Icons
+                                                                .drag_handle_rounded,
+                                                            color: Color(
+                                                                0xFF6B7280),
+                                                            size: 22,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
@@ -1048,35 +1091,82 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                   spacing: 8,
                                                   runSpacing: 8,
                                                   children: [
-                                                    OutlinedButton.icon(
+                                                    FilledButton.icon(
                                                       onPressed: isBusy
                                                           ? null
                                                           : () =>
                                                               _openSlideEditor(
                                                                   existing:
                                                                       slide),
+                                                      style: FilledButton
+                                                          .styleFrom(
+                                                        backgroundColor:
+                                                            _kAdminHeroBlue,
+                                                      ),
                                                       icon: const Icon(
-                                                          Icons.edit_outlined),
+                                                          Icons.edit_rounded,
+                                                          size: 18),
                                                       label: const Text(
                                                           'Modifier'),
                                                     ),
-                                                    OutlinedButton.icon(
-                                                      onPressed: isBusy ||
-                                                              slide.isFirst
-                                                          ? null
-                                                          : () =>
-                                                              _setFirstSlide(
-                                                                  slide),
-                                                      icon: const Icon(Icons
-                                                          .vertical_align_top_rounded),
-                                                      label: const Text(
-                                                          'Définir en premier'),
-                                                    ),
+                                                    if (!slide.isFirst)
+                                                      OutlinedButton.icon(
+                                                        onPressed: isBusy
+                                                            ? null
+                                                            : () =>
+                                                                _setFirstSlide(
+                                                                    slide),
+                                                        icon: const Icon(Icons
+                                                            .vertical_align_top_rounded,
+                                                            size: 18),
+                                                        label: const Text(
+                                                            'Définir premier'),
+                                                      )
+                                                    else
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 12,
+                                                                vertical: 8),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: const Color(
+                                                              0xFF047857),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                        ),
+                                                        child: const Row(
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: [
+                                                            Icon(Icons.star_rounded,
+                                                                size: 16,
+                                                                color: Colors
+                                                                    .white),
+                                                            SizedBox(
+                                                                width: 4),
+                                                            Text(
+                                                              'Premier slide',
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
                                                     OutlinedButton.icon(
                                                       onPressed: isBusy
                                                           ? null
-                                                          : () => _deleteSlide(
-                                                              slide),
+                                                          : () =>
+                                                              _deleteSlide(
+                                                                  slide),
                                                       style: OutlinedButton
                                                           .styleFrom(
                                                         foregroundColor:
@@ -1084,7 +1174,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                                 0xFFB91C1C),
                                                       ),
                                                       icon: const Icon(Icons
-                                                          .delete_outline_rounded),
+                                                          .delete_outline_rounded,
+                                                          size: 18),
                                                       label: const Text(
                                                           'Supprimer'),
                                                     ),
@@ -1234,11 +1325,11 @@ class _HeroIntroCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               const Text(
-                "Gérez ici les images et vidéos affichées dans le Hero de la page Home. Vous pouvez choisir le premier média affiché, définir la durée, modifier l'ordre et activer ou désactiver chaque slide.",
+                "📸 Ajoutez, modifiez et réorganisez vos images et vidéos du Hero.\n🎬 Choisissez le premier média, réglez la durée, activez/désactivez, ou supprimez.\n⬆️ Utilisez les poignées de glisser pour réordonner les slides.",
                 style: TextStyle(
                   color: Color(0xFF6B7280),
                   fontWeight: FontWeight.w600,
-                  height: 1.45,
+                  height: 1.55,
                 ),
               ),
             ],
