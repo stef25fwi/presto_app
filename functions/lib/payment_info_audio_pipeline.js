@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const admin = require("firebase-admin");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 
 if (!admin.apps.length) {
@@ -12,6 +13,7 @@ const PUBLIC_CONFIG_DOC = "public_config/payment_info_audio";
 const ADMIN_SETTINGS_DOC = "admin_settings/payment_info_audio";
 const STORAGE_PATH = "app_public/payment_audio/payment_info_current.mp3";
 const DRAFT_STORAGE_PREFIX = "app_admin/payment_audio_drafts";
+const OPENAI_API_KEY_SECRET = defineSecret("OPENAI_API_KEY");
 
 const DEFAULT_PAYMENT_TEXT = [
   "Bienvenue sur ilipresto.",
@@ -94,6 +96,7 @@ async function loadPaymentText(requestText) {
 
 async function generateMp3BufferWithOpenAI(text, voice) {
   const apiKey =
+    OPENAI_API_KEY_SECRET.value() ||
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_KEY ||
     process.env.OPENAI_SECRET;
@@ -105,7 +108,7 @@ async function generateMp3BufferWithOpenAI(text, voice) {
     );
   }
 
-  const model = process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts";
+  const model = process.env.OPENAI_TTS_MODEL || "gpt-4.1-nano-tts";
   const safeVoice = cleanText(voice) || process.env.OPENAI_TTS_VOICE || "alloy";
 
   const response = await fetch("https://api.openai.com/v1/audio/speech", {
@@ -193,6 +196,7 @@ exports.generatePaymentInfoAudio = onCall(
     timeoutSeconds: 120,
     memory: "512MiB",
     cors: true,
+    secrets: [OPENAI_API_KEY_SECRET],
   },
   async (request) => {
     const uid = await assertAdmin(request);
@@ -256,6 +260,7 @@ exports.generatePaymentInfoAudioDraft = onCall(
     timeoutSeconds: 120,
     memory: "512MiB",
     cors: true,
+    secrets: [OPENAI_API_KEY_SECRET],
   },
   async (request) => {
     const uid = await assertAdmin(request);

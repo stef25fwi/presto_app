@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const admin = require("firebase-admin");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 
 if (!admin.apps.length) {
@@ -12,6 +13,7 @@ const PUBLIC_CONFIG_DOC = "public_config/payment_info_audio";
 const ADMIN_SETTINGS_DOC = "admin_settings/payment_info_audio";
 const STORAGE_PATH = "app_public/payment_audio/payment_info_current.mp3";
 const DRAFT_STORAGE_PREFIX = "app_admin/payment_audio_drafts";
+const OPENAI_API_KEY_SECRET = defineSecret("OPENAI_API_KEY");
 
 const DEFAULT_PAYMENT_TEXT = [
   "Bienvenue sur ilipresto.",
@@ -32,6 +34,10 @@ function cleanText(value) {
 
 function textHash(text) {
   return crypto.createHash("sha256").update(text).digest("hex");
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function assertAdmin(request) {
@@ -94,6 +100,7 @@ async function loadPaymentText(requestText) {
 
 async function generateMp3BufferWithOpenAI(text, voice) {
   const apiKey =
+    OPENAI_API_KEY_SECRET.value() ||
     process.env.OPENAI_API_KEY ||
     process.env.OPENAI_KEY ||
     process.env.OPENAI_SECRET;
@@ -105,45 +112,67 @@ async function generateMp3BufferWithOpenAI(text, voice) {
     );
   }
 
-  const model = process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts";
-  const safeVoice = cleanText(voice) || process.env.OPENAI_TTS_VOICE || "alloy";
+  const model = process.env.OPENAI_TTS_MODEL || "tts-1";
+  const safeVoice = cleanText(voice) || process.env.OPENAI_TTS_VOICE || "nova";
 
-  const response = await fetch("https://api.openai.com/v1/audio/speech", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      voice: safeVoice,
-      input: text,
-      response_format: "mp3",
-    }),
-  });
+  let lastStatus = 0;
+  let lastBody = "";
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-
-    logger.error("OpenAI TTS failed", {
-      status: response.status,
-      body: errorText.slice(0, 500),
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const response = await fetch("https://api.openai.com/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        voice: safeVoice,
+        input: text,
+        response_format: "mp3",
+      }),
     });
 
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      if (!buffer.length) {
+        throw new HttpsError("internal", "Le fichier audio généré est vide.");
+      }
+
+      return buffer;
+    }
+
+    lastStatus = response.status;
+    lastBody = await response.text().catch(() => "");
+
+    logger.error("OpenAI TTS failed", {
+      status: lastStatus,
+      attempt,
+      model,
+      voice: safeVoice,
+      body: lastBody.slice(0, 700),
+    });
+
+    if (response.status !== 429 || attempt === 4) {
+      break;
+    }
+
+    await sleep(2500 * attempt);
+  }
+
+  if (lastStatus === 429) {
     throw new HttpsError(
-      "internal",
-      `Génération audio impossible. Statut TTS: ${response.status}`
+      "resource-exhausted",
+      "OpenAI refuse temporairement la génération audio : limite de requêtes ou quota API atteint. Attends 1 à 2 minutes puis réessaie. Si l'erreur persiste, vérifie le budget/quota OpenAI API."
     );
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-
-  if (!buffer.length) {
-    throw new HttpsError("internal", "Le fichier audio généré est vide.");
-  }
-
-  return buffer;
+  throw new HttpsError(
+    "internal",
+    `Génération audio impossible. Statut TTS: ${lastStatus}`
+  );
 }
 
 async function uploadMp3(buffer, uid, options = {}) {
@@ -193,6 +222,7 @@ exports.generatePaymentInfoAudio = onCall(
     timeoutSeconds: 120,
     memory: "512MiB",
     cors: true,
+    secrets: [OPENAI_API_KEY_SECRET],
   },
   async (request) => {
     const uid = await assertAdmin(request);
@@ -256,6 +286,7 @@ exports.generatePaymentInfoAudioDraft = onCall(
     timeoutSeconds: 120,
     memory: "512MiB",
     cors: true,
+    secrets: [OPENAI_API_KEY_SECRET],
   },
   async (request) => {
     const uid = await assertAdmin(request);

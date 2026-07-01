@@ -154,6 +154,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   MediaQuery.of(context).viewInsets.bottom + 18,
                 ),
                 child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -817,7 +820,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1100),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 260),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -880,6 +883,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                   ? _EmptyHeroSlidesState(
                                       onAddPressed: _openSlideEditor)
                                   : ReorderableListView.builder(
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
                                       itemCount: slides.length,
                                       onReorder: (oldIndex, newIndex) =>
                                           _reorderSlides(
@@ -893,8 +898,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         return Card(
                                           key: ValueKey(slide.id),
                                           elevation: 0,
-                                          margin:
-                                              const EdgeInsets.only(bottom: 12),
+                                          margin: const EdgeInsets.only(
+                                              bottom: 260),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(20),
@@ -1567,6 +1572,7 @@ class _HeroSlidesThumbnailCarousel extends StatelessWidget {
           SizedBox(
             height: 124,
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               scrollDirection: Axis.horizontal,
               itemCount: slides.length,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
@@ -1649,7 +1655,7 @@ class _HeroSlideThumbnail extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(9, 7, 9, 0),
+              padding: const EdgeInsets.fromLTRB(9, 7, 9, 260),
               child: Row(
                 children: [
                   Text(
@@ -1677,7 +1683,7 @@ class _HeroSlideThumbnail extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(9, 3, 9, 0),
+              padding: const EdgeInsets.fromLTRB(9, 3, 9, 260),
               child: Text(
                 '${slide.isVideo ? 'Vidéo' : 'Image'} · ${slide.durationSeconds}s${slide.isFirst ? ' · premier' : ''}',
                 maxLines: 1,
@@ -1691,6 +1697,7 @@ class _HeroSlideThumbnail extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 96), // espace bas visualiseur hero
           ],
         ),
       ),

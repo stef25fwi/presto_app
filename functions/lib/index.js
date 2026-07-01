@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.publishApprovedListings = exports.expireOldListings = exports.notifyListingRejected = exports.notifyListingApproved = exports.reviewListingPhoto = exports.logAdminAction = exports.applyUserRoleClaims = exports.sendChatMessage = exports.createChatThreadFromListing = exports.toggleFavorite = exports.replyToReview = exports.reportReview = exports.getUserTrustScore = exports.submitVerifiedReview = exports.getEligibleRespondersForReview = exports.reportListing = exports.processOfferPhoto = exports.closeOfferWithReason = exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = exports.enqueueFirstListingNotPublishedReminders = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestLoginOtpEmail = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.adminSetMicroIaConfig = exports.adminGetMicroIaConfig = exports.microIaProcessAudio = exports.getUserPresenceStatus = exports.adminGetUserStats = exports.getMyAdminAccessStatus = exports.adminGetAccessStatus = exports.openAiExtractListingFieldsFromAudio = exports.openAiTranscribeListingAudio = exports.openAiExtractListingFields = exports.generateOfferDraft = exports.placesDetails = exports.placesAutocomplete = exports.onUserRolesChanged = exports.onAuthUserCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
-exports.preVerifySiret = exports.verifySiret = exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.generatePaymentInfoAudio = exports.moderateNewOffer = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.onNotificationUpdated = exports.onNotificationCreated = exports.sendSelfTestNotification = exports.broadcastTestNotification = exports.unregisterPushToken = exports.registerPushToken = exports.processConversationAttachmentPhoto = exports.deleteConversationMessage = exports.deleteConversation = exports.adminUnblockConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.sendReferralInviteEmail = exports.enqueueReactivation30DaysEmails = exports.enqueueProfileIncompleteReminderEmails = exports.enqueueNearbyNewListingsEmails = exports.enqueueMarketingOnboardingEmails = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.purgeAbandonedListingDrafts = exports.purgeOrphanedStorageFiles = void 0;
+exports.generatePaymentInfoAudioDraft = exports.preVerifySiret = exports.verifySiret = exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.generatePaymentInfoAudio = exports.moderateNewOffer = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.onNotificationUpdated = exports.onNotificationCreated = exports.sendSelfTestNotification = exports.broadcastTestNotification = exports.unregisterPushToken = exports.registerPushToken = exports.processConversationAttachmentPhoto = exports.deleteConversationMessage = exports.deleteConversation = exports.adminUnblockConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.sendReferralInviteEmail = exports.enqueueReactivation30DaysEmails = exports.enqueueProfileIncompleteReminderEmails = exports.enqueueNearbyNewListingsEmails = exports.enqueueMarketingOnboardingEmails = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.purgeAbandonedListingDrafts = exports.purgeOrphanedStorageFiles = void 0;
+exports.publishPaymentInfoAudioDraft = void 0;
 const v2_1 = require("firebase-functions/v2");
 const env_1 = require("./config/env");
 (0, v2_1.setGlobalOptions)({
@@ -143,25 +144,9 @@ var verifySiret_1 = require("./modules/pro/verifySiret");
 Object.defineProperty(exports, "verifySiret", { enumerable: true, get: function () { return verifySiret_1.verifySiret; } });
 var preVerifySiret_1 = require("./modules/pro/preVerifySiret");
 Object.defineProperty(exports, "preVerifySiret", { enumerable: true, get: function () { return preVerifySiret_1.preVerifySiret; } });
+// Payment popup MP3 draft workflow exports.
+// Kept in source so npm build does not remove the callable exports.
+const paymentInfoAudioDraftWorkflowExports = require("../payment_info_audio_pipeline");
+exports.generatePaymentInfoAudioDraft = paymentInfoAudioDraftWorkflowExports.generatePaymentInfoAudioDraft;
+exports.publishPaymentInfoAudioDraft = paymentInfoAudioDraftWorkflowExports.publishPaymentInfoAudioDraft;
 //# sourceMappingURL=index.js.map
-
-
-
-
-// Payment popup MP3 draft workflow exports (safe getter version).
-const paymentInfoAudioDraftWorkflowExportsSafe = require("./payment_info_audio_pipeline");
-
-Object.defineProperty(exports, "generatePaymentInfoAudioDraft", {
-  enumerable: true,
-  get: function () {
-    return paymentInfoAudioDraftWorkflowExportsSafe.generatePaymentInfoAudioDraft;
-  },
-});
-
-Object.defineProperty(exports, "publishPaymentInfoAudioDraft", {
-  enumerable: true,
-  get: function () {
-    return paymentInfoAudioDraftWorkflowExportsSafe.publishPaymentInfoAudioDraft;
-  },
-});
-

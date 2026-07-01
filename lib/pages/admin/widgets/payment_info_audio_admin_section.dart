@@ -88,11 +88,14 @@ class _PaymentInfoAudioAdminSectionState
 
       if (!mounted) return;
 
-      _showSnack('Texte Infos paiement sauvegardé.');
+      _showSnack('Texte sauvegardé. Tu peux maintenant générer le MP3.');
     } catch (error) {
       if (!mounted) return;
 
-      _showSnack('Sauvegarde impossible : $error', isError: true);
+      _showSnack(
+        'Sauvegarde impossible : $error. Vérifie les règles Firestore admin_settings.',
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _isSavingText = false);
     }
@@ -198,6 +201,8 @@ class _PaymentInfoAudioAdminSectionState
             _hasPreviewedDraft && _lastPreviewedDraftUrl == draftAudioUrl;
 
         return Card(
+          color: Colors.white,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(
@@ -230,7 +235,7 @@ class _PaymentInfoAudioAdminSectionState
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Le texte ci-dessous reprend le message du popup Infos paiement. Modifie-le, génère un MP3 brouillon, puis pré-écoute avant validation.',
+                  'Le texte ci-dessous reprend le message du popup Infos paiement. Sauvegarde le texte, génère un MP3 brouillon, puis pré-écoute avant validation.',
                   style: TextStyle(
                     color: Color(0xFF6B7280),
                     fontWeight: FontWeight.w600,
@@ -291,7 +296,7 @@ class _PaymentInfoAudioAdminSectionState
                       label: Text(
                         _isGeneratingDraft
                             ? 'Génération MP3...'
-                            : 'Générer pré-écoute MP3',
+                            : 'Générer le MP3 depuis ce texte',
                       ),
                     ),
                   ],
@@ -316,7 +321,7 @@ class _PaymentInfoAudioAdminSectionState
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
