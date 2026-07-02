@@ -11,6 +11,22 @@ const firestore_1 = require("../../core/firestore");
 const logger_1 = require("../../core/logger");
 const constants_1 = require("../../shared/constants");
 const FCM_MULTICAST_TOKEN_LIMIT = 500;
+async function readUserTotalUnread(userId) {
+    try {
+        const snap = await firestore_1.db
+            .collection(constants_1.COLLECTIONS.users)
+            .doc(userId)
+            .collection("metadata")
+            .doc("inbox")
+            .get();
+        const counts = (snap.data()?.inboxCounts ?? {});
+        const n = Number(counts.totalUnread);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+    catch {
+        return 0;
+    }
+}
 function readBoolean(value, fallback = true) {
     return typeof value === "boolean" ? value : fallback;
 }
@@ -192,12 +208,17 @@ async function sendPushToUser({ userId, topic, title, body, routeName, channelId
             return;
         }
     }
-    const tokenEntries = await listPushTokens(userId);
+    const [tokenEntries, currentUnread] = await Promise.all([
+        listPushTokens(userId),
+        readUserTotalUnread(userId),
+    ]);
     if (tokenEntries.length === 0) {
         logger_1.logger.info("push_skipped_no_tokens", { userId, topic });
         return;
     }
     const invalidDocIds = new Set();
+    // +1 : le nouvel élément n'est pas encore comptabilisé dans le metadata.
+    const badgeCount = currentUnread + 1;
     for (let index = 0; index < tokenEntries.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
         const batchEntries = tokenEntries.slice(index, index + FCM_MULTICAST_TOKEN_LIMIT);
         const multicast = {
@@ -229,6 +250,7 @@ async function sendPushToUser({ userId, topic, title, body, routeName, channelId
                     aps: {
                         sound: "default",
                         contentAvailable: true,
+                        badge: badgeCount,
                     },
                 },
             },
