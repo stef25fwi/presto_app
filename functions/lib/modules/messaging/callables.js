@@ -910,8 +910,15 @@ exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIO
     if (senderId !== currentUserId) {
         throw new https_1.HttpsError("permission-denied", "you can only delete your own messages");
     }
-    await messageRef.delete();
-    // Delete Storage files attached to the message (best-effort, errors are ignored).
+    // Soft-delete: clear content and mark as deleted so a placeholder appears in the thread.
+    await messageRef.update({
+        text: "",
+        body: "",
+        attachments: [],
+        deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        deletedBy: currentUserId,
+    });
+    // Delete Storage files that were attached (best-effort, errors are ignored).
     const rawAttachments = Array.isArray(messageData.attachments) ? messageData.attachments : [];
     const storagePaths = [];
     for (const att of rawAttachments) {
@@ -928,7 +935,11 @@ exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIO
         messagesRef.orderBy("createdAt", "desc").limit(1).get(),
         messagesRef.count().get(),
     ]);
-    const latestMessage = latestMessageSnap.docs[0]?.data();
+    const latestRaw = latestMessageSnap.docs[0]?.data();
+    // Show a placeholder text in the conversation list if the latest message was deleted.
+    const latestMessage = latestRaw
+        ? { ...latestRaw, text: latestRaw.deletedAt ? "Message supprimé" : (latestRaw.text ?? latestRaw.body) }
+        : undefined;
     const remainingMessageCount = messageCountSnap.data().count;
     const unreadCount = computeUnreadCountAfterMessageDeletion({
         participants,
@@ -949,7 +960,9 @@ exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIO
         unreadCount,
         archivedBy,
         lastMessage: latestMessage
-            ? sanitizeMessageText(latestMessage.text ?? latestMessage.body)
+            ? (latestRaw?.deletedAt
+                ? "Message supprimé"
+                : sanitizeMessageText(latestMessage.text ?? latestMessage.body))
             : "",
         lastSenderId: latestMessage
             ? String(latestMessage.senderId || latestMessage.sender_id || "").trim()

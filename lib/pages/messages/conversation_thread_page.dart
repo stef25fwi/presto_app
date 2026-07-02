@@ -2638,6 +2638,71 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
+  Widget _buildDeletedMessageBubble({
+    required bool isMine,
+    required DateTime? sentAt,
+  }) {
+    final timestampText = _formatMessageTimestamp(sentAt);
+    final bubble = Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.block_rounded,
+                size: 14,
+                color: Color(0xFF9CA3AF),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                'Message supprimé',
+                style: kPrestoBodyTextStyle.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            timestampText,
+            style: kPrestoMetaTextStyle.copyWith(
+              fontSize: 11,
+              color: const Color(0xFFB0B7C3),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Align(
+      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      child: isMine
+          ? bubble
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildOtherParticipantMessageAvatar(),
+                const SizedBox(width: 4),
+                bubble,
+              ],
+            ),
+    );
+  }
+
   Widget _buildMessagesAccessGate() {
     final isPreparing = _isPreparingMessageStream;
     return Center(
@@ -2955,6 +3020,25 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                         _MessageAttachment.fromList(
                                       data['attachments'],
                                     );
+                                    final isDeleted =
+                                        data['deletedAt'] != null;
+
+                                    if (isDeleted) {
+                                      final deletedBubble =
+                                          _buildDeletedMessageBubble(
+                                        isMine: isMine,
+                                        sentAt: sentAt,
+                                      );
+                                      if (!showDateChip) return deletedBubble;
+                                      return Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _buildThreadDateChip(sentAt),
+                                          deletedBubble,
+                                        ],
+                                      );
+                                    }
+
                                     final newerSenderId = docIndex > 0
                                         ? ((docs[docIndex - 1]
                                                         .data()['senderId'] ??
