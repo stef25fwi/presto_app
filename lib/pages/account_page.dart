@@ -41,6 +41,7 @@ import 'user_offers_section.dart';
 import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/pages/account/mes_avis_page.dart';
+import 'package:presto_app/pages/account/verifier_siret_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import 'package:presto_app/services/profile_department_resolver.dart';
 
@@ -3890,8 +3891,9 @@ class _AccountPageState extends State<AccountPage> {
               icon: Icons.grid_view_rounded,
               label: 'Vérifier mon SIRET',
               showProBadge: true,
-              onTap: () => showPrestoSnackBar(
-                  context, 'Vérification SIRET — Bientôt disponible'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const VerifierSiretPage()),
+              ),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
             _buildOrangeMenuItem(
