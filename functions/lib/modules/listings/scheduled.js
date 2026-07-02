@@ -1,12 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.enqueueFirstListingNotPublishedReminders = exports.enqueueExpiringListingEmails = void 0;
+exports.enqueueFourHourExpiryPushNotifications = exports.enqueueFirstListingNotPublishedReminders = exports.enqueueExpiringListingEmails = void 0;
 exports.hasPublishedListingRecords = hasPublishedListingRecords;
+const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("../../core/firestore");
 const env_1 = require("../../config/env");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
+const push_1 = require("../notifications/push");
+const LISTING_EXPIRY_REMINDERS_COLLECTION = "listing_expiry_reminders";
 function normalizeOwnerId(data) {
     return String(data.owner_id || data.ownerId || data.userId || data.uid || "");
 }
@@ -173,5 +179,54 @@ exports.enqueueFirstListingNotPublishedReminders = (0, scheduler_1.onSchedule)("
     const emittedUsers = new Set();
     await processDraftCollection(constants_1.COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
     await processDraftCollection(constants_1.LEGACY_COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
+});
+async function processExpiryPushCollection(collectionName, now, in4h) {
+    const expiringQ = await firestore_1.db
+        .collection(collectionName)
+        .where("expires_at", ">=", now)
+        .where("expires_at", "<=", in4h)
+        .limit(200)
+        .get();
+    for (const doc of expiringQ.docs) {
+        const data = doc.data();
+        if (!isPublishedStatus(data))
+            continue;
+        const ownerId = normalizeOwnerId(data);
+        if (!ownerId)
+            continue;
+        const dedupRef = firestore_1.db.collection(LISTING_EXPIRY_REMINDERS_COLLECTION).doc(`${collectionName}_${doc.id}`);
+        const dedupSnap = await dedupRef.get();
+        if (dedupSnap.exists && dedupSnap.data()?.fourHourPushSentAt)
+            continue;
+        const listingTitle = String(data.title || "Votre annonce");
+        const pushTitle = "Votre annonce arrive à terme !";
+        const pushBody = `"${listingTitle}" expire dans moins de 4 heures. Rendez-vous dans Gérer mes annonces.`;
+        const notificationId = `listing_expiry_4h_${collectionName}_${doc.id}`;
+        await dedupRef.set({ fourHourPushSentAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        await Promise.allSettled([
+            (0, push_1.sendPushToUser)({
+                userId: ownerId,
+                topic: "listings",
+                title: pushTitle,
+                body: pushBody,
+                channelId: "ilipresto_activity",
+                routeName: "/mes-annonces",
+            }),
+            (0, push_1.createInAppNotification)({
+                notificationId,
+                userId: ownerId,
+                title: pushTitle,
+                message: pushBody,
+                type: "listing_expiry",
+                routeName: "/mes-annonces",
+            }),
+        ]);
+    }
+}
+exports.enqueueFourHourExpiryPushNotifications = (0, scheduler_1.onSchedule)("every 1 hours", async () => {
+    const now = Date.now();
+    const in4h = now + 4 * 60 * 60 * 1000;
+    await processExpiryPushCollection(constants_1.COLLECTIONS.listings, now, in4h);
+    await processExpiryPushCollection(constants_1.LEGACY_COLLECTIONS.offers, now, in4h);
 });
 //# sourceMappingURL=scheduled.js.map
