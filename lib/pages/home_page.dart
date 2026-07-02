@@ -1696,7 +1696,7 @@ class _HomePageState extends State<HomePage>
           // redimensionne et la mise en page se restaure proprement a la
           // fermeture (corrige la bottom bar bloquee a mi-ecran sur web).
           resizeToAvoidBottomInset: true,
-          extendBody: false,
+          extendBody: true,
           backgroundColor: Colors.white,
           body: IndexedStack(
             index: _selectedIndex,
@@ -1732,28 +1732,23 @@ class _HomePageState extends State<HomePage>
           bottomNavigationBar: isKeyboardOpen
               ? null
               : Container(
-                  // Fond opaque pour boucher les coins transparents du
-                  // BorderRadius : sans cela le Scaffold.backgroundColor
-                  // (blanc) transparaît dans les angles arrondis.
-                  color: const Color(0xFF0D47A1),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF1A73E8),
-                          Color(0xFF0D47A1),
-                        ],
-                      ),
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(24)),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF1A73E8),
+                        Color(0xFF0D47A1),
+                      ],
                     ),
-                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                    child: SafeArea(
-                    top: false,
-                    maintainBottomViewPadding: true,
-                    child: Row(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                  child: SafeArea(
+                  top: false,
+                  maintainBottomViewPadding: true,
+                  child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -1820,7 +1815,6 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
-              ),
         ),
       ),
     );
