@@ -3504,7 +3504,7 @@ class _AccountPageState extends State<AccountPage> {
                     radius: 45,
                     backgroundColor: Colors.white,
                     backgroundImage:
-                        AssetImage('assets/images/logowebp.webp'),
+                        AssetImage('assets/images/default_avatar.png'),
                   ),
                   if (visiblePhotoUrl.isNotEmpty)
                     ClipOval(
@@ -3725,7 +3725,7 @@ class _AccountPageState extends State<AccountPage> {
                     radius: 45,
                     backgroundColor: Colors.white,
                     backgroundImage:
-                        AssetImage('assets/images/logowebp.webp'),
+                        AssetImage('assets/images/default_avatar.png'),
                   ),
                   if (visiblePhotoUrl.isNotEmpty)
                     ClipOval(

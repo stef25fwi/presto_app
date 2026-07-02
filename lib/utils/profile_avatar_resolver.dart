@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Avatar utilisé lorsqu'aucune photo personnelle n'a été choisie.
-const String kDefaultProfileAvatarAsset = 'assets/images/logowebp.webp';
+const String kDefaultProfileAvatarAsset = 'assets/images/default_avatar.png';
 
 /// Les photos automatiquement fournies par Google ne sont pas utilisées.
 ///
