@@ -178,8 +178,8 @@ async function notifyFavoriteCategoryUsers({
       createInAppNotification({
         notificationId,
         userId,
-        title: `Nouvelle annonce dans ${category}`,
-        message: title,
+        title: `Nouvelle annonce en ${category} !`,
+        message: "Une offre correspond à tes favoris. Regarde vite.",
         type: "favorite_listing_new",
         routeName,
         offerId,
@@ -190,8 +190,8 @@ async function notifyFavoriteCategoryUsers({
       sendPushToUser({
         userId,
         topic: "favorites",
-        title: `Nouvelle annonce dans ${category}`,
-        body: title,
+        title: `Nouvelle annonce en ${category} !`,
+        body: "Une offre correspond à tes favoris. Regarde vite.",
         routeName,
         channelId: "ilipresto_activity",
         collapseKey: `favorite_offer_${offerId}`,

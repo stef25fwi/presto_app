@@ -152,8 +152,8 @@ export const moderateNewOffer = onDocumentCreated(
               batch.set(notifRef, {
                 userId: userDoc.id,
                 offerId,
-                title: `Nouvelle offre : ${category}`,
-                message: title,
+                title: `Nouvelle annonce en ${category} !`,
+                message: "Une offre correspond à tes favoris. Regarde vite.",
                 category,
                 subCategory,
                 read: false,
