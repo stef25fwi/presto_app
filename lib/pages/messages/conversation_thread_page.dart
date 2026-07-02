@@ -31,6 +31,7 @@ import '../../utils/recording_path_web.dart'
 import '../../utils/temp_file_helper_web.dart'
     if (dart.library.io) '../../utils/temp_file_helper_io.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
+import 'package:presto_app/pages/fiche_pro_page.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -723,8 +724,20 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         .pushNamed('/offers/${Uri.encodeComponent(normalizedOfferId)}');
   }
 
+  void _openOtherParticipantProfile() {
+    final uid = _otherParticipantId.trim();
+    if (uid.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FicheProPage(uid: uid, isOwner: false),
+      ),
+    );
+  }
+
   Widget _buildThreadAppBarTitle() {
-    return Row(
+    return GestureDetector(
+      onTap: _openOtherParticipantProfile,
+      child: Row(
       children: [
         CircleAvatar(
           radius: 18,
@@ -777,6 +790,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ),
         ),
       ],
+      ),
     );
   }
 
