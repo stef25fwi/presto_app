@@ -1252,9 +1252,9 @@ export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, asyn
   ]);
   const latestRaw = latestMessageSnap.docs[0]?.data() as Record<string, unknown> | undefined;
   // Show a placeholder text in the conversation list if the latest message was deleted.
-  const latestMessage = latestRaw
+  const latestMessage = (latestRaw
     ? { ...latestRaw, text: latestRaw.deletedAt ? "Message supprimé" : (latestRaw.text ?? latestRaw.body) }
-    : undefined;
+    : undefined) as Record<string, unknown> | undefined;
   const remainingMessageCount = messageCountSnap.data().count;
   const unreadCount = computeUnreadCountAfterMessageDeletion({
     participants,
