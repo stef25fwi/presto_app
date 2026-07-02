@@ -1,6 +1,7 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -32,6 +33,7 @@ import '../models/admin_access_state.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/admin_web_debug_store.dart';
 import '../services/ai/listing_audio_ai_service.dart';
+import '../services/ai/trade_classifier_service.dart';
 import '../services/city_search.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/french_city_postal_validator.dart';
@@ -533,6 +535,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Service IA structuré pour le formulaire publier
   final AiDraftService _aiService = AiDraftService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
+  final TradeClassifierService _tradeClassifier = TradeClassifierService();
+  bool _isClassifyingPhoto = false;
   final AdminAccessResolver _publishAdminAccessResolver = AdminAccessResolver();
   final ProfileReadinessChecker _publishAiProfileReadiness =
       ProfileReadinessChecker();
@@ -2101,7 +2105,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   bool get _showAiPendingForCategory {
-    return _isAnalyzing && (_category == null || _category!.trim().isEmpty);
+    final noCategory = _category == null || _category!.trim().isEmpty;
+    return noCategory && (_isAnalyzing || _isClassifyingPhoto);
   }
 
   Widget _withAiPendingOverlay({
@@ -3585,9 +3590,58 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _selectedPhotoBytes.add(bytes);
         }
       });
+
+      // Détection métier → catégorie/sous-catégorie en arrière-plan (~400-600 ms).
+      // Déclenché uniquement si la catégorie n'a pas encore été choisie.
+      if (!_categoryEditedByUser && (_category ?? '').trim().isEmpty) {
+        unawaited(_classifyPhotoAndApply(bytes));
+      }
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur lors de la sélection : $e');
+    }
+  }
+
+  /// Classifie la photo via GPT-4o-mini (enum fermé) et pré-remplit
+  /// catégorie + sous-catégorie si la confiance est suffisante.
+  Future<void> _classifyPhotoAndApply(Uint8List bytes) async {
+    if (!mounted) return;
+    setState(() => _isClassifyingPhoto = true);
+    try {
+      final b64 = base64Encode(bytes);
+      final result = await _tradeClassifier.classifyFromBase64(b64);
+
+      if (!mounted || _categoryEditedByUser) return;
+      if (!result.isConfident || result.match == null) return;
+
+      final match = result.match!;
+      final resolvedCategory = _resolvePublishCategoryLabel(match.categorie);
+      if (resolvedCategory == null) return;
+
+      final availableSubs =
+          kCategorySubcategories[resolvedCategory] ?? const <String>[];
+
+      setState(() {
+        if ((_category ?? '').trim().isEmpty) {
+          _category = resolvedCategory;
+          _selectedSubCategory = null;
+        }
+        if ((_selectedSubCategory ?? '').trim().isEmpty &&
+            availableSubs.contains(match.sousCat)) {
+          _selectedSubCategory = match.sousCat;
+        }
+      });
+
+      if (mounted) {
+        showPrestoSnackBar(context, 'Catégorie détectée : $resolvedCategory');
+      }
+    } on FirebaseFunctionsException catch (e) {
+      // Erreur réseau ou AppCheck — silencieux (non critique)
+      debugPrint('classifyPhoto: ${e.code}');
+    } catch (e) {
+      debugPrint('classifyPhoto: $e');
+    } finally {
+      if (mounted) setState(() => _isClassifyingPhoto = false);
     }
   }
 
