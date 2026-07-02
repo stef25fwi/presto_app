@@ -38,6 +38,7 @@ import '../main.dart'
         pendingRedirectAuthResult,
         pendingRedirectAuthError;
 import 'user_offers_section.dart';
+import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import 'package:presto_app/services/profile_department_resolver.dart';
@@ -3816,8 +3817,13 @@ class _AccountPageState extends State<AccountPage> {
             _buildOrangeMenuItem(
               icon: Icons.badge_rounded,
               label: 'Ma fiche Pro',
-              onTap: () => showPrestoSnackBar(
-                  context, 'Ma fiche Pro — Bientôt disponible'),
+              onTap: () {
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid == null) return;
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => FicheProPage(uid: uid, isOwner: true),
+                ));
+              },
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
             _buildOrangeMenuItem(
