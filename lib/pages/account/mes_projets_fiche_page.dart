@@ -189,7 +189,7 @@ class _ParcoursCard extends StatelessWidget {
 
   String get _title {
     final raw =
-        ((data['data'] as Map?)?.cast<String, dynamic>()?['projectText'] ?? '')
+        ((data['data'] as Map?)?.cast<String, dynamic>()['projectText'] ?? '')
             as String;
     final trimmed = raw.trim();
     return trimmed.isNotEmpty ? trimmed : 'Projet sans titre';
@@ -197,7 +197,7 @@ class _ParcoursCard extends StatelessWidget {
 
   String get _activityType {
     return ((data['data'] as Map?)
-                ?.cast<String, dynamic>()?['activityType'] ??
+                ?.cast<String, dynamic>()['activityType'] ??
             '')
         .toString()
         .trim();
@@ -205,7 +205,7 @@ class _ParcoursCard extends StatelessWidget {
 
   String get _region {
     final territory = ((data['data'] as Map?)
-            ?.cast<String, dynamic>()?['territory'] as Map?)
+            ?.cast<String, dynamic>()['territory'] as Map?)
         ?.cast<String, dynamic>();
     return (territory?['region'] ?? '').toString().trim();
   }

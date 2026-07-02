@@ -2589,8 +2589,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 messageDocId: messageDocId,
                 canDelete: canDeleteAttachments,
                 isDeleting: isDeletingMessage,
-                onDelete: canDeleteAttachments && messageDocId != null
-                    ? () => _deleteMessageById(messageDocId)
+                onDelete: canDeleteAttachments
+                    ? () => _deleteMessageById(messageDocId!)
                     : null,
               ),
               if (text.isNotEmpty)
