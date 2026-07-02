@@ -107,8 +107,9 @@ service firebase.storage {
     }
 
     function isMessageAttachmentUpload() {
-      // 6.2 : images rasterisées sûres uniquement (pas de SVG), PDF, Word et
-      // texte brut. text/html et image/svg+xml sont refusés (vecteurs XSS).
+      // 6.2 : images rasterisées sûres uniquement (pas de SVG), PDF, Word,
+      // texte brut et audio (notes vocales m4a/aac).
+      // text/html et image/svg+xml sont refusés (vecteurs XSS).
       return request.resource != null
         && request.resource.size < 20 * 1024 * 1024
         && (
@@ -117,6 +118,7 @@ service firebase.storage {
           || request.resource.contentType == 'text/plain'
           || request.resource.contentType == 'application/msword'
           || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          || request.resource.contentType.matches('audio/.*')
         );
     }
 
