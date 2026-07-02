@@ -259,12 +259,8 @@ class _MethodTabButton extends StatelessWidget {
                         : const Color(0xFFF3F4F6)),
               ),
               child: showOrbit
-                  ? const SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: Center(
-                        child: OrbitingAiVisual(size: 34),
-                      ),
+                  ? const Center(
+                      child: OrbitingAiVisual(size: 28),
                     )
                   : Icon(
                       icon,
