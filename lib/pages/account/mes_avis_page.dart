@@ -1,0 +1,40 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+import '../../features/trust_score/trust_score_widgets.dart';
+import '../../main.dart' show prestoOverlayStyleFor, kPrestoOrange;
+
+class MesAvisPage extends StatelessWidget {
+  const MesAvisPage({super.key});
+
+  static const routeName = '/account/mes-avis';
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8),
+      appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        title: const Text(
+          'Mes avis',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        centerTitle: true,
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: uid.isEmpty
+          ? const Center(child: Text('Non connecté'))
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                TrustScoreCard(userId: uid),
+              ],
+            ),
+    );
+  }
+}
