@@ -2494,6 +2494,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     bool failed = false,
     bool groupedWithOlder = false,
     bool groupedWithNewer = false,
+    bool isDeleted = false,
     VoidCallback? onRetry,
     Future<void> Function()? onLongPress,
   }) {
@@ -2562,24 +2563,46 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   ),
                 ),
               ),
-            _buildAttachmentPreviews(
-              attachments,
-              messageDocId: messageDocId,
-              canDelete: canDeleteAttachments,
-              isDeleting: isDeletingMessage,
-              onDelete: canDeleteAttachments && messageDocId != null
-                  ? () => _deleteMessageById(messageDocId)
-                  : null,
-            ),
-            if (text.isNotEmpty)
-              Text(
-                text,
-                style: kPrestoBodyTextStyle.copyWith(
-                  color: const Color(0xFF111827),
-                  height: 1.3,
-                  fontSize: 15,
-                ),
+            if (isDeleted)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.block_rounded,
+                    size: 14,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Message supprimé',
+                    style: kPrestoBodyTextStyle.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              _buildAttachmentPreviews(
+                attachments,
+                messageDocId: messageDocId,
+                canDelete: canDeleteAttachments,
+                isDeleting: isDeletingMessage,
+                onDelete: canDeleteAttachments && messageDocId != null
+                    ? () => _deleteMessageById(messageDocId)
+                    : null,
               ),
+              if (text.isNotEmpty)
+                Text(
+                  text,
+                  style: kPrestoBodyTextStyle.copyWith(
+                    color: const Color(0xFF111827),
+                    height: 1.3,
+                    fontSize: 15,
+                  ),
+                ),
+            ],
             const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -2638,70 +2661,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildDeletedMessageBubble({
-    required bool isMine,
-    required DateTime? sentAt,
-  }) {
-    final timestampText = _formatMessageTimestamp(sentAt);
-    final bubble = Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment:
-            isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.block_rounded,
-                size: 14,
-                color: Color(0xFF9CA3AF),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'Message supprimé',
-                style: kPrestoBodyTextStyle.copyWith(
-                  fontStyle: FontStyle.italic,
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            timestampText,
-            style: kPrestoMetaTextStyle.copyWith(
-              fontSize: 11,
-              color: const Color(0xFFB0B7C3),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: isMine
-          ? bubble
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _buildOtherParticipantMessageAvatar(),
-                const SizedBox(width: 4),
-                bubble,
-              ],
-            ),
-    );
-  }
 
   Widget _buildMessagesAccessGate() {
     final isPreparing = _isPreparingMessageStream;
@@ -3022,22 +2981,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     );
                                     final isDeleted =
                                         data['deletedAt'] != null;
-
-                                    if (isDeleted) {
-                                      final deletedBubble =
-                                          _buildDeletedMessageBubble(
-                                        isMine: isMine,
-                                        sentAt: sentAt,
-                                      );
-                                      if (!showDateChip) return deletedBubble;
-                                      return Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _buildThreadDateChip(sentAt),
-                                          deletedBubble,
-                                        ],
-                                      );
-                                    }
+                                    final isDeletingMessage =
+                                        _deletingMessageIds
+                                            .contains(messageDocId);
+                                    final showAsDeleted =
+                                        isDeleted || isDeletingMessage;
 
                                     final newerSenderId = docIndex > 0
                                         ? ((docs[docIndex - 1]
@@ -3078,7 +3026,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                           : null,
                                       groupedWithNewer: groupedWithNewer,
                                       groupedWithOlder: groupedWithOlder,
-                                      onLongPress: isMine
+                                      isDeleted: showAsDeleted,
+                                      onLongPress: isMine && !showAsDeleted
                                           ? () async {
                                               final scaffoldMessenger =
                                                   ScaffoldMessenger.of(context);
@@ -3106,7 +3055,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                     title: const Text(
                                                         'Supprimer ce message'),
                                                     content: const Text(
-                                                      'Ce message sera definitivement supprime.',
+                                                      'Le contenu sera remplacé par « Message supprimé ». La bulle reste visible avec la date et l\'heure.',
                                                     ),
                                                     actions: [
                                                       TextButton(
@@ -3136,6 +3085,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                   !mounted) {
                                                 return;
                                               }
+                                              setState(() =>
+                                                  _deletingMessageIds
+                                                      .add(messageDocId));
                                               try {
                                                 await ConversationService
                                                     .deleteMessage(
@@ -3147,10 +3099,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                 scaffoldMessenger.showSnackBar(
                                                   const SnackBar(
                                                       content: Text(
-                                                          'Message supprime.')),
+                                                          'Message supprimé.')),
                                                 );
                                               } catch (error) {
                                                 if (!mounted) return;
+                                                setState(() =>
+                                                    _deletingMessageIds
+                                                        .remove(messageDocId));
                                                 scaffoldMessenger.showSnackBar(
                                                   SnackBar(
                                                     content: Text(
