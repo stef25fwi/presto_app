@@ -3069,14 +3069,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                           _isSending)
                                       ? null
                                       : _showAttachmentSheet,
-                                  child: Icon(
-                                    Icons.attach_file_rounded,
-                                    color: (_isBlocked ||
-                                            _isUploadingAttachment ||
-                                            _isSending)
-                                        ? const Color(0xFFCBD5E1)
-                                        : const Color(0xFF6B7280),
-                                    size: 22,
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.attach_file_rounded,
+                                      color: (_isBlocked ||
+                                              _isUploadingAttachment ||
+                                              _isSending)
+                                          ? const Color(0xFFCBD5E1)
+                                          : const Color(0xFF6B7280),
+                                      size: 22,
+                                    ),
                                   ),
                                 ),
                               ),
