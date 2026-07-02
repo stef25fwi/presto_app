@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Available font families selectable from the admin typography panel.
-const List<String> kAvailableFontFamilies = ['Inter', 'Rubik'];
+const List<String> kAvailableFontFamilies = [
+  'Inter',
+  'Rubik',
+  'Nunito',
+  '.SF Pro Display', // iOS system font (San Francisco) – Android falls back to default
+];
 
 const _kPrefScale = 'typo_scale';
 const _kPrefFamily = 'typo_family';
