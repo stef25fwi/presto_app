@@ -3985,13 +3985,6 @@ class _AccountPageState extends State<AccountPage> {
     return Column(
       children: [
         _buildBlueMenuItem(
-          icon: Icons.chat_bubble_rounded,
-          label: 'Mes messages',
-          onTap: () => showPrestoSnackBar(
-              context, 'Messagerie — Bientôt disponible depuis ici'),
-        ),
-        const Divider(height: 1, thickness: 1, indent: 72),
-        _buildBlueMenuItem(
           icon: Icons.campaign_rounded,
           label: 'Mes annonces',
           onTap: () => showPrestoSnackBar(
@@ -3999,8 +3992,8 @@ class _AccountPageState extends State<AccountPage> {
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
         _buildBlueMenuItem(
-          icon: Icons.settings_rounded,
-          label: 'Paramètres',
+          icon: Icons.security_rounded,
+          label: 'Sécurité du compte',
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
