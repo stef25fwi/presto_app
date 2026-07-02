@@ -41,7 +41,10 @@ import 'user_offers_section.dart';
 import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/pages/account/mes_avis_page.dart';
+import 'package:presto_app/pages/account/mes_projets_fiche_page.dart';
 import 'package:presto_app/pages/account/verifier_siret_page.dart';
+import 'package:presto_app/pages/legal_info_page.dart';
+import 'package:presto_app/pages/toolbox_hub_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import 'package:presto_app/services/profile_department_resolver.dart';
 
@@ -3909,15 +3912,18 @@ class _AccountPageState extends State<AccountPage> {
             _buildOrangeMenuItem(
               icon: Icons.add_circle_outline_rounded,
               label: 'Créer mon activité',
-              onTap: () => showPrestoSnackBar(
-                  context, 'Créer mon activité — Bientôt disponible'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ToolboxHubPage()),
+              ),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
             _buildOrangeMenuItem(
               icon: Icons.folder_rounded,
               label: 'Ma fiche projet',
-              onTap: () => showPrestoSnackBar(
-                  context, 'Ma fiche projet — Bientôt disponible'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const MesProjetsFichePage()),
+              ),
             ),
           ],
         ),
@@ -4003,6 +4009,14 @@ class _AccountPageState extends State<AccountPage> {
               ),
             );
           },
+        ),
+        const Divider(height: 1, thickness: 1, indent: 72),
+        _buildBlueMenuItem(
+          icon: Icons.gavel_rounded,
+          label: 'Mentions légales',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const LegalInfoPage()),
+          ),
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
         _buildBlueMenuItem(
