@@ -3031,8 +3031,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     );
                                     final isDeleted =
                                         data['deletedAt'] != null;
+                                    final isDeletingMessage =
+                                        _deletingMessageIds
+                                            .contains(messageDocId);
 
-                                    if (isDeleted) {
+                                    if (isDeleted || isDeletingMessage) {
                                       final deletedBubble =
                                           _buildDeletedMessageBubble(
                                         isMine: isMine,
@@ -3145,6 +3148,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                   !mounted) {
                                                 return;
                                               }
+                                              setState(() =>
+                                                  _deletingMessageIds
+                                                      .add(messageDocId));
                                               try {
                                                 await ConversationService
                                                     .deleteMessage(
@@ -3160,6 +3166,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                 );
                                               } catch (error) {
                                                 if (!mounted) return;
+                                                setState(() =>
+                                                    _deletingMessageIds
+                                                        .remove(messageDocId));
                                                 scaffoldMessenger.showSnackBar(
                                                   SnackBar(
                                                     content: Text(
