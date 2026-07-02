@@ -930,7 +930,7 @@ class _FicheProPageState extends State<FicheProPage> {
         data['titre']?.toString() ??
         'Annonce';
     final price = data['price'] ?? data['prix'];
-    final priceText = price != null ? '${price} €' : null;
+    final priceText = price != null ? '$price €' : null;
     final imageUrls = data['imageUrls'];
     String? imageUrl;
     if (imageUrls is List && imageUrls.isNotEmpty) {
