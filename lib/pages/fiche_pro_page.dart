@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../main.dart' show buildOfferDetailsOffer, prestoOverlayStyleFor, kPrestoOrange;
+import '../app_core.dart' show kPrestoOrange;
+import '../main.dart' show buildOfferDetailsOffer, prestoOverlayStyleFor;
 import '../services/public_offers_query_helpers.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
@@ -263,7 +264,7 @@ class _FicheProPageState extends State<FicheProPage> {
         final path = 'pro_realisations/${user.uid}/$ts.webp';
         final ref = FirebaseStorage.instance.ref(path);
         await ref.putData(
-          webp is Uint8List ? webp : Uint8List.fromList(webp),
+          webp,
           SettableMetadata(
             contentType: 'image/webp',
             cacheControl: 'public,max-age=604800',
