@@ -3259,9 +3259,16 @@ class _AdvertiserContactCard extends StatelessWidget {
     required this.onContactTap,
   });
 
-  void _openProfile(BuildContext context) {
+  Future<void> _openProfile(BuildContext context) async {
     final uid = data.advertiserId.trim();
     if (uid.isEmpty) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    final accountType = (doc.data()?['accountType'] ?? '').toString();
+    if (accountType != 'Entreprise') return;
+    if (!context.mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FicheProPage(uid: uid, isOwner: false),

@@ -724,9 +724,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         .pushNamed('/offers/${Uri.encodeComponent(normalizedOfferId)}');
   }
 
-  void _openOtherParticipantProfile() {
+  Future<void> _openOtherParticipantProfile() async {
     final uid = _otherParticipantId.trim();
     if (uid.isEmpty) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    final accountType = (doc.data()?['accountType'] ?? '').toString();
+    if (accountType != 'Entreprise') return;
+    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FicheProPage(uid: uid, isOwner: false),
