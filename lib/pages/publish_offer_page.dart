@@ -489,6 +489,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _attemptedSubmit = false; // affiche erreurs après tentative
   bool _publishLocked = false; // lock après tentative invalide
   bool _canPublish = false;
+  bool _showDarkOverlay = false;
   String _latestRecognizedTranscript = '';
   bool _isApplyingProgrammaticPublishUpdate = false;
   bool _titleEditedByUser = false;
@@ -1822,6 +1823,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _budgetController.addListener(_handlePublishBudgetChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+    FocusManager.instance.addListener(_onFocusManagerChange);
+  }
+
+  void _onFocusManagerChange() {
+    if (!_showDarkOverlay) return;
+    if (FocusManager.instance.primaryFocus == null) return;
+    if (!mounted) return;
+    setState(() => _showDarkOverlay = false);
   }
 
   Future<void> _loadMarketplacePhotoLimit() async {
@@ -2470,6 +2479,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) {
     final invalid = _attemptedSubmit && _isPublishFieldInvalid(fieldId);
     final isShaking = _shakingPublishFieldId == fieldId;
+    final useDarkStyle = invalid && _showDarkOverlay;
 
     return TweenAnimationBuilder<double>(
       key: ValueKey<String>('publish-field-$fieldId-$_publishShakeTick'),
@@ -2489,16 +2499,29 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         padding: invalid ? const EdgeInsets.all(6) : EdgeInsets.zero,
         decoration: invalid
             ? BoxDecoration(
-                color: const Color(0xFFFFF1F2),
+                color: useDarkStyle
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFFFF1F2),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFDC2626), width: 1.4),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1FDC2626),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+                border: Border.all(
+                  color: useDarkStyle ? Colors.white : const Color(0xFFDC2626),
+                  width: useDarkStyle ? 2.0 : 1.4,
+                ),
+                boxShadow: useDarkStyle
+                    ? [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          blurRadius: 18,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : const [
+                        BoxShadow(
+                          color: Color(0x1FDC2626),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
               )
             : null,
         child: child,
@@ -2668,6 +2691,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           'category': _category ?? '',
         },
       );
+      setState(() => _showDarkOverlay = true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToFirstInvalidPublishField();
       });
@@ -3194,6 +3218,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    FocusManager.instance.removeListener(_onFocusManagerChange);
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
@@ -4544,6 +4569,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               ],
             ),
               ),
+              if (_showDarkOverlay)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: _showDarkOverlay ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 220),
+                      child: const DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(0xBB000000),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               if (_isAnalyzing)
                 Positioned.fill(
                   child: AbsorbPointer(
