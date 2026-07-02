@@ -13,6 +13,8 @@ class HeroSlide {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
+  final String scope;
+  final List<String> targetRegions;
 
   const HeroSlide({
     required this.id,
@@ -27,10 +29,14 @@ class HeroSlide {
     required this.createdAt,
     required this.updatedAt,
     required this.createdBy,
+    this.scope = 'global',
+    this.targetRegions = const [],
   });
 
   bool get isVideo => mediaType == 'video';
   bool get isImage => mediaType == 'image';
+  bool get isGlobal => scope == 'global';
+  bool get isRegional => scope == 'regional';
 
   factory HeroSlide.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -41,6 +47,7 @@ class HeroSlide {
 
   factory HeroSlide.fromMap(String id, Map<String, dynamic> data) {
     final mediaType = _readText(data, const ['mediaType']).toLowerCase();
+    final rawScope = _readText(data, const ['scope']);
     return HeroSlide(
       id: id,
       title: _readText(data, const ['title']),
@@ -54,6 +61,11 @@ class HeroSlide {
       createdAt: _readDateTime(data, const ['createdAt']),
       updatedAt: _readDateTime(data, const ['updatedAt']),
       createdBy: _readNullableText(data, const ['createdBy']),
+      scope: rawScope == 'regional' ? 'regional' : 'global',
+      targetRegions: (data['targetRegions'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList(),
     );
   }
 
@@ -71,6 +83,8 @@ class HeroSlide {
       'createdAt': createdAt == null ? null : Timestamp.fromDate(createdAt!),
       'updatedAt': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'createdBy': createdBy,
+      'scope': scope,
+      'targetRegions': targetRegions,
     };
   }
 
@@ -88,6 +102,8 @@ class HeroSlide {
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'createdBy': createdBy,
+      'scope': scope,
+      'targetRegions': targetRegions,
     };
   }
 
@@ -104,6 +120,8 @@ class HeroSlide {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdBy,
+    String? scope,
+    List<String>? targetRegions,
   }) {
     return HeroSlide(
       id: id ?? this.id,
@@ -118,6 +136,8 @@ class HeroSlide {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
+      scope: scope ?? this.scope,
+      targetRegions: targetRegions ?? this.targetRegions,
     );
   }
 

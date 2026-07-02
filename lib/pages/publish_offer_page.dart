@@ -4600,7 +4600,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: CompositedTransformFollower(
                       link: _publishAiMicAnchorLink,
                       showWhenUnlinked: false,
-                      offset: const Offset(-1, -1),
+                      targetAnchor: Alignment.center,
+                      followerAnchor: Alignment.center,
                       child: const _PublishAiMicroOrbitFocus(),
                     ),
                   ),
