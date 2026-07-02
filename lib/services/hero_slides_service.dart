@@ -80,6 +80,40 @@ class HeroSlidesService {
     });
   }
 
+  /// Renvoie les slides actifs filtrés par région.
+  /// Les slides globaux sont toujours inclus.
+  /// Les slides régionaux sont inclus si [normalizedRegion] correspond à targetRegions.
+  /// Si [normalizedRegion] est null, seuls les slides globaux sont renvoyés.
+  Stream<List<HeroSlide>> watchSlidesForRegion(String? normalizedRegion) {
+    return watchActiveSlides().map((slides) {
+      return slides.where((slide) {
+        if (slide.isGlobal) return true;
+        if (slide.isRegional) {
+          if (normalizedRegion == null || normalizedRegion.isEmpty) return false;
+          if (slide.targetRegions.isEmpty) return false;
+          return slide.targetRegions.contains(normalizedRegion);
+        }
+        return true; // fallback pour les anciens slides sans scope
+      }).toList();
+    });
+  }
+
+  /// Filtre une liste de slides en cache selon la région.
+  List<HeroSlide> filterSlidesForRegion(
+    List<HeroSlide> slides,
+    String? normalizedRegion,
+  ) {
+    return slides.where((slide) {
+      if (slide.isGlobal) return true;
+      if (slide.isRegional) {
+        if (normalizedRegion == null || normalizedRegion.isEmpty) return false;
+        if (slide.targetRegions.isEmpty) return false;
+        return slide.targetRegions.contains(normalizedRegion);
+      }
+      return true;
+    }).toList();
+  }
+
   Stream<List<HeroSlide>> watchAllSlidesForAdmin() {
     return _slidesCollection.snapshots().map(_mapSnapshot);
   }
@@ -94,6 +128,8 @@ class HeroSlidesService {
     int? order,
     bool isActive = true,
     bool isFirst = false,
+    String scope = 'global',
+    List<String> targetRegions = const [],
     void Function(double progress)? onUploadProgress,
   }) async {
     final user = _requireSignedInUser();
@@ -122,6 +158,7 @@ class HeroSlidesService {
       }
     }
 
+    final normalizedScope = scope == 'regional' ? 'regional' : 'global';
     batch.set(docRef, <String, dynamic>{
       'id': docRef.id,
       'title': normalizedTitle,
@@ -138,6 +175,8 @@ class HeroSlidesService {
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'createdBy': user.uid,
+      'scope': normalizedScope,
+      'targetRegions': targetRegions,
     });
 
     try {
@@ -155,6 +194,8 @@ class HeroSlidesService {
     int? order,
     bool? isActive,
     bool? isFirst,
+    String? scope,
+    List<String>? targetRegions,
     Uint8List? replacementFileBytes,
     String? replacementFileName,
     String? replacementMediaType,
@@ -209,6 +250,8 @@ class HeroSlidesService {
       title ?? slide.title,
       fileName: replacementFileName ?? slide.title,
     );
+    final nextScope = (scope ?? slide.scope) == 'regional' ? 'regional' : 'global';
+    final nextTargetRegions = targetRegions ?? slide.targetRegions;
     batch.update(docRef, <String, dynamic>{
       'title': normalizedTitle,
       'mediaUrl': nextMediaUrl,
@@ -222,6 +265,8 @@ class HeroSlidesService {
       'isActive': nextIsActive,
       'isFirst': shouldBeFirst,
       'updatedAt': FieldValue.serverTimestamp(),
+      'scope': nextScope,
+      'targetRegions': nextTargetRegions,
     });
 
     if (slide.isFirst && !shouldBeFirst) {

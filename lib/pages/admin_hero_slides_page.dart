@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import '../constants.dart';
 import '../models/hero_slide.dart';
 import '../services/hero_slides_service.dart';
 import '../utils/friendly_snackbar.dart';
@@ -62,6 +63,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
     String selectedContentType = '';
     bool isActive = existing?.isActive ?? true;
     bool isFirst = existing?.isFirst ?? false;
+    String slideScope = existing?.scope ?? 'global';
+    List<String> selectedRegions =
+        List<String>.from(existing?.targetRegions ?? const <String>[]);
     String previewWarning = '';
     String localError = '';
     bool isPickingFile = false;
@@ -415,6 +419,109 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                 setSheetState(() => isFirst = value);
                               },
                       ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Visibilité du slide',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Un slide régional est affiché uniquement aux utilisateurs dont la région du profil correspond.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Tout le monde'),
+                        value: 'global',
+                        groupValue: slideScope,
+                        activeColor: _kAdminHeroOrange,
+                        onChanged: isSubmittingSheet
+                            ? null
+                            : (v) {
+                                if (v != null) {
+                                  setSheetState(() => slideScope = v);
+                                }
+                              },
+                      ),
+                      RadioListTile<String>(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Une ou plusieurs régions'),
+                        value: 'regional',
+                        groupValue: slideScope,
+                        activeColor: _kAdminHeroOrange,
+                        onChanged: isSubmittingSheet
+                            ? null
+                            : (v) {
+                                if (v != null) {
+                                  setSheetState(() => slideScope = v);
+                                }
+                              },
+                      ),
+                      if (slideScope == 'regional') ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF7ED),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: _kAdminHeroOrange.withValues(alpha: 0.3)),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Régions ciblées',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF374151),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ...getRegionsSorted().map((region) {
+                                final key = region.normalizedKey;
+                                final checked = selectedRegions.contains(key);
+                                return CheckboxListTile(
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(
+                                    region.name,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  value: checked,
+                                  activeColor: _kAdminHeroOrange,
+                                  onChanged: isSubmittingSheet
+                                      ? null
+                                      : (v) {
+                                          setSheetState(() {
+                                            if (v == true) {
+                                              if (!selectedRegions
+                                                  .contains(key)) {
+                                                selectedRegions.add(key);
+                                              }
+                                            } else {
+                                              selectedRegions.remove(key);
+                                            }
+                                          });
+                                        },
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       if (localError.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
@@ -499,6 +606,15 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                         return;
                                       }
 
+                                      if (slideScope == 'regional' &&
+                                          selectedRegions.isEmpty) {
+                                        setSheetState(() {
+                                          localError =
+                                              'Sélectionnez au moins une région pour un slide régional.';
+                                        });
+                                        return;
+                                      }
+
                                       setState(() {
                                         _isSubmitting = true;
                                         _uploadProgress = null;
@@ -529,6 +645,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             order: parsedOrder,
                                             isActive: isActive,
                                             isFirst: isFirst,
+                                            scope: slideScope,
+                                            targetRegions: List<String>.from(
+                                                selectedRegions),
                                             onUploadProgress: (progress) {
                                               if (!mounted) {
                                                 return;
@@ -570,6 +689,9 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                             order: parsedOrder,
                                             isActive: isActive,
                                             isFirst: isFirst,
+                                            scope: slideScope,
+                                            targetRegions: List<String>.from(
+                                                selectedRegions),
                                             replacementFileBytes:
                                                 selectedBytes.isEmpty
                                                     ? null
@@ -1074,6 +1196,24 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                                                         .isActive
                                                                     ? 'Actif'
                                                                     : 'Inactif',
+                                                              ),
+                                                              _TypeBadge(
+                                                                color: slide
+                                                                        .isGlobal
+                                                                    ? const Color(
+                                                                        0xFF059669)
+                                                                    : const Color(
+                                                                        0xFFB45309),
+                                                                label: slide
+                                                                        .isGlobal
+                                                                    ? 'Tout le monde'
+                                                                    : slide.targetRegions
+                                                                            .isEmpty
+                                                                        ? 'Régional'
+                                                                        : slide
+                                                                            .targetRegions
+                                                                            .map((k) => regionDisplayName(k) ?? k)
+                                                                            .join(', '),
                                                               ),
                                                             ],
                                                           ),
