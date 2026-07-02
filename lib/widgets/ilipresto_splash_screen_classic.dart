@@ -129,8 +129,10 @@ class _IliprestoSplashScreenClassicState
               const _ClassicGrainOverlay(opacity: 0.07),
               SafeArea(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: size.height * 0.10),
+                    const Spacer(flex: 2),
                     AnimatedBuilder(
                       animation: _textController,
                       builder: (context, child) {
@@ -144,7 +146,7 @@ class _IliprestoSplashScreenClassicState
                       },
                       child: const _ClassicBrandTitle(),
                     ),
-                    SizedBox(height: size.height * 0.11),
+                    const Spacer(flex: 2),
                     AnimatedBuilder(
                       animation: _logoController,
                       builder: (context, child) {
@@ -158,6 +160,7 @@ class _IliprestoSplashScreenClassicState
                       },
                       child: _ClassicCenterLogo(size: logoSize),
                     ),
+                    const Spacer(flex: 3),
                   ],
                 ),
               ),

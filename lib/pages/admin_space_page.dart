@@ -2964,7 +2964,13 @@ class _AudioPopupAdminPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
-        elevation: 0.5,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         titleSpacing: 16,
         title: const Text(
           'Audio popup paiement',

@@ -2,9 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../main.dart' show buildOfferDetailsOffer;
+import '../services/public_offers_query_helpers.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
+import '../utils/offer_helpers.dart';
 import '../utils/profile_avatar_resolver.dart';
+import 'offers/offer_details_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
 const Color _kBlue = Color(0xFF1A6FFF);
@@ -27,6 +31,8 @@ class _FicheProPageState extends State<FicheProPage> {
   bool _isLoading = true;
   bool _isSaving = false;
 
+  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _offersFuture;
+
   String _companyName = '';
   String _city = '';
   String _department = '';
@@ -47,6 +53,41 @@ class _FicheProPageState extends State<FicheProPage> {
   void initState() {
     super.initState();
     _load();
+    _offersFuture = _loadOffers();
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadOffers() async {
+    final results = await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
+      FirebaseFirestore.instance
+          .collection(kListingsCollection)
+          .where('ownerId', isEqualTo: widget.uid)
+          .where(publicListingsFilter())
+          .get()
+          .then((s) => s.docs),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'uid',
+        ownerId: widget.uid,
+        limit: 50,
+        source: 'fiche_pro_offers_uid',
+      ),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'userId',
+        ownerId: widget.uid,
+        limit: 50,
+        source: 'fiche_pro_offers_userId',
+      ),
+    ]);
+
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    for (final docs in results) {
+      for (final d in docs) {
+        byId[d.id] = d;
+      }
+    }
+
+    return byId.values
+        .where((d) => isVisibleInPublicBrowse(d.data()))
+        .toList();
   }
 
   Future<void> _load() async {
@@ -857,6 +898,142 @@ class _FicheProPageState extends State<FicheProPage> {
     );
   }
 
+  Widget _buildOffersSection() {
+    return FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+      future: _offersFuture,
+      builder: (ctx, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+        final docs = snap.data ?? [];
+        if (docs.isEmpty) return const SizedBox.shrink();
+
+        return _sectionCard(
+          icon: Icons.local_offer_outlined,
+          label: 'Mes annonces',
+          content: Column(
+            children: docs.map(_offerMiniCard).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _offerMiniCard(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final title = data['title']?.toString() ??
+        data['titre']?.toString() ??
+        'Annonce';
+    final price = data['price'] ?? data['prix'];
+    final priceText = price != null ? '${price} €' : null;
+    final imageUrls = data['imageUrls'];
+    String? imageUrl;
+    if (imageUrls is List && imageUrls.isNotEmpty) {
+      imageUrl = imageUrls.first?.toString();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => OfferDetailsPage(
+              offer: buildOfferDetailsOffer(offerId: doc.id, data: data),
+            ),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFEEEEEE)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              if (imageUrl != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(11),
+                    bottomLeft: Radius.circular(11),
+                  ),
+                  child: Image.network(
+                    imageUrl,
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        const SizedBox(width: 72, height: 72),
+                  ),
+                )
+              else
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: _kOrange.withValues(alpha: 0.08),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(11),
+                      bottomLeft: Radius.circular(11),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.local_offer_outlined,
+                    color: _kOrange,
+                    size: 28,
+                  ),
+                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0A1F44),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (priceText != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          priceText,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: _kOrange,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFFCBD5E0),
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -968,6 +1145,7 @@ class _FicheProPageState extends State<FicheProPage> {
                             ),
                           ),
                   ),
+                _buildOffersSection(),
               ],
             ),
       bottomNavigationBar:

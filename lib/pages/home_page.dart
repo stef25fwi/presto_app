@@ -1844,6 +1844,7 @@ class _HomePageState extends State<HomePage>
                           onLongPress: _seedSampleOffers,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               SizedBox(
                                 width: 40,
@@ -1853,17 +1854,15 @@ class _HomePageState extends State<HomePage>
                                   fit: BoxFit.contain,
                                 ),
                               ),
-                              Transform.translate(
-                                offset: const Offset(-4, 0),
-                                child: const Text(
-                                  "iliprestō",
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: kPrestoOrange,
-                                    letterSpacing: 0.5,
-                                  ),
+                              const SizedBox(width: 2),
+                              const Text(
+                                "iliprestō",
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  color: kPrestoOrange,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],

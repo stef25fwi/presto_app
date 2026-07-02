@@ -569,6 +569,27 @@ class _AdPlaceholderImagesAdminPageState
       body: StreamBuilder<List<AdPlaceholderImage>>(
         stream: AdPlaceholderImageService.watchAll(target: _target),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline_rounded,
+                        color: Colors.red, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Erreur de chargement\n${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           final latestStreamImages =
               snapshot.data ?? const <AdPlaceholderImage>[];
           if (latestStreamImages.isNotEmpty) {
@@ -604,8 +625,11 @@ class _AdPlaceholderImagesAdminPageState
     int visibleCount,
   ) {
     final activeImages = images.where((img) => img.isVisible).toList();
-    final spotlightImage =
-        activeImages.isNotEmpty ? activeImages.first : images.first;
+    final spotlightImage = activeImages.isNotEmpty
+        ? activeImages.first
+        : images.isNotEmpty
+            ? images.first
+            : null;
     final activePositionById = <String, int>{
       for (var i = 0; i < activeImages.length; i++) activeImages[i].id: i + 1,
     };
@@ -642,7 +666,7 @@ class _AdPlaceholderImagesAdminPageState
           ),
         ),
         const SizedBox(height: 16),
-        if (images.isNotEmpty) ...[
+        if (spotlightImage != null) ...[
           _LatestPlaceholderReceivedCard(
             image: spotlightImage,
             totalCount: images.length,
