@@ -2579,18 +2579,20 @@ class _AccountPageState extends State<AccountPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+          systemOverlayStyle: prestoOverlayStyleFor(Colors.white),
           title: const Text(
             "Mon compte iliprestō",
             style: kPrestoAppBarTitleStyle,
           ),
-          backgroundColor: kPrestoOrange,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF0D1B3E),
+          elevation: 0,
+          shadowColor: Colors.transparent,
         ),
         backgroundColor: Colors.white,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: SingleChildScrollView(
@@ -2600,259 +2602,143 @@ class _AccountPageState extends State<AccountPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              SizedBox(
-                                width: 84,
-                                height: 84,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    // Logo ilipresto par défaut
-                                    const CircleAvatar(
-                                      radius: 42,
-                                      backgroundColor: Colors.white,
-                                      backgroundImage: AssetImage(
-                                        'assets/images/logowebp.webp',
-                                      ),
-                                    ),
-                                    // Photo utilisateur (ClipOval fonctionne sur web)
-                                    if (visiblePhotoUrl.isNotEmpty)
-                                      ClipOval(
-                                        child: Image.network(
-                                          visiblePhotoUrl,
-                                          fit: BoxFit.cover,
-                                          width: 84,
-                                          height: 84,
-                                          gaplessPlayback: true,
-                                          errorBuilder: (_, __, ___) =>
-                                              const SizedBox.shrink(),
-                                        ),
-                                      ),
-                                    // Overlay upload en cours
-                                    if (_isUploadingProfilePhoto)
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.35),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Center(
-                                          child: SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.5,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                    // Logo brand centré
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 20),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/logowebp.webp',
+                          height: 52,
+                        ),
+                      ),
+                    ),
+                    // En-tête : avatar + nom/localisation/badge
+                    _buildDefaultHeader(user, displayName, visiblePhotoUrl),
+                    if (_profileSyncInProgress)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 6),
+                        child: Center(
+                          child: Text(
+                            'Synchronisation…',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.black45,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Indicateur de complétude du profil
+                    if (_profileLoaded)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Builder(
+                          builder: (context) {
+                            final completeness =
+                                _calculateProfileCompleteness();
+                            final missingFields =
+                                _missingRequiredProfileFields();
+                            final isComplete = missingFields.isEmpty;
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              Positioned(
-                                right: -2,
-                                bottom: -2,
-                                child: Material(
-                                  color: kPrestoBlue,
-                                  shape: const CircleBorder(),
-                                  elevation: 4,
-                                  child: InkWell(
-                                    customBorder: const CircleBorder(),
-                                    onTap: _isUploadingProfilePhoto
-                                        ? null
-                                        : () => unawaited(
-                                              _pickAndUploadProfilePhoto(user),
-                                            ),
-                                    child: SizedBox(
-                                      width: 34,
-                                      height: 34,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: const [
-                                          Icon(
-                                            Icons.photo_camera_outlined,
-                                            color: Colors.white,
-                                            size: 18,
-                                          ),
-                                          Positioned(
-                                            right: 4,
-                                            bottom: 4,
-                                            child: Icon(
-                                              Icons.add_circle,
-                                              color: Colors.white,
-                                              size: 11,
-                                            ),
-                                          ),
-                                        ],
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Complétude du profil",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: completeness,
+                                      minHeight: 6,
+                                      backgroundColor: Colors.grey.shade300,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                        completeness >= 1.0
+                                            ? Colors.green
+                                            : completeness >= 0.75
+                                                ? Colors.orange
+                                                : Colors.red,
                                       ),
                                     ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${(completeness * 100).toStringAsFixed(0)}% complet',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Champs requis : ${_requiredProfileFieldLabels.join(', ')}.',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    isComplete
+                                        ? 'Tous les champs requis sont renseignés.'
+                                        : 'Champ${missingFields.length > 1 ? 's' : ''} requis manquant${missingFields.length > 1 ? 's' : ''} : ${missingFields.join(', ')}.',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isComplete
+                                          ? Colors.green.shade700
+                                          : Colors.red.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    if (_profileLoadError)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.warning_amber,
+                                  size: 14, color: Colors.red.shade700),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Erreur chargement profil',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Bon retour sur iliprestō',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            displayName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            visibleEmail,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          if (_profileSyncInProgress) ...[
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Synchronisation…',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.black45,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          // ✅ Indicateur de complétude du profil
-                          if (_profileLoaded)
-                            Builder(
-                              builder: (context) {
-                                final completeness =
-                                    _calculateProfileCompleteness();
-                                final missingFields =
-                                    _missingRequiredProfileFields();
-                                final isComplete = missingFields.isEmpty;
-
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF5F5F5),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        "Complétude du profil",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: LinearProgressIndicator(
-                                          value: completeness,
-                                          minHeight: 6,
-                                          backgroundColor: Colors.grey.shade300,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            completeness >= 1.0
-                                                ? Colors.green
-                                                : completeness >= 0.75
-                                                    ? Colors.orange
-                                                    : Colors.red,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '${(completeness * 100).toStringAsFixed(0)}% complet',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Champs requis : ${_requiredProfileFieldLabels.join(', ')}.',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        isComplete
-                                            ? 'Tous les champs requis sont renseignés.'
-                                            : 'Champ${missingFields.length > 1 ? 's' : ''} requis manquant${missingFields.length > 1 ? 's' : ''} : ${missingFields.join(', ')}.',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isComplete
-                                              ? Colors.green.shade700
-                                              : Colors.red.shade700,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          if (_profileLoadError)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.warning_amber,
-                                      size: 14, color: Colors.red.shade700),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Erreur chargement profil',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.red.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 24),
                     AccountProfileFormSection(
                       firstName: _profileFirstName,
@@ -3587,6 +3473,180 @@ class _AccountPageState extends State<AccountPage> {
           return _buildProfile(user);
         }
       },
+    );
+  }
+
+  // ── Default (Particulier) header ───────────────────────────────────────────
+
+  Widget _buildDefaultHeader(
+    User user,
+    String displayName,
+    String visiblePhotoUrl,
+  ) {
+    final city = _profileCityController.text.trim();
+    final dept = _departmentController.text.trim();
+    final locationParts = [dept, city].where((s) => s.isNotEmpty).toList();
+    final locationText = locationParts.join(' • ');
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            SizedBox(
+              width: 90,
+              height: 90,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const CircleAvatar(
+                    radius: 45,
+                    backgroundColor: Colors.white,
+                    backgroundImage:
+                        AssetImage('assets/images/logowebp.webp'),
+                  ),
+                  if (visiblePhotoUrl.isNotEmpty)
+                    ClipOval(
+                      child: Image.network(
+                        visiblePhotoUrl,
+                        fit: BoxFit.cover,
+                        width: 90,
+                        height: 90,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox.shrink(),
+                      ),
+                    ),
+                  if (_isUploadingProfilePhoto)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: 2,
+              bottom: 2,
+              child: Material(
+                color: kPrestoBlue,
+                shape: const CircleBorder(),
+                elevation: 4,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: _isUploadingProfilePhoto
+                      ? null
+                      : () => unawaited(_pickAndUploadProfilePhoto(user)),
+                  child: const SizedBox(
+                    width: 34,
+                    height: 34,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(
+                          Icons.photo_camera_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        Positioned(
+                          right: 4,
+                          bottom: 4,
+                          child: Icon(
+                            Icons.add_circle,
+                            color: Colors.white,
+                            size: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                displayName,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0D1B3E),
+                ),
+              ),
+              if (locationText.isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        locationText,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (user.emailVerified) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F0FE),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.verified_user_rounded,
+                        size: 14,
+                        color: kPrestoBlue,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Profil vérifié',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: kPrestoBlue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
