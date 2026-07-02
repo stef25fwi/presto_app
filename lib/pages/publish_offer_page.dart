@@ -4561,7 +4561,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: CompositedTransformFollower(
                       link: _publishAiMicAnchorLink,
                       showWhenUnlinked: false,
-                      offset: const Offset(-32, -32),
+                      offset: const Offset(-1, -1),
                       child: const _PublishAiMicroOrbitFocus(),
                     ),
                   ),
@@ -4579,35 +4579,13 @@ class _PublishAiMicroOrbitFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 132,
-      height: 132,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.10),
-        border: Border.all(
-          color: Colors.white,
-          width: 3,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.85),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-          BoxShadow(
-            color: const Color(0xFF13A8FF).withValues(alpha: 0.70),
-            blurRadius: 48,
-            spreadRadius: 10,
-          ),
-        ],
-      ),
-      child: const Center(
-        child: OrbitingAiVisual(
-          size: 88,
-          strokeColor: Color(0xDDFFFFFF),
-          dotColor: Colors.white,
-        ),
+    return const SizedBox(
+      width: 70,
+      height: 70,
+      child: OrbitingAiVisual(
+        size: 70,
+        strokeColor: Color(0xDDFFFFFF),
+        dotColor: Colors.white,
       ),
     );
   }
