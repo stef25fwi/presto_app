@@ -40,6 +40,7 @@ import '../main.dart'
 import 'user_offers_section.dart';
 import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
+import 'package:presto_app/pages/account/mes_avis_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import 'package:presto_app/services/profile_department_resolver.dart';
 
@@ -2579,15 +2580,13 @@ class _AccountPageState extends State<AccountPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(Colors.white),
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
           title: const Text(
             "Mon compte iliprestō",
             style: kPrestoAppBarTitleStyle,
           ),
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF0D1B3E),
-          elevation: 0,
-          shadowColor: Colors.transparent,
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
         ),
         backgroundColor: Colors.white,
         body: Center(
@@ -3900,8 +3899,9 @@ class _AccountPageState extends State<AccountPage> {
               label: 'Mes avis',
               solidBackground: false,
               showProBadge: true,
-              onTap: () => showPrestoSnackBar(
-                  context, 'Mes avis — Bientôt disponible'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MesAvisPage()),
+              ),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
             _buildOrangeMenuItem(

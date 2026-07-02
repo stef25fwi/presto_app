@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../main.dart' show buildOfferDetailsOffer;
+import '../main.dart' show buildOfferDetailsOffer, prestoOverlayStyleFor, kPrestoOrange;
 import '../services/public_offers_query_helpers.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
@@ -1128,13 +1128,14 @@ class _FicheProPageState extends State<FicheProPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: Text(
           widget.isOwner ? 'Ma fiche Pro' : _companyName.isNotEmpty ? _companyName : 'Fiche Pro',
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0A1F44),
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
