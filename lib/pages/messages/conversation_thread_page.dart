@@ -109,6 +109,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isOtherTyping = false;
   bool _showNewMessagesButton = false;
   bool _isUploadingAttachment = false;
+  final Set<String> _deletingMessageIds = {};
   bool _canLookupOtherParticipantProfile = false;
   bool _isPreparingMessageStream = true;
   bool _isAdminViewer = false;
@@ -2107,8 +2108,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       await recorder.start(
         const RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          sampleRate: 44100,
+          encoder: AudioEncoder.aacEld,
+          sampleRate: 16000,
+          bitRate: 32000,
           numChannels: 1,
         ),
         path: path,
@@ -2248,11 +2250,79 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Widget _buildAttachmentPreview(_MessageAttachment attachment) {
+  Future<void> _deleteMessageById(String messageDocId) async {
+    if (_deletingMessageIds.contains(messageDocId)) return;
+    setState(() => _deletingMessageIds.add(messageDocId));
+    try {
+      await ConversationService.deleteMessage(
+        conversationId: widget.conversationId,
+        messageId: messageDocId,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _deletingMessageIds.remove(messageDocId));
+      showErrorSnackBar(context, 'Suppression impossible : $error');
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _deletingMessageIds.remove(messageDocId));
+  }
+
+  Widget _buildAttachmentPreview(
+    _MessageAttachment attachment, {
+    bool canDelete = false,
+    bool isDeleting = false,
+    VoidCallback? onDelete,
+  }) {
+    Widget buildDeleteOverlay(Widget child) {
+      if (!canDelete) return child;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          child,
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: onDelete,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: isDeleting ? Colors.grey : Colors.red,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: isDeleting
+                    ? const Padding(
+                        padding: EdgeInsets.all(6),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.delete_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     if (attachment.type == 'image') {
       final fullUrl =
           attachment.url.isNotEmpty ? attachment.url : attachment.thumbnailUrl;
-      return GestureDetector(
+      return buildDeleteOverlay(GestureDetector(
         onTap: () => showGeneralDialog<void>(
           context: context,
           barrierDismissible: true,
@@ -2325,14 +2395,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
           ),
         ),
-      );
+      ));
     }
 
     if (attachment.type == 'audio') {
-      return _VoiceNotePlayer(url: attachment.url);
+      return buildDeleteOverlay(_VoiceNotePlayer(url: attachment.url));
     }
 
-    return SizedBox(
+    return buildDeleteOverlay(SizedBox(
       width: 44,
       height: 44,
       child: Material(
@@ -2358,16 +2428,27 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ),
         ),
       ),
-    );
+    ));
   }
 
-  Widget _buildAttachmentPreviews(List<_MessageAttachment> attachments) {
+  Widget _buildAttachmentPreviews(
+    List<_MessageAttachment> attachments, {
+    String? messageDocId,
+    bool canDelete = false,
+    bool isDeleting = false,
+    VoidCallback? onDelete,
+  }) {
     if (attachments.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final attachment in attachments) ...[
-          _buildAttachmentPreview(attachment),
+          _buildAttachmentPreview(
+            attachment,
+            canDelete: canDelete,
+            isDeleting: isDeleting,
+            onDelete: onDelete,
+          ),
           const SizedBox(height: 8),
         ],
       ],
@@ -2406,6 +2487,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     required bool isMine,
     required String senderName,
     required DateTime? sentAt,
+    String? messageDocId,
     List<_MessageAttachment> attachments = const [],
     String? readReceipt,
     String? statusLabel,
@@ -2420,6 +2502,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (readReceipt != null) readReceipt,
       if (statusLabel != null) statusLabel,
     ];
+
+    final canDeleteAttachments = isMine &&
+        messageDocId != null &&
+        attachments.isNotEmpty &&
+        sentAt != null &&
+        DateTime.now().difference(sentAt).inSeconds <= 180;
+    final isDeletingMessage =
+        messageDocId != null && _deletingMessageIds.contains(messageDocId);
 
     final bubbleContent = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: isMine ? 320 : 288),
@@ -2472,7 +2562,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   ),
                 ),
               ),
-            _buildAttachmentPreviews(attachments),
+            _buildAttachmentPreviews(
+              attachments,
+              messageDocId: messageDocId,
+              canDelete: canDeleteAttachments,
+              isDeleting: isDeletingMessage,
+              onDelete: canDeleteAttachments && messageDocId != null
+                  ? () => _deleteMessageById(messageDocId)
+                  : null,
+            ),
             if (text.isNotEmpty)
               Text(
                 text,
@@ -2888,6 +2986,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       isMine: isMine,
                                       senderName: senderName,
                                       sentAt: sentAt,
+                                      messageDocId: messageDocId,
                                       attachments: attachments,
                                       readReceipt: readReceipt,
                                       statusLabel: isMine && readReceipt == null
