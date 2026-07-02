@@ -1822,7 +1822,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHomeContent() {
     return SafeArea(
-      bottom: false,
+      bottom: true,
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
