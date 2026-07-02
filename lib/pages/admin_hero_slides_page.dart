@@ -1031,15 +1031,21 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
         shadowColor: Colors.black.withValues(alpha: 0.08),
         elevation: 1,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: Color(0xFF374151)),
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           'Gestion du Hero',
           style: TextStyle(
-            color: Color(0xFF111827),
+            color: Colors.white,
             fontWeight: FontWeight.w900,
           ),
         ),
-        actions: [],
+        actions: [
+          IconButton(
+            onPressed: _isSubmitting ? null : _openSlideEditor,
+            icon: const Icon(Icons.add_rounded, color: Colors.white),
+            tooltip: 'Ajouter un slide',
+          ),
+        ],
       ),
       body: StreamBuilder<List<HeroSlide>>(
         stream: _heroSlidesService.watchAllSlidesForAdmin(),
@@ -1048,424 +1054,372 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
           final isLoading =
               snapshot.connectionState == ConnectionState.waiting &&
                   !snapshot.hasData;
-          final activeCount = slides.where((slide) => slide.isActive).length;
-          final imageCount = slides.where((slide) => slide.isImage).length;
-          final videoCount = slides.where((slide) => slide.isVideo).length;
+          final activeCount = slides.where((s) => s.isActive).length;
+          final imageCount = slides.where((s) => s.isImage).length;
+          final videoCount = slides.where((s) => s.isVideo).length;
+
+          if (isLoading) {
+            return const _HeroSlidesLoadingState();
+          }
+
+          final header = Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _HeroIntroCard(
+                  hasSlides: slides.isNotEmpty,
+                  onAddPressed: _isSubmitting ? null : _openSlideEditor,
+                ),
+                const SizedBox(height: 14),
+                _HeroQuickActionsPanel(
+                  onAdd: _isSubmitting ? null : _openSlideEditor,
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _HeroStatCard(
+                      label: 'actifs',
+                      value: activeCount.toString(),
+                      icon: Icons.check_circle_rounded,
+                      backgroundColor: const Color(0xFFE8F0FE),
+                      foregroundColor: _kAdminHeroBlue,
+                    ),
+                    _HeroStatCard(
+                      label: 'total',
+                      value: slides.length.toString(),
+                      icon: Icons.layers_rounded,
+                      backgroundColor: const Color(0xFFFFF1E8),
+                      foregroundColor: _kAdminHeroOrange,
+                    ),
+                    _HeroStatCard(
+                      label: 'images',
+                      value: imageCount.toString(),
+                      icon: Icons.image_rounded,
+                      backgroundColor: const Color(0xFFF3F4F6),
+                      foregroundColor: const Color(0xFF374151),
+                    ),
+                    _HeroStatCard(
+                      label: 'vidéos',
+                      value: videoCount.toString(),
+                      icon: Icons.video_library_rounded,
+                      backgroundColor: const Color(0xFFEEF2FF),
+                      foregroundColor: const Color(0xFF4F46E5),
+                    ),
+                  ],
+                ),
+                if (snapshot.hasError) ...[
+                  const SizedBox(height: 14),
+                  _HeroSlidesErrorState(onRetry: () => setState(() {})),
+                ],
+                if (slides.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _HeroSlidesThumbnailCarousel(
+                    slides: slides,
+                    onSlideTap: (slide) => _openSlideEditor(existing: slide),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Icon(Icons.layers_rounded,
+                          color: _kAdminHeroBlue, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Slides (${slides.length})',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      if (_isReordering) ...[
+                        const SizedBox(width: 10),
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          );
+
+          if (slides.isEmpty) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      header,
+                      _EmptyHeroSlidesState(onAddPressed: _openSlideEditor),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
 
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1100),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeroIntroCard(
-                      hasSlides: slides.isNotEmpty,
-                      onAddPressed: _isSubmitting ? null : _openSlideEditor,
-                    ),
-                    const SizedBox(height: 14),
-                    const _HeroToolsPanel(),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _HeroStatCard(
-                          label: 'actifs',
-                          value: activeCount.toString(),
-                          icon: Icons.check_circle_rounded,
-                          backgroundColor: const Color(0xFFE8F0FE),
-                          foregroundColor: _kAdminHeroBlue,
-                        ),
-                        _HeroStatCard(
-                          label: 'total',
-                          value: slides.length.toString(),
-                          icon: Icons.layers_rounded,
-                          backgroundColor: const Color(0xFFFFF1E8),
-                          foregroundColor: _kAdminHeroOrange,
-                        ),
-                        _HeroStatCard(
-                          label: 'images',
-                          value: imageCount.toString(),
-                          icon: Icons.image_rounded,
-                          backgroundColor: const Color(0xFFF3F4F6),
-                          foregroundColor: const Color(0xFF374151),
-                        ),
-                        _HeroStatCard(
-                          label: 'vidéos',
-                          value: videoCount.toString(),
-                          icon: Icons.video_library_rounded,
-                          backgroundColor: const Color(0xFFEEF2FF),
-                          foregroundColor: const Color(0xFF4F46E5),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    if (snapshot.hasError)
-                      _HeroSlidesErrorState(onRetry: () => setState(() {}))
-                    else if (!isLoading && slides.isNotEmpty) ...[
-                      _HeroSlidesThumbnailCarousel(
-                        slides: slides,
-                        onSlideTap: (slide) =>
-                            _openSlideEditor(existing: slide),
+              child: ReorderableListView.builder(
+                header: header,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: slides.length,
+                onReorder: (oldIndex, newIndex) =>
+                    _reorderSlides(slides, oldIndex, newIndex),
+                buildDefaultDragHandles: false,
+                itemBuilder: (context, index) {
+                  final slide = slides[index];
+                  final isBusy =
+                      _busySlideIds.contains(slide.id) || _isSubmitting;
+                  return Card(
+                    key: ValueKey(slide.id),
+                    elevation: 0,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: const BorderSide(
+                        color: Color(0xFFE5E7EB),
                       ),
-                      const SizedBox(height: 16),
-                    ],
-                    Expanded(
-                      child: isLoading
-                          ? const _HeroSlidesLoadingState()
-                          : snapshot.hasError
-                              ? const SizedBox.shrink()
-                              : slides.isEmpty
-                                  ? _EmptyHeroSlidesState(
-                                      onAddPressed: _openSlideEditor)
-                                  : ReorderableListView.builder(
-                                      physics:
-                                          const AlwaysScrollableScrollPhysics(),
-                                      itemCount: slides.length,
-                                      onReorder: (oldIndex, newIndex) =>
-                                          _reorderSlides(
-                                              slides, oldIndex, newIndex),
-                                      buildDefaultDragHandles: false,
-                                      itemBuilder: (context, index) {
-                                        final slide = slides[index];
-                                        final isBusy =
-                                            _busySlideIds.contains(slide.id) ||
-                                                _isSubmitting;
-                                        return Card(
-                                          key: ValueKey(slide.id),
-                                          elevation: 0,
-                                          margin:
-                                              const EdgeInsets.only(bottom: 12),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            side: const BorderSide(
-                                              color: Color(0xFFE5E7EB),
-                                            ),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(16),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    _SlideMediaPreview(
-                                                        slide: slide),
-                                                    const SizedBox(width: 14),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Wrap(
-                                                            spacing: 8,
-                                                            runSpacing: 8,
-                                                            children: [
-                                                              _TypeBadge(
-                                                                color: slide
-                                                                        .isVideo
-                                                                    ? _kAdminHeroBlue
-                                                                    : _kAdminHeroOrange,
-                                                                label: slide
-                                                                        .isVideo
-                                                                    ? 'Vidéo'
-                                                                    : 'Image',
-                                                              ),
-                                                              if (slide.isFirst)
-                                                                const _TypeBadge(
-                                                                  color: Color(
-                                                                      0xFF047857),
-                                                                  label:
-                                                                      'Premier slide',
-                                                                ),
-                                                              _TypeBadge(
-                                                                color: slide
-                                                                        .isActive
-                                                                    ? const Color(
-                                                                        0xFF2563EB)
-                                                                    : const Color(
-                                                                        0xFF9CA3AF),
-                                                                label: slide
-                                                                        .isActive
-                                                                    ? 'Actif'
-                                                                    : 'Inactif',
-                                                              ),
-                                                              _TypeBadge(
-                                                                color: slide
-                                                                        .isGlobal
-                                                                    ? const Color(
-                                                                        0xFF059669)
-                                                                    : const Color(
-                                                                        0xFFB45309),
-                                                                label: slide
-                                                                        .isGlobal
-                                                                    ? 'Tout le monde'
-                                                                    : slide.targetRegions
-                                                                            .isEmpty
-                                                                        ? 'Régional'
-                                                                        : slide
-                                                                            .targetRegions
-                                                                            .map((k) => regionDisplayName(k) ?? k)
-                                                                            .join(', '),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          const SizedBox(
-                                                              height: 10),
-                                                          Text(
-                                                            slide.title
-                                                                    .trim()
-                                                                    .isEmpty
-                                                                ? 'Sans titre interne'
-                                                                : slide.title,
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 17,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w900,
-                                                              color: Color(
-                                                                  0xFF111827),
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                              height: 6),
-                                                          Text(
-                                                            '${slide.durationSeconds} secondes · Position ${index + 1}',
-                                                            style:
-                                                                const TextStyle(
-                                                              color: Color(
-                                                                  0xFF6B7280),
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w700,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                              height: 2),
-                                                          Text(
-                                                            slide.mediaUrl,
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style:
-                                                                const TextStyle(
-                                                              color: Color(
-                                                                  0xFF9CA3AF),
-                                                              fontSize: 12,
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    ReorderableDragStartListener(
-                                                      index: index,
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 8),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: const Color(
-                                                              0xFFF3F4F6),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: Tooltip(
-                                                          message:
-                                                              'Maintenir et glisser pour réordonner',
-                                                          child: const Icon(
-                                                            Icons
-                                                                .drag_handle_rounded,
-                                                            color: Color(
-                                                                0xFF6B7280),
-                                                            size: 22,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 12),
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: SwitchListTile
-                                                          .adaptive(
-                                                        contentPadding:
-                                                            EdgeInsets.zero,
-                                                        title:
-                                                            const Text('Actif'),
-                                                        value: slide.isActive,
-                                                        activeColor:
-                                                            _kAdminHeroOrange,
-                                                        onChanged: isBusy
-                                                            ? null
-                                                            : (value) =>
-                                                                _toggleSlideActive(
-                                                                    slide,
-                                                                    value),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Wrap(
-                                                  spacing: 8,
-                                                  runSpacing: 8,
-                                                  children: [
-                                                    FilledButton.icon(
-                                                      onPressed: isBusy
-                                                          ? null
-                                                          : () =>
-                                                              _openSlideEditor(
-                                                                  existing:
-                                                                      slide),
-                                                      style: FilledButton
-                                                          .styleFrom(
-                                                        backgroundColor:
-                                                            _kAdminHeroBlue,
-                                                      ),
-                                                      icon: const Icon(
-                                                          Icons.edit_rounded,
-                                                          size: 18),
-                                                      label: const Text(
-                                                          'Modifier'),
-                                                    ),
-                                                    if (!slide.isFirst)
-                                                      OutlinedButton.icon(
-                                                        onPressed: isBusy
-                                                            ? null
-                                                            : () =>
-                                                                _setFirstSlide(
-                                                                    slide),
-                                                        icon: const Icon(
-                                                            Icons
-                                                                .vertical_align_top_rounded,
-                                                            size: 18),
-                                                        label: const Text(
-                                                            'Définir premier'),
-                                                      )
-                                                    else
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 12,
-                                                                vertical: 8),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: const Color(
-                                                              0xFF047857),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: const Row(
-                                                          mainAxisSize:
-                                                              MainAxisSize.min,
-                                                          children: [
-                                                            Icon(
-                                                                Icons
-                                                                    .star_rounded,
-                                                                size: 16,
-                                                                color: Colors
-                                                                    .white),
-                                                            SizedBox(width: 4),
-                                                            Text(
-                                                              'Premier slide',
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                fontSize: 12,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    OutlinedButton.icon(
-                                                      onPressed: isBusy
-                                                          ? null
-                                                          : () => _deleteSlide(
-                                                              slide),
-                                                      style: OutlinedButton
-                                                          .styleFrom(
-                                                        foregroundColor:
-                                                            const Color(
-                                                                0xFFB91C1C),
-                                                      ),
-                                                      icon: const Icon(
-                                                          Icons
-                                                              .delete_outline_rounded,
-                                                          size: 18),
-                                                      label: Text(
-                                                        slide.isVideo
-                                                            ? 'Supprimer vidéo'
-                                                            : 'Supprimer image',
-                                                      ),
-                                                    ),
-                                                    OutlinedButton.icon(
-                                                      onPressed: isBusy ||
-                                                              index == 0
-                                                          ? null
-                                                          : () =>
-                                                              _moveSlideByDelta(
-                                                                slides,
-                                                                index,
-                                                                -1,
-                                                              ),
-                                                      icon: const Icon(
-                                                        Icons
-                                                            .arrow_upward_rounded,
-                                                        size: 18,
-                                                      ),
-                                                      label:
-                                                          const Text('Monter'),
-                                                    ),
-                                                    OutlinedButton.icon(
-                                                      onPressed: isBusy ||
-                                                              index ==
-                                                                  slides.length -
-                                                                      1
-                                                          ? null
-                                                          : () =>
-                                                              _moveSlideByDelta(
-                                                                slides,
-                                                                index,
-                                                                1,
-                                                              ),
-                                                      icon: const Icon(
-                                                        Icons
-                                                            .arrow_downward_rounded,
-                                                        size: 18,
-                                                      ),
-                                                      label: const Text(
-                                                        'Descendre',
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
                     ),
-                  ],
-                ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _SlideMediaPreview(slide: slide),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        _TypeBadge(
+                                          color: slide.isVideo
+                                              ? _kAdminHeroBlue
+                                              : _kAdminHeroOrange,
+                                          label: slide.isVideo
+                                              ? 'Vidéo'
+                                              : 'Image',
+                                        ),
+                                        if (slide.isFirst)
+                                          const _TypeBadge(
+                                            color: Color(0xFF047857),
+                                            label: 'Premier slide',
+                                          ),
+                                        _TypeBadge(
+                                          color: slide.isActive
+                                              ? const Color(0xFF2563EB)
+                                              : const Color(0xFF9CA3AF),
+                                          label: slide.isActive
+                                              ? 'Actif'
+                                              : 'Inactif',
+                                        ),
+                                        _TypeBadge(
+                                          color: slide.isGlobal
+                                              ? const Color(0xFF059669)
+                                              : const Color(0xFFB45309),
+                                          label: slide.isGlobal
+                                              ? 'Tout le monde'
+                                              : slide.targetRegions.isEmpty
+                                                  ? 'Régional'
+                                                  : slide.targetRegions
+                                                      .map((k) =>
+                                                          regionDisplayName(
+                                                              k) ??
+                                                          k)
+                                                      .join(', '),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      slide.title.trim().isEmpty
+                                          ? 'Sans titre interne'
+                                          : slide.title,
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${slide.durationSeconds} secondes · Position ${index + 1}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF6B7280),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      slide.mediaUrl,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Color(0xFF9CA3AF),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Tooltip(
+                                    message:
+                                        'Maintenir et glisser pour réordonner',
+                                    child: const Icon(
+                                      Icons.drag_handle_rounded,
+                                      color: Color(0xFF6B7280),
+                                      size: 22,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SwitchListTile.adaptive(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text('Actif'),
+                                  value: slide.isActive,
+                                  activeColor: _kAdminHeroOrange,
+                                  onChanged: isBusy
+                                      ? null
+                                      : (value) =>
+                                          _toggleSlideActive(slide, value),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilledButton.icon(
+                                onPressed: isBusy
+                                    ? null
+                                    : () => _openSlideEditor(existing: slide),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _kAdminHeroBlue,
+                                ),
+                                icon: const Icon(Icons.edit_rounded, size: 18),
+                                label: const Text('Modifier'),
+                              ),
+                              if (!slide.isFirst)
+                                OutlinedButton.icon(
+                                  onPressed: isBusy
+                                      ? null
+                                      : () => _setFirstSlide(slide),
+                                  icon: const Icon(
+                                      Icons.vertical_align_top_rounded,
+                                      size: 18),
+                                  label: const Text('Définir premier'),
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF047857),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.star_rounded,
+                                          size: 16, color: Colors.white),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Premier slide',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              OutlinedButton.icon(
+                                onPressed:
+                                    isBusy ? null : () => _deleteSlide(slide),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFB91C1C),
+                                ),
+                                icon: const Icon(
+                                    Icons.delete_outline_rounded,
+                                    size: 18),
+                                label: Text(
+                                  slide.isVideo
+                                      ? 'Supprimer vidéo'
+                                      : 'Supprimer image',
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: isBusy || index == 0
+                                    ? null
+                                    : () => _moveSlideByDelta(
+                                          slides,
+                                          index,
+                                          -1,
+                                        ),
+                                icon: const Icon(
+                                  Icons.arrow_upward_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Monter'),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed:
+                                    isBusy || index == slides.length - 1
+                                        ? null
+                                        : () => _moveSlideByDelta(
+                                              slides,
+                                              index,
+                                              1,
+                                            ),
+                                icon: const Icon(
+                                  Icons.arrow_downward_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Descendre'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           );
@@ -1716,42 +1670,90 @@ class _HeroStatCard extends StatelessWidget {
   }
 }
 
-class _HeroToolsPanel extends StatelessWidget {
-  const _HeroToolsPanel();
+class _HeroQuickActionsPanel extends StatelessWidget {
+  final VoidCallback? onAdd;
+
+  const _HeroQuickActionsPanel({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: const [
-          _HeroToolChip(label: 'Ajouter image/vidéo', icon: Icons.add_rounded),
-          _HeroToolChip(label: 'Modifier média', icon: Icons.edit_rounded),
-          _HeroToolChip(
-            label: 'Supprimer image/vidéo',
-            icon: Icons.delete_outline_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onAdd,
+              style: FilledButton.styleFrom(
+                backgroundColor: _kAdminHeroOrange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.add_photo_alternate_rounded),
+              label: const Text(
+                'Ajouter un slide Hero',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              ),
+            ),
           ),
-          _HeroToolChip(
-              label: 'Monter/descendre', icon: Icons.swap_vert_rounded),
-          _HeroToolChip(
-            label: 'Glisser-déposer',
-            icon: Icons.drag_handle_rounded,
+          const SizedBox(height: 14),
+          const Text(
+            'Commandes disponibles par slide :',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+            ),
           ),
-          _HeroToolChip(
-            label: 'Définir premier slide',
-            icon: Icons.vertical_align_top_rounded,
-          ),
-          _HeroToolChip(
-            label: 'Activer/désactiver',
-            icon: Icons.toggle_on_rounded,
+          const SizedBox(height: 8),
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _HeroToolChip(
+                label: 'Modifier médias',
+                icon: Icons.edit_rounded,
+              ),
+              _HeroToolChip(
+                label: 'Définir premier slide',
+                icon: Icons.vertical_align_top_rounded,
+              ),
+              _HeroToolChip(
+                label: 'Supprimer',
+                icon: Icons.delete_outline_rounded,
+              ),
+              _HeroToolChip(
+                label: 'Monter / Descendre',
+                icon: Icons.swap_vert_rounded,
+              ),
+              _HeroToolChip(
+                label: 'Glisser-déposer',
+                icon: Icons.drag_handle_rounded,
+              ),
+              _HeroToolChip(
+                label: 'Activer / Désactiver',
+                icon: Icons.toggle_on_rounded,
+              ),
+              _HeroToolChip(
+                label: 'Régler la durée',
+                icon: Icons.timer_outlined,
+              ),
+              _HeroToolChip(
+                label: 'Ciblage régional',
+                icon: Icons.location_on_outlined,
+              ),
+            ],
           ),
         ],
       ),
@@ -2110,7 +2112,7 @@ class _HeroSlideThumbnail extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(9, 7, 9, 260),
+              padding: const EdgeInsets.fromLTRB(9, 7, 9, 4),
               child: Row(
                 children: [
                   Text(
@@ -2138,7 +2140,7 @@ class _HeroSlideThumbnail extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(9, 3, 9, 260),
+              padding: const EdgeInsets.fromLTRB(9, 2, 9, 4),
               child: Text(
                 '${slide.isVideo ? 'Vidéo' : 'Image'} · ${slide.durationSeconds}s${slide.isFirst ? ' · premier' : ''}',
                 maxLines: 1,
@@ -2152,7 +2154,6 @@ class _HeroSlideThumbnail extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 96), // espace bas visualiseur hero
           ],
         ),
       ),
