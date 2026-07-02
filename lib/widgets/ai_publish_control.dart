@@ -510,12 +510,10 @@ class AiWritingButton extends StatelessWidget {
           width: double.infinity,
           height: 46,
           decoration: BoxDecoration(
-            color: isAnalyzing ? const Color(0xFFEEF4FF) : Colors.white,
+            color: isAnalyzing
+                ? const Color(0xFFE65500)
+                : const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFF1A6FFF),
-              width: 1.5,
-            ),
           ),
           alignment: Alignment.center,
           child: Row(
@@ -527,24 +525,24 @@ class AiWritingButton extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Color(0xFF1A6FFF),
+                    color: Colors.white,
                   ),
                 )
               else
                 const Icon(
                   Icons.auto_awesome_rounded,
                   size: 16,
-                  color: Color(0xFF1A6FFF),
+                  color: Colors.white,
                 ),
               const SizedBox(width: 8),
               Text(
                 isAnalyzing
                     ? 'Amélioration en cours…'
-                    : 'Améliorer ma description avec l\'IA',
+                    : 'Appuyez pour améliorer votre description avec l\'IA',
                 style: const TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A6FFF),
+                  color: Colors.white,
                 ),
               ),
             ],
