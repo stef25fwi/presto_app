@@ -1,6 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../main.dart' show buildOfferDetailsOffer;
 import '../services/public_offers_query_helpers.dart';
@@ -48,6 +53,7 @@ class _FicheProPageState extends State<FicheProPage> {
   List<String> _realisations = [];
 
   bool _hasChanges = false;
+  bool _isUploadingRealisation = false;
 
   @override
   void initState() {
@@ -228,6 +234,89 @@ class _FicheProPageState extends State<FicheProPage> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  // ─── Réalisations upload ──────────────────────────────────────────────────
+
+  Future<void> _addRealisationPhoto() async {
+    final picker = ImagePicker();
+    final files = await picker.pickMultiImage(imageQuality: 100);
+    if (files.isEmpty || !mounted) return;
+
+    setState(() => _isUploadingRealisation = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final newUrls = <String>[];
+      for (final file in files) {
+        final raw = await file.readAsBytes();
+        final webp = await FlutterImageCompress.compressWithList(
+          raw,
+          format: CompressFormat.webp,
+          quality: 85,
+          minWidth: 1600,
+          minHeight: 1,
+        );
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final path = 'pro_realisations/${user.uid}/$ts.webp';
+        final ref = FirebaseStorage.instance.ref(path);
+        await ref.putData(
+          webp is Uint8List ? webp : Uint8List.fromList(webp),
+          SettableMetadata(
+            contentType: 'image/webp',
+            cacheControl: 'public,max-age=604800',
+          ),
+        );
+        newUrls.add(await ref.getDownloadURL());
+      }
+
+      await FirebaseFirestore.instance
+          .collection('pro_profiles')
+          .doc(widget.uid)
+          .set(
+        {'realisations': FieldValue.arrayUnion(newUrls), 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+
+      if (mounted) {
+        setState(() => _realisations = [..._realisations, ...newUrls]);
+      }
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, "Impossible d'ajouter la photo.");
+    } finally {
+      if (mounted) setState(() => _isUploadingRealisation = false);
+    }
+  }
+
+  Future<void> _deleteRealisation(String url) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer cette photo ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('pro_profiles')
+          .doc(widget.uid)
+          .set(
+        {'realisations': FieldValue.arrayRemove([url]), 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+      if (mounted) setState(() => _realisations.remove(url));
+    } catch (_) {
+      if (mounted) showErrorSnackBar(context, 'Impossible de supprimer la photo.');
     }
   }
 
@@ -1123,27 +1212,45 @@ class _FicheProPageState extends State<FicheProPage> {
                   _sectionCard(
                     icon: Icons.photo_library_outlined,
                     label: 'Réalisations',
-                    onTap: null,
-                    content: _realisations.isEmpty
-                        ? _emptyHint('Photos de réalisations à venir')
-                        : SizedBox(
+                    onTap: widget.isOwner ? _addRealisationPhoto : null,
+                    content: _isUploadingRealisation
+                        ? const SizedBox(
                             height: 90,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _realisations.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 8),
-                              itemBuilder: (ctx, i) => ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.network(
-                                  _realisations[i],
-                                  width: 90,
-                                  height: 90,
-                                  fit: BoxFit.cover,
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        : _realisations.isEmpty
+                            ? _emptyHint(
+                                widget.isOwner
+                                    ? 'Appuyez pour ajouter des photos'
+                                    : 'Photos de réalisations à venir',
+                              )
+                            : SizedBox(
+                                height: 90,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _realisations.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (ctx, i) {
+                                    final url = _realisations[i];
+                                    return GestureDetector(
+                                      onLongPress: widget.isOwner
+                                          ? () => _deleteRealisation(url)
+                                          : null,
+                                      child: ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(10),
+                                        child: Image.network(
+                                          url,
+                                          width: 90,
+                                          height: 90,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            ),
-                          ),
                   ),
                 _buildOffersSection(),
               ],
