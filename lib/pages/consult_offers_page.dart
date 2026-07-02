@@ -3782,7 +3782,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                             child: Padding(
                               padding: const EdgeInsets.all(3),
                               child: Image.asset(
-                                'assets/images/logowebp.webp',
+                                'assets/images/default_avatar.png',
                                 fit: BoxFit.contain,
                               ),
                             ),
