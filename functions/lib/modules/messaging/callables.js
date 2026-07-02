@@ -911,6 +911,18 @@ exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIO
         throw new https_1.HttpsError("permission-denied", "you can only delete your own messages");
     }
     await messageRef.delete();
+    // Delete Storage files attached to the message (best-effort, errors are ignored).
+    const rawAttachments = Array.isArray(messageData.attachments) ? messageData.attachments : [];
+    const storagePaths = [];
+    for (const att of rawAttachments) {
+        const sp = String(att.storagePath || "").trim();
+        if (sp)
+            storagePaths.push(sp);
+    }
+    if (storagePaths.length > 0) {
+        const bucket = firebase_admin_1.default.storage().bucket();
+        await Promise.allSettled(storagePaths.map((sp) => bucket.file(sp).delete()));
+    }
     const messagesRef = convRef.collection("messages");
     const [latestMessageSnap, messageCountSnap] = await Promise.all([
         messagesRef.orderBy("createdAt", "desc").limit(1).get(),

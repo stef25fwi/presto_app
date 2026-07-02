@@ -1226,6 +1226,18 @@ export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, asyn
 
   await messageRef.delete();
 
+  // Delete Storage files attached to the message (best-effort, errors are ignored).
+  const rawAttachments = Array.isArray(messageData.attachments) ? messageData.attachments : [];
+  const storagePaths: string[] = [];
+  for (const att of rawAttachments) {
+    const sp = String((att as Record<string, unknown>).storagePath || "").trim();
+    if (sp) storagePaths.push(sp);
+  }
+  if (storagePaths.length > 0) {
+    const bucket = admin.storage().bucket();
+    await Promise.allSettled(storagePaths.map((sp) => bucket.file(sp).delete()));
+  }
+
   const messagesRef = convRef.collection("messages");
   const [latestMessageSnap, messageCountSnap] = await Promise.all([
     messagesRef.orderBy("createdAt", "desc").limit(1).get(),
