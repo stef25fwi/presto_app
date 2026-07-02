@@ -1664,8 +1664,8 @@ class _HomePageState extends State<HomePage>
 
     final statusBarColor = _selectedIndex == 0
         ? Colors.white // home tab: scaffold blanc → icônes sombres
-        : (!kIsWeb && _selectedIndex == 1)
-            ? kPrestoOrange
+        : (_selectedIndex == 4 || (!kIsWeb && _selectedIndex == 1))
+            ? kPrestoOrange // compte + consult (mobile) → orange
             : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(statusBarColor),
