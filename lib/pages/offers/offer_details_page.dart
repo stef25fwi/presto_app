@@ -23,6 +23,7 @@ import 'package:presto_app/widgets/offer_network_image.dart';
 import 'dart:async';
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
 import 'package:presto_app/widgets/deleted_user_profile.dart';
+import 'package:presto_app/pages/fiche_pro_page.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -3258,6 +3259,16 @@ class _AdvertiserContactCard extends StatelessWidget {
     required this.onContactTap,
   });
 
+  void _openProfile(BuildContext context) {
+    final uid = data.advertiserId.trim();
+    if (uid.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FicheProPage(uid: uid, isOwner: false),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const blueSoft = Color(0xFFDCEBFF);
@@ -3294,10 +3305,13 @@ class _AdvertiserContactCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              _AdvertiserHeaderLine(
-                advertiserName: data.advertiserName,
-                verified: data.verified,
-                compact: compact,
+              GestureDetector(
+                onTap: () => _openProfile(context),
+                child: _AdvertiserHeaderLine(
+                  advertiserName: data.advertiserName,
+                  verified: data.verified,
+                  compact: compact,
+                ),
               ),
               _AdvertiserMetaLine(
                 advertiserRating: data.advertiserRating,
