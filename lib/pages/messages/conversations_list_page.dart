@@ -2508,8 +2508,8 @@ class _ConversationAvatar extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 27,
-          backgroundColor: fallbackColor,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF2250F4),
           foregroundImage:
               photoUrl.isNotEmpty ? profileAvatarImageProvider(photoUrl) : null,
           onForegroundImageError: (error, stackTrace) {
