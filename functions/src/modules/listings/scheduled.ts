@@ -1,8 +1,12 @@
+import admin from "firebase-admin";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db } from "../../core/firestore";
 import { APP_BASE_URL } from "../../config/env";
 import { COLLECTIONS, LEGACY_COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { sendPushToUser, createInAppNotification } from "../notifications/push";
+
+const LISTING_EXPIRY_REMINDERS_COLLECTION = "listing_expiry_reminders";
 
 type ListingDoc = {
   ownerId: string;
@@ -220,4 +224,65 @@ export const enqueueFirstListingNotPublishedReminders = onSchedule("every day 10
 
   await processDraftCollection(COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
   await processDraftCollection(LEGACY_COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
+});
+
+async function processExpiryPushCollection(
+  collectionName: string,
+  now: number,
+  in4h: number,
+): Promise<void> {
+  const expiringQ = await db
+    .collection(collectionName)
+    .where("expires_at", ">=", now)
+    .where("expires_at", "<=", in4h)
+    .limit(200)
+    .get();
+
+  for (const doc of expiringQ.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    if (!isPublishedStatus(data)) continue;
+
+    const ownerId = normalizeOwnerId(data);
+    if (!ownerId) continue;
+
+    const dedupRef = db.collection(LISTING_EXPIRY_REMINDERS_COLLECTION).doc(`${collectionName}_${doc.id}`);
+    const dedupSnap = await dedupRef.get();
+    if (dedupSnap.exists && dedupSnap.data()?.fourHourPushSentAt) continue;
+
+    const listingTitle = String(data.title || "Votre annonce");
+    const pushTitle = "Votre annonce arrive à terme !";
+    const pushBody = `"${listingTitle}" expire dans moins de 4 heures. Rendez-vous dans Gérer mes annonces.`;
+    const notificationId = `listing_expiry_4h_${collectionName}_${doc.id}`;
+
+    await dedupRef.set(
+      { fourHourPushSentAt: admin.firestore.FieldValue.serverTimestamp() },
+      { merge: true },
+    );
+
+    await Promise.allSettled([
+      sendPushToUser({
+        userId: ownerId,
+        topic: "listings",
+        title: pushTitle,
+        body: pushBody,
+        channelId: "ilipresto_activity",
+        routeName: "/mes-annonces",
+      }),
+      createInAppNotification({
+        notificationId,
+        userId: ownerId,
+        title: pushTitle,
+        message: pushBody,
+        type: "listing_expiry",
+        routeName: "/mes-annonces",
+      }),
+    ]);
+  }
+}
+
+export const enqueueFourHourExpiryPushNotifications = onSchedule("every 1 hours", async () => {
+  const now = Date.now();
+  const in4h = now + 4 * 60 * 60 * 1000;
+  await processExpiryPushCollection(COLLECTIONS.listings, now, in4h);
+  await processExpiryPushCollection(LEGACY_COLLECTIONS.offers, now, in4h);
 });

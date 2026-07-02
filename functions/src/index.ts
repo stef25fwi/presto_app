@@ -33,7 +33,7 @@ export {
 } from "./modules/auth/callables";
 
 export { onListingPublished, onOfferCreated, onOfferUpdated } from "./modules/listings/triggers";
-export { enqueueExpiringListingEmails, enqueueFirstListingNotPublishedReminders } from "./modules/listings/scheduled";
+export { enqueueExpiringListingEmails, enqueueFirstListingNotPublishedReminders, enqueueFourHourExpiryPushNotifications } from "./modules/listings/scheduled";
 export {
   createListingDraft,
   updateListingDraftMedia,
