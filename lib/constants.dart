@@ -72,6 +72,41 @@ const TextStyle kPrestoMetaTextStyle = TextStyle(
 
 /// Constantes de l'application Presto
 
+/// Normalise un nom de région en clé Firestore sans accents ni espaces.
+/// Ex: 'Île-de-France' → 'ile-de-france', "Provence-Alpes-Côte d'Azur" → 'provence-alpes-cote-dazur'
+String normalizeRegionKey(String value) {
+  return value
+      .trim()
+      .toLowerCase()
+      .replaceAll('é', 'e')
+      .replaceAll('è', 'e')
+      .replaceAll('ê', 'e')
+      .replaceAll('ë', 'e')
+      .replaceAll('î', 'i')
+      .replaceAll('ï', 'i')
+      .replaceAll('à', 'a')
+      .replaceAll('â', 'a')
+      .replaceAll('ä', 'a')
+      .replaceAll('ù', 'u')
+      .replaceAll('û', 'u')
+      .replaceAll('ü', 'u')
+      .replaceAll('ô', 'o')
+      .replaceAll('ö', 'o')
+      .replaceAll('ç', 'c')
+      .replaceAll("'", '')
+      .replaceAll('’', '') // curly apostrophe
+      .replaceAll(' ', '-');
+}
+
+/// Renvoie le nom lisible d'une région à partir de sa clé normalisée.
+/// Retourne null si la clé n'est pas trouvée.
+String? regionDisplayName(String normalizedKey) {
+  for (final r in kRegionsOrdered) {
+    if (r.normalizedKey == normalizedKey) return r.name;
+  }
+  return null;
+}
+
 /// Infos région (code officiel + nom)
 class RegionItem {
   final String code; // ex: '11'
@@ -85,6 +120,8 @@ class RegionItem {
   });
 
   String get label => '$code — $name';
+
+  String get normalizedKey => normalizeRegionKey(name);
 }
 
 /// Liste des régions ordonnées :

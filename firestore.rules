@@ -298,7 +298,9 @@ service cloud.firestore {
           'isFirst',
           'createdAt',
           'updatedAt',
-          'createdBy'
+          'createdBy',
+          'scope',
+          'targetRegions'
         ])
         && data.id is string
         && data.id.size() > 0
@@ -323,7 +325,9 @@ service cloud.firestore {
         && data.createdBy is string
         && data.createdBy.size() > 0
         && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
+        && data.updatedAt is timestamp
+        && (!('scope' in data) || data.scope in ['global', 'regional'])
+        && (!('targetRegions' in data) || data.targetRegions is list);
     }
 
     match /heroSlides/{slideId} {

@@ -138,6 +138,7 @@ class _HomePageState extends State<HomePage>
   late final Stream<List<HeroSlide>> _heroSlidesStream =
       _heroSlidesService.watchActiveSlides();
   List<HeroSlide> _cachedHeroSlides = const <HeroSlide>[];
+  String? _userRegion;
   int _currentSlide = 0;
 
   Timer? _homeAutoSlideTimer;
@@ -328,6 +329,9 @@ class _HomePageState extends State<HomePage>
       }
     });
 
+    // Charge la région de l'utilisateur pour le filtrage des slides régionaux.
+    _loadUserRegion();
+
     // Assure la barre de statut bleue dès que l'accueil est actif
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
@@ -377,6 +381,21 @@ class _HomePageState extends State<HomePage>
         unawaited(_maybePromptMessagingNotifications());
       }
     });
+  }
+
+  Future<void> _loadUserRegion() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final raw = doc.data()?['region']?.toString().trim() ?? '';
+      if (raw.isNotEmpty && mounted) {
+        setState(() => _userRegion = raw);
+      }
+    } catch (_) {}
   }
 
   Future<void> _touchPresence({String? status}) async {
@@ -1907,8 +1926,12 @@ class _HomePageState extends State<HomePage>
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(22),
                     child: _HeroSliderWithStableHeight(
-                      cachedSlides: _cachedHeroSlides,
+                      cachedSlides: _heroSlidesService.filterSlidesForRegion(
+                        _cachedHeroSlides,
+                        _userRegion,
+                      ),
                       heroSlidesStream: _heroSlidesStream,
+                      userRegion: _userRegion,
                       fallbackBuilder: _buildFallbackHomeHeroSlider,
                       carouselController: _carouselController,
                     ),
@@ -1938,6 +1961,7 @@ class _HomePageState extends State<HomePage>
 class _HeroSliderWithStableHeight extends StatelessWidget {
   final List<HeroSlide> cachedSlides;
   final Stream<List<HeroSlide>> heroSlidesStream;
+  final String? userRegion;
   final Widget Function() fallbackBuilder;
   final PageController carouselController;
 
@@ -1946,7 +1970,20 @@ class _HeroSliderWithStableHeight extends StatelessWidget {
     required this.heroSlidesStream,
     required this.fallbackBuilder,
     required this.carouselController,
+    this.userRegion,
   });
+
+  List<HeroSlide> _filterForRegion(List<HeroSlide> slides) {
+    return slides.where((slide) {
+      if (slide.isGlobal) return true;
+      if (slide.isRegional) {
+        if (userRegion == null || userRegion!.isEmpty) return false;
+        if (slide.targetRegions.isEmpty) return false;
+        return slide.targetRegions.contains(userRegion);
+      }
+      return true; // anciens slides sans scope : global par défaut
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1961,7 +1998,8 @@ class _HeroSliderWithStableHeight extends StatelessWidget {
         stream: heroSlidesStream,
         builder: (context, snapshot) {
           final fallback = fallbackBuilder();
-          final slides = snapshot.data ?? cachedSlides;
+          final allSlides = snapshot.data ?? cachedSlides;
+          final slides = _filterForRegion(allSlides);
 
           if (snapshot.hasError || slides.isEmpty) {
             // Même le fallback a la hauteur stable
