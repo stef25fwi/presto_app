@@ -3877,6 +3877,7 @@ class _AccountPageState extends State<AccountPage> {
             _buildOrangeMenuItem(
               icon: Icons.badge_rounded,
               label: 'Ma fiche Pro',
+              showProBadge: true,
               onTap: () {
                 final uid = FirebaseAuth.instance.currentUser?.uid;
                 if (uid == null) return;
@@ -3889,6 +3890,7 @@ class _AccountPageState extends State<AccountPage> {
             _buildOrangeMenuItem(
               icon: Icons.grid_view_rounded,
               label: 'Vérifier mon SIRET',
+              showProBadge: true,
               onTap: () => showPrestoSnackBar(
                   context, 'Vérification SIRET — Bientôt disponible'),
             ),
@@ -3897,6 +3899,7 @@ class _AccountPageState extends State<AccountPage> {
               icon: Icons.star_border_rounded,
               label: 'Mes avis',
               solidBackground: false,
+              showProBadge: true,
               onTap: () => showPrestoSnackBar(
                   context, 'Mes avis — Bientôt disponible'),
             ),
@@ -3925,6 +3928,7 @@ class _AccountPageState extends State<AccountPage> {
     required String label,
     required VoidCallback onTap,
     bool solidBackground = true,
+    bool showProBadge = false,
   }) {
     return InkWell(
       onTap: onTap,
@@ -3949,13 +3953,21 @@ class _AccountPageState extends State<AccountPage> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
+              child: Row(
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  if (showProBadge) ...[
+                    const SizedBox(width: 8),
+                    const _IliProBadge(),
+                  ],
+                ],
               ),
             ),
             Icon(
@@ -4167,6 +4179,42 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
               Text(_current.isEmpty ? 'Tous' : 'Valider (${_current.length})'),
         ),
       ],
+    );
+  }
+}
+
+class _IliProBadge extends StatelessWidget {
+  const _IliProBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF6600), Color(0xFFFFB300)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.workspace_premium_rounded, size: 11, color: Colors.white),
+          SizedBox(width: 3),
+          Text(
+            'ili-pro',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 0.3,
+              height: 1.1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
