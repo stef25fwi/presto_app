@@ -87,6 +87,7 @@ class NotificationService {
   GlobalKey<NavigatorState>? _navigatorKey;
   RemoteMessage? _initialMessage;
   String? _pendingRouteName;
+  String? _coldStartRoute;
   String? _lastRegisteredToken;
   String? _lastHandledMessageId;
   String? _lastVisibleNotificationKey;
@@ -180,7 +181,13 @@ class NotificationService {
     // Récupérer le message initial (si l'app a été lancée depuis une notification)
     _initialMessage = await _messaging.getInitialMessage();
     if (_initialMessage != null) {
-      _messageOpenedHandler(_initialMessage!);
+      // Cold-start: store route for SplashScreen to consume after navigation.
+      // Calling _messageOpenedHandler here would push on top of the splash
+      // then get replaced when the splash timer fires pushReplacement.
+      final route = _resolveRouteName(_initialMessage!);
+      if (route.isNotEmpty) {
+        _coldStartRoute = route;
+      }
     }
 
     // Récupérer et afficher le token FCM
@@ -404,6 +411,14 @@ class NotificationService {
 
   String _messagingPromptDismissedAtKey(String userId) {
     return '$_messagingPromptDismissedAtKeyPrefix.$userId';
+  }
+
+  /// Consumes and returns the cold-start notification route (if any).
+  /// Called by SplashScreen after it has navigated to the destination page.
+  String? consumeColdStartRoute() {
+    final route = _coldStartRoute;
+    _coldStartRoute = null;
+    return route;
   }
 
   void markNavigatorReady() {

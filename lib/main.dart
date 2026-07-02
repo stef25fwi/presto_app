@@ -1203,6 +1203,16 @@ class _SplashScreenState extends State<SplashScreen>
           _navigateTo(const HomePage());
         } catch (_) {}
       }
+      _maybePushColdStartNotificationRoute();
+    });
+  }
+
+  void _maybePushColdStartNotificationRoute() {
+    final route = NotificationService().consumeColdStartRoute();
+    if (route == null || route.isEmpty) return;
+    // Schedule on next frame so pushReplacement above has settled first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appNavigatorKey.currentState?.pushNamed(route);
     });
   }
 
