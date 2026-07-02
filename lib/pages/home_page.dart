@@ -1732,20 +1732,25 @@ class _HomePageState extends State<HomePage>
           bottomNavigationBar: isKeyboardOpen
               ? null
               : Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF1A73E8),
-                        Color(0xFF0D47A1),
-                      ],
+                  // Fond opaque pour boucher les coins transparents du
+                  // BorderRadius : sans cela le Scaffold.backgroundColor
+                  // (blanc) transparaît dans les angles arrondis.
+                  color: const Color(0xFF0D47A1),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF1A73E8),
+                          Color(0xFF0D47A1),
+                        ],
+                      ),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24)),
                     ),
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                  child: SafeArea(
+                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                    child: SafeArea(
                     top: false,
                     maintainBottomViewPadding: true,
                     child: Row(
@@ -1815,6 +1820,7 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
+              ),
         ),
       ),
     );
