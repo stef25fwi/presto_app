@@ -154,8 +154,8 @@ export const onConversationSubMessageCreated = onDocumentCreated(
         createInAppNotification({
           notificationId,
           userId: recipientId,
-          title: senderName,
-          message: messagePreview || `Nouveau message dans ${offerTitle}`,
+          title: "Nouveau message reçu !",
+          message: "Une réponse t'attend sur iliprestō. Consulte-la maintenant.",
           type: "new_message",
           routeName,
           conversationId,
@@ -167,8 +167,8 @@ export const onConversationSubMessageCreated = onDocumentCreated(
         sendPushToUser({
           userId: recipientId,
           topic: "messaging",
-          title: senderName,
-          body: messagePreview || `Nouveau message dans ${offerTitle}`,
+          title: "Nouveau message reçu !",
+          body: "Une réponse t'attend sur iliprestō. Consulte-la maintenant.",
           routeName,
           channelId: "ilipresto_messages",
           collapseKey: `conversation_${conversationId}`,
