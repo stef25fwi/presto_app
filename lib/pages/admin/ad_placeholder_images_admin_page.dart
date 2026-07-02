@@ -566,55 +566,143 @@ class _AdPlaceholderImagesAdminPageState
                 _isUploading ? 'Upload en cours…' : 'Ajouter des images',
               ),
             ),
-      body: StreamBuilder<List<AdPlaceholderImage>>(
-        stream: AdPlaceholderImageService.watchAll(target: _target),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.error_outline_rounded,
-                        color: Colors.red, size: 48),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Erreur de chargement\n${snapshot.error}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
+      body: Column(
+        children: [
+          // Widget upload — toujours visible, indépendant de l'état Firestore
+          if (_isUploading || _uploadPreviewBytes != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: _SelectedAdPlaceholderPreview(
+                fileBytes: _uploadPreviewBytes,
+                fileName: _uploadPreviewFileName ?? 'Image placeholder',
+                uploadProgress: _uploadProgress,
+                conversionProgress: _conversionProgress,
+                status: _uploadStatus,
+                isUploading: _isUploading,
+                currentIndex: _currentUploadIndex,
+                totalCount: _totalUploadCount,
+                onClear: _isUploading
+                    ? null
+                    : () {
+                        setState(() {
+                          _uploadPreviewBytes = null;
+                          _uploadPreviewFileName = null;
+                          _uploadProgress = null;
+                          _conversionProgress = null;
+                          _uploadStatus = '';
+                          _currentUploadIndex = 0;
+                          _totalUploadCount = 0;
+                        });
+                      },
               ),
-            );
-          }
+            ),
+          Expanded(
+            child: StreamBuilder<List<AdPlaceholderImage>>(
+              stream: AdPlaceholderImageService.watchAll(target: _target),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return _buildErrorState(snapshot.error!);
+                }
 
-          final latestStreamImages =
-              snapshot.data ?? const <AdPlaceholderImage>[];
-          if (latestStreamImages.isNotEmpty) {
-            _lastLoadedImages = latestStreamImages;
-          }
+                final latestStreamImages =
+                    snapshot.data ?? const <AdPlaceholderImage>[];
+                if (latestStreamImages.isNotEmpty) {
+                  _lastLoadedImages = latestStreamImages;
+                }
 
-          // En mode réordre on utilise le buffer local, pas le stream.
-          final streamImages = latestStreamImages.isNotEmpty
-              ? latestStreamImages
-              : _lastLoadedImages;
-          final images =
-              _isReordering ? (_reorderBuffer ?? streamImages) : streamImages;
+                // En mode réordre on utilise le buffer local, pas le stream.
+                final streamImages = latestStreamImages.isNotEmpty
+                    ? latestStreamImages
+                    : _lastLoadedImages;
+                final images = _isReordering
+                    ? (_reorderBuffer ?? streamImages)
+                    : streamImages;
 
-          final visibleCount =
-              streamImages.where((img) => img.isVisible).length;
+                final visibleCount =
+                    streamImages.where((img) => img.isVisible).length;
 
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              streamImages.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    streamImages.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          return _isReordering
-              ? _buildReorderList(images)
-              : _buildGridView(context, images, visibleCount);
-        },
+                return _isReordering
+                    ? _buildReorderList(images)
+                    : _buildGridView(context, images, visibleCount);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(Object error) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 260),
+      children: [
+        _buildToolsChips(),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.red.shade200),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline_rounded,
+                  color: Colors.red.shade600, size: 40),
+              const SizedBox(height: 12),
+              Text(
+                'Erreur de chargement\n$error',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolsChips() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: const [
+          _PlaceholderToolChip(
+            icon: Icons.add_photo_alternate_rounded,
+            label: 'Ajouter image(s)',
+          ),
+          _PlaceholderToolChip(
+            icon: Icons.edit_rounded,
+            label: 'Modifier slide',
+          ),
+          _PlaceholderToolChip(
+            icon: Icons.visibility_rounded,
+            label: 'Afficher / masquer',
+          ),
+          _PlaceholderToolChip(
+            icon: Icons.swap_vert_rounded,
+            label: 'Réorganiser',
+          ),
+          _PlaceholderToolChip(
+            icon: Icons.delete_rounded,
+            label: 'Supprimer',
+          ),
+        ],
       ),
     );
   }
@@ -675,32 +763,6 @@ class _AdPlaceholderImagesAdminPageState
           ),
           const SizedBox(height: 16),
         ],
-        if (_uploadPreviewBytes != null || _isUploading) ...[
-          _SelectedAdPlaceholderPreview(
-            fileBytes: _uploadPreviewBytes,
-            fileName: _uploadPreviewFileName ?? 'Image placeholder',
-            uploadProgress: _uploadProgress,
-            conversionProgress: _conversionProgress,
-            status: _uploadStatus,
-            isUploading: _isUploading,
-            currentIndex: _currentUploadIndex,
-            totalCount: _totalUploadCount,
-            onClear: _isUploading
-                ? null
-                : () {
-                    setState(() {
-                      _uploadPreviewBytes = null;
-                      _uploadPreviewFileName = null;
-                      _uploadProgress = null;
-                      _conversionProgress = null;
-                      _uploadStatus = '';
-                      _currentUploadIndex = 0;
-                      _totalUploadCount = 0;
-                    });
-                  },
-          ),
-          const SizedBox(height: 16),
-        ],
         Row(
           children: [
             Expanded(
@@ -719,41 +781,7 @@ class _AdPlaceholderImagesAdminPageState
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: const [
-                        _PlaceholderToolChip(
-                          icon: Icons.add_photo_alternate_rounded,
-                          label: 'Ajouter image(s)',
-                        ),
-                        _PlaceholderToolChip(
-                          icon: Icons.edit_rounded,
-                          label: 'Modifier slide',
-                        ),
-                        _PlaceholderToolChip(
-                          icon: Icons.visibility_rounded,
-                          label: 'Afficher / masquer',
-                        ),
-                        _PlaceholderToolChip(
-                          icon: Icons.swap_vert_rounded,
-                          label: 'Réorganiser',
-                        ),
-                        _PlaceholderToolChip(
-                          icon: Icons.delete_rounded,
-                          label: 'Supprimer',
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildToolsChips(),
                   const SizedBox(height: 12),
                   Text(
                     '✏️ Modifier · 👁️ Cocher pour afficher · 🔍 Zoom · 🗑️ Supprimer',

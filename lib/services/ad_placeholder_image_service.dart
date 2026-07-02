@@ -76,7 +76,6 @@ class AdPlaceholderImageService {
     return _collection
         .where('target', isEqualTo: target)
         .orderBy('sortOrder')
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
@@ -90,7 +89,6 @@ class AdPlaceholderImageService {
         .where('target', isEqualTo: target)
         .where('isVisible', isEqualTo: true)
         .orderBy('sortOrder')
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
