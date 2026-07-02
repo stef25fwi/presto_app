@@ -1224,9 +1224,16 @@ export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, asyn
     throw new HttpsError("permission-denied", "you can only delete your own messages");
   }
 
-  await messageRef.delete();
+  // Soft-delete: clear content and mark as deleted so a placeholder appears in the thread.
+  await messageRef.update({
+    text: "",
+    body: "",
+    attachments: [],
+    deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    deletedBy: currentUserId,
+  });
 
-  // Delete Storage files attached to the message (best-effort, errors are ignored).
+  // Delete Storage files that were attached (best-effort, errors are ignored).
   const rawAttachments = Array.isArray(messageData.attachments) ? messageData.attachments : [];
   const storagePaths: string[] = [];
   for (const att of rawAttachments) {
@@ -1243,7 +1250,11 @@ export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, asyn
     messagesRef.orderBy("createdAt", "desc").limit(1).get(),
     messagesRef.count().get(),
   ]);
-  const latestMessage = latestMessageSnap.docs[0]?.data() as Record<string, unknown> | undefined;
+  const latestRaw = latestMessageSnap.docs[0]?.data() as Record<string, unknown> | undefined;
+  // Show a placeholder text in the conversation list if the latest message was deleted.
+  const latestMessage = latestRaw
+    ? { ...latestRaw, text: latestRaw.deletedAt ? "Message supprimé" : (latestRaw.text ?? latestRaw.body) }
+    : undefined;
   const remainingMessageCount = messageCountSnap.data().count;
   const unreadCount = computeUnreadCountAfterMessageDeletion({
     participants,
@@ -1266,7 +1277,9 @@ export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, asyn
       unreadCount,
       archivedBy,
       lastMessage: latestMessage
-        ? sanitizeMessageText(latestMessage.text ?? latestMessage.body)
+        ? (latestRaw?.deletedAt
+          ? "Message supprimé"
+          : sanitizeMessageText(latestMessage.text ?? latestMessage.body))
         : "",
       lastSenderId: latestMessage
         ? String(latestMessage.senderId || latestMessage.sender_id || "").trim()
