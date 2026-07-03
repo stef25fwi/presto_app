@@ -745,11 +745,22 @@ service cloud.firestore {
     }
 
     // ℹ️ [INFO] Debug MicroIA — écriture utilisateur, lecture refusée
+    // Contraintes anti-abus : nombre de champs et tailles bornés.
     match /debug_microia/{docId} {
       allow read: if false;
       allow create: if isSignedIn()
         && hasAppCheck()
-        && request.resource.data.uid == uid();
+        && request.resource.data.uid == uid()
+        && request.resource.data.keys().size() <= 20
+        && (!('transcript' in request.resource.data)
+          || (request.resource.data.transcript is string
+            && request.resource.data.transcript.size() <= 8000))
+        && (!('message' in request.resource.data)
+          || (request.resource.data.message is string
+            && request.resource.data.message.size() <= 2000))
+        && (!('detail' in request.resource.data)
+          || (request.resource.data.detail is string
+            && request.resource.data.detail.size() <= 4000));
       allow update, delete: if false;
     }
 

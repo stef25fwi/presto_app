@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Avatar utilisé lorsqu'aucune photo personnelle n'a été choisie.
-const String kDefaultProfileAvatarAsset = 'assets/images/default_avatar.png';
+const String kDefaultProfileAvatarAsset = 'assets/images/default_avatar.webp';
 
 /// Les photos automatiquement fournies par Google ne sont pas utilisées.
 ///
@@ -42,5 +44,10 @@ ImageProvider<Object> profileAvatarImageProvider(String? value) {
     return const AssetImage(kDefaultProfileAvatarAsset);
   }
 
-  return NetworkImage(customUrl);
+  // Mobile : cache disque persistant entre les sessions.
+  // Web : le cache HTTP du navigateur suffit.
+  if (kIsWeb) {
+    return NetworkImage(customUrl);
+  }
+  return CachedNetworkImageProvider(customUrl);
 }

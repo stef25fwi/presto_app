@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/services.dart' show AssetManifest, rootBundle;
+import 'package:flutter/services.dart' show rootBundle;
 
 /// Modèle ville minimal
 class CityRecord {
@@ -28,51 +28,54 @@ class CitySearch {
   bool _loaded = false;
   final List<CityRecord> _allCities = [];
 
-  /// ====== CHARGEMENT DES FICHIERS JSON ======
+  /// ====== CHARGEMENT DU FICHIER JSON ======
+  ///
+  /// Source unique : `assets/data/cities_compact.json` (une entrée par ville
+  /// avec la liste de ses codes postaux). Chaque code postal est déplié en un
+  /// [CityRecord] afin de conserver exactement la même structure mémoire et
+  /// les mêmes résultats de recherche qu'avec l'ancien découpage par
+  /// département (assets/data/cities/cities_XX.json, supprimé).
   Future<void> ensureLoaded() async {
     if (_loaded) return;
 
-    // On découvre dynamiquement TOUS les fichiers cities_*.json déclarés dans
-    // les assets (un par département/collectivité), au lieu d'une liste codée
-    // en dur qui n'en chargeait qu'une poignée — ce qui laissait la majorité
-    // des villes françaises absentes de l'autocomplétion.
-    List<String> files;
     try {
-      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-      files = manifest
-          .listAssets()
-          .where((asset) =>
-              asset.startsWith('assets/data/cities/cities_') &&
-              asset.endsWith('.json'))
-          .toList()
-        ..sort();
-    } catch (_) {
-      // Repli défensif : si le manifest est indisponible, on retombe sur la
-      // métropole (01→95) pour ne jamais se retrouver sans aucune ville.
-      files = [
-        for (int i = 1; i <= 95; i++)
-          'assets/data/cities/cities_${i.toString().padLeft(2, '0')}.json',
-      ];
-    }
+      final raw = await rootBundle.loadString('assets/data/cities_compact.json');
+      final List<dynamic> list = jsonDecode(raw) as List<dynamic>;
+      for (final row in list) {
+        final map = row as Map<String, dynamic>;
+        final name = (map['name'] ?? '').toString();
+        final dept = (map['dept'] ?? '').toString();
+        final region = (map['region'] ?? '').toString();
+        final cps = (map['cps'] as List<dynamic>? ?? const [])
+            .map((cp) => cp.toString())
+            .toList();
+        if (name.isEmpty || cps.isEmpty) continue;
 
-    for (final path in files) {
-      try {
-        final raw = await rootBundle.loadString(path);
-        final List<dynamic> list = jsonDecode(raw) as List<dynamic>;
-        for (final row in list) {
-          final map = row as Map<String, dynamic>;
+        // Villes à arrondissements : reproduit le nommage historique
+        // ("Paris 12", "Lyon 03", "Marseille 08") pour que la recherche
+        // "paris 12" continue de fonctionner.
+        final hasArrondissements = cps.length > 1 &&
+            (name == 'Paris' || name == 'Lyon' || name == 'Marseille');
+
+        for (final cp in cps) {
+          var recordName = name;
+          if (hasArrondissements && cp.length == 5) {
+            final arr = int.tryParse(cp.substring(3)) ?? 0;
+            final label = (arr % 100).toString().padLeft(2, '0');
+            recordName = '$name $label';
+          }
           _allCities.add(
             CityRecord(
-              name: map['name'] as String,
-              postalCode: map['cp'] as String,
-              departmentCode: map['dept'] as String,
-              regionCode: map['region'] as String,
+              name: recordName,
+              postalCode: cp,
+              departmentCode: dept,
+              regionCode: region,
             ),
           );
         }
-      } catch (_) {
-        // on ignore les fichiers manquants
       }
+    } catch (_) {
+      // Asset indisponible : on garde une liste vide plutôt que de planter.
     }
 
     // Fallback: manually inject missing critical cities.
