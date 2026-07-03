@@ -1193,6 +1193,78 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
+  /// Mots trop génériques pour compter comme information nouvelle dans une
+  /// puce "details" (liaison, remplissage, localisation générique).
+  static const Set<String> _kDetailFillerWords = {
+    'avec', 'pour', 'dans', 'chez', 'vers', 'sans', 'sous', 'entre',
+    'plus', 'tres', 'tout', 'toute', 'tous', 'toutes', 'cette', 'votre',
+    'notre', 'leur', 'elle', 'nous', 'vous', 'sont', 'etre', 'avoir',
+    'faire', 'merci', 'besoin', 'recherche', 'recherchee', 'demande',
+    'secteur', 'zone', 'ville', 'commune', 'quartier',
+  };
+
+  String _normalizeDetailText(String input) {
+    const accents = 'àâäáãåçèéêëìíîïñòóôöõùúûüýÿ';
+    const plain = 'aaaaaaceeeeiiiinooooouuuuyy';
+    final buffer = StringBuffer();
+    for (final rune in input.toLowerCase().runes) {
+      final ch = String.fromCharCode(rune);
+      final idx = accents.indexOf(ch);
+      if (idx >= 0) {
+        buffer.write(plain[idx]);
+      } else if (RegExp(r'[a-z0-9]').hasMatch(ch)) {
+        buffer.write(ch);
+      } else {
+        buffer.write(' ');
+      }
+    }
+    return buffer.toString();
+  }
+
+  List<String> _significantDetailWords(String text) {
+    return _normalizeDetailText(text)
+        .split(RegExp(r'\s+'))
+        .where((w) => w.length >= 4 && !_kDetailFillerWords.contains(w))
+        .toList();
+  }
+
+  /// Deux mots comptent comme la même information s'ils sont identiques,
+  /// si l'un contient l'autre (recherché/cherche) ou s'ils partagent une
+  /// racine d'au moins 5 caractères (réparation/réparer).
+  bool _detailWordsMatch(String a, String b) {
+    if (a == b) return true;
+    if (a.contains(b) || b.contains(a)) return true;
+    final maxCommon = a.length < b.length ? a.length : b.length;
+    var common = 0;
+    while (common < maxCommon && a[common] == b[common]) {
+      common++;
+    }
+    return common >= 5;
+  }
+
+  /// Filtre anti-doublon : écarte les puces "details" qui ne font que
+  /// reformuler la description (ou une puce déjà retenue). Une puce est
+  /// jugée redondante quand au moins 60 % de ses mots significatifs sont
+  /// déjà présents dans le texte de référence.
+  List<String> _filterRedundantDetails(
+    String description,
+    List<String> details,
+  ) {
+    final referenceWords = _significantDetailWords(description);
+    final kept = <String>[];
+    for (final detail in details) {
+      final words = _significantDetailWords(detail);
+      if (words.isEmpty) continue;
+      final matched = words
+          .where((w) => referenceWords.any((d) => _detailWordsMatch(w, d)))
+          .length;
+      if (matched / words.length >= 0.6) continue;
+      kept.add(detail);
+      referenceWords.addAll(words);
+    }
+    return kept;
+  }
+
   String _buildRichDraftDescription(Map<String, dynamic> draft) {
     final shortDescription =
         ((draft['description_courte'] ?? draft['description']) as String? ?? '')
@@ -1206,12 +1278,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final availabilities =
         ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
 
+    // Anti-doublon : le modèle peut renvoyer des puces qui paraphrasent la
+    // transcription déjà présente dans la description — on ne garde que
+    // celles qui apportent une information réellement nouvelle.
+    final uniqueDetails = _filterRedundantDetails(shortDescription, details);
+
     final lines = <String>[];
     if (shortDescription.isNotEmpty) {
       lines.add(shortDescription);
     }
-    if (details.isNotEmpty) {
-      lines.addAll(details.map((detail) => '- $detail'));
+    if (uniqueDetails.isNotEmpty) {
+      lines.addAll(uniqueDetails.map((detail) => '- $detail'));
     }
     if (availabilities.isNotEmpty) {
       lines.add('Disponibilités : $availabilities');

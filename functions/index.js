@@ -375,7 +375,7 @@ Règles de production :
 - Le texte doit rester fidèle à la transcription source. Tu reformules légèrement pour clarifier, mais tu n'ajoutes aucun détail, aucune contrainte ou aucune précision non explicitement dite.
 - Le titre doit être court, clair, spécifique, sans ponctuation marketing, idéalement entre 25 et 60 caractères.
 - "description_courte" doit être une retranscription nettoyée et publiable des faits explicitement mentionnés, en 1 à 3 phrases maximum, sans extrapolation.
-- "details" doit contenir des éléments utiles et actionnables, un item par idée (maximum 4 items).
+- "details" ne doit contenir QUE des informations complémentaires ABSENTES de "description_courte" (contrainte technique, matériel fourni, précision d'accès, référence produit…). Il est INTERDIT d'y reformuler, résumer ou répéter une information déjà présente dans "description_courte" ou la transcription. Si aucune information nouvelle à ajouter, renvoie []. Maximum 4 items, un item par idée.
 - Ne produis PAS de budget, d'urgence ni de disponibilités : l'utilisateur remplit ces champs manuellement dans le formulaire.
 
 Règle d'extraction :
