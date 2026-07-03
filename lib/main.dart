@@ -22,7 +22,7 @@ import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
 import 'pages/home_page.dart';
 import 'pages/publish_offer_page.dart';
-import 'pages/admin_space_page.dart';
+import 'pages/admin_space_loader.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'services/city_search.dart';
 import 'services/app_check_bootstrap.dart';
@@ -1053,7 +1053,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),
         '/account': (_) => const HomePage(),
-        '/admin': (_) => const AdminSpacePage(),
+        '/admin': (_) => const AdminSpaceLoader(),
         if (!kReleaseMode)
           '/page-catalog': (_) => const PageCaptureCatalogPage(),
         ...buildSecondaryNamedRoutes(),

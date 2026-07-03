@@ -11,7 +11,7 @@ import '../pages/account_page.dart';
 import '../pages/admin/ad_placeholder_images_admin_page.dart';
 import '../pages/admin_hero_slides_page.dart';
 import '../pages/admin_photo_reviews_page.dart';
-import '../pages/admin_space_page.dart';
+import '../pages/admin_space_loader.dart';
 import '../pages/auth/forgot_password_page.dart';
 import '../pages/auth/login_page.dart';
 import '../pages/auth/register_page.dart';
@@ -369,7 +369,7 @@ class PageCaptureCatalogPage extends StatelessWidget {
       group: 'Admin',
       description: 'Espace admin — KPIs, config, outils.',
       status: PageStatus.active,
-      builder: (_) => const AdminSpacePage(),
+      builder: (_) => const AdminSpaceLoader(),
     ),
     PageCaptureEntry(
       number: 31,

@@ -1,37 +1,29 @@
-# Flutter
--keep class io.flutter.** { *; }
--keep class io.flutter.plugins.** { *; }
--dontwarn io.flutter.**
+# ── Règles R8 minimales ─────────────────────────────────────────────
+# Les bibliothèques AndroidX, Kotlin, Firebase et Play Services embarquent
+# leurs propres règles consumer-proguard : les sur-keep globaux (`-keep
+# class androidx.** { *; }` etc.) neutralisaient R8 et gonflaient l'APK.
+# On ne garde ici que ce que les plugins ne déclarent pas eux-mêmes.
 
-# Firebase / Google Play Services
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
--dontwarn com.google.firebase.**
--dontwarn com.google.android.gms.**
+# Flutter engine (chargé par réflexion depuis le code natif)
+-keep class io.flutter.app.** { *; }
+-keep class io.flutter.plugin.** { *; }
+-keep class io.flutter.util.** { *; }
+-keep class io.flutter.view.** { *; }
+-keep class io.flutter.embedding.** { *; }
+-keep class io.flutter.plugins.** { *; }
+-dontwarn io.flutter.embedding.**
 
 # Firebase Crashlytics — conserver les stack traces lisibles
 -keepattributes SourceFile,LineNumberTable
 -keep public class * extends java.lang.Exception
 -renamesourcefileattribute SourceFile
 
-# Google Mobile Ads (AdMob)
--keep class com.google.android.gms.ads.** { *; }
--dontwarn com.google.android.gms.ads.**
-
-# Google UMP (User Messaging Platform — consentement RGPD)
+# Google UMP (User Messaging Platform — consentement RGPD), chargé par réflexion
 -keep class com.google.android.ump.** { *; }
 
-# reCAPTCHA Enterprise (App Check / anti-spam)
+# reCAPTCHA Enterprise (App Check) — accès par réflexion documenté
 -keep class com.google.android.recaptcha.** { *; }
 -dontwarn com.google.android.recaptcha.**
 
 # Play Core (split install requis par Flutter deferred components / R8)
 -dontwarn com.google.android.play.core.**
-
-# Kotlin
--keep class kotlin.** { *; }
--dontwarn kotlin.**
-
-# AndroidX
--keep class androidx.** { *; }
--dontwarn androidx.**

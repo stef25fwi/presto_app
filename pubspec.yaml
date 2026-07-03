@@ -52,6 +52,7 @@ dependencies:
   app_settings: ^7.0.0
   flutter_app_badger: ^1.5.0
   flutter_image_compress: ^2.3.0
+  cached_network_image: ^3.4.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

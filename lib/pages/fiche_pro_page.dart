@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1051,8 +1052,8 @@ class _FicheProPageState extends State<FicheProPage> {
                     topLeft: Radius.circular(11),
                     bottomLeft: Radius.circular(11),
                   ),
-                  child: Image.network(
-                    imageUrl,
+                  child: Image(
+                    image: CachedNetworkImageProvider(imageUrl),
                     width: 72,
                     height: 72,
                     fit: BoxFit.cover,
@@ -1242,8 +1243,8 @@ class _FicheProPageState extends State<FicheProPage> {
                                       child: ClipRRect(
                                         borderRadius:
                                             BorderRadius.circular(10),
-                                        child: Image.network(
-                                          url,
+                                        child: Image(
+                                          image: CachedNetworkImageProvider(url),
                                           width: 90,
                                           height: 90,
                                           fit: BoxFit.cover,

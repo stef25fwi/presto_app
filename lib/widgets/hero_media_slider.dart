@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,7 +59,7 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
   void _precacheSlideImages() {
     for (final slide in widget.slides) {
       if (!slide.isVideo && slide.mediaUrl.isNotEmpty) {
-        precacheImage(NetworkImage(slide.mediaUrl), context);
+        precacheImage(CachedNetworkImageProvider(slide.mediaUrl), context);
       }
     }
   }
@@ -331,8 +332,8 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
   @override
   Widget build(BuildContext context) {
     if (!widget.slide.isVideo) {
-      return Image.network(
-        widget.slide.mediaUrl,
+      return Image(
+        image: CachedNetworkImageProvider(widget.slide.mediaUrl),
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
