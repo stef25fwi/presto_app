@@ -62,7 +62,9 @@ void main() {
     );
 
     expect(result, isNotNull);
-    expect(result?.name, 'ANSE BERTRAND');
+    // Référentiel unifié cities_compact.json : noms canoniques accentués
+    // (« Anse-Bertrand ») au lieu des anciens chunks en majuscules.
+    expect(result?.name, 'Anse-Bertrand');
     expect(result?.postalCode, '97121');
   });
 
