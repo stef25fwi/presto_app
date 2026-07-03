@@ -667,10 +667,10 @@ class _FicheProPageState extends State<FicheProPage> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: _kOrange.withValues(alpha: 0.12),
+                  color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: _kOrange, size: 20),
+                child: Icon(icon, color: const Color(0xFF6B7280), size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -707,11 +707,9 @@ class _FicheProPageState extends State<FicheProPage> {
 
   Widget _emptyHint(String text) => Text(
         text,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 13,
-          color: widget.isOwner
-              ? _kOrange.withValues(alpha: 0.55)
-              : const Color(0xFF9CA3AF),
+          color: Color(0xFF9CA3AF),
           fontStyle: FontStyle.italic,
         ),
       );
@@ -1064,16 +1062,16 @@ class _FicheProPageState extends State<FicheProPage> {
                 Container(
                   width: 72,
                   height: 72,
-                  decoration: BoxDecoration(
-                    color: _kOrange.withValues(alpha: 0.08),
-                    borderRadius: const BorderRadius.only(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(11),
                       bottomLeft: Radius.circular(11),
                     ),
                   ),
                   child: const Icon(
                     Icons.local_offer_outlined,
-                    color: _kOrange,
+                    color: Color(0xFF6B7280),
                     size: 28,
                   ),
                 ),
@@ -1101,7 +1099,7 @@ class _FicheProPageState extends State<FicheProPage> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: _kOrange,
+                            color: Color(0xFF6B7280),
                           ),
                         ),
                       ],
