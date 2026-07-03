@@ -3583,11 +3583,43 @@ class _ConversationPatternBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: CustomPaint(
-        painter: _ConversationPatternPainter(),
-        size: Size.infinite,
-      ),
+    return Stack(
+      children: [
+        IgnorePointer(
+          child: CustomPaint(
+            painter: _ConversationPatternPainter(),
+            size: Size.infinite,
+          ),
+        ),
+        Positioned(
+          bottom: -60,
+          right: -40,
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.08,
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 32,
+                      spreadRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.account_circle,
+                  size: 280,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
