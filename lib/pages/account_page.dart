@@ -1,6 +1,7 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ import '../constants.dart';
 import '../features/account/signed_out_account_fallback.dart';
 import '../features/micro_ia/micro_ia_service.dart';
 import '../models/admin_access_state.dart';
-import 'admin_space_page.dart';
+import 'admin_space_loader.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
@@ -738,7 +739,7 @@ class _AccountPageState extends State<AccountPage> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const AdminSpacePage(),
+                      builder: (_) => const AdminSpaceLoader(),
                     ),
                   );
                 },
@@ -3225,7 +3226,7 @@ class _AccountPageState extends State<AccountPage> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const AdminSpacePage(),
+                            builder: (_) => const AdminSpaceLoader(),
                           ),
                         );
                       },
@@ -3371,7 +3372,7 @@ class _AccountPageState extends State<AccountPage> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const AdminSpacePage(),
+                        builder: (_) => const AdminSpaceLoader(),
                       ),
                     );
                   },
@@ -3507,12 +3508,12 @@ class _AccountPageState extends State<AccountPage> {
                     radius: 45,
                     backgroundColor: Colors.white,
                     backgroundImage:
-                        AssetImage('assets/images/default_avatar.png'),
+                        AssetImage('assets/images/default_avatar.webp'),
                   ),
                   if (visiblePhotoUrl.isNotEmpty)
                     ClipOval(
-                      child: Image.network(
-                        visiblePhotoUrl,
+                      child: Image(
+                        image: CachedNetworkImageProvider(visiblePhotoUrl),
                         fit: BoxFit.cover,
                         width: 90,
                         height: 90,
@@ -3728,12 +3729,12 @@ class _AccountPageState extends State<AccountPage> {
                     radius: 45,
                     backgroundColor: Colors.white,
                     backgroundImage:
-                        AssetImage('assets/images/default_avatar.png'),
+                        AssetImage('assets/images/default_avatar.webp'),
                   ),
                   if (visiblePhotoUrl.isNotEmpty)
                     ClipOval(
-                      child: Image.network(
-                        visiblePhotoUrl,
+                      child: Image(
+                        image: CachedNetworkImageProvider(visiblePhotoUrl),
                         fit: BoxFit.cover,
                         width: 90,
                         height: 90,
