@@ -38,7 +38,11 @@
     "deploy": "npm run build && firebase deploy --only functions",
     "logs": "firebase functions:log",
     "marketplace:migrate:private-contacts:dry-run": "node scripts/migrate_listing_private_contacts.mjs",
-    "marketplace:migrate:private-contacts": "node scripts/migrate_listing_private_contacts.mjs --apply"
+    "marketplace:migrate:private-contacts": "node scripts/migrate_listing_private_contacts.mjs --apply",
+    "admin:claims:dry-run": "node scripts/migrate_admin_claims.mjs",
+    "admin:claims:apply": "node scripts/migrate_admin_claims.mjs --apply",
+    "admin:claims:apply:revoke": "node scripts/migrate_admin_claims.mjs --apply --revoke-tokens",
+    "admin:claims:verify": "node scripts/migrate_admin_claims.mjs --verify"
   },
   "dependencies": {
     "@google-cloud/speech": "^6.7.1",
