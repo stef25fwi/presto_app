@@ -224,16 +224,30 @@ class MicroIaService {
   /// Process audio and optionally generate a draft in a single round-trip.
   /// When [generateDraft] is true, the CF merges STT + OpenAI draft
   /// to eliminate one network round-trip (~1-2s saved).
+  ///
+  /// L'audio peut être fourni de deux façons exclusives :
+  /// - [audioBase64] + [audioContentType] : bytes envoyés directement dans le
+  ///   payload du callable (chemin rapide — évite l'upload Storage côté client
+  ///   et le re-download côté serveur).
+  /// - [storagePath] : chemin Firebase Storage (fallback pour gros audios).
   static Future<Map<String, dynamic>> processAudio({
-    required String storagePath,
+    String? storagePath,
+    String? audioBase64,
+    String? audioContentType,
     String? languageCode,
     bool generateDraft = false,
     String? draftCity,
     String? draftCategory,
     String? debugLabel,
   }) async {
+    final hasInlineAudio = (audioBase64 ?? '').isNotEmpty;
+    if (!hasInlineAudio && (storagePath ?? '').isEmpty) {
+      throw ArgumentError(
+        'processAudio requires either storagePath or audioBase64.',
+      );
+    }
     final clientRequestId =
-        '${DateTime.now().millisecondsSinceEpoch}_${storagePath.hashCode}';
+        '${DateTime.now().millisecondsSinceEpoch}_${(storagePath ?? '').hashCode}';
 
     Future<Map<String, dynamic>> invokeCallable(
       MicroIaSecureContext secureContext,
@@ -280,7 +294,10 @@ class MicroIaService {
           name: 'microIaProcessAudio',
           timeout: const Duration(seconds: 75),
           parameters: <String, dynamic>{
-            'storagePath': storagePath,
+            if ((storagePath ?? '').isNotEmpty) 'storagePath': storagePath,
+            if (hasInlineAudio) 'audioBase64': audioBase64,
+            if (hasInlineAudio && audioContentType != null)
+              'audioContentType': audioContentType,
             if (languageCode != null) 'languageCode': languageCode,
             if (generateDraft) 'generateDraft': true,
             if (generateDraft && draftCity != null) 'draftCity': draftCity,
@@ -344,7 +361,7 @@ class MicroIaService {
             keys: {
               'component': 'MicroIaService',
               'function': 'microIaProcessAudio',
-              'storagePath': storagePath,
+              'storagePath': storagePath ?? '(inline)',
               'languageCode': languageCode ?? '',
               'generateDraft': generateDraft.toString(),
               'debugLabel': debugLabel ?? '',
@@ -361,7 +378,7 @@ class MicroIaService {
         keys: {
           'component': 'MicroIaService',
           'function': 'microIaProcessAudio',
-          'storagePath': storagePath,
+          'storagePath': storagePath ?? '(inline)',
           'languageCode': languageCode ?? '',
           'generateDraft': generateDraft.toString(),
           'debugLabel': debugLabel ?? '',
@@ -379,7 +396,7 @@ class MicroIaService {
         keys: {
           'component': 'MicroIaService',
           'function': 'microIaProcessAudio',
-          'storagePath': storagePath,
+          'storagePath': storagePath ?? '(inline)',
           'languageCode': languageCode ?? '',
           'generateDraft': generateDraft.toString(),
           'debugLabel': debugLabel ?? '',

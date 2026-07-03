@@ -242,23 +242,39 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) async {
     _appendPublishAiTrace(
       'upload_audio',
-      'Préparation upload ${audioBytes.length} bytes, $contentType, .$extension',
+      'Préparation envoi ${audioBytes.length} bytes, $contentType, .$extension',
     );
     _logMicroIaDebug(
       'UPLOAD',
       'chunk=final bytes=${audioBytes.length} contentType=$contentType extension=$extension',
     );
-    final storagePath = await _listingAudioAiService.uploadAudioBytes(
-      ownerUid: ownerUid,
-      audioBytes: audioBytes,
-      contentType: contentType,
-      extension: extension,
-    );
-    _appendPublishAiTrace(
-      'upload_audio',
-      'Audio uploadé vers $storagePath',
-      level: PublishAiTraceLevel.success,
-    );
+
+    // ⚡ Chemin rapide : l'audio part en base64 directement dans le callable,
+    // sans passer par Firebase Storage (upload client + re-download serveur
+    // évités, ~1-2,5 s gagnées). Fallback Storage pour les gros audios.
+    const inlineAudioLimitBytes = 2 * 1024 * 1024;
+    final useInlineAudio = audioBytes.length <= inlineAudioLimitBytes;
+
+    String? storagePath;
+    if (useInlineAudio) {
+      _appendPublishAiTrace(
+        'upload_audio',
+        'Envoi direct dans le callable (${audioBytes.length} bytes, sans upload Storage)',
+        level: PublishAiTraceLevel.success,
+      );
+    } else {
+      storagePath = await _listingAudioAiService.uploadAudioBytes(
+        ownerUid: ownerUid,
+        audioBytes: audioBytes,
+        contentType: contentType,
+        extension: extension,
+      );
+      _appendPublishAiTrace(
+        'upload_audio',
+        'Audio uploadé vers $storagePath',
+        level: PublishAiTraceLevel.success,
+      );
+    }
 
     _appendPublishAiTrace(
       'microia_callable',
@@ -269,6 +285,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final currentCity = _locationController.text.trim();
     final out = await MicroIaService.processAudio(
       storagePath: storagePath,
+      audioBase64: useInlineAudio ? base64Encode(audioBytes) : null,
+      audioContentType: useInlineAudio ? contentType : null,
       languageCode: OpenAiConfig.defaultLanguageCode,
       generateDraft: true,
       draftCity: currentCity.isNotEmpty ? currentCity : null,
@@ -2918,9 +2936,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       try {
+        // Pas de refresh forcé ici : le token a déjà été rafraîchi au
+        // démarrage du micro (_startMic) — on réutilise la session chaude
+        // pour ne pas payer un aller-retour réseau au moment du stop.
         final secureContext = await _requirePublishAiSecureContext(
           stage: 'webMic.stop',
-          forceRefreshToken: true,
+          forceRefreshToken: false,
           showUserMessage: false,
         );
         final uid = secureContext?.uid;
@@ -2932,9 +2953,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         }
 
         final blob = await _webRec.stopToBlob();
+        // preferRawBytes: opus/webm brut envoyé tel quel (~10× plus léger que
+        // le WAV) — la conversion WAV 16k se fait côté serveur via ffmpeg,
+        // bien plus vite que decode+resample sur le thread UI.
         final audioUpload = await webBlobToMicroIaUpload(
           blob,
-          preferRawBytes: false,
+          preferRawBytes: true,
         );
         _appendPublishAiTrace(
           'web_audio',
@@ -3063,9 +3087,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _uploadAndTranscribe(String localPath) async {
     // Upload vers Firebase Storage puis appel de la Cloud Function.
     // Le traitement reste côté backend pour conserver les secrets serveur.
+    // Token déjà rafraîchi au démarrage du micro : pas de refresh forcé au
+    // stop, la session chaude suffit (gain ~0,5-1 s sur le remplissage IA).
     final secureContext = await _requirePublishAiSecureContext(
       stage: 'uploadAndTranscribe',
-      forceRefreshToken: true,
+      forceRefreshToken: false,
       showUserMessage: false,
     );
     final uid = secureContext?.uid;

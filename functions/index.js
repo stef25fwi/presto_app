@@ -1964,7 +1964,8 @@ exports.microIaProcessAudio = onCall(
     console.log("[microIaProcessAudio] version=2026-01-01-ffmpeg-webm-1");
     try {
       const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-      const { storagePath, languageCode, generateDraft: wantDraft, draftCity, draftCategory } = req.data || {};
+      const { storagePath, audioBase64, audioContentType, languageCode, generateDraft: wantDraft, draftCity, draftCategory } = req.data || {};
+      const hasInlineAudio = typeof audioBase64 === 'string' && audioBase64.length > 0;
       const clientAuthUid = String(req.data?.clientAuthUid || '').trim() || null;
       const clientAuthEmail = String(req.data?.clientAuthEmail || '').trim() || null;
       const clientAuthSource = String(req.data?.clientAuthSource || '').trim() || null;
@@ -1997,6 +1998,7 @@ exports.microIaProcessAudio = onCall(
         clientTokenPresent,
         clientAppCheckTokenPresent,
         storagePath: earlyStoragePathRedacted,
+        inlineAudio: hasInlineAudio,
       });
 
       if (!uid) {
@@ -2022,33 +2024,43 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
-      if (!storagePath || typeof storagePath !== "string") {
-        throw new HttpsError("invalid-argument", "storagePath is required (Firebase Storage path).");
+      if (!hasInlineAudio && (!storagePath || typeof storagePath !== "string")) {
+        throw new HttpsError("invalid-argument", "storagePath or audioBase64 is required.");
       }
 
       // 🔒 Rate limiting
-      const isStreamingChunk = storagePath.startsWith('stt_streaming/');
+      const isStreamingChunk = !hasInlineAudio && storagePath.startsWith('stt_streaming/');
       await rateLimitOrThrow({ uid, action: 'micro_ia_process', limit: isStreamingChunk ? 40 : 10, windowSec: 60 });
 
-      const storagePathRedacted = redactStoragePath(storagePath);
+      const storagePathRedacted = hasInlineAudio ? '(inline)' : redactStoragePath(storagePath);
 
-      // Empêche chemins bizarres / traversal
-      if (storagePath.includes('..') || storagePath.startsWith('/') || storagePath.includes('\\')) {
-        throw new HttpsError("invalid-argument", "Invalid storagePath.");
-      }
+      // Extension du conteneur source (sert à nommer le fichier temporaire ffmpeg).
+      let sourceExt = '.bin';
+      // Objet Storage à nettoyer après traitement (chemin Storage uniquement).
+      let file = null;
 
-      // Ownership strict: stt/${uid}_*.wav OU stt_streaming/${uid}/*_chunk.wav
-      const expectedPrefix = `stt/${uid}_`;
-      const expectedStreamingPrefix = `stt_streaming/${uid}/`;
-      const isWavPath = storagePath.endsWith('.wav');
-      const isWebmPath = storagePath.endsWith('.webm');
-      const isAacPath = storagePath.endsWith('.aac');
-      const isM4aPath = storagePath.endsWith('.m4a');
-      const isMp4Path = storagePath.endsWith('.mp4');
-      const ownsPath = storagePath.startsWith(expectedPrefix) || storagePath.startsWith(expectedStreamingPrefix);
-      const validExt = isWavPath || isWebmPath || isAacPath || isM4aPath || isMp4Path;
-      if (!ownsPath || !validExt) {
-        throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
+      if (!hasInlineAudio) {
+        // Empêche chemins bizarres / traversal
+        if (storagePath.includes('..') || storagePath.startsWith('/') || storagePath.includes('\\')) {
+          throw new HttpsError("invalid-argument", "Invalid storagePath.");
+        }
+
+        // Ownership strict: stt/${uid}_*.wav OU stt_streaming/${uid}/*_chunk.wav
+        const expectedPrefix = `stt/${uid}_`;
+        const expectedStreamingPrefix = `stt_streaming/${uid}/`;
+        const isWavPath = storagePath.endsWith('.wav');
+        const isWebmPath = storagePath.endsWith('.webm');
+        const isAacPath = storagePath.endsWith('.aac');
+        const isM4aPath = storagePath.endsWith('.m4a');
+        const isMp4Path = storagePath.endsWith('.mp4');
+        const ownsPath = storagePath.startsWith(expectedPrefix) || storagePath.startsWith(expectedStreamingPrefix);
+        const validExt = isWavPath || isWebmPath || isAacPath || isM4aPath || isMp4Path;
+        if (!ownsPath || !validExt) {
+          throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
+        }
+        sourceExt = isWebmPath
+          ? '.webm'
+          : (isAacPath ? '.aac' : (isM4aPath ? '.m4a' : (isMp4Path ? '.mp4' : '.wav')));
       }
 
       const cfg = await getMicroIaConfig();
@@ -2058,37 +2070,69 @@ exports.microIaProcessAudio = onCall(
       // Objectif: réponse très rapide, avec fallback limité uniquement si le 1er résultat est trop faible.
       const ultraFastEnabled = cfg.ultraFastEnabled === true;
 
-      // Garde-fous via metadata Storage AVANT download (coûts + RAM)
-      const bucket = admin.storage().bucket();
-      const file = bucket.file(storagePath);
-      let meta;
-      try {
-        const [m] = await file.getMetadata();
-        meta = m || null;
-      } catch (e) {
-        console.warn("[microIaProcessAudio] META", { requestId, storagePath: storagePathRedacted, err: e?.message || String(e) });
-        throw new HttpsError("not-found", "Audio file not found.");
-      }
-
-      const objectBytes = Number(meta?.size || 0);
-      const contentType = meta?.contentType || null;
       const maxBytes = 20_000_000; // 20MB hard limit
-      if (!Number.isFinite(objectBytes) || objectBytes <= 0) {
-        throw new HttpsError("failed-precondition", "Audio file is empty.");
-      }
-      if (objectBytes > maxBytes) {
-        throw new HttpsError("failed-precondition", `Audio trop gros (${objectBytes} bytes).`);
-      }
-
-      if (!isAllowedAudioContentType(contentType)) {
-        throw new HttpsError(
-          "failed-precondition",
-          `Type audio invalide (contentType=${contentType || 'null'}). Envoie un WAV (audio/wav) ou WEBM (audio/webm).`
-        );
-      }
-
       const _tDownload = Date.now();
-      let audioBuffer = await loadAudioBufferFromStorage(storagePath);
+      let audioBuffer;
+      let objectBytes;
+
+      if (hasInlineAudio) {
+        // ⚡ Chemin rapide : l'audio arrive directement dans le payload du
+        // callable. Évite l'upload Storage côté client + getMetadata +
+        // download ici (~1-2,5 s économisées sur le remplissage IA).
+        const inlineContentType = String(audioContentType || '').trim().toLowerCase();
+        if (!isAllowedAudioContentType(inlineContentType)) {
+          throw new HttpsError(
+            "failed-precondition",
+            `Type audio invalide (contentType=${inlineContentType || 'null'}). Envoie un WAV (audio/wav) ou WEBM (audio/webm).`
+          );
+        }
+        audioBuffer = Buffer.from(audioBase64, 'base64');
+        objectBytes = audioBuffer.length;
+        if (objectBytes <= 0) {
+          throw new HttpsError("failed-precondition", "Audio file is empty.");
+        }
+        if (objectBytes > maxBytes) {
+          throw new HttpsError("failed-precondition", `Audio trop gros (${objectBytes} bytes).`);
+        }
+        sourceExt = inlineContentType.includes('webm')
+          ? '.webm'
+          : (inlineContentType === 'audio/aac'
+            ? '.aac'
+            : (inlineContentType === 'audio/x-m4a'
+              ? '.m4a'
+              : (inlineContentType.includes('mp4') ? '.mp4' : '.wav')));
+      } else {
+        // Garde-fous via metadata Storage AVANT download (coûts + RAM)
+        const bucket = admin.storage().bucket();
+        file = bucket.file(storagePath);
+        let meta;
+        try {
+          const [m] = await file.getMetadata();
+          meta = m || null;
+        } catch (e) {
+          console.warn("[microIaProcessAudio] META", { requestId, storagePath: storagePathRedacted, err: e?.message || String(e) });
+          throw new HttpsError("not-found", "Audio file not found.");
+        }
+
+        objectBytes = Number(meta?.size || 0);
+        const contentType = meta?.contentType || null;
+        if (!Number.isFinite(objectBytes) || objectBytes <= 0) {
+          throw new HttpsError("failed-precondition", "Audio file is empty.");
+        }
+        if (objectBytes > maxBytes) {
+          throw new HttpsError("failed-precondition", `Audio trop gros (${objectBytes} bytes).`);
+        }
+
+        if (!isAllowedAudioContentType(contentType)) {
+          throw new HttpsError(
+            "failed-precondition",
+            `Type audio invalide (contentType=${contentType || 'null'}). Envoie un WAV (audio/wav) ou WEBM (audio/webm).`
+          );
+        }
+
+        audioBuffer = await loadAudioBufferFromStorage(storagePath);
+      }
+
       let audioInfo = parseWavHeader(audioBuffer);
       const downloadMs = Date.now() - _tDownload;
 
@@ -2098,9 +2142,7 @@ exports.microIaProcessAudio = onCall(
       if (shouldConvertToWav) {
         const _tFfmpeg = Date.now();
         const tmpDir = path.join(os.tmpdir(), 'presto_microia');
-        const ext = isWebmPath
-          ? '.webm'
-          : (isAacPath ? '.aac' : (isM4aPath ? '.m4a' : (isMp4Path ? '.mp4' : '.bin')));
+        const ext = sourceExt;
         const inputPath = path.join(tmpDir, `in_${requestId}${ext}`);
         const outputPath = path.join(tmpDir, `out_${requestId}.wav`);
 
@@ -2286,16 +2328,17 @@ exports.microIaProcessAudio = onCall(
         }
       }
 
-      // 🧹 Cleanup: supprimer le fichier audio source après traitement réussi
-      try {
-        await file.delete();
-        console.log("[microIaProcessAudio] CLEANUP", { requestId, storagePath: storagePathRedacted });
-      } catch (cleanupErr) {
-        console.warn("[microIaProcessAudio] CLEANUP_ERROR", {
-          requestId,
-          storagePath: storagePathRedacted,
-          err: cleanupErr?.message || String(cleanupErr),
-        });
+      // 🧹 Cleanup hors chemin chaud: suppression fire-and-forget du fichier
+      // audio source (chemin Storage uniquement — le chemin inline n'écrit rien).
+      if (file) {
+        file.delete().then(
+          () => console.log("[microIaProcessAudio] CLEANUP", { requestId, storagePath: storagePathRedacted }),
+          (cleanupErr) => console.warn("[microIaProcessAudio] CLEANUP_ERROR", {
+            requestId,
+            storagePath: storagePathRedacted,
+            err: cleanupErr?.message || String(cleanupErr),
+          }),
+        );
       }
 
       // 📊 Décomposition des durées par étape (diagnostic latence pipeline).
