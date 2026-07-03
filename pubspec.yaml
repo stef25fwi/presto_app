@@ -99,7 +99,6 @@ flutter:
   assets:
     - assets/images/
     - assets/images/logowebp.webp
-    - assets/data/cities/
     - assets/data/cities_compact.json
     - assets/carousel_home/
 
