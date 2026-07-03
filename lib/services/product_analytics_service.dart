@@ -2,20 +2,34 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 
+import 'cookie_consent_service.dart';
+
 class ProductAnalyticsService {
   ProductAnalyticsService({
     FirebaseAnalytics? analytics,
     FirebasePerformance? performance,
-  })  : _analytics = analytics ?? FirebaseAnalytics.instance,
+  })  : _analyticsOverride = analytics,
         _performance = performance ?? FirebasePerformance.instance;
 
-  final FirebaseAnalytics _analytics;
+  final FirebaseAnalytics? _analyticsOverride;
   final FirebasePerformance _performance;
+
+  FirebaseAnalytics? _analytics;
+
+  FirebaseAnalytics? get _analyticsInstance {
+    if (!CookieConsentService.instance.canUseAnalytics) return null;
+    return _analytics ??= _analyticsOverride ?? FirebaseAnalytics.instance;
+  }
 
   Future<void> logEvent(
     String name, {
     Map<String, Object?> parameters = const <String, Object?>{},
   }) async {
+    if (_analyticsInstance == null) {
+      debugPrint('[Analytics] skipped by consent for $name');
+      return;
+    }
+
     final sanitized = <String, Object>{};
     for (final entry in parameters.entries) {
       final value = entry.value;
@@ -27,7 +41,7 @@ class ProductAnalyticsService {
       }
     }
     try {
-      await _analytics.logEvent(
+      await _analyticsInstance!.logEvent(
         name: name,
         parameters: sanitized,
       );
@@ -37,6 +51,10 @@ class ProductAnalyticsService {
   }
 
   Future<T> trace<T>(String traceName, Future<T> Function() action) async {
+    if (!CookieConsentService.instance.canUseAnalytics) {
+      return action();
+    }
+
     Trace? trace;
     try {
       trace = _performance.newTrace(traceName);

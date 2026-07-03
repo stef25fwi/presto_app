@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:presto_app/widgets/managed_ad_placeholder_ticker.dart';
 
+import '../services/cookie_consent_service.dart';
+
 /// Config pour les IDs pub AdMob production
 class AdConfig {
   // ====== ANDROID (fr.ilipresto.app) ======
@@ -54,6 +56,7 @@ class _AdBannerState extends State<AdBanner> {
   static bool _initialized = false;
   BannerAd? _bannerAd;
   bool _isLoaded = false;
+  bool _isLoading = false;
 
   // Demande le consentement UMP (Google User Messaging Platform) puis
   // initialise MobileAds. Obligatoire pour les utilisateurs EEA (RGPD).
@@ -113,7 +116,38 @@ class _AdBannerState extends State<AdBanner> {
   void initState() {
     super.initState();
     if (!widget.enabled || kIsWeb) return;
-    _load();
+    CookieConsentService.instance.addListener(_onConsentChanged);
+    _maybeLoad();
+  }
+
+  void _onConsentChanged() {
+    if (!mounted) return;
+
+    if (CookieConsentService.instance.canUseMarketing) {
+      _maybeLoad();
+      return;
+    }
+
+    if (_bannerAd != null) {
+      _bannerAd?.dispose();
+      _bannerAd = null;
+      _isLoaded = false;
+      _isLoading = false;
+      setState(() {});
+    }
+  }
+
+  Future<void> _maybeLoad() async {
+    if (!widget.enabled || kIsWeb) return;
+    if (!CookieConsentService.instance.canUseMarketing) return;
+    if (_isLoaded || _isLoading) return;
+
+    _isLoading = true;
+    try {
+      await _load();
+    } finally {
+      _isLoading = false;
+    }
   }
 
   Future<void> _load() async {
@@ -156,6 +190,7 @@ class _AdBannerState extends State<AdBanner> {
 
   @override
   void dispose() {
+    CookieConsentService.instance.removeListener(_onConsentChanged);
     _bannerAd?.dispose();
     super.dispose();
   }

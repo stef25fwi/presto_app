@@ -937,9 +937,9 @@ exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIO
     ]);
     const latestRaw = latestMessageSnap.docs[0]?.data();
     // Show a placeholder text in the conversation list if the latest message was deleted.
-    const latestMessage = latestRaw
+    const latestMessage = (latestRaw
         ? { ...latestRaw, text: latestRaw.deletedAt ? "Message supprimé" : (latestRaw.text ?? latestRaw.body) }
-        : undefined;
+        : undefined);
     const remainingMessageCount = messageCountSnap.data().count;
     const unreadCount = computeUnreadCountAfterMessageDeletion({
         participants,

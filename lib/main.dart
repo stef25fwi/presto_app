@@ -42,6 +42,9 @@ import 'pages/account/account_security_page.dart';
 import 'pages/account/change_email_page.dart';
 import 'pages/account/change_password_page.dart';
 import 'pages/account/delete_account_page.dart';
+import 'services/app_monitoring_service.dart';
+import 'services/cookie_consent_service.dart';
+import 'widgets/cookie_consent_banner.dart';
 
 export 'pages/publish_offer_page.dart' show PublishOfferPage;
 
@@ -624,6 +627,7 @@ Future<void> _initBackgroundServices() async {
 Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    AppMonitoringService.instance.configureGlobalErrorHandling();
 
     // Affiche immédiatement un premier frame Flutter indépendant de Firebase.
     // Les initialisations lourdes continuent ensuite, puis PrestoApp remplace ce splash.
@@ -642,6 +646,7 @@ Future<void> main() async {
     await typographySettings.load();
 
     await ensureFirebaseInitialized(source: 'main');
+    await CookieConsentService.instance.load();
 
     await bootstrapAppCheck();
 
@@ -1026,10 +1031,20 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
                 data: MediaQuery.of(ctx).copyWith(
                   textScaler: TextScaler.linear(typographySettings.scale),
                 ),
-                child: AdminWebDebugPanel(
-                  child: _PrestoResponsiveFrame(
-                    child: child ?? const SizedBox.shrink(),
-                  ),
+                child: Stack(
+                  children: [
+                    AdminWebDebugPanel(
+                      child: _PrestoResponsiveFrame(
+                        child: child ?? const SizedBox.shrink(),
+                      ),
+                    ),
+                    const Positioned.fill(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: CookieConsentBanner(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
