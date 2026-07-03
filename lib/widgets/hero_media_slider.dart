@@ -370,14 +370,14 @@ class _HeroMediaLoadingFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF1A73E8),
+      color: Colors.transparent,
       alignment: Alignment.center,
       child: const SizedBox(
         width: 24,
         height: 24,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: Colors.white,
+          color: Color(0xFF1A73E8),
         ),
       ),
     );
