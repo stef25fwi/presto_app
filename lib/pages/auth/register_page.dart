@@ -240,6 +240,18 @@ class _RegisterPageState extends State<RegisterPage> {
                             : const Text('Créer mon compte'),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    const Center(
+                      child: Text(
+                        'En vous connectant, vous acceptez nos CGU et notre politique de confidentialité.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B6B6B),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     Center(
                       child: GestureDetector(

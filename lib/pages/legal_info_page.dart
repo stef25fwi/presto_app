@@ -232,6 +232,16 @@ d) Données techniques et de sécurité
 e) Notifications
 • Jeton de notification (ex. Firebase Cloud Messaging) pour vous envoyer des notifications (si vous les activez).
 
+f) Données de paiement limitées
+• Identifiant de transaction
+• Montant ou statut de paiement lorsque nécessaire au support, à la preuve ou au suivi
+• Historique limité des paiements liés au service, sans conservation inutile des moyens de paiement complets
+
+g) Données d’usage
+• Catégories favorites ou préférées
+• Annonces publiées
+• Connexions techniques et journaux d’accès
+
 3. Données sensibles
 La Plateforme n'a pas vocation à collecter des données dites "sensibles" (santé, opinions, etc.). Nous vous invitons à ne pas publier de telles informations dans vos annonces ou messages.
 
@@ -240,6 +250,23 @@ Les données proviennent :
 • de vous (création de compte, annonces, messages)
 • de votre appareil (données techniques)
 • de services techniques nécessaires au fonctionnement (ex. Firebase)
+
+5. Finalités de traitement
+Les données sont utilisées pour :
+• créer et gérer votre compte,
+• publier et modérer les annonces,
+• permettre la messagerie,
+• assurer la sécurité, la prévention de fraude et le support,
+• gérer les notifications,
+• mesurer l’usage et améliorer le service lorsqu’un consentement ou un intérêt légitime le permet,
+• respecter nos obligations légales et comptables.
+
+6. Bases légales
+Les traitements reposent selon les cas sur :
+• l’exécution du contrat ou des mesures précontractuelles,
+• votre consentement,
+• l’intérêt légitime de sécurisation, d’amélioration du service et de prévention des abus,
+• l’obligation légale lorsque la loi impose la conservation ou la communication de certaines données.
 """,
             ),
           ),
@@ -303,6 +330,61 @@ Nous répondons dans les délais prévus par la réglementation (en principe 1 m
 
 4. Réclamation
 Si vous estimez, après nous avoir contactés, que vos droits ne sont pas respectés, vous pouvez déposer une réclamation auprès de l’autorité de contrôle compétente : la CNIL.
+""",
+            ),
+          ),
+          const SizedBox(height: 12),
+          _InfoTileCard(
+            title: "Sous-traitants & transferts",
+            subtitle: "Firebase, Google, Stripe, mail et analytics.",
+            onTap: () => _openSection(
+              title: "Sous-traitants & transferts",
+              content: """
+Politique de confidentialité – Sous-traitants et transferts
+
+1. Sous-traitants utilisés
+Selon les fonctionnalités activées, nous pouvons faire appel à des prestataires techniques pour :
+• Firebase / Google : authentification, base de données, stockage, fonctions, notifications et hébergement,
+• Stripe : traitement des paiements si cette fonctionnalité est utilisée,
+• service mail : envoi des e-mails transactionnels ou de support,
+• outils d’analytics : mesure d’audience et amélioration du produit lorsque le consentement le permet.
+
+2. Transfert hors UE
+Certains prestataires peuvent traiter des données hors de l’Union européenne, selon leurs infrastructures et les services utilisés. Dans ce cas, des garanties appropriées sont recherchées lorsque nécessaire (par exemple clauses contractuelles types ou mécanismes équivalents proposés par le prestataire).
+
+3. Sécurité et limitation
+Nous limitons les données transmises aux seules informations utiles au fonctionnement, au support, à la facturation ou à la sécurité.
+""",
+            ),
+          ),
+          const SizedBox(height: 12),
+          _InfoTileCard(
+            title: "Suppression du compte",
+            subtitle: "Effacement, anonymisation et export des données.",
+            onTap: () => _openSection(
+              title: "Suppression du compte",
+              content: """
+Politique de confidentialité – Suppression du compte et export
+
+1. Demande de suppression
+Vous pouvez demander la suppression de votre compte depuis Mon profil ou via contact@ilipresto.fr.
+
+2. Procédure réelle dans Firebase
+Lorsqu’une suppression est validée, nous visons la suppression ou l’anonymisation des données liées au compte dans Firebase et les services associés, dans la mesure techniquement possible et sous réserve des obligations légales de conservation.
+
+3. Données concernées
+Nous supprimons ou anonymisons notamment :
+• les tokens de notifications,
+• les annonces de l’utilisateur ou leur contenu lorsque cela est possible,
+• les messages lorsque leur suppression est techniquement et juridiquement possible,
+• les données de profil non nécessaires à la conservation légale,
+• les références techniques liées au compte lorsque cela est possible.
+
+4. Données conservées si nécessaire
+Certaines données peuvent être conservées ou anonymisées pour des raisons légales, de sécurité, de prévention de fraude, de comptabilité ou de résolution de litiges.
+
+5. Export des données
+Si vous en faites la demande, nous pouvons fournir un export des données accessibles à votre sujet, dans un format raisonnable et dans les limites des contraintes techniques et des droits de tiers.
 """,
             ),
           ),
@@ -446,6 +528,85 @@ Les utilisateurs restent seuls responsables :
 • des dommages causés dans le cadre d’une prestation.
 
 L’Éditeur ne pourra être tenu responsable des litiges, retards, annulations, défauts de prestation, impayés, ou dommages intervenus entre utilisateurs.
+""",
+            ),
+          ),
+          const SizedBox(height: 12),
+          _InfoTileCard(
+            title: "Statut des utilisateurs",
+            subtitle: "Âge, comptes, vérification, emploi et paiement.",
+            onTap: () => _openSection(
+              title: "Statut des utilisateurs",
+              content: """
+CGU – Statut des utilisateurs, comptes et vérification
+
+1. Âge minimum
+L’utilisation de la Plateforme est réservée aux personnes majeures ou aux personnes disposant de l’autorisation de leur représentant légal. L’utilisateur déclare disposer de la capacité juridique nécessaire pour utiliser le service, publier une annonce, répondre à une annonce ou échanger avec d’autres utilisateurs.
+
+2. Compte personnel
+Le compte personnel est destiné aux utilisateurs particuliers souhaitant publier ou consulter des annonces dans le cadre d’un besoin ponctuel ou non professionnel. L’utilisateur s’engage à utiliser son compte de manière loyale, personnelle et conforme aux présentes CGU.
+
+3. Compte professionnel
+Le compte professionnel est destiné aux utilisateurs agissant dans le cadre d’une activité professionnelle, déclarée ou organisée. Le professionnel reste seul responsable de ses obligations légales, fiscales, sociales, assurantielles, administratives et commerciales, notamment lorsqu’un numéro SIRET, une assurance ou une autorisation spécifique est requis.
+
+4. Compte vérifié par téléphone
+La vérification du numéro de téléphone peut être proposée afin de renforcer la confiance entre utilisateurs. Cette vérification confirme uniquement l’accès à un numéro de téléphone au moment de la vérification. Elle ne constitue pas une certification complète de l’identité, des compétences, des assurances, de la moralité ou de la qualité des prestations proposées.
+
+5. Absence de relation d’emploi
+iliprestō n’est pas employeur des utilisateurs, annonceurs ou prestataires. L’utilisation de la Plateforme ne crée aucun contrat de travail, lien de subordination, mandat, société, partenariat, représentation commerciale ou relation d’agence entre iliprestō et les utilisateurs.
+
+6. Absence de mandat de paiement
+iliprestō n’est pas mandataire de paiement, intermédiaire de paiement ou séquestre entre particuliers. Sauf service de paiement spécifiquement annoncé et encadré par des conditions dédiées, les prix, règlements, remboursements, acomptes ou contestations financières sont convenus et gérés directement entre les utilisateurs, sous leur seule responsabilité.
+
+7. Responsabilité individuelle
+Chaque utilisateur reste seul responsable :
+• des informations qu’il publie,
+• des engagements qu’il prend,
+• des prestations qu’il propose ou accepte,
+• du respect des lois applicables à son activité,
+• des paiements ou accords conclus avec un autre utilisateur.
+""",
+            ),
+          ),
+          const SizedBox(height: 12),
+          _InfoTileCard(
+            title: "Litiges & droit applicable",
+            subtitle: "Blocage, litiges, responsabilité et droit français.",
+            onTap: () => _openSection(
+              title: "Litiges & droit applicable",
+              content: """
+CGU – Litiges, blocage, responsabilité et droit applicable
+
+1. Messagerie interne
+La messagerie interne permet aux utilisateurs d’échanger au sujet d’une annonce ou d’une prestation envisagée. Les utilisateurs s’engagent à rester courtois, à ne pas harceler, menacer, discriminer, frauder ou détourner la messagerie à des fins abusives, commerciales non sollicitées ou illicites.
+
+2. Blocage utilisateur
+La Plateforme peut proposer une fonction permettant de bloquer ou limiter les échanges avec un utilisateur. L’Éditeur peut également restreindre les interactions entre utilisateurs en cas d’abus, de signalement, de risque de fraude, de comportement dangereux ou de non-respect des CGU.
+
+3. Signalement et mesures possibles
+En cas de contenu, message, annonce ou comportement inapproprié, l’utilisateur peut effectuer un signalement via les outils proposés dans l’application ou via le support. Après analyse, l’Éditeur peut notamment masquer un contenu, supprimer une annonce, limiter une fonctionnalité, suspendre un compte, supprimer un compte ou transmettre certains éléments aux autorités compétentes si la loi l’exige.
+
+4. Litiges entre utilisateurs
+Les litiges relatifs à une prestation, un prix, un délai, une annulation, un dommage, un remboursement, un impayé ou une qualité de service relèvent exclusivement des utilisateurs concernés. iliprestō n’est pas partie aux accords conclus entre utilisateurs et n’intervient pas comme arbitre contractuel, employeur, assureur, garant, mandataire ou intermédiaire de paiement.
+
+5. Limites de responsabilité de la Plateforme
+L’Éditeur ne pourra être tenu responsable :
+• des contenus publiés par les utilisateurs,
+• de l’exactitude des annonces,
+• de l’exécution ou de l’absence d’exécution d’une prestation,
+• des dommages causés entre utilisateurs,
+• des paiements, impayés, remboursements ou contestations financières,
+• des pertes liées à une indisponibilité temporaire du service,
+• des comportements frauduleux, illicites ou abusifs d’un utilisateur tiers.
+
+6. Droit applicable
+Les présentes CGU sont soumises au droit français.
+
+7. Tribunal compétent
+En cas de litige relatif à l’utilisation de la Plateforme qui ne pourrait être résolu amiablement, les juridictions compétentes seront déterminées conformément aux règles de procédure applicables. Pour les litiges impliquant un consommateur, les règles protectrices du droit de la consommation demeurent applicables.
+
+8. Modification des CGU
+Les CGU peuvent être modifiées afin de tenir compte des évolutions du service, de la loi, de la sécurité ou de l’organisation de la Plateforme. La version applicable est celle disponible dans l’application ou sur le site au moment de l’utilisation.
 """,
             ),
           ),
