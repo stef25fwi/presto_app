@@ -370,21 +370,16 @@ Priorité des sources si plusieurs blocs sont fournis :
 3. "Description actuelle"
 
 Règles de production :
-- N'invente jamais d'informations absentes ou ambiguës. Si une donnée manque, mets null ou [] et ajoute au besoin une entrée dans "questions_a_poser".
+- N'invente jamais d'informations absentes ou ambiguës. Si une donnée manque, mets null ou [].
 - Corrige les fautes, enlève les hésitations, fusionne les répétitions, mais conserve le sens métier exact.
-- Le texte doit rester fidèle à la transcription source. Tu reformules légèrement pour clarifier, mais tu n'ajoutes aucun détail, aucune contrainte, aucun matériel, aucune disponibilité ou aucune précision non explicitement dite.
+- Le texte doit rester fidèle à la transcription source. Tu reformules légèrement pour clarifier, mais tu n'ajoutes aucun détail, aucune contrainte ou aucune précision non explicitement dite.
 - Le titre doit être court, clair, spécifique, sans ponctuation marketing, idéalement entre 25 et 60 caractères.
 - "description_courte" doit être une retranscription nettoyée et publiable des faits explicitement mentionnés, en 1 à 3 phrases maximum, sans extrapolation.
-- "details" doit contenir des éléments utiles et actionnables, un item par idée.
-- "competences_requises" ne doit contenir que des compétences explicitement demandées ou fortement implicites.
-- "questions_a_poser" ne doit contenir que les questions réellement bloquantes pour publier une annonce de qualité.
+- "details" doit contenir des éléments utiles et actionnables, un item par idée (maximum 4 items).
+- Ne produis PAS de budget, d'urgence ni de disponibilités : l'utilisateur remplit ces champs manuellement dans le formulaire.
 
-Règles d'extraction :
+Règle d'extraction :
 - Ville : reprends la ville mentionnée dans l'entrée. Si elle n'apparaît pas clairement mais qu'une ville de contexte est fournie, tu peux reprendre cette ville de contexte.
-- Secteur : renseigne un quartier, secteur ou zone seulement si explicitement présent.
-- Budget : si l'utilisateur mentionne un montant → type "fixe" ou "horaire" avec les valeurs. Si l'utilisateur dit "à négocier", "à discuter", "prix libre" ou équivalent → type "negotiable", min/max à null. Sinon → type null, min/max null.
-- Urgence : utilise uniquement une des valeurs autorisées si l'urgence est clairement exprimée.
-- Si une information n'est pas dite mot pour mot ou déduite de façon certaine de la transcription, ne l'ajoute pas dans la description ni dans les détails.
 
 Catégorie et sous-catégorie : choisis uniquement parmi cette liste si c'est suffisamment clair, sinon null.
 - Jardinage → sous-cats: Tonte de pelouse, Taille de haies, Débroussaillage, Désherbage / nettoyage massif, Élagage léger, Création de massifs / plantations, Arrosage / entretien régulier, Évacuation des végétaux, Entretien jardin location, Entretien potager
@@ -401,30 +396,14 @@ Catégorie et sous-catégorie : choisis uniquement parmi cette liste si c'est su
 FORMAT JSON OBLIGATOIRE :
 {
   "titre": string,
-  "suggestions_titres": [string, string],
   "categorie": string|null,
   "sous_categorie": string|null,
   "ville": string|null,
-  "secteur": string|null,
-  "budget": {
-    "type": "fixe"|"horaire"|"negotiable"|null,
-    "min": number|null,
-    "max": number|null,
-    "devise": "EUR"
-  },
-  "urgence": "immediat"|"24h"|"demain"|"48h"|"7j"|"flexible"|null,
   "description_courte": string,
-  "details": [string],
-  "competences_requises": [string],
-  "materiel": {
-    "fourni_par_demandeur": [string],
-    "a_prevoir_par_prestataire": [string]
-  },
-  "disponibilites": string|null,
-  "questions_a_poser": [string]
+  "details": [string]
 }`;
 
-async function _internalGenerateDraft({ openai, hint, city, category, lang }) {
+async function _internalGenerateDraft({ openai, hint, city, category, lang, model }) {
   const userPrompt = `Contenu utilisateur à restructurer :
 ${hint}
 
@@ -436,13 +415,15 @@ Contexte disponible :
 Retourne uniquement le JSON demandé.`;
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: model || 'gpt-4o-mini',
     messages: [
       { role: 'system', content: DRAFT_SYSTEM_PROMPT },
       { role: 'user', content: userPrompt }
     ],
     temperature: 0.2,
-    max_tokens: 350,
+    // Schéma allégé (titre/catégorie/ville/description/details uniquement) :
+    // ~150 tokens de sortie suffisent, et chaque token coûte ~13 ms de latence.
+    max_tokens: 180,
     response_format: { type: 'json_object' },
   });
 
@@ -464,18 +445,10 @@ Retourne uniquement le JSON demandé.`;
     console.warn('[_internalGenerateDraft] JSON parse failed, using fallback:', e.message);
     draft = {
       titre: 'Nouvelle demande',
-      suggestions_titres: [],
       description_courte: `Je recherche: ${hint.substring(0, 200)}`,
       categorie: category || null,
       ville: city || null,
-      secteur: null,
-      budget: { type: null, min: null, max: null, devise: 'EUR' },
-      urgence: null,
       details: [],
-      competences_requises: [],
-      materiel: { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
-      disponibilites: null,
-      questions_a_poser: []
     };
   }
 
@@ -491,6 +464,9 @@ Retourne uniquement le JSON demandé.`;
     finalPostalCode = draft.postalCode || '';
   }
 
+  // Les champs budget/urgence/disponibilités (et annexes) ne sont plus
+  // générés par l'IA — l'utilisateur les remplit manuellement. On renvoie
+  // des valeurs neutres pour rester compatible avec les clients existants.
   return {
     title: draft.titre || draft.title || '',
     description: draft.description_courte || draft.description || '',
@@ -498,19 +474,19 @@ Retourne uniquement le JSON demandé.`;
     city: finalCity,
     postalCode: finalPostalCode,
     titre: draft.titre || draft.title || '',
-    suggestions_titres: draft.suggestions_titres || [],
+    suggestions_titres: [],
     description_courte: draft.description_courte || draft.description || '',
     categorie: draft.categorie || category || null,
     sous_categorie: draft.sous_categorie || null,
     ville: finalCity,
-    secteur: draft.secteur || null,
-    budget: draft.budget || { type: null, min: null, max: null, devise: 'EUR' },
-    urgence: draft.urgence || null,
+    secteur: null,
+    budget: { type: null, min: null, max: null, devise: 'EUR' },
+    urgence: null,
     details: draft.details || [],
-    competences_requises: draft.competences_requises || [],
-    materiel: draft.materiel || { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
-    disponibilites: draft.disponibilites || null,
-    questions_a_poser: draft.questions_a_poser || []
+    competences_requises: [],
+    materiel: { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
+    disponibilites: null,
+    questions_a_poser: []
   };
 }
 
@@ -881,13 +857,15 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
         p.microia_ultra_fast?.defaultValue?.value ||
         false
     );
+    // Modèle OpenAI du draft, ajustable sans redéploiement (test latence).
+    const draftModel = String(p.microia_draft_model?.defaultValue?.value || '').trim() || 'gpt-4o-mini';
 
-    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode, audioQuality, ultraFastEnabled };
+    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode, audioQuality, ultraFastEnabled, draftModel };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   } catch (e) {
     console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
-    _microIaCfgCache = { mode: "GOOGLE_ONLY", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false };
+    _microIaCfgCache = { mode: "GOOGLE_ONLY", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false, draftModel: 'gpt-4o-mini' };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }
@@ -2311,6 +2289,7 @@ exports.microIaProcessAudio = onCall(
               city: draftCity || '',
               category: draftCategory || '',
               lang: lang?.startsWith('fr') ? 'fr' : (lang || 'fr'),
+              model: cfg.draftModel,
             }),
             15_000,
             'generate_draft'
