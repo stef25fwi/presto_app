@@ -22,10 +22,13 @@ class AiPublishControl extends StatefulWidget {
     this.isAudioAnalyzing = false,
     required this.onStartRecording,
     required this.onStopRecording,
-    required this.onStartWriting,
+    required this.onSelectVocal,
+    required this.onSelectText,
     required this.onDiagnostic,
     required this.onClear,
     this.showAdminDiagnostics = false,
+    this.highlightVocalCard = false,
+    this.dimVocalCard = false,
   });
 
   final AiPublishState state;
@@ -33,10 +36,13 @@ class AiPublishControl extends StatefulWidget {
   final bool isAudioAnalyzing;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
-  final VoidCallback onStartWriting;
+  final VoidCallback onSelectVocal;
+  final VoidCallback onSelectText;
   final VoidCallback onDiagnostic;
   final VoidCallback onClear;
   final bool showAdminDiagnostics;
+  final bool highlightVocalCard;
+  final bool dimVocalCard;
 
   @override
   State<AiPublishControl> createState() => _AiPublishControlState();
@@ -76,16 +82,21 @@ class _AiPublishControlState extends State<AiPublishControl> {
           isAudioAnalyzing: widget.isAudioAnalyzing,
           method: _method,
           enabled: _isReady,
-          onSelectVocal: () => setState(() => _method = _AiMethod.vocal),
+          onSelectVocal: () {
+            setState(() => _method = _AiMethod.vocal);
+            widget.onSelectVocal();
+          },
           onSelectTexte: () {
             setState(() => _method = _AiMethod.texte);
-            widget.onStartWriting();
+            widget.onSelectText();
           },
         ),
         const SizedBox(height: 16),
         _VocalModeCard(
           state: widget.state,
           visible: _method == _AiMethod.vocal,
+          isHighlighted: widget.highlightVocalCard,
+          isDimmed: widget.dimVocalCard,
           micAnchorLink: widget.micAnchorLink,
           onStartRecording: widget.onStartRecording,
           onStopRecording: widget.onStopRecording,
@@ -241,8 +252,18 @@ class _MethodTabButton extends StatelessWidget {
                     ? const Color(0xFF1A6FFF)
                     : const Color(0xFFD1D5DB)),
             width: 1.5,
-          ),
-        ),
+          ),          boxShadow: [
+            BoxShadow(
+              color: (_isTextAiButton
+                      ? const Color(0xFFFF6600)
+                      : (selected
+                          ? const Color(0xFF1A6FFF)
+                          : Colors.black))
+                  .withValues(alpha: 0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],        ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -301,6 +322,8 @@ class _VocalModeCard extends StatelessWidget {
   const _VocalModeCard({
     required this.state,
     required this.visible,
+    required this.isHighlighted,
+    required this.isDimmed,
     required this.micAnchorLink,
     required this.onStartRecording,
     required this.onStopRecording,
@@ -308,6 +331,8 @@ class _VocalModeCard extends StatelessWidget {
 
   final AiPublishState state;
   final bool visible;
+  final bool isHighlighted;
+  final bool isDimmed;
   final LayerLink micAnchorLink;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
@@ -319,15 +344,42 @@ class _VocalModeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!visible) return const SizedBox.shrink();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEF4FF),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFC8D9FF), width: 1),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-      child: Column(
-        children: [
+    final borderColor = isHighlighted
+        ? const Color(0xFFF8FBFF)
+        : const Color(0xFFC8D9FF);
+    final boxShadow = isHighlighted
+        ? <BoxShadow>[
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.32),
+              blurRadius: 22,
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: const Color(0xFF1A6FFF).withValues(alpha: 0.16),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ]
+        : const <BoxShadow>[];
+
+    return IgnorePointer(
+      ignoring: isDimmed,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 220),
+        opacity: isDimmed ? 0.44 : 1,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF4FF),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: isHighlighted ? 1.2 : 1),
+            boxShadow: boxShadow,
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+          child: Stack(
+            children: [
+              Column(
+                children: [
           // En-tête : icône + titre + sous-titre
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,7 +533,20 @@ class _VocalModeCard extends StatelessWidget {
               ),
             ],
           ),
-        ],
+                ],
+              ),
+              if (isDimmed)
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -514,6 +579,13 @@ class AiWritingButton extends StatelessWidget {
                 ? const Color(0xFFE65500)
                 : const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6600).withValues(alpha: 0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           alignment: Alignment.center,
           child: Row(

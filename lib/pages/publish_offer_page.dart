@@ -59,6 +59,15 @@ import '../widgets/orbiting_ai_visual.dart';
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
     AdminAudioRuntimeStore.instance;
 
+enum PublishOfferAiFlowStep {
+  chooseMethod,
+  voiceSelected,
+  voiceAnalyzing,
+  textSelected,
+  textAnalyzing,
+  completed,
+}
+
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
 
@@ -509,6 +518,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _canPublish = false;
   bool _showDarkOverlay = false;
   String _latestRecognizedTranscript = '';
+  PublishOfferAiFlowStep _publishAiFlowStep =
+      PublishOfferAiFlowStep.chooseMethod;
   bool _isApplyingProgrammaticPublishUpdate = false;
   bool _titleEditedByUser = false;
   bool _descriptionEditedByUser = false;
@@ -1076,6 +1087,185 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_isListening) return AiPublishState.recording;
     if (_isAnalyzing) return AiPublishState.analyzing;
     return AiPublishState.ready;
+  }
+
+  bool get _isPublishFlowCompleted {
+    return _publishAiFlowStep == PublishOfferAiFlowStep.completed;
+  }
+
+  bool get _isVoiceFlowActive {
+    return _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
+        _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing;
+  }
+
+  bool get _isTextFlowActive {
+    return _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
+        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+  }
+
+  void _setPublishAiFlowStep(
+    PublishOfferAiFlowStep nextStep, {
+    String? reason,
+  }) {
+    if (_publishAiFlowStep == nextStep) return;
+    debugPrint(
+      '[PublishOfferAiFlow] step=$nextStep${reason == null ? '' : ' reason=$reason'}',
+    );
+    if (!mounted) {
+      _publishAiFlowStep = nextStep;
+      return;
+    }
+    setState(() {
+      _publishAiFlowStep = nextStep;
+    });
+  }
+
+  void _onSelectVoiceMethod() {
+    _setPublishAiFlowStep(
+      PublishOfferAiFlowStep.voiceSelected,
+      reason: 'voice-tab-selected',
+    );
+  }
+
+  Future<void> _onSelectTextMethod() async {
+    _setPublishAiFlowStep(
+      PublishOfferAiFlowStep.textSelected,
+      reason: 'text-tab-selected',
+    );
+    await _scrollToDescription();
+  }
+
+  void _markPublishAiFlowCompleted(String reason) {
+    _setPublishAiFlowStep(PublishOfferAiFlowStep.completed, reason: reason);
+  }
+
+  void _restorePublishAiFlowAfterError({required bool fromVoice}) {
+    _setPublishAiFlowStep(
+      fromVoice
+          ? PublishOfferAiFlowStep.voiceSelected
+          : PublishOfferAiFlowStep.textSelected,
+      reason: fromVoice ? 'voice-error' : 'text-error',
+    );
+  }
+
+  String get _publishAiGuidanceText {
+    if (_isListening) {
+      return 'Enregistrement en cours. Parlez à l\'IA puis arrêtez pour lancer l\'analyse.';
+    }
+
+    switch (_publishAiFlowStep) {
+      case PublishOfferAiFlowStep.chooseMethod:
+        return 'Choisissez une méthode pour créer votre annonce.';
+      case PublishOfferAiFlowStep.voiceSelected:
+        return 'Parlez à l\'IA : elle remplira votre annonce automatiquement.';
+      case PublishOfferAiFlowStep.voiceAnalyzing:
+        return 'Analyse de votre annonce vocale en cours…';
+      case PublishOfferAiFlowStep.textSelected:
+        return 'Écrivez votre description, puis appuyez sur le bouton orange pour l\'améliorer avec l\'IA.';
+      case PublishOfferAiFlowStep.textAnalyzing:
+        return 'Amélioration de votre description en cours…';
+      case PublishOfferAiFlowStep.completed:
+        return 'Votre annonce est prête. Vous pouvez vérifier les informations avant publication.';
+    }
+  }
+
+  Widget _buildPublishAiFlowHint() {
+    final isCompleted = _isPublishFlowCompleted;
+    final isAnalyzing = _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
+        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: isCompleted
+            ? const Color(0xFFF2F8FF)
+            : const Color(0xFFF8FAFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCompleted
+              ? const Color(0xFFD7E7FF)
+              : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isAnalyzing
+                ? Icons.auto_awesome_rounded
+                : isCompleted
+                    ? Icons.check_circle_outline_rounded
+                    : Icons.tips_and_updates_outlined,
+            color: isCompleted ? kPrestoBlue : const Color(0xFF5B6475),
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _publishAiGuidanceText,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                fontWeight: isCompleted ? FontWeight.w700 : FontWeight.w600,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _guidedSection({
+    required Widget child,
+    required bool isActive,
+    required bool isDimmed,
+    bool neonBorder = false,
+  }) {
+    final showNeon = isActive && neonBorder;
+
+    return IgnorePointer(
+      ignoring: isDimmed,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 220),
+        opacity: isDimmed ? 0.42 : 1,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: showNeon ? const EdgeInsets.all(10) : EdgeInsets.zero,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: showNeon
+                ? Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.2)
+                : null,
+            boxShadow: showNeon
+                ? [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.28),
+                      blurRadius: 22,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Stack(
+            children: [
+              child,
+              if (isDimmed)
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   String? _normalizeDraftMissionDelay(String? rawUrgency) {
@@ -2811,6 +3001,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _startMic() async {
     if (_isListening) return;
+    _setPublishAiFlowStep(
+      PublishOfferAiFlowStep.voiceSelected,
+      reason: 'voice-start-requested',
+    );
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) {
       _appendPublishAiTrace(
@@ -2870,6 +3064,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
         if (!mounted) return;
         setState(() => _isListening = true);
+        _setPublishAiFlowStep(
+          PublishOfferAiFlowStep.voiceSelected,
+          reason: 'voice-recording-started-web',
+        );
         _appendPublishAiTrace(
           'start_mic',
           'Micro web démarré',
@@ -2971,6 +3169,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       _isListening = true;
     });
+    _setPublishAiFlowStep(
+      PublishOfferAiFlowStep.voiceSelected,
+      reason: 'voice-recording-started-mobile',
+    );
     _appendPublishAiTrace(
       'start_mic',
       kIsWeb ? 'Micro en écoute' : 'Enregistrement mobile lancé en AAC/m4a',
@@ -3011,6 +3213,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _isListening = false;
         _isAnalyzing = true;
       });
+      _setPublishAiFlowStep(
+        PublishOfferAiFlowStep.voiceAnalyzing,
+        reason: 'voice-analysis-started-web',
+      );
 
       try {
         // Pas de refresh forcé ici : le token a déjà été rafraîchi au
@@ -3063,6 +3269,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           audioResult['text'] as String,
           combinedDraft: audioResult['draft'] as Map<String, dynamic>?,
         );
+        _markPublishAiFlowCompleted('voice-analysis-success-web');
 
         if (mounted && _isAnalyzing) {
           setState(() => _isAnalyzing = false);
@@ -3094,6 +3301,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}',
           );
         }
+        _restorePublishAiFlowAfterError(fromVoice: true);
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
       }
@@ -3129,8 +3337,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Si l'audio est disponible et cloud STT activé, on passe par la fonction distante
     if (_useCloudStt && recordedPath != null) {
       setState(() => _isAnalyzing = true);
+      _setPublishAiFlowStep(
+        PublishOfferAiFlowStep.voiceAnalyzing,
+        reason: 'voice-analysis-started-mobile',
+      );
       try {
         await _uploadAndTranscribe(recordedPath);
+        _markPublishAiFlowCompleted('voice-analysis-success-mobile');
       } catch (e) {
         _appendPublishAiTrace(
           'stop_mic',
@@ -3146,6 +3359,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
           );
         }
+        _restorePublishAiFlowAfterError(fromVoice: true);
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
       }
@@ -3217,6 +3431,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
   Future<void> _onTapAiAnalyze() async {
+    _setPublishAiFlowStep(
+      PublishOfferAiFlowStep.textSelected,
+      reason: 'text-analysis-requested',
+    );
     final input = _descriptionController.text.trim();
     if (input.isEmpty) {
       showSuccessSnackBar(context, "Veuillez d'abord saisir une description");
@@ -3249,6 +3467,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!appCheckReady) return;
 
     setState(() => _isAnalyzing = true);
+    _setPublishAiFlowStep(
+      PublishOfferAiFlowStep.textAnalyzing,
+      reason: 'text-analysis-started',
+    );
 
     try {
       _appendPublishAiTrace(
@@ -3298,10 +3520,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               ? '✨ Analyse IA complétée\nChamps remplis automatiquement'
               : '✨ Analyse IA complétée — aucun nouveau champ à remplir',
         );
+        _markPublishAiFlowCompleted('text-analysis-success');
         return;
       }
 
       final code = (draft['code'] ?? '').toString();
+      _restorePublishAiFlowAfterError(fromVoice: false);
       showSuccessSnackBar(
         context,
         code == 'deadline-exceeded'
@@ -3310,6 +3534,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     } catch (e) {
       if (!mounted) return;
+      _restorePublishAiFlowAfterError(fromVoice: false);
       showSuccessSnackBar(
         context,
         "Erreur lors de l'analyse : ${_formatMicroIaRuntimeError(e)}",
@@ -3373,6 +3598,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _attemptedSubmit = false;
       _publishLocked = false;
       _canPublish = false;
+      _publishAiFlowStep = PublishOfferAiFlowStep.chooseMethod;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
     unawaited(_prefillPublishFromProfile());
@@ -4098,6 +4324,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   Widget build(BuildContext context) {
     final publishVisuallyDisabled = !_canPublish || _isSubmitting;
+    final isDescriptionActive = _isTextFlowActive;
+    final shouldDimDescription = !_isPublishFlowCompleted && !isDescriptionActive;
+    final shouldDimRemainingSections = !_isPublishFlowCompleted;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -4187,72 +4416,88 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         isAudioAnalyzing: _isAnalyzing,
                         onStartRecording: _startMic,
                         onStopRecording: _stopMic,
-                        onStartWriting: _scrollToDescription,
+                        onSelectVocal: _onSelectVoiceMethod,
+                        onSelectText: _onSelectTextMethod,
                         onDiagnostic: _showPublishAiTraceDialog,
                         onClear: _clearPublishAiTrace,
                         showAdminDiagnostics:
                             _adminAudioRuntimeAccessState == 1,
+                        highlightVocalCard: _isVoiceFlowActive,
+                        dimVocalCard: !_isPublishFlowCompleted && !_isVoiceFlowActive,
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
+                _buildPublishAiFlowHint(),
+                const SizedBox(height: 16),
 
                 // DESCRIPTION
-                _withPublishFieldHighlight(
-                  fieldId: 'description',
-                  child: _withAiPendingOverlay(
-                    showPending:
-                        _showAiPendingForController(_descriptionController),
-                    alignment: Alignment.topRight,
-                    padding: const EdgeInsets.only(top: 14, right: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _descriptionController,
-                          focusNode: _descriptionFocusNode,
-                          textAlignVertical: TextAlignVertical.top,
-                          decoration: InputDecoration(
-                            label: _requiredLabel('Description détaillée'),
-                            alignLabelWithHint: true,
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                _guidedSection(
+                  isActive: isDescriptionActive,
+                  isDimmed: shouldDimDescription,
+                  neonBorder: true,
+                  child: _withPublishFieldHighlight(
+                    fieldId: 'description',
+                    child: _withAiPendingOverlay(
+                      showPending:
+                          _showAiPendingForController(_descriptionController),
+                      alignment: Alignment.topRight,
+                      padding: const EdgeInsets.only(top: 14, right: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextFormField(
+                            controller: _descriptionController,
+                            focusNode: _descriptionFocusNode,
+                            textAlignVertical: TextAlignVertical.top,
+                            decoration: InputDecoration(
+                              label: _requiredLabel('Description détaillée'),
+                              alignLabelWithHint: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                12,
+                                14,
+                                12,
+                                14,
+                              ),
+                              hintText:
+                                  'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
+                              hintStyle: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                color: Color(0xFFBBC0CF),
+                                fontSize: 13.5,
+                                height: 1.4,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.fromLTRB(
-                              12,
-                              14,
-                              12,
-                              14,
-                            ),
-                            hintText:
-                                'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
-                            hintStyle: const TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Color(0xFFBBC0CF),
-                              fontSize: 13.5,
-                              height: 1.4,
-                            ),
+                            minLines: 4,
+                            maxLines: 8,
+                            validator: _validatePublishDescription,
                           ),
-                          minLines: 4,
-                          maxLines: 8,
-                          validator: _validatePublishDescription,
-                        ),
-                        const SizedBox(height: 8),
-                        AiWritingButton(
-                          isAnalyzing: _isAnalyzing,
-                          onTap: !_isAnalyzing && !_isListening
-                              ? _onTapAiAnalyze
-                              : null,
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          AiWritingButton(
+                            isAnalyzing: _isAnalyzing,
+                            onTap: !_isAnalyzing && !_isListening
+                                ? _onTapAiAnalyze
+                                : null,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
 
+                _guidedSection(
+                  isActive: _isPublishFlowCompleted,
+                  isDimmed: shouldDimRemainingSections,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                 // TITRE
                 _withPublishFieldHighlight(
                   fieldId: 'title',
@@ -4669,6 +4914,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     ),
                   ),
                 ),
+                    ],
+                  ),
+                ),
               ],
             ),
               ),
@@ -4686,18 +4934,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     ),
                   ),
                 ),
-              if (_isAnalyzing)
-                Positioned.fill(
-                  child: AbsorbPointer(
-                    absorbing: true,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.54),
-                      ),
-                    ),
-                  ),
-                ),
-              if (_isAnalyzing)
+              if (_publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CompositedTransformFollower(
