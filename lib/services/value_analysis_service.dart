@@ -177,12 +177,15 @@ class ValueAnalysisService {
   ) {
     final total = userBaseValue + reproductionValue + resaleValue;
 
-    final userPercentage =
-        total > 0 ? (userBaseValue / total * 100).clamp(0, 100) : 0;
-    final reproPercentage =
-        total > 0 ? (reproductionValue / total * 100).clamp(0, 100) : 0;
-    final resalePercentage =
-        total > 0 ? (resaleValue / total * 100).clamp(0, 100) : 0;
+    final userPercentage = total > 0
+      ? (userBaseValue / total * 100).clamp(0.0, 100.0).toDouble()
+      : 0.0;
+    final reproPercentage = total > 0
+      ? (reproductionValue / total * 100).clamp(0.0, 100.0).toDouble()
+      : 0.0;
+    final resalePercentage = total > 0
+      ? (resaleValue / total * 100).clamp(0.0, 100.0).toDouble()
+      : 0.0;
 
     return ValueAnalysisBreakdown(
       userBaseWeight: 0.30,
