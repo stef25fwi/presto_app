@@ -2112,10 +2112,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _onFocusManagerChange() {
+    if (FocusManager.instance.primaryFocus == null) {
+      _handlePublishKeyboardDismissed();
+    }
     if (!_showDarkOverlay) return;
     if (FocusManager.instance.primaryFocus == null) return;
     if (!mounted) return;
     setState(() => _showDarkOverlay = false);
+  }
+
+  // Quand le clavier se ferme (plus aucun champ focus) pendant l'étape de
+  // description guidée par l'IA, la position de scroll avait été calculée
+  // pour la hauteur réduite (clavier ouvert). Une fois le clavier rétracté,
+  // on relance ensureVisible sur la nouvelle hauteur pour que le bouton IA
+  // et le reste du contenu réapparaissent au lieu de laisser un espace vide.
+  void _handlePublishKeyboardDismissed() {
+    if (_publishAiFlowStep != PublishOfferAiFlowStep.textSelected) return;
+    Future.delayed(const Duration(milliseconds: 260), () {
+      if (!mounted) return;
+      final ctx = _descriptionFieldKey.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        alignment: 0.05,
+      );
+    });
   }
 
   Future<void> _loadMarketplacePhotoLimit() async {
