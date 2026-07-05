@@ -23,7 +23,7 @@ class CookieConsentBanner extends StatelessWidget {
               child: Material(
                 elevation: 18,
                 borderRadius: BorderRadius.circular(22),
-                color: const Color(0xFF121826),
+                color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(18),
                   child: Column(
@@ -33,7 +33,7 @@ class CookieConsentBanner extends StatelessWidget {
                       const Text(
                         'Cookies et traceurs',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.black87,
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                         ),
@@ -41,7 +41,7 @@ class CookieConsentBanner extends StatelessWidget {
                       const SizedBox(height: 8),
                       const Text(
                         'Nous utilisons les traceurs strictement nécessaires au fonctionnement, et des traceurs analytics ou marketing uniquement après votre accord.',
-                        style: TextStyle(color: Colors.white70, height: 1.35),
+                        style: TextStyle(color: Colors.black54, height: 1.35),
                       ),
                       const SizedBox(height: 16),
                       Wrap(
@@ -54,8 +54,8 @@ class CookieConsentBanner extends StatelessWidget {
                               showCookiePreferencesDialog(context);
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white24),
+                              foregroundColor: Colors.black87,
+                              side: const BorderSide(color: Colors.black26),
                             ),
                             child: const Text('Personnaliser'),
                           ),
@@ -64,8 +64,8 @@ class CookieConsentBanner extends StatelessWidget {
                               await CookieConsentService.instance.refuseAll();
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white24),
+                              foregroundColor: Colors.black87,
+                              side: const BorderSide(color: Colors.black26),
                             ),
                             child: const Text('Refuser'),
                           ),
