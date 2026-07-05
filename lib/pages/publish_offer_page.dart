@@ -557,6 +557,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   final GlobalKey _titleFieldKey = GlobalKey();
   final GlobalKey _categoryFieldKey = GlobalKey();
+  final GlobalKey _publishAiFlowHintKey = GlobalKey();
   final GlobalKey _descriptionFieldKey = GlobalKey();
   final GlobalKey _cityFieldKey = GlobalKey();
   final GlobalKey _phoneFieldKey = GlobalKey();
@@ -1194,6 +1195,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
 
     return AnimatedContainer(
+      key: _publishAiFlowHintKey,
       duration: const Duration(milliseconds: 220),
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -1276,7 +1278,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6B7280).withValues(alpha: 0.32),
+                      color: const Color(0xFF6B7280).withValues(alpha: 0.42),
                       borderRadius: borderRadius,
                     ),
                   ),
@@ -2750,20 +2752,29 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _scrollToDescription() async {
-    final ctx = _descriptionFieldKey.currentContext;
-    if (ctx == null) return;
+    final shouldShowHintFirst =
+        _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
+        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+    final hintCtx = _publishAiFlowHintKey.currentContext;
+    final descriptionCtx = _descriptionFieldKey.currentContext;
+    final targetCtx = shouldShowHintFirst && hintCtx != null
+        ? hintCtx
+        : descriptionCtx;
+    if (targetCtx == null) return;
+
     await Scrollable.ensureVisible(
-      ctx,
+      targetCtx,
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
-      alignment: 0.5,
+      alignment: shouldShowHintFirst ? 0.08 : 0.5,
     );
     // Positionne le curseur au début pour que la suggestion soit visible en italique
     _descriptionController.selection = TextSelection.fromPosition(
       TextPosition(offset: _descriptionController.text.length),
     );
     if (_descriptionTapToEditPrimed) {
-      FocusScope.of(ctx).requestFocus(_descriptionFocusNode);
+      final focusCtx = descriptionCtx ?? targetCtx;
+      FocusScope.of(focusCtx).requestFocus(_descriptionFocusNode);
     }
   }
 
