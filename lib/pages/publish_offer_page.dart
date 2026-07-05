@@ -1191,7 +1191,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Widget _buildPublishAiFlowHint() {
-    if (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod) {
+    if (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod ||
+        _publishAiFlowStep == PublishOfferAiFlowStep.voiceSelected ||
+        _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing) {
       return const SizedBox.shrink();
     }
 
@@ -4505,7 +4507,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (_publishAiFlowStep != PublishOfferAiFlowStep.chooseMethod) ...[
+                if (_publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
+                    _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing ||
+                    _publishAiFlowStep == PublishOfferAiFlowStep.completed) ...[
                   _buildPublishAiFlowHint(),
                   const SizedBox(height: 16),
                 ],
@@ -5041,22 +5045,22 @@ class _PublishAiMicroOrbitFocus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF13C8FF).withValues(alpha: 0.24),
-            blurRadius: 16,
+            color: const Color(0xFF1A73E8).withValues(alpha: 0.30),
+            blurRadius: 14,
             spreadRadius: 1,
           ),
         ],
       ),
       child: const OrbitingAiVisual(
-        size: 56,
-        strokeColor: Color(0xCC4FD8FF),
-        dotColor: Color(0xFF7FE5FF),
+        size: 48,
+        strokeColor: Color(0xCC1A73E8),
+        dotColor: Color(0xFF4EA1FF),
       ),
     );
   }

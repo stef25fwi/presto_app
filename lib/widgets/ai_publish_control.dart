@@ -539,7 +539,7 @@ class _VocalModeCard extends StatelessWidget {
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
+                      color: const Color(0xFF6B7280).withValues(alpha: 0.42),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
