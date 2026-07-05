@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -1254,24 +1255,51 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) {
     final showNeon = isActive && neonBorder;
     final borderRadius = BorderRadius.circular(22);
+    Widget sectionChild = child;
+
+    if (isDimmed) {
+      sectionChild = ClipRRect(
+        borderRadius: borderRadius,
+        child: ColorFiltered(
+          colorFilter: const ColorFilter.matrix(<double>[
+            0.45, 0.45, 0.45, 0, 0,
+            0.45, 0.45, 0.45, 0, 0,
+            0.45, 0.45, 0.45, 0, 0,
+            0, 0, 0, 1, 0,
+          ]),
+          child: ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.6),
+            child: child,
+          ),
+        ),
+      );
+    }
 
     return IgnorePointer(
       ignoring: isDimmed,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 220),
-        opacity: isDimmed ? 0.42 : 1,
+        opacity: isDimmed ? 0.72 : 1,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           padding: showNeon ? const EdgeInsets.all(10) : EdgeInsets.zero,
           decoration: BoxDecoration(
             borderRadius: borderRadius,
             border: showNeon
-                ? Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.2)
+                ? Border.all(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    width: 1.15,
+                  )
                 : null,
             boxShadow: showNeon
                 ? [
                     BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.28),
+                      color: Colors.white.withValues(alpha: 0.18),
+                      blurRadius: 16,
+                      spreadRadius: 1,
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFFFF6600).withValues(alpha: 0.18),
                       blurRadius: 22,
                       spreadRadius: 1,
                     ),
@@ -1280,13 +1308,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
           child: Stack(
             children: [
-              child,
+              sectionChild,
               if (isDimmed)
                 Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6B7280).withValues(alpha: 0.42),
-                      borderRadius: borderRadius,
+                  child: ClipRRect(
+                    borderRadius: borderRadius,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B7280).withValues(alpha: 0.34),
+                        borderRadius: borderRadius,
+                      ),
                     ),
                   ),
                 ),

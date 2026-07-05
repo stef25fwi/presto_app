@@ -345,18 +345,23 @@ class _VocalModeCard extends StatelessWidget {
     if (!visible) return const SizedBox.shrink();
 
     final borderColor = isHighlighted
-        ? const Color(0xFFF8FBFF)
+        ? Colors.white.withValues(alpha: 0.90)
         : const Color(0xFFC8D9FF);
     final boxShadow = isHighlighted
         ? <BoxShadow>[
             BoxShadow(
-              color: Colors.white.withValues(alpha: 0.32),
-              blurRadius: 22,
+              color: Colors.white.withValues(alpha: 0.18),
+              blurRadius: 16,
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: const Color(0xFF1A6FFF).withValues(alpha: 0.16),
-              blurRadius: 20,
+              color: const Color(0xFF1A73E8).withValues(alpha: 0.22),
+              blurRadius: 24,
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: const Color(0xFF1A73E8).withValues(alpha: 0.12),
+              blurRadius: 18,
               offset: const Offset(0, 8),
             ),
           ]
@@ -457,22 +462,11 @@ class _VocalModeCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: _isAnalyzing
-                    ? const Center(
-                        child: SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    : Icon(
-                        _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
-                        color: Colors.white,
-                        size: 32,
-                      ),
+                child: Icon(
+                  _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
             ),
           ),
