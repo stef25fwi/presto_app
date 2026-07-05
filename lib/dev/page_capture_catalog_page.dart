@@ -567,7 +567,11 @@ class _EntryTile extends StatelessWidget {
         ),
       ),
       trailing: FilledButton(
-        onPressed: () => Navigator.of(context).pushNamed(route),
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => _PageCaptureViewer(entry: item),
+          ),
+        ),
         child: const Text('Ouvrir'),
       ),
     );
@@ -661,8 +665,7 @@ class _PageCaptureViewer extends StatelessWidget {
               child: Row(
                 children: [
                   FilledButton.icon(
-                    onPressed: () =>
-                        Navigator.of(context).pushReplacementNamed('/page-catalog'),
+                    onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back),
                     label: const Text('Catalogue'),
                   ),

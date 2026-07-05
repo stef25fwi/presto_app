@@ -520,6 +520,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String _latestRecognizedTranscript = '';
   PublishOfferAiFlowStep _publishAiFlowStep =
       PublishOfferAiFlowStep.chooseMethod;
+  bool _descriptionTapToEditPrimed = false;
   bool _isApplyingProgrammaticPublishUpdate = false;
   bool _titleEditedByUser = false;
   bool _descriptionEditedByUser = false;
@@ -1121,6 +1122,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _onSelectVoiceMethod() {
+    if (_descriptionTapToEditPrimed) {
+      setState(() {
+        _descriptionTapToEditPrimed = false;
+      });
+      _descriptionFocusNode.unfocus();
+    }
     _setPublishAiFlowStep(
       PublishOfferAiFlowStep.voiceSelected,
       reason: 'voice-tab-selected',
@@ -1128,6 +1135,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _onSelectTextMethod() async {
+    if (mounted) {
+      setState(() {
+        _descriptionTapToEditPrimed = true;
+      });
+    } else {
+      _descriptionTapToEditPrimed = true;
+    }
     _setPublishAiFlowStep(
       PublishOfferAiFlowStep.textSelected,
       reason: 'text-tab-selected',
@@ -1136,6 +1150,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _markPublishAiFlowCompleted(String reason) {
+    if (_descriptionTapToEditPrimed) {
+      setState(() {
+        _descriptionTapToEditPrimed = false;
+      });
+    }
     _setPublishAiFlowStep(PublishOfferAiFlowStep.completed, reason: reason);
   }
 
@@ -1225,6 +1244,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     bool neonBorder = false,
   }) {
     final showNeon = isActive && neonBorder;
+    final borderRadius = BorderRadius.circular(22);
 
     return IgnorePointer(
       ignoring: isDimmed,
@@ -1235,7 +1255,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           duration: const Duration(milliseconds: 220),
           padding: showNeon ? const EdgeInsets.all(10) : EdgeInsets.zero,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: borderRadius,
             border: showNeon
                 ? Border.all(color: Colors.white.withValues(alpha: 0.95), width: 1.2)
                 : null,
@@ -1256,8 +1276,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(22),
+                      color: const Color(0xFF6B7280).withValues(alpha: 0.32),
+                      borderRadius: borderRadius,
                     ),
                   ),
                 ),
@@ -2736,14 +2756,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ctx,
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
-      alignment: 0.1,
+      alignment: 0.5,
     );
     // Positionne le curseur au début pour que la suggestion soit visible en italique
     _descriptionController.selection = TextSelection.fromPosition(
-      const TextPosition(offset: 0),
+      TextPosition(offset: _descriptionController.text.length),
     );
-    // Donne le focus au champ descriptif
-    FocusScope.of(ctx).requestFocus(_descriptionFocusNode);
+    if (_descriptionTapToEditPrimed) {
+      FocusScope.of(ctx).requestFocus(_descriptionFocusNode);
+    }
+  }
+
+  void _unlockDescriptionEditing() {
+    if (!_descriptionTapToEditPrimed) return;
+    setState(() {
+      _descriptionTapToEditPrimed = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _descriptionFocusNode.requestFocus();
+      SystemChannels.textInput.invokeMethod<void>('TextInput.show');
+    });
   }
 
   Future<void> _scrollToFirstInvalidPublishField() async {
@@ -4473,7 +4506,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           TextFormField(
                             controller: _descriptionController,
                             focusNode: _descriptionFocusNode,
+                            readOnly: _descriptionTapToEditPrimed,
+                            showCursor: _descriptionTapToEditPrimed ? true : null,
                             textAlignVertical: TextAlignVertical.top,
+                            onTap: _unlockDescriptionEditing,
                             decoration: InputDecoration(
                               label: _requiredLabel('Description détaillée'),
                               alignLabelWithHint: true,
