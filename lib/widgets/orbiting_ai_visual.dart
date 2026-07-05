@@ -100,7 +100,7 @@ class _OrbitPainter extends CustomPainter {
     ];
 
     for (final position in positions) {
-      canvas.drawCircle(position, 2.8, dotPaint);
+      canvas.drawCircle(position, 3.6, dotPaint);
     }
   }
 
