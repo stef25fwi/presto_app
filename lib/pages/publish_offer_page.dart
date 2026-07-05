@@ -1147,6 +1147,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       PublishOfferAiFlowStep.textSelected,
       reason: 'text-tab-selected',
     );
+    await WidgetsBinding.instance.endOfFrame;
     await _scrollToDescription();
   }
 
@@ -2759,7 +2760,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final shouldShowHintFirst =
         _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
         _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
-    final hintCtx = _publishAiFlowHintKey.currentContext;
+    BuildContext? hintCtx = _publishAiFlowHintKey.currentContext;
+    if (shouldShowHintFirst && hintCtx == null) {
+      await WidgetsBinding.instance.endOfFrame;
+      hintCtx = _publishAiFlowHintKey.currentContext;
+    }
     final descriptionCtx = _descriptionFieldKey.currentContext;
     final targetCtx = shouldShowHintFirst && hintCtx != null
         ? hintCtx
