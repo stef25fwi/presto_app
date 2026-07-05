@@ -1190,6 +1190,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Widget _buildPublishAiFlowHint() {
+    if (_publishAiFlowStep == PublishOfferAiFlowStep.chooseMethod) {
+      return const SizedBox.shrink();
+    }
+
     final isCompleted = _isPublishFlowCompleted;
     final isAnalyzing = _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
         _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
@@ -4496,8 +4500,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildPublishAiFlowHint(),
-                const SizedBox(height: 16),
+                if (_publishAiFlowStep != PublishOfferAiFlowStep.chooseMethod) ...[
+                  _buildPublishAiFlowHint(),
+                  const SizedBox(height: 16),
+                ],
 
                 // DESCRIPTION
                 _guidedSection(
@@ -5029,13 +5035,23 @@ class _PublishAiMicroOrbitFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 70,
-      height: 70,
-      child: OrbitingAiVisual(
-        size: 70,
-        strokeColor: Color(0xDDFFFFFF),
-        dotColor: Colors.white,
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF13C8FF).withValues(alpha: 0.24),
+            blurRadius: 16,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: const OrbitingAiVisual(
+        size: 56,
+        strokeColor: Color(0xCC4FD8FF),
+        dotColor: Color(0xFF7FE5FF),
       ),
     );
   }
