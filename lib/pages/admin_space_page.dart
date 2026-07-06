@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'admin_hero_slides_page.dart';
+import 'admin_messaging_moderation_page.dart';
 import 'admin_photo_reviews_page.dart';
 import 'admin_typography_page.dart';
 import 'admin_monitoring_health_page.dart';
@@ -3165,6 +3166,21 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                             : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
                     badge: null,
                     iconColor: prestoBlue,
+                  ),
+                  _KpiTile(
+                    icon: Icons.shield_outlined,
+                    title: 'Messages modérés',
+                    subtitle:
+                        'Journal récent\ndes messages en revue',
+                    badge: null,
+                    iconColor: const Color(0xFF0F766E),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const AdminMessagingModerationPage(),
+                        ),
+                      );
+                    },
                   ),
                   _KpiTile(
                     icon: Icons.photo_library_outlined,
