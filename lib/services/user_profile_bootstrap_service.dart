@@ -6,6 +6,8 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../features/subscriptions/subscription_models.dart';
+
 import '../config/app_check_state.dart';
 
 class UserProfileBootstrapException implements Exception {
@@ -419,6 +421,7 @@ class UserProfileBootstrapService {
       if (displayName.isNotEmpty) 'pseudo': displayName,
       'profileCompleted': false,
       'profileCompleteness': 0.0,
+      ...buildDefaultSubscriptionUserFields(),
     };
 
     // Probe existence: try server then cache. If both fail (offline, App

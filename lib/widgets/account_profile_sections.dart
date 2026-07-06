@@ -16,6 +16,7 @@ class AccountProfileFormSection extends StatefulWidget {
   final String phoneCountryCode;
   final bool isEditing;
   final bool isSaving;
+  final bool showTitle;
   final VoidCallback onStartEditing;
   final Future<void> Function() onSave;
   final ValueChanged<String> onPhoneCountryCodeChanged;
@@ -31,6 +32,7 @@ class AccountProfileFormSection extends StatefulWidget {
     required this.phoneCountryCode,
     required this.isEditing,
     required this.isSaving,
+    this.showTitle = true,
     required this.onStartEditing,
     required this.onSave,
     required this.onPhoneCountryCodeChanged,
@@ -87,14 +89,16 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Mon profil',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+        if (widget.showTitle) ...[
+          const Text(
+            'Mon profil',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
         Container(
           decoration: BoxDecoration(
             color: Colors.white,

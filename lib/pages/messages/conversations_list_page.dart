@@ -1381,33 +1381,38 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     required int unreadCount,
     required int archivedCount,
   }) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    return Padding(
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
       child: Row(
         children: [
-          _ConversationFilterChip(
-            label: 'Tous',
-            count: allCount,
-            selected: _activeFilter == _ConversationListFilter.all,
-            onTap: () =>
-                setState(() => _activeFilter = _ConversationListFilter.all),
+          Expanded(
+            child: _ConversationFilterChip(
+              label: 'Tous',
+              count: allCount,
+              selected: _activeFilter == _ConversationListFilter.all,
+              onTap: () =>
+                  setState(() => _activeFilter = _ConversationListFilter.all),
+            ),
           ),
           const SizedBox(width: 8),
-          _ConversationFilterChip(
-            label: 'Non lus',
-            count: unreadCount,
-            selected: _activeFilter == _ConversationListFilter.unread,
-            onTap: () =>
-                setState(() => _activeFilter = _ConversationListFilter.unread),
+          Expanded(
+            child: _ConversationFilterChip(
+              label: 'Non lus',
+              count: unreadCount,
+              selected: _activeFilter == _ConversationListFilter.unread,
+              onTap: () => setState(
+                  () => _activeFilter = _ConversationListFilter.unread),
+            ),
           ),
           const SizedBox(width: 8),
-          _ConversationFilterChip(
-            label: 'Archives',
-            count: archivedCount,
-            selected: _activeFilter == _ConversationListFilter.archived,
-            onTap: () => setState(
-                () => _activeFilter = _ConversationListFilter.archived),
+          Expanded(
+            child: _ConversationFilterChip(
+              label: 'Archives',
+              count: archivedCount,
+              selected: _activeFilter == _ConversationListFilter.archived,
+              onTap: () => setState(
+                  () => _activeFilter = _ConversationListFilter.archived),
+            ),
           ),
         ],
       ),
@@ -2506,27 +2511,42 @@ class _ConversationAvatar extends StatelessWidget {
   Widget _buildAvatar({required bool isOnline, required String photoUrl}) {
     return Stack(
       children: [
-        CircleAvatar(
-          radius: 27,
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF2250F4),
-          foregroundImage:
-              photoUrl.isNotEmpty ? profileAvatarImageProvider(photoUrl) : null,
-          onForegroundImageError: (error, stackTrace) {
-            debugPrint(
-              '[ConversationAvatar] image load failed '
-              'userId=$userId url=$photoUrl error=$error',
-            );
-          },
-          child: photoUrl.isEmpty
-              ? Text(
-                  title.trim().isNotEmpty ? title.trim()[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                  ),
-                )
-              : null,
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 27,
+            backgroundColor: Colors.white,
+            foregroundColor: const Color(0xFF2250F4),
+            foregroundImage: photoUrl.isNotEmpty
+                ? profileAvatarImageProvider(photoUrl)
+                : null,
+            onForegroundImageError: (error, stackTrace) {
+              debugPrint(
+                '[ConversationAvatar] image load failed '
+                'userId=$userId url=$photoUrl error=$error',
+              );
+            },
+            child: photoUrl.isEmpty
+                ? Text(
+                    title.trim().isNotEmpty
+                        ? title.trim()[0].toUpperCase()
+                        : '?',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                  )
+                : null,
+          ),
         ),
         Positioned(
           right: 1,
@@ -2572,6 +2592,7 @@ class _ConversationFilterChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
+        width: double.infinity,
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
         decoration: BoxDecoration(
@@ -2582,7 +2603,7 @@ class _ConversationFilterChip extends StatelessWidget {
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               label,

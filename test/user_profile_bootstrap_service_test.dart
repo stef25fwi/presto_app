@@ -83,5 +83,33 @@ void main() {
       expect(source.contains('collection("user_profiles")'), isFalse);
       expect(source.contains("users/"), isTrue);
     });
+
+    test('sync auth ne reinitialise pas les champs abonnement existants', () async {
+      final source = await File(
+        'lib/services/user_profile_bootstrap_service.dart',
+      ).readAsString();
+
+      final authSyncMarker = "final authSyncData = <String, dynamic>{";
+      final createDataMarker = "final createData = <String, dynamic>{";
+      final authSyncStart = source.indexOf(authSyncMarker);
+      final createDataStart = source.indexOf(createDataMarker);
+
+      expect(authSyncStart, greaterThanOrEqualTo(0));
+      expect(createDataStart, greaterThan(authSyncStart));
+
+      final authSyncBlock = source.substring(authSyncStart, createDataStart);
+      final createDataBlock = source.substring(createDataStart);
+
+      expect(
+        authSyncBlock.contains('buildDefaultSubscriptionUserFields'),
+        isFalse,
+        reason: 'Le sync auth ne doit pas écraser un plan existant.',
+      );
+      expect(
+        createDataBlock.contains('buildDefaultSubscriptionUserFields'),
+        isTrue,
+        reason: 'La création initiale peut semer les champs par défaut.',
+      );
+    });
   });
 }

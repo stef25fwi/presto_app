@@ -10,17 +10,11 @@ import 'admin_hero_slides_page.dart';
 import 'admin_photo_reviews_page.dart';
 import 'admin_typography_page.dart';
 import 'admin_monitoring_health_page.dart';
-import '../dev/page_capture_catalog_page.dart';
 import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 import '../constants.dart';
 import '../features/micro_ia/micro_ia_service.dart';
-import 'account/mes_avis_page.dart';
-import 'account/mes_projets_fiche_page.dart';
-import 'account/verifier_siret_page.dart';
-import 'fiche_pro_page.dart';
-import 'toolbox_page.dart';
-import 'entrepreneur_toolbox_page.dart';
+import '../features/subscriptions/subscription_widgets.dart';
 import '../services/admin_access_resolver.dart';
 import '../services/admin_broadcast_service.dart';
 import '../services/firebase_functions_region.dart';
@@ -64,24 +58,6 @@ class _FirebaseDeployDiagnosticRule {
     required this.summary,
     required this.action,
     required this.needles,
-  });
-}
-
-class _WorkInProgressPageEntry {
-  final String title;
-  final String subtitle;
-  final String status;
-  final IconData icon;
-  final Color color;
-  final WidgetBuilder builder;
-
-  const _WorkInProgressPageEntry({
-    required this.title,
-    required this.subtitle,
-    required this.status,
-    required this.icon,
-    required this.color,
-    required this.builder,
   });
 }
 
@@ -2784,6 +2760,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               const SizedBox(height: 14),
               _buildAdminStatusBanner(),
               const SizedBox(height: 14),
+              const AdminSubscriptionTile(),
+              const SizedBox(height: 14),
               _buildFirebaseDeployDiagnosticPanel(),
               const SizedBox(height: 14),
               GridView(
@@ -2966,20 +2944,6 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       );
                     },
                   ),
-                  _KpiTile(
-                    icon: Icons.construction_rounded,
-                    title: 'Pages en travaux',
-                    subtitle: 'Écrans existants hors navigation prod',
-                    badge: '5',
-                    iconColor: prestoBlue,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const _WorkInProgressPagesPage(),
-                        ),
-                      );
-                    },
-                  ),
                   if (!kReleaseMode)
                     _KpiTile(
                       icon: Icons.layers_rounded,
@@ -3035,168 +2999,6 @@ class _AudioPopupAdminPage extends StatelessWidget {
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: PaymentInfoAudioAdminSection(),
-        ),
-      ),
-    );
-  }
-}
-
-class _WorkInProgressPagesPage extends StatelessWidget {
-  const _WorkInProgressPagesPage();
-
-  List<_WorkInProgressPageEntry> _entries(String? currentUid) {
-    final normalizedUid = currentUid?.trim();
-
-    return <_WorkInProgressPageEntry>[
-      _WorkInProgressPageEntry(
-        title: 'Mes avis',
-        subtitle: 'Page compte existante non branchée au menu principal.',
-        status: 'Hors prod',
-        icon: Icons.star_rounded,
-        color: const Color(0xFFFF6600),
-        builder: (_) => const MesAvisPage(),
-      ),
-      _WorkInProgressPageEntry(
-        title: 'Ma fiche projet',
-        subtitle: 'Suivi des parcours utilisateur côté compte.',
-        status: 'Hors prod',
-        icon: Icons.folder_special_rounded,
-        color: const Color(0xFF1A73E8),
-        builder: (_) => const MesProjetsFichePage(),
-      ),
-      _WorkInProgressPageEntry(
-        title: 'Vérifier mon SIRET',
-        subtitle: 'Écran métier isolé, prêt pour tests fonctionnels.',
-        status: 'Hors prod',
-        icon: Icons.verified_rounded,
-        color: const Color(0xFF0F9D58),
-        builder: (_) => const VerifierSiretPage(),
-      ),
-      if (normalizedUid != null && normalizedUid.isNotEmpty)
-        _WorkInProgressPageEntry(
-          title: 'Fiche pro',
-          subtitle: 'Version profil pro accessible ici avec l’utilisateur courant.',
-          status: 'Preview',
-          icon: Icons.storefront_rounded,
-          color: const Color(0xFF8E24AA),
-          builder: (_) => FicheProPage(
-            uid: normalizedUid,
-            isOwner: true,
-          ),
-        ),
-      _WorkInProgressPageEntry(
-        title: 'Boîte à outils (ancienne)',
-        subtitle: 'ToolboxPage — remplacée par ToolboxHubPage. À migrer ou supprimer.',
-        status: 'Déprécié',
-        icon: Icons.construction_rounded,
-        color: const Color(0xFF6D4C41),
-        builder: (_) => const ToolboxPage(),
-      ),
-      _WorkInProgressPageEntry(
-        title: 'Toolbox entrepreneur (alias)',
-        subtitle: 'EntrepreneurToolboxPage — alias de ToolboxJeMeLancePage, sans usage actif.',
-        status: 'Déprécié',
-        icon: Icons.handyman_rounded,
-        color: const Color(0xFF546E7A),
-        builder: (_) => const EntrepreneurToolboxPage(),
-      ),
-      _WorkInProgressPageEntry(
-        title: 'Catalogue des pages',
-        subtitle: 'Galerie interne des écrans pour prévisualisation rapide.',
-        status: 'Interne',
-        icon: Icons.layers_rounded,
-        color: const Color(0xFFF29900),
-        builder: (_) => const PageCaptureCatalogPage(),
-      ),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-    final entries = _entries(currentUid);
-
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A73E8),
-        foregroundColor: Colors.white,
-        elevation: 0.5,
-        titleSpacing: 16,
-        title: const Text(
-          'Pages en travaux',
-          style: kPrestoAppBarTitleStyle,
-        ),
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          children: [
-            _CardShell(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Zone de pré-production',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Ces écrans existent déjà dans le code mais restent hors navigation principale. L’objectif est de permettre le travail en parallèle puis la bascule vers la prod quand ils sont prêts.',
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        const _StatusBadge(
-                          label: 'Accès admin uniquement',
-                          color: Color(0xFFFF6600),
-                        ),
-                        _StatusBadge(
-                          label: '${entries.length} pages',
-                          color: const Color(0xFF1A73E8),
-                        ),
-                        if (currentUid == null || currentUid.isEmpty)
-                          _StatusBadge(
-                            label: 'Fiche pro masquée sans session',
-                            color: Colors.red.shade700,
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            for (final entry in entries) ...[
-              _ActionCard(
-                icon: entry.icon,
-                title: entry.title,
-                subtitle: '${entry.subtitle}\nStatut: ${entry.status}',
-                color: entry.color,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: entry.builder,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ],
         ),
       ),
     );

@@ -3193,7 +3193,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               width: 44,
                               height: 44,
                               child: Material(
-                                color: Colors.white,
+                                color: (_isBlocked ||
+                                        _isUploadingAttachment ||
+                                        _isSending)
+                                    ? const Color(0xFFF3F4F6)
+                                    : Colors.white,
                                 shape: const CircleBorder(
                                   side: BorderSide(
                                     color: Color(0xFFD1D5DB),
@@ -3214,7 +3218,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       color: (_isBlocked ||
                                               _isUploadingAttachment ||
                                               _isSending)
-                                          ? const Color(0xFFCBD5E1)
+                                          ? const Color(0xFF94A3B8)
                                           : const Color(0xFF6B7280),
                                       size: 22,
                                     ),

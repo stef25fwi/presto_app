@@ -17,6 +17,7 @@ import '../app_core.dart';
 import '../constants.dart';
 import '../features/account/signed_out_account_fallback.dart';
 import '../features/micro_ia/micro_ia_service.dart';
+import '../features/subscriptions/subscription_widgets.dart';
 import '../models/admin_access_state.dart';
 import 'admin_space_loader.dart';
 import '../services/admin_access_resolver.dart';
@@ -151,6 +152,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _isUploadingProfilePhoto = false;
   bool _isSigningOut = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
+  bool _isProfileSectionExpanded = false;
   bool _isPublishedOffersExpanded = false;
   bool _isFavoriteOffersExpanded = false;
   bool _profileLoadError = false;
@@ -2669,8 +2671,7 @@ class _AccountPageState extends State<AccountPage> {
                                       value: completeness,
                                       minHeight: 6,
                                       backgroundColor: Colors.grey.shade300,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
                                         completeness >= 1.0
                                             ? Colors.green
                                             : completeness >= 0.75
@@ -2744,29 +2745,48 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     const SizedBox(height: 24),
-                    AccountProfileFormSection(
-                      firstName: _profileFirstName,
-                      lastName: _profileLastName,
-                      departmentController: _departmentController,
-                      pseudoController: _profilePseudoController,
-                      cityController: _profileCityController,
-                      phoneController: _profilePhoneController,
-                      phoneCountryCode: _profilePhoneCountryCode,
-                      isEditing: _isEditingProfile,
-                      isSaving: _isSavingProfile,
-                      onStartEditing: () {
-                        setState(() => _isEditingProfile = true);
+                    _buildAccountSectionCard(
+                      icon: Icons.person_rounded,
+                      title: 'Mon profil',
+                      description:
+                          'Consulte et modifie tes informations personnelles.',
+                      isExpanded: _isProfileSectionExpanded,
+                      onToggle: () {
+                        setState(() {
+                          _isProfileSectionExpanded =
+                              !_isProfileSectionExpanded;
+                        });
                       },
-                      onPhoneCountryCodeChanged: (code) {
-                        if (!mounted || _profilePhoneCountryCode == code) {
-                          return;
-                        }
-                        setState(() => _profilePhoneCountryCode = code);
-                      },
-                      onSave: () async {
-                        await _saveProfile(user);
-                      },
+                      child: AccountProfileFormSection(
+                        firstName: _profileFirstName,
+                        lastName: _profileLastName,
+                        departmentController: _departmentController,
+                        pseudoController: _profilePseudoController,
+                        cityController: _profileCityController,
+                        phoneController: _profilePhoneController,
+                        phoneCountryCode: _profilePhoneCountryCode,
+                        isEditing: _isEditingProfile,
+                        isSaving: _isSavingProfile,
+                        showTitle: false,
+                        onStartEditing: () {
+                          setState(() {
+                            _isEditingProfile = true;
+                            _isProfileSectionExpanded = true;
+                          });
+                        },
+                        onPhoneCountryCodeChanged: (code) {
+                          if (!mounted || _profilePhoneCountryCode == code) {
+                            return;
+                          }
+                          setState(() => _profilePhoneCountryCode = code);
+                        },
+                        onSave: () async {
+                          await _saveProfile(user);
+                        },
+                      ),
                     ),
+                    const SizedBox(height: 24),
+                    const AccountNotificationsTile(),
                     const SizedBox(height: 24),
                     _buildAccountSectionCard(
                       icon: Icons.tune_rounded,
@@ -2880,7 +2900,7 @@ class _AccountPageState extends State<AccountPage> {
                       child: const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 24),
-                    const AccountNotificationsTile(),
+                    SubscriptionSection(userId: user.uid),
                     const SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,
@@ -3518,8 +3538,7 @@ class _AccountPageState extends State<AccountPage> {
                         width: 90,
                         height: 90,
                         gaplessPlayback: true,
-                        errorBuilder: (_, __, ___) =>
-                            const SizedBox.shrink(),
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
                   if (_isUploadingProfilePhoto)
@@ -3739,8 +3758,7 @@ class _AccountPageState extends State<AccountPage> {
                         width: 90,
                         height: 90,
                         gaplessPlayback: true,
-                        errorBuilder: (_, __, ___) =>
-                            const SizedBox.shrink(),
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
                 ],
@@ -3922,8 +3940,7 @@ class _AccountPageState extends State<AccountPage> {
               icon: Icons.folder_rounded,
               label: 'Ma fiche projet',
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => const MesProjetsFichePage()),
+                MaterialPageRoute(builder: (_) => const MesProjetsFichePage()),
               ),
             ),
           ],
