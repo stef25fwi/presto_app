@@ -13,10 +13,14 @@ import {
   loadModerationConfig,
   persistModerationResult,
 } from "../services/moderation";
-import { sendListingModerationSystemMessage } from "../services/system_messages";
+import {
+  sendListingModerationSystemMessage,
+  sendTeamBroadcastMessage,
+} from "../services/system_messages";
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
 import { shouldRejectListingSubmissionForRecaptcha } from "../services/recaptcha";
 import { toHttpsError } from "../services/errors";
+import { extractRolesFromAuthToken } from "../services/roles";
 import { validateListingDraftPayload, validateListingMedia } from "../validators/listings";
 import type { ListingMedia } from "../models/firestore";
 
@@ -904,15 +908,17 @@ function isFoundOnIliPrestoReason(reason: string | undefined): boolean {
 const JOB_DONE_OVERLAY_HOURS = 10;
 
 async function closeOrDeleteListingForOwner({
-  ownerId,
+  actorId,
   listingId,
   reason,
   jobDone,
+  allowAdminDelete = false,
 }: {
-  ownerId: string;
+  actorId: string;
   listingId: string;
   reason?: string;
   jobDone?: boolean;
+  allowAdminDelete?: boolean;
 }): Promise<Record<string, unknown>> {
     const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
     const listingSnap = await listingRef.get();
@@ -923,11 +929,15 @@ async function closeOrDeleteListingForOwner({
 
     const listingData = (listingSnap.data() ?? {}) as Record<string, unknown>;
     const listingOwnerId = readListingOwnerId(listingData);
-    if (listingOwnerId !== ownerId) {
+    const isOwnerDelete = listingOwnerId === actorId;
+    const isAdminDelete = allowAdminDelete && !isOwnerDelete;
+    if (!isOwnerDelete && !isAdminDelete) {
       throw new HttpsError("permission-denied", "You do not own this listing");
     }
 
     const previousStatus = normalizeString(listingData.status) || "unknown";
+    const listingTitle =
+      normalizeString(listingData.title) || "votre annonce";
     const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
 
     if (isJobDoneReason(reason, jobDone === true)) {
@@ -958,7 +968,8 @@ async function closeOrDeleteListingForOwner({
 
       logger.info("marketplace_listing_marked_job_done", {
         listingId,
-        ownerId,
+        ownerId: listingOwnerId,
+        actorId,
         previousStatus,
         reason,
       });
@@ -982,7 +993,9 @@ async function closeOrDeleteListingForOwner({
     batch.set(archiveRef, {
       ...listingData,
       deletedAt: admin.firestore.FieldValue.serverTimestamp(),
-      deletedBy: ownerId,
+      deletedBy: actorId,
+      deletedForOwnerId: listingOwnerId,
+      deletedByAdmin: isAdminDelete,
       deletedReason: reason || 'user_request',
       originalListingId: listingId,
     });
@@ -994,19 +1007,38 @@ async function closeOrDeleteListingForOwner({
 
     logger.info("marketplace_listing_deleted", {
       listingId,
-      ownerId,
+      ownerId: listingOwnerId,
+      actorId,
+      adminDelete: isAdminDelete,
       previousStatus,
       reason: reason || "none",
     });
 
+    if (isAdminDelete && listingOwnerId) {
+      await sendTeamBroadcastMessage({
+        userId: listingOwnerId,
+        messageId: `listing_deleted_${listingId}`,
+        body:
+          `Bonjour, votre annonce "${listingTitle}" a ete supprimee par l'equipe ilipresto.`,
+        campaignTitle: "Annonce supprimée",
+      });
+    }
+
     return {
       ok: true,
       listingId,
+      ownerId: listingOwnerId,
+      adminDelete: isAdminDelete,
     };
 }
 
 export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
-  const ownerId = requireAuthUid(request);
+  const actorId = requireAuthUid(request);
+  const actorRoles = extractRolesFromAuthToken(
+    request.auth?.token as Record<string, unknown> | undefined,
+  );
+  const allowAdminDelete =
+    actorRoles.includes("admin") || actorRoles.includes("superadmin");
   const listingId = normalizeString(request.data?.listingId);
   const reason = typeof request.data?.reason === "string"
     ? request.data.reason.trim().slice(0, 500)
@@ -1018,10 +1050,11 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
 
   try {
     return await closeOrDeleteListingForOwner({
-      ownerId,
+      actorId,
       listingId,
       reason,
       jobDone: request.data?.jobDone === true,
+      allowAdminDelete,
     });
   } catch (error) {
     throw toHttpsError(error, "Unable to delete listing");
@@ -1029,7 +1062,7 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
 });
 
 export const closeOfferWithReason = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
-  const ownerId = requireAuthUid(request);
+  const actorId = requireAuthUid(request);
   const listingId = normalizeString(request.data?.offerId || request.data?.listingId);
   const reason = typeof request.data?.reason === "string"
     ? request.data.reason.trim().slice(0, 500)
@@ -1044,7 +1077,7 @@ export const closeOfferWithReason = onCall({ region: PROJECT_REGION, enforceAppC
 
   try {
     return await closeOrDeleteListingForOwner({
-      ownerId,
+      actorId,
       listingId,
       reason,
       jobDone: request.data?.jobDone === true,
