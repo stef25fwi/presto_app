@@ -14,6 +14,7 @@ import 'package:presto_app/data/marketplace/favorite_repository.dart';
 import 'package:presto_app/data/marketplace/report_repository.dart';
 import 'package:presto_app/models/marketplace_enums.dart';
 import 'package:presto_app/models/marketplace_report.dart';
+import 'package:presto_app/services/admin_access_resolver.dart';
 import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
@@ -349,13 +350,17 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
   static final ReportRepository _reportRepository = ReportRepository();
   static const MarketplaceHumanVerification _verification =
       MarketplaceHumanVerification();
+  final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
   Future<Map<String, dynamic>?>? _marketplaceFuture;
+  bool _isAdminViewer = false;
+  bool _isDeletingListingAsAdmin = false;
 
   @override
   void initState() {
     super.initState();
     _initMarketplaceFuture();
+    unawaited(_loadAdminAccess());
   }
 
   @override
@@ -372,6 +377,110 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
             _shouldHydrateMarketplaceOffer(widget.offer, listingId))
         ? _fetchMarketplaceOffer(listingId)
         : null;
+  }
+
+  Future<void> _loadAdminAccess() async {
+    try {
+      final state = await _adminAccessResolver.resolveAdminAccess(
+        returnOnLocalAdminEvidence: true,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isAdminViewer = state.effectiveIsAdmin;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isAdminViewer = false;
+      });
+    }
+  }
+
+  Future<void> _confirmAdminDeleteOffer(
+    BuildContext context,
+    _OfferUiData data,
+  ) async {
+    if (_isDeletingListingAsAdmin || data.offerId.trim().isEmpty) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Suppression admin'),
+        content: Text(
+          'Confirmer la suppression de l\'annonce "${data.title}" ?\n\n'
+          'L\'auteur recevra un message de l\'équipe ilipresto.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD14343),
+            ),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _isDeletingListingAsAdmin = true;
+    });
+
+    try {
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'deleteListing',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 30),
+        ),
+      );
+      await callable.call<dynamic>({
+        'listingId': data.offerId,
+        'reason': 'admin_deleted_by_team',
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Annonce supprimée. L\'auteur a été informé par l\'équipe ilipresto.',
+          ),
+        ),
+      );
+      Navigator.of(context).maybePop();
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) return;
+      final message = error.code == 'permission-denied'
+          ? 'Suppression admin refusée.'
+          : error.code == 'not-found'
+              ? 'Annonce introuvable.'
+              : 'Erreur lors de la suppression admin.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur lors de la suppression admin.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeletingListingAsAdmin = false;
+        });
+      }
+    }
   }
 
   String _extractMarketplaceListingId(Object? source) {
@@ -1630,6 +1739,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                       compact: isCompactMobile,
                       onContactTap: () =>
                           _showContactOptionsSheet(context, data),
+                      onAdminDeleteTap: _isAdminViewer && data.isMarketplace
+                          ? () => _confirmAdminDeleteOffer(context, data)
+                          : null,
                     ),
                     SizedBox(height: sectionGap),
                     const _OfferDetailsAdMobBannerSpace(),
@@ -3085,15 +3197,54 @@ class _OfferImage extends StatelessWidget {
   }
 }
 
+class _AdminDeleteListingButton extends StatelessWidget {
+  final bool compact;
+  final VoidCallback onTap;
+
+  const _AdminDeleteListingButton({
+    required this.compact,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Supprimer l\'annonce',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 8 : 9,
+            vertical: compact ? 5 : 6,
+          ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFEFEF),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFF3C3C3)),
+          ),
+          child: Icon(
+            Icons.delete_outline_rounded,
+            size: compact ? 16 : 17,
+            color: const Color(0xFFD14343),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PracticalInfoCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
   final VoidCallback onContactTap;
+  final VoidCallback? onAdminDeleteTap;
 
   const _PracticalInfoCard({
     required this.data,
     this.compact = false,
     required this.onContactTap,
+    this.onAdminDeleteTap,
   });
 
   Widget _paymentInfoPill(BuildContext context) {
@@ -3170,6 +3321,25 @@ class _PracticalInfoCard extends StatelessWidget {
                       label: 'Délai d’intervention',
                       value: data.missionDelay,
                       compact: compact,
+                      labelSuffix: onAdminDeleteTap == null
+                          ? null
+                          : _AdminDeleteListingButton(
+                              compact: compact,
+                              onTap: onAdminDeleteTap!,
+                            ),
+                    ),
+                  if ((data.missionDelay.isEmpty ||
+                          data.missionDelay == 'Délai non précisé') &&
+                      onAdminDeleteTap != null)
+                    _InfoLine(
+                      icon: Icons.shield_outlined,
+                      label: 'Action admin',
+                      value: 'Supprimer cette annonce',
+                      compact: compact,
+                      labelSuffix: _AdminDeleteListingButton(
+                        compact: compact,
+                        onTap: onAdminDeleteTap!,
+                      ),
                     ),
                   const Divider(height: 1, thickness: 1, color: line),
                   _InfoLine(
