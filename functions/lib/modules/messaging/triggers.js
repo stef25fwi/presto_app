@@ -12,6 +12,7 @@ const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
 const env_1 = require("../../config/env");
 const push_1 = require("../notifications/push");
+const moderation_1 = require("./moderation");
 const state_1 = require("./state");
 const participants_1 = require("./participants");
 const mirror_1 = require("./mirror");
@@ -22,6 +23,35 @@ function buildMessagePreview(value) {
     if (text.length <= 120)
         return text;
     return `${text.slice(0, 117)}...`;
+}
+function parseMessageAttachments(value) {
+    if (!Array.isArray(value))
+        return [];
+    return value.flatMap((entry) => {
+        if (!entry || typeof entry !== "object")
+            return [];
+        const raw = entry;
+        const type = String(raw.type || "").trim();
+        if (type !== "image" && type !== "document" && type !== "audio")
+            return [];
+        const url = String(raw.url || "").trim();
+        if (!url)
+            return [];
+        return [{
+                type,
+                name: String(raw.name || "").trim(),
+                url,
+                storagePath: String(raw.storagePath || "").trim(),
+                mimeType: String(raw.mimeType || "").trim(),
+                sizeBytes: Number(raw.sizeBytes || 0),
+            }];
+    });
+}
+function moderatedMessagePlaceholder(status) {
+    if (status === "rejected") {
+        return "Message retiré par la modération";
+    }
+    return "Message en cours de vérification";
 }
 async function emitConversationMessageEvent({ conversationId, messageId, recipientId, senderName, eventName, }) {
     const canProceed = await (0, rate_limit_1.canProceedRateLimited)("msg_email", `${conversationId}:${recipientId}`, 1, MESSAGE_EMAIL_COOLDOWN_MS);
@@ -52,25 +82,69 @@ async function emitConversationMessageEvent({ conversationId, messageId, recipie
 // Le trigger sur la sous-collection conversations/{id}/messages/{id} est la seule
 // source valide : les messages sont toujours écrits via sendConversationMessage.
 exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("conversations/{conversationId}/messages/{messageId}", async (event) => {
-    const message = event.data?.data();
-    if (!message)
+    const messageSnapshot = event.data;
+    const rawMessage = messageSnapshot?.data();
+    if (!rawMessage)
         return;
+    let message = rawMessage;
     const conversationId = String(event.params.conversationId || "");
     const messageId = String(event.params.messageId || "");
     const senderId = String(message.senderId || message.sender_id || "");
     const senderName = String(message.senderName || message.sender_name || "Quelqu'un");
-    const messagePreview = buildMessagePreview(message.text);
     // isFirstMessage est positionné de manière transactionnelle par le callable.
     // Le trigger ne recalcule rien pour éviter les races entre messages concurrents.
     const isFirstMessage = message.isFirstMessage === true;
     const eventName = isFirstMessage
         ? "message.created.new_thread"
         : "message.created.existing_thread";
+    const moderation = (message.moderation ?? {});
+    const moderationMode = String(moderation.mode || "hybrid").trim().toLowerCase();
+    const moderationStatus = String(moderation.status || "").trim().toLowerCase();
+    if (moderationStatus === "pending") {
+        const evaluated = await (0, moderation_1.evaluateMessagingModeration)({
+            mode: moderationMode === "visible_then_retract"
+                ? "visible_then_retract"
+                : moderationMode === "hidden_until_validated"
+                    ? "hidden_until_validated"
+                    : "hybrid",
+            text: String(message.text || message.body || "").trim(),
+            attachments: parseMessageAttachments(message.attachments),
+        });
+        const nextModeration = {
+            mode: evaluated.mode,
+            status: evaluated.status,
+            visibility: evaluated.visibility,
+            reason: evaluated.moderationReason,
+            userMessage: evaluated.userMessage,
+            autoFlags: evaluated.autoFlags,
+            riskScore: evaluated.riskScore,
+            textScanStatus: evaluated.textScanStatus,
+            imageScanStatus: evaluated.imageScanStatus,
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        };
+        await messageSnapshot?.ref.set({
+            moderation: nextModeration,
+        }, { merge: true });
+        message = {
+            ...message,
+            moderation: nextModeration,
+        };
+    }
     const conversationSnap = await firestore_2.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId).get();
     const conversationData = (conversationSnap.data() ?? {});
     const conversation = (0, mirror_1.readConversationMirrorData)(conversationData, { conversationId });
     const normalizedParticipants = (0, participants_1.readConversationParticipants)(conversationData, { conversationId });
-    const normalizedMessageText = String(message.text || message.body || "").trim();
+    const resolvedModeration = (message.moderation ?? {});
+    const resolvedModerationStatus = String(resolvedModeration.status || "").trim().toLowerCase();
+    const resolvedModerationVisibility = String(resolvedModeration.visibility || "visible").trim().toLowerCase();
+    const shouldHideContent = resolvedModerationStatus === "rejected" ||
+        resolvedModerationStatus === "manual_review" ||
+        (resolvedModerationStatus === "pending" && resolvedModerationVisibility === "hidden");
+    const normalizedMessageText = shouldHideContent
+        ? moderatedMessagePlaceholder(resolvedModerationStatus)
+        : String(message.text || message.body || "").trim();
+    const shouldNotifyParticipants = !shouldHideContent;
+    const messagePreview = buildMessagePreview(normalizedMessageText);
     const isClientFirestoreFallback = message.createdVia === "client_firestore_fallback";
     if (normalizedParticipants.length > 0) {
         const archivedBy = conversation.archivedBy;
@@ -112,6 +186,9 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
     const offerTitle = String(conversation.offerTitle || "Annonce IliPresto").trim();
     const offerId = String(conversation.offerId || "").trim();
     const routeName = `/messages/${encodeURIComponent(conversationId)}`;
+    if (!shouldNotifyParticipants) {
+        return;
+    }
     for (const recipientId of participants) {
         const notificationId = `notif_message_${messageId}_${recipientId}`;
         await Promise.all([

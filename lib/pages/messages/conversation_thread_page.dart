@@ -10,14 +10,19 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../features/micro_ia/web_audio_recorder_stub.dart'
   if (dart.library.js_interop) '../../features/micro_ia/web_audio_recorder.dart';
+import '../../features/subscriptions/subscription_action_placeholders.dart';
+import '../../features/subscriptions/subscription_config_service.dart';
+import '../../features/subscriptions/subscription_models.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
 import '../../services/admin_access_resolver.dart';
@@ -26,6 +31,10 @@ import '../../services/conversation_participants.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 import '../../utils/friendly_snackbar.dart';
+import '../../utils/local_audio_preview_source_io.dart'
+    if (dart.library.js_interop) '../../utils/local_audio_preview_source_web.dart';
+import '../../utils/open_attachment_file_web.dart'
+  if (dart.library.io) '../../utils/open_attachment_file_io.dart';
 import '../../widgets/offer_network_image.dart';
 import 'package:presto_app/services/auth_guard.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
@@ -69,6 +78,8 @@ class ConversationThreadPage extends StatefulWidget {
 class _ConversationThreadPageState extends State<ConversationThreadPage> {
   static const int _messagePageSize = 50;
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
+  final SubscriptionConfigService _subscriptionConfigService =
+      SubscriptionConfigService();
 
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -138,6 +149,185 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   AudioRecorder? _voiceRecorder;
   String? _currentRecordingPath;
   bool _isWebVoiceRecording = false;
+
+  Future<bool> _ensureAttachmentAllowed({
+    required String uid,
+    required String attachmentType,
+  }) async {
+    try {
+      final decision = await _resolveAttachmentGateDecision(
+        uid: uid,
+        attachmentType: attachmentType,
+      );
+      if (decision == null) return true;
+      if (!mounted) return false;
+      await _showAttachmentSubscriptionGate(decision);
+      return false;
+    } catch (error) {
+      debugPrint('[ConversationThread] subscription gate skipped: $error');
+      return true;
+    }
+  }
+
+  Future<_ConversationAttachmentGateDecision?> _resolveAttachmentGateDecision({
+    required String uid,
+    required String attachmentType,
+  }) async {
+    final config = await _subscriptionConfigService.getConfig();
+    if (config.freeAccessMode) {
+      return null;
+    }
+
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    final userState = AppUserSubscriptionState.fromMap(userSnapshot.data());
+    final entitlements = getConversationAttachmentEntitlements(
+      userState.plan,
+      freeAccessMode: config.freeAccessMode,
+    );
+
+    if (attachmentType == 'document' && !entitlements.canSendDocuments) {
+      return _ConversationAttachmentGateDecision(
+        title: 'Fichiers réservés à ilipresto+',
+        message:
+            'Les documents et autres fichiers sont prévus pour ilipresto+. En gratuit, vous gardez les messages texte, 1 photo et 1 note audio par conversation.',
+        source: 'messages_document_gate',
+        stripeEnabled: config.stripeEnabled,
+      );
+    }
+
+    if (attachmentType == 'image') {
+      final sentPhotos = await _countSentAttachmentsOfType(
+        uid: uid,
+        attachmentType: 'image',
+      );
+      if (sentPhotos >= entitlements.maxPhotosPerConversation) {
+        return _ConversationAttachmentGateDecision(
+          title: 'Quota photo atteint',
+          message:
+              'L’offre gratuite est préparée pour 1 photo par conversation. Passez à ilipresto+ pour envoyer davantage de pièces jointes.',
+          source: 'messages_photo_limit_gate',
+          stripeEnabled: config.stripeEnabled,
+        );
+      }
+    }
+
+    if (attachmentType == 'audio') {
+      final sentAudios = await _countSentAttachmentsOfType(
+        uid: uid,
+        attachmentType: 'audio',
+      );
+      if (sentAudios >= entitlements.maxAudioPerConversation) {
+        return _ConversationAttachmentGateDecision(
+          title: 'Quota audio atteint',
+          message:
+              'L’offre gratuite est préparée pour 1 note audio par conversation. Passez à ilipresto+ pour aller plus loin.',
+          source: 'messages_audio_limit_gate',
+          stripeEnabled: config.stripeEnabled,
+        );
+      }
+    }
+
+    return null;
+  }
+
+  Future<int> _countSentAttachmentsOfType({
+    required String uid,
+    required String attachmentType,
+  }) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('conversations')
+        .doc(widget.conversationId)
+        .collection('messages')
+        .where('senderId', isEqualTo: uid)
+        .get();
+
+    var count = 0;
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['deletedAt'] != null || data['isDeleted'] == true) {
+        continue;
+      }
+      final attachments = _MessageAttachment.fromList(data['attachments']);
+      count += attachments
+          .where((attachment) => attachment.type == attachmentType)
+          .length;
+    }
+    return count;
+  }
+
+  Future<void> _showAttachmentSubscriptionGate(
+    _ConversationAttachmentGateDecision decision,
+  ) async {
+    final overlayTheme = context.prestoOverlayTheme;
+    final wantsPlan = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  decision.title,
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  decision.message,
+                  textAlign: TextAlign.center,
+                  style: kPrestoBodyTextStyle.copyWith(
+                    color: const Color(0xFF4B5563),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(false),
+                  child: const Text('Plus tard'),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(sheetContext).pop(true),
+                  icon: const Icon(Icons.workspace_premium_rounded),
+                  label: const Text('Découvrir ilipresto+'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: kPrestoBlue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (wantsPlan != true || !mounted) return;
+    if (decision.stripeEnabled) {
+      await startSubscriptionCheckout(
+        context,
+        'ilipresto_plus',
+        stripeEnabled: true,
+        source: decision.source,
+      );
+      return;
+    }
+    await notifySubscriptionLaunch(
+      context,
+      'ilipresto_plus',
+      stripeEnabled: false,
+      source: decision.source,
+    );
+  }
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
@@ -228,6 +418,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   String _sendMessageErrorMessage(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      final details = error.details;
+      String reason = '';
+      if (details is Map) {
+        reason = (details['reason'] ?? '').toString().trim();
+      }
+      switch (reason) {
+        case 'messaging_text_blocked':
+          return 'Le message contient des termes non conformes aux CGU.';
+        case 'messaging_image_blocked':
+          return 'Une image du message ne respecte pas les CGU.';
+        case 'messaging_content_review_required':
+          return 'Le message doit être revu avant de pouvoir être envoyé dans ce mode de modération.';
+      }
+    }
+
     final code = _messagingErrorCode(error);
     switch (code) {
       case 'not-found':
@@ -240,6 +446,38 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         return 'L’envoi est indisponible car la conversation est bloquée ou incomplète.';
       default:
         return 'L’envoi du message a échoué. Réessayez dans un instant.';
+    }
+  }
+
+  String _attachmentUploadErrorMessage(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      final details = error.details;
+      String reason = '';
+      if (details is Map) {
+        reason = (details['reason'] ?? '').toString().trim();
+      }
+      switch (reason) {
+        case 'subscription_document_required':
+          return 'Les documents et autres fichiers sont réservés à ilipresto+.';
+        case 'free_plan_photo_limit_reached':
+          return 'Le plan Gratuit est limité à 1 photo par conversation.';
+        case 'free_plan_audio_limit_reached':
+          return 'Le plan Gratuit est limité à 1 note audio par conversation.';
+      }
+    }
+
+    final code = _messagingErrorCode(error);
+    switch (code) {
+      case 'unauthenticated':
+        return 'Connectez-vous pour envoyer une pièce jointe.';
+      case 'permission-denied':
+        return 'Vous n’avez pas accès à cette conversation.';
+      case 'failed-precondition':
+        return 'Cette pièce jointe ne peut pas être envoyée dans l’état actuel de la conversation.';
+      case 'resource-exhausted':
+        return 'Trop d’envois en peu de temps. Réessayez dans un instant.';
+      default:
+        return 'La pièce jointe n’a pas pu être envoyée.';
     }
   }
 
@@ -1810,6 +2048,73 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
+  Widget _buildMessagingSubscriptionBadge() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return const SizedBox.shrink();
+
+    return StreamBuilder<SubscriptionAppConfig>(
+      stream: _subscriptionConfigService.watchConfig(),
+      builder: (context, configSnapshot) {
+        final config =
+            configSnapshot.data ?? const SubscriptionAppConfig.defaults();
+
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+          builder: (context, userSnapshot) {
+            final userState =
+                AppUserSubscriptionState.fromMap(userSnapshot.data?.data());
+            final entitlements = getConversationAttachmentEntitlements(
+              userState.plan,
+              freeAccessMode: config.freeAccessMode,
+            );
+
+            final message = config.freeAccessMode
+                ? 'Accès gratuit complet actif. Prévu ensuite: Gratuit = 1 photo + 1 audio par conversation, fichiers réservés à ilipresto+.'
+                : entitlements.canSendDocuments
+                    ? 'ilipresto+ actif pour cette conversation: fichiers, photos et audio débloqués.'
+                    : 'Gratuit: 1 photo + 1 audio par conversation. Les documents demandent ilipresto+.';
+
+            final accentColor = config.freeAccessMode
+                ? Colors.green.shade700
+                : entitlements.canSendDocuments
+                    ? kPrestoBlue
+                : kPrestoOrange;
+
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.workspace_premium_rounded, color: accentColor, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: kPrestoMetaTextStyle.copyWith(
+                        color: accentColor,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _insertEmoji(String emoji) {
     unawaited(_recordEmojiUsage(emoji));
     final selection = _controller.selection;
@@ -1844,13 +2149,51 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (lowerName.endsWith('.png')) return 'image/png';
     if (lowerName.endsWith('.webp')) return 'image/webp';
     if (lowerName.endsWith('.gif')) return 'image/gif';
+    if (lowerName.endsWith('.mp3')) return 'audio/mpeg';
+    if (lowerName.endsWith('.wav')) return 'audio/wav';
+    if (lowerName.endsWith('.ogg')) return 'audio/ogg';
+    if (lowerName.endsWith('.oga')) return 'audio/ogg';
+    if (lowerName.endsWith('.m4a')) return 'audio/mp4';
+    if (lowerName.endsWith('.aac')) return 'audio/aac';
+    if (lowerName.endsWith('.webm')) return 'audio/webm';
     if (lowerName.endsWith('.pdf')) return 'application/pdf';
+    if (lowerName.endsWith('.csv')) return 'text/csv';
     if (lowerName.endsWith('.txt')) return 'text/plain';
+    if (lowerName.endsWith('.rtf')) return 'application/rtf';
     if (lowerName.endsWith('.doc')) return 'application/msword';
     if (lowerName.endsWith('.docx')) {
       return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     }
+    if (lowerName.endsWith('.odt')) {
+      return 'application/vnd.oasis.opendocument.text';
+    }
+    if (lowerName.endsWith('.xls')) return 'application/vnd.ms-excel';
+    if (lowerName.endsWith('.xlsx')) {
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    }
+    if (lowerName.endsWith('.ppt')) return 'application/vnd.ms-powerpoint';
+    if (lowerName.endsWith('.pptx')) {
+      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    }
     return fallback;
+  }
+
+  String _attachmentTypeForFile(String name, String mimeType) {
+    final normalizedMimeType = mimeType.trim().toLowerCase();
+    final lowerName = name.trim().toLowerCase();
+    if (normalizedMimeType.startsWith('audio/')) {
+      return 'audio';
+    }
+    if (lowerName.endsWith('.mp3') ||
+        lowerName.endsWith('.wav') ||
+        lowerName.endsWith('.ogg') ||
+        lowerName.endsWith('.oga') ||
+        lowerName.endsWith('.m4a') ||
+        lowerName.endsWith('.aac') ||
+        lowerName.endsWith('.webm')) {
+      return 'audio';
+    }
+    return 'document';
   }
 
   String _attachmentMessageText(_MessageAttachment attachment) {
@@ -1859,12 +2202,31 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return 'Document : ${attachment.name}';
   }
 
+  bool _shouldHideAttachmentText(
+    String text,
+    List<_MessageAttachment> attachments,
+  ) {
+    final normalizedText = text.trim();
+    if (normalizedText.isEmpty || attachments.isEmpty) {
+      return false;
+    }
+    if (attachments.any((attachment) => attachment.type != 'image')) {
+      return false;
+    }
+    return normalizedText == _attachmentMessageText(attachments.first);
+  }
+
   Future<void> _pickAndSendPhoto() async {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
       showErrorSnackBar(context, 'Connectez-vous pour envoyer une photo.');
       return;
     }
+    final allowed = await _ensureAttachmentAllowed(
+      uid: authUser.uid,
+      attachmentType: 'image',
+    );
+    if (!allowed) return;
 
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -1888,13 +2250,37 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _pickAndSendDocument() async {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
-      showErrorSnackBar(context, 'Connectez-vous pour envoyer un document.');
+      showErrorSnackBar(context, 'Connectez-vous pour envoyer un fichier.');
       return;
     }
+    final allowed = await _ensureAttachmentAllowed(
+      uid: authUser.uid,
+      attachmentType: 'document',
+    );
+    if (!allowed) return;
 
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
+      allowedExtensions: const [
+        'pdf',
+        'txt',
+        'csv',
+        'rtf',
+        'doc',
+        'docx',
+        'odt',
+        'xls',
+        'xlsx',
+        'ppt',
+        'pptx',
+        'mp3',
+        'wav',
+        'ogg',
+        'oga',
+        'm4a',
+        'aac',
+        'webm',
+      ],
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
@@ -1909,12 +2295,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
 
     final name = _safeAttachmentName(file.name, 'document.pdf');
+    final mimeType = _mimeTypeForName(name, 'application/pdf');
+    final attachmentType = _attachmentTypeForFile(name, mimeType);
     await _uploadAndSendAttachment(
       uid: authUser.uid,
-      type: 'document',
+      type: attachmentType,
       name: name,
       bytes: bytes,
-      mimeType: _mimeTypeForName(name, 'application/pdf'),
+      mimeType: mimeType,
     );
   }
 
@@ -2002,7 +2390,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (!mounted) return;
       showErrorSnackBar(
         context,
-        'La pièce jointe n’a pas pu être envoyée.',
+        _attachmentUploadErrorMessage(error),
       );
     } finally {
       if (mounted) {
@@ -2079,7 +2467,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               ListTile(
                 leading:
                     const Icon(Icons.description_outlined, color: kPrestoBlue),
-                title: const Text('Document'),
+                title: const Text('Fichier'),
                 onTap: () {
                   Navigator.of(context).pop();
                   unawaited(_pickAndSendDocument());
@@ -2093,6 +2481,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _showVoiceRecordingSheet() async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    if (authUser == null) {
+      showErrorSnackBar(context, 'Connectez-vous pour envoyer une note vocale.');
+      return;
+    }
+    final allowed = await _ensureAttachmentAllowed(
+      uid: authUser.uid,
+      attachmentType: 'audio',
+    );
+    if (!allowed) return;
+
     if (kIsWeb) {
       try {
         await _webVoiceRecorder.start();
@@ -2135,7 +2534,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           },
           onSend: () {
             Navigator.of(ctx).pop();
-            unawaited(_stopAndSendVoiceNote());
+            unawaited(_stopVoiceRecordingForPreview());
           },
         ),
       );
@@ -2209,7 +2608,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         },
         onSend: () {
           Navigator.of(ctx).pop();
-          unawaited(_stopAndSendVoiceNote());
+          unawaited(_stopVoiceRecordingForPreview());
         },
       ),
     );
@@ -2250,7 +2649,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Future<void> _stopAndSendVoiceNote() async {
+  Future<void> _stopVoiceRecordingForPreview() async {
     _recordingTimer?.cancel();
     _recordingTimer = null;
     final isWebVoiceRecording = _isWebVoiceRecording;
@@ -2267,14 +2666,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       });
     }
     if (isWebVoiceRecording) {
-      final authUser = FirebaseAuth.instance.currentUser;
-      if (authUser == null) {
-        if (mounted) {
-          showErrorSnackBar(
-              context, 'Connectez-vous pour envoyer une note vocale.');
-        }
-        return;
-      }
       try {
         final blob = await _webVoiceRecorder.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(
@@ -2284,17 +2675,26 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         if (audioUpload.bytes.isEmpty) {
           throw Exception('Audio invalide');
         }
-        final secs = duration.inSeconds;
-        final extension = audioUpload.extension.trim().isEmpty
-            ? 'webm'
-            : audioUpload.extension.trim();
-        final name = 'note_vocale_${secs}s.$extension';
-        await _uploadAndSendAttachment(
-          uid: authUser.uid,
-          type: 'audio',
-          name: name,
-          bytes: audioUpload.bytes,
-          mimeType: audioUpload.contentType,
+        final previewSource = await createLocalAudioPreviewSource(
+          audioUpload.bytes,
+          contentType: audioUpload.contentType,
+        );
+        if (!mounted) {
+          disposeLocalAudioPreviewSource(previewSource);
+          return;
+        }
+        await _showVoiceNotePreviewSheet(
+          _PendingVoiceNote(
+            duration: duration,
+            bytes: audioUpload.bytes,
+            previewSource: previewSource,
+            previewIsLocalFile: false,
+            mimeType: audioUpload.contentType,
+            extension: audioUpload.extension.trim().isEmpty
+                ? 'webm'
+                : audioUpload.extension.trim(),
+            usesGeneratedPreviewSource: true,
+          ),
         );
       } catch (_) {
         if (mounted) {
@@ -2312,47 +2712,285 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       await recorder.stop();
     } catch (_) {}
     recorder.dispose();
+    if (!mounted) {
+      deleteTempFile(path);
+      return;
+    }
+    await _showVoiceNotePreviewSheet(
+      _PendingVoiceNote(
+        duration: duration,
+        filePath: path,
+        previewSource: path,
+        previewIsLocalFile: true,
+        mimeType: 'audio/mp4',
+        extension: 'm4a',
+      ),
+    );
+  }
+
+  Future<void> _showVoiceNotePreviewSheet(_PendingVoiceNote preview) async {
+    final action = await showModalBottomSheet<_VoiceNotePreviewAction>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => _VoiceNotePreviewSheet(
+        preview: preview,
+        onCancel: () => Navigator.of(ctx).pop(_VoiceNotePreviewAction.cancel),
+        onRerecord: () =>
+            Navigator.of(ctx).pop(_VoiceNotePreviewAction.rerecord),
+        onSend: () => Navigator.of(ctx).pop(_VoiceNotePreviewAction.send),
+      ),
+    );
+
+    switch (action) {
+      case _VoiceNotePreviewAction.send:
+        await _sendPreparedVoiceNote(preview);
+        await _disposePendingVoiceNote(preview);
+        return;
+      case _VoiceNotePreviewAction.rerecord:
+        await _disposePendingVoiceNote(preview);
+        if (mounted) {
+          await _showVoiceRecordingSheet();
+        }
+        return;
+      case _VoiceNotePreviewAction.cancel:
+      case null:
+        await _disposePendingVoiceNote(preview);
+        return;
+    }
+  }
+
+  Future<void> _sendPreparedVoiceNote(_PendingVoiceNote preview) async {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
-      deleteTempFile(path);
       if (mounted) {
-        showErrorSnackBar(
-            context, 'Connectez-vous pour envoyer une note vocale.');
+        showErrorSnackBar(context, 'Connectez-vous pour envoyer une note vocale.');
       }
       return;
     }
+
     Uint8List bytes;
-    try {
-      bytes = await readTempFile(path);
-    } catch (_) {
-      if (mounted) {
-        showErrorSnackBar(
-            context, 'Erreur lors de la lecture de la note vocale.');
+    if (preview.bytes != null) {
+      bytes = preview.bytes!;
+    } else {
+      final path = preview.filePath;
+      if (path == null) return;
+      try {
+        bytes = await readTempFile(path);
+      } catch (_) {
+        if (mounted) {
+          showErrorSnackBar(context, 'Erreur lors de la lecture de la note vocale.');
+        }
+        return;
       }
-      return;
-    } finally {
-      deleteTempFile(path);
     }
-    final secs = duration.inSeconds;
-    final name = 'note_vocale_${secs}s.m4a';
+
+    final secs = preview.duration.inSeconds;
+    final safeSeconds = secs <= 0 ? 1 : secs;
+    final extension =
+        preview.extension.trim().isEmpty ? 'm4a' : preview.extension.trim();
+    final name = 'note_vocale_${safeSeconds}s.$extension';
     await _uploadAndSendAttachment(
       uid: authUser.uid,
       type: 'audio',
       name: name,
       bytes: bytes,
-      mimeType: 'audio/mp4',
+      mimeType: preview.mimeType,
     );
   }
 
+  Future<void> _disposePendingVoiceNote(
+    _PendingVoiceNote preview, {
+    bool keepFilePath = false,
+  }) async {
+    if (preview.usesGeneratedPreviewSource) {
+      disposeLocalAudioPreviewSource(preview.previewSource);
+    }
+    if (!keepFilePath && preview.filePath != null) {
+      deleteTempFile(preview.filePath!);
+    }
+  }
+
   Future<void> _openAttachment(_MessageAttachment attachment) async {
+    if (attachment.type == 'image') {
+      return;
+    }
+    await _showAttachmentActionsSheet(attachment);
+  }
+
+  Future<void> _showAttachmentActionsSheet(_MessageAttachment attachment) async {
+    final overlayTheme = context.prestoOverlayTheme;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (sheetContext) {
+        Future<void> handleOpen() async {
+          Navigator.of(sheetContext).pop();
+          await _openAttachmentWithChooser(attachment);
+        }
+
+        Future<void> handleShare() async {
+          Navigator.of(sheetContext).pop();
+          await _shareAttachment(attachment);
+        }
+
+        return SafeArea(
+          top: false,
+          child: Container(
+            color: overlayTheme.surfaceColor,
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Pièce jointe',
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: overlayTheme.selectionFillColor,
+                    borderRadius: overlayTheme.popupRadius,
+                    border: Border.all(color: overlayTheme.borderColor),
+                  ),
+                  child: Text(
+                    attachment.name,
+                    style: kPrestoBodyTextStyle.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _AttachmentActionTile(
+                  icon: Icons.open_in_new_rounded,
+                  title: 'Ouvrir',
+                  subtitle: kIsWeb
+                      ? 'Ouvre le fichier dans le navigateur.'
+                      : 'Télécharge puis laisse choisir l’application.',
+                  onTap: handleOpen,
+                ),
+                const SizedBox(height: 8),
+                _AttachmentActionTile(
+                  icon: Icons.share_rounded,
+                  title: 'Partager',
+                  subtitle: kIsWeb
+                      ? 'Partage le lien du fichier.'
+                      : 'Partage le fichier avec une autre application.',
+                  onTap: handleShare,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openAttachmentWithChooser(_MessageAttachment attachment) async {
     final uri = Uri.tryParse(attachment.url);
     if (uri == null) {
       showErrorSnackBar(context, 'Lien de pièce jointe invalide.');
       return;
     }
+
+    if (kIsWeb) {
+      final opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (!opened && mounted) {
+        showErrorSnackBar(context, 'Impossible d’ouvrir cette pièce jointe.');
+      }
+      return;
+    }
+
+    final localPath = await _downloadAttachmentToTempFile(attachment, uri: uri);
+    if (localPath == null) {
+      return;
+    }
+
+    final openedLocally = await openAttachmentFile(localPath);
+    if (openedLocally) {
+      return;
+    }
+
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && mounted) {
       showErrorSnackBar(context, 'Impossible d’ouvrir cette pièce jointe.');
+    }
+  }
+
+  Future<void> _shareAttachment(_MessageAttachment attachment) async {
+    final uri = Uri.tryParse(attachment.url);
+    if (uri == null) {
+      showErrorSnackBar(context, 'Lien de pièce jointe invalide.');
+      return;
+    }
+
+    try {
+      if (kIsWeb) {
+        await Share.share(
+          uri.toString(),
+          subject: attachment.name,
+        );
+        return;
+      }
+
+      final localPath = await _downloadAttachmentToTempFile(attachment, uri: uri);
+      if (localPath == null) {
+        return;
+      }
+
+      await Share.shareXFiles(
+        [
+          XFile(
+            localPath,
+            mimeType: attachment.mimeType.trim().isEmpty
+                ? null
+                : attachment.mimeType,
+            name: attachment.name,
+          ),
+        ],
+        text: attachment.name,
+        subject: attachment.name,
+      );
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Impossible de partager cette pièce jointe.');
+      }
+    }
+  }
+
+  Future<String?> _downloadAttachmentToTempFile(
+    _MessageAttachment attachment, {
+    required Uri uri,
+  }) async {
+    try {
+      final response = await http.get(uri);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('http_${response.statusCode}');
+      }
+      return writeTempFile(
+        response.bodyBytes,
+        fileName: _safeAttachmentName(attachment.name, 'piece_jointe.bin'),
+      );
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Téléchargement impossible pour cette pièce jointe.',
+        );
+      }
+      return null;
     }
   }
 
@@ -2464,6 +3102,34 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     ),
                   ),
                   Positioned(
+                    right: 18,
+                    bottom: 18,
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18),
+                          ),
+                        ),
+                        child: Text(
+                          'iliprestō',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
                     top: 8,
                     right: 8,
                     child: IconButton(
@@ -2505,7 +3171,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
 
     if (attachment.type == 'audio') {
-      return buildDeleteOverlay(_VoiceNotePlayer(url: attachment.url));
+      return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url));
     }
 
     return buildDeleteOverlay(SizedBox(
@@ -2523,7 +3189,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             shape: const CircleBorder(),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: null,
+              onTap: () => unawaited(_openAttachment(attachment)),
               customBorder: const CircleBorder(),
               child: Icon(
                 Icons.attach_file_rounded,
@@ -2601,6 +3267,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     bool groupedWithOlder = false,
     bool groupedWithNewer = false,
     bool isDeleted = false,
+    bool isModerated = false,
+    String moderatedPlaceholder = 'Message retiré par la modération',
     VoidCallback? onRetry,
     Future<void> Function()? onLongPress,
   }) {
@@ -2609,6 +3277,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (readReceipt != null) readReceipt,
       if (statusLabel != null) statusLabel,
     ];
+    final hideAttachmentText = _shouldHideAttachmentText(text, attachments);
 
     final canDeleteAttachments = isMine &&
         messageDocId != null &&
@@ -2689,6 +3358,28 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   ),
                 ],
               )
+            else if (isModerated)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.shield_outlined,
+                    size: 14,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      moderatedPlaceholder,
+                      style: kPrestoBodyTextStyle.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: const Color(0xFF6B7280),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              )
             else ...[
               _buildAttachmentPreviews(
                 attachments,
@@ -2699,7 +3390,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     ? () => _deleteMessageById(messageDocId)
                     : null,
               ),
-              if (text.isNotEmpty)
+              if (text.isNotEmpty && !hideAttachmentText)
                 Text(
                   text,
                   style: kPrestoBodyTextStyle.copyWith(
@@ -3085,6 +3776,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                         _MessageAttachment.fromList(
                                       data['attachments'],
                                     );
+                                    final moderation =
+                                      _MessageModeration.fromMap(
+                                      data['moderation'],
+                                    );
                                     final isDeleted =
                                         data['deletedAt'] != null;
                                     final isDeletingMessage =
@@ -3092,6 +3787,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                             .contains(messageDocId);
                                     final showAsDeleted =
                                         isDeleted || isDeletingMessage;
+                                    final showAsModerated =
+                                      moderation.shouldHideContent &&
+                                        !showAsDeleted;
 
                                     final newerSenderId = docIndex > 0
                                         ? ((docs[docIndex - 1]
@@ -3133,6 +3831,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       groupedWithNewer: groupedWithNewer,
                                       groupedWithOlder: groupedWithOlder,
                                       isDeleted: showAsDeleted,
+                                        isModerated: showAsModerated,
+                                        moderatedPlaceholder:
+                                          moderation.placeholderText,
                                       onLongPress: isMine && !showAsDeleted
                                           ? () async {
                                               final scaffoldMessenger =
@@ -3270,6 +3971,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildEmojiStrip(),
+                      _buildMessagingSubscriptionBadge(),
                       if (_isUploadingAttachment) ...[
                         Row(
                           children: [
@@ -3475,6 +4177,51 @@ class _OptimisticMessage {
   }
 }
 
+class _MessageModeration {
+  final String status;
+  final String visibility;
+
+  const _MessageModeration({
+    required this.status,
+    required this.visibility,
+  });
+
+  static const _none = _MessageModeration(
+    status: '',
+    visibility: 'visible',
+  );
+
+  static _MessageModeration fromMap(Object? value) {
+    if (value is! Map) return _none;
+    return _MessageModeration(
+      status: (value['status'] ?? '').toString().trim().toLowerCase(),
+      visibility: (value['visibility'] ?? 'visible')
+          .toString()
+          .trim()
+          .toLowerCase(),
+    );
+  }
+
+  bool get shouldHideContent {
+    return status == 'rejected' ||
+        status == 'manual_review' ||
+        (status == 'pending' && visibility == 'hidden');
+  }
+
+  String get placeholderText {
+    switch (status) {
+      case 'rejected':
+        return 'Message retiré par la modération';
+      case 'manual_review':
+        return 'Message masqué en attente de vérification';
+      case 'pending':
+        return 'Message en cours de vérification';
+      default:
+        return 'Message modéré';
+    }
+  }
+}
+
 class _MessageAttachment {
   final String type;
   final String name;
@@ -3544,6 +4291,77 @@ class _MessageAttachment {
       storagePath: storagePath,
       mimeType: mimeType,
       sizeBytes: sizeBytes,
+    );
+  }
+}
+
+class _AttachmentActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _AttachmentActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: kPrestoBlue),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: kPrestoBodyTextStyle.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: kPrestoMetaTextStyle.copyWith(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF9CA3AF),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -3870,10 +4688,145 @@ class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
   }
 }
 
-class _VoiceNotePlayer extends StatefulWidget {
-  final String url;
+enum _VoiceNotePreviewAction { cancel, rerecord, send }
 
-  const _VoiceNotePlayer({required this.url});
+class _ConversationAttachmentGateDecision {
+  final String title;
+  final String message;
+  final String source;
+  final bool stripeEnabled;
+
+  const _ConversationAttachmentGateDecision({
+    required this.title,
+    required this.message,
+    required this.source,
+    required this.stripeEnabled,
+  });
+}
+
+class _PendingVoiceNote {
+  final Duration duration;
+  final Uint8List? bytes;
+  final String? filePath;
+  final String previewSource;
+  final bool previewIsLocalFile;
+  final String mimeType;
+  final String extension;
+  final bool usesGeneratedPreviewSource;
+
+  const _PendingVoiceNote({
+    required this.duration,
+    this.bytes,
+    this.filePath,
+    required this.previewSource,
+    required this.previewIsLocalFile,
+    required this.mimeType,
+    required this.extension,
+    this.usesGeneratedPreviewSource = false,
+  });
+}
+
+class _VoiceNotePreviewSheet extends StatelessWidget {
+  final _PendingVoiceNote preview;
+  final VoidCallback onCancel;
+  final VoidCallback onRerecord;
+  final VoidCallback onSend;
+
+  const _VoiceNotePreviewSheet({
+    required this.preview,
+    required this.onCancel,
+    required this.onRerecord,
+    required this.onSend,
+  });
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Relire la note vocale',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Durée ${_fmt(preview.duration)}',
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: _VoiceNotePlayer(
+                source: preview.previewSource,
+                isLocalFile: preview.previewIsLocalFile,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onCancel,
+                    icon: const Icon(Icons.close_rounded),
+                    label: const Text('Annuler'),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onRerecord,
+                    icon: const Icon(Icons.mic_rounded),
+                    label: const Text('Refaire'),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: onSend,
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text('Envoyer'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: kWhatsappGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VoiceNotePlayer extends StatefulWidget {
+  final String source;
+  final bool isLocalFile;
+
+  const _VoiceNotePlayer({
+    required this.source,
+    this.isLocalFile = false,
+  });
 
   @override
   State<_VoiceNotePlayer> createState() => _VoiceNotePlayerState();
@@ -3890,6 +4843,7 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
   Duration _position = Duration.zero;
   Duration _total = Duration.zero;
   bool _isLoading = false;
+  bool _sourceLoaded = false;
 
   bool get _isPlaying => _state == PlayerState.playing;
   bool get _isPaused => _state == PlayerState.paused;
@@ -3920,6 +4874,16 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
         _position = Duration.zero;
       });
     });
+    unawaited(_prepareSource());
+  }
+
+  @override
+  void didUpdateWidget(covariant _VoiceNotePlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.source != widget.source ||
+        oldWidget.isLocalFile != widget.isLocalFile) {
+      unawaited(_resetForNewUrl());
+    }
   }
 
   @override
@@ -3938,6 +4902,42 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
     return '$m:$s';
   }
 
+  Future<void> _prepareSource() async {
+    final source = widget.source.trim();
+    if (source.isEmpty) return;
+    try {
+      await _player.setSource(
+        widget.isLocalFile ? DeviceFileSource(source) : UrlSource(source),
+      );
+      final duration = await _player.getDuration();
+      if (!mounted) return;
+      setState(() {
+        _sourceLoaded = true;
+        if (duration != null && duration > Duration.zero) {
+          _total = duration;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _sourceLoaded = false);
+    }
+  }
+
+  Future<void> _resetForNewUrl() async {
+    try {
+      await _player.stop();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _state = PlayerState.stopped;
+      _position = Duration.zero;
+      _total = Duration.zero;
+      _isLoading = false;
+      _sourceLoaded = false;
+    });
+    await _prepareSource();
+  }
+
   Future<void> _toggle() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
@@ -3947,13 +4947,36 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
       } else if (_isPaused) {
         await _player.resume();
       } else {
-        await _player.play(UrlSource(widget.url));
+        if (!_sourceLoaded) {
+          await _prepareSource();
+        }
+        if (_sourceLoaded) {
+          if (_position > Duration.zero &&
+              _total > Duration.zero &&
+              _position >= _total) {
+            await _player.seek(Duration.zero);
+          }
+          await _player.resume();
+        } else {
+          final source = widget.source.trim();
+          await _player.play(
+            widget.isLocalFile
+                ? DeviceFileSource(source)
+                : UrlSource(source),
+          );
+          final duration = await _player.getDuration();
+          if (!mounted) return;
+          if (duration != null && duration > Duration.zero) {
+            setState(() => _total = duration);
+          }
+        }
       }
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _state = PlayerState.stopped;
         _isLoading = false;
+        _sourceLoaded = false;
       });
     }
   }

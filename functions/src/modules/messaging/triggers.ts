@@ -6,6 +6,7 @@ import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
 import { APP_BASE_URL } from "../../config/env";
 import { createInAppNotification, sendPushToUser } from "../notifications/push";
+import { evaluateMessagingModeration, type MessagingAttachmentLike } from "./moderation";
 import { computeConversationStatus } from "./state";
 import { readConversationParticipants } from "./participants";
 import {
@@ -20,6 +21,33 @@ function buildMessagePreview(value: unknown): string {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (text.length <= 120) return text;
   return `${text.slice(0, 117)}...`;
+}
+
+function parseMessageAttachments(value: unknown): MessagingAttachmentLike[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const raw = entry as Record<string, unknown>;
+    const type = String(raw.type || "").trim();
+    if (type !== "image" && type !== "document" && type !== "audio") return [];
+    const url = String(raw.url || "").trim();
+    if (!url) return [];
+    return [{
+      type,
+      name: String(raw.name || "").trim(),
+      url,
+      storagePath: String(raw.storagePath || "").trim(),
+      mimeType: String(raw.mimeType || "").trim(),
+      sizeBytes: Number(raw.sizeBytes || 0),
+    } satisfies MessagingAttachmentLike];
+  });
+}
+
+function moderatedMessagePlaceholder(status: string): string {
+  if (status === "rejected") {
+    return "Message retiré par la modération";
+  }
+  return "Message en cours de vérification";
 }
 
 async function emitConversationMessageEvent({
@@ -72,14 +100,16 @@ async function emitConversationMessageEvent({
 export const onConversationSubMessageCreated = onDocumentCreated(
   "conversations/{conversationId}/messages/{messageId}",
   async (event) => {
-    const message = event.data?.data();
-    if (!message) return;
+    const messageSnapshot = event.data;
+    const rawMessage = messageSnapshot?.data();
+    if (!rawMessage) return;
+
+    let message = rawMessage as Record<string, unknown>;
 
     const conversationId = String(event.params.conversationId || "");
     const messageId = String(event.params.messageId || "");
     const senderId = String(message.senderId || message.sender_id || "");
     const senderName = String(message.senderName || message.sender_name || "Quelqu'un");
-    const messagePreview = buildMessagePreview(message.text);
 
     // isFirstMessage est positionné de manière transactionnelle par le callable.
     // Le trigger ne recalcule rien pour éviter les races entre messages concurrents.
@@ -88,11 +118,55 @@ export const onConversationSubMessageCreated = onDocumentCreated(
       ? "message.created.new_thread"
       : "message.created.existing_thread";
 
+    const moderation = (message.moderation ?? {}) as Record<string, unknown>;
+    const moderationMode = String(moderation.mode || "hybrid").trim().toLowerCase();
+    const moderationStatus = String(moderation.status || "").trim().toLowerCase();
+    if (moderationStatus === "pending") {
+      const evaluated = await evaluateMessagingModeration({
+        mode: moderationMode === "visible_then_retract"
+          ? "visible_then_retract"
+          : moderationMode === "hidden_until_validated"
+            ? "hidden_until_validated"
+            : "hybrid",
+        text: String(message.text || message.body || "").trim(),
+        attachments: parseMessageAttachments(message.attachments),
+      });
+      const nextModeration = {
+        mode: evaluated.mode,
+        status: evaluated.status,
+        visibility: evaluated.visibility,
+        reason: evaluated.moderationReason,
+        userMessage: evaluated.userMessage,
+        autoFlags: evaluated.autoFlags,
+        riskScore: evaluated.riskScore,
+        textScanStatus: evaluated.textScanStatus,
+        imageScanStatus: evaluated.imageScanStatus,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      await messageSnapshot?.ref.set({
+        moderation: nextModeration,
+      }, { merge: true });
+      message = {
+        ...message,
+        moderation: nextModeration,
+      };
+    }
+
     const conversationSnap = await db.collection(COLLECTIONS.conversations).doc(conversationId).get();
     const conversationData = (conversationSnap.data() ?? {}) as Record<string, unknown>;
     const conversation = readConversationMirrorData(conversationData, { conversationId });
     const normalizedParticipants = readConversationParticipants(conversationData, { conversationId });
-    const normalizedMessageText = String(message.text || message.body || "").trim();
+    const resolvedModeration = (message.moderation ?? {}) as Record<string, unknown>;
+    const resolvedModerationStatus = String(resolvedModeration.status || "").trim().toLowerCase();
+    const resolvedModerationVisibility = String(resolvedModeration.visibility || "visible").trim().toLowerCase();
+    const shouldHideContent = resolvedModerationStatus === "rejected" ||
+      resolvedModerationStatus === "manual_review" ||
+      (resolvedModerationStatus === "pending" && resolvedModerationVisibility === "hidden");
+    const normalizedMessageText = shouldHideContent
+      ? moderatedMessagePlaceholder(resolvedModerationStatus)
+      : String(message.text || message.body || "").trim();
+    const shouldNotifyParticipants = !shouldHideContent;
+    const messagePreview = buildMessagePreview(normalizedMessageText);
     const isClientFirestoreFallback = message.createdVia === "client_firestore_fallback";
 
     if (normalizedParticipants.length > 0) {
@@ -140,6 +214,10 @@ export const onConversationSubMessageCreated = onDocumentCreated(
     const offerTitle = String(conversation.offerTitle || "Annonce IliPresto").trim();
     const offerId = String(conversation.offerId || "").trim();
     const routeName = `/messages/${encodeURIComponent(conversationId)}`;
+
+    if (!shouldNotifyParticipants) {
+      return;
+    }
 
     for (const recipientId of participants) {
       const notificationId = `notif_message_${messageId}_${recipientId}`;

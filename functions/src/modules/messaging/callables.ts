@@ -13,6 +13,12 @@ import { sha256 } from "../../utils/hash";
 import { extractRolesFromAuthToken } from "../marketplace/services/roles";
 import { refreshUnreadMessageCount, refreshUnreadNotificationCount } from "../notifications/counters";
 import {
+  buildPendingMessagingModeration,
+  evaluateMessagingModeration,
+  loadMessagingModerationMode,
+  shouldModerateSynchronouslyBeforeSend,
+} from "./moderation";
+import {
   computeConversationStatus,
   isConversationBlocked,
   isConversationFlagEnabledForUser,
@@ -285,7 +291,193 @@ const ALLOWED_AUDIO_ATTACHMENT_MIME_TYPES = new Set([
   "audio/aac",
   "audio/x-m4a",
   "audio/webm",
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/x-wav",
+  "audio/wave",
+  "audio/ogg",
 ]);
+
+type MessagingAttachmentEntitlements = {
+  canSendDocuments: boolean;
+  maxPhotosPerConversation: number;
+  maxAudioPerConversation: number;
+};
+
+type MessagingAttachmentEntitlementFailureReason =
+  | "subscription_document_required"
+  | "free_plan_photo_limit_reached"
+  | "free_plan_audio_limit_reached";
+
+function buildMessagingEntitlementError(
+  reason: MessagingAttachmentEntitlementFailureReason,
+): HttpsError {
+  switch (reason) {
+    case "subscription_document_required":
+      return new HttpsError(
+        "failed-precondition",
+        "documents require ilipresto_plus when free access mode is disabled",
+        { reason },
+      );
+    case "free_plan_photo_limit_reached":
+      return new HttpsError(
+        "failed-precondition",
+        "free plan is limited to one photo per conversation",
+        { reason },
+      );
+    case "free_plan_audio_limit_reached":
+      return new HttpsError(
+        "failed-precondition",
+        "free plan is limited to one audio attachment per conversation",
+        { reason },
+      );
+  }
+}
+
+function buildMessagingModerationError(details: {
+  moderationReason: string;
+  autoFlags: string[];
+  userMessage: string;
+}): HttpsError {
+  let reason = "messaging_content_review_required";
+  if (details.autoFlags.includes("banned_term")) {
+    reason = "messaging_text_blocked";
+  } else if (
+    details.autoFlags.includes("adult_content") ||
+    details.autoFlags.includes("violent_content")
+  ) {
+    reason = "messaging_image_blocked";
+  }
+
+  return new HttpsError(
+    "failed-precondition",
+    details.userMessage || "message requires moderation before send",
+    {
+      reason,
+      moderationReason: details.moderationReason,
+    },
+  );
+}
+
+function normalizeSubscriptionPlan(value: unknown): "free" | "ilipresto_plus" | "ilipro" {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "ilipresto_plus" || normalized === "iliprestoplus" || normalized === "ilipresto+") {
+    return "ilipresto_plus";
+  }
+  if (normalized === "ilipro") {
+    return "ilipro";
+  }
+  return "free";
+}
+
+export function getMessagingAttachmentEntitlements(
+  plan: unknown,
+  freeAccessMode = true,
+): MessagingAttachmentEntitlements {
+  if (freeAccessMode) {
+    return {
+      canSendDocuments: true,
+      maxPhotosPerConversation: 999,
+      maxAudioPerConversation: 999,
+    };
+  }
+
+  switch (normalizeSubscriptionPlan(plan)) {
+    case "ilipresto_plus":
+    case "ilipro":
+      return {
+        canSendDocuments: true,
+        maxPhotosPerConversation: 999,
+        maxAudioPerConversation: 999,
+      };
+    default:
+      return {
+        canSendDocuments: false,
+        maxPhotosPerConversation: 1,
+        maxAudioPerConversation: 1,
+      };
+  }
+}
+
+async function readSubscriptionConfigFreeAccessMode(): Promise<boolean> {
+  const [snakeCaseSnap, camelCaseSnap] = await Promise.all([
+    db.collection("app_config").doc("subscriptions").get().catch(() => null),
+    db.collection(COLLECTIONS.appConfig).doc("subscriptions").get().catch(() => null),
+  ]);
+
+  const data = snakeCaseSnap?.data() ?? camelCaseSnap?.data() ?? {};
+  return data.freeAccessMode !== false;
+}
+
+async function enforceMessagingAttachmentEntitlements({
+  convRef,
+  currentUserId,
+  attachments,
+}: {
+  convRef: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>;
+  currentUserId: string;
+  attachments: ConversationAttachment[];
+}): Promise<void> {
+  if (attachments.length === 0) {
+    return;
+  }
+
+  const freeAccessMode = await readSubscriptionConfigFreeAccessMode();
+  if (freeAccessMode) {
+    return;
+  }
+
+  const userSnap = await db.collection(COLLECTIONS.users).doc(currentUserId).get();
+  const entitlements = getMessagingAttachmentEntitlements(
+    userSnap.data()?.subscriptionPlan,
+    freeAccessMode,
+  );
+
+  const requestedDocuments = attachments.filter((attachment) => attachment.type === "document").length;
+  const requestedPhotos = attachments.filter((attachment) => attachment.type === "image").length;
+  const requestedAudios = attachments.filter((attachment) => attachment.type === "audio").length;
+
+  if (requestedDocuments > 0 && !entitlements.canSendDocuments) {
+    throw buildMessagingEntitlementError("subscription_document_required");
+  }
+
+  if (requestedPhotos === 0 && requestedAudios === 0) {
+    return;
+  }
+
+  const sentMessagesSnap = await convRef.collection("messages")
+    .where("senderId", "==", currentUserId)
+    .get();
+
+  let existingPhotos = 0;
+  let existingAudios = 0;
+
+  for (const doc of sentMessagesSnap.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    if (data.deletedAt || data.isDeleted === true) {
+      continue;
+    }
+
+    const rawAttachments = Array.isArray(data.attachments) ? data.attachments : [];
+    for (const rawAttachment of rawAttachments) {
+      const attachmentType = String((rawAttachment as Record<string, unknown>)?.type || "").trim();
+      if (attachmentType === "image") {
+        existingPhotos++;
+      } else if (attachmentType === "audio") {
+        existingAudios++;
+      }
+    }
+  }
+
+  if (existingPhotos + requestedPhotos > entitlements.maxPhotosPerConversation) {
+    throw buildMessagingEntitlementError("free_plan_photo_limit_reached");
+  }
+
+  if (existingAudios + requestedAudios > entitlements.maxAudioPerConversation) {
+    throw buildMessagingEntitlementError("free_plan_audio_limit_reached");
+  }
+}
 
 export function buildAttachmentMessageFallbackText(
   attachment: Pick<ConversationAttachment, "type" | "name">,
@@ -311,8 +503,14 @@ function sanitizeAttachmentText(value: unknown, maxLength: number): string {
 function isAllowedDocumentAttachmentMimeType(mimeType: string): boolean {
   return mimeType.startsWith("text/") || [
     "application/pdf",
+    "application/rtf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   ].includes(mimeType);
 }
 
@@ -859,6 +1057,28 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
   }
 
   const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
+  await enforceMessagingAttachmentEntitlements({
+    convRef,
+    currentUserId,
+    attachments,
+  });
+
+  const moderationMode = await loadMessagingModerationMode();
+  let messageModeration = shouldModerateSynchronouslyBeforeSend(moderationMode)
+    ? await evaluateMessagingModeration({
+      mode: moderationMode,
+      text: messageText,
+      attachments,
+    })
+    : buildPendingMessagingModeration(moderationMode);
+
+  if (shouldModerateSynchronouslyBeforeSend(moderationMode) && messageModeration.status !== "approved") {
+    throw buildMessagingModerationError({
+      moderationReason: messageModeration.moderationReason,
+      autoFlags: messageModeration.autoFlags,
+      userMessage: messageModeration.userMessage,
+    });
+  }
 
   const latestMessageSnap = await convRef
     .collection("messages")
@@ -919,6 +1139,18 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
       text: messageText,
       body: messageText,
       attachments,
+      moderation: {
+        mode: messageModeration.mode,
+        status: messageModeration.status,
+        visibility: messageModeration.visibility,
+        reason: messageModeration.moderationReason,
+        userMessage: messageModeration.userMessage,
+        autoFlags: messageModeration.autoFlags,
+        riskScore: messageModeration.riskScore,
+        textScanStatus: messageModeration.textScanStatus,
+        imageScanStatus: messageModeration.imageScanStatus,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
       senderId: currentUserId,
       sender_id: currentUserId,
       senderName,

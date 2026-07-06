@@ -7,6 +7,7 @@ exports.deleteConversationMessage = exports.deleteConversation = exports.adminUn
 exports.assertConversationParticipantAccess = assertConversationParticipantAccess;
 exports.canonicalConversationId = canonicalConversationId;
 exports.resolveOfferLikeData = resolveOfferLikeData;
+exports.getMessagingAttachmentEntitlements = getMessagingAttachmentEntitlements;
 exports.buildAttachmentMessageFallbackText = buildAttachmentMessageFallbackText;
 exports.buildProcessedConversationAttachmentPath = buildProcessedConversationAttachmentPath;
 exports.sanitizeConversationAttachments = sanitizeConversationAttachments;
@@ -25,6 +26,7 @@ const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
 const roles_1 = require("../marketplace/services/roles");
 const counters_1 = require("../notifications/counters");
+const moderation_1 = require("./moderation");
 const state_1 = require("./state");
 const participants_1 = require("./participants");
 const mirror_1 = require("./mirror");
@@ -199,7 +201,126 @@ const ALLOWED_AUDIO_ATTACHMENT_MIME_TYPES = new Set([
     "audio/aac",
     "audio/x-m4a",
     "audio/webm",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/wave",
+    "audio/ogg",
 ]);
+function buildMessagingEntitlementError(reason) {
+    switch (reason) {
+        case "subscription_document_required":
+            return new https_1.HttpsError("failed-precondition", "documents require ilipresto_plus when free access mode is disabled", { reason });
+        case "free_plan_photo_limit_reached":
+            return new https_1.HttpsError("failed-precondition", "free plan is limited to one photo per conversation", { reason });
+        case "free_plan_audio_limit_reached":
+            return new https_1.HttpsError("failed-precondition", "free plan is limited to one audio attachment per conversation", { reason });
+    }
+}
+function buildMessagingModerationError(details) {
+    let reason = "messaging_content_review_required";
+    if (details.autoFlags.includes("banned_term")) {
+        reason = "messaging_text_blocked";
+    }
+    else if (details.autoFlags.includes("adult_content") ||
+        details.autoFlags.includes("violent_content")) {
+        reason = "messaging_image_blocked";
+    }
+    return new https_1.HttpsError("failed-precondition", details.userMessage || "message requires moderation before send", {
+        reason,
+        moderationReason: details.moderationReason,
+    });
+}
+function normalizeSubscriptionPlan(value) {
+    const normalized = String(value ?? "").trim().toLowerCase();
+    if (normalized === "ilipresto_plus" || normalized === "iliprestoplus" || normalized === "ilipresto+") {
+        return "ilipresto_plus";
+    }
+    if (normalized === "ilipro") {
+        return "ilipro";
+    }
+    return "free";
+}
+function getMessagingAttachmentEntitlements(plan, freeAccessMode = true) {
+    if (freeAccessMode) {
+        return {
+            canSendDocuments: true,
+            maxPhotosPerConversation: 999,
+            maxAudioPerConversation: 999,
+        };
+    }
+    switch (normalizeSubscriptionPlan(plan)) {
+        case "ilipresto_plus":
+        case "ilipro":
+            return {
+                canSendDocuments: true,
+                maxPhotosPerConversation: 999,
+                maxAudioPerConversation: 999,
+            };
+        default:
+            return {
+                canSendDocuments: false,
+                maxPhotosPerConversation: 1,
+                maxAudioPerConversation: 1,
+            };
+    }
+}
+async function readSubscriptionConfigFreeAccessMode() {
+    const [snakeCaseSnap, camelCaseSnap] = await Promise.all([
+        firestore_1.db.collection("app_config").doc("subscriptions").get().catch(() => null),
+        firestore_1.db.collection(constants_1.COLLECTIONS.appConfig).doc("subscriptions").get().catch(() => null),
+    ]);
+    const data = snakeCaseSnap?.data() ?? camelCaseSnap?.data() ?? {};
+    return data.freeAccessMode !== false;
+}
+async function enforceMessagingAttachmentEntitlements({ convRef, currentUserId, attachments, }) {
+    if (attachments.length === 0) {
+        return;
+    }
+    const freeAccessMode = await readSubscriptionConfigFreeAccessMode();
+    if (freeAccessMode) {
+        return;
+    }
+    const userSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(currentUserId).get();
+    const entitlements = getMessagingAttachmentEntitlements(userSnap.data()?.subscriptionPlan, freeAccessMode);
+    const requestedDocuments = attachments.filter((attachment) => attachment.type === "document").length;
+    const requestedPhotos = attachments.filter((attachment) => attachment.type === "image").length;
+    const requestedAudios = attachments.filter((attachment) => attachment.type === "audio").length;
+    if (requestedDocuments > 0 && !entitlements.canSendDocuments) {
+        throw buildMessagingEntitlementError("subscription_document_required");
+    }
+    if (requestedPhotos === 0 && requestedAudios === 0) {
+        return;
+    }
+    const sentMessagesSnap = await convRef.collection("messages")
+        .where("senderId", "==", currentUserId)
+        .get();
+    let existingPhotos = 0;
+    let existingAudios = 0;
+    for (const doc of sentMessagesSnap.docs) {
+        const data = doc.data();
+        if (data.deletedAt || data.isDeleted === true) {
+            continue;
+        }
+        const rawAttachments = Array.isArray(data.attachments) ? data.attachments : [];
+        for (const rawAttachment of rawAttachments) {
+            const attachmentType = String(rawAttachment?.type || "").trim();
+            if (attachmentType === "image") {
+                existingPhotos++;
+            }
+            else if (attachmentType === "audio") {
+                existingAudios++;
+            }
+        }
+    }
+    if (existingPhotos + requestedPhotos > entitlements.maxPhotosPerConversation) {
+        throw buildMessagingEntitlementError("free_plan_photo_limit_reached");
+    }
+    if (existingAudios + requestedAudios > entitlements.maxAudioPerConversation) {
+        throw buildMessagingEntitlementError("free_plan_audio_limit_reached");
+    }
+}
 function buildAttachmentMessageFallbackText(attachment) {
     if (attachment.type === "image") {
         return `Photo : ${attachment.name}`;
@@ -219,8 +340,14 @@ function sanitizeAttachmentText(value, maxLength) {
 function isAllowedDocumentAttachmentMimeType(mimeType) {
     return mimeType.startsWith("text/") || [
         "application/pdf",
+        "application/rtf",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.oasis.opendocument.text",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     ].includes(mimeType);
 }
 function buildProcessedConversationAttachmentPath({ uid, conversationId, storagePath, }) {
@@ -634,6 +761,26 @@ exports.sendConversationMessage = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPT
         throw new https_1.HttpsError("resource-exhausted", "too many messages sent too quickly");
     }
     const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
+    await enforceMessagingAttachmentEntitlements({
+        convRef,
+        currentUserId,
+        attachments,
+    });
+    const moderationMode = await (0, moderation_1.loadMessagingModerationMode)();
+    let messageModeration = (0, moderation_1.shouldModerateSynchronouslyBeforeSend)(moderationMode)
+        ? await (0, moderation_1.evaluateMessagingModeration)({
+            mode: moderationMode,
+            text: messageText,
+            attachments,
+        })
+        : (0, moderation_1.buildPendingMessagingModeration)(moderationMode);
+    if ((0, moderation_1.shouldModerateSynchronouslyBeforeSend)(moderationMode) && messageModeration.status !== "approved") {
+        throw buildMessagingModerationError({
+            moderationReason: messageModeration.moderationReason,
+            autoFlags: messageModeration.autoFlags,
+            userMessage: messageModeration.userMessage,
+        });
+    }
     const latestMessageSnap = await convRef
         .collection("messages")
         .orderBy("createdAt", "desc")
@@ -678,6 +825,18 @@ exports.sendConversationMessage = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPT
             text: messageText,
             body: messageText,
             attachments,
+            moderation: {
+                mode: messageModeration.mode,
+                status: messageModeration.status,
+                visibility: messageModeration.visibility,
+                reason: messageModeration.moderationReason,
+                userMessage: messageModeration.userMessage,
+                autoFlags: messageModeration.autoFlags,
+                riskScore: messageModeration.riskScore,
+                textScanStatus: messageModeration.textScanStatus,
+                imageScanStatus: messageModeration.imageScanStatus,
+                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            },
             senderId: currentUserId,
             sender_id: currentUserId,
             senderName,
