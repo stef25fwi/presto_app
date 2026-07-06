@@ -2523,6 +2523,7 @@ class _AccountPageState extends State<AccountPage> {
     required String title,
     required String description,
     required Widget child,
+    Widget? alwaysVisibleChild,
     bool isExpanded = true,
     VoidCallback? onToggle,
   }) {
@@ -2594,6 +2595,10 @@ class _AccountPageState extends State<AccountPage> {
             )
           else
             header,
+          if (alwaysVisibleChild != null) ...[
+            const SizedBox(height: 14),
+            alwaysVisibleChild,
+          ],
           if (!isCollapsible || isExpanded) ...[
             const SizedBox(height: 14),
             child,
@@ -2687,87 +2692,6 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                       ),
-                    // Indicateur de complétude du profil
-                    if (_profileLoaded)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: Builder(
-                          builder: (context) {
-                            final completeness =
-                                _calculateProfileCompleteness();
-                            final missingFields =
-                                _missingRequiredProfileFields();
-                            final isComplete = missingFields.isEmpty;
-
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF5F5F5),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Complétude du profil",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: completeness,
-                                      minHeight: 6,
-                                      backgroundColor: Colors.grey.shade300,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        completeness >= 1.0
-                                            ? Colors.green
-                                            : completeness >= 0.75
-                                                ? Colors.orange
-                                                : Colors.red,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${(completeness * 100).toStringAsFixed(0)}% complet',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Champs requis : ${_requiredProfileFieldLabels.join(', ')}.',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    isComplete
-                                        ? 'Tous les champs requis sont renseignés.'
-                                        : 'Champ${missingFields.length > 1 ? 's' : ''} requis manquant${missingFields.length > 1 ? 's' : ''} : ${missingFields.join(', ')}.',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isComplete
-                                          ? Colors.green.shade700
-                                          : Colors.red.shade700,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
                     if (_profileLoadError)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
@@ -2810,11 +2734,11 @@ class _AccountPageState extends State<AccountPage> {
                               !_isProfileSectionExpanded;
                         });
                       },
+                      alwaysVisibleChild:
+                          _profileLoaded ? _buildProfileCompletenessBanner() : null,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildProfileCompletenessBanner(),
-                          const SizedBox(height: 12),
                           AccountProfileFormSection(
                             firstName: _profileFirstName,
                             lastName: _profileLastName,

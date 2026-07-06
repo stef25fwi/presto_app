@@ -2054,6 +2054,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         final config =
             configSnapshot.data ?? const SubscriptionAppConfig.defaults();
 
+        if (config.freeAccessMode) {
+          return const SizedBox.shrink();
+        }
+
         return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('users')
@@ -2067,17 +2071,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               freeAccessMode: config.freeAccessMode,
             );
 
-            final message = config.freeAccessMode
-                ? 'Accès gratuit complet actif. Prévu ensuite: Gratuit = 1 photo + 1 audio par conversation, fichiers réservés à ilipresto+.'
-                : entitlements.canSendDocuments
-                    ? 'ilipresto+ actif pour cette conversation: fichiers, photos et audio débloqués.'
-                    : 'Gratuit: 1 photo + 1 audio par conversation. Les documents demandent ilipresto+.';
+            final message = entitlements.canSendDocuments
+              ? 'ilipresto+ actif pour cette conversation: fichiers, photos et audio débloqués.'
+              : 'Gratuit: 1 photo + 1 audio par conversation. Les documents demandent ilipresto+.';
 
-            final accentColor = config.freeAccessMode
-                ? Colors.green.shade700
-                : entitlements.canSendDocuments
-                    ? kPrestoBlue
-                    : kPrestoOrange;
+            final accentColor = entitlements.canSendDocuments
+              ? kPrestoBlue
+              : kPrestoOrange;
 
             return Container(
               width: double.infinity,
@@ -3112,8 +3112,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     child: IgnorePointer(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 8,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.22),
@@ -3126,9 +3126,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                           'iliprestō',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 12,
+                            fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 0.2,
+                            letterSpacing: 0.1,
                           ),
                         ),
                       ),
@@ -4619,6 +4619,24 @@ class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
 
   @override
   Widget build(BuildContext context) {
+    final compactOutlinedStyle = OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      minimumSize: const Size(0, 44),
+      textStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    final compactFilledStyle = FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      minimumSize: const Size(0, 44),
+      textStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: kWhatsappGreen,
+    );
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -4747,6 +4765,24 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactOutlinedStyle = OutlinedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      minimumSize: const Size(0, 44),
+      textStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    final compactFilledStyle = FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      minimumSize: const Size(0, 44),
+      textStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+      ),
+      backgroundColor: kWhatsappGreen,
+    );
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -4787,27 +4823,39 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onCancel,
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text('Annuler'),
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    label: const Text(
+                      'Annuler',
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                    style: compactOutlinedStyle,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onRerecord,
-                    icon: const Icon(Icons.mic_rounded),
-                    label: const Text('Refaire'),
+                    icon: const Icon(Icons.mic_rounded, size: 18),
+                    label: const Text(
+                      'Refaire',
+                      maxLines: 1,
+                      softWrap: false,
+                    ),
+                    style: compactOutlinedStyle,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: onSend,
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('Envoyer'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: kWhatsappGreen,
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: const Text(
+                      'Envoyer',
+                      maxLines: 1,
+                      softWrap: false,
                     ),
+                    style: compactFilledStyle,
                   ),
                 ),
               ],

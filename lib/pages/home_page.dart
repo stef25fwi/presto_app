@@ -391,7 +391,10 @@ class _HomePageState extends State<HomePage>
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final raw = doc.data()?['region']?.toString().trim() ?? '';
       if (raw.isNotEmpty && mounted) {
-        setState(() => _userRegion = raw);
+        setState(() {
+          _userRegion = raw;
+          _latestOffers = _prioritizeOffersForUserRegion(_latestOffers);
+        });
       }
     } catch (_) {}
   }
@@ -639,6 +642,56 @@ class _HomePageState extends State<HomePage>
         .limit(limit);
   }
 
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _prioritizeOffersForUserRegion(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> offers,
+  ) {
+    final region = _userRegion?.trim() ?? '';
+    if (region.isEmpty || offers.length <= 1) return offers;
+
+    final prioritized = List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+      offers,
+    );
+    prioritized.sort((a, b) {
+      final aMatches = _offerMatchesUserRegion(a.data());
+      final bMatches = _offerMatchesUserRegion(b.data());
+      if (aMatches == bMatches) return 0;
+      return aMatches ? -1 : 1;
+    });
+    return prioritized;
+  }
+
+  bool _offerMatchesUserRegion(Map<String, dynamic> data) {
+    final userRegion = _userRegion?.trim() ?? '';
+    if (userRegion.isEmpty) return false;
+
+    final normalizedUserRegion = normalizeRegionKey(userRegion);
+    final userRegionItem = kRegionsOrdered.where((item) {
+      return item.code == userRegion ||
+          item.normalizedKey == normalizedUserRegion ||
+          normalizeRegionKey(item.label) == normalizedUserRegion;
+    }).cast<RegionItem?>().firstOrNull;
+
+    final offerRegionValues = <String>{
+      (data['region'] ?? '').toString().trim(),
+      (data['regionCode'] ?? '').toString().trim(),
+      (data['regionName'] ?? '').toString().trim(),
+    }..removeWhere((value) => value.isEmpty);
+
+    if (userRegionItem != null) {
+      offerRegionValues.add(userRegionItem.code);
+      offerRegionValues.add(userRegionItem.name);
+      offerRegionValues.add(userRegionItem.label);
+    }
+
+    return offerRegionValues.any((value) {
+      final normalizedValue = normalizeRegionKey(value);
+      if (normalizedValue == normalizedUserRegion) return true;
+      if (userRegionItem == null) return false;
+      return value == userRegionItem.code ||
+          normalizedValue == userRegionItem.normalizedKey;
+    });
+  }
+
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
     try {
@@ -671,14 +724,16 @@ class _HomePageState extends State<HomePage>
                 )
               : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final mergedAll = mergeOfferDocsById(listings, legacy).toList();
-      final merged = mergedAll
+      final merged = _prioritizeOffersForUserRegion(
+        mergedAll
           .where(
             (doc) => isVisibleInPublicBrowse(
               doc.data(),
             ),
           )
           .take(8)
-          .toList(growable: false);
+          .toList(growable: false),
+      );
       return merged;
     } catch (error, stackTrace) {
       logPublicOffersReadErrorWithAppCheck(

@@ -804,6 +804,32 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  Future<String> _resolveCallablePhoneForOffer(_OfferUiData data) async {
+    if (!data.isMarketplace || data.offerId.trim().isEmpty) {
+      return data.phone.trim();
+    }
+
+    try {
+      final callable = prestoFirebaseFunctions.httpsCallable(
+        'getListingContactPhone',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
+      );
+      final result = await callable.call<Map<String, dynamic>>({
+        'listingId': data.offerId,
+      });
+      final payload = result.data;
+      final hidePhone = payload['hidePhone'] == true;
+      if (hidePhone) {
+        return '';
+      }
+      return (payload['phone'] ?? '').toString().trim();
+    } on FirebaseFunctionsException {
+      return data.phone.trim();
+    } catch (_) {
+      return data.phone.trim();
+    }
+  }
+
   Future<void> _openExternalShareTarget(
     BuildContext context, {
     required Uri uri,
@@ -1046,9 +1072,11 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                     label: const Text('Envoyer un message'),
                   ),
                 ),
-                // Bouton « Appeler » masqué si l'annonceur a caché son numéro
-                // (hidePhone) ou si le numéro est vide.
-                if (!data.hidePhone && data.phone.trim().isNotEmpty) ...[
+                // Pour les listings marketplace, le numéro peut rester stocké
+                // côté contact privé et être résolu au clic via callable.
+                if (!data.hidePhone &&
+                    (data.phone.trim().isNotEmpty ||
+                        (data.isMarketplace && data.offerId.trim().isNotEmpty))) ...[
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 50,
@@ -1076,7 +1104,9 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                             'phoneViewCount': FieldValue.increment(1)
                           }).ignore();
                         }
-                        await _callPhone(context, data.phone);
+                        final phone = await _resolveCallablePhoneForOffer(data);
+                        if (!context.mounted) return;
+                        await _callPhone(context, phone);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0459D9),
