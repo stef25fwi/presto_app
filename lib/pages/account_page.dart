@@ -1778,9 +1778,62 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   double _calculateProfileCompleteness() {
-    final missingCount = _missingRequiredProfileFields().length;
-    final filled = _requiredProfileFieldLabels.length - missingCount;
-    return filled / _requiredProfileFieldLabels.length;
+    return UserProfileSavePayload.calculateCompleteness(
+      displayName: _profilePseudoController.text,
+      city: _profileCityController.text,
+      phone: _profilePhoneController.text,
+    );
+  }
+
+  Widget _buildProfileCompletenessBanner() {
+    final completeness = _calculateProfileCompleteness().clamp(0.0, 1.0);
+    final percent = (completeness * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDCE8F7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Complétude du profil',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16324F),
+                  ),
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: kPrestoBlue,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: completeness,
+              minHeight: 10,
+              backgroundColor: const Color(0xFFE5E7EB),
+              valueColor: const AlwaysStoppedAnimation<Color>(kPrestoBlue),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<bool> _saveProfile(
@@ -2757,32 +2810,39 @@ class _AccountPageState extends State<AccountPage> {
                               !_isProfileSectionExpanded;
                         });
                       },
-                      child: AccountProfileFormSection(
-                        firstName: _profileFirstName,
-                        lastName: _profileLastName,
-                        departmentController: _departmentController,
-                        pseudoController: _profilePseudoController,
-                        cityController: _profileCityController,
-                        phoneController: _profilePhoneController,
-                        phoneCountryCode: _profilePhoneCountryCode,
-                        isEditing: _isEditingProfile,
-                        isSaving: _isSavingProfile,
-                        showTitle: false,
-                        onStartEditing: () {
-                          setState(() {
-                            _isEditingProfile = true;
-                            _isProfileSectionExpanded = true;
-                          });
-                        },
-                        onPhoneCountryCodeChanged: (code) {
-                          if (!mounted || _profilePhoneCountryCode == code) {
-                            return;
-                          }
-                          setState(() => _profilePhoneCountryCode = code);
-                        },
-                        onSave: () async {
-                          await _saveProfile(user);
-                        },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildProfileCompletenessBanner(),
+                          const SizedBox(height: 12),
+                          AccountProfileFormSection(
+                            firstName: _profileFirstName,
+                            lastName: _profileLastName,
+                            departmentController: _departmentController,
+                            pseudoController: _profilePseudoController,
+                            cityController: _profileCityController,
+                            phoneController: _profilePhoneController,
+                            phoneCountryCode: _profilePhoneCountryCode,
+                            isEditing: _isEditingProfile,
+                            isSaving: _isSavingProfile,
+                            showTitle: false,
+                            onStartEditing: () {
+                              setState(() {
+                                _isEditingProfile = true;
+                                _isProfileSectionExpanded = true;
+                              });
+                            },
+                            onPhoneCountryCodeChanged: (code) {
+                              if (!mounted || _profilePhoneCountryCode == code) {
+                                return;
+                              }
+                              setState(() => _profilePhoneCountryCode = code);
+                            },
+                            onSave: () async {
+                              await _saveProfile(user);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),

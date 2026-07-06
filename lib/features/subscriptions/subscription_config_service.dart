@@ -64,6 +64,21 @@ class SubscriptionConfigService {
       SetOptions(merge: true),
     );
   }
+
+  Future<void> updateFreeAccessMode(
+    bool enabled, {
+    String? updatedBy,
+  }) async {
+    const baseConfig = SubscriptionAppConfig.defaults();
+
+    await _configRef.set(
+      baseConfig.copyWith(freeAccessMode: enabled).toFirestoreMap(
+            includeServerTimestamp: true,
+            nextUpdatedBy: updatedBy,
+          ),
+      SetOptions(merge: true),
+    );
+  }
 }
 
 extension on SubscriptionAppConfig {

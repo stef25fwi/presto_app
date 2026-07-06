@@ -12,6 +12,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_remote_config
   firebase_storage
   record_windows
+  share_plus
   url_launcher_windows
 )
 

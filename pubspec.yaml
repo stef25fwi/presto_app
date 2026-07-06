@@ -39,6 +39,8 @@ dependencies:
   google_mobile_ads: ^9.0.0
   flutter_slidable: ^4.0.3
   file_picker: ^11.0.2
+  share_plus: ^10.1.4
+  open_filex: ^4.7.0
   font_awesome_flutter: ^11.0.0
   flutter_svg: ^2.0.9
   shared_preferences: ^2.5.3

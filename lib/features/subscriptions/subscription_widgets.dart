@@ -125,6 +125,10 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
       userState.plan,
       freeAccessMode: config.freeAccessMode,
     );
+    final messagingEntitlements = getConversationAttachmentEntitlements(
+      userState.plan,
+      freeAccessMode: config.freeAccessMode,
+    );
 
     return Container(
       width: double.infinity,
@@ -225,6 +229,12 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          _SubscriptionMessagingRulesCard(
+            config: config,
+            plan: userState.plan,
+            entitlements: messagingEntitlements,
+          ),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
@@ -236,6 +246,118 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
               ),
               icon: const Icon(Icons.settings_outlined),
               label: const Text('Gestion future des abonnements'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubscriptionMessagingRulesCard extends StatelessWidget {
+  final SubscriptionAppConfig config;
+  final SubscriptionPlan plan;
+  final ConversationAttachmentEntitlements entitlements;
+
+  const _SubscriptionMessagingRulesCard({
+    required this.config,
+    required this.plan,
+    required this.entitlements,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final title = config.freeAccessMode
+        ? 'Règles messagerie préparées'
+        : 'Règles messagerie actives';
+    final summary = config.freeAccessMode
+        ? 'Aujourd’hui, personne n’est limité. Quand le mode gratuit complet sera coupé, ces règles s’appliqueront.'
+        : 'Les limites ci-dessous sont actuellement pilotées par l’abonnement.';
+    final photoRule = entitlements.maxPhotosPerConversation >= 999
+        ? 'Photos: envoi étendu'
+        : 'Photos: ${entitlements.maxPhotosPerConversation} par conversation';
+    final audioRule = entitlements.maxAudioPerConversation >= 999
+        ? 'Audio: envoi étendu'
+        : 'Audio: ${entitlements.maxAudioPerConversation} par conversation';
+    final documentRule = entitlements.canSendDocuments
+        ? 'Documents et fichiers: autorisés'
+        : 'Documents et fichiers: ilipresto+ requis';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: _kSubscriptionTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+              color: _kSubscriptionTextSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _SubscriptionRuleLine(label: 'Plan', value: subscriptionPlanLabel(plan)),
+          _SubscriptionRuleLine(label: 'Photos', value: photoRule),
+          _SubscriptionRuleLine(label: 'Audio', value: audioRule),
+          _SubscriptionRuleLine(label: 'Fichiers', value: documentRule),
+        ],
+      ),
+    );
+  }
+}
+
+class _SubscriptionRuleLine extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SubscriptionRuleLine({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: _kSubscriptionTextPrimary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _kSubscriptionTextSecondary,
+              ),
             ),
           ),
         ],
@@ -743,6 +865,35 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
     }
   }
 
+  Future<void> _toggleFreeAccessMode(bool enabled) async {
+    if (_saving) return;
+
+    setState(() => _saving = true);
+    try {
+      await _service.updateFreeAccessMode(
+        enabled,
+        updatedBy: FirebaseAuth.instance.currentUser?.uid,
+      );
+      if (!mounted) return;
+      showSuccessSnackBar(
+        context,
+        enabled
+            ? 'Accès gratuit complet réactivé.'
+            : 'Mode restrictions préparées activé.',
+      );
+    } catch (_) {
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Impossible de mettre à jour freeAccessMode.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<SubscriptionAppConfig>(
@@ -828,6 +979,24 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                 value: config.subscriptionSectionEnabled,
                 onChanged: _saving ? null : _toggleSectionVisibility,
               ),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'freeAccessMode',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: _kSubscriptionTextPrimary,
+                  ),
+                ),
+                subtitle: Text(
+                  config.freeAccessMode
+                      ? 'Aucune restriction abonnement n est appliquée aux utilisateurs.'
+                      : 'Les limites Gratuit vs ilipresto+ sont maintenant actives dans l app.',
+                  style: const TextStyle(color: _kSubscriptionTextSecondary),
+                ),
+                value: config.freeAccessMode,
+                onChanged: _saving ? null : _toggleFreeAccessMode,
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -867,7 +1036,7 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
                 child: const Text(
-                  'Les abonnements sont préparés, mais aucune restriction n’est appliquée aux utilisateurs tant que Stripe n’est pas activé.',
+                  'Stripe peut rester inactif: freeAccessMode permet déjà de préparer ou d activer les règles d accès côté app sans ouvrir le paiement.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,

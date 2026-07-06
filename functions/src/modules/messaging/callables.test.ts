@@ -7,6 +7,7 @@ import {
   buildProcessedConversationAttachmentPath,
   canonicalConversationId,
   computeUnreadCountAfterMessageDeletion,
+  getMessagingAttachmentEntitlements,
   mergeConversationParticipants,
   resolveOfferLikeData,
   sanitizeConversationAttachments,
@@ -190,6 +191,24 @@ test("sanitizeConversationAttachments rejects unsupported document mime type", (
   );
 });
 
+test("sanitizeConversationAttachments accepts spreadsheet document attachment", () => {
+  const attachments = sanitizeConversationAttachments([
+    {
+      type: "document",
+      name: "budget.xlsx",
+      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fbudget.xlsx",
+      storagePath: "messageAttachments/buyer_a/conv_1/budget.xlsx",
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      sizeBytes: 42000,
+    },
+  ], "buyer_a", "conv_1");
+
+  assert.equal(attachments.length, 1);
+  const firstAttachment = attachments[0];
+  assert.ok(firstAttachment);
+  assert.equal(firstAttachment.type, "document");
+});
+
 test("sanitizeConversationAttachments accepts audio attachment for current conversation", () => {
   const attachments = sanitizeConversationAttachments([
     {
@@ -223,10 +242,10 @@ test("sanitizeConversationAttachments rejects unsupported audio mime type", () =
     () => sanitizeConversationAttachments([
       {
         type: "audio",
-        name: "note_vocale.wav",
-        url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote_vocale.wav",
-        storagePath: "messageAttachments/buyer_a/conv_1/note_vocale.wav",
-        mimeType: "audio/wav",
+        name: "note_vocale.flac",
+        url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote_vocale.flac",
+        storagePath: "messageAttachments/buyer_a/conv_1/note_vocale.flac",
+        mimeType: "audio/flac",
         sizeBytes: 64000,
       },
     ], "buyer_a", "conv_1"),
@@ -236,6 +255,66 @@ test("sanitizeConversationAttachments rejects unsupported audio mime type", () =
       return true;
     },
   );
+});
+
+test("sanitizeConversationAttachments accepts mp3 audio attachment", () => {
+  const attachments = sanitizeConversationAttachments([
+    {
+      type: "audio",
+      name: "jingle.mp3",
+      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fjingle.mp3",
+      storagePath: "messageAttachments/buyer_a/conv_1/jingle.mp3",
+      mimeType: "audio/mpeg",
+      sizeBytes: 64000,
+    },
+  ], "buyer_a", "conv_1");
+
+  assert.equal(attachments.length, 1);
+  const firstAttachment = attachments[0];
+  assert.ok(firstAttachment);
+  assert.equal(firstAttachment.type, "audio");
+});
+
+test("sanitizeConversationAttachments accepts wav audio attachment", () => {
+  const attachments = sanitizeConversationAttachments([
+    {
+      type: "audio",
+      name: "note.wav",
+      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote.wav",
+      storagePath: "messageAttachments/buyer_a/conv_1/note.wav",
+      mimeType: "audio/wav",
+      sizeBytes: 64000,
+    },
+  ], "buyer_a", "conv_1");
+
+  assert.equal(attachments.length, 1);
+  const firstAttachment = attachments[0];
+  assert.ok(firstAttachment);
+  assert.equal(firstAttachment.type, "audio");
+});
+
+test("getMessagingAttachmentEntitlements keeps all messaging attachments open while free access mode is active", () => {
+  const entitlements = getMessagingAttachmentEntitlements("free", true);
+
+  assert.equal(entitlements.canSendDocuments, true);
+  assert.equal(entitlements.maxPhotosPerConversation, 999);
+  assert.equal(entitlements.maxAudioPerConversation, 999);
+});
+
+test("getMessagingAttachmentEntitlements prepares free plan messaging limits when free access mode is disabled", () => {
+  const entitlements = getMessagingAttachmentEntitlements("free", false);
+
+  assert.equal(entitlements.canSendDocuments, false);
+  assert.equal(entitlements.maxPhotosPerConversation, 1);
+  assert.equal(entitlements.maxAudioPerConversation, 1);
+});
+
+test("getMessagingAttachmentEntitlements unlocks messaging attachments for ilipresto+", () => {
+  const entitlements = getMessagingAttachmentEntitlements("ilipresto_plus", false);
+
+  assert.equal(entitlements.canSendDocuments, true);
+  assert.equal(entitlements.maxPhotosPerConversation, 999);
+  assert.equal(entitlements.maxAudioPerConversation, 999);
 });
 
 test("buildProcessedConversationAttachmentPath keeps photos scoped and converts to webp", () => {

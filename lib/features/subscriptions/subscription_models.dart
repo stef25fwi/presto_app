@@ -149,6 +149,18 @@ class SubscriptionFeatures {
   });
 }
 
+class ConversationAttachmentEntitlements {
+  final bool canSendDocuments;
+  final int maxPhotosPerConversation;
+  final int maxAudioPerConversation;
+
+  const ConversationAttachmentEntitlements({
+    required this.canSendDocuments,
+    required this.maxPhotosPerConversation,
+    required this.maxAudioPerConversation,
+  });
+}
+
 SubscriptionPlan subscriptionPlanFromKey(String? value) {
   switch ((value ?? '').trim().toLowerCase()) {
     case 'ilipresto_plus':
@@ -233,6 +245,35 @@ SubscriptionFeatures getFeaturesForPlan(
     subscriptionPlanFromKey(plan),
     freeAccessMode: freeAccessMode,
   );
+}
+
+ConversationAttachmentEntitlements getConversationAttachmentEntitlements(
+  SubscriptionPlan plan, {
+  bool freeAccessMode = true,
+}) {
+  if (freeAccessMode) {
+    return const ConversationAttachmentEntitlements(
+      canSendDocuments: true,
+      maxPhotosPerConversation: 999,
+      maxAudioPerConversation: 999,
+    );
+  }
+
+  switch (plan) {
+    case SubscriptionPlan.free:
+      return const ConversationAttachmentEntitlements(
+        canSendDocuments: false,
+        maxPhotosPerConversation: 1,
+        maxAudioPerConversation: 1,
+      );
+    case SubscriptionPlan.iliprestoPlus:
+    case SubscriptionPlan.ilipro:
+      return const ConversationAttachmentEntitlements(
+        canSendDocuments: true,
+        maxPhotosPerConversation: 999,
+        maxAudioPerConversation: 999,
+      );
+  }
 }
 
 SubscriptionFeatures getFeaturesForSubscriptionPlan(
