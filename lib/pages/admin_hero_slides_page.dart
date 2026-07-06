@@ -473,7 +473,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                             color: const Color(0xFFFFF7ED),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: _kAdminHeroOrange.withValues(alpha: 0.3)),
+                                color:
+                                    _kAdminHeroOrange.withValues(alpha: 0.3)),
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
@@ -1215,9 +1216,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                           color: slide.isVideo
                                               ? _kAdminHeroBlue
                                               : _kAdminHeroOrange,
-                                          label: slide.isVideo
-                                              ? 'Vidéo'
-                                              : 'Image',
+                                          label:
+                                              slide.isVideo ? 'Vidéo' : 'Image',
                                         ),
                                         if (slide.isFirst)
                                           const _TypeBadge(
@@ -1284,8 +1284,8 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                               ReorderableDragStartListener(
                                 index: index,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 8),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF3F4F6),
                                     borderRadius: BorderRadius.circular(8),
@@ -1375,8 +1375,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFFB91C1C),
                                 ),
-                                icon: const Icon(
-                                    Icons.delete_outline_rounded,
+                                icon: const Icon(Icons.delete_outline_rounded,
                                     size: 18),
                                 label: Text(
                                   slide.isVideo
@@ -1399,14 +1398,13 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                 label: const Text('Monter'),
                               ),
                               OutlinedButton.icon(
-                                onPressed:
-                                    isBusy || index == slides.length - 1
-                                        ? null
-                                        : () => _moveSlideByDelta(
-                                              slides,
-                                              index,
-                                              1,
-                                            ),
+                                onPressed: isBusy || index == slides.length - 1
+                                    ? null
+                                    : () => _moveSlideByDelta(
+                                          slides,
+                                          index,
+                                          1,
+                                        ),
                                 icon: const Icon(
                                   Icons.arrow_downward_rounded,
                                   size: 18,

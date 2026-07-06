@@ -252,18 +252,18 @@ class _MethodTabButton extends StatelessWidget {
                     ? const Color(0xFF1A6FFF)
                     : const Color(0xFFD1D5DB)),
             width: 1.5,
-          ),          boxShadow: [
+          ),
+          boxShadow: [
             BoxShadow(
               color: (_isTextAiButton
                       ? const Color(0xFFFF6600)
-                      : (selected
-                          ? const Color(0xFF1A6FFF)
-                          : Colors.black))
+                      : (selected ? const Color(0xFF1A6FFF) : Colors.black))
                   .withValues(alpha: 0.18),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
-          ],        ),
+          ],
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -291,7 +291,7 @@ class _MethodTabButton extends StatelessWidget {
                       icon,
                       size: 16,
                       color: _isTextAiButton
-                        ? const Color(0xFFFF6600)
+                          ? const Color(0xFFFF6600)
                           : (selected ? Colors.white : const Color(0xFF6B7280)),
                     ),
             ),
@@ -359,7 +359,8 @@ class _VocalModeCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFEEF4FF),
             borderRadius: borderRadius,
-            border: Border.all(color: borderColor, width: isHighlighted ? 1.2 : 1),
+            border:
+                Border.all(color: borderColor, width: isHighlighted ? 1.2 : 1),
           ),
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
           child: Stack(
@@ -420,148 +421,149 @@ class _VocalModeCard extends StatelessWidget {
                 ),
               Column(
                 children: [
-          // En-tête : icône + titre + sous-titre
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFD6E6FF),
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Color(0xFF1A6FFF),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Parlez, l'IA complète l'annonce",
-                      style: TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0A1F44),
-                        height: 1.2,
+                  // En-tête : icône + titre + sous-titre
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFD6E6FF),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Color(0xFF1A6FFF),
+                          size: 22,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      "Décrivez votre offre à l'oral. L'IA structure et rédige une annonce prête à publier.",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF6B7280),
-                        height: 1.4,
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Parlez, l'IA complète l'annonce",
+                              style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0A1F44),
+                                height: 1.2,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Décrivez votre offre à l'oral. L'IA structure et rédige une annonce prête à publier.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF6B7280),
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-
-          // Bouton microphone central
-          CompositedTransformTarget(
-            link: micAnchorLink,
-            child: GestureDetector(
-              onTap: _isAnalyzing
-                  ? null
-                  : (_isRecording ? onStopRecording : onStartRecording),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 68,
-                height: 68,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _isRecording
-                      ? const Color(0xFFFF3B35)
-                      : _isAnalyzing
-                          ? const Color(0xFF13C8FF)
-                          : const Color(0xFF1A6FFF),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_isRecording
-                              ? const Color(0xFFFF3B35)
-                              : const Color(0xFF1A6FFF))
-                          .withValues(alpha: 0.38),
-                      blurRadius: 18,
-                      offset: const Offset(0, 7),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Texte d'état sous le bouton
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              _isRecording
-                  ? 'Appuyez pour arrêter'
-                  : _isAnalyzing
-                      ? 'Analyse en cours…'
-                      : 'Appuyez pour parler',
-              key: ValueKey(state),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: _isRecording
-                    ? const Color(0xFFFF3B35)
-                    : const Color(0xFF1A6FFF),
-              ),
-            ),
-          ),
-
-          if (_isRecording) ...[
-            const SizedBox(height: 10),
-            const _AnimatedWaveform(
-              width: 100,
-              height: 22,
-              barColor: Color(0xBFFF3B35),
-              barWidth: 3,
-              barRadius: 8,
-              baseHeights: [6, 14, 9, 20, 12, 18, 8, 22, 14, 16, 9, 18],
-              duration: Duration(milliseconds: 900),
-            ),
-          ],
-
-          const SizedBox(height: 14),
-
-          // Mention sécurité
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.security_rounded, size: 12, color: Color(0xFF9CA3AF)),
-              SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  'Vos données vocales sont sécurisées et non conservées.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF9CA3AF),
-                    height: 1.3,
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ),
+                  const SizedBox(height: 22),
+
+                  // Bouton microphone central
+                  CompositedTransformTarget(
+                    link: micAnchorLink,
+                    child: GestureDetector(
+                      onTap: _isAnalyzing
+                          ? null
+                          : (_isRecording ? onStopRecording : onStartRecording),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isRecording
+                              ? const Color(0xFFFF3B35)
+                              : _isAnalyzing
+                                  ? const Color(0xFF13C8FF)
+                                  : const Color(0xFF1A6FFF),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (_isRecording
+                                      ? const Color(0xFFFF3B35)
+                                      : const Color(0xFF1A6FFF))
+                                  .withValues(alpha: 0.38),
+                              blurRadius: 18,
+                              offset: const Offset(0, 7),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Texte d'état sous le bouton
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Text(
+                      _isRecording
+                          ? 'Appuyez pour arrêter'
+                          : _isAnalyzing
+                              ? 'Analyse en cours…'
+                              : 'Appuyez pour parler',
+                      key: ValueKey(state),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: _isRecording
+                            ? const Color(0xFFFF3B35)
+                            : const Color(0xFF1A6FFF),
+                      ),
+                    ),
+                  ),
+
+                  if (_isRecording) ...[
+                    const SizedBox(height: 10),
+                    const _AnimatedWaveform(
+                      width: 100,
+                      height: 22,
+                      barColor: Color(0xBFFF3B35),
+                      barWidth: 3,
+                      barRadius: 8,
+                      baseHeights: [6, 14, 9, 20, 12, 18, 8, 22, 14, 16, 9, 18],
+                      duration: Duration(milliseconds: 900),
+                    ),
+                  ],
+
+                  const SizedBox(height: 14),
+
+                  // Mention sécurité
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.security_rounded,
+                          size: 12, color: Color(0xFF9CA3AF)),
+                      SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          'Vos données vocales sont sécurisées et non conservées.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF9CA3AF),
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               if (isDimmed)
@@ -604,9 +606,8 @@ class AiWritingButton extends StatelessWidget {
           width: double.infinity,
           height: 46,
           decoration: BoxDecoration(
-            color: isAnalyzing
-                ? const Color(0xFFE65500)
-                : const Color(0xFFFF6600),
+            color:
+                isAnalyzing ? const Color(0xFFE65500) : const Color(0xFFFF6600),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(

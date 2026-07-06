@@ -104,7 +104,8 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
 
   void _removeFont(String fontName) {
     if (fontName == 'Inter') {
-      _showSnackbar('❌ Impossible de supprimer la police par défaut', Colors.red);
+      _showSnackbar(
+          '❌ Impossible de supprimer la police par défaut', Colors.red);
       return;
     }
     if (_selectedFont == fontName) {
@@ -272,7 +273,8 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
             const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(Icons.pending_outlined, size: 16, color: _prestoOrange),
+                const Icon(Icons.pending_outlined,
+                    size: 16, color: _prestoOrange),
                 const SizedBox(width: 6),
                 Text(
                   'Modifications en attente',
@@ -446,56 +448,56 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-            Row(
-              children: [
-                const Icon(Icons.format_bold_rounded,
-                    color: _prestoBlue, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Épaisseur (graisse)',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+          Row(
+            children: [
+              const Icon(Icons.format_bold_rounded,
+                  color: _prestoBlue, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Épaisseur (graisse)',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: _weightDelta.toDouble(),
+                  min: -2,
+                  max: 2,
+                  divisions: 4,
+                  activeColor: _prestoBlue,
+                  label: _weightLabel(_weightDelta),
+                  onChanged: (v) {
+                    setState(() => _weightDelta = v.round());
+                    _updateIsModified();
+                  },
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _weightDelta.toDouble(),
-                    min: -2,
-                    max: 2,
-                    divisions: 4,
-                    activeColor: _prestoBlue,
-                    label: _weightLabel(_weightDelta),
-                    onChanged: (v) {
-                      setState(() => _weightDelta = v.round());
-                      _updateIsModified();
-                    },
+              ),
+              SizedBox(
+                width: 100,
+                child: Text(
+                  _weightLabel(_weightDelta),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: _prestoBlue,
                   ),
+                  textAlign: TextAlign.end,
                 ),
-                SizedBox(
-                  width: 100,
-                  child: Text(
-                    _weightLabel(_weightDelta),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: _prestoBlue,
-                    ),
-                    textAlign: TextAlign.end,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'De très léger (−2) à très gras (+2)',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'De très léger (−2) à très gras (+2)',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
         ],
       ),
     );
@@ -508,250 +510,251 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-            Row(
-              children: [
-                const Icon(Icons.text_fields_rounded,
-                    color: _prestoBlue, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Polices disponibles',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
+          Row(
+            children: [
+              const Icon(Icons.text_fields_rounded,
+                  color: _prestoBlue, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Polices disponibles',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                Tooltip(
-                  message: 'Ajouter une nouvelle police',
-                  child: IconButton(
-                    onPressed: () => setState(
-                        () => _showAddFontDialog = !_showAddFontDialog),
-                    icon: const Icon(Icons.add_rounded, color: _prestoOrange),
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // 🔍 Barre de recherche
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: '🔍 Rechercher une police...',
-                prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                        child: const Icon(Icons.clear_rounded, size: 18),
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD7DEE8)),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                isDense: true,
               ),
-              onChanged: (_) => setState(() {}),
-            ),
-
-            const SizedBox(height: 12),
-            if (filtered.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Aucune police trouvée',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: filtered.map((font) {
-                  final isSelected = _selectedFont == font;
-                  final isDefault = font == 'Inter';
-
-                  return Tooltip(
-                    message: isDefault ? 'Police par défaut' : 'Cliquer pour sélectionner',
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedFont = font);
-                        _updateIsModified();
-                        _showSnackbar('✅ Police "$font" sélectionnée', Colors.blue);
-                      },
-                      onLongPress: !isDefault
-                          ? () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Supprimer la police ?'),
-                                  content: Text(
-                                    'Êtes-vous sûr de vouloir supprimer "$font" ?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(ctx),
-                                      child: const Text('Annuler'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(ctx);
-                                        _removeFont(font);
-                                      },
-                                      child: const Text('Supprimer',
-                                          style: TextStyle(color: Colors.red)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                          : null,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFFE8F0FE)
-                              : Colors.white,
-                          border: Border.all(
-                            color: isSelected
-                                ? _prestoBlue
-                                : const Color(0xFFD7DEE8),
-                            width: isSelected ? 2 : 1,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              font,
-                              style: TextStyle(
-                                fontFamily: font,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? _prestoBlue
-                                    : Colors.black87,
-                              ),
-                            ),
-                            if (isDefault)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 6),
-                                child: Icon(
-                                  Icons.check_circle_rounded,
-                                  size: 14,
-                                  color: _prestoBlue,
-                                ),
-                              ),
-                            if (!isDefault && isSelected)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 6),
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 14,
-                                  color: Colors.red,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-
-            if (_showAddFontDialog) ...[
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3EA),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFFCDD2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '➕ Ajouter une nouvelle police',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.orange.shade900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _addFontController,
-                      decoration: InputDecoration(
-                        hintText: 'Ex: Roboto, Poppins, Playfair...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        isDense: true,
-                      ),
-                      onChanged: (_) => setState(() => _addFontError = ''),
-                    ),
-                    if (_addFontError.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          '❌ $_addFontError',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => setState(() {
-                            _showAddFontDialog = false;
-                            _addFontController.clear();
-                            _addFontError = '';
-                          }),
-                          child: const Text('Annuler'),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
-                          onPressed: _addNewFont,
-                          icon: const Icon(Icons.add_rounded, size: 16),
-                          label: const Text('Ajouter'),
-                        ),
-                      ],
-                    ),
-                  ],
+              Tooltip(
+                message: 'Ajouter une nouvelle police',
+                child: IconButton(
+                  onPressed: () =>
+                      setState(() => _showAddFontDialog = !_showAddFontDialog),
+                  icon: const Icon(Icons.add_rounded, color: _prestoOrange),
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+
+          // 🔍 Barre de recherche
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: '🔍 Rechercher une police...',
+              prefixIcon: const Icon(Icons.search_rounded, size: 18),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? GestureDetector(
+                      onTap: () {
+                        _searchController.clear();
+                        setState(() {});
+                      },
+                      child: const Icon(Icons.clear_rounded, size: 18),
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFD7DEE8)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              isDense: true,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+
+          const SizedBox(height: 12),
+          if (filtered.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'Aucune police trouvée',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: filtered.map((font) {
+                final isSelected = _selectedFont == font;
+                final isDefault = font == 'Inter';
+
+                return Tooltip(
+                  message: isDefault
+                      ? 'Police par défaut'
+                      : 'Cliquer pour sélectionner',
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedFont = font);
+                      _updateIsModified();
+                      _showSnackbar(
+                          '✅ Police "$font" sélectionnée', Colors.blue);
+                    },
+                    onLongPress: !isDefault
+                        ? () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Supprimer la police ?'),
+                                content: Text(
+                                  'Êtes-vous sûr de vouloir supprimer "$font" ?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('Annuler'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      _removeFont(font);
+                                    },
+                                    child: const Text('Supprimer',
+                                        style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        : null,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            isSelected ? const Color(0xFFE8F0FE) : Colors.white,
+                        border: Border.all(
+                          color: isSelected
+                              ? _prestoBlue
+                              : const Color(0xFFD7DEE8),
+                          width: isSelected ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            font,
+                            style: TextStyle(
+                              fontFamily: font,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? _prestoBlue : Colors.black87,
+                            ),
+                          ),
+                          if (isDefault)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.check_circle_rounded,
+                                size: 14,
+                                color: _prestoBlue,
+                              ),
+                            ),
+                          if (!isDefault && isSelected)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 6),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: Colors.red,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
+          if (_showAddFontDialog) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3EA),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFFCDD2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '➕ Ajouter une nouvelle police',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.orange.shade900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _addFontController,
+                    decoration: InputDecoration(
+                      hintText: 'Ex: Roboto, Poppins, Playfair...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      isDense: true,
+                    ),
+                    onChanged: (_) => setState(() => _addFontError = ''),
+                  ),
+                  if (_addFontError.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        '❌ $_addFontError',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _showAddFontDialog = false;
+                          _addFontController.clear();
+                          _addFontError = '';
+                        }),
+                        child: const Text('Annuler'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: _addNewFont,
+                        icon: const Icon(Icons.add_rounded, size: 16),
+                        label: const Text('Ajouter'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -762,81 +765,81 @@ class _AdminTypographyPageState extends State<AdminTypographyPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-            Row(
-              children: [
-                const Icon(Icons.visibility_rounded,
-                    color: _prestoBlue, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Aperçu en direct',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+          Row(
+            children: [
+              const Icon(Icons.visibility_rounded,
+                  color: _prestoBlue, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Aperçu en direct',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
-              child: MediaQuery(
-                data: MediaQuery.of(context)
-                    .copyWith(textScaler: TextScaler.linear(_scale)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$_selectedFont • ${(_scale * 100).round()}%${_weightDelta != 0 ? ' • Graisse ${_weightDelta > 0 ? '+' : ''}$_weightDelta' : ''}',
-                      style: TextStyle(
-                        fontFamily: _selectedFont,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black45,
-                      ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(_scale)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$_selectedFont • ${(_scale * 100).round()}%${_weightDelta != 0 ? ' • Graisse ${_weightDelta > 0 ? '+' : ''}$_weightDelta' : ''}',
+                    style: TextStyle(
+                      fontFamily: _selectedFont,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black45,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Titre de section',
-                      style: TextStyle(
-                        fontFamily: _selectedFont,
-                        fontSize: 18,
-                        fontWeight:
-                            shiftFontWeight(FontWeight.w700, _weightDelta),
-                        color: Colors.black87,
-                      ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Titre de section',
+                    style: TextStyle(
+                      fontFamily: _selectedFont,
+                      fontSize: 18,
+                      fontWeight:
+                          shiftFontWeight(FontWeight.w700, _weightDelta),
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Texte courant — iliprestō facilite les connexions entre professionnels.',
-                      style: TextStyle(
-                        fontFamily: _selectedFont,
-                        fontSize: 14,
-                        fontWeight:
-                            shiftFontWeight(FontWeight.w400, _weightDelta),
-                        color: Colors.black87,
-                        height: 1.5,
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Texte courant — iliprestō facilite les connexions entre professionnels.',
+                    style: TextStyle(
+                      fontFamily: _selectedFont,
+                      fontSize: 14,
+                      fontWeight:
+                          shiftFontWeight(FontWeight.w400, _weightDelta),
+                      color: Colors.black87,
+                      height: 1.5,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Label (12 px)',
-                      style: TextStyle(
-                        fontFamily: _selectedFont,
-                        fontSize: 12,
-                        fontWeight:
-                            shiftFontWeight(FontWeight.w500, _weightDelta),
-                        color: Colors.black54,
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Label (12 px)',
+                    style: TextStyle(
+                      fontFamily: _selectedFont,
+                      fontSize: 12,
+                      fontWeight:
+                          shiftFontWeight(FontWeight.w500, _weightDelta),
+                      color: Colors.black54,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );

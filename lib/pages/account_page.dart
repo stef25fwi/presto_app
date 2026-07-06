@@ -2833,7 +2833,8 @@ class _AccountPageState extends State<AccountPage> {
                               });
                             },
                             onPhoneCountryCodeChanged: (code) {
-                              if (!mounted || _profilePhoneCountryCode == code) {
+                              if (!mounted ||
+                                  _profilePhoneCountryCode == code) {
                                 return;
                               }
                               setState(() => _profilePhoneCountryCode = code);

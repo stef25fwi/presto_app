@@ -43,9 +43,15 @@ class AdPlaceholderImage {
       isVisible: data['isVisible'] == true,
       target: (data['target'] ?? 'consult_offers').toString(),
       sortOrder: data['sortOrder'] is int ? data['sortOrder'] as int : 0,
-      title: (data['title'] ?? '').toString().isEmpty ? null : (data['title'] ?? '').toString(),
-      description: (data['description'] ?? '').toString().isEmpty ? null : (data['description'] ?? '').toString(),
-      linkUrl: (data['linkUrl'] ?? '').toString().isEmpty ? null : (data['linkUrl'] ?? '').toString(),
+      title: (data['title'] ?? '').toString().isEmpty
+          ? null
+          : (data['title'] ?? '').toString(),
+      description: (data['description'] ?? '').toString().isEmpty
+          ? null
+          : (data['description'] ?? '').toString(),
+      linkUrl: (data['linkUrl'] ?? '').toString().isEmpty
+          ? null
+          : (data['linkUrl'] ?? '').toString(),
       createdAt: data['createdAt'] is Timestamp
           ? data['createdAt'] as Timestamp
           : null,
@@ -212,8 +218,10 @@ class AdPlaceholderImageService {
   }) async {
     await _collection.doc(id).update({
       if (title != null) 'title': title.isEmpty ? FieldValue.delete() : title,
-      if (description != null) 'description': description.isEmpty ? FieldValue.delete() : description,
-      if (linkUrl != null) 'linkUrl': linkUrl.isEmpty ? FieldValue.delete() : linkUrl,
+      if (description != null)
+        'description': description.isEmpty ? FieldValue.delete() : description,
+      if (linkUrl != null)
+        'linkUrl': linkUrl.isEmpty ? FieldValue.delete() : linkUrl,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }

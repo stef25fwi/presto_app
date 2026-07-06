@@ -269,8 +269,7 @@ class _MessagingModerationConfigService {
     await _configRef.set(
       <String, dynamic>{
         'moderation': <String, dynamic>{
-          'messagingMode':
-              _MessagingModerationMode.hybrid.firestoreValue,
+          'messagingMode': _MessagingModerationMode.hybrid.firestoreValue,
         },
         'updatedAt': FieldValue.serverTimestamp(),
         if (updatedBy != null && updatedBy.trim().isNotEmpty)
@@ -439,9 +438,8 @@ class _AdminMessagingModerationTileState
                   ),
                 ],
                 selected: {mode},
-                onSelectionChanged: _saving
-                    ? null
-                    : (selection) => _setMode(selection.first),
+                onSelectionChanged:
+                    _saving ? null : (selection) => _setMode(selection.first),
               ),
               const SizedBox(height: 14),
               Wrap(
@@ -3170,8 +3168,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   _KpiTile(
                     icon: Icons.shield_outlined,
                     title: 'Messages modérés',
-                    subtitle:
-                        'Journal récent\ndes messages en revue',
+                    subtitle: 'Journal récent\ndes messages en revue',
                     badge: null,
                     iconColor: const Color(0xFF0F766E),
                     onTap: () {

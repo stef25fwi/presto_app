@@ -27,8 +27,7 @@ void main() {
       expect(analysis.totalValue, greaterThan(0));
 
       // Verify breakdown percentages sum to 100
-      final totalPercentage =
-          analysis.breakdown.userBasePercentage +
+      final totalPercentage = analysis.breakdown.userBasePercentage +
           analysis.breakdown.reproductionPercentage +
           analysis.breakdown.resalePercentage;
       expect(totalPercentage, closeTo(100.0, 0.1));
@@ -149,8 +148,8 @@ void main() {
       final analysisPremium =
           await ValueAnalysisService.analyzeValue(paramsPremium);
 
-      expect(analysisPremium.totalValue,
-          greaterThan(analysisStandard.totalValue));
+      expect(
+          analysisPremium.totalValue, greaterThan(analysisStandard.totalValue));
     });
 
     test('value decreases with item age (depreciation)', () async {
@@ -262,8 +261,7 @@ void main() {
       expect(reconstructed.reproductionValue, analysis.reproductionValue);
       expect(reconstructed.resaleValue, analysis.resaleValue);
       expect(reconstructed.totalValue, analysis.totalValue);
-      expect(
-          reconstructed.confidenceScore, analysis.confidenceScore);
+      expect(reconstructed.confidenceScore, analysis.confidenceScore);
     });
   });
 }

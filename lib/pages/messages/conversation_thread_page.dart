@@ -19,7 +19,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../features/micro_ia/web_audio_recorder_stub.dart'
-  if (dart.library.js_interop) '../../features/micro_ia/web_audio_recorder.dart';
+    if (dart.library.js_interop) '../../features/micro_ia/web_audio_recorder.dart';
 import '../../features/subscriptions/subscription_action_placeholders.dart';
 import '../../features/subscriptions/subscription_config_service.dart';
 import '../../features/subscriptions/subscription_models.dart';
@@ -34,7 +34,7 @@ import '../../utils/friendly_snackbar.dart';
 import '../../utils/local_audio_preview_source_io.dart'
     if (dart.library.js_interop) '../../utils/local_audio_preview_source_web.dart';
 import '../../utils/open_attachment_file_web.dart'
-  if (dart.library.io) '../../utils/open_attachment_file_io.dart';
+    if (dart.library.io) '../../utils/open_attachment_file_io.dart';
 import '../../widgets/offer_network_image.dart';
 import 'package:presto_app/services/auth_guard.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
@@ -178,10 +178,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return null;
     }
 
-    final userSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final userSnapshot =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final userState = AppUserSubscriptionState.fromMap(userSnapshot.data());
     final entitlements = getConversationAttachmentEntitlements(
       userState.plan,
@@ -975,10 +973,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _openOtherParticipantProfile() async {
     final uid = _otherParticipantId.trim();
     if (uid.isEmpty) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final accountType = (doc.data()?['accountType'] ?? '').toString();
     if (accountType != 'Entreprise') return;
     if (!mounted) return;
@@ -993,58 +989,58 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return GestureDetector(
       onTap: _openOtherParticipantProfile,
       child: Row(
-      children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: Colors.white.withValues(alpha: 0.18),
-          foregroundColor: Colors.white,
-          foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
-              ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
-              : null,
-          onForegroundImageError: (error, stackTrace) {
-            debugPrint(
-              '[ConversationThread] header avatar load failed '
-              'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-              'error=$error',
-            );
-          },
-          child: _otherParticipantPhotoUrl.isEmpty
-              ? Text(
-                  _conversationInitial(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                )
-              : null,
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _headerDisplayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: kPrestoAppBarTitleStyle,
-              ),
-              const SizedBox(height: 1),
-              Text(
-                _metaLoaded ? _headerSubtitle : 'Chargement...',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.white.withValues(alpha: 0.18),
+            foregroundColor: Colors.white,
+            foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
+                ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
+                : null,
+            onForegroundImageError: (error, stackTrace) {
+              debugPrint(
+                '[ConversationThread] header avatar load failed '
+                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+                'error=$error',
+              );
+            },
+            child: _otherParticipantPhotoUrl.isEmpty
+                ? Text(
+                    _conversationInitial(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  )
+                : null,
           ),
-        ),
-      ],
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _headerDisplayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: kPrestoAppBarTitleStyle,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  _metaLoaded ? _headerSubtitle : 'Chargement...',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2059,7 +2055,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             configSnapshot.data ?? const SubscriptionAppConfig.defaults();
 
         return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .snapshots(),
           builder: (context, userSnapshot) {
             final userState =
                 AppUserSubscriptionState.fromMap(userSnapshot.data?.data());
@@ -2078,7 +2077,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 ? Colors.green.shade700
                 : entitlements.canSendDocuments
                     ? kPrestoBlue
-                : kPrestoOrange;
+                    : kPrestoOrange;
 
             return Container(
               width: double.infinity,
@@ -2094,7 +2093,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.workspace_premium_rounded, color: accentColor, size: 18),
+                  Icon(Icons.workspace_premium_rounded,
+                      color: accentColor, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -2483,7 +2483,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _showVoiceRecordingSheet() async {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
-      showErrorSnackBar(context, 'Connectez-vous pour envoyer une note vocale.');
+      showErrorSnackBar(
+          context, 'Connectez-vous pour envoyer une note vocale.');
       return;
     }
     final allowed = await _ensureAttachmentAllowed(
@@ -2584,7 +2585,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
     setState(() {
       _isRecording = true;
-        _isWebVoiceRecording = false;
+      _isWebVoiceRecording = false;
       _voiceRecorder = recorder;
       _currentRecordingPath = path;
       _recordingDuration = Duration.zero;
@@ -2768,7 +2769,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
       if (mounted) {
-        showErrorSnackBar(context, 'Connectez-vous pour envoyer une note vocale.');
+        showErrorSnackBar(
+            context, 'Connectez-vous pour envoyer une note vocale.');
       }
       return;
     }
@@ -2783,7 +2785,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         bytes = await readTempFile(path);
       } catch (_) {
         if (mounted) {
-          showErrorSnackBar(context, 'Erreur lors de la lecture de la note vocale.');
+          showErrorSnackBar(
+              context, 'Erreur lors de la lecture de la note vocale.');
         }
         return;
       }
@@ -2822,7 +2825,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     await _showAttachmentActionsSheet(attachment);
   }
 
-  Future<void> _showAttachmentActionsSheet(_MessageAttachment attachment) async {
+  Future<void> _showAttachmentActionsSheet(
+      _MessageAttachment attachment) async {
     final overlayTheme = context.prestoOverlayTheme;
     await showModalBottomSheet<void>(
       context: context,
@@ -2945,7 +2949,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         return;
       }
 
-      final localPath = await _downloadAttachmentToTempFile(attachment, uri: uri);
+      final localPath =
+          await _downloadAttachmentToTempFile(attachment, uri: uri);
       if (localPath == null) {
         return;
       }
@@ -2954,9 +2959,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         [
           XFile(
             localPath,
-            mimeType: attachment.mimeType.trim().isEmpty
-                ? null
-                : attachment.mimeType,
+            mimeType:
+                attachment.mimeType.trim().isEmpty ? null : attachment.mimeType,
             name: attachment.name,
           ),
         ],
@@ -2965,7 +2969,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
     } catch (_) {
       if (mounted) {
-        showErrorSnackBar(context, 'Impossible de partager cette pièce jointe.');
+        showErrorSnackBar(
+            context, 'Impossible de partager cette pièce jointe.');
       }
     }
   }
@@ -3458,7 +3463,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-
   Widget _buildMessagesAccessGate() {
     final isPreparing = _isPreparingMessageStream;
     return Center(
@@ -3777,19 +3781,18 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       data['attachments'],
                                     );
                                     final moderation =
-                                      _MessageModeration.fromMap(
+                                        _MessageModeration.fromMap(
                                       data['moderation'],
                                     );
-                                    final isDeleted =
-                                        data['deletedAt'] != null;
+                                    final isDeleted = data['deletedAt'] != null;
                                     final isDeletingMessage =
                                         _deletingMessageIds
                                             .contains(messageDocId);
                                     final showAsDeleted =
                                         isDeleted || isDeletingMessage;
                                     final showAsModerated =
-                                      moderation.shouldHideContent &&
-                                        !showAsDeleted;
+                                        moderation.shouldHideContent &&
+                                            !showAsDeleted;
 
                                     final newerSenderId = docIndex > 0
                                         ? ((docs[docIndex - 1]
@@ -3831,8 +3834,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       groupedWithNewer: groupedWithNewer,
                                       groupedWithOlder: groupedWithOlder,
                                       isDeleted: showAsDeleted,
-                                        isModerated: showAsModerated,
-                                        moderatedPlaceholder:
+                                      isModerated: showAsModerated,
+                                      moderatedPlaceholder:
                                           moderation.placeholderText,
                                       onLongPress: isMine && !showAsDeleted
                                           ? () async {
@@ -3892,9 +3895,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                   !mounted) {
                                                 return;
                                               }
-                                              setState(() =>
-                                                  _deletingMessageIds
-                                                      .add(messageDocId));
+                                              setState(() => _deletingMessageIds
+                                                  .add(messageDocId));
                                               try {
                                                 await ConversationService
                                                     .deleteMessage(
@@ -4195,10 +4197,8 @@ class _MessageModeration {
     if (value is! Map) return _none;
     return _MessageModeration(
       status: (value['status'] ?? '').toString().trim().toLowerCase(),
-      visibility: (value['visibility'] ?? 'visible')
-          .toString()
-          .trim()
-          .toLowerCase(),
+      visibility:
+          (value['visibility'] ?? 'visible').toString().trim().toLowerCase(),
     );
   }
 
@@ -4960,9 +4960,7 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
         } else {
           final source = widget.source.trim();
           await _player.play(
-            widget.isLocalFile
-                ? DeviceFileSource(source)
-                : UrlSource(source),
+            widget.isLocalFile ? DeviceFileSource(source) : UrlSource(source),
           );
           final duration = await _player.getDuration();
           if (!mounted) return;

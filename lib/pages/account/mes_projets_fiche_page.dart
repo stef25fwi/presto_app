@@ -32,9 +32,7 @@ class MesProjetsFichePage extends StatelessWidget {
           ),
         ],
       ),
-      body: uid == null
-          ? const _NotSignedIn()
-          : _ParcoursListBody(uid: uid),
+      body: uid == null ? const _NotSignedIn() : _ParcoursListBody(uid: uid),
     );
   }
 }
@@ -96,8 +94,7 @@ class _ParcoursListBody extends StatelessWidget {
               child: Text(
                 'Erreur de chargement : ${snapshot.error}',
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
               ),
             ),
           );
@@ -155,9 +152,7 @@ class _EmptyState extends StatelessWidget {
               'Utilisez la boîte à outils pour créer\nvotre premier projet d\'entreprise.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                  height: 1.4),
+                  fontSize: 14, color: Color(0xFF6B7280), height: 1.4),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -170,8 +165,7 @@ class _EmptyState extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => const CurrentToolboxPage()),
+                MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
               ),
               icon: const Icon(Icons.rocket_launch_rounded),
               label: const Text('Démarrer un projet'),
@@ -196,22 +190,20 @@ class _ParcoursCard extends StatelessWidget {
   }
 
   String get _activityType {
-    return ((data['data'] as Map?)
-                ?.cast<String, dynamic>()['activityType'] ??
+    return ((data['data'] as Map?)?.cast<String, dynamic>()['activityType'] ??
             '')
         .toString()
         .trim();
   }
 
   String get _region {
-    final territory = ((data['data'] as Map?)
-            ?.cast<String, dynamic>()['territory'] as Map?)
-        ?.cast<String, dynamic>();
+    final territory =
+        ((data['data'] as Map?)?.cast<String, dynamic>()['territory'] as Map?)
+            ?.cast<String, dynamic>();
     return (territory?['region'] ?? '').toString().trim();
   }
 
-  bool get _isCompleted =>
-      (data['status'] ?? '').toString() == 'completed';
+  bool get _isCompleted => (data['status'] ?? '').toString() == 'completed';
 
   DateTime? get _updatedAt {
     final ts = data['updatedAt'];
@@ -220,8 +212,19 @@ class _ParcoursCard extends StatelessWidget {
   }
 
   static const _months = [
-    '', 'jan', 'fév', 'mar', 'avr', 'mai', 'juin',
-    'juil', 'aoû', 'sep', 'oct', 'nov', 'déc',
+    '',
+    'jan',
+    'fév',
+    'mar',
+    'avr',
+    'mai',
+    'juin',
+    'juil',
+    'aoû',
+    'sep',
+    'oct',
+    'nov',
+    'déc',
   ];
 
   String _formatDate(DateTime dt) {
@@ -269,9 +272,7 @@ class _ParcoursCard extends StatelessWidget {
                   _isCompleted
                       ? Icons.check_circle_rounded
                       : Icons.edit_note_rounded,
-                  color: _isCompleted
-                      ? const Color(0xFF059669)
-                      : _kOrange,
+                  color: _isCompleted ? const Color(0xFF059669) : _kOrange,
                   size: 24,
                 ),
               ),

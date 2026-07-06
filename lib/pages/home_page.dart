@@ -387,10 +387,8 @@ class _HomePageState extends State<HomePage>
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final raw = doc.data()?['region']?.toString().trim() ?? '';
       if (raw.isNotEmpty && mounted) {
         setState(() => _userRegion = raw);
@@ -1746,9 +1744,9 @@ class _HomePageState extends State<HomePage>
                   ),
                   padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
                   child: SafeArea(
-                  top: false,
-                  maintainBottomViewPadding: true,
-                  child: Row(
+                    top: false,
+                    maintainBottomViewPadding: true,
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [

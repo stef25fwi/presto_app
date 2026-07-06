@@ -75,10 +75,8 @@ class ValueAnalysis {
   /// Create from map
   factory ValueAnalysis.fromMap(Map<String, dynamic> map) {
     return ValueAnalysis(
-      userBaseValue:
-          (map['userBaseValue'] as num?)?.toDouble() ?? 0.0,
-      reproductionValue:
-          (map['reproductionValue'] as num?)?.toDouble() ?? 0.0,
+      userBaseValue: (map['userBaseValue'] as num?)?.toDouble() ?? 0.0,
+      reproductionValue: (map['reproductionValue'] as num?)?.toDouble() ?? 0.0,
       resaleValue: (map['resaleValue'] as num?)?.toDouble() ?? 0.0,
       totalValue: (map['totalValue'] as num?)?.toDouble() ?? 0.0,
       breakdown: ValueAnalysisBreakdown.fromMap(
@@ -147,8 +145,7 @@ class ValueAnalysisBreakdown {
           (map['userBasePercentage'] as num?)?.toDouble() ?? 0.0,
       reproductionPercentage:
           (map['reproductionPercentage'] as num?)?.toDouble() ?? 0.0,
-      resalePercentage:
-          (map['resalePercentage'] as num?)?.toDouble() ?? 0.0,
+      resalePercentage: (map['resalePercentage'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

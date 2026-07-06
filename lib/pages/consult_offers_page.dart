@@ -1198,7 +1198,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     List<QueryDocumentSnapshot<Map<String, dynamic>>> rawDocs,
   ) {
     final signature = '$streamKey|${_makeRawDocsSignature(rawDocs)}';
-    if (_displayedDocsCacheSignature == signature && _displayedDocsCache != null) {
+    if (_displayedDocsCacheSignature == signature &&
+        _displayedDocsCache != null) {
       return _displayedDocsCache!;
     }
 
@@ -1263,7 +1264,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           ((data['city'] ?? data['location']) ?? 'Lieu non précisé').toString();
       final postalCode =
           ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
-      final category = (data['category'] ?? 'Catégorie non précisée').toString();
+      final category =
+          (data['category'] ?? 'Catégorie non précisée').toString();
       final budgetRaw = data['budget'] ?? data['price'];
       final budget = budgetRaw is num
           ? budgetRaw.round()
@@ -2175,10 +2177,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                     ),
                                   );
                                 }
-                                  final offerId = item.offerId!;
-                                  final title = item.title!;
-                                  final data = item.data!;
-                                  final tileData = item.tileData!;
+                                final offerId = item.offerId!;
+                                final title = item.title!;
+                                final data = item.data!;
+                                final tileData = item.tileData!;
 
                                 return RepaintBoundary(
                                   child: Padding(

@@ -40,7 +40,6 @@ class TradeCategoryMatch {
 /// Les valeurs [categorie] et [sousCat] sont les chaînes exactes de
 /// [kCategorySubcategories] dans app_core.dart.
 const Map<String, TradeCategoryMatch> kTradeLookup = {
-
   // ── Restauration / Extra ───────────────────────────────────────────────────
   'serveur': TradeCategoryMatch(
     categorie: 'Restauration / Extra',
@@ -221,7 +220,12 @@ const Map<String, TradeCategoryMatch> kTradeLookup = {
   'garde_domicile': TradeCategoryMatch(
     categorie: "Garde d'enfants",
     sousCat: 'Garde à domicile temps plein',
-    tags: ['garde domicile', 'temps plein', 'nourrice', 'assistante maternelle'],
+    tags: [
+      'garde domicile',
+      'temps plein',
+      'nourrice',
+      'assistante maternelle'
+    ],
   ),
 
   // ── Événementiel / DJ ──────────────────────────────────────────────────────

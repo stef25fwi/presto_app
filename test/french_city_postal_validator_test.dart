@@ -68,7 +68,8 @@ void main() {
     expect(result?.postalCode, '97121');
   });
 
-  test('resolveCanonicalCity does not force distant invalid city names', () async {
+  test('resolveCanonicalCity does not force distant invalid city names',
+      () async {
     TestWidgetsFlutterBinding.ensureInitialized();
     await CitySearch.instance.ensureLoaded();
 

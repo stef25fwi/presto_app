@@ -3219,10 +3219,8 @@ class _AdvertiserContactCard extends StatelessWidget {
   Future<void> _openProfile(BuildContext context) async {
     final uid = data.advertiserId.trim();
     if (uid.isEmpty) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final accountType = (doc.data()?['accountType'] ?? '').toString();
     if (accountType != 'Entreprise') return;
     if (!context.mounted) return;
@@ -3429,7 +3427,8 @@ class _InfoLine extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final shouldStack = labelSuffix != null || constraints.maxWidth < 360;
+              final shouldStack =
+                  labelSuffix != null || constraints.maxWidth < 360;
 
               if (shouldStack) {
                 return Row(
@@ -3583,8 +3582,8 @@ class _AnimatedPaymentInfoPillState extends State<_AnimatedPaymentInfoPill>
                 borderRadius: BorderRadius.circular(999),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1A73E8)
-                        .withValues(alpha: _glow.value),
+                    color:
+                        const Color(0xFF1A73E8).withValues(alpha: _glow.value),
                     blurRadius: 12,
                     spreadRadius: 0.5,
                     offset: const Offset(0, 3),

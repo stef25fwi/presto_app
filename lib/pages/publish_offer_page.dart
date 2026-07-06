@@ -1199,8 +1199,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     final isCompleted = _isPublishFlowCompleted;
-    final isAnalyzing = _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
-        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+    final isAnalyzing =
+        _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
+            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
 
     return AnimatedContainer(
       key: _publishAiFlowHintKey,
@@ -1208,14 +1209,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: isCompleted
-            ? const Color(0xFFF2F8FF)
-            : const Color(0xFFF8FAFD),
+        color: isCompleted ? const Color(0xFFF2F8FF) : const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isCompleted
-              ? const Color(0xFFD7E7FF)
-              : const Color(0xFFE5E7EB),
+          color:
+              isCompleted ? const Color(0xFFD7E7FF) : const Color(0xFFE5E7EB),
         ),
       ),
       child: Row(
@@ -1262,10 +1260,26 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         borderRadius: borderRadius,
         child: ColorFiltered(
           colorFilter: const ColorFilter.matrix(<double>[
-            0.45, 0.45, 0.45, 0, 0,
-            0.45, 0.45, 0.45, 0, 0,
-            0.45, 0.45, 0.45, 0, 0,
-            0, 0, 0, 1, 0,
+            0.45,
+            0.45,
+            0.45,
+            0,
+            0,
+            0.45,
+            0.45,
+            0.45,
+            0,
+            0,
+            0.45,
+            0.45,
+            0.45,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
           ]),
           child: ImageFiltered(
             imageFilter: ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.6),
@@ -1446,11 +1460,41 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// Mots trop génériques pour compter comme information nouvelle dans une
   /// puce "details" (liaison, remplissage, localisation générique).
   static const Set<String> _kDetailFillerWords = {
-    'avec', 'pour', 'dans', 'chez', 'vers', 'sans', 'sous', 'entre',
-    'plus', 'tres', 'tout', 'toute', 'tous', 'toutes', 'cette', 'votre',
-    'notre', 'leur', 'elle', 'nous', 'vous', 'sont', 'etre', 'avoir',
-    'faire', 'merci', 'besoin', 'recherche', 'recherchee', 'demande',
-    'secteur', 'zone', 'ville', 'commune', 'quartier',
+    'avec',
+    'pour',
+    'dans',
+    'chez',
+    'vers',
+    'sans',
+    'sous',
+    'entre',
+    'plus',
+    'tres',
+    'tout',
+    'toute',
+    'tous',
+    'toutes',
+    'cette',
+    'votre',
+    'notre',
+    'leur',
+    'elle',
+    'nous',
+    'vous',
+    'sont',
+    'etre',
+    'avoir',
+    'faire',
+    'merci',
+    'besoin',
+    'recherche',
+    'recherchee',
+    'demande',
+    'secteur',
+    'zone',
+    'ville',
+    'commune',
+    'quartier',
   };
 
   String _normalizeDetailText(String input) {
@@ -2792,16 +2836,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _scrollToDescription() async {
     final shouldShowHintFirst =
         _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
-        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
     BuildContext? hintCtx = _publishAiFlowHintKey.currentContext;
     if (shouldShowHintFirst && hintCtx == null) {
       await WidgetsBinding.instance.endOfFrame;
       hintCtx = _publishAiFlowHintKey.currentContext;
     }
     final descriptionCtx = _descriptionFieldKey.currentContext;
-    final targetCtx = shouldShowHintFirst && hintCtx != null
-        ? hintCtx
-        : descriptionCtx;
+    final targetCtx =
+        shouldShowHintFirst && hintCtx != null ? hintCtx : descriptionCtx;
     if (targetCtx == null) return;
 
     await Scrollable.ensureVisible(
@@ -4434,7 +4477,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Widget build(BuildContext context) {
     final publishVisuallyDisabled = !_canPublish || _isSubmitting;
     final isDescriptionActive = _isTextFlowActive;
-    final shouldDimDescription = !_isPublishFlowCompleted && !isDescriptionActive;
+    final shouldDimDescription =
+        !_isPublishFlowCompleted && !isDescriptionActive;
     final shouldDimRemainingSections = !_isPublishFlowCompleted;
 
     return GestureDetector(
@@ -4513,528 +4557,553 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(6, 16, 6, 150),
                   children: [
-                const SizedBox(height: 6),
-                ClipRRect(
-                  // _publishAiMicroOrbitFocusStack
-                  borderRadius: BorderRadius.circular(28),
-                  child: Stack(
-                    children: [
-                      AiPublishControl(
-                        state: _aiPublishState,
-                        micAnchorLink: _publishAiMicAnchorLink,
-                        isAudioAnalyzing: _isAnalyzing,
-                        onStartRecording: _startMic,
-                        onStopRecording: _stopMic,
-                        onSelectVocal: _onSelectVoiceMethod,
-                        onSelectText: _onSelectTextMethod,
-                        onDiagnostic: _showPublishAiTraceDialog,
-                        onClear: _clearPublishAiTrace,
-                        showAdminDiagnostics:
-                            _adminAudioRuntimeAccessState == 1,
-                        highlightVocalCard: _isVoiceFlowActive,
-                        dimVocalCard: !_isPublishFlowCompleted && !_isVoiceFlowActive,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (_publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
-                    _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing ||
-                    _publishAiFlowStep == PublishOfferAiFlowStep.completed) ...[
-                  _buildPublishAiFlowHint(),
-                  const SizedBox(height: 16),
-                ],
-
-                // DESCRIPTION
-                _guidedSection(
-                  isActive: isDescriptionActive,
-                  isDimmed: shouldDimDescription,
-                  neonBorder: true,
-                  child: _withPublishFieldHighlight(
-                    fieldId: 'description',
-                    child: _withAiPendingOverlay(
-                      showPending:
-                          _showAiPendingForController(_descriptionController),
-                      alignment: Alignment.topRight,
-                      padding: const EdgeInsets.only(top: 14, right: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      // _publishAiMicroOrbitFocusStack
+                      borderRadius: BorderRadius.circular(28),
+                      child: Stack(
                         children: [
-                          TextFormField(
-                            controller: _descriptionController,
-                            focusNode: _descriptionFocusNode,
-                            readOnly: _descriptionTapToEditPrimed,
-                            showCursor: _descriptionTapToEditPrimed ? true : null,
-                            textAlignVertical: TextAlignVertical.top,
-                            onTap: _unlockDescriptionEditing,
-                            decoration: InputDecoration(
-                              label: _requiredLabel('Description détaillée'),
-                              alignLabelWithHint: true,
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.fromLTRB(
-                                12,
-                                14,
-                                12,
-                                14,
-                              ),
-                              hintText:
-                                  'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
-                              hintStyle: const TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Color(0xFFBBC0CF),
-                                fontSize: 13.5,
-                                height: 1.4,
-                              ),
-                            ),
-                            minLines: 4,
-                            maxLines: 8,
-                            validator: _validatePublishDescription,
-                          ),
-                          const SizedBox(height: 8),
-                          AiWritingButton(
-                            isAnalyzing: _isAnalyzing,
-                            onTap: !_isAnalyzing && !_isListening
-                                ? _onTapAiAnalyze
-                                : null,
+                          AiPublishControl(
+                            state: _aiPublishState,
+                            micAnchorLink: _publishAiMicAnchorLink,
+                            isAudioAnalyzing: _isAnalyzing,
+                            onStartRecording: _startMic,
+                            onStopRecording: _stopMic,
+                            onSelectVocal: _onSelectVoiceMethod,
+                            onSelectText: _onSelectTextMethod,
+                            onDiagnostic: _showPublishAiTraceDialog,
+                            onClear: _clearPublishAiTrace,
+                            showAdminDiagnostics:
+                                _adminAudioRuntimeAccessState == 1,
+                            highlightVocalCard: _isVoiceFlowActive,
+                            dimVocalCard:
+                                !_isPublishFlowCompleted && !_isVoiceFlowActive,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                    if (_publishAiFlowStep ==
+                            PublishOfferAiFlowStep.textSelected ||
+                        _publishAiFlowStep ==
+                            PublishOfferAiFlowStep.textAnalyzing ||
+                        _publishAiFlowStep ==
+                            PublishOfferAiFlowStep.completed) ...[
+                      _buildPublishAiFlowHint(),
+                      const SizedBox(height: 16),
+                    ],
 
-                _guidedSection(
-                  isActive: _isPublishFlowCompleted,
-                  isDimmed: shouldDimRemainingSections,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                // TITRE
-                _withPublishFieldHighlight(
-                  fieldId: 'title',
-                  child: _withAiPendingOverlay(
-                    showPending: _showAiPendingForController(_titleController),
-                    child: TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        label: _requiredLabel("Titre de l'offre"),
-                        border: const OutlineInputBorder(),
-                        hintText: 'Ex : Monter un meuble IKEA',
-                      ),
-                      validator: _validatePublishTitle,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // CATÉGORIE
-                _withPublishFieldHighlight(
-                  fieldId: 'category',
-                  child: _withAiPendingOverlay(
-                    showPending: _showAiPendingForCategory,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _category,
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Catégorie'),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                      ),
-                      items: _categories
-                          .map(
-                            (cat) => DropdownMenuItem(
-                              value: cat,
-                              child: Text(cat),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _categoryEditedByUser = true;
-                          _category = value;
-                          _selectedSubCategory = null;
-                        });
-                        _recompute();
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Merci de choisir une catégorie';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // SOUS-CATÉGORIE (dropdown dynamique)
-                if (_category != null)
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedSubCategory,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      labelText: 'Sous-catégorie',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    items: (kCategorySubcategories[_category] ?? [])
-                        .map(
-                          (sub) => DropdownMenuItem(
-                            value: sub,
-                            child: Text(sub),
+                    // DESCRIPTION
+                    _guidedSection(
+                      isActive: isDescriptionActive,
+                      isDimmed: shouldDimDescription,
+                      neonBorder: true,
+                      child: _withPublishFieldHighlight(
+                        fieldId: 'description',
+                        child: _withAiPendingOverlay(
+                          showPending: _showAiPendingForController(
+                              _descriptionController),
+                          alignment: Alignment.topRight,
+                          padding: const EdgeInsets.only(top: 14, right: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextFormField(
+                                controller: _descriptionController,
+                                focusNode: _descriptionFocusNode,
+                                readOnly: _descriptionTapToEditPrimed,
+                                showCursor:
+                                    _descriptionTapToEditPrimed ? true : null,
+                                textAlignVertical: TextAlignVertical.top,
+                                onTap: _unlockDescriptionEditing,
+                                decoration: InputDecoration(
+                                  label:
+                                      _requiredLabel('Description détaillée'),
+                                  alignLabelWithHint: true,
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    14,
+                                    12,
+                                    14,
+                                  ),
+                                  hintText:
+                                      'Je cherche un (compétence)… pour effectuer (mission)… dans le secteur de (ville / région)… J\'offre (€).',
+                                  hintStyle: const TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    color: Color(0xFFBBC0CF),
+                                    fontSize: 13.5,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                minLines: 4,
+                                maxLines: 8,
+                                validator: _validatePublishDescription,
+                              ),
+                              const SizedBox(height: 8),
+                              AiWritingButton(
+                                isAnalyzing: _isAnalyzing,
+                                onTap: !_isAnalyzing && !_isListening
+                                    ? _onTapAiAnalyze
+                                    : null,
+                              ),
+                            ],
                           ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSubCategory = value;
-                      });
-                      _recompute();
-                    },
-                    validator: (_) => null,
-                  ),
-                if (_category != null) const SizedBox(height: 16),
-
-                // PHOTOS
-                Row(
-                  children: [
-                    Text(
-                      'Photos de l\'offre',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      '(optionnel, 2 photos maximum)',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(height: 16),
+
+                    _guidedSection(
+                      isActive: _isPublishFlowCompleted,
+                      isDimmed: shouldDimRemainingSections,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // TITRE
+                          _withPublishFieldHighlight(
+                            fieldId: 'title',
+                            child: _withAiPendingOverlay(
+                              showPending:
+                                  _showAiPendingForController(_titleController),
+                              child: TextFormField(
+                                controller: _titleController,
+                                decoration: InputDecoration(
+                                  label: _requiredLabel("Titre de l'offre"),
+                                  border: const OutlineInputBorder(),
+                                  hintText: 'Ex : Monter un meuble IKEA',
+                                ),
+                                validator: _validatePublishTitle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // CATÉGORIE
+                          _withPublishFieldHighlight(
+                            fieldId: 'category',
+                            child: _withAiPendingOverlay(
+                              showPending: _showAiPendingForCategory,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _category,
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                decoration: InputDecoration(
+                                  label: _requiredLabel('Catégorie'),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 14),
+                                ),
+                                items: _categories
+                                    .map(
+                                      (cat) => DropdownMenuItem(
+                                        value: cat,
+                                        child: Text(cat),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _categoryEditedByUser = true;
+                                    _category = value;
+                                    _selectedSubCategory = null;
+                                  });
+                                  _recompute();
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Merci de choisir une catégorie';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // SOUS-CATÉGORIE (dropdown dynamique)
+                          if (_category != null)
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedSubCategory,
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              decoration: InputDecoration(
+                                labelText: 'Sous-catégorie',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 14),
+                              ),
+                              items: (kCategorySubcategories[_category] ?? [])
+                                  .map(
+                                    (sub) => DropdownMenuItem(
+                                      value: sub,
+                                      child: Text(sub),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedSubCategory = value;
+                                });
+                                _recompute();
+                              },
+                              validator: (_) => null,
+                            ),
+                          if (_category != null) const SizedBox(height: 16),
+
+                          // PHOTOS
+                          Row(
+                            children: [
+                              Text(
+                                'Photos de l\'offre',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                '(optionnel, 2 photos maximum)',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _visiblePhotoTileCount,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              childAspectRatio: 1.8,
+                            ),
+                            itemBuilder: (context, index) {
+                              final hasPhoto = index < _selectedPhotos.length;
+                              return PhotoSelectorTile(
+                                label: 'Photo ${index + 1}',
+                                file: hasPhoto ? _selectedPhotos[index] : null,
+                                bytes: hasPhoto &&
+                                        index < _selectedPhotoBytes.length
+                                    ? _selectedPhotoBytes[index]
+                                    : null,
+                                onTap: () => _onPhotoTileTap(index),
+                                onLongPress: () => _pickImage(index),
+                                onRemove: hasPhoto
+                                    ? () => _removePhotoAt(index)
+                                    : null,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // VILLE + CP + AUTOCOMPLÉTION
+                          const Text(
+                            'Localisation',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          _withPublishFieldHighlight(
+                            fieldId: 'city',
+                            child: _withAiPendingOverlay(
+                              showPending: _showAiPendingForController(
+                                  _locationController),
+                              child: CityPostalAutocompleteField(
+                                cityController: _locationController,
+                                postalCodeController: _postalCodeController,
+                                onSelected: (city) {
+                                  setState(() {
+                                    _selectedDeptCode = city.dept;
+                                    // CityEntry ne porte pas toujours le code région.
+                                    // La publication recalcule la région officielle via Geo API Gouv.
+                                    _selectedRegionCode = null;
+                                    _selectedPhoneCountryCode =
+                                        _countryCodeForDept(city.dept);
+                                    _locationEditedByUser = true;
+                                    _postalCodeEditedByUser = true;
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  label: _requiredLabel('Ville'),
+                                  hintText:
+                                      'Ex : Les Abymes, Baie-Mahault, Paris...',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _withAiPendingOverlay(
+                            showPending: _showAiPendingForController(
+                                _postalCodeController),
+                            child: TextFormField(
+                              controller: _postalCodeController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Code postal',
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 14),
+                              ),
+                              onTap: _clearAiPrefilledLocationPostalOnUserTap,
+                              onEditingComplete: _canonicalizeLocationInputs,
+                              validator: _validatePostalCode,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // TÉLÉPHONE avec sélection indicatif
+                          _withPublishFieldHighlight(
+                            fieldId: 'phone',
+                            child: PhoneInputFieldCompact(
+                              controller: _phoneController,
+                              label: _requiredLabel(
+                                  'Téléphone (pour être rappelé)'),
+                              hintText: phoneHintForCountryCode(
+                                  _selectedPhoneCountryCode),
+                              initialCountryCode: _selectedPhoneCountryCode,
+                              onCountryCodeChanged: (code) {
+                                setState(() {
+                                  _selectedPhoneCountryCode = code;
+                                });
+                              },
+                              onPhoneChanged: (_) => _recompute(),
+                              validator: (value) {
+                                return _isValidPhoneFR(value ?? '')
+                                    ? null
+                                    : 'Téléphone invalide';
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () =>
+                                setState(() => _hidePhone = !_hidePhone),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 6),
+                              child: Row(
+                                children: [
+                                  Switch(
+                                    value: _hidePhone,
+                                    onChanged: (v) =>
+                                        setState(() => _hidePhone = v),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'Masquer mon numéro (les visiteurs verront uniquement l\'indicatif)',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // DÉLAI POUR EFFECTUER LA MISSION
+                          _withPublishFieldHighlight(
+                            fieldId: 'delay',
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _missionDelay,
+                              dropdownColor: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              decoration: InputDecoration(
+                                label: _requiredLabel(
+                                    'Délai pour effectuer la mission'),
+                                filled: true,
+                                fillColor: Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 14),
+                              ),
+                              items: _missionDelayOptions
+                                  .map(
+                                    (delay) => DropdownMenuItem(
+                                      value: delay,
+                                      child: Text(delay),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _delayEditedByUser = true;
+                                  _missionDelay = value;
+                                  _isUrgent = value == 'Urgent';
+                                });
+                                _recompute();
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Merci de choisir un délai';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _withPublishFieldHighlight(
+                            fieldId: 'budget',
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: _budgetType,
+                                    dropdownColor: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    decoration: InputDecoration(
+                                      labelText: 'Type de budget',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14),
+                                    ),
+                                    items: _budgetTypes
+                                        .map(
+                                          (type) => DropdownMenuItem(
+                                            value: type,
+                                            child: Text(type),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setState(() {
+                                        _budgetEditedByUser = true;
+                                        _budgetType = value;
+                                      });
+                                      _recompute();
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 3,
+                                  child: TextFormField(
+                                    controller: _budgetController,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
+                                    decoration: InputDecoration(
+                                      label: _budgetType == 'À négocier'
+                                          ? const Text('Budget')
+                                          : _requiredLabel('Budget (€)'),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14),
+                                    ),
+                                    enabled: _budgetType == 'Fixe',
+                                    validator: (value) {
+                                      if (_budgetType == 'À négocier')
+                                        return null;
+                                      final b = _parseBudget(value ?? '');
+                                      if (b == null) return 'Montant invalide';
+                                      if (b <= 0)
+                                        return 'Le montant doit être > 0';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          const Text(
+                            '* Champs obligatoires',
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                          const SizedBox(height: 10),
+                          PublishValidationBanner(
+                            missingFields: _attemptedSubmit
+                                ? _missingPublishFieldLabels()
+                                : const [],
+                          ),
+                          if (_attemptedSubmit &&
+                              _missingPublishFieldLabels().isNotEmpty)
+                            const SizedBox(height: 10),
+
+                          // BOUTON PUBLIER
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed:
+                                  _isSubmitting ? null : _onPublishPressed,
+                              icon: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.send),
+                              label: Text(
+                                _isSubmitting
+                                    ? 'Publication en cours...'
+                                    : 'Publier mon offre',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: publishVisuallyDisabled
+                                    ? Colors.grey.shade400
+                                    : kPrestoOrange,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _visiblePhotoTileCount,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.8,
-                  ),
-                  itemBuilder: (context, index) {
-                    final hasPhoto = index < _selectedPhotos.length;
-                    return PhotoSelectorTile(
-                      label: 'Photo ${index + 1}',
-                      file: hasPhoto ? _selectedPhotos[index] : null,
-                      bytes: hasPhoto && index < _selectedPhotoBytes.length
-                          ? _selectedPhotoBytes[index]
-                          : null,
-                      onTap: () => _onPhotoTileTap(index),
-                      onLongPress: () => _pickImage(index),
-                      onRemove: hasPhoto ? () => _removePhotoAt(index) : null,
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // VILLE + CP + AUTOCOMPLÉTION
-                const Text(
-                  'Localisation',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                _withPublishFieldHighlight(
-                  fieldId: 'city',
-                  child: _withAiPendingOverlay(
-                    showPending:
-                        _showAiPendingForController(_locationController),
-                    child: CityPostalAutocompleteField(
-                      cityController: _locationController,
-                      postalCodeController: _postalCodeController,
-                      onSelected: (city) {
-                        setState(() {
-                          _selectedDeptCode = city.dept;
-                          // CityEntry ne porte pas toujours le code région.
-                          // La publication recalcule la région officielle via Geo API Gouv.
-                          _selectedRegionCode = null;
-                          _selectedPhoneCountryCode =
-                              _countryCodeForDept(city.dept);
-                          _locationEditedByUser = true;
-                          _postalCodeEditedByUser = true;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Ville'),
-                        hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _withAiPendingOverlay(
-                  showPending:
-                      _showAiPendingForController(_postalCodeController),
-                  child: TextFormField(
-                    controller: _postalCodeController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Code postal',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    onTap: _clearAiPrefilledLocationPostalOnUserTap,
-                    onEditingComplete: _canonicalizeLocationInputs,
-                    validator: _validatePostalCode,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // TÉLÉPHONE avec sélection indicatif
-                _withPublishFieldHighlight(
-                  fieldId: 'phone',
-                  child: PhoneInputFieldCompact(
-                    controller: _phoneController,
-                    label: _requiredLabel('Téléphone (pour être rappelé)'),
-                    hintText:
-                        phoneHintForCountryCode(_selectedPhoneCountryCode),
-                    initialCountryCode: _selectedPhoneCountryCode,
-                    onCountryCodeChanged: (code) {
-                      setState(() {
-                        _selectedPhoneCountryCode = code;
-                      });
-                    },
-                    onPhoneChanged: (_) => _recompute(),
-                    validator: (value) {
-                      return _isValidPhoneFR(value ?? '')
-                          ? null
-                          : 'Téléphone invalide';
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () => setState(() => _hidePhone = !_hidePhone),
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                    child: Row(
-                      children: [
-                        Switch(
-                          value: _hidePhone,
-                          onChanged: (v) => setState(() => _hidePhone = v),
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            'Masquer mon numéro (les visiteurs verront uniquement l\'indicatif)',
-                            style: TextStyle(fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // DÉLAI POUR EFFECTUER LA MISSION
-                _withPublishFieldHighlight(
-                  fieldId: 'delay',
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _missionDelay,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Délai pour effectuer la mission'),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    items: _missionDelayOptions
-                        .map(
-                          (delay) => DropdownMenuItem(
-                            value: delay,
-                            child: Text(delay),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _delayEditedByUser = true;
-                        _missionDelay = value;
-                        _isUrgent = value == 'Urgent';
-                      });
-                      _recompute();
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Merci de choisir un délai';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _withPublishFieldHighlight(
-                  fieldId: 'budget',
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _budgetType,
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          decoration: InputDecoration(
-                            labelText: 'Type de budget',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                          items: _budgetTypes
-                              .map(
-                                (type) => DropdownMenuItem(
-                                  value: type,
-                                  child: Text(type),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            if (value == null) return;
-                            setState(() {
-                              _budgetEditedByUser = true;
-                              _budgetType = value;
-                            });
-                            _recompute();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          controller: _budgetController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            label: _budgetType == 'À négocier'
-                                ? const Text('Budget')
-                                : _requiredLabel('Budget (€)'),
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                          enabled: _budgetType == 'Fixe',
-                          validator: (value) {
-                            if (_budgetType == 'À négocier') return null;
-                            final b = _parseBudget(value ?? '');
-                            if (b == null) return 'Montant invalide';
-                            if (b <= 0) return 'Le montant doit être > 0';
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                const Text(
-                  '* Champs obligatoires',
-                  style: TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 10),
-                PublishValidationBanner(
-                  missingFields: _attemptedSubmit
-                      ? _missingPublishFieldLabels()
-                      : const [],
-                ),
-                if (_attemptedSubmit && _missingPublishFieldLabels().isNotEmpty)
-                  const SizedBox(height: 10),
-
-                // BOUTON PUBLIER
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isSubmitting ? null : _onPublishPressed,
-                    icon: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send),
-                    label: Text(
-                      _isSubmitting
-                          ? 'Publication en cours...'
-                          : 'Publier mon offre',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: publishVisuallyDisabled
-                          ? Colors.grey.shade400
-                          : kPrestoOrange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
               ),
               if (_showDarkOverlay)
                 Positioned.fill(

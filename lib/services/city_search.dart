@@ -39,7 +39,8 @@ class CitySearch {
     if (_loaded) return;
 
     try {
-      final raw = await rootBundle.loadString('assets/data/cities_compact.json');
+      final raw =
+          await rootBundle.loadString('assets/data/cities_compact.json');
       final List<dynamic> list = jsonDecode(raw) as List<dynamic>;
       for (final row in list) {
         final map = row as Map<String, dynamic>;

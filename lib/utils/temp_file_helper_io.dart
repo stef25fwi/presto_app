@@ -15,8 +15,7 @@ Future<String> writeTempFile(
       .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '_')
       .replaceAll(RegExp(r'_+'), '_');
   final safeName = sanitizedName.isEmpty ? 'piece_jointe.bin' : sanitizedName;
-  final path =
-      '${dir.path}/${DateTime.now().millisecondsSinceEpoch}_$safeName';
+  final path = '${dir.path}/${DateTime.now().millisecondsSinceEpoch}_$safeName';
   final file = File(path);
   await file.writeAsBytes(bytes, flush: true);
   return path;
