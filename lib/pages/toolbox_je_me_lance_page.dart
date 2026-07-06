@@ -4019,52 +4019,136 @@ class _Bullet extends StatelessWidget {
   }
 }
 
-class _CostRow extends StatelessWidget {
+class _CostRow extends StatefulWidget {
   final IconData icon;
   final String label;
   final String value;
+  final String? explanation;
   const _CostRow({
     required this.icon,
     required this.label,
     required this.value,
+    this.explanation,
   });
 
   @override
+  State<_CostRow> createState() => _CostRowState();
+}
+
+class _CostRowState extends State<_CostRow> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    final hasExplanation =
+        widget.explanation != null && widget.explanation!.trim().isNotEmpty;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: hasExplanation
+              ? () => setState(() => _expanded = !_expanded)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        widget.icon,
+                        size: 18,
+                        color: const Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.value,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (hasExplanation) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        _expanded
+                            ? Icons.expand_less_rounded
+                            : Icons.expand_more_rounded,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ],
+                  ],
+                ),
+                if (hasExplanation && _expanded) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(left: 48),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 1),
+                          child: Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            widget.explanation!,
+                            style: const TextStyle(
+                              color: Color(0xFF4B5563),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 18, color: const Color(0xFF374151)),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF111827),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(value,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
-        ],
+        ),
       ),
     );
   }
@@ -4610,7 +4694,6 @@ class _JourneySummaryPage extends StatelessWidget {
                     _Card(
                       title: 'Résumé de ma situation',
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _SummaryFactRow(label: 'Région', value: summaryRegion),
                           _SummaryFactRow(label: 'Statut actuel', value: summaryStatus),
@@ -4829,26 +4912,36 @@ class _JourneySummaryPage extends StatelessWidget {
                               icon: Icons.receipt_long_outlined,
                               label: 'Frais de formalités',
                               value: '≈ $formalitesMin à $formalitesMax €',
+                              explanation:
+                                  "Cette fourchette couvre surtout les frais de création et d'immatriculation. En micro-entreprise, ils restent souvent faibles. Pour une société, des frais administratifs supplémentaires peuvent s'ajouter selon la forme choisie.",
                             ),
                             _CostRow(
                               icon: Icons.campaign_outlined,
                               label: 'Annonce légale',
                               value: '≈ ${costs['annonceLegale'] ?? 0} €',
+                              explanation:
+                                  "Ce coût concerne principalement les sociétés comme SASU, SAS, EURL ou SARL. Il est en général nul en micro-entreprise. Le montant affiché correspond à une estimation standard de publication.",
                             ),
                             _CostRow(
                               icon: Icons.shield_outlined,
                               label: 'Assurance professionnelle',
                               value: '≈ ${costs['assuranceProAn'] ?? 0} €',
+                              explanation:
+                                  "Montant indicatif annuel pour une RC Pro de base. Le prix varie selon votre métier, votre niveau de risque, vos garanties et votre chiffre d'affaires.",
                             ),
                             _CostRow(
                               icon: Icons.calculate_outlined,
                               label: 'Comptable / an',
                               value: '≈ ${costs['comptableAn'] ?? 0} €',
+                              explanation:
+                                  "Ce budget devient surtout utile pour une société ou une EI au réel. En micro-entreprise, il peut être nul si vous gérez seul la comptabilité et les déclarations.",
                             ),
                             _CostRow(
                               icon: Icons.account_balance_wallet_outlined,
                               label: 'Banque + outils / an',
                               value: '≈ ${costs['banqueOutilsAn'] ?? 0} €',
+                              explanation:
+                                  "Cette estimation regroupe les frais de compte pro, de facturation et quelques outils de gestion de base. Elle peut monter si vous ajoutez des services de paiement, CRM ou automatisation.",
                             ),
                             _ResultCallout(
                               icon: Icons.info_outline,
