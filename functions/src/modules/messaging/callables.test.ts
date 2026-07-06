@@ -189,6 +189,44 @@ test("sanitizeConversationAttachments rejects unsupported document mime type", (
   );
 });
 
+test("sanitizeConversationAttachments accepts audio attachment for current conversation", () => {
+  const attachments = sanitizeConversationAttachments([
+    {
+      type: "audio",
+      name: "note_vocale_8s.m4a",
+      url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote_vocale_8s.m4a",
+      storagePath: "messageAttachments/buyer_a/conv_1/note_vocale_8s.m4a",
+      mimeType: "audio/mp4",
+      sizeBytes: 64000,
+    },
+  ], "buyer_a", "conv_1");
+
+  assert.equal(attachments.length, 1);
+  const firstAttachment = attachments[0];
+  assert.ok(firstAttachment);
+  assert.equal(firstAttachment.type, "audio");
+});
+
+test("sanitizeConversationAttachments rejects unsupported audio mime type", () => {
+  assert.throws(
+    () => sanitizeConversationAttachments([
+      {
+        type: "audio",
+        name: "note_vocale.wav",
+        url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote_vocale.wav",
+        storagePath: "messageAttachments/buyer_a/conv_1/note_vocale.wav",
+        mimeType: "audio/wav",
+        sizeBytes: 64000,
+      },
+    ], "buyer_a", "conv_1"),
+    (error: unknown) => {
+      assert.ok(error instanceof HttpsError);
+      assert.equal(error.code, "invalid-argument");
+      return true;
+    },
+  );
+});
+
 test("buildProcessedConversationAttachmentPath keeps photos scoped and converts to webp", () => {
   const path = buildProcessedConversationAttachmentPath({
     uid: "buyer_a",

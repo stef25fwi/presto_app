@@ -271,13 +271,20 @@ function sanitizeMessageText(value: unknown): string {
 }
 
 type ConversationAttachment = {
-  type: "image" | "document";
+  type: "image" | "document" | "audio";
   name: string;
   url: string;
   storagePath: string;
   mimeType: string;
   sizeBytes: number;
 };
+
+const ALLOWED_AUDIO_ATTACHMENT_MIME_TYPES = new Set([
+  "audio/mp4",
+  "audio/m4a",
+  "audio/aac",
+  "audio/x-m4a",
+]);
 
 const ADMIN_MESSAGING_CALLABLE_OPTIONS = {
   ...MESSAGING_CALLABLE_OPTIONS,
@@ -422,11 +429,12 @@ export function sanitizeConversationAttachments(
     }
     const raw = entry as Record<string, unknown>;
     const type = sanitizeAttachmentText(raw.type, 24);
-    if (type !== "image" && type !== "document") {
+    if (type !== "image" && type !== "document" && type !== "audio") {
       throw new HttpsError("invalid-argument", `attachment #${index + 1} type is invalid`);
     }
 
-    const name = sanitizeAttachmentText(raw.name, 140) || (type === "image" ? "Photo" : "Document");
+    const name = sanitizeAttachmentText(raw.name, 140) ||
+      (type === "image" ? "Photo" : type === "audio" ? "Note vocale" : "Document");
     const url = String(raw.url ?? "").trim();
     const storagePath = String(raw.storagePath ?? "").trim();
     const mimeType = sanitizeAttachmentText(raw.mimeType, 120);
@@ -467,6 +475,9 @@ export function sanitizeConversationAttachments(
     }
     if (type === "document" && !isAllowedDocumentAttachmentMimeType(mimeType)) {
       throw new HttpsError("invalid-argument", `attachment #${index + 1} document type is invalid`);
+    }
+    if (type === "audio" && !ALLOWED_AUDIO_ATTACHMENT_MIME_TYPES.has(mimeType)) {
+      throw new HttpsError("invalid-argument", `attachment #${index + 1} audio type is invalid`);
     }
 
     return {
@@ -813,7 +824,11 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
   const attachments = sanitizeConversationAttachments(request.data?.attachments, currentUserId, conversationId);
   const firstAttachment = attachments[0];
   const messageText = text || (firstAttachment
-    ? (firstAttachment.type === "image" ? `Photo : ${firstAttachment.name}` : `Document : ${firstAttachment.name}`)
+    ? (firstAttachment.type === "image"
+      ? `Photo : ${firstAttachment.name}`
+      : firstAttachment.type === "audio"
+        ? "Note vocale"
+        : `Document : ${firstAttachment.name}`)
     : "");
 
   if (!conversationId || !messageText) {

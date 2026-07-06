@@ -145,6 +145,38 @@ const mirror_1 = require("./mirror");
         return true;
     });
 });
+(0, node_test_1.default)("sanitizeConversationAttachments accepts audio attachment for current conversation", () => {
+    const attachments = (0, callables_1.sanitizeConversationAttachments)([
+        {
+            type: "audio",
+            name: "note_vocale_8s.m4a",
+            url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote_vocale_8s.m4a",
+            storagePath: "messageAttachments/buyer_a/conv_1/note_vocale_8s.m4a",
+            mimeType: "audio/mp4",
+            sizeBytes: 64000,
+        },
+    ], "buyer_a", "conv_1");
+    strict_1.default.equal(attachments.length, 1);
+    const firstAttachment = attachments[0];
+    strict_1.default.ok(firstAttachment);
+    strict_1.default.equal(firstAttachment.type, "audio");
+});
+(0, node_test_1.default)("sanitizeConversationAttachments rejects unsupported audio mime type", () => {
+    strict_1.default.throws(() => (0, callables_1.sanitizeConversationAttachments)([
+        {
+            type: "audio",
+            name: "note_vocale.wav",
+            url: "https://firebasestorage.googleapis.com/v0/b/bucket/o/messageAttachments%2Fbuyer_a%2Fconv_1%2Fnote_vocale.wav",
+            storagePath: "messageAttachments/buyer_a/conv_1/note_vocale.wav",
+            mimeType: "audio/wav",
+            sizeBytes: 64000,
+        },
+    ], "buyer_a", "conv_1"), (error) => {
+        strict_1.default.ok(error instanceof https_1.HttpsError);
+        strict_1.default.equal(error.code, "invalid-argument");
+        return true;
+    });
+});
 (0, node_test_1.default)("buildProcessedConversationAttachmentPath keeps photos scoped and converts to webp", () => {
     const path = (0, callables_1.buildProcessedConversationAttachmentPath)({
         uid: "buyer_a",
