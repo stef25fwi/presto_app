@@ -284,7 +284,20 @@ const ALLOWED_AUDIO_ATTACHMENT_MIME_TYPES = new Set([
   "audio/m4a",
   "audio/aac",
   "audio/x-m4a",
+  "audio/webm",
 ]);
+
+export function buildAttachmentMessageFallbackText(
+  attachment: Pick<ConversationAttachment, "type" | "name">,
+): string {
+  if (attachment.type === "image") {
+    return `Photo : ${attachment.name}`;
+  }
+  if (attachment.type === "audio") {
+    return "Note vocale";
+  }
+  return `Document : ${attachment.name}`;
+}
 
 const ADMIN_MESSAGING_CALLABLE_OPTIONS = {
   ...MESSAGING_CALLABLE_OPTIONS,
@@ -824,11 +837,7 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
   const attachments = sanitizeConversationAttachments(request.data?.attachments, currentUserId, conversationId);
   const firstAttachment = attachments[0];
   const messageText = text || (firstAttachment
-    ? (firstAttachment.type === "image"
-      ? `Photo : ${firstAttachment.name}`
-      : firstAttachment.type === "audio"
-        ? "Note vocale"
-        : `Document : ${firstAttachment.name}`)
+    ? buildAttachmentMessageFallbackText(firstAttachment)
     : "");
 
   if (!conversationId || !messageText) {

@@ -3,6 +3,7 @@ import test from "node:test";
 import { HttpsError } from "firebase-functions/v2/https";
 import {
   assertConversationParticipantAccess,
+  buildAttachmentMessageFallbackText,
   buildProcessedConversationAttachmentPath,
   canonicalConversationId,
   computeUnreadCountAfterMessageDeletion,
@@ -205,6 +206,16 @@ test("sanitizeConversationAttachments accepts audio attachment for current conve
   const firstAttachment = attachments[0];
   assert.ok(firstAttachment);
   assert.equal(firstAttachment.type, "audio");
+});
+
+test("buildAttachmentMessageFallbackText returns audio label for voice notes", () => {
+  assert.equal(
+    buildAttachmentMessageFallbackText({
+      type: "audio",
+      name: "note_vocale_8s.webm",
+    }),
+    "Note vocale",
+  );
 });
 
 test("sanitizeConversationAttachments rejects unsupported audio mime type", () => {
