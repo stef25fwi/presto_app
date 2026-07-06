@@ -132,6 +132,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isBlockedForCurrentUser = false;
   bool _isBlockedByAnotherParticipant = false;
   bool _isArchivedForCurrentUser = false;
+  bool _isDeletedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
   int _messageStreamRetryCount = 0;
   String _offerId = '';
@@ -1269,6 +1270,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
               : 0;
       final participantChanged = otherParticipantId != _otherParticipantId;
+      final isDeletedForCurrentUser = isConversationDeletedForUser(
+        data,
+        widget.currentUserId,
+      );
 
       if (mounted) {
         setState(() {
@@ -1300,7 +1305,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               isConversationBlockedByOtherUser(data, widget.currentUserId);
           _isArchivedForCurrentUser =
               isConversationArchivedForUser(data, widget.currentUserId);
+          _isDeletedForCurrentUser = isDeletedForCurrentUser;
         });
+      }
+
+      if (isDeletedForCurrentUser) {
+        _handleConversationRemoved(showMessage: false);
+        return;
       }
 
       if (unreadCount > 0) {
@@ -1719,7 +1730,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 shape: overlayTheme.dialogShape,
                 title: const Text('Supprimer la conversation'),
                 content: const Text(
-                  'Cette action est irreversible. Tous les messages seront supprimes.',
+                  'Cette conversation sera retirée uniquement de votre messagerie. L’autre participant continuera à la voir tant qu’il ne la supprime pas lui-même.',
                 ),
                 actions: [
                   TextButton(
@@ -1740,7 +1751,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               conversationId: widget.conversationId);
           if (!mounted) return;
           _hasHandledConversationRemoval = true;
-          showSuccessSnackBar(context, 'Conversation supprimee.');
+          showSuccessSnackBar(
+            context,
+            'Conversation supprimée pour votre compte.',
+          );
           Navigator.of(context).pop();
           return;
       }

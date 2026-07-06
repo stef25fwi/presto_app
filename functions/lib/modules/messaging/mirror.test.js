@@ -114,6 +114,10 @@ const mirror_1 = require("./mirror");
             seller_b: true,
             ghost_user: true,
         },
+        deletedBy: {
+            buyer_a: true,
+            ghost_user: true,
+        },
         blockedBy: {
             ghost_user: true,
         },
@@ -126,6 +130,7 @@ const mirror_1 = require("./mirror");
     strict_1.default.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
     strict_1.default.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 2 });
     strict_1.default.deepEqual(fields.archivedBy, { buyer_a: false, seller_b: true });
+    strict_1.default.deepEqual(fields.deletedBy, { buyer_a: true, seller_b: false });
     strict_1.default.deepEqual(fields.blockedBy, { buyer_a: false, seller_b: false });
     strict_1.default.deepEqual(fields.lastReadAt, { seller_b: "2026-01-01T00:00:00.000Z" });
 });

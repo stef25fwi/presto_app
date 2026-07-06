@@ -43,4 +43,14 @@ const state_1 = require("./state");
     strict_1.default.equal((0, state_1.isConversationFlagEnabledForUser)(data, "blockedBy", "a"), false);
     strict_1.default.equal((0, state_1.isConversationFlagEnabledForUser)(data, "blockedBy", "b"), true);
 });
+(0, node_test_1.default)("isConversationFlagEnabledForUser also supports deletedBy", () => {
+    const data = {
+        deletedBy: {
+            a: true,
+            b: false,
+        },
+    };
+    strict_1.default.equal((0, state_1.isConversationFlagEnabledForUser)(data, "deletedBy", "a"), true);
+    strict_1.default.equal((0, state_1.isConversationFlagEnabledForUser)(data, "deletedBy", "b"), false);
+});
 //# sourceMappingURL=state.test.js.map

@@ -20,6 +20,7 @@ class ConversationSummary {
   final DateTime? lastMessageAt;
   final String status;
   final Map<String, bool> archivedBy;
+  final Map<String, bool> deletedBy;
   final Map<String, bool> blockedBy;
 
   const ConversationSummary({
@@ -39,6 +40,7 @@ class ConversationSummary {
     required this.lastMessageAt,
     required this.status,
     required this.archivedBy,
+    required this.deletedBy,
     required this.blockedBy,
   });
 
@@ -94,6 +96,7 @@ class ConversationSummary {
       ),
       status: _readString(data, const ['status']),
       archivedBy: _readBoolMap(data, const ['archivedBy']),
+      deletedBy: _readBoolMap(data, const ['deletedBy']),
       blockedBy: _readBoolMap(data, const ['blockedBy']),
     );
   }
@@ -129,6 +132,7 @@ class ConversationSummary {
       lastMessageAt: _latestDateTime(lastMessageAt, other.lastMessageAt),
       status: _pickPreferredString(other.status, status),
       archivedBy: _mergeBoolMaps(archivedBy, other.archivedBy),
+      deletedBy: _mergeBoolMaps(deletedBy, other.deletedBy),
       blockedBy: _mergeBoolMaps(blockedBy, other.blockedBy),
     );
   }
@@ -145,6 +149,10 @@ class ConversationSummary {
 
   bool isArchivedForUser(String userId) {
     return archivedBy[userId.trim()] == true;
+  }
+
+  bool isDeletedForUser(String userId) {
+    return deletedBy[userId.trim()] == true;
   }
 
   bool isBlockedForUser(String userId) {

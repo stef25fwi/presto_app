@@ -53,3 +53,15 @@ test("isConversationFlagEnabledForUser reads participant-specific flags", () => 
   assert.equal(isConversationFlagEnabledForUser(data, "blockedBy", "a"), false);
   assert.equal(isConversationFlagEnabledForUser(data, "blockedBy", "b"), true);
 });
+
+test("isConversationFlagEnabledForUser also supports deletedBy", () => {
+  const data = {
+    deletedBy: {
+      a: true,
+      b: false,
+    },
+  };
+
+  assert.equal(isConversationFlagEnabledForUser(data, "deletedBy", "a"), true);
+  assert.equal(isConversationFlagEnabledForUser(data, "deletedBy", "b"), false);
+});

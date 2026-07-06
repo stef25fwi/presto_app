@@ -2,7 +2,7 @@ export type ConversationStatus = "open" | "archived" | "closed";
 
 export function readConversationFlagMap(
   data: Record<string, unknown>,
-  field: "archivedBy" | "blockedBy",
+  field: "archivedBy" | "deletedBy" | "blockedBy",
 ): Record<string, boolean> {
   const raw = data[field];
   if (!raw || typeof raw != "object") return {};
@@ -16,7 +16,7 @@ export function readConversationFlagMap(
 
 export function isConversationFlagEnabledForUser(
   data: Record<string, unknown>,
-  field: "archivedBy" | "blockedBy",
+  field: "archivedBy" | "deletedBy" | "blockedBy",
   userId: string,
 ): boolean {
   return readConversationFlagMap(data, field)[userId] === true;

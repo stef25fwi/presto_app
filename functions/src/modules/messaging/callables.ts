@@ -138,7 +138,10 @@ export function assertConversationParticipantAccess(
   }
 }
 
-async function deleteNotificationsForConversation(conversationId: string): Promise<Set<string>> {
+async function deleteNotificationsForConversation(
+  conversationId: string,
+  userId?: string,
+): Promise<Set<string>> {
   const routeName = `/messages/${encodeURIComponent(conversationId)}`;
   const [conversationIdSnap, routeNameSnap] = await Promise.all([
     db.collection(COLLECTIONS.notifications).where("conversationId", "==", conversationId).get(),
@@ -148,6 +151,12 @@ async function deleteNotificationsForConversation(conversationId: string): Promi
   const notificationDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
   for (const snapshot of [conversationIdSnap, routeNameSnap]) {
     for (const doc of snapshot.docs) {
+      if (userId) {
+        const docUserId = String(doc.data().userId || "").trim();
+        if (docUserId != userId) {
+          continue;
+        }
+      }
       notificationDocs.set(doc.id, doc);
     }
   }
@@ -1163,12 +1172,16 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
     const archivedBy = {
       ...conversation.archivedBy,
     };
+    const deletedBy = {
+      ...conversation.deletedBy,
+    };
     const unreadCount = {
       ...conversation.unreadCount,
     };
 
     for (const participantId of participants) {
       archivedBy[participantId] = false;
+      deletedBy[participantId] = false;
       unreadCount[participantId] = participantId == currentUserId
         ? 0
         : admin.firestore.FieldValue.increment(1);
@@ -1184,6 +1197,7 @@ export const sendConversationMessage = onCall(HOT_MESSAGING_CALLABLE_OPTIONS, as
           [currentUserId]: senderName,
         },
         archivedBy,
+        deletedBy,
         unreadCount,
         lastMessage: messageText,
         lastSenderId: currentUserId,
@@ -1279,6 +1293,10 @@ export const unarchiveConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (r
     ...conversation.archivedBy,
     [currentUserId]: false,
   };
+  const deletedBy = {
+    ...conversation.deletedBy,
+    [currentUserId]: false,
+  };
   const blockedBy = conversation.blockedBy;
 
   await convRef.update(
@@ -1286,6 +1304,7 @@ export const unarchiveConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (r
       ...conversation,
       participants,
       archivedBy,
+      deletedBy,
       blockedBy,
       status: computeConversationStatus(participants, archivedBy, blockedBy),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1405,51 +1424,42 @@ export const deleteConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (requ
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-  const notificationUserIds = await deleteNotificationsForConversation(conversationId);
+  const { convRef, data, participants, conversation } = await loadConversationForParticipant(
+    conversationId,
+    currentUserId,
+  );
+  const notificationUserIds = await deleteNotificationsForConversation(
+    conversationId,
+    currentUserId,
+  );
+  const archivedBy = readConversationFlagMap(data, "archivedBy");
+  const deletedBy = readConversationFlagMap(data, "deletedBy");
+  const blockedBy = readConversationFlagMap(data, "blockedBy");
+  const unreadCount = {
+    ...conversation.unreadCount,
+    [currentUserId]: 0,
+  };
 
-  // Delete messages subcollection in batches
-  const messagesRef = convRef.collection("messages");
-  let batch = db.batch();
-  let batchCount = 0;
-  const BATCH_SIZE = 400;
+  archivedBy[currentUserId] = true;
+  deletedBy[currentUserId] = true;
 
-  const messagesSnap = await messagesRef.limit(BATCH_SIZE).get();
-  let remaining = messagesSnap.size;
+  await convRef.update(
+    buildConversationMirrorFields({
+      ...conversation,
+      participants,
+      archivedBy,
+      deletedBy,
+      blockedBy,
+      unreadCount,
+      status: computeConversationStatus(participants, archivedBy, blockedBy),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }),
+  );
 
-  for (const doc of messagesSnap.docs) {
-    batch.delete(doc.ref);
-    batchCount++;
-    if (batchCount >= BATCH_SIZE) {
-      await batch.commit();
-      batch = db.batch();
-      batchCount = 0;
-    }
-  }
-
-  if (batchCount > 0) {
-    await batch.commit();
-  }
-
-  // If there could be more messages beyond the first batch, continue
-  if (remaining >= BATCH_SIZE) {
-    let moreSnap = await messagesRef.limit(BATCH_SIZE).get();
-    while (moreSnap.size > 0) {
-      const deleteBatch = db.batch();
-      for (const doc of moreSnap.docs) {
-        deleteBatch.delete(doc.ref);
-      }
-      await deleteBatch.commit();
-      moreSnap = await messagesRef.limit(BATCH_SIZE).get();
-    }
-  }
-
-  // Delete the conversation document itself
-  await convRef.delete();
-
-  // Refresh unread counts for all participants
-  await Promise.all(participants.map((pid) => refreshUnreadMessageCount(pid)));
-  await Promise.all(Array.from(notificationUserIds, (userId) => refreshUnreadNotificationCount(userId)));
+  await refreshUnreadMessageCount(currentUserId);
+  await Promise.all(
+    Array.from(notificationUserIds, (userId) => refreshUnreadNotificationCount(userId)),
+  );
 
   return { ok: true };
 });

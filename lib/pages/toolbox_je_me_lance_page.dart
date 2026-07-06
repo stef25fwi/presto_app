@@ -17,16 +17,186 @@
 // © You can freely adapt.
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_core.dart';
 import '../data/city_postal_data.dart';
 import '../services/region_resources_service.dart';
+
+const String _kLocalSavedJourneyKey = 'toolbox.saved_journey.latest';
+
+Future<void> _openExternalUrl(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Impossible d\'ouvrir $url')),
+    );
+  }
+}
+
+List<RegionResource> _planContactsForTask(
+  String region,
+  String title, {
+  String activity = '',
+  String currentStatus = '',
+}) {
+  final resources = getRegionResources(region);
+  if (resources.isEmpty) return const [];
+
+  final lowerTitle = title.toLowerCase();
+  final lowerActivity = activity.toLowerCase().trim();
+  final lowerStatus = currentStatus.toLowerCase().trim();
+  final isDromRegion = RegionResourcesService.isDROM(region);
+  final isArtisanActivity =
+      lowerActivity.contains('artisan') ||
+      lowerActivity.contains('btp') ||
+      lowerActivity.contains('travaux') ||
+      lowerActivity.contains('coiffure') ||
+      lowerActivity.contains('esthétique') ||
+      lowerActivity.contains('reparation') ||
+      lowerActivity.contains('réparation');
+  final isCommerceActivity =
+      lowerActivity.contains('commerce') ||
+      lowerActivity.contains('vente') ||
+      lowerActivity.contains('restauration') ||
+      lowerActivity.contains('livraison');
+  final isServiceActivity =
+      lowerActivity.contains('conseil') ||
+      lowerActivity.contains('formation') ||
+      lowerActivity.contains('digitale') ||
+      lowerActivity.contains('événementiel') ||
+      lowerActivity.contains('evenementiel');
+  final selected = <RegionResource>[];
+
+  void addMatches(List<String> patterns) {
+    for (final resource in resources) {
+      final haystacks = [
+        resource.name.toLowerCase(),
+        resource.description.toLowerCase(),
+      ];
+      final matches = patterns.any(
+        (pattern) => haystacks.any((text) => text.contains(pattern)),
+      );
+      final alreadyAdded = selected.any((item) => item.url == resource.url);
+      if (matches && !alreadyAdded) {
+        selected.add(resource);
+      }
+    }
+  }
+
+  if (lowerTitle.contains('guichet unique') ||
+      lowerTitle.contains('formalit') ||
+      lowerTitle.contains('deposer')) {
+    addMatches(['inpi', 'urssaf']);
+    if (isArtisanActivity) {
+      addMatches(['artisanat']);
+    } else if (isCommerceActivity) {
+      addMatches(['cci']);
+    }
+  }
+
+  if (lowerTitle.contains('acre') ||
+      lowerTitle.contains('france travail')) {
+    addMatches(['france travail', 'urssaf']);
+    if (isDromRegion) {
+      addMatches(['lodeom', 'outre-mer']);
+    }
+  }
+
+  if (lowerTitle.contains('cci') ||
+      lowerTitle.contains('cma') ||
+      lowerTitle.contains('bge') ||
+      lowerTitle.contains('rdv')) {
+    if (isArtisanActivity) {
+      addMatches(['artisanat', 'bge', 'cci']);
+    } else if (isCommerceActivity) {
+      addMatches(['cci', 'bge', 'artisanat']);
+    } else if (isServiceActivity) {
+      addMatches(['bge', 'cci', 'initiative france']);
+    } else {
+      addMatches(['cci', 'artisanat', 'bge']);
+    }
+  }
+
+  if (lowerTitle.contains('aides-territoires') ||
+      lowerTitle.contains('aide') ||
+      lowerTitle.contains('subvention')) {
+    addMatches([
+      'aides locales',
+      'aides-territoires',
+      'bpifrance',
+      'initiative france',
+      'région',
+      'collectivité',
+    ]);
+    if (lowerStatus.contains('demandeur')) {
+      addMatches(['france travail']);
+    }
+    if (isDromRegion) {
+      addMatches(['collectivité', 'outre-mer', 'ladom']);
+    }
+  }
+
+  if (lowerTitle.contains('assurance') || lowerTitle.contains('banque')) {
+    if (isArtisanActivity) {
+      addMatches(['artisanat', 'cci', 'bpifrance']);
+    } else {
+      addMatches(['cci', 'bpifrance', 'artisanat']);
+    }
+  }
+
+  if (lowerTitle.contains('client') ||
+      lowerTitle.contains('offre') ||
+      lowerTitle.contains('commerciale')) {
+    if (isServiceActivity) {
+      addMatches(['bge', 'reseau entreprendre', 'cci']);
+    } else {
+      addMatches(['cci', 'bge', 'reseau entreprendre']);
+    }
+  }
+
+  if (lowerTitle.contains('autorisation') ||
+      lowerTitle.contains('qualification') ||
+      lowerTitle.contains('documents')) {
+    if (isArtisanActivity) {
+      addMatches(['artisanat', 'cci']);
+    } else {
+      addMatches(['cci', 'bge']);
+    }
+  }
+
+  if (lowerStatus.contains('fonctionnaire') || lowerStatus.contains('agent public')) {
+    addMatches(['bge', 'cci']);
+  }
+
+  if (lowerStatus.contains('salari')) {
+    addMatches(['bge', 'cci']);
+  }
+
+  if (isDromRegion) {
+    addMatches(['collectivité', 'outre-mer']);
+  }
+
+  if (selected.isEmpty) {
+    if (isArtisanActivity) {
+      addMatches(['artisanat', 'cci', 'bge']);
+    } else {
+      addMatches(['cci', 'bge', 'urssaf']);
+    }
+  }
+
+  return selected.take(3).toList();
+}
 
 class ToolboxJeMeLancePage extends StatefulWidget {
   const ToolboxJeMeLancePage({super.key});
@@ -1113,12 +1283,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // Navigation
   // --------------------------
   bool get _starterStepValid =>
+      _region.isNotEmpty;
+  bool get _step2Valid => _situation.isNotEmpty;
+  bool get _step3Valid => _selectedActivity.trim().isNotEmpty;
+    bool get _step4Valid =>
       _region.isNotEmpty &&
       _situation.isNotEmpty &&
       _selectedActivity.trim().isNotEmpty;
-  bool get _step2Valid => _situation.isNotEmpty;
-  bool get _step3Valid => _selectedActivity.trim().isNotEmpty;
-  bool get _step4Valid => true;
 
   Future<void> _next() async {
     if (_step == 1 && !_starterStepValid) return;
@@ -1307,26 +1478,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     await _saveDraft();
   }
 
-  Future<void> _continueStarterStep() async {
-    if (!_starterStepValid) {
-      setState(() => _showStarterErrors = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Renseignez la région, le statut et l activité avant de valider.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    if (_projectCtrl.text.trim().isEmpty) {
-      _projectCtrl.text = _selectedActivity;
-    }
-
-    await _completeJourney();
-  }
-
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -1424,13 +1575,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   String get _currentStepTitle {
     switch (_step) {
       case 1:
-        return 'Je me lance';
+        return 'Étape 1 · Votre région';
       case 2:
-        return 'Ton statut';
+        return 'Étape 2 · Votre statut';
       case 3:
-        return 'Ton activité';
+        return 'Étape 3 · Votre activité';
       case 4:
-        return 'Validation';
+        return 'Étape 4 · Vérification';
       default:
         return 'Parcours personnalisé';
     }
@@ -1443,13 +1594,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     switch (_step) {
       case 1:
-        return 'Choisissez votre région pour personnaliser les aides et les contacts locaux.';
+        return 'Choisissez votre région pour personnaliser les aides, les guichets et les démarches locales.';
       case 2:
         return 'Précisez votre statut actuel pour ajuster les alertes et les aides pertinentes.';
       case 3:
         return 'Choisissez votre activité pour générer une recommandation adaptée à votre projet.';
       case 4:
-        return 'Vérifiez le récapitulatif généré avant de valider votre parcours.';
+        return 'Vérifiez vos réponses avant d’ouvrir votre parcours personnalisé.';
       default:
         return 'Décrivez ton projet, ta situation et ton territoire.';
     }
@@ -1529,7 +1680,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                if (_step == 1) _buildStarterCard(),
+                                _buildStepPageShell(_buildCurrentStepPage()),
                                 Padding(
                                   padding:
                                       const EdgeInsets.symmetric(
@@ -1584,8 +1735,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Votre région a déjà été prise en compte depuis la première carte. Vérifiez maintenant le parcours généré avant validation finale.',
+          const _InfoBox(
+            icon: Icons.fact_check_outlined,
+            title: 'Dernière vérification',
+            text:
+                'Confirmez vos 3 réponses avant de générer votre parcours personnalisé.',
           ),
           const SizedBox(height: 12),
           _ResultCallout(
@@ -1595,6 +1749,22 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 ? _region
                 : 'Aucune région renseignée',
             tone: kBlue,
+          ),
+          const SizedBox(height: 10),
+          _ResultCallout(
+            icon: Icons.badge_outlined,
+            title: 'Statut actuel',
+            text: _situation.isNotEmpty ? _situation : 'Aucun statut renseigné',
+            tone: const Color(0xFF7C3AED),
+          ),
+          const SizedBox(height: 10),
+          _ResultCallout(
+            icon: Icons.work_outline_rounded,
+            title: 'Activité',
+            text: _selectedActivity.isNotEmpty
+                ? _selectedActivity
+                : 'Aucune activité renseignée',
+            tone: const Color(0xFF26A65B),
           ),
         ],
       ),
@@ -1607,7 +1777,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       color: kOrange,
       padding: EdgeInsets.only(top: topInset),
       child: SizedBox(
-        height: 64,
+        height: 94,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: kPageHorizontalPadding,
@@ -1620,15 +1790,32 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 outlined: false,
                 light: true,
               ),
-              const Expanded(
-                child: Text(
-                  'Je me lance',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _currentStepTitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _currentStepDescription,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFFFEDD5),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               _HeaderCircleButton(
@@ -1639,6 +1826,39 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentStepPage() {
+    switch (_step) {
+      case 1:
+        return _buildStepRegion();
+      case 2:
+        return _buildStepSituation();
+      case 3:
+        return _buildStepActivity();
+      case 4:
+      default:
+        return _buildReviewStep();
+    }
+  }
+
+  Widget _buildStepPageShell(Widget child) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final minHeight = (screenHeight - 300).clamp(440.0, 620.0);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: kPageHorizontalPadding),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: minHeight),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 6),
+            child,
+          ],
         ),
       ),
     );
@@ -2402,24 +2622,34 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final items = _starterStatuses;
 
     return _Card(
-      title: "Votre situation actuelle",
+      title: "Votre statut actuel",
       stepLabel: "Étape 2/4",
       accent: const Color(0xFF7C3AED),
       icon: Icons.badge_outlined,
       subtitle:
           'Validez votre contexte actuel pour ajuster les alertes et les aides pertinentes.',
       child: Column(
-        children: items
-            .map((s) => _SelectRow(
-                  icon: Icons.work_outline,
-                  title: s,
-                  selected: _situation == s,
-                  onTap: () {
-                    setState(() => _situation = s);
-                    _onAnyFieldChanged();
-                  },
-                ))
-            .toList(),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _InfoBox(
+            icon: Icons.badge_outlined,
+            title: 'Pourquoi cette étape ?',
+            text:
+                'Votre statut sert à afficher les règles de cumul, les aides mobilisables et les démarches prioritaires.',
+          ),
+          const SizedBox(height: 14),
+          ...items
+              .map((s) => _SelectRow(
+                icon: Icons.work_outline,
+                title: s,
+                selected: _situation == s,
+                onTap: () {
+                  setState(() => _situation = s);
+                  _onAnyFieldChanged();
+                },
+              ))
+              .toList(),
+        ],
       ),
     );
   }
@@ -2446,6 +2676,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const _InfoBox(
+            icon: Icons.work_outline_rounded,
+            title: 'Pourquoi cette étape ?',
+            text:
+                'Votre activité influence la réglementation, les assurances recommandées et les interlocuteurs à contacter ensuite.',
+          ),
+          const SizedBox(height: 14),
           _buildStarterSelector(
             icon: Icons.work_outline_rounded,
             iconColor: const Color(0xFF26A65B),
@@ -2528,8 +2765,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ..sort();
 
     return _Card(
-      title: "Ta région",
-      stepLabel: "Étape 2/4",
+      title: "Votre région",
+      stepLabel: "Étape 1/4",
       accent: kOrange,
       icon: Icons.location_on_outlined,
       subtitle:
@@ -2679,12 +2916,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         children: [
           Text(
             _step == 1
-              ? (_starterStepValid
-                ? 'Votre parcours est prêt. Vous pouvez continuer.'
-                : 'Complétez votre région, votre statut et votre activité pour générer votre parcours.')
-                : isFinalStep
-                    ? 'Derniere etape avant validation du parcours.'
-                    : 'Continuez pour enrichir la recommandation automatiquement.',
+                ? 'Choisissez votre région pour passer à l’étape suivante.'
+                : _step == 2
+                    ? 'Sélectionnez votre statut actuel pour continuer.'
+                    : _step == 3
+                        ? 'Choisissez votre activité pour accéder à la vérification finale.'
+                        : 'Dernière étape avant l’ouverture du parcours personnalisé.',
             style: TextStyle(
               color: Colors.grey.shade700,
               fontSize: 13,
@@ -2715,20 +2952,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed:
-                    canNext
-                      ? (isFinalStep
-                        ? _completeJourney
-                        : (_step == 1 ? _continueStarterStep : _next))
-                      : null,
+                      canNext
+                          ? (isFinalStep ? _completeJourney : _next)
+                          : null,
                   style: ElevatedButton.styleFrom(
                   backgroundColor: kBlue,
                     foregroundColor: Colors.white,
-                  disabledBackgroundColor: _step == 1
-                    ? const Color(0xFFF0F2F6)
-                    : kBlue.withValues(alpha: 0.35),
-                  disabledForegroundColor: _step == 1
-                    ? const Color(0xFF9AA3B2)
-                    : Colors.white,
+                  disabledBackgroundColor: kBlue.withValues(alpha: 0.35),
+                  disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -2736,20 +2967,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     ),
                   ),
                   icon: Icon(
-                    _step == 1
-                        ? Icons.check_circle_outline
-                        : (_step < kTotalSteps
-                            ? Icons.arrow_forward
-                            : Icons.check_circle_outline),
+                    _step < kTotalSteps
+                        ? Icons.arrow_forward
+                        : Icons.check_circle_outline,
                   ),
                   label: Text(
-                    _step == 1
-                        ? 'Voir mon parcours personnalisé'
-                        : (_step < kTotalSteps
-                            ? 'Continuer'
-                            : (_journeyStatus == 'completed'
-                                ? 'Revalider'
-                                : 'Valider')),
+                    _step < kTotalSteps
+                        ? 'Continuer'
+                        : 'Voir mon parcours personnalisé',
                   ),
                 ),
               ),
@@ -2948,13 +3173,20 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         ),
         const SizedBox(height: 12),
         _Card(
-          title: "Plan d'action 30 jours",
+          title: "Plan d'action 30 jours et organismes à contacter",
           child: Column(
             children: _plan30.map((t) {
               return _PlanTaskTile(
                 title: "${t['label']}",
                 week: "${t['week']}",
                 completed: (t['done'] ?? false) as bool,
+                contacts: _planContactsForTask(
+                  _region,
+                  "${t['label']}",
+                  activity: _selectedActivity,
+                  currentStatus: _normalizedSituation,
+                ),
+                onOpenContact: (url) => _launchUrl(url),
                 onChanged: (v) async {
                   setState(() => t['done'] = v ?? false);
                   await _saveDraft();
@@ -2963,10 +3195,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             }).toList(),
           ),
         ),
-        if (_region.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _buildRegionGuichets(),
-        ],
       ],
     );
   }
@@ -4292,12 +4520,16 @@ class _PlanTaskTile extends StatelessWidget {
   final String title;
   final String week;
   final bool completed;
+  final List<RegionResource> contacts;
+  final ValueChanged<String> onOpenContact;
   final ValueChanged<bool?> onChanged;
 
   const _PlanTaskTile({
     required this.title,
     required this.week,
     required this.completed,
+    this.contacts = const [],
+    required this.onOpenContact,
     required this.onChanged,
   });
 
@@ -4355,6 +4587,30 @@ class _PlanTaskTile extends StatelessWidget {
                       decoration: completed ? TextDecoration.lineThrough : null,
                     ),
                   ),
+                  if (contacts.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Organismes à contacter pour cette étape',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: contacts
+                          .map(
+                            (contact) => _TaskContactLinkChip(
+                              label: contact.name,
+                              onTap: () => onOpenContact(contact.url),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -4584,6 +4840,114 @@ class _JourneySummaryPage extends StatelessWidget {
     required this.steps,
   });
 
+  Map<String, dynamic> _buildLocalSnapshot() {
+    return {
+      'savedAt': DateTime.now().toIso8601String(),
+      'projectLabel': projectLabel,
+      'region': region,
+      'currentStatus': currentStatus,
+      'selectedActivity': selectedActivity,
+      'recommendation': recommendation,
+      'blockingAlerts': blockingAlerts,
+      'costs': costs,
+      'aides': aides,
+      'plan30': plan30,
+      'summary': summary,
+      'regulationTutorial': regulationTutorial,
+      'statusWarnings': statusWarnings,
+      'recommendedLegalStatus': recommendedLegalStatus,
+      'steps': steps,
+    };
+  }
+
+  Future<void> _saveLocally(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _kLocalSavedJourneyKey,
+      jsonEncode(_buildLocalSnapshot()),
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Parcours sauvegardé localement sur cet appareil.'),
+      ),
+    );
+  }
+
+  Future<void> _showPremiumPdfDialog(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1D5DB),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const Text(
+                'PDF & partage réservés à IliPresto+',
+                style: TextStyle(
+                  color: Color(0xFF111827),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Vous pouvez sauvegarder ce parcours en local gratuitement. Pour l’exporter en PDF et le partager, activez l’abonnement IliPresto+.',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.of(sheetContext).pop();
+                  await startSubscriptionCheckout(
+                    context,
+                    'ilipresto+',
+                    source: 'toolbox_pdf_export',
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _ToolboxJeMeLancePageState.kOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                icon: const Icon(Icons.workspace_premium_outlined),
+                label: const Text('Découvrir IliPresto+'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: () => Navigator.of(sheetContext).pop(),
+                child: const Text('Plus tard'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _openResourceUrl(String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null) return;
@@ -4601,7 +4965,6 @@ class _JourneySummaryPage extends StatelessWidget {
     final relevantAides = aides
         .where((item) => (item['relevant'] ?? true) as bool)
         .toList();
-    final resources = region.isNotEmpty ? getRegionResources(region) : const [];
     final activityLabel = selectedActivity.isNotEmpty ? selectedActivity : projectLabel;
     final summaryRegion = '${summary['region'] ?? region}';
     final summaryStatus = '${summary['currentStatus'] ?? currentStatus}';
@@ -4864,38 +5227,7 @@ class _JourneySummaryPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _Card(
-                      title: '6. Contacter les bons organismes',
-                      child: resources.isEmpty
-                          ? const _InfoBox(
-                              icon: Icons.place_outlined,
-                              title: 'Aucun contact local identifié',
-                              text: 'Renseignez une région reconnue pour afficher les organismes utiles.',
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  'Organismes officiels pour créer votre entreprise${region.isNotEmpty ? ' en $region' : ''}.',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                ...resources.map(
-                                  (resource) => _ResourceLinkTile(
-                                    name: resource.name,
-                                    description: resource.description,
-                                    url: resource.url,
-                                    onTap: () => _openResourceUrl(resource.url),
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '7. Prévoir les coûts de lancement',
+                      title: '6. Prévoir les coûts de lancement',
                       child: Column(
                         children: [
                           if (blockingAlerts.isNotEmpty)
@@ -4955,7 +5287,7 @@ class _JourneySummaryPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _Card(
-                      title: '8. Votre plan d’action sur 30 jours',
+                      title: '7. Votre plan d’action sur 30 jours',
                       child: plan30.isEmpty
                           ? const _InfoBox(
                               icon: Icons.task_alt_rounded,
@@ -4970,10 +5302,54 @@ class _JourneySummaryPage extends StatelessWidget {
                                       week: '${item['week']}',
                                       completed:
                                           (item['done'] ?? false) as bool,
+                                      contacts: _planContactsForTask(
+                                        region,
+                                        '${item['label']}',
+                                        activity: selectedActivity,
+                                        currentStatus: currentStatus,
+                                      ),
+                                      onOpenContact: (url) =>
+                                          _openResourceUrl(url),
                                     ),
                                   )
                                   .toList(),
                             ),
+                    ),
+                    const SizedBox(height: 12),
+                    _Card(
+                      title: 'Sauvegarde & partage',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'Sauvegardez ce parcours sur cet appareil gratuitement. L’export PDF et le partage sont disponibles avec IliPresto+.',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          OutlinedButton.icon(
+                            onPressed: () => _saveLocally(context),
+                            icon: const Icon(Icons.save_outlined),
+                            label: const Text('Sauvegarder en local'),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton.icon(
+                            onPressed: () => _showPremiumPdfDialog(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  _ToolboxJeMeLancePageState.kBlue,
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: const Icon(Icons.workspace_premium_outlined),
+                            label: const Text(
+                              'Exporter en PDF et partager avec IliPresto+',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -5448,11 +5824,15 @@ class _PlanTaskSummaryTile extends StatelessWidget {
   final String title;
   final String week;
   final bool completed;
+  final List<RegionResource> contacts;
+  final ValueChanged<String> onOpenContact;
 
   const _PlanTaskSummaryTile({
     required this.title,
     required this.week,
     required this.completed,
+    this.contacts = const [],
+    required this.onOpenContact,
   });
 
   @override
@@ -5504,10 +5884,79 @@ class _PlanTaskSummaryTile extends StatelessWidget {
                     decoration: completed ? TextDecoration.lineThrough : null,
                   ),
                 ),
+                if (contacts.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Lien direct vers l’organisme concerné',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: contacts
+                        .map(
+                          (contact) => _TaskContactLinkChip(
+                            label: contact.name,
+                            onTap: () => onOpenContact(contact.url),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TaskContactLinkChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _TaskContactLinkChip({
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: const Color(0xFFBFDBFE)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.open_in_new_rounded,
+              size: 15,
+              color: Color(0xFF1A73E8),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF1A73E8),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
