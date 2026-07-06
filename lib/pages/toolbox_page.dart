@@ -18,6 +18,7 @@ const Color kPageBackground = Color(0xFFF5F6F8);
 const Color kCardBackground = Color(0xFFFFFFFF);
 const Color kIconOrangeBg = Color(0xFFFFEEE6);
 const Color kIconBlueBg = Color(0xFFEAF3FF);
+const double kToolboxOuterPadding = 12;
 
 class ToolboxPage extends StatelessWidget {
   const ToolboxPage({super.key});
@@ -44,77 +45,93 @@ class _ToolboxView extends StatelessWidget {
           children: [
             const _ToolboxHeader(),
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(14, 22, 14, 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: shouldConstrain ? 430 : double.infinity,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isShort = constraints.maxHeight < 760;
+
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      kToolboxOuterPadding,
+                      22,
+                      kToolboxOuterPadding,
+                      24,
                     ),
-                    child: const Column(
-                      children: [
-                        _ToolboxCard(
-                          icon: Icon(
-                            Icons.rocket_launch_rounded,
-                            size: 42,
-                            color: Color(0xFFFF5A00),
-                          ),
-                          iconBackground: kIconOrangeBg,
-                          title: 'CRÉER MON\nENTREPRISE',
-                          subtitle: 'iliprestō me guide pas à pas.',
-                          description:
-                              'Décris ton projet, ta situation et ton territoire pour obtenir des conseils concrets.',
-                          benefits: [
-                            'Statut juridique\nconseillé',
-                            'Coûts & démarches\nexactes',
-                            'Aides, subventions &\norganismes',
-                            'Plan d’action sur 30\njours',
-                          ],
-                          buttonLabel: 'Démarrer mon projet',
-                          buttonGradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              kBlueStart,
-                              kBlueEnd,
-                            ],
-                          ),
-                          onTap: _openCreateBusiness,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: shouldConstrain ? 430 : double.infinity,
                         ),
-                        SizedBox(height: 22),
-                        _ToolboxCard(
-                          icon: Icon(
-                            Icons.calculate_rounded,
-                            size: 44,
-                            color: Color(0xFF096FE8),
-                          ),
-                          iconBackground: kIconBlueBg,
-                          title: 'FIXER MON PRIX\nDE VENTE',
-                          subtitle: 'Je calcule un prix rentable.',
-                          description:
-                              'En quelques clics, j’estime mon coût de revient, mes charges et mon positionnement marché.',
-                          benefits: [
-                            'Matières premières',
-                            'Temps de travail',
-                            'Charges & frais réels',
-                            'Positionnement face à\nla concurrence',
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: _ToolboxCard(
+                                icon: const Icon(
+                                  Icons.rocket_launch_rounded,
+                                  size: 42,
+                                  color: Color(0xFFFF5A00),
+                                ),
+                                iconBackground: kIconOrangeBg,
+                                title: 'CRÉER MON\nENTREPRISE',
+                                subtitle: 'iliprestō me guide pas à pas.',
+                                description:
+                                    'Décris ton projet, ta situation et ton territoire pour obtenir des conseils concrets.',
+                                benefits: const [
+                                  'Statut juridique\nconseillé',
+                                  'Coûts & démarches\nexactes',
+                                  'Aides, subventions &\norganismes',
+                                  'Plan d’action sur 30\njours',
+                                ],
+                                buttonLabel: 'Démarrer mon projet',
+                                buttonGradient: const LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    kBlueStart,
+                                    kBlueEnd,
+                                  ],
+                                ),
+                                onTap: _openCreateBusiness,
+                                compact: isShort,
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            Expanded(
+                              child: _ToolboxCard(
+                                icon: const Icon(
+                                  Icons.calculate_rounded,
+                                  size: 44,
+                                  color: Color(0xFF096FE8),
+                                ),
+                                iconBackground: kIconBlueBg,
+                                title: 'FIXER MON PRIX\nDE VENTE',
+                                subtitle: 'Je calcule un prix rentable.',
+                                description:
+                                    'En quelques clics, j’estime mon coût de revient, mes charges et mon positionnement marché.',
+                                benefits: const [
+                                  'Matières premières',
+                                  'Temps de travail',
+                                  'Charges & frais réels',
+                                  'Positionnement face à\nla concurrence',
+                                ],
+                                buttonLabel: 'Calculer mon prix',
+                                buttonGradient: const LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    Color(0xFFFF9800),
+                                    Color(0xFFFF2F00),
+                                  ],
+                                ),
+                                onTap: _openPriceCalculator,
+                                compact: isShort,
+                              ),
+                            ),
                           ],
-                          buttonLabel: 'Calculer mon prix',
-                          buttonGradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Color(0xFFFF9800),
-                              Color(0xFFFF2F00),
-                            ],
-                          ),
-                          onTap: _openPriceCalculator,
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ],
@@ -198,6 +215,7 @@ class _ToolboxCard extends StatelessWidget {
   final String buttonLabel;
   final Gradient buttonGradient;
   final ValueChanged<BuildContext>? onTap;
+  final bool compact;
 
   const _ToolboxCard({
     required this.icon,
@@ -209,17 +227,21 @@ class _ToolboxCard extends StatelessWidget {
     required this.buttonLabel,
     required this.buttonGradient,
     this.onTap,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 370;
-    final horizontalPadding = isCompact ? 20.0 : 22.0;
+    final useCompact = isCompact || compact;
+    final horizontalPadding = useCompact ? 18.0 : 22.0;
+    final topGap = useCompact ? 20.0 : 30.0;
+    final bottomGap = useCompact ? 18.0 : 28.0;
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(horizontalPadding, 26, horizontalPadding, 24),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, useCompact ? 20 : 26, horizontalPadding, useCompact ? 18 : 24),
       decoration: BoxDecoration(
         color: kCardBackground,
         borderRadius: BorderRadius.circular(26),
@@ -245,14 +267,16 @@ class _ToolboxCard extends StatelessWidget {
             title: title,
             subtitle: subtitle,
             description: description,
+            compact: useCompact,
           ),
-          const SizedBox(height: 30),
-          _BenefitsGrid(items: benefits),
-          const SizedBox(height: 28),
+          SizedBox(height: topGap),
+          _BenefitsGrid(items: benefits, compact: useCompact),
+          SizedBox(height: bottomGap),
           _GradientActionButton(
             label: buttonLabel,
             gradient: buttonGradient,
             onTap: onTap,
+            compact: useCompact,
           ),
         ],
       ),
@@ -266,6 +290,7 @@ class _CardTopBlock extends StatelessWidget {
   final String title;
   final String subtitle;
   final String description;
+  final bool compact;
 
   const _CardTopBlock({
     required this.icon,
@@ -273,13 +298,18 @@ class _CardTopBlock extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.description,
+    required this.compact,
   });
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 370;
-    final titleSize = isCompact ? 34.0 : 37.0;
+    final useCompact = isCompact || compact;
+    final titleSize = useCompact ? 30.0 : 37.0;
+    final subtitleSize = useCompact ? 18.0 : 21.0;
+    final descriptionSize = useCompact ? 14.0 : 17.0;
+    final titleGap = useCompact ? 8.0 : 12.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,22 +340,22 @@ class _CardTopBlock extends StatelessWidget {
                     color: kTextDark,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: titleGap),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 21,
+                  style: TextStyle(
+                    fontSize: subtitleSize,
                     fontWeight: FontWeight.w800,
                     height: 1.05,
                     color: kBlueText,
                     letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: titleGap),
                 Text(
                   description,
-                  style: const TextStyle(
-                    fontSize: 17,
+                  style: TextStyle(
+                    fontSize: descriptionSize,
                     fontWeight: FontWeight.w500,
                     height: 1.35,
                     color: kTextGrey,
@@ -343,8 +373,9 @@ class _CardTopBlock extends StatelessWidget {
 
 class _BenefitsGrid extends StatelessWidget {
   final List<String> items;
+  final bool compact;
 
-  const _BenefitsGrid({required this.items});
+  const _BenefitsGrid({required this.items, required this.compact});
 
   @override
   Widget build(BuildContext context) {
@@ -354,17 +385,17 @@ class _BenefitsGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _BenefitItem(text: items[0])),
+            Expanded(child: _BenefitItem(text: items[0], compact: compact)),
             const SizedBox(width: 16),
-            Expanded(child: _BenefitItem(text: items[1])),
+            Expanded(child: _BenefitItem(text: items[1], compact: compact)),
           ],
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: compact ? 14 : 22),
         Row(
           children: [
-            Expanded(child: _BenefitItem(text: items[2])),
+            Expanded(child: _BenefitItem(text: items[2], compact: compact)),
             const SizedBox(width: 16),
-            Expanded(child: _BenefitItem(text: items[3])),
+            Expanded(child: _BenefitItem(text: items[3], compact: compact)),
           ],
         ),
       ],
@@ -374,14 +405,15 @@ class _BenefitsGrid extends StatelessWidget {
 
 class _BenefitItem extends StatelessWidget {
   final String text;
+  final bool compact;
 
-  const _BenefitItem({required this.text});
+  const _BenefitItem({required this.text, required this.compact});
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 370;
-    final fontSize = isCompact ? 16.0 : 17.0;
+    final fontSize = (isCompact || compact) ? 14.0 : 17.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,11 +454,13 @@ class _GradientActionButton extends StatelessWidget {
   final String label;
   final Gradient gradient;
   final ValueChanged<BuildContext>? onTap;
+  final bool compact;
 
   const _GradientActionButton({
     required this.label,
     required this.gradient,
     this.onTap,
+    required this.compact,
   });
 
   @override
@@ -438,7 +472,7 @@ class _GradientActionButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(31),
         onTap: onTap != null ? () => onTap!(context) : null,
         child: Ink(
-          height: 62,
+          height: compact ? 54 : 62,
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: gradient,
@@ -454,9 +488,9 @@ class _GradientActionButton extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 23,
+                fontSize: compact ? 19 : 23,
                 fontWeight: FontWeight.w800,
                 height: 1,
                 letterSpacing: -0.25,
