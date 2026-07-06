@@ -46,7 +46,7 @@ import 'package:presto_app/pages/account/mes_avis_page.dart';
 import 'package:presto_app/pages/account/mes_projets_fiche_page.dart';
 import 'package:presto_app/pages/account/verifier_siret_page.dart';
 import 'package:presto_app/pages/legal_info_page.dart';
-import 'package:presto_app/pages/toolbox_hub_page.dart';
+import 'package:presto_app/pages/toolbox_page.dart';
 import 'package:presto_app/utils/profile_avatar_resolver.dart';
 import 'package:presto_app/services/profile_department_resolver.dart';
 
@@ -3917,7 +3917,7 @@ class _AccountPageState extends State<AccountPage> {
               icon: Icons.add_circle_outline_rounded,
               label: 'Créer mon activité',
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ToolboxHubPage()),
+                MaterialPageRoute(builder: (_) => const ToolboxPage()),
               ),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),

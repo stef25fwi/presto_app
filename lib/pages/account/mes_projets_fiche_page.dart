@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../toolbox_hub_page.dart';
 import '../toolbox_je_me_lance_page.dart';
+import '../toolbox_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
 const Color _kBg = Color(0xFFF6F7FB);
@@ -27,7 +27,7 @@ class MesProjetsFichePage extends StatelessWidget {
             icon: const Icon(Icons.add_rounded),
             tooltip: 'Nouveau projet',
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
+              MaterialPageRoute(builder: (_) => const ToolboxPage()),
             ),
           ),
         ],
@@ -165,7 +165,7 @@ class _EmptyState extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
+                MaterialPageRoute(builder: (_) => const ToolboxPage()),
               ),
               icon: const Icon(Icons.rocket_launch_rounded),
               label: const Text('Démarrer un projet'),
@@ -248,7 +248,7 @@ class _ParcoursCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
+          MaterialPageRoute(builder: (_) => const ToolboxPage()),
         ),
         child: Container(
           padding: const EdgeInsets.all(16),

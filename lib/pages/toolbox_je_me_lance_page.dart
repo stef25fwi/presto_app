@@ -23,6 +23,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../app_core.dart';
 import '../data/city_postal_data.dart';
 import '../services/region_resources_service.dart';
 
@@ -39,16 +40,21 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   static const Color kBlue = Color(0xFF1A73E8);
   static const Color kBg = Color(0xFFF6F7FB);
   static const Color kCardBg = Color(0xFFE8E8E8); // Gris clair pour les tuiles
+  static const Color kTextDark = Color(0xFF071B4D);
+  static const Color kMutedText = Color(0xFF66728A);
+  static const Color kBorder = Color(0xFFE2E6EF);
+  static const int kTotalSteps = 4;
 
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
   final _cacheService = ToolboxCacheService();
 
   // UI state
-  int _step = 1; // 1..3
+  int _step = 1; // 1..4
   bool _loading = true;
   bool _saving = false;
   bool _isLocalOnlyMode = false;
+  bool _showStarterErrors = false;
   String? _error;
   String _journeyStatus = 'draft';
 
@@ -64,6 +70,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   String _activityType = 'Prestation de services'; // default
   String _clientele = 'Particuliers (B2C)';
   String _businessModel = 'Ponctuel';
+  String _selectedActivity = '';
 
   String _situation = ''; // Salarié / Fonctionnaire / etc.
 
@@ -86,7 +93,42 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   List<Map<String, dynamic>> _plan30 = [];
   List<Map<String, dynamic>> _aides = [];
 
+  static const List<String> _starterStatuses = <String>[
+    'Salarié',
+    'Fonctionnaire',
+    'Indépendant',
+    'Étudiant',
+    'Demandeur d’emploi',
+    'Sans activité',
+    'En reconversion',
+  ];
+
   Timer? _autosaveDebounce;
+
+  List<String> get _availableActivities {
+    final items = <String>{
+      ...kCategorySubcategories.keys,
+      for (final subcategories in kCategorySubcategories.values) ...subcategories,
+    };
+    final sorted = items.toList()..sort();
+    return sorted;
+  }
+
+  String _resolveActivityTypeFromSelection(String selection) {
+    if (selection.isEmpty) return _activityType;
+
+    if (kCategorySubcategories.containsKey(selection)) {
+      return selection;
+    }
+
+    for (final entry in kCategorySubcategories.entries) {
+      if (entry.value.contains(selection)) {
+        return entry.key;
+      }
+    }
+
+    return _activityType;
+  }
 
   @override
   void initState() {
@@ -149,6 +191,34 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     }
   }
 
+  Future<void> _prefillRegionFromProfile(String uid) async {
+    if (_region.isNotEmpty) return;
+
+    try {
+      final snap = await _db.collection('users').doc(uid).get();
+      final data = snap.data();
+      if (data == null) return;
+
+      final territory = (data['territory'] as Map?)?.cast<String, dynamic>();
+      final profile = (data['profile'] as Map?)?.cast<String, dynamic>();
+
+      final profileRegion = [
+        territory?['region'],
+        profile?['region'],
+        data['region'],
+      ]
+          .map((value) => value?.toString().trim() ?? '')
+          .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+
+      if (profileRegion.isEmpty) return;
+
+      _region = profileRegion;
+      _regionCtrl.text = profileRegion;
+    } catch (e) {
+      debugPrint('[Toolbox] profile region prefill skipped: $e');
+    }
+  }
+
   Future<void> _bootstrap() async {
     try {
       var user = _auth.currentUser;
@@ -182,6 +252,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       final latest = await _tryFetchLatestParcours(user.uid);
 
       if (latest == null) {
+        await _prefillRegionFromProfile(user.uid);
+
         // Créer un nouveau parcours
         final doc =
             _db.collection('users').doc(user.uid).collection('parcours').doc();
@@ -215,10 +287,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
         _importData(data);
         _importDerived(derived);
-        _step = step.clamp(1, 3);
+        _step = step.clamp(1, kTotalSteps);
         _journeyStatus = status == 'completed' ? 'completed' : 'draft';
         _isLocalOnlyMode = false;
         _isFromCache = false;
+
+        await _prefillRegionFromProfile(user.uid);
 
         // Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
         final updatedAt = map['updatedAt'];
@@ -348,6 +422,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   Map<String, dynamic> _exportData() => {
         'projectText': _projectCtrl.text.trim(),
+      'selectedActivity': _selectedActivity,
         'activityType': _activityType,
         'clientele': _clientele,
         'businessModel': _businessModel,
@@ -367,6 +442,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   void _importData(Map<String, dynamic> data) {
     _projectCtrl.text = (data['projectText'] ?? '') as String;
+    _selectedActivity = (data['selectedActivity'] ?? '') as String;
     _activityType = (data['activityType'] ?? _activityType) as String;
     _clientele = (data['clientele'] ?? _clientele) as String;
     _businessModel = (data['businessModel'] ?? _businessModel) as String;
@@ -480,6 +556,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         .toList();
   }
 
+  String get _normalizedSituation {
+    switch (_situation) {
+      case 'Fonctionnaire':
+        return 'Fonctionnaire / agent public';
+      case 'Demandeur d’emploi':
+        return "Demandeur d'emploi";
+      default:
+        return _situation;
+    }
+  }
+
   Map<String, dynamic> _computeRecommendationRules() {
     final text = _projectCtrl.text.toLowerCase();
     final isDromRegion = isDROM(_region);
@@ -514,11 +601,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       blocking.add(
           "Activité potentiellement réglementée : vérification (diplômes/assurances/autorisations) recommandée avant création.");
     }
-    if (_situation == 'Fonctionnaire / agent public') {
+    if (_normalizedSituation == 'Fonctionnaire / agent public') {
       blocking.add(
           "Cumul : demande écrite hiérarchique + règles spécifiques (temps partiel / durée encadrée).");
     }
-    if (_situation == "Demandeur d'emploi") {
+    if (_normalizedSituation == "Demandeur d'emploi") {
       blocking.add(
           "Aides France Travail : attention au timing (ARCE/ACRE) avant certaines démarches.");
     }
@@ -574,7 +661,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final aides = <Map<String, dynamic>>[
       _aid("ACRE", "Exonération partielle de cotisations au démarrage", true),
       _aid("ARCE", "Capital France Travail (si ARE + conditions)",
-          _situation == "Demandeur d'emploi"),
+          _normalizedSituation == "Demandeur d'emploi"),
       _aid("Prêt d'honneur", "Initiative France / Réseau Entreprendre", true),
       _aid("Aides territoriales",
           "Région / Département / Agglo (selon territoire)", true),
@@ -671,22 +758,33 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Navigation
   // --------------------------
-  bool get _step1Valid => _region.isNotEmpty;
-  bool get _step2Valid => _projectCtrl.text.trim().length >= 6;
-  bool get _step3Valid => _situation.isNotEmpty;
+  bool get _starterStepValid =>
+      _region.isNotEmpty &&
+      _situation.isNotEmpty &&
+      _selectedActivity.trim().isNotEmpty;
+  bool get _step2Valid => _region.isNotEmpty;
+  bool get _step3Valid => _projectCtrl.text.trim().length >= 6;
+  bool get _step4Valid => _situation.isNotEmpty;
 
   Future<void> _next() async {
-    if (_step == 1 && !_step1Valid) return;
+    if (_step == 1 && !_starterStepValid) return;
     if (_step == 2 && !_step2Valid) return;
     if (_step == 3 && !_step3Valid) return;
+    if (_step == 4 && !_step4Valid) return;
 
-    setState(() => _step = (_step + 1).clamp(1, 3));
+    if (_step == 1 && _projectCtrl.text.trim().isEmpty) {
+      _projectCtrl.text = _selectedActivity;
+    }
+
+    setState(() {
+      _showStarterErrors = false;
+      _step = (_step + 1).clamp(1, kTotalSteps);
+    });
     await _saveDraft();
-    // If we moved past 3, we stay on 3 and show "Mon parcours" below.
   }
 
   Future<void> _completeJourney() async {
-    if (!_step3Valid) return;
+    if (!_step4Valid) return;
 
     setState(() => _journeyStatus = 'completed');
     await _saveDraft();
@@ -747,6 +845,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _step = 1;
     _journeyStatus = 'draft';
     _isFromCache = false;
+    _showStarterErrors = false;
     _projectCtrl.clear();
     _regionCtrl.clear();
     _departementCtrl.clear();
@@ -765,6 +864,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _besoinTva = 'Je ne sais pas';
     _association = false;
     _protectionPatrimoine = true;
+    _selectedActivity = '';
 
     _recommendation = {};
     _blockingAlerts = [];
@@ -814,8 +914,24 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Future<void> _back() async {
-    setState(() => _step = (_step - 1).clamp(1, 3));
+    setState(() => _step = (_step - 1).clamp(1, kTotalSteps));
     await _saveDraft();
+  }
+
+  Future<void> _continueStarterStep() async {
+    if (!_starterStepValid) {
+      setState(() => _showStarterErrors = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Complétez les 3 informations pour personnaliser votre parcours.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _next();
   }
 
   Future<void> _launchUrl(String url) async {
@@ -915,10 +1031,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   String get _currentStepTitle {
     switch (_step) {
       case 1:
-        return 'Ta région';
+        return 'Je me lance';
       case 2:
-        return 'Ton projet';
+        return 'Ta région';
       case 3:
+        return 'Ton projet';
+      case 4:
         return 'Ta situation';
       default:
         return 'Parcours personnalisé';
@@ -932,10 +1050,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     switch (_step) {
       case 1:
-        return 'Ta région personnalise les aides, les contacts locaux et le plan d action.';
+        return 'Renseignez vos informations de départ pour personnaliser la suite du parcours.';
       case 2:
-        return 'Posez les bases du projet pour lancer une premiere recommandation exploitable.';
+        return 'Ta région personnalise les aides, les contacts locaux et le plan d action.';
       case 3:
+        return 'Posez les bases du projet pour lancer une premiere recommandation exploitable.';
+      case 4:
         return 'On ajuste les alertes et aides selon votre contexte personnel et professionnel.';
       default:
         return 'Décrivez ton projet, ta situation et ton territoire.';
@@ -945,10 +1065,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   IconData get _currentStepIcon {
     switch (_step) {
       case 1:
-        return Icons.place_outlined;
+        return Icons.track_changes_rounded;
       case 2:
-        return Icons.explore_outlined;
+        return Icons.place_outlined;
       case 3:
+        return Icons.explore_outlined;
+      case 4:
         return Icons.badge_outlined;
       default:
         return Icons.auto_awesome;
@@ -959,7 +1081,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final items = <Map<String, String>>[
       {
         'label': 'Etape',
-        'value': _journeyStatus == 'completed' ? 'Finalise' : '$_step/3',
+        'value': _journeyStatus == 'completed' ? 'Finalise' : '$_step/$kTotalSteps',
       },
       {
         'label': 'Sortie',
@@ -992,92 +1114,747 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: kOrange,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text("Boîte à outils"),
-        actions: [
-          if (_saving)
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Center(
-                child: SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildTopHeader(),
+            _buildTopProgressBar(),
+            if (_step > 1) _buildStickyStarterRecap(),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? _ErrorState(message: _error!, onRetry: _bootstrap)
+                      : SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildStarterCard(),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (_isLocalOnlyMode) ...[
+                                      const _InfoBox(
+                                        icon: Icons.cloud_off_outlined,
+                                        title: 'Mode local non sauvegardé',
+                                        text:
+                                            "Tes réponses restent utilisables sur cet écran, mais elles ne seront pas reprises automatiquement plus tard tant que la persistance n'est pas disponible.",
+                                      ),
+                                      const SizedBox(height: 12),
+                                    ],
+                                    if (_journeyStatus == 'completed') ...[
+                                      _InfoBox(
+                                        icon: Icons.verified_outlined,
+                                        title: 'Parcours validé',
+                                        text: _isLocalOnlyMode
+                                            ? 'Ce parcours a été validé localement. Toute nouvelle modification remettra le parcours en brouillon.'
+                                            : 'Ce parcours a été validé et sauvegardé. Toute nouvelle modification remettra le parcours en brouillon.',
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _buildCompletionActionsCard(),
+                                      const SizedBox(height: 12),
+                                    ],
+                                    if (_step == 2) _buildStepRegion(),
+                                    if (_step == 3) _buildStepProject(),
+                                    if (_step == 4) _buildStepSituation(),
+                                    if (_step > 1) ...[
+                                      const SizedBox(height: 14),
+                                      _buildNavButtons(),
+                                    ],
+                                    const SizedBox(height: 18),
+                                    _buildMyPath(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopHeader() {
+    return SizedBox(
+      height: 64,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            _HeaderCircleButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: () => Navigator.of(context).maybePop(),
+              outlined: false,
+            ),
+            const Expanded(
+              child: Text(
+                'Je me lance',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: kTextDark,
+                ),
+              ),
+            ),
+            _HeaderCircleButton(
+              icon: Icons.help_outline_rounded,
+              onTap: _showJourneyHelp,
+              outlined: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopProgressBar() {
+    final stepLabel = _journeyStatus == 'completed' ? kTotalSteps : _step;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              children: [
+                const TextSpan(
+                  text: 'Étape ',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: kBlue,
+                  ),
+                ),
+                TextSpan(
+                  text: '$stepLabel',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: kBlue,
+                  ),
+                ),
+                const TextSpan(
+                  text: ' sur 4',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF5F6C85),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _buildProgressCircle(number: 1, active: stepLabel == 1, done: stepLabel > 1),
+              _buildProgressLine(active: stepLabel > 1),
+              _buildProgressCircle(number: 2, active: stepLabel == 2, done: stepLabel > 2),
+              _buildProgressLine(active: stepLabel > 2),
+              _buildProgressCircle(number: 3, active: stepLabel == 3, done: stepLabel > 3),
+              _buildProgressLine(active: stepLabel > 3),
+              _buildProgressCircle(number: 4, active: stepLabel == 4, done: false),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressCircle({
+    required int number,
+    required bool active,
+    required bool done,
+  }) {
+    return Container(
+      width: active ? 34 : 30,
+      height: active ? 34 : 30,
+      decoration: BoxDecoration(
+        color: active || done ? kOrange : const Color(0xFFB7BECC),
+        shape: BoxShape.circle,
+        boxShadow: active
+            ? [
+                BoxShadow(
+                  color: kOrange.withValues(alpha: 0.28),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$number',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: active ? 15 : 14,
+          fontWeight: active ? FontWeight.w800 : FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressLine({required bool active}) {
+    return Expanded(
+      child: Container(
+        height: 4,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: active ? kOrange : const Color(0xFFD8DDE7),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStarterCard() {
+    final width = MediaQuery.of(context).size.width;
+    final isCompact = width < 370;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      constraints: const BoxConstraints(minHeight: 520),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFFF7A1A), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6600).withValues(alpha: 0.18),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 78,
+                height: 78,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFFF8A33), Color(0xFFFF6600)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.track_changes_rounded,
+                  color: Colors.white,
+                  size: 42,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Commencez votre parcours',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: kTextDark,
+                          height: 1.1,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Renseignez ces 3 informations pour\npersonnaliser votre accompagnement.',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: kMutedText,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          _buildStarterSelector(
+            icon: Icons.location_on_outlined,
+            iconColor: kOrange,
+            iconBackground: const Color(0xFFFFF1E8),
+            label: 'Région',
+            value: _region.isNotEmpty ? _region : 'Choisir une région',
+            helper: _region.isNotEmpty
+                ? RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Récupérée depuis votre profil • ',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF7A8498),
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Modifiable',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: kBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const Text(
+                    'Récupérée depuis votre profil • Modifiable',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF7A8498),
+                    ),
+                  ),
+            onTap: () {
+              final regions =
+                  kFrenchCitiesData.map((c) => c.region).toSet().toList()
+                    ..sort();
+              _showRegionPicker(regions);
+            },
+            isError: _showStarterErrors && _region.isEmpty,
+          ),
+          const SizedBox(height: 14),
+          _buildStarterSelector(
+            icon: Icons.person_outline_rounded,
+            iconColor: kBlue,
+            iconBackground: const Color(0xFFEEF4FF),
+            label: 'Statut actuel',
+            value: _situation.isNotEmpty ? _situation : 'Choisir un statut',
+            helper: const SizedBox.shrink(),
+            onTap: _showStatusPicker,
+            isError: _showStarterErrors && _situation.isEmpty,
+            minHeight: 100,
+          ),
+          const SizedBox(height: 14),
+          _buildStarterSelector(
+            icon: Icons.work_outline_rounded,
+            iconColor: const Color(0xFF26A65B),
+            iconBackground: const Color(0xFFEAF8EF),
+            label: 'Activité',
+            value: _selectedActivity.isNotEmpty
+                ? _selectedActivity
+                : 'Choisir une activité',
+            helper: Row(
+              children: const [
+                Icon(
+                  Icons.search_rounded,
+                  size: 22,
+                  color: Color(0xFF6B7280),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Recherchez et sélectionnez votre activité',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onTap: _showActivityPicker,
+            isError: _showStarterErrors && _selectedActivity.trim().isEmpty,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 58,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _starterStepValid
+                    ? const LinearGradient(
+                        colors: [Color(0xFFFF8A1F), Color(0xFFFF6600)],
+                      )
+                    : null,
+                color: _starterStepValid ? null : const Color(0xFFF0F2F6),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: ElevatedButton(
+                onPressed: _starterStepValid ? _continueStarterStep : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: _starterStepValid
+                      ? Colors.white
+                      : const Color(0xFF9AA3B2),
+                  disabledBackgroundColor: Colors.transparent,
+                  disabledForegroundColor: const Color(0xFF9AA3B2),
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: Text(
+                  'Continuer',
+                  style: TextStyle(
+                    fontSize: isCompact ? 17 : 18,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ),
+          ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? _ErrorState(message: _error!, onRetry: _bootstrap)
-              : SafeArea(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(6, 14, 6, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _HeaderInfoCard(
-                          title: _currentStepTitle,
-                          subtitle: _currentStepDescription,
-                          accent: kBlue,
-                          icon: _currentStepIcon,
-                          eyebrow: _journeyStatus == 'completed'
-                              ? 'Parcours finalise'
-                              : 'Etape $_step sur 3',
-                          progressValue:
-                              _journeyStatus == 'completed' ? 1 : _step / 3,
-                          progressLabel: _journeyStatus == 'completed'
-                              ? 'Parcours pret a relire ou modifier'
-                              : 'Progression active du parcours',
-                          footer: _buildHeaderStatusPanel(),
-                        ),
-                        if (_isLocalOnlyMode) ...[
-                          const SizedBox(height: 12),
-                          const _InfoBox(
-                            icon: Icons.cloud_off_outlined,
-                            title: 'Mode local non sauvegardé',
-                            text:
-                                "Tes réponses restent utilisables sur cet écran, mais elles ne seront pas reprises automatiquement plus tard tant que la persistance n'est pas disponible.",
+    );
+  }
+
+  Widget _buildStickyStarterRecap() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5EAF3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Récapitulatif de départ',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: kTextDark,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StarterRecapChip(
+                icon: Icons.location_on_outlined,
+                color: kOrange,
+                label: _region.isNotEmpty ? _region : 'Région',
+              ),
+              _StarterRecapChip(
+                icon: Icons.person_outline_rounded,
+                color: kBlue,
+                label: _situation.isNotEmpty ? _situation : 'Statut',
+              ),
+              _StarterRecapChip(
+                icon: Icons.work_outline_rounded,
+                color: const Color(0xFF26A65B),
+                label: _selectedActivity.isNotEmpty
+                    ? _selectedActivity
+                    : 'Activité',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStarterSelector({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBackground,
+    required String label,
+    required String value,
+    required Widget helper,
+    required VoidCallback onTap,
+    required bool isError,
+    double minHeight = 118,
+  }) {
+    final borderColor = isError ? const Color(0xFFFF3B30) : kBorder;
+    final backgroundColor = isError ? const Color(0xFFFFF5F5) : Colors.white;
+    final hasValue = !value.toLowerCase().startsWith('choisir');
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          constraints: BoxConstraints(minHeight: minHeight),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: iconBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 30),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$label ',
+                            style: const TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              color: kTextDark,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: '*',
+                            style: TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                              color: kOrange,
+                            ),
                           ),
                         ],
-                        if (_journeyStatus == 'completed') ...[
-                          const SizedBox(height: 12),
-                          _InfoBox(
-                            icon: Icons.verified_outlined,
-                            title: 'Parcours validé',
-                            text: _isLocalOnlyMode
-                                ? 'Ce parcours a été validé localement. Toute nouvelle modification remettra le parcours en brouillon.'
-                                : 'Ce parcours a été validé et sauvegardé. Toute nouvelle modification remettra le parcours en brouillon.',
-                          ),
-                          const SizedBox(height: 12),
-                          _buildCompletionActionsCard(),
-                        ],
-                        const SizedBox(height: 12),
-                        _StepperBar(step: _step),
-                        const SizedBox(height: 12),
-
-                        // Step content
-                        if (_step == 1) _buildStepRegion(),
-                        if (_step == 2) _buildStepProject(),
-                        if (_step == 3) _buildStepSituation(),
-
-                        const SizedBox(height: 14),
-                        _buildNavButtons(),
-
-                        const SizedBox(height: 18),
-                        _buildMyPath(),
-                      ],
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 58,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFDCE1EA)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight:
+                                    hasValue ? FontWeight.w600 : FontWeight.w500,
+                                color: hasValue
+                                    ? kTextDark
+                                    : const Color(0xFF7A8498),
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF1E293B),
+                            size: 28,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    helper,
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showJourneyHelp() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Je me lance'),
+          content: const Text(
+            'Commencez par votre région, votre statut actuel et votre activité. Ces choix servent à personnaliser les étapes suivantes du parcours sans supprimer les critères déjà présents.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showStatusPicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Choisir un statut actuel',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: kTextDark,
                   ),
                 ),
+                const SizedBox(height: 14),
+                ..._starterStatuses.map(
+                  (status) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(status),
+                    trailing: _situation == status
+                        ? const Icon(Icons.check_circle, color: kBlue)
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        _situation = status;
+                        _showStarterErrors = false;
+                      });
+                      Navigator.of(sheetContext).pop();
+                      _onAnyFieldChanged();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showActivityPicker() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        var query = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final filtered = _availableActivities
+                .where(
+                  (activity) => activity
+                      .toLowerCase()
+                      .contains(query.trim().toLowerCase()),
+                )
+                .toList();
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Choisir une activité',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: kTextDark,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher une activité',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                      ),
+                      onChanged: (value) {
+                        setModalState(() {
+                          query = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, index) {
+                          final activity = filtered[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(activity),
+                            trailing: _selectedActivity == activity
+                                ? const Icon(Icons.check_circle, color: kBlue)
+                                : null,
+                            onTap: () {
+                              setState(() {
+                                _selectedActivity = activity;
+                                _activityType =
+                                    _resolveActivityTypeFromSelection(activity);
+                                _showStarterErrors = false;
+                              });
+                              Navigator.of(sheetContext).pop();
+                              _onAnyFieldChanged();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1095,7 +1872,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     return _Card(
       title: "Que souhaitez-vous faire ?",
-      stepLabel: "Étape 2/3",
+      stepLabel: "Étape 3/4",
+      accent: kBlue,
+      icon: Icons.explore_outlined,
+      subtitle:
+          'Définissez précisément votre projet et son cadre pour affiner la recommandation.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1261,18 +2042,15 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Widget _buildStepSituation() {
-    final items = <String>[
-      "Salarié",
-      "Fonctionnaire / agent public",
-      "Activité secondaire",
-      "Demandeur d'emploi",
-      "Créateur / Entrepreneur (temps plein)",
-      "Étudiant / En formation",
-    ];
+    final items = _starterStatuses;
 
     return _Card(
       title: "Votre situation actuelle",
-      stepLabel: "Étape 3/3",
+      stepLabel: "Étape 4/4",
+      accent: const Color(0xFF7C3AED),
+      icon: Icons.badge_outlined,
+      subtitle:
+          'Validez votre contexte actuel pour ajuster les alertes et les aides pertinentes.',
       child: Column(
         children: items
             .map((s) => _SelectRow(
@@ -1295,7 +2073,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     return _Card(
       title: "Ta région",
-      stepLabel: "Étape 1/3",
+      stepLabel: "Étape 2/4",
+      accent: kOrange,
+      icon: Icons.location_on_outlined,
+      subtitle:
+          'Confirmez votre territoire pour personnaliser les aides, contacts et priorités locales.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1404,7 +2186,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         regions: regions,
         currentRegion: _region,
         onSelect: (r) {
-          setState(() => _region = r);
+          setState(() {
+            _region = r;
+            _showStarterErrors = false;
+          });
           Navigator.pop(ctx);
           _onAnyFieldChanged();
         },
@@ -1413,10 +2198,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Widget _buildNavButtons() {
-    final canNext = (_step == 1 && _step1Valid) ||
+    final canNext = (_step == 1 && _starterStepValid) ||
         (_step == 2 && _step2Valid) ||
-        (_step == 3 && _step3Valid);
-    final isFinalStep = _step == 3;
+      (_step == 3 && _step3Valid) ||
+      (_step == 4 && _step4Valid);
+    final isFinalStep = _step == kTotalSteps;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
@@ -1438,7 +2224,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           Text(
             isFinalStep
                 ? 'Derniere etape avant validation du parcours.'
-                : 'Continuez pour enrichir la recommandation automatiquement.',
+                : _step == 1
+                    ? 'Ces 3 informations lancent votre parcours personnalisé.'
+                    : 'Continuez pour enrichir la recommandation automatiquement.',
             style: TextStyle(
               color: Colors.grey.shade700,
               fontSize: 13,
@@ -1467,12 +2255,20 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed:
-                      canNext ? (isFinalStep ? _completeJourney : _next) : null,
+                    canNext
+                      ? (isFinalStep
+                        ? _completeJourney
+                        : (_step == 1 ? _continueStarterStep : _next))
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kBlue,
+                  backgroundColor: _step == 1 ? kOrange : kBlue,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: kBlue.withValues(alpha: 0.35),
-                    disabledForegroundColor: Colors.white,
+                  disabledBackgroundColor: _step == 1
+                    ? const Color(0xFFF0F2F6)
+                    : kBlue.withValues(alpha: 0.35),
+                  disabledForegroundColor: _step == 1
+                    ? const Color(0xFF9AA3B2)
+                    : Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -1480,13 +2276,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     ),
                   ),
                   icon: Icon(
-                    _step < 3
+                    _step < kTotalSteps
                         ? Icons.arrow_forward
                         : Icons.check_circle_outline,
                   ),
                   label: Text(
-                    _step < 3
-                        ? "Suivant"
+                    _step < kTotalSteps
+                        ? "Continuer"
                         : (_journeyStatus == 'completed'
                             ? "Revalider"
                             : "Valider"),
@@ -1781,6 +2577,42 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 // -------------------------------------
 // Reusable Widgets
 // -------------------------------------
+class _HeaderCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool outlined;
+
+  const _HeaderCircleButton({
+    required this.icon,
+    required this.onTap,
+    required this.outlined,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: Material(
+        color: outlined ? const Color(0xFFF5F7FB) : Colors.transparent,
+        shape: outlined
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
+                side: const BorderSide(color: Color(0xFFDCE2EE)),
+              )
+            : const CircleBorder(),
+        child: InkWell(
+          customBorder:
+              outlined ? null : const CircleBorder(),
+          borderRadius: outlined ? BorderRadius.circular(999) : null,
+          onTap: onTap,
+          child: Icon(icon, size: 24, color: const Color(0xFF071B4D)),
+        ),
+      ),
+    );
+  }
+}
+
 class _StepperBar extends StatelessWidget {
   final int step;
   const _StepperBar({required this.step});
@@ -1978,34 +2810,38 @@ class _JourneyStatusChip extends StatelessWidget {
 class _Card extends StatelessWidget {
   final String title;
   final String? stepLabel;
+  final String? subtitle;
+  final IconData? icon;
+  final Color accent;
   final Widget child;
 
   const _Card({
     required this.title,
     required this.child,
     this.stepLabel,
+    this.subtitle,
+    this.icon,
+    this.accent = const Color(0xFFFF6600),
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Color(0xFFF8F9FC),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: accent.withValues(alpha: 0.14), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -2013,44 +2849,69 @@ class _Card extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 34,
-                height: 34,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(12),
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  stepLabel?.split('/').first.replaceAll('Étape ', '') ?? '•',
-                  style: const TextStyle(
-                    color: Color(0xFF111827),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                child: icon != null
+                    ? Icon(icon, color: accent, size: 26)
+                    : Text(
+                        stepLabel?.split('/').first.replaceAll('Étape ', '') ?? '•',
+                        style: TextStyle(
+                          color: accent,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800, // Plus épais
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (stepLabel != null)
+                      Text(
+                        stepLabel!,
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    if (stepLabel != null) const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF071B4D),
+                        height: 1.1,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF66728A),
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              if (stepLabel != null)
-                Text(
-                  stepLabel!,
-                  style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600),
-                ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 18),
           child,
         ],
       ),
@@ -2062,7 +2923,6 @@ class _HeaderInfoCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color accent;
-  final Widget? footer;
   final IconData icon;
   final String eyebrow;
   final double progressValue;
@@ -2076,7 +2936,6 @@ class _HeaderInfoCard extends StatelessWidget {
     required this.eyebrow,
     required this.progressValue,
     required this.progressLabel,
-    this.footer,
   });
 
   @override
@@ -2189,7 +3048,6 @@ class _HeaderInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          if (footer != null) footer!,
         ],
       ),
     );
@@ -2212,33 +3070,96 @@ class _SelectRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: selected
-              ? Colors.grey.shade300 // Sélection gris clair
+              ? const Color(0xFFF1F6FF)
               : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF1A73E8) : Colors.grey.shade300,
+            color: selected ? const Color(0xFF1A73E8) : const Color(0xFFE2E6EF),
+            width: selected ? 1.4 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon,
-                color:
-                    selected ? const Color(0xFF1A73E8) : Colors.grey.shade700),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: selected
+                    ? const Color(0xFFEAF2FF)
+                    : const Color(0xFFF5F7FB),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                icon,
+                color: selected ? const Color(0xFF1A73E8) : const Color(0xFF5F6C85),
+              ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade600),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 16,
+                  color: const Color(0xFF071B4D),
+                ),
+              ),
+            ),
+            Icon(
+              selected ? Icons.check_circle_rounded : Icons.chevron_right,
+              color: selected ? const Color(0xFF1A73E8) : Colors.grey.shade600,
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StarterRecapChip extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  const _StarterRecapChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: const Color(0xFF071B4D),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
