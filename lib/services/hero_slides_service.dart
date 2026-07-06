@@ -296,7 +296,7 @@ class HeroSlidesService {
     if (previousStoragePath != null &&
         previousStoragePath.isNotEmpty &&
         previousStoragePath != nextStoragePath) {
-      await deleteHeroMedia(previousStoragePath);
+      await _cleanupUploadedHeroMedia(previousStoragePath);
     }
   }
 
@@ -321,7 +321,7 @@ class HeroSlidesService {
     await batch.commit();
 
     if (slide.storagePath.trim().isNotEmpty) {
-      await deleteHeroMedia(slide.storagePath);
+      await _cleanupUploadedHeroMedia(slide.storagePath);
     }
   }
 
