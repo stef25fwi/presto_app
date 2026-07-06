@@ -95,3 +95,11 @@ release_apk/
 downloads/
 flutter_analyze_*.log
 *.tmp
+
+# Flutter / Android generated files
+build/
+.dart_tool/
+*.apk
+*.aab
+release_apk/
+android/app/build/
