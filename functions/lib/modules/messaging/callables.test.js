@@ -161,6 +161,12 @@ const mirror_1 = require("./mirror");
     strict_1.default.ok(firstAttachment);
     strict_1.default.equal(firstAttachment.type, "audio");
 });
+(0, node_test_1.default)("buildAttachmentMessageFallbackText returns audio label for voice notes", () => {
+    strict_1.default.equal((0, callables_1.buildAttachmentMessageFallbackText)({
+        type: "audio",
+        name: "note_vocale_8s.webm",
+    }), "Note vocale");
+});
 (0, node_test_1.default)("sanitizeConversationAttachments rejects unsupported audio mime type", () => {
     strict_1.default.throws(() => (0, callables_1.sanitizeConversationAttachments)([
         {

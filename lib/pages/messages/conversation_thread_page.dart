@@ -16,6 +16,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
+import '../../features/micro_ia/web_audio_recorder_stub.dart'
+  if (dart.library.js_interop) '../../features/micro_ia/web_audio_recorder.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
 import '../../services/admin_access_resolver.dart';
@@ -132,8 +134,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isRecording = false;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
+  final WebAudioRecorder _webVoiceRecorder = WebAudioRecorder();
   AudioRecorder? _voiceRecorder;
   String? _currentRecordingPath;
+  bool _isWebVoiceRecording = false;
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
@@ -306,7 +310,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _presenceSubscription?.cancel();
     _typingStopTimer?.cancel();
     _recordingTimer?.cancel();
-    _voiceRecorder?.dispose();
+    if (_isRecording) {
+      unawaited(_cancelVoiceRecording());
+    } else {
+      _voiceRecorder?.dispose();
+    }
     unawaited(_publishTyping(false));
     _controller.removeListener(_handleDraftChanged);
     _controller.dispose();
@@ -2086,12 +2094,57 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   Future<void> _showVoiceRecordingSheet() async {
     if (kIsWeb) {
-      showErrorSnackBar(
-        context,
-        'Les notes vocales ne sont pas disponibles dans le navigateur.',
+      try {
+        await _webVoiceRecorder.start();
+      } catch (_) {
+        if (mounted) {
+          showErrorSnackBar(
+            context,
+            'Impossible de démarrer l\'enregistrement dans le navigateur.',
+          );
+        }
+        return;
+      }
+      if (!mounted) {
+        try {
+          await _webVoiceRecorder.stopToBlob();
+        } catch (_) {}
+        return;
+      }
+      setState(() {
+        _isRecording = true;
+        _isWebVoiceRecording = true;
+        _recordingDuration = Duration.zero;
+      });
+      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _recordingDuration += const Duration(seconds: 1));
+      });
+      await showModalBottomSheet<void>(
+        context: context,
+        isDismissible: false,
+        enableDrag: false,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => _VoiceRecordingSheet(
+          onCancel: () {
+            Navigator.of(ctx).pop();
+            unawaited(_cancelVoiceRecording());
+          },
+          onSend: () {
+            Navigator.of(ctx).pop();
+            unawaited(_stopAndSendVoiceNote());
+          },
+        ),
       );
+      if (_isRecording) {
+        unawaited(_cancelVoiceRecording());
+      }
       return;
     }
+
     final recorder = AudioRecorder();
     final hasPermission = await recorder.hasPermission();
     if (!hasPermission) {
@@ -2132,6 +2185,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
     setState(() {
       _isRecording = true;
+        _isWebVoiceRecording = false;
       _voiceRecorder = recorder;
       _currentRecordingPath = path;
       _recordingDuration = Duration.zero;
@@ -2167,15 +2221,23 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _cancelVoiceRecording() async {
     _recordingTimer?.cancel();
     _recordingTimer = null;
+    final isWebVoiceRecording = _isWebVoiceRecording;
     final recorder = _voiceRecorder;
     final path = _currentRecordingPath;
     if (mounted) {
       setState(() {
         _isRecording = false;
+        _isWebVoiceRecording = false;
         _voiceRecorder = null;
         _currentRecordingPath = null;
         _recordingDuration = Duration.zero;
       });
+    }
+    if (isWebVoiceRecording) {
+      try {
+        await _webVoiceRecorder.stopToBlob();
+      } catch (_) {}
+      return;
     }
     if (recorder != null) {
       try {
@@ -2191,17 +2253,60 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _stopAndSendVoiceNote() async {
     _recordingTimer?.cancel();
     _recordingTimer = null;
+    final isWebVoiceRecording = _isWebVoiceRecording;
     final recorder = _voiceRecorder;
     final path = _currentRecordingPath;
     final duration = _recordingDuration;
     if (mounted) {
       setState(() {
         _isRecording = false;
+        _isWebVoiceRecording = false;
         _voiceRecorder = null;
         _currentRecordingPath = null;
         _recordingDuration = Duration.zero;
       });
     }
+    if (isWebVoiceRecording) {
+      final authUser = FirebaseAuth.instance.currentUser;
+      if (authUser == null) {
+        if (mounted) {
+          showErrorSnackBar(
+              context, 'Connectez-vous pour envoyer une note vocale.');
+        }
+        return;
+      }
+      try {
+        final blob = await _webVoiceRecorder.stopToBlob();
+        final audioUpload = await webBlobToMicroIaUpload(
+          blob,
+          preferRawBytes: true,
+        );
+        if (audioUpload.bytes.isEmpty) {
+          throw Exception('Audio invalide');
+        }
+        final secs = duration.inSeconds;
+        final extension = audioUpload.extension.trim().isEmpty
+            ? 'webm'
+            : audioUpload.extension.trim();
+        final name = 'note_vocale_${secs}s.$extension';
+        await _uploadAndSendAttachment(
+          uid: authUser.uid,
+          type: 'audio',
+          name: name,
+          bytes: audioUpload.bytes,
+          mimeType: audioUpload.contentType,
+        );
+      } catch (_) {
+        if (mounted) {
+          showErrorSnackBar(
+            context,
+            'Erreur lors de la préparation de la note vocale.',
+          );
+        }
+      }
+      return;
+    }
+
     if (recorder == null || path == null) return;
     try {
       await recorder.stop();
