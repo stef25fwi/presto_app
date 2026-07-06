@@ -347,25 +347,7 @@ class _VocalModeCard extends StatelessWidget {
     final borderColor = isHighlighted
         ? Colors.white.withValues(alpha: 0.90)
         : const Color(0xFFC8D9FF);
-    final boxShadow = isHighlighted
-        ? <BoxShadow>[
-            BoxShadow(
-              color: Colors.white.withValues(alpha: 0.18),
-              blurRadius: 16,
-              spreadRadius: 1,
-            ),
-            BoxShadow(
-              color: const Color(0xFF1A73E8).withValues(alpha: 0.22),
-              blurRadius: 24,
-              spreadRadius: 1,
-            ),
-            BoxShadow(
-              color: const Color(0xFF1A73E8).withValues(alpha: 0.12),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ]
-        : const <BoxShadow>[];
+    final borderRadius = BorderRadius.circular(20);
 
     return IgnorePointer(
       ignoring: isDimmed,
@@ -376,13 +358,66 @@ class _VocalModeCard extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           decoration: BoxDecoration(
             color: const Color(0xFFEEF4FF),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: borderRadius,
             border: Border.all(color: borderColor, width: isHighlighted ? 1.2 : 1),
-            boxShadow: boxShadow,
           ),
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
           child: Stack(
             children: [
+              if (isHighlighted)
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: borderRadius,
+                    child: IgnorePointer(
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.24),
+                                    const Color(0xFFB9D7FF)
+                                        .withValues(alpha: 0.18),
+                                    Colors.transparent,
+                                  ],
+                                  stops: const [0.0, 0.34, 1.0],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Padding(
+                              padding: const EdgeInsets.all(2),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.16),
+                                    width: 1,
+                                  ),
+                                  gradient: RadialGradient(
+                                    center: const Alignment(0, -0.9),
+                                    radius: 1.15,
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.18),
+                                      const Color(0xFF7DB7FF)
+                                          .withValues(alpha: 0.12),
+                                      Colors.transparent,
+                                    ],
+                                    stops: const [0.0, 0.42, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               Column(
                 children: [
           // En-tête : icône + titre + sous-titre
