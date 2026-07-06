@@ -259,7 +259,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         elevation: 0,
         scrolledUnderElevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: statusBlue,
+          statusBarColor: proOrange,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
