@@ -23,6 +23,12 @@ class GoogleAuthService {
     return "Erreur inattendue. Réessaye.";
   }
 
+  bool _isLikelyUserAbortedGoogleFlow(String? message) {
+    final msg = (message ?? '').toLowerCase();
+    return msg.contains('there was an error while trying to get your package certificate hash') ||
+        msg.contains('package certificate hash');
+  }
+
   /// Vrai si le code + message indiquent un blocage par App Check enforcement.
   /// Firebase Auth renvoie 'internal-error' avec des messages serveur spécifiques
   /// (INVALID_APP_CREDENTIAL, REQUEST_BLOCKED) quand App Check est en mode enforced.
@@ -107,6 +113,10 @@ class GoogleAuthService {
 
   /// Messages PlatformException (Google Sign-In mobile)
   String _getPlatformErrorMessage(String code, String? message) {
+    if (_isLikelyUserAbortedGoogleFlow(message)) {
+      return 'Connexion Google interrompue. Vous pouvez réessayer quand vous voulez.';
+    }
+
     switch (code) {
       case 'sign_in_canceled':
       case 'sign_in_cancelled':
