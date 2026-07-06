@@ -374,6 +374,15 @@ class CurrentToolboxPage extends StatelessWidget {
   }
 }
 
+class CurrentToolboxSummaryPage extends StatelessWidget {
+  const CurrentToolboxSummaryPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ToolboxMyParcoursPage();
+  }
+}
+
 class EntrepreneurCalculatorPage extends StatelessWidget {
   const EntrepreneurCalculatorPage({super.key});
 

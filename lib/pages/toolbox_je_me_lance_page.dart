@@ -4320,6 +4320,150 @@ class _JourneySummaryPage extends StatelessWidget {
   }
 }
 
+class ToolboxMyParcoursPage extends StatefulWidget {
+  const ToolboxMyParcoursPage({super.key});
+
+  @override
+  State<ToolboxMyParcoursPage> createState() => _ToolboxMyParcoursPageState();
+}
+
+class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  bool _loading = true;
+  String? _error;
+  String _projectLabel = '';
+  String _region = '';
+  Map<String, dynamic> _recommendation = const {};
+  List<String> _blockingAlerts = const [];
+  List<Map<String, dynamic>> _aides = const [];
+  List<Map<String, dynamic>> _plan30 = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLatestParcours();
+  }
+
+  Future<void> _loadLatestParcours() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
+        return;
+      }
+
+      final col = _db.collection('users').doc(user.uid).collection('parcours');
+
+      QueryDocumentSnapshot<Map<String, dynamic>>? latestDoc;
+
+      try {
+        final ordered = await col
+            .orderBy('updatedAt', descending: true)
+            .limit(1)
+            .get();
+        if (ordered.docs.isNotEmpty) {
+          latestDoc = ordered.docs.first;
+        }
+      } catch (_) {
+        final fallback = await col.limit(25).get();
+        if (fallback.docs.isNotEmpty) {
+          latestDoc = fallback.docs.reduce((best, current) {
+            final bestTs = best.data()['updatedAt'];
+            final currentTs = current.data()['updatedAt'];
+            if (bestTs is Timestamp && currentTs is Timestamp) {
+              return currentTs.compareTo(bestTs) > 0 ? current : best;
+            }
+            return best;
+          });
+        }
+      }
+
+      if (latestDoc == null) {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
+        return;
+      }
+
+      final payload = latestDoc.data();
+      final data = (payload['data'] as Map?)?.cast<String, dynamic>() ?? const {};
+      final derived =
+          (payload['derived'] as Map?)?.cast<String, dynamic>() ?? const {};
+
+      if (!mounted) return;
+      setState(() {
+        _projectLabel = '${data['projectText'] ?? data['project'] ?? ''}';
+        final territory =
+            (data['territory'] as Map?)?.cast<String, dynamic>() ?? const {};
+        _region = '${territory['region'] ?? data['region'] ?? ''}';
+        _recommendation =
+            (derived['recommendation'] as Map?)?.cast<String, dynamic>() ??
+                const {};
+        _blockingAlerts = (derived['blockingAlerts'] as List?)
+                ?.map((e) => '$e')
+                .toList() ??
+            const [];
+        _aides = (derived['aides'] as List?)
+                ?.map((e) => (e as Map).cast<String, dynamic>())
+                .toList() ??
+            const [];
+        _plan30 = (derived['plan30'] as List?)
+                ?.map((e) => (e as Map).cast<String, dynamic>())
+                .toList() ??
+            const [];
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Impossible de charger le dernier parcours.';
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: _ToolboxJeMeLancePageState.kOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text('Mon parcours'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(_error!, textAlign: TextAlign.center),
+          ),
+        ),
+      );
+    }
+
+    return _JourneySummaryPage(
+      projectLabel: _projectLabel,
+      region: _region,
+      recommendation: _recommendation,
+      blockingAlerts: _blockingAlerts,
+      aides: _aides,
+      plan30: _plan30,
+    );
+  }
+}
+
 class _AidStatusSummaryTile extends StatelessWidget {
   final String name;
   final String description;
