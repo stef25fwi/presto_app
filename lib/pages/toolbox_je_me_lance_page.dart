@@ -755,12 +755,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Navigation
   // --------------------------
-  bool get _starterStepValid =>
-      _region.isNotEmpty &&
-      _situation.isNotEmpty &&
-      _selectedActivity.trim().isNotEmpty;
-  bool get _step2Valid => _projectCtrl.text.trim().length >= 6;
-  bool get _step3Valid => _situation.isNotEmpty;
+  bool get _starterStepValid => _region.isNotEmpty;
+  bool get _step2Valid => _situation.isNotEmpty;
+  bool get _step3Valid => _selectedActivity.trim().isNotEmpty;
   bool get _step4Valid => true;
 
   Future<void> _next() async {
@@ -769,7 +766,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     if (_step == 3 && !_step3Valid) return;
     if (_step == 4 && !_step4Valid) return;
 
-    if (_step == 1 && _projectCtrl.text.trim().isEmpty) {
+    if (_step == 3 && _projectCtrl.text.trim().isEmpty) {
       _projectCtrl.text = _selectedActivity;
     }
 
@@ -938,7 +935,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Complétez les 3 informations pour personnaliser votre parcours.',
+            'Choisissez votre région pour démarrer le parcours.',
           ),
         ),
       );
@@ -1047,9 +1044,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       case 1:
         return 'Je me lance';
       case 2:
-        return 'Ton projet';
+        return 'Ton statut';
       case 3:
-        return 'Ta situation';
+        return 'Ton activité';
       case 4:
         return 'Validation';
       default:
@@ -1064,11 +1061,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     switch (_step) {
       case 1:
-        return 'Renseignez vos informations de départ pour personnaliser la suite du parcours.';
+        return 'Choisissez votre région pour personnaliser les aides et les contacts locaux.';
       case 2:
-        return 'Posez les bases du projet pour lancer une premiere recommandation exploitable.';
+        return 'Précisez votre statut actuel pour ajuster les alertes et les aides pertinentes.';
       case 3:
-        return 'On ajuste les alertes et aides selon votre contexte personnel et professionnel.';
+        return 'Choisissez votre activité pour générer une recommandation adaptée à votre projet.';
       case 4:
         return 'Vérifiez le récapitulatif généré avant de valider votre parcours.';
       default:
@@ -1081,9 +1078,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       case 1:
         return Icons.track_changes_rounded;
       case 2:
-        return Icons.explore_outlined;
-      case 3:
         return Icons.badge_outlined;
+      case 3:
+        return Icons.work_outline_rounded;
       case 4:
         return Icons.task_alt_rounded;
       default:
@@ -1181,8 +1178,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                                         _buildCompletionActionsCard(),
                                         const SizedBox(height: 12),
                                       ],
-                                      if (_step == 2) _buildStepProject(),
-                                      if (_step == 3) _buildStepSituation(),
+                                      if (_step == 2) _buildStepSituation(),
+                                      if (_step == 3) _buildStepActivity(),
                                       if (_step == 4) _buildReviewStep(),
                                       if (_step > 1) ...[
                                         const SizedBox(height: 14),
@@ -1471,7 +1468,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'Renseignez ces 3 informations pour\npersonnaliser votre accompagnement.',
+                        'Choisissez votre région pour\ndémarrer un parcours adapté.',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -1530,50 +1527,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               _showRegionPicker(regions);
             },
             isError: _showStarterErrors && _region.isEmpty,
-          ),
-          const SizedBox(height: 14),
-          _buildStarterSelector(
-            icon: Icons.person_outline_rounded,
-            iconColor: kBlue,
-            iconBackground: const Color(0xFFEEF4FF),
-            label: 'Statut actuel',
-            value: _situation.isNotEmpty ? _situation : 'Choisir un statut',
-            helper: const SizedBox.shrink(),
-            onTap: _showStatusPicker,
-            isError: _showStarterErrors && _situation.isEmpty,
-            minHeight: 100,
-          ),
-          const SizedBox(height: 14),
-          _buildStarterSelector(
-            icon: Icons.work_outline_rounded,
-            iconColor: const Color(0xFF26A65B),
-            iconBackground: const Color(0xFFEAF8EF),
-            label: 'Activité',
-            value: _selectedActivity.isNotEmpty
-                ? _selectedActivity
-                : 'Choisir une activité',
-            helper: Row(
-              children: const [
-                Icon(
-                  Icons.search_rounded,
-                  size: 22,
-                  color: Color(0xFF6B7280),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Recherchez et sélectionnez votre activité',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onTap: _showActivityPicker,
-            isError: _showStarterErrors && _selectedActivity.trim().isEmpty,
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -2082,7 +2035,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     return _Card(
       title: "Votre situation actuelle",
-      stepLabel: "Étape 4/4",
+      stepLabel: "Étape 2/4",
       accent: const Color(0xFF7C3AED),
       icon: Icons.badge_outlined,
       subtitle:
@@ -2099,6 +2052,105 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                   },
                 ))
             .toList(),
+      ),
+    );
+  }
+
+  Widget _buildStepActivity() {
+    final suggestions = <String>[
+      'Vente de gâteaux',
+      'Service de jardinage',
+      'Pâtisserie',
+      'DJ / sonorisation',
+      'Food truck / snack',
+      'Coiffure / barber',
+      'Réparation smartphones',
+      'Micro-entreprise de service',
+    ];
+
+    return _Card(
+      title: 'Votre activité',
+      stepLabel: 'Étape 3/4',
+      accent: const Color(0xFF26A65B),
+      icon: Icons.work_outline_rounded,
+      subtitle:
+          'Choisissez votre activité principale. Vous pouvez ajouter un détail projet si besoin.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildStarterSelector(
+            icon: Icons.work_outline_rounded,
+            iconColor: const Color(0xFF26A65B),
+            iconBackground: const Color(0xFFEAF8EF),
+            label: 'Activité',
+            value: _selectedActivity.isNotEmpty
+                ? _selectedActivity
+                : 'Choisir une activité',
+            helper: Row(
+              children: const [
+                Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: Color(0xFF6B7280),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Recherchez et sélectionnez votre activité',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            onTap: _showActivityPicker,
+            isError: !_step3Valid,
+            minHeight: 108,
+          ),
+          const SizedBox(height: 14),
+          const Text('Suggestions rapides'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: suggestions
+                .map(
+                  (activity) => ActionChip(
+                    label: Text(activity),
+                    onPressed: () {
+                      setState(() {
+                        _selectedActivity = activity;
+                        _activityType =
+                            _resolveActivityTypeFromSelection(activity);
+                        if (_projectCtrl.text.trim().isEmpty) {
+                          _projectCtrl.text = activity;
+                        }
+                      });
+                      _onAnyFieldChanged();
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 14),
+          const _SectionTitle('Précision du projet - optionnel'),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _projectCtrl,
+            decoration: InputDecoration(
+              hintText: 'Ex : Vente de gâteaux sur commande à domicile',
+              prefixIcon: const Icon(Icons.edit_outlined),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
