@@ -1140,7 +1140,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             children: [
               _buildTopHeader(),
               _buildTopProgressBar(),
-              if (_step > 1) _buildStickyStarterRecap(),
               Expanded(
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
@@ -1151,7 +1150,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                _buildStarterCard(),
+                                if (_step == 1) _buildStarterCard(),
                                 Padding(
                                   padding:
                                       const EdgeInsets.symmetric(
@@ -1328,6 +1327,32 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               _buildProgressCircle(number: 4, active: stepLabel == 4, done: false),
             ],
           ),
+          if (_step > 1) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _StarterRecapChip(
+                  icon: Icons.location_on_outlined,
+                  color: kOrange,
+                  label: _region.isNotEmpty ? _region : 'Région',
+                ),
+                _StarterRecapChip(
+                  icon: Icons.person_outline_rounded,
+                  color: kBlue,
+                  label: _situation.isNotEmpty ? _situation : 'Statut',
+                ),
+                _StarterRecapChip(
+                  icon: Icons.work_outline_rounded,
+                  color: const Color(0xFF26A65B),
+                  label: _selectedActivity.isNotEmpty
+                      ? _selectedActivity
+                      : 'Activité',
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1588,68 +1613,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStickyStarterRecap() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(
-        kPageHorizontalPadding,
-        0,
-        kPageHorizontalPadding,
-        16,
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5EAF3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Récapitulatif de départ',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: kTextDark,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _StarterRecapChip(
-                icon: Icons.location_on_outlined,
-                color: kOrange,
-                label: _region.isNotEmpty ? _region : 'Région',
-              ),
-              _StarterRecapChip(
-                icon: Icons.person_outline_rounded,
-                color: kBlue,
-                label: _situation.isNotEmpty ? _situation : 'Statut',
-              ),
-              _StarterRecapChip(
-                icon: Icons.work_outline_rounded,
-                color: const Color(0xFF26A65B),
-                label: _selectedActivity.isNotEmpty
-                    ? _selectedActivity
-                    : 'Activité',
-              ),
-            ],
           ),
         ],
       ),
