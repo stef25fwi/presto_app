@@ -143,6 +143,8 @@ Sous-titre : Répondez à 3 questions pour obtenir votre parcours personnalisé.
 
 Progression affichée : une progressbar doit être placée sous le header. Elle représente l'avancement des 3 choix obligatoires.
 
+Important : l'implémentation actuelle découpe l'entrée en 4 écrans dédiés, mais la progressbar reste volontairement centrée sur les 3 réponses utiles. Le 4e écran sert uniquement de vérification avant génération.
+
 États possibles :
 
 - 0 / 3 : aucune information renseignée
@@ -164,6 +166,17 @@ Cette card est le cœur de la page. Elle doit être visible immédiatement, sans
 Titre : Commencer votre parcours
 
 Sous-titre : Sélectionnez votre région, votre statut actuel et votre activité pour obtenir un guide adapté à votre situation.
+
+### Structure par écrans dédiés
+
+L'implémentation actuelle rend chaque étape sur une page dédiée avec un header nommé :
+
+- Étape 1/4 : Région
+- Étape 2/4 : Votre statut actuel
+- Étape 3/4 : Votre activité
+- Étape 4/4 : Vérifiez avant validation
+
+Chaque page réutilise une même carte visuelle, avec une hauteur harmonisée, un bloc d'introduction et une navigation séquentielle.
 
 ### Sélecteur 1 — Région
 
@@ -457,6 +470,8 @@ Règle régionale :
 - si la région est renseignée, les contacts doivent être adaptés à cette région
 - si la région est un DROM, afficher en priorité les contacts locaux et aides territoriales
 
+Note d'implémentation actuelle : sur la page Mon parcours, ces contacts ne sont plus exposés comme une section séparée principale. Ils sont injectés directement dans les tuiles du plan d'action 30 jours pour chaque étape concernée, afin que l'utilisateur puisse contacter le bon organisme au bon moment.
+
 ### Section 8 — Coûts à prévoir
 
 Titre : 7. Prévoir les coûts de lancement
@@ -519,6 +534,8 @@ Semaine 4 — Lancer :
 - ajuster l'offre
 - suivre les premiers résultats
 
+Dans l'implémentation actuelle, chaque ligne du plan peut afficher directement des liens vers les organismes pertinents selon la région, le statut et l'activité.
+
 ### Section 10 — Suivi de progression
 
 Objectif : permettre à l'utilisateur d'avancer progressivement.
@@ -536,6 +553,16 @@ Progression globale :
 - pourcentage d'avancement
 
 Exemple : 3 étapes terminées sur 9 — 33 % du parcours réalisé.
+
+### Section 11 — Sauvegarde et partage
+
+Objectif : permettre à l'utilisateur de conserver son parcours sur l'appareil et d'accéder à une option premium de diffusion.
+
+Contenu attendu :
+
+- sauvegarde locale gratuite sur l'appareil
+- export PDF et partage réservés à IliPresto+
+- message explicite sur la différence entre sauvegarde locale et export premium
 
 ## États du parcours
 
@@ -691,67 +718,71 @@ Ce tableau compare le flow cible décrit dans ce document avec l'implémentation
 | Exigence du flow cible | Statut actuel | Observation |
 | --- | --- | --- |
 | La landing page Boîte à outils propose 2 parcours distincts | Respecté | La page affiche bien une carte création d'activité et une carte calculatrice. |
-| La carte création doit s'appeler Je crée mon activité | Partiel | L'intention est bonne mais le libellé courant reste orienté création d'entreprise et non exactement Je crée mon activité. |
-| La CTA principale doit être Commencer mon parcours | Partiel | La CTA actuelle est Démarrer mon projet. Le rôle est conforme, pas le libellé cible. |
+| La carte création doit s'appeler Je crée mon activité | Respecté | Le libellé affiché sur la carte principale est désormais aligné sur Je crée mon activité. |
+| La CTA principale doit être Commencer mon parcours | Respecté | La CTA de la carte principale est maintenant Commencer mon parcours. |
 | La calculatrice entrepreneur reste indépendante | Respecté | Le deuxième parcours ouvre bien un flow séparé de calcul de prix. |
-| La page Je me lance doit être la première vraie étape du parcours | Partiel | Le comportement est conforme, mais le titre d'écran actuel est Mon projet au lieu de Je me lance. |
+| La page Je me lance doit être la première vraie étape du parcours | Respecté | L'entrée création envoie désormais bien vers Je me lance comme première étape du parcours. |
 | La première page ne doit demander que 3 informations | Respecté | L'écran d'entrée impose uniquement région, statut et activité. |
 | Région, statut et activité sont obligatoires avant génération | Respecté | La validation dépend bien des 3 champs remplis. |
 | Le bouton principal reste désactivé tant que les 3 champs ne sont pas remplis | Respecté | La CTA de validation reste inactive si la saisie est incomplète. |
 | Le message d'erreur doit demander de compléter région, statut et activité | Respecté | Le message de validation actuelle rappelle bien ces 3 éléments. |
-| La progressbar doit être sur 3 étapes | Non respecté | L'UI courante affiche encore une progression sur 4 étapes avec Étape x sur 4. |
-| Le texte sous progressbar doit refléter 0/3, 1/3, 2/3, 3/3 | Non respecté | Les libellés dynamiques demandés par la spec ne sont pas encore implémentés. |
-| Le header de la page doit être Je me lance | Non respecté | Le header actuel est Mon projet. |
-| La card principale doit être nommée Commencer votre parcours | Partiel | La card joue ce rôle mais son titre actuel est Mon projet. |
+| La progressbar doit être sur 3 étapes | Respecté | La barre de progression affiche maintenant une logique 0/3 à 3/3 fondée sur les 3 réponses obligatoires. |
+| Le texte sous progressbar doit refléter 0/3, 1/3, 2/3, 3/3 | Respecté | Les libellés dynamiques sont implémentés avec les messages attendus. |
+| Le header de la page doit être Je me lance | Respecté | Le header de l'écran d'entrée est désormais Je me lance. |
+| La card principale doit être nommée Commencer votre parcours | Respecté | Le flow d'entrée utilise maintenant des cartes d'étape dédiées avec un wording centré sur le parcours. |
 | La région doit être préremplie depuis le profil si disponible | Respecté | Le comportement existe déjà. |
 | Les DROM doivent déclencher une adaptation du parcours | Respecté | Le code prend déjà en compte les aides et ressources spécifiques DROM. |
 | Le statut doit déclencher des vigilances personnalisées | Respecté | Des règles spécifiques existent déjà pour fonctionnaire et demandeur d'emploi. |
 | L'activité doit déclencher des obligations et risques métier | Partiel | Une détection de mots-clés et d'activités réglementées existe, mais le tutoriel métier détaillé n'est pas encore structuré comme cible. |
-| Le bouton principal doit s'appeler Voir mon parcours personnalisé | Non respecté | Le bouton actuel s'appelle Valider. |
+| Le bouton principal doit s'appeler Voir mon parcours personnalisé | Respecté | Le CTA final de génération porte désormais ce libellé. |
 | La validation doit sauvegarder puis ouvrir Mon parcours | Respecté | Le parcours est sauvegardé puis la page de synthèse est ouverte. |
-| Mon parcours doit être un tutoriel guidé et non seulement une synthèse | Partiel | La page est déjà riche, mais elle reste encore structurée comme une synthèse enrichie plus que comme un tutoriel pas à pas complet. |
-| Mon parcours doit afficher un résumé personnalisé complet | Partiel | Le résumé existe via recommandation, alertes et métriques, mais pas encore sous la forme exacte Région / Statut / Activité / Vigilance / Parcours recommandé. |
-| Mon parcours doit inclure un vrai bloc Tutoriel réglementation | Non respecté | Il n'existe pas encore de section pédagogique dédiée et structurée regulationTutorial. |
-| Mon parcours doit inclure un bloc distinct sur la situation personnelle | Partiel | Les effets statutaires sont calculés, mais pas encore rendus comme une section autonome bien identifiée. |
+| Mon parcours doit être un tutoriel guidé et non seulement une synthèse | Partiel | La structure a fortement avancé vers un tutoriel ordonné, mais certains blocs restent encore alimentés partiellement selon l'activité. |
+| Mon parcours doit afficher un résumé personnalisé complet | Respecté | La page affiche maintenant un résumé structuré Région / Statut / Activité / Vigilance / Parcours recommandé. |
+| Mon parcours doit inclure un vrai bloc Tutoriel réglementation | Partiel | La section existe et s'appuie sur regulationTutorial, mais le contenu reste encore incomplet pour certains métiers. |
+| Mon parcours doit inclure un bloc distinct sur la situation personnelle | Respecté | Une section autonome Vérifier votre situation personnelle est maintenant rendue. |
 | Mon parcours doit inclure un statut juridique conseillé avec avertissement prudent | Respecté | Une recommandation et un plan B existent déjà, avec un ton orientatif. |
 | Mon parcours doit afficher les démarches dans le bon ordre sous forme d'étapes | Partiel | Le plan 30 jours existe, mais pas encore comme une suite canonique de 9 démarches avec statuts À faire / En cours / Terminé. |
 | Mon parcours doit afficher aides et financements contextualisés | Respecté | Les aides sont filtrées et affichées selon le contexte. |
-| Mon parcours doit afficher contacts et guichets régionaux | Respecté | Une section Contacts & guichets par région existe déjà. |
+| Mon parcours doit afficher contacts et guichets régionaux | Respecté | Les contacts sont maintenant intégrés directement dans les tuiles du plan d'action selon l'étape concernée. |
 | Mon parcours doit afficher des coûts de lancement détaillés | Respecté | Une section Coûts estimés est déjà en place. |
 | Mon parcours doit afficher un plan d'action 30 jours | Respecté | La section correspondante existe déjà et permet le suivi de tâches. |
-| Mon parcours doit afficher une progression globale claire | Partiel | L'avancement du plan existe partiellement, mais pas encore sous forme unifiée de progression du parcours entier. |
+| Mon parcours doit afficher une progression globale claire | Respecté | Le header du parcours affiche une progression fondée sur les étapes tutoriels terminées. |
 | Les états Brouillon / Généré / En cours / Terminé doivent être distingués | Partiel | Draft et completed existent, mais generated et in_progress ne sont pas encore modélisés comme dans la spec cible. |
 | Firestore doit contenir data, derived et progress structurés selon la nouvelle spec | Partiel | data et derived existent déjà, mais progress et plusieurs sous-structures cibles ne sont pas encore en place. |
 | Le mode local doit laisser le flow utilisable | Respecté | Le flow fonctionne déjà en mode local avec message d'information. |
-| Il ne faut pas ouvrir directement Mon parcours depuis la landing sans contexte clair | Non respecté | La landing expose encore un bouton Je me lance qui ouvre directement Mon parcours. |
+| Il ne faut pas ouvrir directement Mon parcours depuis la landing sans contexte clair | Respecté | La landing oriente maintenant vers Je me lance et non vers une reprise ambiguë de Mon parcours. |
 | Une seule action principale doit exister sur la page Je me lance | Respecté | L'écran d'entrée courant n'a plus de compétition de CTA principale. |
 | Les questions avancées comme TVA, CA, clientèle, ambition doivent être retirées du premier écran | Respecté | Elles ne sont plus présentes sur l'écran d'entrée actuel. |
+| Le plan d'action doit embarquer les liens utiles directement dans les étapes concernées | Respecté | Chaque tuile du plan peut maintenant proposer les organismes à contacter pour l'action en cours. |
+| Le parcours doit pouvoir être sauvegardé localement puis proposé en PDF via IliPresto+ | Respecté | La page expose une sauvegarde locale gratuite et un export PDF/partage réservé à IliPresto+. |
+| Chaque étape du questionnaire doit pouvoir vivre sur un écran dédié | Respecté | Le flow d'entrée est maintenant réparti en 4 écrans dédiés avec titres explicites. |
 
 ## Lecture rapide
 
 ### Déjà respecté
 
 - la séparation création d'activité / calculatrice
+- les libellés d'entrée Je crée mon activité et Commencer mon parcours
 - les 3 champs obligatoires au départ
+- la progression 3/3 et son texte dynamique
 - la validation bloquée tant que le formulaire est incomplet
 - la persistance du parcours
-- les aides, coûts, contacts et plan 30 jours
+- les aides, coûts, contacts intégrés au plan et plan 30 jours
+- la sauvegarde locale et la porte d'entrée IliPresto+ pour PDF/partage
 - le mode local
 
 ### Partiellement respecté
 
-- les libellés UX de la landing et de Je me lance
 - la structure tutorielle de Mon parcours
 - la modélisation détaillée des statuts et de la progression
 - la transformation des règles métier en blocs pédagogiques dédiés
 
 ### À corriger en priorité
 
-- supprimer l'accès direct ambigu à Mon parcours depuis la landing
-- renommer Mon projet en Je me lance
-- remplacer la progression 4 étapes par une vraie progression 3/3
-- renommer la CTA Valider en Voir mon parcours personnalisé
-- restructurer Mon parcours en tutoriel ordonné plutôt qu'en synthèse enrichie
+- enrichir le contenu métier de regulationTutorial selon les activités
+- transformer les étapes tutoriels en séquence plus canonique avec statuts complets À faire / En cours / Terminé
+- finaliser la modélisation Firestore des états generated et in_progress
+- unifier encore la progression globale entre questionnaire, tutoriel et plan d'action
 
 ## Plan d'action priorisé
 
@@ -763,12 +794,12 @@ Ce plan transforme les écarts identifiés en séquence d'implémentation concr�
 
 Supprimer toute ambiguïté dès la landing page Boîte à outils.
 
+Statut : déjà traité dans l'implémentation actuelle.
+
 ### À faire
 
-- remplacer le libellé de la carte principale par Je crée mon activité
-- remplacer la CTA Démarrer mon projet par Commencer mon parcours
-- supprimer le bouton secondaire qui ouvre directement Mon parcours depuis la landing
-- s'assurer que la carte création ouvre toujours Je me lance
+- conserver les libellés actuels alignés sur Je crée mon activité et Commencer mon parcours
+- maintenir l'entrée création vers Je me lance sans raccourci ambigu vers Mon parcours
 
 ### Résultat attendu
 
@@ -783,16 +814,15 @@ L'utilisateur comprend immédiatement qu'il doit commencer par Je crée mon acti
 
 ### Objectif
 
-Faire correspondre l'écran actuel Mon projet à la page cible Je me lance.
+Stabiliser l'écran Je me lance autour du découpage en pages dédiées et de la progression 3/3.
+
+Statut : majoritairement traité dans l'implémentation actuelle.
 
 ### À faire
 
-- renommer le header Mon projet en Je me lance
-- renommer le titre de la card principale en Commencer votre parcours
-- remplacer la logique de progression 4 étapes par une vraie progression 3/3
-- afficher un texte dynamique cohérent sous la progressbar
-- renommer la CTA Valider en Voir mon parcours personnalisé
-- conserver une seule action principale sur l'écran
+- conserver le header Je me lance et la CTA Voir mon parcours personnalisé
+- maintenir la progressbar 3/3 tout en gardant le 4e écran de vérification
+- poursuivre l'harmonisation visuelle des cartes d'étape si nécessaire
 
 ### Résultat attendu
 
@@ -811,7 +841,7 @@ Préparer une structure de données capable d'alimenter un vrai tutoriel, pas se
 ### À faire
 
 - conserver les 3 entrées obligatoires comme base de génération
-- introduire dans derived des blocs plus explicites : summary, regulationTutorial, statusWarnings, recommendedLegalStatus, steps, contacts, progress
+- consolider dans derived les blocs déjà présents : summary, regulationTutorial, statusWarnings, recommendedLegalStatus, steps et plan30
 - distinguer plus proprement les états draft, generated, in_progress, completed
 - définir une structure de progression globale du parcours
 
@@ -832,12 +862,10 @@ Faire évoluer la page Mon parcours d'une synthèse enrichie vers un guide pas �
 
 ### À faire
 
-- ajouter un vrai bloc Résumé de ma situation
-- ajouter un bloc Comprendre les règles de votre activité
-- ajouter un bloc Vérifier votre situation personnelle
-- garder la recommandation de statut juridique mais l'encadrer comme orientation
-- remplacer la simple logique de plan par des démarches ordonnées et statutables
-- conserver les sections Aides, Contacts, Coûts et Plan 30 jours, mais les repositionner dans un ordre plus tutoriel
+- enrichir le contenu réel des blocs déjà en place : Résumé, réglementation, situation personnelle et cadre conseillé
+- transformer davantage la séquence steps en tutoriel canonique à statuts complets
+- conserver l'intégration des organismes directement dans les tuiles du plan d'action
+- garder la section Sauvegarde & partage en clôture de page
 
 ### Résultat attendu
 
@@ -858,7 +886,7 @@ Mieux adapter le contenu aux DROM, aux statuts personnels et aux activités rég
 - enrichir les règles spécifiques DROM
 - rendre les cartes de vigilance par statut plus explicites
 - enrichir les blocs réglementation par activité
-- prioriser les organismes régionaux réellement utiles selon territoire
+- continuer à prioriser les organismes régionaux réellement utiles selon territoire, activité et statut
 
 ### Résultat attendu
 
@@ -881,6 +909,7 @@ Permettre un suivi clair d'avancement et une reprise propre du parcours.
 - stocker les étapes terminées, en cours et restantes
 - distinguer clairement reprendre un parcours et en créer un nouveau
 - améliorer les messages de mode local et de synchronisation
+- aligner plus proprement les états Firestore et la progression affichée en UI
 
 ### Résultat attendu
 
@@ -892,12 +921,11 @@ L'utilisateur sait où il en est, peut reprendre son parcours et comprend ce qui
 
 ## Ordre recommandé d'exécution
 
-1. Corriger la landing page Boîte à outils.
-2. Aligner la page Je me lance sur la spec UX.
-3. Restructurer le modèle derived et les états de parcours.
-4. Recomposer Mon parcours en tutoriel guidé.
-5. Renforcer les règles métier, statutaires et territoriales.
-6. Finaliser la progression globale et la reprise utilisateur.
+1. Consolider le modèle derived et les états de parcours.
+2. Enrichir le tutoriel réglementation et les règles métier par activité.
+3. Renforcer encore les étapes guidées et leurs statuts.
+4. Finaliser la progression globale et la reprise utilisateur.
+5. Continuer la personnalisation territoriale et statutaire.
 
 ## Définition de terminé
 
@@ -905,7 +933,10 @@ Le flow pourra être considéré comme aligné avec cette spec quand :
 
 - la landing n'ouvre plus Mon parcours directement sans contexte
 - Je me lance affiche bien une logique 3/3 claire
+- le questionnaire conserve ses 4 écrans dédiés avec une structure homogène
 - Voir mon parcours personnalisé est la seule action principale du premier écran
 - Mon parcours expose un tutoriel ordonné par questions et étapes
+- les liens organismes sont injectés dans les étapes du plan quand ils sont utiles
+- la sauvegarde locale et l'export premium sont clairement distingués
 - les données Firestore portent la progression et les blocs dérivés attendus
 - l'utilisateur peut reprendre ou recommencer sans ambiguïté

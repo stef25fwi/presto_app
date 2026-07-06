@@ -121,6 +121,10 @@ test("buildConversationMirrorFields scopes participant maps to normalized partic
       seller_b: true,
       ghost_user: true,
     },
+    deletedBy: {
+      buyer_a: true,
+      ghost_user: true,
+    },
     blockedBy: {
       ghost_user: true,
     },
@@ -134,6 +138,7 @@ test("buildConversationMirrorFields scopes participant maps to normalized partic
   assert.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
   assert.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 2 });
   assert.deepEqual(fields.archivedBy, { buyer_a: false, seller_b: true });
+  assert.deepEqual(fields.deletedBy, { buyer_a: true, seller_b: false });
   assert.deepEqual(fields.blockedBy, { buyer_a: false, seller_b: false });
   assert.deepEqual(fields.lastReadAt, { seller_b: "2026-01-01T00:00:00.000Z" });
 });

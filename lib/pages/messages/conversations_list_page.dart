@@ -1013,7 +1013,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 shape: overlayTheme.dialogShape,
                 title: const Text('Supprimer la conversation'),
                 content: const Text(
-                  'Cette action est irreversible. Tous les messages seront supprimes.',
+                  'Cette conversation sera retirée uniquement de votre messagerie. L’autre participant continuera à la voir tant qu’il ne la supprime pas lui-même.',
                 ),
                 actions: [
                   TextButton(
@@ -1036,7 +1036,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           setState(() {
             _hiddenConversationIds.add(conversationId);
           });
-          showSuccessSnackBar(context, 'Conversation supprimee.');
+          showSuccessSnackBar(
+            context,
+            'Conversation supprimée pour votre compte.',
+          );
           return;
       }
     } catch (error) {
@@ -1812,6 +1815,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             conversations.where((conversation) {
                           if (_hiddenConversationIds
                               .contains(conversation.id)) {
+                            return false;
+                          }
+
+                          if (conversation.isDeletedForUser(userId)) {
                             return false;
                           }
 

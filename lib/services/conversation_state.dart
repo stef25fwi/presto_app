@@ -12,6 +12,10 @@ bool isConversationArchivedForUser(Map<String, dynamic> data, String userId) {
   return readConversationFlagForUser(data, 'archivedBy', userId);
 }
 
+bool isConversationDeletedForUser(Map<String, dynamic> data, String userId) {
+  return readConversationFlagForUser(data, 'deletedBy', userId);
+}
+
 bool isConversationBlocked(Map<String, dynamic> data) {
   final raw = data['blockedBy'];
   if (raw is! Map) return false;
@@ -43,6 +47,9 @@ bool shouldShowConversation({
   required String userId,
   required bool showArchivedOnly,
 }) {
+  if (isConversationDeletedForUser(data, userId)) {
+    return false;
+  }
   final isArchived = isConversationArchivedForUser(data, userId);
   return showArchivedOnly ? isArchived : !isArchived;
 }

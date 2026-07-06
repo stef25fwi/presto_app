@@ -2925,6 +2925,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           ),
         );
         await callable.call<dynamic>({'listingId': offerId});
+        await _refreshOffers();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Annonce supprimée.')),
+          );
+        }
       } else if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -2934,10 +2940,25 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           ),
         );
       }
+    } on FirebaseFunctionsException catch (error) {
+      if (context.mounted) {
+        final message = error.code == 'permission-denied'
+            ? 'Suppression refusée. Cette annonce ne vous appartient pas ou plus.'
+            : error.code == 'not-found'
+                ? 'Annonce introuvable.'
+                : 'Suppression temporairement indisponible. Réessayez dans un instant.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Impossible de supprimer l\'annonce : $e')),
+          const SnackBar(
+            content: Text(
+              'Suppression temporairement indisponible. Réessayez dans un instant.',
+            ),
+          ),
         );
       }
     }

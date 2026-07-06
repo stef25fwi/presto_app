@@ -91,6 +91,7 @@ function buildParticipantUniverse(input) {
         ...Object.keys(input.unreadCount ?? {}),
         ...Object.keys(input.lastReadAt ?? {}),
         ...Object.keys(input.archivedBy ?? {}),
+        ...Object.keys(input.deletedBy ?? {}),
         ...Object.keys(input.blockedBy ?? {}),
     ]);
 }
@@ -185,6 +186,7 @@ function readConversationMirrorData(data, options = {}) {
         lastReadAt: readUnknownMap(data, ["lastReadAt", "last_read_at"]),
         status: normalizeString(pickFirstValue(data, ["status"])),
         archivedBy: readBooleanMap(data, ["archivedBy"]),
+        deletedBy: readBooleanMap(data, ["deletedBy"]),
         blockedBy: readBooleanMap(data, ["blockedBy"]),
     };
 }
@@ -194,6 +196,7 @@ function buildConversationMirrorFields(input) {
     const unreadCount = buildUnreadCountMap(input.unreadCount ?? {}, participants);
     const lastReadAt = scopeUnknownMapToParticipants(input.lastReadAt ?? {}, participants);
     const archivedBy = buildBooleanMapForParticipants(input.archivedBy ?? {}, participants);
+    const deletedBy = buildBooleanMapForParticipants(input.deletedBy ?? {}, participants);
     const blockedBy = buildBooleanMapForParticipants(input.blockedBy ?? {}, participants);
     const fields = {
         // Champ canonique unique. Les anciens alias (participants, participant_ids,
@@ -207,6 +210,7 @@ function buildConversationMirrorFields(input) {
         lastReadAt,
         last_read_at: lastReadAt,
         archivedBy,
+        deletedBy,
         blockedBy,
     };
     if (input.otherUserName !== undefined) {

@@ -24,6 +24,7 @@ export interface ConversationMirrorData {
   lastReadAt: UnknownRecord;
   status: string;
   archivedBy: BooleanMap;
+  deletedBy: BooleanMap;
   blockedBy: BooleanMap;
 }
 
@@ -46,6 +47,7 @@ export interface ConversationMirrorFieldsInput {
   lastReadAt?: UnknownRecord;
   status?: string;
   archivedBy?: BooleanMap;
+  deletedBy?: BooleanMap;
   blockedBy?: BooleanMap;
 }
 
@@ -137,6 +139,7 @@ function buildParticipantUniverse(input: ConversationMirrorFieldsInput): string[
     ...Object.keys(input.unreadCount ?? {}),
     ...Object.keys(input.lastReadAt ?? {}),
     ...Object.keys(input.archivedBy ?? {}),
+    ...Object.keys(input.deletedBy ?? {}),
     ...Object.keys(input.blockedBy ?? {}),
   ]);
 }
@@ -266,6 +269,7 @@ export function readConversationMirrorData(
     lastReadAt: readUnknownMap(data, ["lastReadAt", "last_read_at"]),
     status: normalizeString(pickFirstValue(data, ["status"])),
     archivedBy: readBooleanMap(data, ["archivedBy"]),
+    deletedBy: readBooleanMap(data, ["deletedBy"]),
     blockedBy: readBooleanMap(data, ["blockedBy"]),
   };
 }
@@ -281,6 +285,7 @@ export function buildConversationMirrorFields(
   const unreadCount = buildUnreadCountMap(input.unreadCount ?? {}, participants);
   const lastReadAt = scopeUnknownMapToParticipants(input.lastReadAt ?? {}, participants);
   const archivedBy = buildBooleanMapForParticipants(input.archivedBy ?? {}, participants);
+  const deletedBy = buildBooleanMapForParticipants(input.deletedBy ?? {}, participants);
   const blockedBy = buildBooleanMapForParticipants(input.blockedBy ?? {}, participants);
 
   const fields: Record<string, unknown> = {
@@ -295,6 +300,7 @@ export function buildConversationMirrorFields(
     lastReadAt,
     last_read_at: lastReadAt,
     archivedBy,
+    deletedBy,
     blockedBy,
   };
 
