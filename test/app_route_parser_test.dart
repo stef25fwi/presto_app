@@ -54,7 +54,8 @@ void main() {
       expect(target.initialDraftText, 'Bonjour vendeur');
     });
 
-    test('parse un thread de conversation messages 2 avec brouillon initial', () {
+    test('parse un thread de conversation messages 2 avec brouillon initial',
+        () {
       final target = parseAppDeepLink(
         '/messages-2/conv_789?draft=Bonjour%20vendeur',
       );

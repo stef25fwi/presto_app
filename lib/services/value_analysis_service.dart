@@ -74,8 +74,7 @@ class ValueAnalysisService {
     final userRatio = params.activeUsers / _standardUserBase;
 
     // View-based value: more views = higher perceived value
-    final viewValue =
-        params.viewCount * _viewToValueFactor * userRatio;
+    final viewValue = params.viewCount * _viewToValueFactor * userRatio;
 
     // Engagement-based value: favorites indicate desirability
     final engagementValue =
@@ -107,14 +106,16 @@ class ValueAnalysisService {
     final conditionMultiplier =
         _conditionMultipliers[params.itemCondition] ?? 0.8;
 
-    return params.basePrice * reproductionRatio * conditionMultiplier * ageMultiplier;
+    return params.basePrice *
+        reproductionRatio *
+        conditionMultiplier *
+        ageMultiplier;
   }
 
   /// Calculates potential resale value
   static double _calculateResaleValue(ValueAnalysisParams params) {
     // Resale value depends on item condition and market demand
-    final retentionRate =
-        _categoryResaleRetention[params.category] ?? 0.5;
+    final retentionRate = _categoryResaleRetention[params.category] ?? 0.5;
 
     final conditionMultiplier =
         _conditionMultipliers[params.itemCondition] ?? 0.8;
@@ -155,12 +156,14 @@ class ValueAnalysisService {
       adjustedUserWeight = 0.40;
       adjustedResaleWeight = 0.25;
     } else if (params.itemAgeDays > 90) {
-      adjustedUserWeight = 0.20;
-      adjustedResaleWeight = 0.45;
+      // Les annonces anciennes ne doivent pas gagner artificiellement de la valeur
+      // par un surpoids de la revente. La dépréciation est déjà appliquée dans
+      // reproductionValue et resaleValue, on réduit donc le poids revente.
+      adjustedUserWeight = 0.25;
+      adjustedResaleWeight = 0.30;
     }
 
-    final adjustedReproWeight =
-        1.0 - adjustedUserWeight - adjustedResaleWeight;
+    final adjustedReproWeight = 1.0 - adjustedUserWeight - adjustedResaleWeight;
 
     return (userBaseValue * adjustedUserWeight +
             reproductionValue * adjustedReproWeight +
@@ -178,14 +181,14 @@ class ValueAnalysisService {
     final total = userBaseValue + reproductionValue + resaleValue;
 
     final userPercentage = total > 0
-      ? (userBaseValue / total * 100).clamp(0.0, 100.0).toDouble()
-      : 0.0;
+        ? (userBaseValue / total * 100).clamp(0.0, 100.0).toDouble()
+        : 0.0;
     final reproPercentage = total > 0
-      ? (reproductionValue / total * 100).clamp(0.0, 100.0).toDouble()
-      : 0.0;
+        ? (reproductionValue / total * 100).clamp(0.0, 100.0).toDouble()
+        : 0.0;
     final resalePercentage = total > 0
-      ? (resaleValue / total * 100).clamp(0.0, 100.0).toDouble()
-      : 0.0;
+        ? (resaleValue / total * 100).clamp(0.0, 100.0).toDouble()
+        : 0.0;
 
     return ValueAnalysisBreakdown(
       userBaseWeight: 0.30,
@@ -211,8 +214,7 @@ class ValueAnalysisService {
         ValueFactor(
           name: 'High Popularity',
           impact: params.viewCount * 0.1,
-          description:
-              'Strong viewer interest indicates good market demand',
+          description: 'Strong viewer interest indicates good market demand',
           contributionPercentage: 15,
         ),
       );
@@ -258,15 +260,13 @@ class ValueAnalysisService {
     }
 
     // Category factor
-    final categoryRetention =
-        _categoryResaleRetention[params.category] ?? 0.5;
+    final categoryRetention = _categoryResaleRetention[params.category] ?? 0.5;
     if (categoryRetention > 0.6) {
       factors.add(
         ValueFactor(
           name: 'Strong Category',
           impact: resaleValue * 0.1,
-          description:
-              '${params.category} items maintain value well in resale',
+          description: '${params.category} items maintain value well in resale',
           contributionPercentage: 10,
         ),
       );
@@ -298,13 +298,17 @@ class ValueAnalysisService {
     int score = 50; // Base score
 
     // More views = higher confidence
-    if (params.viewCount > 100) score += 15;
-    else if (params.viewCount > 50) score += 10;
+    if (params.viewCount > 100)
+      score += 15;
+    else if (params.viewCount > 50)
+      score += 10;
     else if (params.viewCount > 10) score += 5;
 
     // More favorites = higher confidence
-    if (params.favoriteCount > 20) score += 15;
-    else if (params.favoriteCount > 10) score += 10;
+    if (params.favoriteCount > 20)
+      score += 15;
+    else if (params.favoriteCount > 10)
+      score += 10;
     else if (params.favoriteCount > 5) score += 5;
 
     // Known category = higher confidence

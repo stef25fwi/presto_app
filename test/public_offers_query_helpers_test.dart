@@ -3,7 +3,8 @@ import 'package:presto_app/services/public_offers_query_helpers.dart';
 
 void main() {
   group('pickPublicListingsBrowseFilterField', () {
-    test('prefers cityCategoryKey when both city and category are available', () {
+    test('prefers cityCategoryKey when both city and category are available',
+        () {
       expect(
         pickPublicListingsBrowseFilterField(
           categoryId: 'bricolage-travaux',

@@ -44,12 +44,11 @@ class AdminMonitoringHealthPage extends StatelessWidget {
           final criticals =
               events.where((e) => e['level'] == 'critical').length;
 
-          final warnings =
-              events.where((e) => e['level'] == 'warning').length;
+          final warnings = events.where((e) => e['level'] == 'warning').length;
 
           final appCheckRefused = events
-              .where((e) =>
-                  e['scope'] == 'app_check' && e['action'] == 'refused')
+              .where(
+                  (e) => e['scope'] == 'app_check' && e['action'] == 'refused')
               .length;
 
           final adminConnections = events

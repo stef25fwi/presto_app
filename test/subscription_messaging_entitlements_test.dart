@@ -13,7 +13,9 @@ void main() {
     expect(entitlements.maxAudioPerConversation, greaterThan(100));
   });
 
-  test('free plan is prepared with messaging limits when subscriptions activate', () {
+  test(
+      'free plan is prepared with messaging limits when subscriptions activate',
+      () {
     final entitlements = getConversationAttachmentEntitlements(
       SubscriptionPlan.free,
       freeAccessMode: false,

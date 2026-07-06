@@ -313,7 +313,8 @@ class _SubscriptionMessagingRulesCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _SubscriptionRuleLine(label: 'Plan', value: subscriptionPlanLabel(plan)),
+          _SubscriptionRuleLine(
+              label: 'Plan', value: subscriptionPlanLabel(plan)),
           _SubscriptionRuleLine(label: 'Photos', value: photoRule),
           _SubscriptionRuleLine(label: 'Audio', value: audioRule),
           _SubscriptionRuleLine(label: 'Fichiers', value: documentRule),

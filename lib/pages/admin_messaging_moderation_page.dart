@@ -23,12 +23,12 @@ class _AdminMessagingModerationPageState
     extends State<AdminMessagingModerationPage> {
   _ModerationLogFilter _filter = _ModerationLogFilter.all;
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> get _stream => FirebaseFirestore
-      .instance
-      .collectionGroup('messages')
-      .orderBy('createdAt', descending: true)
-      .limit(120)
-      .snapshots();
+  Stream<QuerySnapshot<Map<String, dynamic>>> get _stream =>
+      FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .orderBy('createdAt', descending: true)
+          .limit(120)
+          .snapshots();
 
   bool _matchesFilter(_ModerationLogEntry entry) {
     switch (_filter) {
@@ -231,7 +231,8 @@ class _ModerationLogEntry {
       riskScore: (moderation['riskScore'] is num)
           ? (moderation['riskScore'] as num).round()
           : 0,
-      createdAt: parseFirestoreDateTime(data['createdAt'] ?? data['created_at']),
+      createdAt:
+          parseFirestoreDateTime(data['createdAt'] ?? data['created_at']),
     );
   }
 }
@@ -353,8 +354,11 @@ class _ModerationLogCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _InfoChip(label: 'Mode ${entry.mode.isEmpty ? 'hybrid' : entry.mode}'),
-              _InfoChip(label: 'Visibilité ${entry.visibility.isEmpty ? 'visible' : entry.visibility}'),
+              _InfoChip(
+                  label: 'Mode ${entry.mode.isEmpty ? 'hybrid' : entry.mode}'),
+              _InfoChip(
+                  label:
+                      'Visibilité ${entry.visibility.isEmpty ? 'visible' : entry.visibility}'),
               _InfoChip(label: 'Risk ${entry.riskScore}'),
             ],
           ),

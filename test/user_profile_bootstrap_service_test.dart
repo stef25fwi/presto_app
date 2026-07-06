@@ -84,7 +84,8 @@ void main() {
       expect(source.contains("users/"), isTrue);
     });
 
-    test('sync auth ne reinitialise pas les champs abonnement existants', () async {
+    test('sync auth ne reinitialise pas les champs abonnement existants',
+        () async {
       final source = await File(
         'lib/services/user_profile_bootstrap_service.dart',
       ).readAsString();

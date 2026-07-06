@@ -38,7 +38,8 @@ class _FicheProPageState extends State<FicheProPage> {
   bool _isLoading = true;
   bool _isSaving = false;
 
-  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _offersFuture;
+  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _offersFuture;
 
   String _companyName = '';
   String _city = '';
@@ -64,8 +65,10 @@ class _FicheProPageState extends State<FicheProPage> {
     _offersFuture = _loadOffers();
   }
 
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadOffers() async {
-    final results = await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadOffers() async {
+    final results =
+        await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
       FirebaseFirestore.instance
           .collection(kListingsCollection)
           .where('ownerId', isEqualTo: widget.uid)
@@ -93,9 +96,7 @@ class _FicheProPageState extends State<FicheProPage> {
       }
     }
 
-    return byId.values
-        .where((d) => isVisibleInPublicBrowse(d.data()))
-        .toList();
+    return byId.values.where((d) => isVisibleInPublicBrowse(d.data())).toList();
   }
 
   Future<void> _load() async {
@@ -107,8 +108,10 @@ class _FicheProPageState extends State<FicheProPage> {
         db.collection('users').doc(widget.uid).get(),
       ]);
 
-      final proData = (results[0] as DocumentSnapshot<Map<String, dynamic>>).data() ?? {};
-      final userData = (results[1] as DocumentSnapshot<Map<String, dynamic>>).data() ?? {};
+      final proData =
+          (results[0] as DocumentSnapshot<Map<String, dynamic>>).data() ?? {};
+      final userData =
+          (results[1] as DocumentSnapshot<Map<String, dynamic>>).data() ?? {};
 
       // Fallback to legacy pros/{uid} if pro_profiles empty
       Map<String, dynamic> src = proData;
@@ -278,7 +281,10 @@ class _FicheProPageState extends State<FicheProPage> {
           .collection('pro_profiles')
           .doc(widget.uid)
           .set(
-        {'realisations': FieldValue.arrayUnion(newUrls), 'updatedAt': FieldValue.serverTimestamp()},
+        {
+          'realisations': FieldValue.arrayUnion(newUrls),
+          'updatedAt': FieldValue.serverTimestamp()
+        },
         SetOptions(merge: true),
       );
 
@@ -298,7 +304,9 @@ class _FicheProPageState extends State<FicheProPage> {
       builder: (ctx) => AlertDialog(
         title: const Text('Supprimer cette photo ?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
@@ -313,12 +321,16 @@ class _FicheProPageState extends State<FicheProPage> {
           .collection('pro_profiles')
           .doc(widget.uid)
           .set(
-        {'realisations': FieldValue.arrayRemove([url]), 'updatedAt': FieldValue.serverTimestamp()},
+        {
+          'realisations': FieldValue.arrayRemove([url]),
+          'updatedAt': FieldValue.serverTimestamp()
+        },
         SetOptions(merge: true),
       );
       if (mounted) setState(() => _realisations.remove(url));
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, 'Impossible de supprimer la photo.');
+      if (mounted)
+        showErrorSnackBar(context, 'Impossible de supprimer la photo.');
     }
   }
 
@@ -448,7 +460,8 @@ class _FicheProPageState extends State<FicheProPage> {
             ],
           ),
           const SizedBox(height: 14),
-          _confirmButton(ctx, () => Navigator.pop(ctx, List<String>.from(items))),
+          _confirmButton(
+              ctx, () => Navigator.pop(ctx, List<String>.from(items))),
         ],
       ),
     );
@@ -605,9 +618,7 @@ class _FicheProPageState extends State<FicheProPage> {
                 ],
               ),
             );
-            return scrollable
-                ? SingleChildScrollView(child: inner)
-                : inner;
+            return scrollable ? SingleChildScrollView(child: inner) : inner;
           },
         );
       },
@@ -781,13 +792,11 @@ class _FicheProPageState extends State<FicheProPage> {
   }
 
   Widget _buildHeader() {
-    final locationParts = [_city, _department]
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final locationParts =
+        [_city, _department].where((s) => s.isNotEmpty).toList();
     final location = locationParts.join(' • ');
-    final initial = _companyName.isNotEmpty
-        ? _companyName[0].toUpperCase()
-        : '?';
+    final initial =
+        _companyName.isNotEmpty ? _companyName[0].toUpperCase() : '?';
 
     return Card(
       margin: EdgeInsets.zero,
@@ -807,12 +816,10 @@ class _FicheProPageState extends State<FicheProPage> {
                 CircleAvatar(
                   radius: 45,
                   backgroundColor: const Color(0xFFF3F4F6),
-                  foregroundImage: _photoUrl.isNotEmpty
-                      ? NetworkImage(_photoUrl)
-                      : null,
-                  onForegroundImageError: _photoUrl.isNotEmpty
-                      ? (_, __) {}
-                      : null,
+                  foregroundImage:
+                      _photoUrl.isNotEmpty ? NetworkImage(_photoUrl) : null,
+                  onForegroundImageError:
+                      _photoUrl.isNotEmpty ? (_, __) {} : null,
                   child: Text(
                     initial,
                     style: const TextStyle(
@@ -1015,9 +1022,8 @@ class _FicheProPageState extends State<FicheProPage> {
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data();
-    final title = data['title']?.toString() ??
-        data['titre']?.toString() ??
-        'Annonce';
+    final title =
+        data['title']?.toString() ?? data['titre']?.toString() ?? 'Annonce';
     final price = data['price'] ?? data['prix'];
     final priceText = price != null ? '$price €' : null;
     final imageUrls = data['imageUrls'];
@@ -1130,7 +1136,11 @@ class _FicheProPageState extends State<FicheProPage> {
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: Text(
-          widget.isOwner ? 'Ma fiche Pro' : _companyName.isNotEmpty ? _companyName : 'Fiche Pro',
+          widget.isOwner
+              ? 'Ma fiche Pro'
+              : _companyName.isNotEmpty
+                  ? _companyName
+                  : 'Fiche Pro',
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         centerTitle: true,
@@ -1239,10 +1249,10 @@ class _FicheProPageState extends State<FicheProPage> {
                                           ? () => _deleteRealisation(url)
                                           : null,
                                       child: ClipRRect(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(10),
                                         child: Image(
-                                          image: CachedNetworkImageProvider(url),
+                                          image:
+                                              CachedNetworkImageProvider(url),
                                           width: 90,
                                           height: 90,
                                           fit: BoxFit.cover,
@@ -1256,8 +1266,7 @@ class _FicheProPageState extends State<FicheProPage> {
                 _buildOffersSection(),
               ],
             ),
-      bottomNavigationBar:
-          widget.isOwner ? _buildSaveButton() : null,
+      bottomNavigationBar: widget.isOwner ? _buildSaveButton() : null,
     );
   }
 }

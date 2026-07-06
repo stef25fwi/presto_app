@@ -118,7 +118,8 @@ class PageCaptureCatalogPage extends StatelessWidget {
       id: '05_messages_page',
       title: 'MessagesPage',
       group: 'Navigation principale',
-      description: 'Wrapper historique de la messagerie (remplacé par MessagesPageV2).',
+      description:
+          'Wrapper historique de la messagerie (remplacé par MessagesPageV2).',
       status: PageStatus.deprecated,
       builder: (_) => const MessagesPage(),
     ),
@@ -280,7 +281,8 @@ class PageCaptureCatalogPage extends StatelessWidget {
       id: '21_user_public_profile_page',
       title: 'UserPublicProfilePage',
       group: 'Profil public',
-      description: 'Profil public utilisateur sur identifiant de démonstration.',
+      description:
+          'Profil public utilisateur sur identifiant de démonstration.',
       status: PageStatus.active,
       builder: (_) => const UserPublicProfilePage(
         userId: 'demo-public-user',
@@ -338,7 +340,8 @@ class PageCaptureCatalogPage extends StatelessWidget {
       id: '27_toolbox_page',
       title: 'ToolboxPage',
       group: 'Boîte à outils',
-      description: 'Ancienne page toolbox standalone (remplacée par ToolboxHubPage).',
+      description:
+          'Ancienne page toolbox standalone (remplacée par ToolboxHubPage).',
       status: PageStatus.deprecated,
       builder: (_) => const ToolboxPage(),
     ),

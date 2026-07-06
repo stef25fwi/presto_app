@@ -89,7 +89,8 @@ class HeroSlidesService {
       return slides.where((slide) {
         if (slide.isGlobal) return true;
         if (slide.isRegional) {
-          if (normalizedRegion == null || normalizedRegion.isEmpty) return false;
+          if (normalizedRegion == null || normalizedRegion.isEmpty)
+            return false;
           if (slide.targetRegions.isEmpty) return false;
           return slide.targetRegions.contains(normalizedRegion);
         }
@@ -250,7 +251,8 @@ class HeroSlidesService {
       title ?? slide.title,
       fileName: replacementFileName ?? slide.title,
     );
-    final nextScope = (scope ?? slide.scope) == 'regional' ? 'regional' : 'global';
+    final nextScope =
+        (scope ?? slide.scope) == 'regional' ? 'regional' : 'global';
     final nextTargetRegions = targetRegions ?? slide.targetRegions;
     batch.update(docRef, <String, dynamic>{
       'title': normalizedTitle,
