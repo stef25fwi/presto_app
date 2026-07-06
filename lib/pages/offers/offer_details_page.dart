@@ -3067,51 +3067,8 @@ class _PracticalInfoCard extends StatelessWidget {
   });
 
   Widget _paymentInfoPill(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF1A73E8),
-              Color(0xFF1565D8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1A73E8).withValues(alpha: 0.20),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: () => showPaymentInfoPopup(context),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-            child: SizedBox(
-              width: 44,
-              child: Center(
-                child: Text(
-                  'Infos',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return _AnimatedPaymentInfoPill(
+      onTap: () => showPaymentInfoPopup(context),
     );
   }
 
@@ -3470,55 +3427,196 @@ class _InfoLine extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(icon,
-                  color: const Color(0xFF6C7384), size: compact ? 20 : 22),
-              SizedBox(width: compact ? 8 : 10),
-              Expanded(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final shouldStack = labelSuffix != null || constraints.maxWidth < 360;
+
+              if (shouldStack) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Flexible(
+                    Icon(
+                      icon,
+                      color: const Color(0xFF6C7384),
+                      size: compact ? 20 : 22,
+                    ),
+                    SizedBox(width: compact ? 8 : 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: compact ? 7 : 8,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  color: muted,
+                                  fontSize: compact ? 15 : 16,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                              if (labelSuffix != null) labelSuffix!,
+                            ],
+                          ),
+                          SizedBox(height: compact ? 6 : 8),
+                          Text(
+                            value,
+                            style: TextStyle(
+                              color: navy,
+                              fontSize: compact ? 15 : 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(icon,
+                      color: const Color(0xFF6C7384), size: compact ? 20 : 22),
+                  SizedBox(width: compact ? 8 : 10),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: muted,
+                        fontSize: compact ? 15 : 16,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: compact ? 8 : 10),
+                  Flexible(
+                    child: Align(
+                      alignment: Alignment.centerRight,
                       child: Text(
-                        label,
+                        value,
+                        textAlign: TextAlign.right,
                         style: TextStyle(
-                          color: muted,
+                          color: navy,
                           fontSize: compact ? 15 : 16,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.1,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.15,
                         ),
                       ),
                     ),
-                    if (labelSuffix != null) ...[
-                      SizedBox(width: compact ? 7 : 8),
-                      labelSuffix!,
-                    ],
-                  ],
-                ),
-              ),
-              SizedBox(width: compact ? 8 : 10),
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    value,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: navy,
-                      fontSize: compact ? 15 : 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.15,
-                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
         const Divider(height: 1, thickness: 1, color: line),
       ],
+    );
+  }
+}
+
+class _AnimatedPaymentInfoPill extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _AnimatedPaymentInfoPill({required this.onTap});
+
+  @override
+  State<_AnimatedPaymentInfoPill> createState() =>
+      _AnimatedPaymentInfoPillState();
+}
+
+class _AnimatedPaymentInfoPillState extends State<_AnimatedPaymentInfoPill>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+    _scale = Tween<double>(begin: 1.0, end: 1.035).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _glow = Tween<double>(begin: 0.20, end: 0.34).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scale.value,
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+            child: Ink(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF1A73E8),
+                    Color(0xFF1565D8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1A73E8)
+                        .withValues(alpha: _glow.value),
+                    blurRadius: 12,
+                    spreadRadius: 0.5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: widget.onTap,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                  child: SizedBox(
+                    width: 44,
+                    child: Center(
+                      child: Text(
+                        'Infos',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

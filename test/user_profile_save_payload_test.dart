@@ -76,6 +76,21 @@ void main() {
       expect(payload, contains('updatedAt'));
       expect(payload.keys.toSet().difference(allowedKeys), isEmpty);
 
+      for (final subscriptionKey in <String>[
+        'subscriptionPlan',
+        'subscriptionStatus',
+        'subscriptionExpiresAt',
+        'phoneVerified',
+        'proVerified',
+      ]) {
+        expect(
+          payload.containsKey(subscriptionKey),
+          isFalse,
+          reason:
+              'La sauvegarde profil ne doit pas réinitialiser les champs abonnement.',
+        );
+      }
+
       for (final protectedKey in <String>[
         'admin',
         'superadmin',

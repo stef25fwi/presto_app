@@ -22,3 +22,27 @@ git add -A
 git commit -m "message du lot"
 git push -u origin "$(git branch --show-current)"
 ```
+
+Préparation abonnements, sans Stripe ni restrictions :
+
+```bash
+node tools/seed_subscription_fields.cjs
+node tools/seed_subscription_fields.cjs --uid=USER_UID
+node tools/seed_subscription_fields.cjs --apply --limit=25
+```
+
+Voir aussi [docs/subscriptions_migration.md](docs/subscriptions_migration.md).
+
+Audit et nettoyage des users legacy/test :
+
+```bash
+node tools/cleanup_legacy_user_stubs.cjs
+node tools/cleanup_legacy_user_stubs.cjs --apply --limit=25
+node tools/manage_test_seed_users.cjs
+node tools/manage_test_seed_users.cjs --apply --limit=25
+node tools/manage_test_seed_users.cjs --apply --with-auth --limit=25
+node tools/manage_test_seed_auth.cjs
+node tools/manage_test_seed_auth.cjs --apply
+```
+
+Voir aussi [docs/users_audit_20260706.md](docs/users_audit_20260706.md).
