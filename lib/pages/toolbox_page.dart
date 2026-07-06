@@ -78,17 +78,17 @@ class _ToolboxView extends StatelessWidget {
                           color: const Color(0xFFFF5A00),
                         ),
                         iconBackground: kIconOrangeBg,
-                        title: 'CRÉER MON\nENTREPRISE',
-                        subtitle: 'iliprestō me guide pas à pas.',
+                        title: 'JE CRÉE MON\nACTIVITÉ',
+                        subtitle: 'Un parcours simple pour me lancer.',
                         description:
-                            'Décris ton projet, ta situation et ton territoire pour obtenir des conseils concrets.',
+                          'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
                         benefits: const [
                           'Statut juridique\nconseillé',
                           'Coûts & démarches\nexactes',
                           'Aides, subventions &\norganismes',
                           'Plan d’action sur 30\njours',
                         ],
-                        buttonLabel: 'Démarrer mon projet',
+                        buttonLabel: 'Commencer mon parcours',
                         buttonGradient: const LinearGradient(
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
@@ -97,9 +97,6 @@ class _ToolboxView extends StatelessWidget {
                             kBlueEnd,
                           ],
                         ),
-                        secondaryButtonLabel: 'Je me lance',
-                        secondaryButtonColor: const Color(0xFF1A73E8),
-                        secondaryOnTap: _openMyParcours,
                         onTap: _openCreateBusiness,
                         compact: isShort,
                         tight: isVeryShort,
@@ -193,12 +190,6 @@ void _openCreateBusiness(BuildContext context) {
   );
 }
 
-void _openMyParcours(BuildContext context) {
-  Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => const CurrentToolboxSummaryPage()),
-  );
-}
-
 void _openPriceCalculator(BuildContext context) {
   Navigator.of(context).push(
     MaterialPageRoute(builder: (_) => const EntrepreneurCalculatorPage()),
@@ -218,9 +209,6 @@ class _ToolboxCard extends StatelessWidget {
   final bool compact;
   final bool tight;
   final bool ultraTight;
-  final String? secondaryButtonLabel;
-  final Color? secondaryButtonColor;
-  final ValueChanged<BuildContext>? secondaryOnTap;
 
   const _ToolboxCard({
     required this.icon,
@@ -235,9 +223,6 @@ class _ToolboxCard extends StatelessWidget {
     this.compact = false,
     this.tight = false,
     this.ultraTight = false,
-    this.secondaryButtonLabel,
-    this.secondaryButtonColor,
-    this.secondaryOnTap,
   });
 
   @override
@@ -304,17 +289,6 @@ class _ToolboxCard extends StatelessWidget {
             tight: tight,
             ultraTight: ultraTight,
           ),
-          if (secondaryButtonLabel != null && secondaryOnTap != null) ...[
-            SizedBox(height: ultraTight ? 6 : (tight ? 8 : 10)),
-            _SolidActionButton(
-              label: secondaryButtonLabel!,
-              color: secondaryButtonColor ?? const Color(0xFF1A73E8),
-              onTap: secondaryOnTap!,
-              compact: useCompact,
-              tight: tight,
-              ultraTight: ultraTight,
-            ),
-          ],
         ],
       ),
     );
