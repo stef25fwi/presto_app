@@ -755,7 +755,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Navigation
   // --------------------------
-  bool get _starterStepValid => _region.isNotEmpty;
+  bool get _starterStepValid =>
+      _region.isNotEmpty &&
+      _situation.isNotEmpty &&
+      _selectedActivity.trim().isNotEmpty;
   bool get _step2Valid => _situation.isNotEmpty;
   bool get _step3Valid => _selectedActivity.trim().isNotEmpty;
   bool get _step4Valid => true;
@@ -780,7 +783,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   Future<void> _completeJourney() async {
     if (!_step4Valid) return;
 
-    setState(() => _journeyStatus = 'completed');
+    setState(() {
+      _journeyStatus = 'completed';
+      _step = kTotalSteps;
+    });
     await _saveDraft();
 
     final user = _auth.currentUser;
@@ -935,14 +941,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Choisissez votre région pour démarrer le parcours.',
+            'Renseignez la région, le statut et l activité avant de valider.',
           ),
         ),
       );
       return;
     }
 
-    await _next();
+    if (_projectCtrl.text.trim().isEmpty) {
+      _projectCtrl.text = _selectedActivity;
+    }
+
+    await _completeJourney();
   }
 
   Future<void> _launchUrl(String url) async {
@@ -1178,15 +1188,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                                         _buildCompletionActionsCard(),
                                         const SizedBox(height: 12),
                                       ],
-                                      if (_step == 2) _buildStepSituation(),
-                                      if (_step == 3) _buildStepActivity(),
-                                      if (_step == 4) _buildReviewStep(),
-                                      if (_step > 1) ...[
-                                        const SizedBox(height: 14),
-                                        _buildNavButtons(),
-                                      ],
-                                      const SizedBox(height: 18),
-                                      _buildMyPath(),
+                                      const SizedBox(height: 14),
+                                      _buildNavButtons(),
                                     ],
                                   ),
                                 ),
@@ -1247,7 +1250,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               ),
               const Expanded(
                 child: Text(
-                  'Je me lance',
+                  'Mon projet',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -1324,7 +1327,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               _buildProgressCircle(number: 4, active: stepLabel == 4, done: false),
             ],
           ),
-          if (_step > 1) ...[
+          if (_step > 0) ...[
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
@@ -1458,7 +1461,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
-                        'Commencez votre parcours',
+                        'Mon projet',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
@@ -1468,7 +1471,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        'Choisissez votre région pour\ndémarrer un parcours adapté.',
+                        'Renseignez les 3 cartes\nobligatoires avant validation.',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -1529,43 +1532,44 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             isError: _showStarterErrors && _region.isEmpty,
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 58,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: _starterStepValid
-                    ? const LinearGradient(
-                        colors: [Color(0xFFFF8A1F), Color(0xFFFF6600)],
-                      )
-                    : null,
-                color: _starterStepValid ? null : const Color(0xFFF0F2F6),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: ElevatedButton(
-                onPressed: _starterStepValid ? _continueStarterStep : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: _starterStepValid
-                      ? Colors.white
-                      : const Color(0xFF9AA3B2),
-                  disabledBackgroundColor: Colors.transparent,
-                  disabledForegroundColor: const Color(0xFF9AA3B2),
-                  shadowColor: Colors.transparent,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                child: Text(
-                  'Continuer',
-                  style: TextStyle(
-                    fontSize: isCompact ? 17 : 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+          _buildStarterSelector(
+            icon: Icons.badge_outlined,
+            iconColor: kBlue,
+            iconBackground: const Color(0xFFEAF3FF),
+            label: 'Statut',
+            value: _situation.isNotEmpty ? _situation : 'Choisir un statut',
+            helper: const Text(
+              'Votre situation actuelle ajuste les alertes et aides utiles',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF7A8498),
               ),
             ),
+            onTap: _showStatusPicker,
+            isError: _showStarterErrors && _situation.isEmpty,
+            minHeight: 108,
+          ),
+          const SizedBox(height: 24),
+          _buildStarterSelector(
+            icon: Icons.work_outline_rounded,
+            iconColor: const Color(0xFF26A65B),
+            iconBackground: const Color(0xFFEAF8EF),
+            label: 'Activité',
+            value: _selectedActivity.isNotEmpty
+                ? _selectedActivity
+                : 'Choisir une activité',
+            helper: const Text(
+              'Votre activité principale sert à générer le parcours de création',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF7A8498),
+              ),
+            ),
+            onTap: _showActivityPicker,
+            isError: _showStarterErrors && _selectedActivity.trim().isEmpty,
+            minHeight: 108,
           ),
         ],
       ),
@@ -2310,10 +2314,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            isFinalStep
-                ? 'Derniere etape avant validation du parcours.'
-                : _step == 1
-                    ? 'Ces 3 informations lancent votre parcours personnalisé.'
+            _step == 1
+                ? 'Les 3 cartes sont obligatoires avant d ouvrir Mon parcours.'
+                : isFinalStep
+                    ? 'Derniere etape avant validation du parcours.'
                     : 'Continuez pour enrichir la recommandation automatiquement.',
             style: TextStyle(
               color: Colors.grey.shade700,
@@ -2326,7 +2330,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _step > 1 ? _back : null,
+                  onPressed: _step > 1
+                      ? _back
+                      : () => Navigator.of(context).maybePop(),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF111827),
                     side: BorderSide(color: Colors.grey.shade300),
@@ -2349,7 +2355,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                         : (_step == 1 ? _continueStarterStep : _next))
                       : null,
                   style: ElevatedButton.styleFrom(
-                  backgroundColor: _step == 1 ? kOrange : kBlue,
+                  backgroundColor: kBlue,
                     foregroundColor: Colors.white,
                   disabledBackgroundColor: _step == 1
                     ? const Color(0xFFF0F2F6)
@@ -2364,16 +2370,20 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     ),
                   ),
                   icon: Icon(
-                    _step < kTotalSteps
-                        ? Icons.arrow_forward
-                        : Icons.check_circle_outline,
+                    _step == 1
+                        ? Icons.check_circle_outline
+                        : (_step < kTotalSteps
+                            ? Icons.arrow_forward
+                            : Icons.check_circle_outline),
                   ),
                   label: Text(
-                    _step < kTotalSteps
-                        ? "Continuer"
-                        : (_journeyStatus == 'completed'
-                            ? "Revalider"
-                            : "Valider"),
+                    _step == 1
+                        ? 'Valider'
+                        : (_step < kTotalSteps
+                            ? 'Continuer'
+                            : (_journeyStatus == 'completed'
+                                ? 'Revalider'
+                                : 'Valider')),
                   ),
                 ),
               ),
