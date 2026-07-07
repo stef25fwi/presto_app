@@ -66,3 +66,168 @@ export const enqueueUnreadMessageReminders = onSchedule("every 2 hours", async (
       .limit(200);
   }
 });
+
+export const syncMessagingAnalytics = onSchedule("every 1 hours", async () => {
+  const now = Date.now();
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const notificationThreshold = now - 60 * 60 * 1000;
+
+  const totalConversations = (await db.collection(COLLECTIONS.conversations).count().get()).data().count;
+  const activeToday = (await db
+    .collection(COLLECTIONS.conversations)
+    .where("lastMessageAt", ">=", startOfDay.getTime())
+    .count()
+    .get()).data().count;
+  const reportedConversations = (await db.collection("message_reports").count().get()).data().count;
+  const pendingNew = (await db.collection("message_reports").where("status", "==", "nouveau").count().get()).data().count;
+  const pendingReview = (await db.collection("message_reports").where("status", "==", "en revue").count().get()).data().count;
+  const pendingReports = pendingNew + pendingReview;
+  const resolvedReports = Math.max(0, reportedConversations - pendingReports);
+  const attachmentsCount = (await db.collection("message_attachments").count().get()).data().count;
+  const watchlistedConversations = (await db
+    .collection(COLLECTIONS.conversations)
+    .where("adminWatchlisted", "==", true)
+    .count()
+    .get()).data().count;
+  const criticalRiskConversations = (await db
+    .collection(COLLECTIONS.conversations)
+    .where("riskScore", ">=", 80)
+    .count()
+    .get()).data().count;
+
+  let totalMessages = 0;
+  let unansweredConversations = 0;
+  let storageBytes = 0;
+  let activeUsers = 0;
+  let blockedUsers = 0;
+  let averageResponseHoursTotal = 0;
+  let averageResponseHoursCount = 0;
+  let providerResponseRateTotal = 0;
+  let providerResponseRateCount = 0;
+
+  let conversationQuery = db.collection(COLLECTIONS.conversations).orderBy("updatedAt", "desc").limit(200);
+  let lastConversationDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  while (true) {
+    const snapshot = await conversationQuery.get();
+    if (snapshot.empty) break;
+    for (const doc of snapshot.docs) {
+      lastConversationDoc = doc;
+      const data = doc.data();
+      totalMessages += Number(data.messageCount || 0);
+      const unreadCount = (data.unreadCount || data.unreadCounts || {}) as Record<string, unknown>;
+      const hasUnread = Object.values(unreadCount).some((value) => Number(value || 0) > 0);
+      if (hasUnread) unansweredConversations += 1;
+    }
+    if (snapshot.size < 200 || !lastConversationDoc) break;
+    conversationQuery = db
+      .collection(COLLECTIONS.conversations)
+      .orderBy("updatedAt", "desc")
+      .startAfter(lastConversationDoc)
+      .limit(200);
+  }
+
+  let attachmentQuery = db.collection("message_attachments").orderBy("createdAt", "desc").limit(200);
+  let lastAttachmentDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  while (true) {
+    const snapshot = await attachmentQuery.get();
+    if (snapshot.empty) break;
+    for (const doc of snapshot.docs) {
+      lastAttachmentDoc = doc;
+      storageBytes += Number(doc.data().fileSize || 0);
+    }
+    if (snapshot.size < 200 || !lastAttachmentDoc) break;
+    attachmentQuery = db
+      .collection("message_attachments")
+      .orderBy("createdAt", "desc")
+      .startAfter(lastAttachmentDoc)
+      .limit(200);
+  }
+
+  let usersQuery = db.collection(COLLECTIONS.users).orderBy("updatedAt", "desc").limit(200);
+  let lastUserDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  while (true) {
+    const snapshot = await usersQuery.get();
+    if (snapshot.empty) break;
+    for (const doc of snapshot.docs) {
+      lastUserDoc = doc;
+      const data = doc.data();
+      const messagesSent = Number(data.messagesSent || 0);
+      const openConversations = Number(data.messagingOpenConversations || 0);
+      if (messagesSent > 0 || openConversations > 0) activeUsers += 1;
+      const messagingStatus = String(data.messagingStatus || "").toLowerCase();
+      if (messagingStatus === "bloqué" || messagingStatus === "suspendu") {
+        blockedUsers += 1;
+      }
+      const avgResponse = Number(data.averageResponseHours || 0);
+      if (avgResponse > 0) {
+        averageResponseHoursTotal += avgResponse;
+        averageResponseHoursCount += 1;
+      }
+      const role = String(data.primaryRole || data.role || "").toLowerCase();
+      const isProvider = role.includes("provider") ||
+        role.includes("prestataire") ||
+        role.includes("seller") ||
+        role.includes("vendeur") ||
+        role.includes("pro");
+      if (isProvider) {
+        providerResponseRateTotal += Number(data.messagingResponseRate || 0);
+        providerResponseRateCount += 1;
+      }
+    }
+    if (snapshot.size < 200 || !lastUserDoc) break;
+    usersQuery = db
+      .collection(COLLECTIONS.users)
+      .orderBy("updatedAt", "desc")
+      .startAfter(lastUserDoc)
+      .limit(200);
+  }
+
+  const notificationSnapshot = await db
+    .collection(COLLECTIONS.notifications)
+    .where("createdAt", ">=", notificationThreshold)
+    .orderBy("createdAt", "desc")
+    .limit(1000)
+    .get();
+  let pushSentCount = 0;
+  let pushDeliveredCount = 0;
+  let pushFailedCount = 0;
+  for (const doc of notificationSnapshot.docs) {
+    const data = doc.data();
+    const routeName = String(data.routeName || "");
+    const conversationId = String(data.conversationId || "");
+    if (!conversationId && !routeName.includes("/messages")) continue;
+    const status = String(data.deliveryStatus || data.status || "").toLowerCase();
+    if (status.includes("sent") || status.includes("envoy")) pushSentCount += 1;
+    if (status.includes("deliver") || status.includes("recu")) pushDeliveredCount += 1;
+    if (status.includes("fail") || status.includes("error") || status.includes("erreur")) pushFailedCount += 1;
+  }
+
+  const averageResponseHours = averageResponseHoursCount === 0 ? 0 : averageResponseHoursTotal / averageResponseHoursCount;
+  const providerResponseRate = providerResponseRateCount === 0 ? 0 : providerResponseRateTotal / providerResponseRateCount;
+
+  await db.collection(COLLECTIONS.systemSettings).doc("messaging_dashboard_current").set({
+    generatedAt: now,
+    source: "scheduled",
+    windowHours: 1,
+    sampledNotifications: notificationSnapshot.size,
+    totalConversations,
+    activeToday,
+    totalMessages,
+    unansweredConversations,
+    reportedConversations,
+    blockedUsers,
+    attachmentsCount,
+    storageBytes,
+    activeUsers,
+    watchlistedConversations,
+    criticalRiskConversations,
+    pendingReports,
+    resolvedReports,
+    averageResponseHours,
+    providerResponseRate,
+    pushSentCount,
+    pushDeliveredCount,
+    pushFailedCount,
+  }, {merge: true});
+});

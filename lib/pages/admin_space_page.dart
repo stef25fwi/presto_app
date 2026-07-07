@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/admin/messaging/admin_messaging_dashboard_page.dart';
 import 'admin_hero_slides_page.dart';
 import 'admin_messaging_moderation_page.dart';
 import 'admin_photo_reviews_page.dart';
@@ -3164,6 +3165,22 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                             : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
                     badge: null,
                     iconColor: prestoBlue,
+                  ),
+                  _KpiTile(
+                    icon: Icons.admin_panel_settings_rounded,
+                    title: 'Gestion messagerie',
+                    subtitle: 'Dashboard, signalements, audit et réglages',
+                    badge: null,
+                    iconColor: const Color(0xFF0F766E),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => AdminMessagingDashboardPage(
+                            accessState: _adminAccessState,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _KpiTile(
                     icon: Icons.shield_outlined,
