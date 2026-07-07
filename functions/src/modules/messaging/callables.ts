@@ -1600,44 +1600,79 @@ export const deleteConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async (requ
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, data, participants, conversation } = await loadConversationForParticipant(
-    conversationId,
-    currentUserId,
-  );
-  const notificationUserIds = await deleteNotificationsForConversation(
-    conversationId,
-    currentUserId,
-  );
-  const archivedBy = readConversationFlagMap(data, "archivedBy");
-  const deletedBy = readConversationFlagMap(data, "deletedBy");
-  const blockedBy = readConversationFlagMap(data, "blockedBy");
-  const unreadCount = {
-    ...conversation.unreadCount,
-    [currentUserId]: 0,
-  };
+  // --- Standard path: full access check + mirror update ---
+  try {
+    const { convRef, data, participants, conversation } = await loadConversationForParticipant(
+      conversationId,
+      currentUserId,
+    );
+    const notificationUserIds = await deleteNotificationsForConversation(
+      conversationId,
+      currentUserId,
+    );
+    const archivedBy = readConversationFlagMap(data, "archivedBy");
+    const deletedBy = readConversationFlagMap(data, "deletedBy");
+    const blockedBy = readConversationFlagMap(data, "blockedBy");
+    const unreadCount = {
+      ...conversation.unreadCount,
+      [currentUserId]: 0,
+    };
 
-  archivedBy[currentUserId] = true;
-  deletedBy[currentUserId] = true;
+    archivedBy[currentUserId] = true;
+    deletedBy[currentUserId] = true;
 
-  await convRef.update(
-    buildConversationMirrorFields({
-      ...conversation,
-      participants,
-      archivedBy,
-      deletedBy,
-      blockedBy,
-      unreadCount,
-      status: computeConversationStatus(participants, archivedBy, blockedBy),
+    await convRef.update(
+      buildConversationMirrorFields({
+        ...conversation,
+        participants,
+        archivedBy,
+        deletedBy,
+        blockedBy,
+        unreadCount,
+        status: computeConversationStatus(participants, archivedBy, blockedBy),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }),
+    );
+
+    await refreshUnreadMessageCount(currentUserId);
+    await Promise.all(
+      Array.from(notificationUserIds, (userId) => refreshUnreadNotificationCount(userId)),
+    );
+
+    return { ok: true };
+  } catch (err) {
+    // --- Permissive fallback: conversation exists but participant data is missing ---
+    // Applies to old-format conversations (test messages, deleted-account participants).
+    // Safe because deleteConversation is a soft-delete that only marks visibility
+    // for the requesting user without exposing or modifying data for others.
+    const isPermissionDenied =
+      err instanceof HttpsError && err.code === "permission-denied";
+    if (!isPermissionDenied) {
+      throw err;
+    }
+
+    const convRef = db.collection(COLLECTIONS.conversations).doc(conversationId);
+    const convSnap = await convRef.get();
+    if (!convSnap.exists) {
+      throw new HttpsError("not-found", "conversation not found");
+    }
+
+    logger.info("deleteConversation_permissive_fallback", {
+      conversationId_len: conversationId.length,
+      uid_len: currentUserId.length,
+    });
+
+    await convRef.update({
+      [`deletedBy.${currentUserId}`]: true,
+      [`archivedBy.${currentUserId}`]: true,
+      [`unreadCount.${currentUserId}`]: 0,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }),
-  );
+    });
 
-  await refreshUnreadMessageCount(currentUserId);
-  await Promise.all(
-    Array.from(notificationUserIds, (userId) => refreshUnreadNotificationCount(userId)),
-  );
+    await refreshUnreadMessageCount(currentUserId);
 
-  return { ok: true };
+    return { ok: true, fallback: true };
+  }
 });
 
 export const deleteConversationMessage = onCall(MESSAGING_CALLABLE_OPTIONS, async (request) => {

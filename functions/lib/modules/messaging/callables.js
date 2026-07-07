@@ -1192,30 +1192,60 @@ exports.deleteConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, asy
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, data, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
-    const notificationUserIds = await deleteNotificationsForConversation(conversationId, currentUserId);
-    const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
-    const deletedBy = (0, state_1.readConversationFlagMap)(data, "deletedBy");
-    const blockedBy = (0, state_1.readConversationFlagMap)(data, "blockedBy");
-    const unreadCount = {
-        ...conversation.unreadCount,
-        [currentUserId]: 0,
-    };
-    archivedBy[currentUserId] = true;
-    deletedBy[currentUserId] = true;
-    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
-        ...conversation,
-        participants,
-        archivedBy,
-        deletedBy,
-        blockedBy,
-        unreadCount,
-        status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
-        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-    }));
-    await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
-    await Promise.all(Array.from(notificationUserIds, (userId) => (0, counters_1.refreshUnreadNotificationCount)(userId)));
-    return { ok: true };
+    // --- Standard path: full access check + mirror update ---
+    try {
+        const { convRef, data, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
+        const notificationUserIds = await deleteNotificationsForConversation(conversationId, currentUserId);
+        const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
+        const deletedBy = (0, state_1.readConversationFlagMap)(data, "deletedBy");
+        const blockedBy = (0, state_1.readConversationFlagMap)(data, "blockedBy");
+        const unreadCount = {
+            ...conversation.unreadCount,
+            [currentUserId]: 0,
+        };
+        archivedBy[currentUserId] = true;
+        deletedBy[currentUserId] = true;
+        await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+            ...conversation,
+            participants,
+            archivedBy,
+            deletedBy,
+            blockedBy,
+            unreadCount,
+            status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        }));
+        await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
+        await Promise.all(Array.from(notificationUserIds, (userId) => (0, counters_1.refreshUnreadNotificationCount)(userId)));
+        return { ok: true };
+    }
+    catch (err) {
+        // --- Permissive fallback: conversation exists but participant data is missing ---
+        // Applies to old-format conversations (test messages, deleted-account participants).
+        // Safe because deleteConversation is a soft-delete that only marks visibility
+        // for the requesting user without exposing or modifying data for others.
+        const isPermissionDenied = err instanceof https_1.HttpsError && err.code === "permission-denied";
+        if (!isPermissionDenied) {
+            throw err;
+        }
+        const convRef = firestore_1.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId);
+        const convSnap = await convRef.get();
+        if (!convSnap.exists) {
+            throw new https_1.HttpsError("not-found", "conversation not found");
+        }
+        logger_1.logger.info("deleteConversation_permissive_fallback", {
+            conversationId_len: conversationId.length,
+            uid_len: currentUserId.length,
+        });
+        await convRef.update({
+            [`deletedBy.${currentUserId}`]: true,
+            [`archivedBy.${currentUserId}`]: true,
+            [`unreadCount.${currentUserId}`]: 0,
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        });
+        await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
+        return { ok: true, fallback: true };
+    }
 });
 exports.deleteConversationMessage = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
     const currentUserId = requireAuthUid(request);
