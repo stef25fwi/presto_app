@@ -72,6 +72,16 @@ const mirror_1 = require("./mirror");
     strict_1.default.equal(left, right);
     strict_1.default.match(left, /^conv_[a-f0-9]{32}$/);
 });
+(0, node_test_1.default)("shouldForkConversationThread returns true when a participant previously deleted the thread", () => {
+    strict_1.default.equal((0, callables_1.shouldForkConversationThread)(["buyer_a", "seller_b"], {
+        buyer_a: false,
+        seller_b: true,
+    }), true);
+    strict_1.default.equal((0, callables_1.shouldForkConversationThread)(["buyer_a", "seller_b"], {
+        buyer_a: false,
+        seller_b: false,
+    }), false);
+});
 (0, node_test_1.default)("sendConversationMessage refuses non participant access", () => {
     strict_1.default.throws(() => (0, callables_1.assertConversationParticipantAccess)(["buyer_a", "seller_b"], "intruder_c"), (error) => {
         strict_1.default.ok(error instanceof https_1.HttpsError);

@@ -95,12 +95,12 @@ class ConversationService {
     return conversationId;
   }
 
-  static Future<void> sendMessage({
+  static Future<String> sendMessage({
     required String conversationId,
     String text = '',
     List<ConversationAttachmentInput> attachments = const [],
   }) async {
-    await callPrestoFunction<dynamic>(
+    final response = await callPrestoFunction<dynamic>(
       functions: _functions,
       name: 'sendConversationMessage',
       timeout: const Duration(seconds: 20),
@@ -111,6 +111,14 @@ class ConversationService {
           'attachments': attachments.map((entry) => entry.toJson()).toList(),
       },
     );
+    final data = Map<String, dynamic>.from(
+      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
+    );
+    final resolvedConversationId =
+        (data['conversationId'] ?? conversationId).toString().trim();
+    return resolvedConversationId.isEmpty
+        ? conversationId
+        : resolvedConversationId;
   }
 
   static Future<ProcessedConversationPhoto> processConversationPhoto({

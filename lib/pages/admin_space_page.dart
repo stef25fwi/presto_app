@@ -3115,6 +3115,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               const SizedBox(height: 14),
               const _AdminMessagingModerationTile(),
               const SizedBox(height: 14),
+              _AdminMessagingEntryCard(accessState: _adminAccessState),
+              const SizedBox(height: 14),
               _buildFirebaseDeployDiagnosticPanel(),
               const SizedBox(height: 14),
               GridView(
@@ -4809,6 +4811,83 @@ class _AdminListTile extends StatelessWidget {
             const SizedBox(width: 12),
             trailing,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminMessagingEntryCard extends StatelessWidget {
+  final AdminAccessState? accessState;
+
+  const _AdminMessagingEntryCard({required this.accessState});
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => AdminMessagingDashboardPage(
+                accessState: accessState,
+              ),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F766E).withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF0F766E).withValues(alpha: 0.18),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.admin_panel_settings_rounded,
+                  color: Color(0xFF0F766E),
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Gestion messagerie',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 17,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Accès direct au dashboard, aux signalements, à l’audit et aux réglages.',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF0F766E),
+                size: 28,
+              ),
+            ],
+          ),
         ),
       ),
     );
