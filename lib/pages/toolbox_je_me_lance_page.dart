@@ -213,7 +213,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   static const Color kMutedText = Color(0xFF66728A);
   static const Color kBorder = Color(0xFFE2E6EF);
   static const int kTotalSteps = 4;
-  static const double kPageHorizontalPadding = 16;
+  static const double kPageHorizontalPadding = 10;
 
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
@@ -1872,7 +1872,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: kPageHorizontalPadding),
       child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: minHeight),
+        constraints: BoxConstraints(minHeight: minHeight - 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -3571,10 +3571,10 @@ class _Card extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: accent.withValues(alpha: 0.14), width: 1.2),
         boxShadow: [
           BoxShadow(
@@ -3625,7 +3625,7 @@ class _Card extends StatelessWidget {
                         stepLabel!,
                         style: TextStyle(
                           color: accent,
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -3633,7 +3633,7 @@ class _Card extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 19,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF071B4D),
                         height: 1.1,
@@ -4366,12 +4366,25 @@ class _CostRowState extends State<_CostRow> {
                       ),
                     ),
                     if (hasExplanation) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        _expanded
-                            ? Icons.expand_less_rounded
-                            : Icons.expand_more_rounded,
-                        color: const Color(0xFF6B7280),
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: _expanded
+                              ? const Color(0xFFFF6600).withValues(alpha: 0.12)
+                              : const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          _expanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          size: 20,
+                          color: _expanded
+                              ? const Color(0xFFFF6600)
+                              : const Color(0xFF6B7280),
+                        ),
                       ),
                     ],
                   ],
