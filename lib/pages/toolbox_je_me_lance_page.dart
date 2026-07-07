@@ -1708,15 +1708,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
-                                      if (_isLocalOnlyMode) ...[
-                                        const _InfoBox(
-                                          icon: Icons.cloud_off_outlined,
-                                          title: 'Mode local non sauvegardé',
-                                          text:
-                                              "Tes réponses restent utilisables sur cet écran, mais elles ne seront pas reprises automatiquement plus tard tant que la persistance n'est pas disponible.",
-                                        ),
-                                        const SizedBox(height: 12),
-                                      ],
                                       if (_journeyStatus == 'completed') ...[
                                         _InfoBox(
                                           icon: Icons.verified_outlined,
