@@ -11,6 +11,7 @@ import {
   mergeConversationParticipants,
   resolveOfferLikeData,
   sanitizeConversationAttachments,
+  shouldForkConversationThread,
 } from "./callables";
 import { readConversationMessageCount } from "./mirror";
 
@@ -98,6 +99,23 @@ test("canonicalConversationId is stable and order-independent", () => {
 
   assert.equal(left, right);
   assert.match(left, /^conv_[a-f0-9]{32}$/);
+});
+
+test("shouldForkConversationThread returns true when a participant previously deleted the thread", () => {
+  assert.equal(
+    shouldForkConversationThread(["buyer_a", "seller_b"], {
+      buyer_a: false,
+      seller_b: true,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldForkConversationThread(["buyer_a", "seller_b"], {
+      buyer_a: false,
+      seller_b: false,
+    }),
+    false,
+  );
 });
 
 test("sendConversationMessage refuses non participant access", () => {

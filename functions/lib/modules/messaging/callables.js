@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteConversationMessage = exports.deleteConversation = exports.adminUnblockConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.processConversationAttachmentPhoto = void 0;
 exports.assertConversationParticipantAccess = assertConversationParticipantAccess;
 exports.canonicalConversationId = canonicalConversationId;
+exports.shouldForkConversationThread = shouldForkConversationThread;
 exports.resolveOfferLikeData = resolveOfferLikeData;
 exports.getMessagingAttachmentEntitlements = getMessagingAttachmentEntitlements;
 exports.buildAttachmentMessageFallbackText = buildAttachmentMessageFallbackText;
@@ -147,6 +148,22 @@ async function deleteNotificationsForConversation(conversationId, userId) {
 function canonicalConversationId({ listingId, currentUserId, otherUserId, }) {
     const participants = [sanitizeConversationPart(currentUserId), sanitizeConversationPart(otherUserId)].sort();
     return `conv_${(0, hash_1.sha256)(`${sanitizeConversationPart(listingId)}::${participants.join("::")}`).slice(0, 32)}`;
+}
+function baseConversationThreadId(conversationId) {
+    const normalizedConversationId = String(conversationId || "").trim();
+    const markerIndex = normalizedConversationId.indexOf("__");
+    if (markerIndex <= 0) {
+        return normalizedConversationId;
+    }
+    return normalizedConversationId.slice(0, markerIndex);
+}
+function buildForkedConversationThreadId(conversationId) {
+    const baseId = baseConversationThreadId(conversationId);
+    const suffix = (0, node_crypto_1.randomUUID)().replaceAll("-", "").slice(0, 12);
+    return `${baseId}__${suffix}`;
+}
+function shouldForkConversationThread(participants, deletedBy) {
+    return participants.some((participantId) => deletedBy[participantId] === true);
 }
 function normalizeParticipantName(...values) {
     for (const value of values) {
@@ -654,6 +671,9 @@ exports.ensureOfferConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS
         if ((0, state_1.isConversationBlocked)(docData)) {
             throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
         }
+        if (shouldForkConversationThread(normalizedParticipants, conversation.deletedBy)) {
+            continue;
+        }
         const archivedBy = {
             ...conversation.archivedBy,
             [currentUserId]: false,
@@ -684,7 +704,47 @@ exports.ensureOfferConversation = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS
     }
     const conversationId = canonicalConversationId({ listingId, currentUserId, otherUserId });
     const participants = [currentUserId, otherUserId].sort();
-    const convRef = convCol.doc(conversationId);
+    const matchingConversationExists = existingDocs.some((doc) => {
+        const docData = doc.data();
+        const conversation = (0, mirror_1.readConversationMirrorData)(docData, { conversationId: doc.id });
+        return conversation.participants.includes(otherUserId);
+    });
+    const targetConversationId = matchingConversationExists
+        ? buildForkedConversationThreadId(conversationId)
+        : conversationId;
+    const convRef = convCol.doc(targetConversationId);
+    if (targetConversationId != conversationId) {
+        await convRef.set((0, mirror_1.buildConversationMirrorFields)({
+            participants,
+            participantNames,
+            otherUserName,
+            listingId,
+            listingTitle: offerTitle,
+            offerId: listingId,
+            offerTitle,
+            status: "open",
+            archivedBy: {},
+            deletedBy: {},
+            blockedBy: {},
+            lastReadAt: {},
+            createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            lastMessage: "",
+            lastSenderId: "",
+            lastSenderName: "",
+            messageCount: 0,
+            unreadCount: {
+                [currentUserId]: 0,
+                [otherUserId]: 0,
+            },
+        }), { merge: false });
+        return {
+            ok: true,
+            conversationId: convRef.id,
+            offerTitle,
+        };
+    }
     await firestore_1.db.runTransaction(async (transaction) => {
         const snap = await transaction.get(convRef);
         if (snap.exists) {
@@ -814,6 +874,8 @@ exports.sendConversationMessage = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPT
     const senderName = readUserDisplayName(senderUserSnap.data(), request.auth?.token?.name, request.auth?.token?.email, currentUserId);
     const messageRef = convRef.collection("messages").doc();
     let participantsToRefresh = [];
+    let effectiveConversationId = conversationId;
+    let effectiveMessageId = messageRef.id;
     await firestore_1.db.runTransaction(async (transaction) => {
         const convSnap = await transaction.get(convRef);
         if (!convSnap.exists) {
@@ -860,6 +922,88 @@ exports.sendConversationMessage = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPT
         const unreadCount = {
             ...conversation.unreadCount,
         };
+        if (shouldForkConversationThread(participants, deletedBy)) {
+            const forkedConversationId = buildForkedConversationThreadId(conversationId);
+            const forkedConvRef = firestore_1.db.collection(constants_1.COLLECTIONS.conversations).doc(forkedConversationId);
+            const forkedMessageRef = forkedConvRef.collection("messages").doc();
+            const retiredArchivedBy = {
+                ...archivedBy,
+                [currentUserId]: true,
+            };
+            const retiredDeletedBy = {
+                ...deletedBy,
+                [currentUserId]: true,
+            };
+            const freshArchivedBy = Object.fromEntries(participants.map((participantId) => [participantId, false]));
+            const freshDeletedBy = Object.fromEntries(participants.map((participantId) => [participantId, false]));
+            const freshBlockedBy = Object.fromEntries(participants.map((participantId) => [participantId, false]));
+            const freshUnreadCount = Object.fromEntries(participants.map((participantId) => [
+                participantId,
+                participantId == currentUserId ? 0 : firebase_admin_1.default.firestore.FieldValue.increment(1),
+            ]));
+            transaction.set(forkedMessageRef, {
+                text: messageText,
+                body: messageText,
+                attachments,
+                moderation: {
+                    mode: messageModeration.mode,
+                    status: messageModeration.status,
+                    visibility: messageModeration.visibility,
+                    reason: messageModeration.moderationReason,
+                    userMessage: messageModeration.userMessage,
+                    autoFlags: messageModeration.autoFlags,
+                    riskScore: messageModeration.riskScore,
+                    textScanStatus: messageModeration.textScanStatus,
+                    imageScanStatus: messageModeration.imageScanStatus,
+                    updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                },
+                senderId: currentUserId,
+                sender_id: currentUserId,
+                senderName,
+                sender_name: senderName,
+                isFirstMessage: true,
+                createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                created_at: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            });
+            transaction.set(forkedConvRef, (0, mirror_1.buildConversationMirrorFields)({
+                ...conversation,
+                participants,
+                participantNames: {
+                    ...conversation.participantNames,
+                    [currentUserId]: senderName,
+                },
+                archivedBy: freshArchivedBy,
+                deletedBy: freshDeletedBy,
+                blockedBy: freshBlockedBy,
+                unreadCount: freshUnreadCount,
+                status: "open",
+                lastReadAt: {},
+                createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                lastMessage: messageText,
+                lastSenderId: currentUserId,
+                lastSenderName: senderName,
+                lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                messageCount: 1,
+            }), { merge: false });
+            transaction.update(convRef, (0, mirror_1.buildConversationMirrorFields)({
+                ...conversation,
+                participants,
+                archivedBy: retiredArchivedBy,
+                deletedBy: retiredDeletedBy,
+                blockedBy: conversation.blockedBy,
+                unreadCount: {
+                    ...conversation.unreadCount,
+                    [currentUserId]: 0,
+                },
+                status: (0, state_1.computeConversationStatus)(participants, retiredArchivedBy, conversation.blockedBy),
+                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            }));
+            participantsToRefresh = participants;
+            effectiveConversationId = forkedConversationId;
+            effectiveMessageId = forkedMessageRef.id;
+            return;
+        }
         for (const participantId of participants) {
             archivedBy[participantId] = false;
             deletedBy[participantId] = false;
@@ -890,7 +1034,8 @@ exports.sendConversationMessage = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPT
     await Promise.all(participantsToRefresh.map((participantId) => (0, counters_1.refreshUnreadMessageCount)(participantId)));
     return {
         ok: true,
-        messageId: messageRef.id,
+        messageId: effectiveMessageId,
+        conversationId: effectiveConversationId,
     };
 });
 exports.markConversationRead = (0, https_1.onCall)(HOT_MESSAGING_CALLABLE_OPTIONS, async (request) => {

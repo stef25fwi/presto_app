@@ -1451,18 +1451,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Future<void> _sendMessageCf({
+  Future<String> _sendMessageCf({
     required String text,
     List<ConversationAttachmentInput> attachments = const [],
   }) async {
     Object? firstError;
     try {
-      await ConversationService.sendMessage(
+      return await ConversationService.sendMessage(
         conversationId: widget.conversationId,
         text: text,
         attachments: attachments,
       );
-      return;
     } catch (error) {
       if (_messagingErrorCode(error) != 'unauthenticated') rethrow;
       firstError = error;
@@ -1474,10 +1473,31 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       forceRefreshAppCheckToken: true,
     );
     if (!retryReady) throw firstError;
-    await ConversationService.sendMessage(
+    return await ConversationService.sendMessage(
       conversationId: widget.conversationId,
       text: text,
       attachments: attachments,
+    );
+  }
+
+  Future<void> _switchToConversationIfNeeded(String conversationId) async {
+    final normalizedConversationId = conversationId.trim();
+    if (!mounted ||
+        normalizedConversationId.isEmpty ||
+        normalizedConversationId == widget.conversationId) {
+      return;
+    }
+
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => ConversationThreadPage(
+          conversationId: normalizedConversationId,
+          offerTitle: _conversationOfferTitle.isNotEmpty
+              ? _conversationOfferTitle
+              : widget.offerTitle,
+          currentUserId: widget.currentUserId,
+        ),
+      ),
     );
   }
 
@@ -1529,10 +1549,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         }
         return;
       }
-      await _sendMessageCf(text: text);
+      final resolvedConversationId = await _sendMessageCf(text: text);
 
-      unawaited(_markAsRead());
+      if (resolvedConversationId == widget.conversationId) {
+        unawaited(_markAsRead());
+      }
       _removeOptimisticMessage(optimisticMessage.id);
+      await _switchToConversationIfNeeded(resolvedConversationId);
+      if (!mounted) return;
       _scrollToLatestMessage(force: true);
     } catch (error) {
       _debugMessagingAccess(
@@ -2440,13 +2464,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _scrollToLatestMessage(force: true);
 
     try {
-      await ConversationService.sendMessage(
+      final resolvedConversationId = await ConversationService.sendMessage(
         conversationId: widget.conversationId,
         text: text,
         attachments: [attachment.toInput()],
       );
-      unawaited(_markAsRead());
+      if (resolvedConversationId == widget.conversationId) {
+        unawaited(_markAsRead());
+      }
       _removeOptimisticMessage(optimisticMessage.id);
+      await _switchToConversationIfNeeded(resolvedConversationId);
+      if (!mounted) return;
       _scrollToLatestMessage(force: true);
     } catch (error) {
       debugPrint('[ConversationThread] send attachment error: $error');

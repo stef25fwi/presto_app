@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
+import '../features/trust_score/trust_score_service.dart';
 import '../features/trust_score/trust_score_widgets.dart';
 import '../main.dart'
     show
@@ -2888,29 +2889,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     String offerId,
     String title,
   ) async {
-    final yes = await showDialog<bool>(
+    final reason = await showDialog<String>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text(
-          'Supprimer l\'annonce ?',
-          style: kPrestoSectionTitleStyle,
-        ),
-        content: Text(
-          'Supprimer : "$title" ?',
-          style: kPrestoBodyTextStyle,
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Supprimer')),
-        ],
-      ),
+      builder: (_) => const CloseOfferReasonDialog(),
     );
 
-    if (yes != true) return;
+    if (reason == null) return;
 
     try {
       final listingsRef = FirebaseFirestore.instance
@@ -2918,17 +2902,36 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
       if (listingsSnap.exists) {
-        final callable = prestoFirebaseFunctions.httpsCallable(
-          'deleteListing',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 30),
-          ),
-        );
-        await callable.call<dynamic>({'listingId': offerId});
+        final shouldKeepVisibleWithJobDone =
+            isOfferJobDoneDeletionReason(reason);
+        if (shouldKeepVisibleWithJobDone) {
+          await TrustScoreService().closeOfferWithReason(
+            offerId: offerId,
+            reason: reason,
+            jobDone: true,
+          );
+        } else {
+          final callable = prestoFirebaseFunctions.httpsCallable(
+            'deleteListing',
+            options: HttpsCallableOptions(
+              timeout: const Duration(seconds: 30),
+            ),
+          );
+          await callable.call<dynamic>({
+            'listingId': offerId,
+            'reason': reason,
+          });
+        }
         await _refreshOffers();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Annonce supprimée.')),
+            SnackBar(
+              content: Text(
+                shouldKeepVisibleWithJobDone
+                    ? 'Annonce "$title" marquée comme réalisée. Elle restera visible 10 h avec son état de clôture.'
+                    : 'Annonce supprimée.',
+              ),
+            ),
           );
         }
       } else if (context.mounted) {
