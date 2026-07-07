@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class ParcoursFichesService {
   ParcoursFichesService({FirebaseFirestore? firestore})
@@ -28,13 +29,35 @@ class ParcoursFichesService {
       return null;
     }
 
-    final fiche =
-        _FonctionnaireParcoursFiche.fromMap(snapshot.docs.first.data());
+    final rawFiche = Map<String, dynamic>.from(snapshot.docs.first.data());
+    if ('${rawFiche['markdown_content'] ?? ''}'.trim().isEmpty) {
+      final bundledMarkdown = await _loadBundledMarkdownContent(rawFiche);
+      if (bundledMarkdown.isNotEmpty) {
+        rawFiche['markdown_content'] = bundledMarkdown;
+      }
+    }
+
+    final fiche = _FonctionnaireParcoursFiche.fromMap(rawFiche);
     return fiche.toDerivedData(
       region: region,
       currentStatus: currentStatus,
       fallback: fallback,
     );
+  }
+
+  Future<String> _loadBundledMarkdownContent(Map<String, dynamic> fiche) async {
+    final ficheId = '${fiche['id_fiche'] ?? ''}'.trim();
+    if (ficheId.isEmpty) {
+      return '';
+    }
+
+    final assetPath =
+        'docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/$ficheId.md';
+    try {
+      return await rootBundle.loadString(assetPath);
+    } catch (_) {
+      return '';
+    }
   }
 }
 
@@ -59,11 +82,15 @@ class _FonctionnaireParcoursFiche {
   }
 
   final Map<String, dynamic> raw;
+  late final _MarkdownOutline _markdownOutline = _MarkdownOutline.parse(
+    markdownContent,
+  );
 
   String get activity => _string('activite');
   String get category => _string('categorie');
   String get vigilance => _string('niveau_vigilance');
   String get qualificationRules => _string('qualification_regles');
+  String get markdownContent => _string('markdown_content');
   String get currentFrame => _stringFromMap(_map('parcours'), '3_cadre');
   String get personalSituation =>
       _stringFromMap(_map('parcours'), '2_situation_personnelle');
@@ -72,6 +99,7 @@ class _FonctionnaireParcoursFiche {
   String get fiscalNature => _string('nature_fiscale_probable');
   String get cumulBody => _string('organisme_cumul');
   bool get isRegulated => raw['activite_reglementee'] == true;
+  bool get hasMarkdownContent => markdownContent.isNotEmpty;
 
   List<String> get alerts => _stringList('alertes');
   List<String> get documents => _stringList('documents_a_collecter');
@@ -106,7 +134,7 @@ class _FonctionnaireParcoursFiche {
         (fallback['recommendedLegalStatus'] as Map?)?.cast<String, dynamic>() ??
             <String, dynamic>{};
 
-    final regulationTutorial = <Map<String, dynamic>>[
+    final generatedRegulationTutorial = <Map<String, dynamic>>[
       {
         'title': 'Activité libre ou réglementée',
         'description': isRegulated
@@ -135,8 +163,9 @@ class _FonctionnaireParcoursFiche {
               '(${officialSources.length} source(s) recensée(s)).',
         },
     ];
+    final regulationTutorial = _buildMarkdownRegulationTutorial();
 
-    final statusWarnings = <Map<String, dynamic>>[
+    final generatedStatusWarnings = <Map<String, dynamic>>[
       {
         'title': 'Cumul fonction publique à sécuriser',
         'description': personalSituation.isNotEmpty
@@ -150,6 +179,7 @@ class _FonctionnaireParcoursFiche {
         ]),
       },
     ];
+    final statusWarnings = _buildMarkdownStatusWarnings();
 
     final planB = alternateStatuses.isNotEmpty
         ? 'Alternative(s) à envisager : ${alternateStatuses.join(', ')}.'
@@ -159,20 +189,27 @@ class _FonctionnaireParcoursFiche {
         ? legalReviewStatus
         : 'La fiche fournit un socle métier. Une validation finale par l’administration employeur ou l’organisme compétent reste recommandée.';
 
-    final recommendedLegalStatus = <String, dynamic>{
-      'recommended': recommendedStatus.isNotEmpty
-          ? recommendedStatus
-          : (fallbackLegalStatus['recommended'] ??
-              fallbackRecommendation['statut'] ??
-              ''),
-      'justification': currentFrame.isNotEmpty
-          ? currentFrame
-          : (fallbackLegalStatus['justification'] ??
-              fallbackRecommendation['why'] ??
-              ''),
-      'planB': planB,
-      'disclaimer': legalDisclaimer,
-    };
+    final recommendedLegalStatus =
+        _buildMarkdownRecommendedLegalStatus(
+          fallbackLegalStatus: fallbackLegalStatus,
+          fallbackRecommendation: fallbackRecommendation,
+          fallbackPlanB: planB,
+          fallbackDisclaimer: legalDisclaimer,
+        ) ??
+        <String, dynamic>{
+          'recommended': recommendedStatus.isNotEmpty
+              ? recommendedStatus
+              : (fallbackLegalStatus['recommended'] ??
+                  fallbackRecommendation['statut'] ??
+                  ''),
+          'justification': currentFrame.isNotEmpty
+              ? currentFrame
+              : (fallbackLegalStatus['justification'] ??
+                  fallbackRecommendation['why'] ??
+                  ''),
+          'planB': planB,
+          'disclaimer': legalDisclaimer,
+        };
 
     final recommendation = <String, dynamic>{
       ...fallbackRecommendation,
@@ -219,19 +256,199 @@ class _FonctionnaireParcoursFiche {
       'recommendedLegalStatus': recommendedLegalStatus['recommended'],
     };
 
+    final markdownTutorialSteps = _buildMarkdownTutorialSteps();
+    final markdownAids = _buildMarkdownAids();
+
     return {
       ...fallback,
       'recommendation': recommendation,
       'blockingAlerts': blockingAlerts,
       'costs': costs,
       'plan30': plan30,
-      'aides': _buildAids(),
+      'aides': markdownAids.isNotEmpty ? markdownAids : _buildAids(),
       'summary': summary,
-      'regulationTutorial': regulationTutorial,
-      'statusWarnings': statusWarnings,
+      'regulationTutorial': regulationTutorial.isNotEmpty
+          ? regulationTutorial
+          : generatedRegulationTutorial,
+      'statusWarnings': statusWarnings.isNotEmpty
+          ? statusWarnings
+          : generatedStatusWarnings,
       'recommendedLegalStatus': recommendedLegalStatus,
-      'steps': _buildTutorialSteps(),
+      'steps': markdownTutorialSteps.isNotEmpty
+          ? markdownTutorialSteps
+          : _buildTutorialSteps(),
     };
+  }
+
+  List<Map<String, dynamic>> _buildMarkdownRegulationTutorial() {
+    if (!hasMarkdownContent) {
+      return const <Map<String, dynamic>>[];
+    }
+    return _markdownOutline
+        .subsectionsForSectionPrefix('1.')
+        .map(
+          (subsection) => {
+            'title': subsection.title,
+            'description': subsection.fullText,
+          },
+        )
+        .where((item) => '${item['description'] ?? ''}'.trim().isNotEmpty)
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _buildMarkdownStatusWarnings() {
+    if (!hasMarkdownContent) {
+      return const <Map<String, dynamic>>[];
+    }
+    return _markdownOutline
+        .subsectionsForSectionPrefix('2.')
+        .map(
+          (subsection) => {
+            'title': subsection.title,
+            'description': subsection.prose.isNotEmpty
+                ? subsection.prose
+                : subsection.fullText,
+            'checks': subsection.bullets,
+          },
+        )
+        .where(
+          (item) =>
+              '${item['description'] ?? ''}'.trim().isNotEmpty ||
+              ((item['checks'] as List?)?.isNotEmpty ?? false),
+        )
+        .toList();
+  }
+
+  Map<String, dynamic>? _buildMarkdownRecommendedLegalStatus({
+    required Map<String, dynamic> fallbackLegalStatus,
+    required Map<String, dynamic> fallbackRecommendation,
+    required String fallbackPlanB,
+    required String fallbackDisclaimer,
+  }) {
+    if (!hasMarkdownContent) {
+      return null;
+    }
+
+    final recommendationSection =
+        _markdownOutline.findSubsection('3.', 'Recommandation principale');
+    final whySection =
+        _markdownOutline.findSubsection('3.', 'Pourquoi ce statut est adapté');
+    final limitsSection =
+        _markdownOutline.findSubsection('3.', 'Limites du statut');
+    final fiscalSection =
+        _markdownOutline.findSubsection('3.', 'Fiscalité, cotisations et TVA');
+
+    if (recommendationSection == null &&
+        whySection == null &&
+        limitsSection == null &&
+        fiscalSection == null) {
+      return null;
+    }
+
+    final extractedRecommended = _extractFirstBoldValue(
+      recommendationSection?.fullText ?? '',
+    );
+    final justification = _joinNonEmpty([
+      recommendationSection?.fullText ?? '',
+      whySection?.fullText ?? '',
+    ]);
+    final planB = limitsSection?.fullText.trim().isNotEmpty == true
+        ? limitsSection!.fullText
+        : fallbackPlanB;
+    final disclaimer = _joinNonEmpty([
+      fiscalSection?.fullText ?? '',
+      fallbackDisclaimer,
+    ]);
+
+    return <String, dynamic>{
+      'recommended': extractedRecommended.isNotEmpty
+          ? extractedRecommended
+          : (recommendedStatus.isNotEmpty
+              ? recommendedStatus
+              : (fallbackLegalStatus['recommended'] ??
+                  fallbackRecommendation['statut'] ??
+                  '')),
+      'justification': justification.isNotEmpty
+          ? justification
+          : (fallbackLegalStatus['justification'] ??
+              fallbackRecommendation['why'] ??
+              ''),
+      'planB': planB,
+      'disclaimer': disclaimer.isNotEmpty ? disclaimer : fallbackDisclaimer,
+    };
+  }
+
+  List<Map<String, dynamic>> _buildMarkdownTutorialSteps() {
+    if (!hasMarkdownContent) {
+      return const <Map<String, dynamic>>[];
+    }
+
+    final subsections = _markdownOutline
+        .subsectionsForSectionPrefix('4.')
+        .where((item) => item.title.toLowerCase().startsWith('étape '))
+        .toList();
+    if (subsections.isEmpty) {
+      return const <Map<String, dynamic>>[];
+    }
+
+    return [
+      for (var index = 0; index < subsections.length; index += 1)
+        _tutorialStep(
+          id: 'markdown_${index + 1}',
+          order: index + 1,
+          title: subsections[index].title,
+          objective: subsections[index].prose.isNotEmpty
+              ? subsections[index].prose
+              : subsections[index].fullText,
+          todos: subsections[index].bullets,
+        ),
+    ];
+  }
+
+  List<Map<String, dynamic>> _buildMarkdownAids() {
+    if (!hasMarkdownContent) {
+      return const <Map<String, dynamic>>[];
+    }
+
+    final subsections = _markdownOutline.subsectionsForSectionPrefix('5.');
+    if (subsections.isEmpty) {
+      return const <Map<String, dynamic>>[];
+    }
+
+    final items = <Map<String, dynamic>>[];
+    for (final subsection in subsections) {
+      if (subsection.title == 'Aides à prévoir dans la base') {
+        for (final bullet in subsection.bullets) {
+          items.add({
+            'name': bullet,
+            'desc': 'Mentionnée explicitement dans la fiche métier.',
+            'relevant': true,
+            'status': 'à checker',
+          });
+        }
+        continue;
+      }
+
+      items.add({
+        'name': subsection.title,
+        'desc': subsection.fullText,
+        'relevant': true,
+        'status': 'à checker',
+      });
+    }
+    return _dedupeMapsByName(items);
+  }
+
+  String _extractFirstBoldValue(String value) {
+    final match = RegExp(r'\*\*(.+?)\*\*').firstMatch(value);
+    return match == null ? '' : match.group(1)?.trim() ?? '';
+  }
+
+  String _joinNonEmpty(List<String> values) {
+    return values
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .join('\n\n');
   }
 
   List<Map<String, dynamic>> _buildAids() {
@@ -502,5 +719,159 @@ class _FonctionnaireParcoursFiche {
       return value;
     }
     return value[0].toUpperCase() + value.substring(1);
+  }
+}
+
+class _MarkdownOutline {
+  _MarkdownOutline({required this.sections});
+
+  factory _MarkdownOutline.parse(String markdown) {
+    if (markdown.trim().isEmpty) {
+      return _MarkdownOutline(sections: const <_MarkdownSection>[]);
+    }
+
+    final sections = <_MarkdownSection>[];
+    String? currentSectionTitle;
+    String? currentSubsectionTitle;
+    final currentLines = <String>[];
+    final currentSubsections = <_MarkdownSubsection>[];
+
+    void flushSubsection() {
+      if (currentSubsectionTitle == null) {
+        currentLines.clear();
+        return;
+      }
+      currentSubsections.add(
+        _MarkdownSubsection(
+          title: currentSubsectionTitle,
+          rawLines: List<String>.from(currentLines),
+        ),
+      );
+      currentLines.clear();
+    }
+
+    void flushSection() {
+      flushSubsection();
+      if (currentSectionTitle != null) {
+        sections.add(
+          _MarkdownSection(
+            title: currentSectionTitle,
+            subsections: List<_MarkdownSubsection>.from(currentSubsections),
+          ),
+        );
+      }
+      currentSubsections.clear();
+    }
+
+    for (final rawLine in markdown.split('\n')) {
+      final line = rawLine.trimRight();
+      final trimmed = line.trim();
+
+      if (trimmed.startsWith('## ')) {
+        flushSection();
+        currentSectionTitle = trimmed.substring(3).trim();
+        currentSubsectionTitle = null;
+        continue;
+      }
+
+      if (trimmed.startsWith('### ')) {
+        flushSubsection();
+        currentSubsectionTitle = trimmed.substring(4).trim();
+        continue;
+      }
+
+      if (trimmed == '---' || trimmed.startsWith('# ')) {
+        continue;
+      }
+
+      if (currentSubsectionTitle != null) {
+        currentLines.add(line);
+      }
+    }
+
+    flushSection();
+    return _MarkdownOutline(sections: sections);
+  }
+
+  final List<_MarkdownSection> sections;
+
+  List<_MarkdownSubsection> subsectionsForSectionPrefix(String prefix) {
+    for (final section in sections) {
+      if (section.title.startsWith(prefix)) {
+        return section.subsections;
+      }
+    }
+    return const <_MarkdownSubsection>[];
+  }
+
+  _MarkdownSubsection? findSubsection(String sectionPrefix, String title) {
+    for (final subsection in subsectionsForSectionPrefix(sectionPrefix)) {
+      if (subsection.title == title) {
+        return subsection;
+      }
+    }
+    return null;
+  }
+}
+
+class _MarkdownSection {
+  const _MarkdownSection({required this.title, required this.subsections});
+
+  final String title;
+  final List<_MarkdownSubsection> subsections;
+}
+
+class _MarkdownSubsection {
+  _MarkdownSubsection({required this.title, required List<String> rawLines})
+      : _rawLines = rawLines;
+
+  final String title;
+  final List<String> _rawLines;
+
+  List<String> get bullets => _rawLines
+      .map((line) => line.trim())
+      .where((line) => line.startsWith('* ') || line.startsWith('- '))
+      .map((line) => line.substring(2).trim())
+      .where((line) => line.isNotEmpty)
+      .toList();
+
+  String get prose {
+    final paragraphs = <String>[];
+    final buffer = <String>[];
+
+    void flush() {
+      final paragraph = buffer.join(' ').trim();
+      if (paragraph.isNotEmpty) {
+        paragraphs.add(paragraph);
+      }
+      buffer.clear();
+    }
+
+    for (final rawLine in _rawLines) {
+      final line = rawLine.trim();
+      if (line.isEmpty) {
+        flush();
+        continue;
+      }
+      if (line.startsWith('* ') || line.startsWith('- ')) {
+        flush();
+        continue;
+      }
+      buffer.add(line);
+    }
+    flush();
+
+    return paragraphs.join('\n\n');
+  }
+
+  String get fullText {
+    final parts = <String>[];
+    if (prose.isNotEmpty) {
+      parts.add(prose);
+    }
+    if (bullets.isNotEmpty) {
+      parts.add(bullets.map((item) => '* $item').join('\n'));
+    }
+    return parts.join('\n\n').trim();
   }
 }

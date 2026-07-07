@@ -88,6 +88,41 @@ void main() {
         isTrue,
       );
     });
+
+    test('reprend le texte exact du markdown quand il est présent', () {
+      final derived = mapFonctionnaireFicheToDerivedData(
+        fiche: _informatiqueDepannageWithMarkdown,
+        region: 'Occitanie',
+        currentStatus: 'Fonctionnaire / agent public',
+      );
+
+      final regulationTutorial =
+          (derived['regulationTutorial'] as List).cast<Map<String, dynamic>>();
+      final statusWarnings =
+          (derived['statusWarnings'] as List).cast<Map<String, dynamic>>();
+      final recommendedLegalStatus =
+          (derived['recommendedLegalStatus'] as Map).cast<String, dynamic>();
+      final steps = (derived['steps'] as List).cast<Map<String, dynamic>>();
+
+      expect('${regulationTutorial[0]['title']}', 'Résumé utilisateur');
+      expect(
+        '${regulationTutorial[1]['description']}',
+        contains('Statut de vigilance : **non / à vérifier selon périmètre**.'),
+      );
+      expect(
+        '${statusWarnings[1]['checks']}',
+        contains('fonction publique concernée : État, territoriale, hospitalière ;'),
+      );
+      expect(
+        '${recommendedLegalStatus['justification']}',
+        contains('Statut conseillé : **micro-entrepreneur / entreprise individuelle**'),
+      );
+      expect('${steps[0]['title']}', 'Étape 1 — Décrire précisément l’activité');
+      expect(
+        '${steps[1]['todos']}',
+        contains('rédiger la demande de cumul ;'),
+      );
+    });
   });
 }
 
@@ -255,4 +290,91 @@ const Map<String, dynamic> _aideAdministrativeComptable = <String, dynamic>{
   },
   'legal_review_status':
       'socle officiel intégré ; contrôle final recommandé par CMA/administration/organisme compétent selon activité avant mise en production',
+};
+
+const Map<String, dynamic> _informatiqueDepannageWithMarkdown = <String, dynamic>{
+  ..._informatiqueDepannage,
+  'markdown_content': '''# FICHE MÉTIER — Informatique / dépannage — fonctionnaire
+
+## 1. Comprendre les règles de votre activité
+
+### Résumé utilisateur
+
+L’utilisateur fonctionnaire ne doit pas démarrer directement l’activité **Informatique / dépannage** sans vérifier deux niveaux : d’abord les règles propres aux agents publics, ensuite les règles propres au métier.
+
+### Activité libre ou réglementée
+
+Statut de vigilance : **non / à vérifier selon périmètre**.
+
+L'activité peut être exercée comme activité accessoire sous réserve d'autorisation de cumul. Vérifier le respect du RGPD, la confidentialité des données, les licences logicielles et l'absence d'utilisation des moyens ou accès de l'administration.
+
+### Règles spécifiques au fonctionnaire / agent public
+
+Un agent public peut, dans certains cas, cumuler son emploi avec une micro-entreprise, mais le cumul n’est pas automatique.
+
+* demander l’autorisation ou effectuer la déclaration avant le démarrage ;
+* ne pas utiliser le matériel, les locaux, fichiers, contacts ou informations de l’administration ;
+
+## 2. Vérifier votre situation personnelle
+
+### Résumé utilisateur
+
+Le cas traité ici est : **utilisateur fonctionnaire ou agent public**.
+
+### Cas : utilisateur fonctionnaire
+
+À vérifier :
+
+* fonction publique concernée : État, territoriale, hospitalière ;
+* statut : titulaire, stagiaire, contractuel ;
+
+### Documents à demander à l’utilisateur
+
+* demande écrite d'autorisation de cumul
+* réponse écrite de l'administration
+
+## 3. Choisir le bon cadre pour démarrer
+
+### Recommandation principale
+
+Statut conseillé : **micro-entrepreneur / entreprise individuelle**, uniquement si l’activité reste compatible avec le statut d’agent public.
+
+### Pourquoi ce statut est adapté
+
+* Démarrage rapide via le Guichet unique.
+* Pas de capital social.
+
+### Limites du statut
+
+* Pas de déduction des frais réels en micro.
+* Dépassement des seuils à surveiller.
+
+### Fiscalité, cotisations et TVA
+
+Pour les prestations de services BIC, le taux de cotisations micro-sociales 2026 est de 21,2 % du chiffre d’affaires.
+
+## 4. Faire les démarches étape par étape
+
+### Étape 1 — Décrire précisément l’activité
+
+Objectif : éviter une déclaration trop vague.
+
+### Étape 2 — Vérifier le cumul fonction publique
+
+À faire avant toute publicité ou prestation :
+
+* rédiger la demande de cumul ;
+* joindre la description de l’activité ;
+
+## 5. Identifier les aides possibles
+
+### ACRE
+
+À afficher : “Exonération partielle de cotisations sociales au démarrage, sous conditions.”
+
+### Aides à prévoir dans la base
+
+* ACRE
+* Région / collectivité
+''',
 };

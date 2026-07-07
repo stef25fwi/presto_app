@@ -60,6 +60,7 @@ function extractPack(zipPath) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'parcours-fiches-'));
   execFileSync('unzip', ['-oq', zipPath, '-d', tempDir], { stdio: 'inherit' });
   const firebaseDir = findDirContaining(tempDir, 'firebase');
+  const markdownDir = findDirContaining(tempDir, 'markdown');
   if (!firebaseDir) {
     throw new Error('Dossier firebase introuvable dans le pack');
   }
@@ -69,7 +70,28 @@ function extractPack(zipPath) {
   if (!jsonFile) {
     throw new Error('Fichier JSON Firestore introuvable dans le pack');
   }
-  return path.join(firebaseDir, jsonFile);
+  return {
+    jsonPath: path.join(firebaseDir, jsonFile),
+    markdownDir,
+  };
+}
+
+function loadMarkdownById(markdownDir) {
+  const markdownById = new Map();
+  if (!markdownDir || !fs.existsSync(markdownDir)) {
+    return markdownById;
+  }
+
+  for (const entry of fs.readdirSync(markdownDir)) {
+    if (!entry.endsWith('.md')) {
+      continue;
+    }
+    const id = path.basename(entry, '.md');
+    const markdown = fs.readFileSync(path.join(markdownDir, entry), 'utf8');
+    markdownById.set(id, markdown);
+  }
+
+  return markdownById;
 }
 
 function findDirContaining(root, targetName) {
@@ -157,8 +179,12 @@ async function countDocuments({ accessToken, project, collection }) {
 
 async function main() {
   const args = readArgs(process.argv.slice(2));
-  const jsonPath = extractPack(args.zip);
-  const fiches = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  const { jsonPath, markdownDir } = extractPack(args.zip);
+  const markdownById = loadMarkdownById(markdownDir);
+  const fiches = JSON.parse(fs.readFileSync(jsonPath, 'utf8')).map((fiche) => {
+    const markdown = markdownById.get(fiche.id_fiche);
+    return markdown ? { ...fiche, markdown_content: markdown } : fiche;
+  });
   const accessToken = getFirebaseCliAccessToken();
 
   for (let index = 0; index < fiches.length; index += 200) {

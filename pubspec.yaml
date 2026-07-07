@@ -103,6 +103,7 @@ flutter:
     - assets/images/logowebp.webp
     - assets/data/cities_compact.json
     - assets/carousel_home/
+    - docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/
 
 dependency_overrides:
   flutter_app_badger:
