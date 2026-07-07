@@ -38,7 +38,7 @@ function readArgs(argv) {
   return args;
 }
 
-function getFirebaseCliAccessToken() {
+async function getFirebaseCliAccessToken() {
   const configPath = path.join(
     os.homedir(),
     '.config',
@@ -46,12 +46,24 @@ function getFirebaseCliAccessToken() {
     'firebase-tools.json'
   );
   if (!fs.existsSync(configPath)) {
-    throw new Error('Configuration Firebase CLI introuvable');
+    throw new Error(
+      'Configuration Firebase CLI introuvable. Lancez `firebase login`.'
+    );
   }
+
+  // Ask the Firebase CLI to run a lightweight command so it refreshes its own token.
+  try {
+    execFileSync('firebase', ['--version'], { stdio: 'ignore' });
+  } catch (_) {
+    // best effort
+  }
+
   const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   const token = raw.tokens?.access_token;
   if (!token) {
-    throw new Error('Access token Firebase CLI introuvable');
+    throw new Error(
+      'Access token Firebase CLI introuvable. Relancez `firebase login`.'
+    );
   }
   return token;
 }
@@ -185,7 +197,7 @@ async function main() {
     const markdown = markdownById.get(fiche.id_fiche);
     return markdown ? { ...fiche, markdown_content: markdown } : fiche;
   });
-  const accessToken = getFirebaseCliAccessToken();
+  const accessToken = await getFirebaseCliAccessToken();
 
   for (let index = 0; index < fiches.length; index += 200) {
     const batch = fiches.slice(index, index + 200);
