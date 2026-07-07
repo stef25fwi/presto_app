@@ -301,6 +301,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   List<Map<String, dynamic>> _progressSteps = [];
 
   Timer? _autosaveDebounce;
+  final ScrollController _pageScrollController = ScrollController();
 
   @override
   void initState() {
@@ -316,6 +317,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _regionCtrl.dispose();
     _departementCtrl.dispose();
     _communeCtrl.dispose();
+    _pageScrollController.dispose();
     super.dispose();
   }
 
@@ -1326,6 +1328,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       _showStarterErrors = false;
       _step = (_step + 1).clamp(1, kTotalSteps);
     });
+    _scrollToTop();
     await _saveDraft();
   }
 
@@ -1491,8 +1494,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     );
   }
 
+  void _scrollToTop() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pageScrollController.hasClients) {
+        _pageScrollController.jumpTo(0);
+      }
+    });
+  }
+
   Future<void> _back() async {
     setState(() => _step = (_step - 1).clamp(1, kTotalSteps));
+    _scrollToTop();
     await _saveDraft();
   }
 
@@ -1695,6 +1707,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     : _error != null
                         ? _ErrorState(message: _error!, onRetry: _bootstrap)
                         : SingleChildScrollView(
+                            controller: _pageScrollController,
                             padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
