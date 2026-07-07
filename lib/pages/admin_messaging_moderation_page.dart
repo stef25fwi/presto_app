@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import '../constants.dart';
+import '../admin/messaging/widgets/admin_messaging_app_bar.dart';
 import '../services/firestore_date_parser.dart';
 
 class AdminMessagingModerationPage extends StatefulWidget {
@@ -47,16 +47,7 @@ class _AdminMessagingModerationPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1A73E8),
-        foregroundColor: Colors.white,
-        elevation: 0.5,
-        titleSpacing: 16,
-        title: const Text(
-          'Modération messages',
-          style: kPrestoAppBarTitleStyle,
-        ),
-      ),
+      appBar: const AdminMessagingAppBar(title: 'Modération messages'),
       body: SafeArea(
         child: Column(
           children: [

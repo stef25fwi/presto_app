@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 
 import 'models/admin_notification_log_model.dart';
 import 'services/admin_notification_monitor_service.dart';
+import 'widgets/admin_messaging_app_bar.dart';
 
 class AdminNotificationsMonitorPage extends StatefulWidget {
-  const AdminNotificationsMonitorPage({super.key});
+  final bool showAppBar;
+
+  const AdminNotificationsMonitorPage({
+    super.key,
+    this.showAppBar = true,
+  });
 
   @override
   State<AdminNotificationsMonitorPage> createState() =>
@@ -110,9 +116,9 @@ class _AdminNotificationsMonitorPageState
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      appBar: AppBar(
-        title: const Text('Notifications messagerie'),
-      ),
+      appBar: widget.showAppBar
+          ? const AdminMessagingAppBar(title: 'Notifications messagerie')
+          : null,
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(

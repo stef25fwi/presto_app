@@ -6,6 +6,7 @@ import 'models/admin_conversation_model.dart';
 import 'services/admin_moderation_service.dart';
 import 'widgets/admin_confirm_sensitive_action_dialog.dart';
 import 'widgets/admin_conversation_status_badge.dart';
+import 'widgets/admin_messaging_app_bar.dart';
 import 'widgets/admin_risk_score_badge.dart';
 
 class AdminConversationDetailPage extends StatefulWidget {
@@ -96,12 +97,7 @@ class _AdminConversationDetailPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        title: const Text('Détail conversation'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
-        elevation: 0,
-      ),
+      appBar: const AdminMessagingAppBar(title: 'Détail conversation'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
