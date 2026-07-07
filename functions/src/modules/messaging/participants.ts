@@ -39,7 +39,9 @@ export function readConversationParticipantIdsFromCanonicalId(
     .map((value) => normalizeString(value))
     .filter(Boolean);
 
-  if (parts.length < 3) {
+  // Accept 2-part IDs: offer_listingId__uid (only the uid is the participant).
+  // Accept 3+-part IDs: offer_listingId__uid1__uid2 (standard format).
+  if (parts.length < 2) {
     return [];
   }
 
@@ -102,7 +104,13 @@ export function readConversationParticipants(
     "member_ids",
     "users",
   ]) {
-    addArray(source[field]);
+    const raw = source[field];
+    if (Array.isArray(raw)) {
+      addArray(raw);
+    } else if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      // Older conversations may store participants as a map { uid: true }.
+      addMapKeys(raw);
+    }
   }
 
   for (const field of [
@@ -114,6 +122,8 @@ export function readConversationParticipants(
     "last_read_at",
     "archivedBy",
     "archived_by",
+    "deletedBy",
+    "deleted_by",
     "blockedBy",
     "blocked_by",
     "participantsMap",
