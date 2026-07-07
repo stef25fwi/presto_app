@@ -52,7 +52,11 @@ class _ToolboxView extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
-          systemOverlayStyle: SystemUiOverlayStyle.light,
+          systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
+            statusBarColor: kToolboxAppBarColor,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
           title: const Text(
             'Boîte à outils',
             style: TextStyle(fontWeight: FontWeight.w800),
