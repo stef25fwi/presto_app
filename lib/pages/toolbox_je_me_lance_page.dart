@@ -2751,12 +2751,21 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const Text('Suggestions rapides'),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: suggestions
                 .map(
                   (activity) => ActionChip(
-                    label: Text(activity),
+                    label: Text(
+                      activity,
+                      style: const TextStyle(fontSize: 11.5),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 0,
+                    ),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
                       setState(() {
                         _selectedActivity = activity;
