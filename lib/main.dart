@@ -24,6 +24,7 @@ import 'pages/home_page.dart';
 import 'pages/publish_offer_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
+import 'pages/toolbox_je_me_lance_page.dart';
 import 'services/city_search.dart';
 import 'services/app_check_bootstrap.dart';
 import 'services/app_route_parser.dart';
@@ -137,6 +138,10 @@ const String kAppBuildTag = String.fromEnvironment(
 );
 const String kAppBuildTimeUtc = String.fromEnvironment(
   'APP_BUILD_TIME_UTC',
+  defaultValue: '',
+);
+const String kDebugStartPage = String.fromEnvironment(
+  'PRESTO_DEBUG_START_PAGE',
   defaultValue: '',
 );
 
@@ -897,6 +902,13 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       if (!kReleaseMode && normalizedPath == '/page-catalog') {
         return const PageCaptureCatalogPage();
       }
+      if (!kReleaseMode && normalizedPath == '/toolbox-fonctionnaire-test') {
+        return const ToolboxJeMeLancePage();
+      }
+    }
+
+    if (!kReleaseMode && kDebugStartPage == 'toolbox_fonctionnaire') {
+      return const ToolboxJeMeLancePage();
     }
 
     return const SplashScreen();
@@ -950,6 +962,14 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
       return MaterialPageRoute(
         settings: settings,
         builder: (_) => const PageCaptureCatalogPage(),
+      );
+    }
+    if (!kReleaseMode &&
+        parsedRoute != null &&
+        parsedRoute.path == '/toolbox-fonctionnaire-test') {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const ToolboxJeMeLancePage(),
       );
     }
 
@@ -1071,6 +1091,8 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         '/admin': (_) => const AdminSpacePage(),
         if (!kReleaseMode)
           '/page-catalog': (_) => const PageCaptureCatalogPage(),
+        if (!kReleaseMode)
+          '/toolbox-fonctionnaire-test': (_) => const ToolboxJeMeLancePage(),
         ...buildSecondaryNamedRoutes(),
       },
       theme: buildPrestoTheme(),
