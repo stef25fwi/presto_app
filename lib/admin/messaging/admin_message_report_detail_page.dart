@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/admin_message_report_model.dart';
 import 'services/admin_moderation_service.dart';
 import 'widgets/admin_confirm_sensitive_action_dialog.dart';
+import 'widgets/admin_messaging_app_bar.dart';
 import 'widgets/admin_report_priority_badge.dart';
 
 class AdminMessageReportDetailPage extends StatefulWidget {
@@ -55,12 +56,7 @@ class _AdminMessageReportDetailPageState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        title: const Text('Détail signalement'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
-        elevation: 0,
-      ),
+      appBar: const AdminMessagingAppBar(title: 'Détail signalement'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

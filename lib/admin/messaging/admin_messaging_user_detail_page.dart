@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/admin_messaging_user_model.dart';
 import 'services/admin_moderation_service.dart';
 import 'widgets/admin_confirm_sensitive_action_dialog.dart';
+import 'widgets/admin_messaging_app_bar.dart';
 import 'widgets/admin_risk_score_badge.dart';
 import 'widgets/admin_user_messaging_status_badge.dart';
 
@@ -55,12 +56,7 @@ class _AdminMessagingUserDetailPageState
     final user = widget.user;
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        title: const Text('Fiche utilisateur messagerie'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
-        elevation: 0,
-      ),
+      appBar: const AdminMessagingAppBar(title: 'Fiche utilisateur messagerie'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

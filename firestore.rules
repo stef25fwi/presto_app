@@ -196,9 +196,9 @@ service cloud.firestore {
     }
 
     function canReadNotification(data) {
-      return hasAppCheck()
-        && (isAdmin()
-        || (isSignedIn()
+      return isAdmin()
+        || (hasAppCheck()
+          && isSignedIn()
           && (
             data.userId == uid()
             || data.uid == uid()
@@ -206,7 +206,7 @@ service cloud.firestore {
             || data.receiverId == uid()
             || data.toUid == uid()
             || data.ownerId == uid()
-          )));
+          ));
     }
 
     // hasAdminClaim()/hasUserDocAdminRole()/hasEnabledAdminDoc() already cover all
@@ -609,6 +609,21 @@ service cloud.firestore {
             .hasOnly(['read']);
 
       allow create, delete: if false; // ⛔ server-only
+    }
+
+    match /message_reports/{reportId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /message_attachments/{attachmentId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /messaging_admin_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // ✅ [AUTORISÉ] Offers — annonces utilisateur

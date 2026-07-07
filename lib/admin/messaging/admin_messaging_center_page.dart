@@ -27,6 +27,7 @@ import 'services/admin_messaging_service.dart';
 import 'services/admin_notification_monitor_service.dart';
 import 'widgets/admin_conversation_status_badge.dart';
 import 'widgets/admin_messaging_filter_bar.dart';
+import 'widgets/admin_messaging_app_bar.dart';
 import 'widgets/admin_messaging_stat_card.dart';
 import 'widgets/admin_report_priority_badge.dart';
 import 'widgets/admin_risk_score_badge.dart';
@@ -138,11 +139,8 @@ class _AdminMessagingCenterPageState extends State<AdminMessagingCenterPage> {
     final body = _buildSection();
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        title: Text(_section.label),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
-        elevation: 0,
+      appBar: AdminMessagingAppBar(
+        title: 'Gestion messagerie - ${_section.label}',
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -190,7 +188,7 @@ class _AdminMessagingCenterPageState extends State<AdminMessagingCenterPage> {
       case AdminMessagingSection.attachments:
         return const AdminAttachmentsPage();
       case AdminMessagingSection.notifications:
-        return const AdminNotificationsMonitorPage();
+        return const AdminNotificationsMonitorPage(showAppBar: false);
       case AdminMessagingSection.settings:
         return AdminMessagingSettingsPage(canEdit: _canManageSettings);
       case AdminMessagingSection.audit:
