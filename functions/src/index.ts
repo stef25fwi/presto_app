@@ -83,7 +83,7 @@ export { sendReferralInviteEmail } from "./modules/marketing/callables";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";
 
 export { onConversationSubMessageCreated } from "./modules/messaging/triggers";
-export { enqueueUnreadMessageReminders } from "./modules/messaging/scheduled";
+export { enqueueUnreadMessageReminders, syncMessagingAnalytics } from "./modules/messaging/scheduled";
 export {
   ensureOfferConversation,
   sendConversationMessage,
