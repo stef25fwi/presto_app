@@ -1932,7 +1932,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                               Expanded(
                                 child: ListView.builder(
                                   padding:
-                                      const EdgeInsets.fromLTRB(6, 6, 6, 18),
+                                      const EdgeInsets.fromLTRB(6, 6, 6, 80),
                                   itemCount: filteredConversations.length,
                                   itemBuilder: (context, index) {
                                     final conversation =
