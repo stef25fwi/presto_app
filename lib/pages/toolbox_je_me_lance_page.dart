@@ -24,6 +24,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
+import 'package:presto_app/services/parcours_fiches_service.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -57,21 +58,18 @@ List<RegionResource> _planContactsForTask(
   final lowerActivity = activity.toLowerCase().trim();
   final lowerStatus = currentStatus.toLowerCase().trim();
   final isDromRegion = RegionResourcesService.isDROM(region);
-  final isArtisanActivity =
-      lowerActivity.contains('artisan') ||
+  final isArtisanActivity = lowerActivity.contains('artisan') ||
       lowerActivity.contains('btp') ||
       lowerActivity.contains('travaux') ||
       lowerActivity.contains('coiffure') ||
       lowerActivity.contains('esthétique') ||
       lowerActivity.contains('reparation') ||
       lowerActivity.contains('réparation');
-  final isCommerceActivity =
-      lowerActivity.contains('commerce') ||
+  final isCommerceActivity = lowerActivity.contains('commerce') ||
       lowerActivity.contains('vente') ||
       lowerActivity.contains('restauration') ||
       lowerActivity.contains('livraison');
-  final isServiceActivity =
-      lowerActivity.contains('conseil') ||
+  final isServiceActivity = lowerActivity.contains('conseil') ||
       lowerActivity.contains('formation') ||
       lowerActivity.contains('digitale') ||
       lowerActivity.contains('événementiel') ||
@@ -105,8 +103,7 @@ List<RegionResource> _planContactsForTask(
     }
   }
 
-  if (lowerTitle.contains('acre') ||
-      lowerTitle.contains('france travail')) {
+  if (lowerTitle.contains('acre') || lowerTitle.contains('france travail')) {
     addMatches(['france travail', 'urssaf']);
     if (isDromRegion) {
       addMatches(['lodeom', 'outre-mer']);
@@ -175,7 +172,8 @@ List<RegionResource> _planContactsForTask(
     }
   }
 
-  if (lowerStatus.contains('fonctionnaire') || lowerStatus.contains('agent public')) {
+  if (lowerStatus.contains('fonctionnaire') ||
+      lowerStatus.contains('agent public')) {
     addMatches(['bge', 'cci']);
   }
 
@@ -220,6 +218,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
   final _cacheService = ToolboxCacheService();
+  final _parcoursFichesService = ParcoursFichesService();
 
   // UI state
   int _step = 1; // 1..4
@@ -535,7 +534,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final user = _auth.currentUser;
     if (user == null || _parcoursId == null) {
       if (recompute) {
-        _recomputeDerived();
+        await _recomputeDerivedAsync();
         if (mounted) setState(() {});
       }
       return;
@@ -595,7 +594,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   Map<String, dynamic> _exportData() => {
         'projectText': _projectCtrl.text.trim(),
-      'selectedActivity': _selectedActivity,
+        'selectedActivity': _selectedActivity,
         'activityType': _activityType,
         'clientele': _clientele,
         'businessModel': _businessModel,
@@ -681,46 +680,107 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         [];
     _summary = (derived['summary'] as Map?)?.cast<String, dynamic>() ?? {};
     _regulationTutorial = (derived['regulationTutorial'] as List?)
-        ?.map((e) => (e as Map).cast<String, dynamic>())
-        .toList() ??
-      [];
+            ?.map((e) => (e as Map).cast<String, dynamic>())
+            .toList() ??
+        [];
     _statusWarnings = (derived['statusWarnings'] as List?)
-        ?.map((e) => (e as Map).cast<String, dynamic>())
-        .toList() ??
-      [];
+            ?.map((e) => (e as Map).cast<String, dynamic>())
+            .toList() ??
+        [];
     _recommendedLegalStatus =
-      (derived['recommendedLegalStatus'] as Map?)?.cast<String, dynamic>() ??
-        {};
+        (derived['recommendedLegalStatus'] as Map?)?.cast<String, dynamic>() ??
+            {};
     _tutorialSteps = (derived['steps'] as List?)
-        ?.map((e) => (e as Map).cast<String, dynamic>())
-        .toList() ??
-      [];
+            ?.map((e) => (e as Map).cast<String, dynamic>())
+            .toList() ??
+        [];
     final progress =
-      (derived['progress'] as Map?)?.cast<String, dynamic>() ?? {};
-    final completedSteps = (progress['completedSteps'] as List?)
-        ?.map((e) => '$e')
-        .toSet() ??
-      <String>{};
+        (derived['progress'] as Map?)?.cast<String, dynamic>() ?? {};
+    final completedSteps =
+        (progress['completedSteps'] as List?)?.map((e) => '$e').toSet() ??
+            <String>{};
     if (_tutorialSteps.isNotEmpty) {
       _progressSteps = _tutorialSteps
-        .map(
-        (step) => {
-          ...step,
-          'status': completedSteps.contains('${step['id']}')
-            ? 'done'
-            : (step['status'] ?? 'todo'),
-        },
-        )
-        .toList();
+          .map(
+            (step) => {
+              ...step,
+              'status': completedSteps.contains('${step['id']}')
+                  ? 'done'
+                  : (step['status'] ?? 'todo'),
+            },
+          )
+          .toList();
     } else {
       _progressSteps = [];
     }
+  }
+
+  void _applyDerivedResult(Map<String, dynamic> r) {
+    _recommendation = (r['recommendation'] as Map).cast<String, dynamic>();
+    _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
+    _costs = (r['costs'] as Map).cast<String, dynamic>();
+    _plan30 = (r['plan30'] as List)
+        .map((e) => (e as Map).cast<String, dynamic>())
+        .toList();
+    _aides = (r['aides'] as List)
+        .map((e) => (e as Map).cast<String, dynamic>())
+        .toList();
+    _summary = (r['summary'] as Map).cast<String, dynamic>();
+    _regulationTutorial = (r['regulationTutorial'] as List)
+        .map((e) => (e as Map).cast<String, dynamic>())
+        .toList();
+    _statusWarnings = (r['statusWarnings'] as List)
+        .map((e) => (e as Map).cast<String, dynamic>())
+        .toList();
+    _recommendedLegalStatus =
+        (r['recommendedLegalStatus'] as Map).cast<String, dynamic>();
+    _tutorialSteps = (r['steps'] as List)
+        .map((e) => (e as Map).cast<String, dynamic>())
+        .toList();
+    _progressSteps = _cloneProgressSteps(_tutorialSteps);
+  }
+
+  bool get _shouldUseFonctionnaireFiche {
+    return _normalizedSituation == 'Fonctionnaire / agent public' &&
+        _selectedActivity.trim().isNotEmpty;
+  }
+
+  Future<Map<String, dynamic>> _computeDerivedData() async {
+    final fallback = _computeRecommendationRules();
+    if (!_shouldUseFonctionnaireFiche) {
+      return fallback;
+    }
+
+    try {
+      final firestored =
+          await _parcoursFichesService.loadFonctionnaireDerivedData(
+        activity: _selectedActivity,
+        region: _region,
+        currentStatus: _normalizedSituation,
+        fallback: fallback,
+      );
+      return firestored ?? fallback;
+    } catch (e) {
+      debugPrint('[Toolbox] fonctionnaire parcours fiche fallback: $e');
+      return fallback;
+    }
+  }
+
+  Future<void> _recomputeDerivedAsync() async {
+    _isFromCache = false;
+    final r = await _computeDerivedData();
+    _applyDerivedResult(r);
   }
 
   // --------------------------
   // Derived computation (RULES + CACHE)
   // --------------------------
   Future<void> _recomputeDerivedWithCache() async {
+    if (_shouldUseFonctionnaireFiche) {
+      await _recomputeDerivedAsync();
+      return;
+    }
+
     // Essayer de récupérer depuis le cache
     final cachedJourney = await _cacheService.fetchExistingJourney(
       typeProjet: _activityType,
@@ -736,29 +796,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       _importDerived(cachedJourney['content'] as Map<String, dynamic>? ?? {});
     } else {
       _isFromCache = false;
-      final r = _computeRecommendationRules();
-      _recommendation = r['recommendation'] as Map<String, dynamic>;
-      _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
-      _costs = (r['costs'] as Map).cast<String, dynamic>();
-      _plan30 = (r['plan30'] as List)
-          .map((e) => (e as Map).cast<String, dynamic>())
-          .toList();
-      _aides = (r['aides'] as List)
-          .map((e) => (e as Map).cast<String, dynamic>())
-          .toList();
-      _summary = (r['summary'] as Map).cast<String, dynamic>();
-      _regulationTutorial = (r['regulationTutorial'] as List)
-          .map((e) => (e as Map).cast<String, dynamic>())
-          .toList();
-      _statusWarnings = (r['statusWarnings'] as List)
-          .map((e) => (e as Map).cast<String, dynamic>())
-          .toList();
-      _recommendedLegalStatus =
-          (r['recommendedLegalStatus'] as Map).cast<String, dynamic>();
-      _tutorialSteps = (r['steps'] as List)
-          .map((e) => (e as Map).cast<String, dynamic>())
-          .toList();
-      _progressSteps = _cloneProgressSteps(_tutorialSteps);
+      final r = await _computeDerivedData();
+      _applyDerivedResult(r);
 
       // Sauvegarder le nouveau parcours généré en cache
       final journeyContent = {
@@ -793,28 +832,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   void _recomputeDerived() {
     _isFromCache = false;
     final r = _computeRecommendationRules();
-    _recommendation = r['recommendation'] as Map<String, dynamic>;
-    _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
-    _costs = (r['costs'] as Map).cast<String, dynamic>();
-    _plan30 = (r['plan30'] as List)
-        .map((e) => (e as Map).cast<String, dynamic>())
-        .toList();
-    _aides = (r['aides'] as List)
-        .map((e) => (e as Map).cast<String, dynamic>())
-        .toList();
-    _summary = (r['summary'] as Map).cast<String, dynamic>();
-    _regulationTutorial = (r['regulationTutorial'] as List)
-      .map((e) => (e as Map).cast<String, dynamic>())
-      .toList();
-    _statusWarnings = (r['statusWarnings'] as List)
-      .map((e) => (e as Map).cast<String, dynamic>())
-      .toList();
-    _recommendedLegalStatus =
-      (r['recommendedLegalStatus'] as Map).cast<String, dynamic>();
-    _tutorialSteps = (r['steps'] as List)
-      .map((e) => (e as Map).cast<String, dynamic>())
-      .toList();
-    _progressSteps = _cloneProgressSteps(_tutorialSteps);
+    _applyDerivedResult(r);
   }
 
   String get _normalizedSituation {
@@ -975,7 +993,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       hasRegulatedSignal:
           likelyRegulatedKeywords.any((keyword) => text.contains(keyword)),
     );
-    final summary = _buildSummary(statut: statut, hasBlockingAlerts: blocking.isNotEmpty);
+    final summary =
+        _buildSummary(statut: statut, hasBlockingAlerts: blocking.isNotEmpty);
     final recommendedLegalStatus = {
       'recommended': statut,
       'justification': why,
@@ -1127,7 +1146,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         id: 'situation',
         order: 2,
         title: 'Vérifier votre situation personnelle',
-        objective: 'Sécuriser les règles de cumul et les aides liées à votre statut.',
+        objective:
+            'Sécuriser les règles de cumul et les aides liées à votre statut.',
         todos: [
           'Relire votre situation actuelle',
           'Contacter RH ou organisme compétent si besoin',
@@ -1231,9 +1251,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     };
   }
 
-  List<Map<String, dynamic>> _cloneProgressSteps(List<Map<String, dynamic>> source) {
+  List<Map<String, dynamic>> _cloneProgressSteps(
+      List<Map<String, dynamic>> source) {
     return source
-        .map((step) => Map<String, dynamic>.from(step)..putIfAbsent('status', () => 'todo'))
+        .map((step) => Map<String, dynamic>.from(step)
+          ..putIfAbsent('status', () => 'todo'))
         .toList();
   }
 
@@ -1282,11 +1304,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Navigation
   // --------------------------
-  bool get _starterStepValid =>
-      _region.isNotEmpty;
+  bool get _starterStepValid => _region.isNotEmpty;
   bool get _step2Valid => _situation.isNotEmpty;
   bool get _step3Valid => _selectedActivity.trim().isNotEmpty;
-    bool get _step4Valid =>
+  bool get _step4Valid =>
       _region.isNotEmpty &&
       _situation.isNotEmpty &&
       _selectedActivity.trim().isNotEmpty;
@@ -1364,13 +1385,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           selectedActivity: _selectedActivity,
           recommendation: Map<String, dynamic>.from(_recommendation),
           blockingAlerts: List<String>.from(_blockingAlerts),
-            costs: Map<String, dynamic>.from(_costs),
-          aides: _aides
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList(),
-          plan30: _plan30
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList(),
+          costs: Map<String, dynamic>.from(_costs),
+          aides: _aides.map((item) => Map<String, dynamic>.from(item)).toList(),
+          plan30:
+              _plan30.map((item) => Map<String, dynamic>.from(item)).toList(),
           summary: Map<String, dynamic>.from(_summary),
           regulationTutorial: _regulationTutorial
               .map((item) => Map<String, dynamic>.from(item))
@@ -1625,7 +1643,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final items = <Map<String, String>>[
       {
         'label': 'Etape',
-        'value': _journeyStatus == 'completed' ? 'Finalise' : '$_step/$kTotalSteps',
+        'value':
+            _journeyStatus == 'completed' ? 'Finalise' : '$_step/$kTotalSteps',
       },
       {
         'label': 'Sortie',
@@ -1682,10 +1701,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                               children: [
                                 _buildStepPageShell(_buildCurrentStepPage()),
                                 Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(
-                                        horizontal: kPageHorizontalPadding,
-                                      ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: kPageHorizontalPadding,
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
@@ -1727,7 +1745,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     );
   }
 
-
   Widget _buildReviewStep() {
     return _Card(
       title: 'Vérifiez avant validation',
@@ -1745,9 +1762,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           _ResultCallout(
             icon: Icons.place_outlined,
             title: 'Territoire pris en compte',
-            text: _region.isNotEmpty
-                ? _region
-                : 'Aucune région renseignée',
+            text: _region.isNotEmpty ? _region : 'Aucune région renseignée',
             tone: kBlue,
           ),
           const SizedBox(height: 10),
@@ -1770,6 +1785,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ),
     );
   }
+
   Widget _buildTopHeader() {
     final topInset = MediaQuery.of(context).padding.top;
 
@@ -1921,11 +1937,20 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const SizedBox(height: 14),
           Row(
             children: [
-              _buildProgressCircle(number: 1, active: progressLabel == 1, done: progressLabel > 1),
+              _buildProgressCircle(
+                  number: 1,
+                  active: progressLabel == 1,
+                  done: progressLabel > 1),
               _buildProgressLine(active: progressLabel > 1),
-              _buildProgressCircle(number: 2, active: progressLabel == 2, done: progressLabel > 2),
+              _buildProgressCircle(
+                  number: 2,
+                  active: progressLabel == 2,
+                  done: progressLabel > 2),
               _buildProgressLine(active: progressLabel > 2),
-              _buildProgressCircle(number: 3, active: progressLabel == 3, done: progressLabel == 3),
+              _buildProgressCircle(
+                  number: 3,
+                  active: progressLabel == 3,
+                  done: progressLabel == 3),
             ],
           ),
           const SizedBox(height: 12),
@@ -2108,9 +2133,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     ),
                   ),
             onTap: () {
-              final regions =
-                  kFrenchCitiesData.map((c) => c.region).toSet().toList()
-                    ..sort();
+              final regions = kFrenchCitiesData
+                  .map((c) => c.region)
+                  .toSet()
+                  .toList()
+                ..sort();
               _showRegionPicker(regions);
             },
             isError: _showStarterErrors && _region.isEmpty,
@@ -2243,8 +2270,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                               value,
                               style: TextStyle(
                                 fontSize: 18,
-                                fontWeight:
-                                    hasValue ? FontWeight.w600 : FontWeight.w500,
+                                fontWeight: hasValue
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
                                 color: hasValue
                                     ? kTextDark
                                     : const Color(0xFF7A8498),
@@ -2640,14 +2668,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const SizedBox(height: 14),
           ...items
               .map((s) => _SelectRow(
-                icon: Icons.work_outline,
-                title: s,
-                selected: _situation == s,
-                onTap: () {
-                  setState(() => _situation = s);
-                  _onAnyFieldChanged();
-                },
-              ))
+                    icon: Icons.work_outline,
+                    title: s,
+                    selected: _situation == s,
+                    onTap: () {
+                      setState(() => _situation = s);
+                      _onAnyFieldChanged();
+                    },
+                  ))
               .toList(),
         ],
       ),
@@ -2893,8 +2921,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   Widget _buildNavButtons() {
     final canNext = (_step == 1 && _starterStepValid) ||
         (_step == 2 && _step2Valid) ||
-      (_step == 3 && _step3Valid) ||
-      (_step == 4 && _step4Valid);
+        (_step == 3 && _step3Valid) ||
+        (_step == 4 && _step4Valid);
     final isFinalStep = _step == kTotalSteps;
 
     return Container(
@@ -2952,14 +2980,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed:
-                      canNext
-                          ? (isFinalStep ? _completeJourney : _next)
-                          : null,
+                      canNext ? (isFinalStep ? _completeJourney : _next) : null,
                   style: ElevatedButton.styleFrom(
-                  backgroundColor: kBlue,
+                    backgroundColor: kBlue,
                     foregroundColor: Colors.white,
-                  disabledBackgroundColor: kBlue.withValues(alpha: 0.35),
-                  disabledForegroundColor: Colors.white,
+                    disabledBackgroundColor: kBlue.withValues(alpha: 0.35),
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -3289,7 +3315,9 @@ class _HeaderCircleButton extends StatelessWidget {
       height: 44,
       child: Material(
         color: outlined
-            ? (light ? Colors.white.withValues(alpha: 0.14) : const Color(0xFFF5F7FB))
+            ? (light
+                ? Colors.white.withValues(alpha: 0.14)
+                : const Color(0xFFF5F7FB))
             : Colors.transparent,
         shape: outlined
             ? RoundedRectangleBorder(
@@ -3302,8 +3330,7 @@ class _HeaderCircleButton extends StatelessWidget {
               )
             : const CircleBorder(),
         child: InkWell(
-          customBorder:
-              outlined ? null : const CircleBorder(),
+          customBorder: outlined ? null : const CircleBorder(),
           borderRadius: outlined ? BorderRadius.circular(999) : null,
           onTap: onTap,
           child: Icon(
@@ -3566,7 +3593,8 @@ class _Card extends StatelessWidget {
                 child: icon != null
                     ? Icon(icon, color: accent, size: 26)
                     : Text(
-                        stepLabel?.split('/').first.replaceAll('Étape ', '') ?? '•',
+                        stepLabel?.split('/').first.replaceAll('Étape ', '') ??
+                            '•',
                         style: TextStyle(
                           color: accent,
                           fontWeight: FontWeight.w800,
@@ -3780,9 +3808,7 @@ class _SelectRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFFF1F6FF)
-              : Colors.white,
+          color: selected ? const Color(0xFFF1F6FF) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? const Color(0xFF1A73E8) : const Color(0xFFE2E6EF),
@@ -3802,7 +3828,9 @@ class _SelectRow extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: selected ? const Color(0xFF1A73E8) : const Color(0xFF5F6C85),
+                color: selected
+                    ? const Color(0xFF1A73E8)
+                    : const Color(0xFF5F6C85),
               ),
             ),
             const SizedBox(width: 12),
@@ -4958,38 +4986,43 @@ class _JourneySummaryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final statut = (recommendation['statut'] ?? '—') as String;
     final why = (recommendation['why'] ?? '') as String;
-    final prios = (recommendation['priorites'] as List?)
-        ?.map((e) => '$e')
-        .toList() ??
-      const <String>[];
-    final relevantAides = aides
-        .where((item) => (item['relevant'] ?? true) as bool)
-        .toList();
-    final activityLabel = selectedActivity.isNotEmpty ? selectedActivity : projectLabel;
+    final prios =
+        (recommendation['priorites'] as List?)?.map((e) => '$e').toList() ??
+            const <String>[];
+    final relevantAides =
+        aides.where((item) => (item['relevant'] ?? true) as bool).toList();
+    final activityLabel =
+        selectedActivity.isNotEmpty ? selectedActivity : projectLabel;
     final summaryRegion = '${summary['region'] ?? region}';
     final summaryStatus = '${summary['currentStatus'] ?? currentStatus}';
     final summaryActivity = '${summary['activity'] ?? activityLabel}';
-    final vigilanceLevel = '${summary['vigilanceLevel'] ?? (blockingAlerts.isNotEmpty ? 'Moyen' : 'Faible')}';
+    final vigilanceLevel =
+        '${summary['vigilanceLevel'] ?? (blockingAlerts.isNotEmpty ? 'Moyen' : 'Faible')}';
     final recommendedPath =
-      '${summary['recommendedPath'] ?? 'Création progressive'}';
+        '${summary['recommendedPath'] ?? 'Création progressive'}';
     final tutorialProgress = steps.isEmpty
-      ? 0.0
-      : steps
-          .where((step) => (step['status'] ?? 'todo') == 'done')
-          .length /
-        steps.length;
+        ? 0.0
+        : steps.where((step) => (step['status'] ?? 'todo') == 'done').length /
+            steps.length;
     final completedSteps =
-      steps.where((step) => (step['status'] ?? 'todo') == 'done').length;
+        steps.where((step) => (step['status'] ?? 'todo') == 'done').length;
     final headerSubtitle = [
       if (summaryActivity.isNotEmpty) 'Créer une activité de $summaryActivity',
       if (summaryRegion.isNotEmpty) 'en $summaryRegion',
       if (summaryStatus.isNotEmpty) 'avec le statut actuel : $summaryStatus',
     ].join(' ');
-    final legalRecommendation = (recommendedLegalStatus['recommended'] ?? statut) as String;
-    final legalJustification = (recommendedLegalStatus['justification'] ?? why) as String;
-    final legalPlanB = (recommendedLegalStatus['planB'] ?? recommendation['planB'] ?? '') as String;
-    final legalDisclaimer = (recommendedLegalStatus['disclaimer'] ?? '') as String;
-    final formalites = (costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final legalRecommendation =
+        (recommendedLegalStatus['recommended'] ?? statut) as String;
+    final legalJustification =
+        (recommendedLegalStatus['justification'] ?? why) as String;
+    final legalPlanB = (recommendedLegalStatus['planB'] ??
+        recommendation['planB'] ??
+        '') as String;
+    final legalDisclaimer =
+        (recommendedLegalStatus['disclaimer'] ?? '') as String;
+    final formalites =
+        (costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ??
+            const {};
     final formalitesMin = formalites['min'] ?? 0;
     final formalitesMax = formalites['max'] ?? 0;
 
@@ -5007,7 +5040,8 @@ class _JourneySummaryPage extends StatelessWidget {
             children: [
               Container(
                 color: _ToolboxJeMeLancePageState.kOrange,
-                padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                padding:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                 child: SizedBox(
                   height: 64,
                   child: Padding(
@@ -5058,11 +5092,18 @@ class _JourneySummaryPage extends StatelessWidget {
                       title: 'Résumé de ma situation',
                       child: Column(
                         children: [
-                          _SummaryFactRow(label: 'Région', value: summaryRegion),
-                          _SummaryFactRow(label: 'Statut actuel', value: summaryStatus),
-                          _SummaryFactRow(label: 'Activité', value: summaryActivity),
-                          _SummaryFactRow(label: 'Niveau de vigilance', value: vigilanceLevel),
-                          _SummaryFactRow(label: 'Parcours recommandé', value: recommendedPath),
+                          _SummaryFactRow(
+                              label: 'Région', value: summaryRegion),
+                          _SummaryFactRow(
+                              label: 'Statut actuel', value: summaryStatus),
+                          _SummaryFactRow(
+                              label: 'Activité', value: summaryActivity),
+                          _SummaryFactRow(
+                              label: 'Niveau de vigilance',
+                              value: vigilanceLevel),
+                          _SummaryFactRow(
+                              label: 'Parcours recommandé',
+                              value: recommendedPath),
                           const SizedBox(height: 8),
                           Text(
                             'Votre parcours est adapté à votre région, à votre situation actuelle et à votre activité. Suivez les étapes dans l’ordre pour avancer sans oublier les points importants.',
@@ -5084,7 +5125,8 @@ class _JourneySummaryPage extends StatelessWidget {
                                 const _InfoBox(
                                   icon: Icons.info_outline,
                                   title: 'Tutoriel réglementation à compléter',
-                                  text: 'La structure tutorielle est prête, mais le contenu détaillé par activité reste à enrichir.',
+                                  text:
+                                      'La structure tutorielle est prête, mais le contenu détaillé par activité reste à enrichir.',
                                 ),
                               ]
                             : regulationTutorial
@@ -5108,7 +5150,8 @@ class _JourneySummaryPage extends StatelessWidget {
                                 const _InfoBox(
                                   icon: Icons.verified_outlined,
                                   title: 'Aucune vigilance spécifique',
-                                  text: 'Aucun bloc statut particulier n’a été généré à ce stade.',
+                                  text:
+                                      'Aucun bloc statut particulier n’a été généré à ce stade.',
                                 ),
                               ]
                             : statusWarnings
@@ -5184,13 +5227,15 @@ class _JourneySummaryPage extends StatelessWidget {
                                 const _InfoBox(
                                   icon: Icons.route_outlined,
                                   title: 'Étapes à structurer',
-                                  text: 'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
+                                  text:
+                                      'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
                                 ),
                               ]
                             : steps
                                 .map(
                                   (item) => _TutorialStepSummaryTile(
-                                    order: (item['order'] as num?)?.toInt() ?? 0,
+                                    order:
+                                        (item['order'] as num?)?.toInt() ?? 0,
                                     title: '${item['title']}',
                                     objective: '${item['objective']}',
                                     status: '${item['status'] ?? 'todo'}',
@@ -5210,7 +5255,8 @@ class _JourneySummaryPage extends StatelessWidget {
                           ? const _InfoBox(
                               icon: Icons.volunteer_activism_outlined,
                               title: 'Aucune aide identifiée',
-                              text: 'Aucune aide spécifique n’a été remontée pour le moment.',
+                              text:
+                                  'Aucune aide spécifique n’a été remontée pour le moment.',
                             )
                           : Column(
                               children: relevantAides
@@ -5234,7 +5280,8 @@ class _JourneySummaryPage extends StatelessWidget {
                             _ResultCallout(
                               icon: Icons.warning_amber_rounded,
                               title: 'Alertes à vérifier',
-                              text: '${blockingAlerts.length} point(s) de vigilance détecté(s) avant lancement.',
+                              text:
+                                  '${blockingAlerts.length} point(s) de vigilance détecté(s) avant lancement.',
                               tone: const Color(0xFFD97706),
                             ),
                           if (blockingAlerts.isNotEmpty)
@@ -5292,7 +5339,8 @@ class _JourneySummaryPage extends StatelessWidget {
                           ? const _InfoBox(
                               icon: Icons.task_alt_rounded,
                               title: 'Plan non disponible',
-                              text: 'Le plan d’action sera visible dès qu’une recommandation complète est générée.',
+                              text:
+                                  'Le plan d’action sera visible dès qu’une recommandation complète est générée.',
                             )
                           : Column(
                               children: plan30
@@ -5339,8 +5387,7 @@ class _JourneySummaryPage extends StatelessWidget {
                           ElevatedButton.icon(
                             onPressed: () => _showPremiumPdfDialog(context),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  _ToolboxJeMeLancePageState.kBlue,
+                              backgroundColor: _ToolboxJeMeLancePageState.kBlue,
                               foregroundColor: Colors.white,
                             ),
                             icon: const Icon(Icons.workspace_premium_outlined),
@@ -5412,10 +5459,8 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
       QueryDocumentSnapshot<Map<String, dynamic>>? latestDoc;
 
       try {
-        final ordered = await col
-            .orderBy('updatedAt', descending: true)
-            .limit(1)
-            .get();
+        final ordered =
+            await col.orderBy('updatedAt', descending: true).limit(1).get();
         if (ordered.docs.isNotEmpty) {
           latestDoc = ordered.docs.first;
         }
@@ -5442,7 +5487,8 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
       }
 
       final payload = latestDoc.data();
-      final data = (payload['data'] as Map?)?.cast<String, dynamic>() ?? const {};
+      final data =
+          (payload['data'] as Map?)?.cast<String, dynamic>() ?? const {};
       final derived =
           (payload['derived'] as Map?)?.cast<String, dynamic>() ?? const {};
 
@@ -5457,12 +5503,11 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
         _recommendation =
             (derived['recommendation'] as Map?)?.cast<String, dynamic>() ??
                 const {};
-        _blockingAlerts = (derived['blockingAlerts'] as List?)
-                ?.map((e) => '$e')
-                .toList() ??
-            const [];
-        _costs = (derived['costs'] as Map?)?.cast<String, dynamic>() ??
-          const {};
+        _blockingAlerts =
+            (derived['blockingAlerts'] as List?)?.map((e) => '$e').toList() ??
+                const [];
+        _costs =
+            (derived['costs'] as Map?)?.cast<String, dynamic>() ?? const {};
         _aides = (derived['aides'] as List?)
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
@@ -5471,24 +5516,23 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
             const [];
-        _summary = (derived['summary'] as Map?)?.cast<String, dynamic>() ??
-          const {};
+        _summary =
+            (derived['summary'] as Map?)?.cast<String, dynamic>() ?? const {};
         _regulationTutorial = (derived['regulationTutorial'] as List?)
-            ?.map((e) => (e as Map).cast<String, dynamic>())
-            .toList() ??
-          const [];
+                ?.map((e) => (e as Map).cast<String, dynamic>())
+                .toList() ??
+            const [];
         _statusWarnings = (derived['statusWarnings'] as List?)
-            ?.map((e) => (e as Map).cast<String, dynamic>())
-            .toList() ??
-          const [];
-        _recommendedLegalStatus =
-          (derived['recommendedLegalStatus'] as Map?)
-              ?.cast<String, dynamic>() ??
+                ?.map((e) => (e as Map).cast<String, dynamic>())
+                .toList() ??
+            const [];
+        _recommendedLegalStatus = (derived['recommendedLegalStatus'] as Map?)
+                ?.cast<String, dynamic>() ??
             const {};
         _steps = (derived['steps'] as List?)
-            ?.map((e) => (e as Map).cast<String, dynamic>())
-            .toList() ??
-          const [];
+                ?.map((e) => (e as Map).cast<String, dynamic>())
+                .toList() ??
+            const [];
         _loading = false;
       });
     } catch (_) {
@@ -5851,8 +5895,11 @@ class _PlanTaskSummaryTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            completed ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-            color: completed ? const Color(0xFF0F766E) : const Color(0xFF9CA3AF),
+            completed
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked,
+            color:
+                completed ? const Color(0xFF0F766E) : const Color(0xFF9CA3AF),
             size: 22,
           ),
           const SizedBox(width: 12),
@@ -5861,7 +5908,8 @@ class _PlanTaskSummaryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(999),
