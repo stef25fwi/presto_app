@@ -348,6 +348,7 @@ class _CardTopBlock extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
+                    fontFamily: 'Rubik',
                     fontSize: titleSize,
                     fontWeight: FontWeight.w900,
                     height: 0.95,
