@@ -59,6 +59,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   firebase_core_platform_interface: ^7.1.0
+  firebase_auth_platform_interface: ^9.0.0
   flutter_lints: ^6.0.0
 
 flutter:
@@ -103,6 +104,12 @@ flutter:
     - assets/images/logowebp.webp
     - assets/data/cities_compact.json
     - assets/data/parcours_fiches_fonctionnaire.json
+    - assets/data/parcours_fiches_retraite.json
+    - assets/data/parcours_fiches_etudiant.json
+    - assets/data/parcours_fiches_salarie.json
+    - assets/data/parcours_fiches_independant.json
+    - assets/data/parcours_fiches_demandeur_emploi.json
+    - assets/data/parcours_fiches_sans_activite.json
     - assets/carousel_home/
     - docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/
 

@@ -785,7 +785,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // doivent jamais partager un parcours mis en cache (notamment le contenu
   // issu des fiches officielles, spécifique au statut Fonctionnaire).
   String get _cacheDomaineKey =>
-      '${_projectCtrl.text.trim()}|${_normalizedSituation}|$_selectedActivity';
+      '${_projectCtrl.text.trim()}|$_normalizedSituation|$_selectedActivity';
 
   Future<void> _recomputeDerivedWithCache() async {
     if (_shouldUseFonctionnaireFiche) {
@@ -1039,13 +1039,49 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     return _applyFicheToRecommendation(result, fiche);
   }
 
+  // Statuts couverts par un pack de fiches officielles. Ajouter une entrée
+  // ici suffit à brancher un nouveau statut une fois son pack déclaré dans
+  // JeMeLanceParcoursFichesService.
+  static const _ficheStatutParSituation = <String, String>{
+    'Fonctionnaire / agent public': 'fonctionnaire',
+    'Retraité': 'retraité',
+    'Étudiant': 'étudiant',
+    'Salarié': 'salarié',
+    'Indépendant': 'indépendant',
+    "Demandeur d'emploi": 'demandeur d’emploi',
+    'Sans activité': 'sans activité',
+  };
+
+  // Sous-clés de `regles_<statut>` traitées comme alertes bloquantes
+  // (mises en avant par les packs eux-mêmes, ex. mineur / titre de séjour
+  // pour le statut Étudiant, alertes_generales pour le statut Salarié).
+  // À étendre si un futur pack en ajoute.
+  static const _reglesAlertKeys = <String>[
+    'mineur',
+    'titre_sejour',
+    'alertes_generales',
+  ];
+
+  // Sous-clés de `regles_<statut>` utilisées comme checklist de la section
+  // "Vérifier votre situation personnelle", par ordre de priorité (la
+  // première clé non vide trouvée est utilisée).
+  static const _reglesChecksPriorityKeys = <String>[
+    'declaration_caisse',
+    'bourse_assiduite',
+    'fiscalite_etudiant',
+    'clauses',
+    'conditions',
+    'actualisation',
+  ];
+
   /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à
   /// l'activité actuellement sélectionnés, si elle existe.
   Map<String, dynamic>? _matchedParcoursFiche() {
-    if (_normalizedSituation != 'Fonctionnaire / agent public') return null;
+    final ficheStatut = _ficheStatutParSituation[_normalizedSituation];
+    if (ficheStatut == null) return null;
     if (_selectedActivity.trim().isEmpty) return null;
     return JeMeLanceParcoursFichesService.instance.find(
-      statutUtilisateur: 'fonctionnaire',
+      statutUtilisateur: ficheStatut,
       activite: _selectedActivity,
     );
   }
@@ -1079,6 +1115,33 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final statutAlternatif = l(fiche['statut_alternatif']);
     final parcours = (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
     final fiscalite = (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
+    // Bloc optionnel propre à certains statuts (ex. `regles_retraite`,
+    // `regles_etudiant`). Détecté par préfixe pour rester générique aux
+    // packs sans lister chaque statut ici.
+    Map<String, dynamic>? reglesSpecifiques;
+    for (final entry in fiche.entries) {
+      final value = entry.value;
+      if (entry.key.startsWith('regles_') && value is Map) {
+        reglesSpecifiques = value.cast<String, dynamic>();
+        break;
+      }
+    }
+    final statutLower = s(fiche['statut_utilisateur']).toLowerCase();
+    final cumulLabel = statutLower.contains('retrait')
+        ? 'Cumul emploi-retraite'
+        : statutLower.contains('etudiant') || statutLower.contains('étudiant')
+            ? 'Points à vérifier avant de démarrer'
+            : 'Cumul d’activité';
+    // Sous-listes de `reglesSpecifiques` à traiter comme alertes bloquantes
+    // (mises en avant par les packs eux-mêmes, ex. mineur / titre de séjour
+    // pour le statut Étudiant). À étendre si un futur pack ajoute une clé
+    // équivalente.
+    final reglesAlerts = <String>[];
+    if (reglesSpecifiques != null) {
+      for (final key in _reglesAlertKeys) {
+        reglesAlerts.addAll(l(reglesSpecifiques[key]));
+      }
+    }
 
     final regulationTutorial = <Map<String, dynamic>>[
       {
@@ -1103,14 +1166,30 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         },
     ];
 
-    final situationDescription = s(parcours['2_situation_personnelle']).isNotEmpty
-        ? s(parcours['2_situation_personnelle'])
-        : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.';
+    final reglesSpecifiquesResume =
+        reglesSpecifiques != null ? s(reglesSpecifiques['resume']) : '';
+    final situationDescription = reglesSpecifiquesResume.isNotEmpty
+        ? reglesSpecifiquesResume
+        : (s(parcours['2_situation_personnelle']).isNotEmpty
+            ? s(parcours['2_situation_personnelle'])
+            : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.');
+    var reglesSpecifiquesChecks = const <String>[];
+    if (reglesSpecifiques != null) {
+      for (final key in _reglesChecksPriorityKeys) {
+        final values = l(reglesSpecifiques[key]);
+        if (values.isNotEmpty) {
+          reglesSpecifiquesChecks = values;
+          break;
+        }
+      }
+    }
     final statusWarnings = <Map<String, dynamic>>[
       {
-        'title': 'Cumul d’activité — $activite',
+        'title': '$cumulLabel — $activite',
         'description': situationDescription,
-        'checks': documents.isNotEmpty ? documents : alertes,
+        'checks': reglesSpecifiquesChecks.isNotEmpty
+            ? reglesSpecifiquesChecks
+            : (documents.isNotEmpty ? documents : alertes),
       },
     ];
 
@@ -1134,6 +1213,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final blockingAlerts = <String>{
       ...(result['blockingAlerts'] as List).cast<String>(),
       ...alertes,
+      ...reglesAlerts,
     }.toList();
 
     final demarches = l(parcours['4_demarches']);
@@ -1157,6 +1237,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           {
             step['todos'] = [
               situationDescription,
+              ...reglesAlerts,
               if (s(fiche['organisme_cumul']).isNotEmpty)
                 'Contact utile : ${s(fiche['organisme_cumul'])}',
             ].where((e) => e.toString().isNotEmpty).toList();
@@ -1194,15 +1275,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           }
         case 'gestion':
           {
-            final gestionTodos = [
-              if (s(fiscalite['seuil_micro_service_2026']).isNotEmpty)
-                'Seuil micro (prestation) 2026 : ${fiscalite['seuil_micro_service_2026']}',
-              if (s(fiscalite['seuil_micro_vente_2026']).isNotEmpty)
-                'Seuil micro (vente) 2026 : ${fiscalite['seuil_micro_vente_2026']}',
-              if (s(fiscalite['cotisations_micro_bic_service_2026']).isNotEmpty)
-                'Cotisations micro-BIC service 2026 : ${fiscalite['cotisations_micro_bic_service_2026']}',
-              if (s(fiscalite['cfe']).isNotEmpty) 'CFE : ${fiscalite['cfe']}',
-            ];
+            final gestionTodos = fiscalite.entries
+                .where((e) => s(e.value).isNotEmpty)
+                .map((e) => '${_fiscaliteLabel(e.key)} : ${s(e.value)}')
+                .toList();
             if (gestionTodos.isNotEmpty) step['todos'] = gestionTodos;
             break;
           }
@@ -1287,6 +1363,36 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       'recommendedLegalStatus': recommendedLegalStatus,
       'steps': steps,
     };
+  }
+
+  // Acronymes usuels rencontrés dans les clés `fiscalite` des fiches, pour un
+  // libellé plus lisible que la simple capitalisation mot à mot.
+  static const _fiscaliteAcronyms = <String, String>{
+    'cfe': 'CFE',
+    'tva': 'TVA',
+    'ca': 'CA',
+    'bic': 'BIC',
+    'cnav': 'CNAV',
+    'cnavpl': 'CNAVPL',
+    'zfrr': 'ZFRR',
+    'zup': 'ZUP',
+  };
+
+  /// Transforme une clé `fiscalite` (ex. `seuil_micro_service_2026_2028`) en
+  /// libellé lisible, sans dépendre du nom exact des clés d'un pack donné.
+  String _fiscaliteLabel(String key) {
+    return key
+        .split('_')
+        .where((w) => w.isNotEmpty)
+        .map((w) {
+          final lower = w.toLowerCase();
+          if (_fiscaliteAcronyms.containsKey(lower)) {
+            return _fiscaliteAcronyms[lower]!;
+          }
+          if (RegExp(r'^\d').hasMatch(w)) return w;
+          return w[0].toUpperCase() + w.substring(1);
+        })
+        .join(' ');
   }
 
   Map<String, dynamic> _buildSummary({
