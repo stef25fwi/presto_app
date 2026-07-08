@@ -177,6 +177,15 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Assistance shooting photo',
     'Autre service ponctuel',
   ],
+  'Agriculture': <String>[
+    'Agriculteur',
+  ],
+  'Digital / Communication': <String>[
+    'Influenceur',
+  ],
+  'Digital / Création': <String>[
+    'Créateur de contenu digital',
+  ],
 };
 
 class PublishCategoryPairRule {
