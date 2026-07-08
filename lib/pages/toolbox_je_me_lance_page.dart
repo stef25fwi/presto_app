@@ -5505,14 +5505,16 @@ class _JourneySummaryPage extends StatelessWidget {
     );
 
     try {
-      final file = await _pdfExportService.generateJourneyPdf(
+      // Le service renvoie un XFile prêt à partager (fichier temporaire sur
+      // mobile, données en mémoire sur web), et un PDF avec police Unicode.
+      final pdfFile = await _pdfExportService.generateJourneyPdf(
         _buildLocalSnapshot(),
       );
       await _entitlementsService.recordPdfExport();
 
       if (!context.mounted) return;
       await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'application/pdf')],
+        [pdfFile],
         text: 'Mon parcours personnalisé — iliPresto+',
       );
     } catch (e) {
