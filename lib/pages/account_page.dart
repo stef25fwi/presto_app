@@ -44,6 +44,7 @@ import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/pages/account/mes_avis_page.dart';
 import 'package:presto_app/pages/account/mes_projets_fiche_page.dart';
+import 'package:presto_app/pages/account/mon_entreprise_parcours_page.dart';
 import 'package:presto_app/pages/account/verifier_siret_page.dart';
 import 'package:presto_app/pages/legal_info_page.dart';
 import 'package:presto_app/pages/toolbox_page.dart';
@@ -3918,6 +3919,16 @@ class _AccountPageState extends State<AccountPage> {
               label: 'Créer mon activité',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ToolboxPage()),
+              ),
+            ),
+            const Divider(height: 1, thickness: 1, indent: 72),
+            _buildOrangeMenuItem(
+              icon: Icons.route_rounded,
+              label: 'Je crée mon entreprise',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const MonEntrepriseParcoursPage(),
+                ),
               ),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),

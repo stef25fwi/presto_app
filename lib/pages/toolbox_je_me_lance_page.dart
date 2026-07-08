@@ -17,23 +17,25 @@
 // © You can freely adapt.
 
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/features/subscriptions/journey_entitlements_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
+import 'package:presto_app/pages/account_page.dart';
+import 'package:presto_app/services/journey_local_storage_service.dart';
+import 'package:presto_app/services/journey_pdf_export_service.dart';
 import 'package:presto_app/services/parcours_fiches_service.dart';
+import 'package:presto_app/services/screen_capture_protection_service.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_core.dart';
 import '../data/city_postal_data.dart';
 import '../services/je_me_lance_parcours_fiches_service.dart';
 import '../services/region_resources_service.dart';
-
-const String _kLocalSavedJourneyKey = 'toolbox.saved_journey.latest';
 
 Future<void> _openExternalUrl(BuildContext context, String url) async {
   final uri = Uri.tryParse(url);
@@ -5247,7 +5249,12 @@ class _JourneySummaryPage extends StatelessWidget {
   final Map<String, dynamic> recommendedLegalStatus;
   final List<Map<String, dynamic>> steps;
 
-  const _JourneySummaryPage({
+  /// Ancre utilisée pour repérer la carte "4. Faire les démarches étape par
+  /// étape" dans la liste et détecter le scroll jusqu'à sa moitié (voir
+  /// `_GuestSignupGate`).
+  final GlobalKey _step4CardKey = GlobalKey();
+
+  _JourneySummaryPage({
     required this.projectLabel,
     required this.region,
     required this.currentStatus,
@@ -5263,6 +5270,15 @@ class _JourneySummaryPage extends StatelessWidget {
     required this.recommendedLegalStatus,
     required this.steps,
   });
+
+  /// Un utilisateur "non connecté" est soit totalement déconnecté, soit
+  /// seulement authentifié anonymement (session technique créée par
+  /// `_bootstrap()` pour l'accès Firestore) — dans les deux cas, il n'a pas
+  /// de compte iliPresto réel.
+  bool get _isGuestUser {
+    final user = FirebaseAuth.instance.currentUser;
+    return user == null || user.isAnonymous;
+  }
 
   Map<String, dynamic> _buildLocalSnapshot() {
     return {
@@ -5284,12 +5300,24 @@ class _JourneySummaryPage extends StatelessWidget {
     };
   }
 
+  static const JourneyLocalStorageService _localStorageService =
+      JourneyLocalStorageService();
+  static const JourneyPdfExportService _pdfExportService =
+      JourneyPdfExportService();
+  static final JourneyEntitlementsService _entitlementsService =
+      JourneyEntitlementsService();
+
   Future<void> _saveLocally(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _kLocalSavedJourneyKey,
-      jsonEncode(_buildLocalSnapshot()),
-    );
+    final decision = await _entitlementsService.evaluateLocalSave();
+    if (!decision.allowed) {
+      if (!context.mounted) return;
+      await _showSaveLimitReachedDialog(context, decision);
+      return;
+    }
+
+    await _localStorageService.saveSnapshot(_buildLocalSnapshot());
+    await _entitlementsService.recordLocalSave();
+
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -5298,78 +5326,103 @@ class _JourneySummaryPage extends StatelessWidget {
     );
   }
 
+  Future<void> _showSaveLimitReachedDialog(
+    BuildContext context,
+    JourneySaveDecision decision,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return _UpgradeBottomSheet(
+          title: 'Limite de sauvegarde atteinte',
+          message:
+              'L’abonnement Gratuit permet de sauvegarder ${decision.entitlements.maxLocalSavesPerMonth} parcours par mois en local. '
+              'Passez à IliPresto+ pour sauvegarder sans limite.',
+          ctaLabel: 'Découvrir IliPresto+',
+          source: 'toolbox_local_save_limit',
+        );
+      },
+    );
+  }
+
   Future<void> _showPremiumPdfDialog(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                width: 42,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 18),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD1D5DB),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const Text(
-                'PDF & partage réservés à IliPresto+',
-                style: TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Vous pouvez sauvegarder ce parcours en local gratuitement. Pour l’exporter en PDF et le partager, activez l’abonnement IliPresto+.',
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  Navigator.of(sheetContext).pop();
-                  await startSubscriptionCheckout(
-                    context,
-                    'ilipresto+',
-                    source: 'toolbox_pdf_export',
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _ToolboxJeMeLancePageState.kOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                icon: const Icon(Icons.workspace_premium_outlined),
-                label: const Text('Découvrir IliPresto+'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: () => Navigator.of(sheetContext).pop(),
-                child: const Text('Plus tard'),
-              ),
-            ],
-          ),
+        return const _UpgradeBottomSheet(
+          title: 'PDF & partage réservés à IliPresto+',
+          message:
+              'Vous pouvez sauvegarder ce parcours en local gratuitement. Pour l’exporter en PDF et le partager, activez l’abonnement IliPresto+.',
+          ctaLabel: 'Découvrir IliPresto+',
+          source: 'toolbox_pdf_export',
         );
       },
     );
+  }
+
+  Future<void> _showPdfQuotaReachedDialog(
+    BuildContext context,
+    JourneyPdfExportDecision decision,
+  ) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Limite d’export atteinte'),
+        content: Text(
+          'Vous avez déjà utilisé vos ${decision.entitlements.maxPdfExportsPerMonth} exports PDF inclus ce mois-ci avec IliPresto+. '
+          'La limite se réinitialise le mois prochain.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Compris'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handlePdfExport(BuildContext context) async {
+    final decision = await _entitlementsService.evaluatePdfExport();
+
+    if (decision.requiresUpgrade) {
+      if (!context.mounted) return;
+      await _showPremiumPdfDialog(context);
+      return;
+    }
+
+    if (!decision.allowed) {
+      if (!context.mounted) return;
+      await _showPdfQuotaReachedDialog(context, decision);
+      return;
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Génération du PDF en cours…')),
+    );
+
+    try {
+      final file = await _pdfExportService.generateJourneyPdf(
+        _buildLocalSnapshot(),
+      );
+      await _entitlementsService.recordPdfExport();
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/pdf')],
+        text: 'Mon parcours personnalisé — iliPresto+',
+      );
+    } catch (e) {
+      debugPrint('[Toolbox] pdf export failed: $e');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('L’export PDF a échoué. Réessayez dans un instant.'),
+        ),
+      );
+    }
   }
 
   Future<void> _openResourceUrl(String url) async {
@@ -5422,7 +5475,8 @@ class _JourneySummaryPage extends StatelessWidget {
     final formalitesMin = formalites['min'] ?? 0;
     final formalitesMax = formalites['max'] ?? 0;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
+    return _ScreenCaptureGuard(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: _ToolboxJeMeLancePageState.kOrange,
         statusBarIconBrightness: Brightness.light,
@@ -5468,7 +5522,11 @@ class _JourneySummaryPage extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: ListView(
+                child: _GuestSignupGate(
+                  enabled: _isGuestUser,
+                  triggerKey: _step4CardKey,
+                  listBuilder: (scrollController) => ListView(
+                  controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   children: [
                     _HeaderInfoCard(
@@ -5615,33 +5673,37 @@ class _JourneySummaryPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _Card(
-                      title: '4. Faire les démarches étape par étape',
-                      child: Column(
-                        children: steps.isEmpty
-                            ? [
-                                const _InfoBox(
-                                  icon: Icons.route_outlined,
-                                  title: 'Étapes à structurer',
-                                  text:
-                                      'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
-                                ),
-                              ]
-                            : steps
-                                .map(
-                                  (item) => _TutorialStepSummaryTile(
-                                    order:
-                                        (item['order'] as num?)?.toInt() ?? 0,
-                                    title: '${item['title']}',
-                                    objective: '${item['objective']}',
-                                    status: '${item['status'] ?? 'todo'}',
-                                    todos: (item['todos'] as List?)
-                                            ?.map((e) => '$e')
-                                            .toList() ??
-                                        const <String>[],
+                    KeyedSubtree(
+                      key: _step4CardKey,
+                      child: _Card(
+                        title: '4. Faire les démarches étape par étape',
+                        child: Column(
+                          children: steps.isEmpty
+                              ? [
+                                  const _InfoBox(
+                                    icon: Icons.route_outlined,
+                                    title: 'Étapes à structurer',
+                                    text:
+                                        'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
                                   ),
-                                )
-                                .toList(),
+                                ]
+                              : steps
+                                  .map(
+                                    (item) => _TutorialStepSummaryTile(
+                                      order: (item['order'] as num?)
+                                              ?.toInt() ??
+                                          0,
+                                      title: '${item['title']}',
+                                      objective: '${item['objective']}',
+                                      status: '${item['status'] ?? 'todo'}',
+                                      todos: (item['todos'] as List?)
+                                              ?.map((e) => '$e')
+                                              .toList() ??
+                                          const <String>[],
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -5781,7 +5843,7 @@ class _JourneySummaryPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           ElevatedButton.icon(
-                            onPressed: () => _showPremiumPdfDialog(context),
+                            onPressed: () => _handlePdfExport(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _ToolboxJeMeLancePageState.kBlue,
                               foregroundColor: Colors.white,
@@ -5796,10 +5858,296 @@ class _JourneySummaryPage extends StatelessWidget {
                     ),
                   ],
                 ),
+                ),
               ),
             ],
           ),
         ),
+      ),
+      ),
+    );
+  }
+}
+
+class _ScreenCaptureGuard extends StatefulWidget {
+  final Widget child;
+
+  const _ScreenCaptureGuard({required this.child});
+
+  @override
+  State<_ScreenCaptureGuard> createState() => _ScreenCaptureGuardState();
+}
+
+class _ScreenCaptureGuardState extends State<_ScreenCaptureGuard> {
+  @override
+  void initState() {
+    super.initState();
+    unawaited(ScreenCaptureProtection.enable());
+  }
+
+  @override
+  void dispose() {
+    unawaited(ScreenCaptureProtection.disable());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Affiche `listBuilder` (la liste des cartes du parcours) et, pour un
+/// visiteur non connecté (`enabled`), surveille le scroll pour repérer le
+/// moment où il atteint la moitié de la carte marquée par `triggerKey`
+/// (carte "4. Faire les démarches étape par étape"). À ce moment, une
+/// bannière de connexion/inscription apparaît en bas de l'écran.
+class _GuestSignupGate extends StatefulWidget {
+  final Widget Function(ScrollController controller) listBuilder;
+  final GlobalKey triggerKey;
+  final bool enabled;
+
+  const _GuestSignupGate({
+    required this.listBuilder,
+    required this.triggerKey,
+    required this.enabled,
+  });
+
+  @override
+  State<_GuestSignupGate> createState() => _GuestSignupGateState();
+}
+
+class _GuestSignupGateState extends State<_GuestSignupGate> {
+  final ScrollController _scrollController = ScrollController();
+  bool _bannerVisible = false;
+  bool _bannerDismissed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.enabled) {
+      _scrollController.addListener(_handleScroll);
+    }
+  }
+
+  void _handleScroll() {
+    if (_bannerVisible || _bannerDismissed) return;
+
+    final viewportBox = context.findRenderObject() as RenderBox?;
+    final targetBox =
+        widget.triggerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null ||
+        !viewportBox.attached ||
+        targetBox == null ||
+        !targetBox.attached) {
+      return;
+    }
+
+    final targetMidY =
+        targetBox.localToGlobal(Offset.zero, ancestor: viewportBox).dy +
+            targetBox.size.height / 2;
+
+    if (targetMidY <= viewportBox.size.height * 0.5) {
+      setState(() => _bannerVisible = true);
+    }
+  }
+
+  void _dismissBanner() {
+    setState(() {
+      _bannerVisible = false;
+      _bannerDismissed = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(child: widget.listBuilder(_scrollController)),
+        if (_bannerVisible)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _GuestSignupBanner(onDismiss: _dismissBanner),
+          ),
+      ],
+    );
+  }
+}
+
+class _GuestSignupBanner extends StatelessWidget {
+  final VoidCallback onDismiss;
+
+  const _GuestSignupBanner({required this.onDismiss});
+
+  Future<void> _openAccount(BuildContext context, {required bool signup}) {
+    return Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => AccountPage(startInSignup: signup),
+          ),
+        )
+        .then((_) => onDismiss());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      minimum: const EdgeInsets.all(12),
+      child: Material(
+        elevation: 18,
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Pour continuer à consulter, crée ton compte gratuit',
+                      style: TextStyle(
+                        color: Color(0xFF111827),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onDismiss,
+                    borderRadius: BorderRadius.circular(999),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close_rounded,
+                          size: 20, color: Color(0xFF9CA3AF)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _openAccount(context, signup: false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _ToolboxJeMeLancePageState.kOrange,
+                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Se connecter'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => _openAccount(context, signup: true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _ToolboxJeMeLancePageState.kOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Créer un compte gratuit'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UpgradeBottomSheet extends StatelessWidget {
+  final String title;
+  final String message;
+  final String ctaLabel;
+  final String source;
+
+  const _UpgradeBottomSheet({
+    required this.title,
+    required this.message,
+    required this.ctaLabel,
+    required this.source,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            width: 42,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Color(0xFF111827),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await startSubscriptionCheckout(
+                context,
+                'ilipresto+',
+                source: source,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _ToolboxJeMeLancePageState.kOrange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: const Icon(Icons.workspace_premium_outlined),
+            label: Text(ctaLabel),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Plus tard'),
+          ),
+        ],
       ),
     );
   }
