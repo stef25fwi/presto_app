@@ -5969,15 +5969,12 @@ class _GuestSignupGateState extends State<_GuestSignupGate> {
     return Stack(
       children: [
         Positioned.fill(
-          child: IgnorePointer(
-            ignoring: _bannerVisible,
-            child: ImageFiltered(
-              imageFilter: ui.ImageFilter.blur(
-                sigmaX: _bannerVisible ? 6 : 0,
-                sigmaY: _bannerVisible ? 6 : 0,
-              ),
-              child: widget.listBuilder(_scrollController),
+          child: ImageFiltered(
+            imageFilter: ui.ImageFilter.blur(
+              sigmaX: _bannerVisible ? 6 : 0,
+              sigmaY: _bannerVisible ? 6 : 0,
             ),
+            child: widget.listBuilder(_scrollController),
           ),
         ),
         if (_bannerVisible) ...[
