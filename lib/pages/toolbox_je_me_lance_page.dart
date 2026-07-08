@@ -6075,10 +6075,8 @@ class _JourneySummaryPage extends StatelessWidget {
                               const SizedBox(height: 8),
                               ...(costs['ficheCoutsIndicatifs'] as List)
                                   .map(
-                                    (item) => _Bullet(
-                                      icon: Icons.euro_outlined,
-                                      text: '$item',
-                                    ),
+                                    (item) =>
+                                        _JourneyInfoBullet(text: '$item'),
                                   ),
                             ],
                           ],
@@ -6673,15 +6671,17 @@ class _AidStatusSummaryTile extends StatelessWidget {
             style: const TextStyle(
               color: Color(0xFF111827),
               fontWeight: FontWeight.w800,
+              fontSize: 15,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             description,
             style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+              color: Colors.grey.shade800,
+              fontWeight: FontWeight.w500,
+              fontSize: 13.5,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -6784,19 +6784,15 @@ class _StatusGuidanceCard extends StatelessWidget {
           Text(
             description,
             style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+              color: Colors.grey.shade800,
+              fontWeight: FontWeight.w500,
+              fontSize: 13.5,
+              height: 1.5,
             ),
           ),
           if (checks.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ...checks.map(
-              (item) => _Bullet(
-                icon: Icons.checklist_rounded,
-                text: item,
-              ),
-            ),
+            const SizedBox(height: 12),
+            ...checks.map((item) => _JourneyInfoBullet(text: item)),
           ],
         ],
       ),
@@ -6889,19 +6885,15 @@ class _TutorialStepSummaryTile extends StatelessWidget {
           Text(
             objective,
             style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+              color: Colors.grey.shade800,
+              fontWeight: FontWeight.w500,
+              fontSize: 13.5,
+              height: 1.5,
             ),
           ),
           if (todos.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ...todos.map(
-              (todo) => _Bullet(
-                icon: Icons.arrow_right_alt_rounded,
-                text: todo,
-              ),
-            ),
+            const SizedBox(height: 12),
+            ...todos.map((todo) => _JourneyInfoBullet(text: todo)),
           ],
         ],
       ),
