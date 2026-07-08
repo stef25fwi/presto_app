@@ -49,6 +49,25 @@ Future<void> _settle(WidgetTester tester, {int times = 10}) async {
   }
 }
 
+/// Fait défiler la liste (ListView) par pas fixes jusqu'à ce que [target] soit
+/// effectivement monté dans l'arbre, puis s'arrête. Contrairement à
+/// `tester.dragUntilVisible`, ceci ne suppose pas que [target] soit unique
+/// (dragUntilVisible appelle `.element` et lève « Too many elements » si le
+/// texte apparaît plusieurs fois — ce qui est le cas de plusieurs contenus de
+/// fiche répétés entre sections). On teste `evaluate().isNotEmpty`, qui ne
+/// lève jamais, que le finder matche 0, 1 ou plusieurs widgets.
+Future<void> _scrollUntilFound(
+  WidgetTester tester,
+  Finder target, {
+  int maxDrags = 14,
+}) async {
+  for (var i = 0; i < maxDrags; i++) {
+    if (target.evaluate().isNotEmpty) return;
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    await _settle(tester, times: 3);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -142,23 +161,17 @@ void main() {
 
         // Organisme(s) de contrôle spécifiques à l'agriculture (MSA...),
         // qui n'existent que dans la fiche.
-        await tester.dragUntilVisible(
-          find.textContaining('MSA, DAAF/DDT(M)').first,
-          find.byType(Scrollable).first,
-          const Offset(0, -300),
+        await _scrollUntilFound(
+          tester,
+          find.textContaining('MSA, DAAF/DDT(M)'),
         );
-        await _settle(tester, times: 5);
         expect(find.textContaining('MSA, DAAF/DDT(M)'), findsWidgets);
 
         // Source officielle MSA micro-BA (tuile dédiée de la section 1).
-        // .first : dragUntilVisible exige une cible unique (il appelle
-        // .element), donc on vise la première occurrence.
-        await tester.dragUntilVisible(
-          find.textContaining('MSA — Le régime du micro-BA').first,
-          find.byType(Scrollable).first,
-          const Offset(0, -300),
+        await _scrollUntilFound(
+          tester,
+          find.textContaining('MSA — Le régime du micro-BA'),
         );
-        await _settle(tester, times: 5);
         expect(
           find.textContaining('MSA — Le régime du micro-BA'),
           findsWidgets,
@@ -167,12 +180,10 @@ void main() {
         // Section "2. Vérifier votre situation personnelle" : titre et résumé
         // propres à la fiche (regles_statut), pas le bloc générique "Contrat
         // de travail à vérifier" du statut Salarié.
-        await tester.dragUntilVisible(
+        await _scrollUntilFound(
+          tester,
           find.text('Cumul d’activité — Agriculteur'),
-          find.byType(Scrollable).first,
-          const Offset(0, -300),
         );
-        await _settle(tester, times: 5);
         expect(
           find.text('Cumul d’activité — Agriculteur'),
           findsOneWidget,
@@ -183,15 +194,11 @@ void main() {
         );
 
         // Section "6. Prévoir les coûts" : coût agricole propre à la fiche
-        // (cotisations MSA). Ce texte apparaît deux fois (note de lecture
-        // concaténée + puce détaillée), donc .first pour la cible unique
-        // qu'exige dragUntilVisible.
-        await tester.dragUntilVisible(
-          find.textContaining('cotisations MSA : à simuler').first,
-          find.byType(Scrollable).first,
-          const Offset(0, -400),
+        // (cotisations MSA), affiché dans la liste des coûts détaillés.
+        await _scrollUntilFound(
+          tester,
+          find.textContaining('cotisations MSA : à simuler'),
         );
-        await _settle(tester, times: 5);
         expect(
           find.textContaining('cotisations MSA : à simuler'),
           findsWidgets,
