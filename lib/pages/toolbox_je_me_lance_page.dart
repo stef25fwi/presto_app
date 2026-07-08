@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:presto_app/features/subscriptions/journey_entitlements_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
+import 'package:presto_app/pages/account_page.dart';
 import 'package:presto_app/services/journey_local_storage_service.dart';
 import 'package:presto_app/services/journey_pdf_export_service.dart';
 import 'package:presto_app/services/parcours_fiches_service.dart';
@@ -5248,7 +5249,12 @@ class _JourneySummaryPage extends StatelessWidget {
   final Map<String, dynamic> recommendedLegalStatus;
   final List<Map<String, dynamic>> steps;
 
-  const _JourneySummaryPage({
+  /// Ancre utilisée pour repérer la carte "4. Faire les démarches étape par
+  /// étape" dans la liste et détecter le scroll jusqu'à sa moitié (voir
+  /// `_GuestSignupGate`).
+  final GlobalKey _step4CardKey = GlobalKey();
+
+  _JourneySummaryPage({
     required this.projectLabel,
     required this.region,
     required this.currentStatus,
@@ -5264,6 +5270,15 @@ class _JourneySummaryPage extends StatelessWidget {
     required this.recommendedLegalStatus,
     required this.steps,
   });
+
+  /// Un utilisateur "non connecté" est soit totalement déconnecté, soit
+  /// seulement authentifié anonymement (session technique créée par
+  /// `_bootstrap()` pour l'accès Firestore) — dans les deux cas, il n'a pas
+  /// de compte iliPresto réel.
+  bool get _isGuestUser {
+    final user = FirebaseAuth.instance.currentUser;
+    return user == null || user.isAnonymous;
+  }
 
   Map<String, dynamic> _buildLocalSnapshot() {
     return {
@@ -5507,7 +5522,11 @@ class _JourneySummaryPage extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: ListView(
+                child: _GuestSignupGate(
+                  enabled: _isGuestUser,
+                  triggerKey: _step4CardKey,
+                  listBuilder: (scrollController) => ListView(
+                  controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   children: [
                     _HeaderInfoCard(
@@ -5654,33 +5673,37 @@ class _JourneySummaryPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _Card(
-                      title: '4. Faire les démarches étape par étape',
-                      child: Column(
-                        children: steps.isEmpty
-                            ? [
-                                const _InfoBox(
-                                  icon: Icons.route_outlined,
-                                  title: 'Étapes à structurer',
-                                  text:
-                                      'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
-                                ),
-                              ]
-                            : steps
-                                .map(
-                                  (item) => _TutorialStepSummaryTile(
-                                    order:
-                                        (item['order'] as num?)?.toInt() ?? 0,
-                                    title: '${item['title']}',
-                                    objective: '${item['objective']}',
-                                    status: '${item['status'] ?? 'todo'}',
-                                    todos: (item['todos'] as List?)
-                                            ?.map((e) => '$e')
-                                            .toList() ??
-                                        const <String>[],
+                    KeyedSubtree(
+                      key: _step4CardKey,
+                      child: _Card(
+                        title: '4. Faire les démarches étape par étape',
+                        child: Column(
+                          children: steps.isEmpty
+                              ? [
+                                  const _InfoBox(
+                                    icon: Icons.route_outlined,
+                                    title: 'Étapes à structurer',
+                                    text:
+                                        'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
                                   ),
-                                )
-                                .toList(),
+                                ]
+                              : steps
+                                  .map(
+                                    (item) => _TutorialStepSummaryTile(
+                                      order: (item['order'] as num?)
+                                              ?.toInt() ??
+                                          0,
+                                      title: '${item['title']}',
+                                      objective: '${item['objective']}',
+                                      status: '${item['status'] ?? 'todo'}',
+                                      todos: (item['todos'] as List?)
+                                              ?.map((e) => '$e')
+                                              .toList() ??
+                                          const <String>[],
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -5835,6 +5858,7 @@ class _JourneySummaryPage extends StatelessWidget {
                     ),
                   ],
                 ),
+                ),
               ),
             ],
           ),
@@ -5869,6 +5893,181 @@ class _ScreenCaptureGuardState extends State<_ScreenCaptureGuard> {
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// Affiche `listBuilder` (la liste des cartes du parcours) et, pour un
+/// visiteur non connecté (`enabled`), surveille le scroll pour repérer le
+/// moment où il atteint la moitié de la carte marquée par `triggerKey`
+/// (carte "4. Faire les démarches étape par étape"). À ce moment, une
+/// bannière de connexion/inscription apparaît en bas de l'écran.
+class _GuestSignupGate extends StatefulWidget {
+  final Widget Function(ScrollController controller) listBuilder;
+  final GlobalKey triggerKey;
+  final bool enabled;
+
+  const _GuestSignupGate({
+    required this.listBuilder,
+    required this.triggerKey,
+    required this.enabled,
+  });
+
+  @override
+  State<_GuestSignupGate> createState() => _GuestSignupGateState();
+}
+
+class _GuestSignupGateState extends State<_GuestSignupGate> {
+  final ScrollController _scrollController = ScrollController();
+  bool _bannerVisible = false;
+  bool _bannerDismissed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.enabled) {
+      _scrollController.addListener(_handleScroll);
+    }
+  }
+
+  void _handleScroll() {
+    if (_bannerVisible || _bannerDismissed) return;
+
+    final viewportBox = context.findRenderObject() as RenderBox?;
+    final targetBox =
+        widget.triggerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null ||
+        !viewportBox.attached ||
+        targetBox == null ||
+        !targetBox.attached) {
+      return;
+    }
+
+    final targetMidY =
+        targetBox.localToGlobal(Offset.zero, ancestor: viewportBox).dy +
+            targetBox.size.height / 2;
+
+    if (targetMidY <= viewportBox.size.height * 0.5) {
+      setState(() => _bannerVisible = true);
+    }
+  }
+
+  void _dismissBanner() {
+    setState(() {
+      _bannerVisible = false;
+      _bannerDismissed = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(child: widget.listBuilder(_scrollController)),
+        if (_bannerVisible)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _GuestSignupBanner(onDismiss: _dismissBanner),
+          ),
+      ],
+    );
+  }
+}
+
+class _GuestSignupBanner extends StatelessWidget {
+  final VoidCallback onDismiss;
+
+  const _GuestSignupBanner({required this.onDismiss});
+
+  Future<void> _openAccount(BuildContext context, {required bool signup}) {
+    return Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => AccountPage(startInSignup: signup),
+          ),
+        )
+        .then((_) => onDismiss());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      minimum: const EdgeInsets.all(12),
+      child: Material(
+        elevation: 18,
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Pour continuer à consulter, crée ton compte gratuit',
+                      style: TextStyle(
+                        color: Color(0xFF111827),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onDismiss,
+                    borderRadius: BorderRadius.circular(999),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close_rounded,
+                          size: 20, color: Color(0xFF9CA3AF)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _openAccount(context, signup: false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _ToolboxJeMeLancePageState.kOrange,
+                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Se connecter'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => _openAccount(context, signup: true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _ToolboxJeMeLancePageState.kOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Créer un compte gratuit'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _UpgradeBottomSheet extends StatelessWidget {
