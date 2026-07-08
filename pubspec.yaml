@@ -107,6 +107,7 @@ flutter:
     - assets/data/parcours_fiches_retraite.json
     - assets/data/parcours_fiches_etudiant.json
     - assets/data/parcours_fiches_salarie.json
+    - assets/data/parcours_fiches_independant.json
     - assets/carousel_home/
     - docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/
 

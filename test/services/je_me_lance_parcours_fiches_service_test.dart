@@ -54,34 +54,35 @@ void main() {
       expect(fiche['regles_salarie'], isA<Map>());
     });
 
-    test('les quatre packs renvoient des fiches distinctes pour la même activité', () {
-      final fonctionnaire = service.find(
-        statutUtilisateur: 'fonctionnaire',
-        activite: 'Tonte de pelouse',
+    test('trouve une fiche indépendant pour une activité du catalogue', () {
+      final fiche = service.find(
+        statutUtilisateur: 'indépendant',
+        activite: 'Service en salle',
       );
-      final retraite = service.find(
-        statutUtilisateur: 'retraité',
-        activite: 'Tonte de pelouse',
-      );
-      final etudiant = service.find(
-        statutUtilisateur: 'étudiant',
-        activite: 'Tonte de pelouse',
-      );
-      final salarie = service.find(
-        statutUtilisateur: 'salarié',
-        activite: 'Tonte de pelouse',
-      );
-      expect(fonctionnaire, isNotNull);
-      expect(retraite, isNotNull);
-      expect(etudiant, isNotNull);
-      expect(salarie, isNotNull);
-      final ids = {
-        fonctionnaire!['id_fiche'],
-        retraite!['id_fiche'],
-        etudiant!['id_fiche'],
-        salarie!['id_fiche'],
-      };
-      expect(ids, hasLength(4));
+      expect(fiche, isNotNull);
+      expect(fiche!['statut_utilisateur'], 'indépendant');
+      expect(fiche['activite'], 'Service en salle');
+      expect(fiche['regles_independant'], isA<Map>());
+    });
+
+    test('les cinq packs renvoient des fiches distinctes pour la même activité', () {
+      const statuts = [
+        'fonctionnaire',
+        'retraité',
+        'étudiant',
+        'salarié',
+        'indépendant',
+      ];
+      final ids = <Object>{};
+      for (final statut in statuts) {
+        final fiche = service.find(
+          statutUtilisateur: statut,
+          activite: 'Tonte de pelouse',
+        );
+        expect(fiche, isNotNull, reason: 'statut $statut');
+        ids.add(fiche!['id_fiche']);
+      }
+      expect(ids, hasLength(statuts.length));
     });
 
     test('la normalisation ignore accents/casse sur le statut', () {
@@ -92,9 +93,9 @@ void main() {
       expect(fiche, isNotNull);
     });
 
-    test('retourne null pour un statut sans pack (ex. indépendant)', () {
+    test('retourne null pour un statut sans pack (ex. sans activité)', () {
       final fiche = service.find(
-        statutUtilisateur: 'indépendant',
+        statutUtilisateur: 'sans activité',
         activite: 'Service en salle',
       );
       expect(fiche, isNull);

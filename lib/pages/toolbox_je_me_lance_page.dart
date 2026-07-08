@@ -1047,6 +1047,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'Retraité': 'retraité',
     'Étudiant': 'étudiant',
     'Salarié': 'salarié',
+    'Indépendant': 'indépendant',
   };
 
   // Sous-clés de `regles_<statut>` traitées comme alertes bloquantes
@@ -1067,6 +1068,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'bourse_assiduite',
     'fiscalite_etudiant',
     'clauses',
+    'conditions',
   ];
 
   /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à
