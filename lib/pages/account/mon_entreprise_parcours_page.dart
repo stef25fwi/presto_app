@@ -10,8 +10,13 @@ const Color _kBg = Color(0xFFF6F7FB);
 
 /// Onglet "Je crée mon entreprise" de la page "Mon compte iliPresto".
 ///
-/// Affiche le dernier parcours personnalisé sauvegardé localement sur cet
-/// appareil, ainsi que le quota mensuel de sauvegarde/export en fonction de
+/// Affiche deux parcours distincts, stockés localement sur l'appareil :
+/// - le parcours **véritablement sauvegardé** par l'utilisateur (action
+///   explicite sur le bouton "Sauvegarder", limitée par le quota mensuel) ;
+/// - le **dernier parcours de l'historique**, mis à jour automatiquement à
+///   chaque parcours terminé, sans quota, et toujours écrasé par le suivant.
+///
+/// Ainsi qu'un rappel du quota mensuel de sauvegarde/export en fonction de
 /// l'abonnement (Gratuit : 1 sauvegarde locale/mois, aucun export ;
 /// IliPresto+ : sauvegardes illimitées + 2 exports PDF/mois).
 class MonEntrepriseParcoursPage extends StatefulWidget {
@@ -28,7 +33,8 @@ class _MonEntrepriseParcoursPageState
   final _entitlementsService = JourneyEntitlementsService();
 
   bool _loading = true;
-  Map<String, dynamic>? _snapshot;
+  Map<String, dynamic>? _savedSnapshot;
+  Map<String, dynamic>? _historySnapshot;
   JourneyEntitlements? _entitlements;
   int _savesUsed = 0;
   int _pdfExportsUsed = 0;
@@ -40,14 +46,16 @@ class _MonEntrepriseParcoursPageState
   }
 
   Future<void> _load() async {
-    final snapshot = await _localStorageService.loadSnapshot();
+    final savedSnapshot = await _localStorageService.loadSnapshot();
+    final historySnapshot = await _localStorageService.loadHistorySnapshot();
     final entitlements = await _entitlementsService.resolveEntitlements();
     final savesUsed = await _entitlementsService.getLocalSavesUsedThisMonth();
     final pdfUsed = await _entitlementsService.getPdfExportsUsedThisMonth();
 
     if (!mounted) return;
     setState(() {
-      _snapshot = snapshot;
+      _savedSnapshot = savedSnapshot;
+      _historySnapshot = historySnapshot;
       _entitlements = entitlements;
       _savesUsed = savesUsed;
       _pdfExportsUsed = pdfUsed;
@@ -57,6 +65,9 @@ class _MonEntrepriseParcoursPageState
 
   @override
   Widget build(BuildContext context) {
+    final hasSaved = _savedSnapshot != null;
+    final hasHistory = _historySnapshot != null;
+
     return Scaffold(
       backgroundColor: _kBg,
       appBar: AppBar(
@@ -74,12 +85,33 @@ class _MonEntrepriseParcoursPageState
                 children: [
                   _buildQuotaCard(),
                   const SizedBox(height: 16),
-                  _snapshot == null
-                      ? _EmptyState(onCreate: _openToolbox)
-                      : _SavedJourneyCard(
-                          snapshot: _snapshot!,
-                          onResume: _openToolbox,
-                        ),
+                  if (!hasSaved && !hasHistory)
+                    _EmptyState(onCreate: _openToolbox)
+                  else ...[
+                    const _SectionLabel('Mon parcours sauvegardé'),
+                    const SizedBox(height: 8),
+                    hasSaved
+                        ? _JourneyCard(
+                            snapshot: _savedSnapshot!,
+                            dateLabel: 'Sauvegardé le',
+                            onResume: _openToolbox,
+                          )
+                        : const _EmptyInlineNote(
+                            'Aucun parcours sauvegardé pour le moment.',
+                          ),
+                    const SizedBox(height: 20),
+                    const _SectionLabel('Dernier parcours consulté'),
+                    const SizedBox(height: 8),
+                    hasHistory
+                        ? _JourneyCard(
+                            snapshot: _historySnapshot!,
+                            dateLabel: 'Généré le',
+                            onResume: _openToolbox,
+                          )
+                        : const _EmptyInlineNote(
+                            'Aucun parcours généré pour le moment.',
+                          ),
+                  ],
                 ],
               ),
             ),
@@ -100,7 +132,7 @@ class _MonEntrepriseParcoursPageState
         ? 'Sauvegardes locales illimitées'
         : '$_savesUsed / ${entitlements.maxLocalSavesPerMonth} sauvegarde(s) locale(s) utilisée(s) ce mois-ci';
     final pdfLabel = !entitlements.canExportPdf
-        ? 'Export PDF réservé à IliPresto+'
+        ? 'Export PDF réservé à IliPresto+ / ilipro'
         : '$_pdfExportsUsed / ${entitlements.maxPdfExportsPerMonth} export(s) PDF utilisé(s) ce mois-ci';
 
     return Container(
@@ -131,6 +163,47 @@ class _MonEntrepriseParcoursPageState
           const SizedBox(height: 4),
           Text(pdfLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.w800,
+        fontSize: 13,
+        color: Color(0xFF6B7280),
+        letterSpacing: 0.2,
+      ),
+    );
+  }
+}
+
+class _EmptyInlineNote extends StatelessWidget {
+  final String text;
+
+  const _EmptyInlineNote(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -185,11 +258,16 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _SavedJourneyCard extends StatelessWidget {
+class _JourneyCard extends StatelessWidget {
   final Map<String, dynamic> snapshot;
+  final String dateLabel;
   final VoidCallback onResume;
 
-  const _SavedJourneyCard({required this.snapshot, required this.onResume});
+  const _JourneyCard({
+    required this.snapshot,
+    required this.dateLabel,
+    required this.onResume,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -231,7 +309,7 @@ class _SavedJourneyCard extends StatelessWidget {
           if (savedAt != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Sauvegardé le ${savedAt.day.toString().padLeft(2, '0')}/${savedAt.month.toString().padLeft(2, '0')}/${savedAt.year}',
+              '$dateLabel ${savedAt.day.toString().padLeft(2, '0')}/${savedAt.month.toString().padLeft(2, '0')}/${savedAt.year}',
               style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Fausse implémentation minimale de FirebaseAuthPlatform : simule un
 /// environnement où l'auth anonyme échoue immédiatement (comme quand
@@ -50,6 +51,10 @@ void main() {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
     FirebaseAuthPlatform.instance = _FakeAuthPlatform();
+    // _completeJourney() écrit un instantané d'historique local
+    // (JourneyLocalStorageService) : sans ce mock, SharedPreferences n'a
+    // pas de handler de canal disponible en test.
+    SharedPreferences.setMockInitialValues({});
   });
 
   testWidgets(
