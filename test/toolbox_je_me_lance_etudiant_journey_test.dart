@@ -167,9 +167,12 @@ void main() {
           find.text('Points à vérifier avant de démarrer — Service en salle'),
           findsOneWidget,
         );
+        // Ce résumé apparaît aussi en tête des todos de l'étape tutoriel
+        // "Vérifier votre situation personnelle" (section 4), en plus de la
+        // carte de la section 2 : findsWidgets, pas findsOneWidget.
         expect(
           find.textContaining('Un étudiant peut créer une micro-entreprise'),
-          findsOneWidget,
+          findsWidgets,
         );
 
         // Scroll jusqu'aux étapes 4-9 pour vérifier l'enrichissement du plan
