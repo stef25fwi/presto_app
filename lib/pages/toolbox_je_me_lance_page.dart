@@ -792,6 +792,16 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _selectedActivity.trim().isNotEmpty;
   }
 
+  /// Vrai dès qu'une fiche officielle (n'importe lequel des 7 packs
+  /// statut+activité) correspond à la sélection actuelle. Sert à exclure ce
+  /// parcours du cache partagé inter-utilisateurs `toolbox_journeys` : ce
+  /// cache n'a aucune invalidation liée au contenu des fiches, donc un
+  /// parcours mis en cache avant une évolution du pack (nouvelle activité,
+  /// champ enrichi...) resterait servi tel quel indéfiniment. Les fiches
+  /// étant des données locales et le calcul déterministe/peu coûteux, elles
+  /// n'ont de toute façon pas besoin d'être mises en cache.
+  bool get _hasMatchedParcoursFiche => _matchedParcoursFiche() != null;
+
   Future<Map<String, dynamic>> _computeDerivedData() async {
     final fallback = _computeRecommendationRules();
     if (!_shouldUseFonctionnaireFiche) {
@@ -830,7 +840,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       '${_projectCtrl.text.trim()}|$_normalizedSituation|$_selectedActivity';
 
   Future<void> _recomputeDerivedWithCache() async {
-    if (_shouldUseFonctionnaireFiche) {
+    if (_shouldUseFonctionnaireFiche || _hasMatchedParcoursFiche) {
       await _recomputeDerivedAsync();
       return;
     }
