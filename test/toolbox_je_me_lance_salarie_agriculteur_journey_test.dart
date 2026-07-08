@@ -143,7 +143,7 @@ void main() {
         // Organisme(s) de contrôle spécifiques à l'agriculture (MSA...),
         // qui n'existent que dans la fiche.
         await tester.dragUntilVisible(
-          find.textContaining('MSA, DAAF/DDT(M)'),
+          find.textContaining('MSA, DAAF/DDT(M)').first,
           find.byType(Scrollable).first,
           const Offset(0, -300),
         );
@@ -151,8 +151,10 @@ void main() {
         expect(find.textContaining('MSA, DAAF/DDT(M)'), findsWidgets);
 
         // Source officielle MSA micro-BA (tuile dédiée de la section 1).
+        // .first : dragUntilVisible exige une cible unique (il appelle
+        // .element), donc on vise la première occurrence.
         await tester.dragUntilVisible(
-          find.textContaining('MSA — Le régime du micro-BA'),
+          find.textContaining('MSA — Le régime du micro-BA').first,
           find.byType(Scrollable).first,
           const Offset(0, -300),
         );
@@ -181,9 +183,11 @@ void main() {
         );
 
         // Section "6. Prévoir les coûts" : coût agricole propre à la fiche
-        // (cotisations MSA), affiché dans la liste des coûts détaillés.
+        // (cotisations MSA). Ce texte apparaît deux fois (note de lecture
+        // concaténée + puce détaillée), donc .first pour la cible unique
+        // qu'exige dragUntilVisible.
         await tester.dragUntilVisible(
-          find.textContaining('cotisations MSA : à simuler'),
+          find.textContaining('cotisations MSA : à simuler').first,
           find.byType(Scrollable).first,
           const Offset(0, -400),
         );
