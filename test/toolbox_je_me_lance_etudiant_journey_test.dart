@@ -147,10 +147,17 @@ void main() {
 
         // La fiche officielle alimente désormais bien plus de tuiles dans la
         // section 1 (vue d'ensemble, activité, organismes, sources
-        // officielles...) : la section 2 n'est plus visible sans défiler
-        // (ListView : les sections hors-écran ne sont montées qu'une fois
-        // scrollées en vue).
-        await tester.drag(find.byType(Scrollable).first, const Offset(0, -1500));
+        // officielles...) : la section 2 n'est plus visible sans défiler, et
+        // de combien dépend du nombre de tuiles (variable selon la fiche).
+        // dragUntilVisible avance par petits pas jusqu'à ce que le texte
+        // cible soit effectivement monté, au lieu de parier sur une distance
+        // fixe (ListView : les sections hors-écran ne sont montées qu'une
+        // fois scrollées en vue).
+        await tester.dragUntilVisible(
+          find.text('Points à vérifier avant de démarrer — Service en salle'),
+          find.byType(Scrollable).first,
+          const Offset(0, -300),
+        );
         await _settle(tester, times: 5);
 
         // Section "2. Vérifier votre situation personnelle" : titre et
