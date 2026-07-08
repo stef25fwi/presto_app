@@ -346,6 +346,71 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
   }
 }
 
+/// Valeur utilisée pour représenter un quota "illimité" (mode d'accès libre
+/// ou palier d'abonnement sans plafond).
+const int kUnlimitedJourneyQuota = 999999;
+
+/// Règles d'abonnement pour la fonctionnalité "Mon parcours personnalisé" :
+/// - Gratuit : 1 sauvegarde locale par mois, aucun export PDF.
+/// - IliPresto+ / ilipro : sauvegardes locales illimitées + 2 exports PDF
+///   par mois, le PDF exporté devant porter le logo iliPresto et un filigrane.
+class JourneyEntitlements {
+  final int maxLocalSavesPerMonth;
+  final bool canExportPdf;
+  final int maxPdfExportsPerMonth;
+  final bool pdfRequiresLogo;
+  final bool pdfRequiresWatermark;
+
+  const JourneyEntitlements({
+    required this.maxLocalSavesPerMonth,
+    required this.canExportPdf,
+    required this.maxPdfExportsPerMonth,
+    required this.pdfRequiresLogo,
+    required this.pdfRequiresWatermark,
+  });
+
+  bool get hasUnlimitedLocalSaves =>
+      maxLocalSavesPerMonth >= kUnlimitedJourneyQuota;
+
+  bool get hasUnlimitedPdfExports =>
+      maxPdfExportsPerMonth >= kUnlimitedJourneyQuota;
+}
+
+JourneyEntitlements getJourneyEntitlementsForPlan(
+  SubscriptionPlan plan, {
+  bool freeAccessMode = true,
+}) {
+  if (freeAccessMode) {
+    return const JourneyEntitlements(
+      maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
+      canExportPdf: true,
+      maxPdfExportsPerMonth: kUnlimitedJourneyQuota,
+      pdfRequiresLogo: true,
+      pdfRequiresWatermark: true,
+    );
+  }
+
+  switch (plan) {
+    case SubscriptionPlan.free:
+      return const JourneyEntitlements(
+        maxLocalSavesPerMonth: 1,
+        canExportPdf: false,
+        maxPdfExportsPerMonth: 0,
+        pdfRequiresLogo: false,
+        pdfRequiresWatermark: false,
+      );
+    case SubscriptionPlan.iliprestoPlus:
+    case SubscriptionPlan.ilipro:
+      return const JourneyEntitlements(
+        maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
+        canExportPdf: true,
+        maxPdfExportsPerMonth: 2,
+        pdfRequiresLogo: true,
+        pdfRequiresWatermark: true,
+      );
+  }
+}
+
 DateTime? _dateTimeFromDynamic(dynamic value) {
   if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
