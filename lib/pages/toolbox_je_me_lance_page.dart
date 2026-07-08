@@ -1049,6 +1049,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'Salarié': 'salarié',
     'Indépendant': 'indépendant',
     "Demandeur d'emploi": 'demandeur d’emploi',
+    'Sans activité': 'sans activité',
   };
 
   // Sous-clés de `regles_<statut>` traitées comme alertes bloquantes

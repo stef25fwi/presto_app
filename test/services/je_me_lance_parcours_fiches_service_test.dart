@@ -76,7 +76,18 @@ void main() {
       expect(fiche['regles_demandeur_emploi'], isA<Map>());
     });
 
-    test('les six packs renvoient des fiches distinctes pour la même activité', () {
+    test('trouve une fiche sans activité pour une activité du catalogue', () {
+      final fiche = service.find(
+        statutUtilisateur: 'sans activité',
+        activite: 'Service en salle',
+      );
+      expect(fiche, isNotNull);
+      expect(fiche!['statut_utilisateur'], 'sans activité');
+      expect(fiche['activite'], 'Service en salle');
+      expect(fiche['regles_sans_activite'], isA<Map>());
+    });
+
+    test('les sept packs renvoient des fiches distinctes pour la même activité', () {
       const statuts = [
         'fonctionnaire',
         'retraité',
@@ -84,6 +95,7 @@ void main() {
         'salarié',
         'indépendant',
         "demandeur d'emploi",
+        'sans activité',
       ];
       final ids = <Object>{};
       for (final statut in statuts) {
@@ -105,9 +117,9 @@ void main() {
       expect(fiche, isNotNull);
     });
 
-    test('retourne null pour un statut sans pack (ex. sans activité)', () {
+    test('retourne null pour un statut hors catalogue', () {
       final fiche = service.find(
-        statutUtilisateur: 'sans activité',
+        statutUtilisateur: 'extraterrestre',
         activite: 'Service en salle',
       );
       expect(fiche, isNull);
