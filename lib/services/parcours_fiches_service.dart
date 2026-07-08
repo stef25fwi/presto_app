@@ -292,7 +292,7 @@ class _FonctionnaireParcoursFiche {
             'description': subsection.fullText,
           },
         )
-        .where((item) => '${item['description'] ?? ''}'.trim().isNotEmpty)
+        .where((item) => (item['description'] ?? '').trim().isNotEmpty)
         .toList();
   }
 
