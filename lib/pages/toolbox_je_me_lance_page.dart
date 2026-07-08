@@ -29,6 +29,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_core.dart';
 import '../data/city_postal_data.dart';
+import '../services/je_me_lance_parcours_fiches_service.dart';
 import '../services/region_resources_service.dart';
 
 const String _kLocalSavedJourneyKey = 'toolbox.saved_journey.latest';
@@ -394,6 +395,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   Future<void> _bootstrap() async {
     try {
+      await JeMeLanceParcoursFichesService.instance.ensureLoaded();
+
       var user = _auth.currentUser;
 
       // Tentative de sign-in anonyme si utilisateur null
@@ -720,11 +723,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Derived computation (RULES + CACHE)
   // --------------------------
+  // Inclut statut + activité exacte dans la clé de cache : deux statuts
+  // différents (ex. Fonctionnaire vs Salarié) sur la même activité/région ne
+  // doivent jamais partager un parcours mis en cache (notamment le contenu
+  // issu des fiches officielles, spécifique au statut Fonctionnaire).
+  String get _cacheDomaineKey =>
+      '${_projectCtrl.text.trim()}|${_normalizedSituation}|$_selectedActivity';
+
   Future<void> _recomputeDerivedWithCache() async {
     // Essayer de récupérer depuis le cache
     final cachedJourney = await _cacheService.fetchExistingJourney(
       typeProjet: _activityType,
-      domaine: _projectCtrl.text.trim(),
+      domaine: _cacheDomaineKey,
       region: _region,
     );
 
@@ -782,7 +792,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       unawaited(
         _cacheService.saveNewJourney(
           typeProjet: _activityType,
-          domaine: _projectCtrl.text.trim(),
+          domaine: _cacheDomaineKey,
           region: _region,
           journeyContent: journeyContent,
         ),
@@ -985,7 +995,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     };
     final steps = _buildTutorialSteps();
 
-    return {
+    final Map<String, dynamic> result = {
       'recommendation': {
         'statut': statut,
         'why': why,
@@ -997,6 +1007,260 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       'plan30': plan,
       'aides': aides,
       'summary': summary,
+      'regulationTutorial': regulationTutorial,
+      'statusWarnings': statusWarnings,
+      'recommendedLegalStatus': recommendedLegalStatus,
+      'steps': steps,
+    };
+
+    final fiche = _matchedParcoursFiche();
+    if (fiche == null) return result;
+    return _applyFicheToRecommendation(result, fiche);
+  }
+
+  /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à
+  /// l'activité actuellement sélectionnés, si elle existe.
+  Map<String, dynamic>? _matchedParcoursFiche() {
+    if (_normalizedSituation != 'Fonctionnaire / agent public') return null;
+    if (_selectedActivity.trim().isEmpty) return null;
+    return JeMeLanceParcoursFichesService.instance.find(
+      statutUtilisateur: 'fonctionnaire',
+      activite: _selectedActivity,
+    );
+  }
+
+  /// Alimente les sections du parcours personnalisé avec le contenu de la
+  /// fiche officielle correspondante, sans changer la structure attendue
+  /// par l'UI (mêmes clés/formes que la logique générique).
+  Map<String, dynamic> _applyFicheToRecommendation(
+    Map<String, dynamic> result,
+    Map<String, dynamic> fiche,
+  ) {
+    String s(dynamic v) => (v ?? '').toString().trim();
+    List<String> l(dynamic v) => (v as List?)
+            ?.map((e) => '$e'.trim())
+            .where((e) => e.isNotEmpty)
+            .toList() ??
+        const <String>[];
+    String stripWeekPrefix(String text) {
+      final idx = text.indexOf(':');
+      final tail = idx == -1 ? text : text.substring(idx + 1).trim();
+      return tail.isEmpty ? tail : tail[0].toUpperCase() + tail.substring(1);
+    }
+
+    final activite = s(fiche['activite']);
+    final alertes = l(fiche['alertes']);
+    final assurances = l(fiche['assurances']);
+    final documents = l(fiche['documents_a_collecter']);
+    final couts = l(fiche['couts_indicatifs']);
+    final organismes = l(fiche['organismes_accompagnement']);
+    final modesExercice = l(fiche['modes_exercice']);
+    final statutAlternatif = l(fiche['statut_alternatif']);
+    final parcours = (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final fiscalite = (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
+
+    final regulationTutorial = <Map<String, dynamic>>[
+      {
+        'title': 'Activité : $activite',
+        'description':
+            '${s(fiche['type_activite'])} Code APE indicatif : ${s(fiche['code_ape_indicatif'])}.',
+      },
+      if (s(fiche['qualification_regles']).isNotEmpty)
+        {
+          'title': 'Règles à respecter',
+          'description': s(fiche['qualification_regles']),
+        },
+      if (assurances.isNotEmpty)
+        {
+          'title': 'Assurances à prévoir',
+          'description': assurances.join(' ; '),
+        },
+      if (alertes.isNotEmpty)
+        {
+          'title': 'Alertes spécifiques à l’activité',
+          'description': alertes.join(' ; '),
+        },
+    ];
+
+    final situationDescription = s(parcours['2_situation_personnelle']).isNotEmpty
+        ? s(parcours['2_situation_personnelle'])
+        : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.';
+    final statusWarnings = <Map<String, dynamic>>[
+      {
+        'title': 'Cumul d’activité — $activite',
+        'description': situationDescription,
+        'checks': documents.isNotEmpty ? documents : alertes,
+      },
+    ];
+
+    final existingLegal =
+        (result['recommendedLegalStatus'] as Map).cast<String, dynamic>();
+    final recommendedLegalStatus = {
+      'recommended': s(fiche['statut_recommande']).isNotEmpty
+          ? fiche['statut_recommande']
+          : existingLegal['recommended'],
+      'justification': s(parcours['3_cadre']).isNotEmpty
+          ? parcours['3_cadre']
+          : existingLegal['justification'],
+      'planB': statutAlternatif.isNotEmpty
+          ? statutAlternatif.join(' ou ')
+          : existingLegal['planB'],
+      'disclaimer': s(fiche['legal_review_status']).isNotEmpty
+          ? fiche['legal_review_status']
+          : existingLegal['disclaimer'],
+    };
+
+    final blockingAlerts = <String>{
+      ...(result['blockingAlerts'] as List).cast<String>(),
+      ...alertes,
+    }.toList();
+
+    final demarches = l(parcours['4_demarches']);
+    final ficheAides = l(parcours['5_aides']);
+    final steps = (result['steps'] as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    for (final step in steps) {
+      switch (step['id']) {
+        case 'reglementation':
+          {
+            step['todos'] = [
+              s(fiche['qualification_regles']),
+              if (s(fiche['code_ape_indicatif']).isNotEmpty)
+                'Code APE indicatif : ${s(fiche['code_ape_indicatif'])}',
+              ...assurances,
+            ].where((e) => e.toString().isNotEmpty).toList();
+            break;
+          }
+        case 'situation':
+          {
+            step['todos'] = [
+              situationDescription,
+              if (s(fiche['organisme_cumul']).isNotEmpty)
+                'Contact utile : ${s(fiche['organisme_cumul'])}',
+            ].where((e) => e.toString().isNotEmpty).toList();
+            break;
+          }
+        case 'statut_lancement':
+          {
+            step['todos'] = [
+              'Statut conseillé : ${s(fiche['statut_recommande'])}',
+              if (statutAlternatif.isNotEmpty)
+                'Alternatives : ${statutAlternatif.join(', ')}',
+            ].where((e) => e.toString().isNotEmpty).toList();
+            break;
+          }
+        case 'preparation':
+          {
+            if (documents.isNotEmpty) step['todos'] = documents;
+            break;
+          }
+        case 'declaration':
+          {
+            step['todos'] = [
+              ...(demarches.isNotEmpty
+                  ? demarches
+                  : (step['todos'] as List).cast<String>()),
+              if (s(fiche['organisme_formalite']).isNotEmpty)
+                'Guichet : ${s(fiche['organisme_formalite'])}',
+            ].where((e) => e.toString().isNotEmpty).toList();
+            break;
+          }
+        case 'protections':
+          {
+            if (assurances.isNotEmpty) step['todos'] = assurances;
+            break;
+          }
+        case 'gestion':
+          {
+            final gestionTodos = [
+              if (s(fiscalite['seuil_micro_service_2026']).isNotEmpty)
+                'Seuil micro (prestation) 2026 : ${fiscalite['seuil_micro_service_2026']}',
+              if (s(fiscalite['seuil_micro_vente_2026']).isNotEmpty)
+                'Seuil micro (vente) 2026 : ${fiscalite['seuil_micro_vente_2026']}',
+              if (s(fiscalite['cotisations_micro_bic_service_2026']).isNotEmpty)
+                'Cotisations micro-BIC service 2026 : ${fiscalite['cotisations_micro_bic_service_2026']}',
+              if (s(fiscalite['cfe']).isNotEmpty) 'CFE : ${fiscalite['cfe']}',
+            ];
+            if (gestionTodos.isNotEmpty) step['todos'] = gestionTodos;
+            break;
+          }
+        case 'aides':
+          {
+            final todos = [
+              ...ficheAides,
+              if (organismes.isNotEmpty)
+                'Organismes : ${organismes.join(', ')}',
+            ];
+            if (todos.isNotEmpty) step['todos'] = todos;
+            break;
+          }
+        case 'offres':
+          {
+            if (modesExercice.isNotEmpty) {
+              step['todos'] = modesExercice
+                  .map((m) => 'Mode d’exercice possible : $m')
+                  .toList();
+            }
+            break;
+          }
+      }
+    }
+
+    final aides = (result['aides'] as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    final existingAideNames =
+        aides.map((a) => '${a['name']}'.toLowerCase()).toSet();
+    for (final name in ficheAides) {
+      final key = name.toLowerCase();
+      if (existingAideNames.contains(key)) continue;
+      aides.add(_aid(
+        name,
+        'Dispositif identifié pour l’activité « $activite » (fiche officielle).',
+        true,
+      ));
+      existingAideNames.add(key);
+    }
+
+    final costs = Map<String, dynamic>.from(result['costs'] as Map);
+    if (couts.isNotEmpty) {
+      costs['note'] = couts.join(' ');
+    }
+
+    final ficheWeeks = l(parcours['7_plan_30_jours']);
+    const weekLabels = ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4'];
+    final plan30 = <Map<String, dynamic>>[];
+    final insertedWeeks = <String>{};
+    for (final task in (result['plan30'] as List)) {
+      final week = '${(task as Map)['week']}';
+      final idx = weekLabels.indexOf(week);
+      if (idx != -1 && idx < ficheWeeks.length && !insertedWeeks.contains(week)) {
+        plan30.add(_task(week, stripWeekPrefix(ficheWeeks[idx])));
+        insertedWeeks.add(week);
+      }
+      plan30.add(Map<String, dynamic>.from(task));
+    }
+
+    final recommendation =
+        Map<String, dynamic>.from(result['recommendation'] as Map);
+    if (s(fiche['statut_recommande']).isNotEmpty) {
+      recommendation['statut'] = fiche['statut_recommande'];
+    }
+    if (s(parcours['3_cadre']).isNotEmpty) {
+      recommendation['why'] = parcours['3_cadre'];
+    }
+    if (statutAlternatif.isNotEmpty) {
+      recommendation['planB'] = statutAlternatif.join(' ou ');
+    }
+
+    return {
+      ...result,
+      'recommendation': recommendation,
+      'blockingAlerts': blockingAlerts,
+      'costs': costs,
+      'plan30': plan30,
+      'aides': aides,
       'regulationTutorial': regulationTutorial,
       'statusWarnings': statusWarnings,
       'recommendedLegalStatus': recommendedLegalStatus,
