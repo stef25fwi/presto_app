@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart' show XFile;
 
 /// Génère le PDF export du "parcours personnalisé", réservé aux abonnements
 /// IliPresto+ / ilipro (voir `JourneyEntitlements.canExportPdf`).
@@ -12,16 +14,55 @@ import 'package:pdf/widgets.dart' as pw;
 /// Le document embarque systématiquement le logo iliPresto et un filigrane
 /// "ILIPRESTO+" pour rappeler que ce contenu est réservé à un usage
 /// personnel et lié à l'abonnement de l'utilisateur.
+///
+/// Retourne un `XFile` prêt à partager, en gérant les deux plateformes :
+/// - sur **web**, un `XFile.fromData` (octets en mémoire) — `path_provider`
+///   et `dart:io` n'y sont pas disponibles ;
+/// - sur **mobile**, les octets sont écrits dans le répertoire temporaire
+///   (nécessaire pour que `Share.shareXFiles` puisse partager un vrai chemin
+///   de fichier natif) puis exposés via `XFile(path)`.
 class JourneyPdfExportService {
   const JourneyPdfExportService();
 
   static const _logoAssetPath = 'assets/images/logo_ilipresto.png';
+  // Police TTF Unicode obligatoire : les polices Type1 par défaut du package
+  // `pdf` (Helvetica) ne couvrent pas toute la typographie française présente
+  // dans les fiches (apostrophes courbes « ’ », tirets cadratins « — »,
+  // guillemets « « » », « € », etc.), ce qui faisait échouer `document.save()`
+  // dès qu'un glyphe manquait.
+  static const _fontRegularPath = 'assets/fonts/Inter-Regular.ttf';
+  static const _fontBoldPath = 'assets/fonts/Inter-Bold.ttf';
 
-  Future<File> generateJourneyPdf(Map<String, dynamic> journey) async {
+  Future<XFile> generateJourneyPdf(Map<String, dynamic> journey) async {
+    final bytes = await _buildPdfBytes(journey);
+    const fileName = 'parcours_ilipresto.pdf';
+
+    if (kIsWeb) {
+      return XFile.fromData(
+        bytes,
+        name: fileName,
+        mimeType: 'application/pdf',
+      );
+    }
+
+    // Mobile : un vrai chemin de fichier est nécessaire pour le partage natif.
+    final dir = await getTemporaryDirectory();
+    final file = File(
+      '${dir.path}/parcours_ilipresto_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
+    await file.writeAsBytes(bytes, flush: true);
+    return XFile(file.path, mimeType: 'application/pdf', name: fileName);
+  }
+
+  Future<Uint8List> _buildPdfBytes(Map<String, dynamic> journey) async {
+    final baseFont = pw.Font.ttf(await rootBundle.load(_fontRegularPath));
+    final boldFont = pw.Font.ttf(await rootBundle.load(_fontBoldPath));
     final logoBytes = await rootBundle.load(_logoAssetPath);
     final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
 
-    final document = pw.Document();
+    final document = pw.Document(
+      theme: pw.ThemeData.withFont(base: baseFont, bold: boldFont),
+    );
 
     final recommendation =
         (journey['recommendation'] as Map?)?.cast<String, dynamic>() ??
@@ -136,16 +177,7 @@ class JourneyPdfExportService {
       ),
     );
 
-    final Uint8List bytes = await document.save();
-    // Répertoire documents de l'app (persistant) plutôt que temporaire, pour
-    // que le PDF reste réellement enregistré sur l'appareil et pas seulement
-    // le temps du partage.
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File(
-      '${dir.path}/parcours_ilipresto_${DateTime.now().millisecondsSinceEpoch}.pdf',
-    );
-    await file.writeAsBytes(bytes, flush: true);
-    return file;
+    return document.save();
   }
 
   pw.Widget _sectionTitle(String text) => pw.Padding(
