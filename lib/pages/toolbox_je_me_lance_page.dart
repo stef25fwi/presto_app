@@ -1157,6 +1157,26 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final statutAlternatif = l(fiche['statut_alternatif']);
     final parcours = (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
     final fiscalite = (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
+    // Champs supplémentaires de la fiche officielle, pour que le parcours
+    // reprenne l'intégralité des informations présentes dans les fiches
+    // statut+activité (.md) : famille d'activité, nature fiscale probable,
+    // organisme de contrôle, niveau de vigilance réel et sources officielles.
+    final famille = s(fiche['famille']);
+    final natureFiscaleProbable = s(fiche['nature_fiscale_probable']);
+    final organismeControle = s(fiche['organisme_controle']);
+    final niveauVigilance = s(fiche['niveau_vigilance']);
+    final activiteReglementee = fiche['activite_reglementee'] == true;
+    final statutUtilisateurLabel = s(fiche['statut_utilisateur']);
+    // `sources_officielles` a deux formats selon l'ancienneté du pack :
+    // une liste d'URLs brutes (packs historiques) ou une liste d'objets
+    // {titre, url, resume} (packs plus récents) — on gère les deux.
+    final sourcesOfficielles = (fiche['sources_officielles'] as List?)
+            ?.map((e) {
+              if (e is Map) return e.cast<String, dynamic>();
+              return <String, dynamic>{'titre': '', 'url': '$e', 'resume': ''};
+            })
+            .toList() ??
+        const <Map<String, dynamic>>[];
     // Bloc optionnel propre à certains statuts (ex. `regles_retraite`,
     // `regles_etudiant`). Détecté par préfixe pour rester générique aux
     // packs sans lister chaque statut ici.
@@ -1187,9 +1207,24 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     final regulationTutorial = <Map<String, dynamic>>[
       {
+        'title': 'Vue d’ensemble',
+        'description': [
+          'Ce parcours explique comment un profil « $statutUtilisateurLabel » '
+              'peut démarrer ou ajouter l’activité « $activite ».',
+          'Activité ${activiteReglementee ? 'réglementée' : 'libre'}.',
+          if (niveauVigilance.isNotEmpty)
+            'Niveau de vigilance : $niveauVigilance.',
+        ].join(' '),
+      },
+      {
         'title': 'Activité : $activite',
-        'description':
-            '${s(fiche['type_activite'])} Code APE indicatif : ${s(fiche['code_ape_indicatif'])}.',
+        'description': [
+          s(fiche['type_activite']),
+          if (famille.isNotEmpty) 'Famille : $famille.',
+          'Code APE indicatif : ${s(fiche['code_ape_indicatif'])}.',
+          if (natureFiscaleProbable.isNotEmpty)
+            'Nature fiscale probable : $natureFiscaleProbable.',
+        ].where((e) => e.isNotEmpty).join(' '),
       },
       if (s(fiche['qualification_regles']).isNotEmpty)
         {
@@ -1201,11 +1236,32 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           'title': 'Assurances à prévoir',
           'description': assurances.join(' ; '),
         },
+      if (organismes.isNotEmpty)
+        {
+          'title': 'Organismes à consulter',
+          'description': organismes.join(' ; '),
+        },
+      if (organismeControle.isNotEmpty)
+        {
+          'title': 'Organisme(s) de contrôle',
+          'description': organismeControle,
+        },
       if (alertes.isNotEmpty)
         {
           'title': 'Alertes spécifiques à l’activité',
           'description': alertes.join(' ; '),
         },
+      for (final source in sourcesOfficielles)
+        if (s(source['titre']).isNotEmpty || s(source['url']).isNotEmpty)
+          {
+            'title': s(source['titre']).isNotEmpty
+                ? s(source['titre'])
+                : 'Source officielle',
+            'description': [
+              s(source['resume']),
+              s(source['url']),
+            ].where((e) => e.isNotEmpty).join(' — '),
+          },
     ];
 
     final reglesSpecifiquesResume =
@@ -1365,7 +1421,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final costs = Map<String, dynamic>.from(result['costs'] as Map);
     if (couts.isNotEmpty) {
       costs['note'] = couts.join(' ');
+      // Liste détaillée des coûts propres à l'activité (fiche officielle),
+      // affichée telle quelle en complément des estimations génériques.
+      costs['ficheCoutsIndicatifs'] = couts;
     }
+
+    final summary = <String, dynamic>{
+      ...(result['summary'] as Map).cast<String, dynamic>(),
+      if (niveauVigilance.isNotEmpty)
+        'vigilanceLevel':
+            niveauVigilance[0].toUpperCase() + niveauVigilance.substring(1),
+    };
 
     final ficheWeeks = l(parcours['7_plan_30_jours']);
     const weekLabels = ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4'];
@@ -1398,6 +1464,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       'recommendation': recommendation,
       'blockingAlerts': blockingAlerts,
       'costs': costs,
+      'summary': summary,
       'plan30': plan30,
       'aides': aides,
       'regulationTutorial': regulationTutorial,
@@ -5833,6 +5900,22 @@ class _JourneySummaryPage extends StatelessWidget {
                               text: '${costs['note'] ?? ''}',
                               tone: const Color(0xFF6B7280),
                             ),
+                            if ((costs['ficheCoutsIndicatifs'] as List?)
+                                    ?.isNotEmpty ==
+                                true) ...[
+                              const SizedBox(height: 12),
+                              const _SectionTitle(
+                                'Coûts détaillés propres à votre activité',
+                              ),
+                              const SizedBox(height: 8),
+                              ...(costs['ficheCoutsIndicatifs'] as List)
+                                  .map(
+                                    (item) => _Bullet(
+                                      icon: Icons.euro_outlined,
+                                      text: '$item',
+                                    ),
+                                  ),
+                            ],
                           ],
                         ],
                       ),
