@@ -134,6 +134,25 @@ void main() {
           findsOneWidget,
         );
 
+        // Alertes bloquantes issues de regles_etudiant.mineur /
+        // regles_etudiant.titre_sejour, remontées dans la section 1.
+        expect(
+          find.textContaining('Étudiant mineur'),
+          findsOneWidget,
+        );
+        expect(
+          find.textContaining('titre de séjour étudiant'),
+          findsOneWidget,
+        );
+
+        // La fiche officielle alimente désormais bien plus de tuiles dans la
+        // section 1 (vue d'ensemble, activité, organismes, sources
+        // officielles...) : la section 2 n'est plus visible sans défiler
+        // (ListView : les sections hors-écran ne sont montées qu'une fois
+        // scrollées en vue).
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -1500));
+        await _settle(tester, times: 5);
+
         // Section "2. Vérifier votre situation personnelle" : titre et
         // résumé propres au statut Étudiant (regles_etudiant), pas le texte
         // générique "Cumul d'activité".
@@ -143,17 +162,6 @@ void main() {
         );
         expect(
           find.textContaining('Un étudiant peut créer une micro-entreprise'),
-          findsOneWidget,
-        );
-
-        // Alertes bloquantes issues de regles_etudiant.mineur /
-        // regles_etudiant.titre_sejour, remontées dans la section 1.
-        expect(
-          find.textContaining('Étudiant mineur'),
-          findsOneWidget,
-        );
-        expect(
-          find.textContaining('titre de séjour étudiant'),
           findsOneWidget,
         );
 
