@@ -102,6 +102,7 @@ flutter:
     - assets/images/
     - assets/images/logowebp.webp
     - assets/data/cities_compact.json
+    - assets/data/parcours_fiches_fonctionnaire.json
     - assets/carousel_home/
     - docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/
 
