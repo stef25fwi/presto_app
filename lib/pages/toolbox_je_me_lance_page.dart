@@ -17,6 +17,7 @@
 // © You can freely adapt.
 
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5527,7 +5528,7 @@ class _JourneySummaryPage extends StatelessWidget {
                   triggerKey: _step4CardKey,
                   listBuilder: (scrollController) => ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
                   children: [
                     _HeaderInfoCard(
                       title: 'Mon parcours personnalisé',
@@ -5967,14 +5968,31 @@ class _GuestSignupGateState extends State<_GuestSignupGate> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: widget.listBuilder(_scrollController)),
-        if (_bannerVisible)
+        Positioned.fill(
+          child: IgnorePointer(
+            ignoring: _bannerVisible,
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(
+                sigmaX: _bannerVisible ? 6 : 0,
+                sigmaY: _bannerVisible ? 6 : 0,
+              ),
+              child: widget.listBuilder(_scrollController),
+            ),
+          ),
+        ),
+        if (_bannerVisible) ...[
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(color: Colors.black.withValues(alpha: 0.12)),
+            ),
+          ),
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             child: _GuestSignupBanner(onDismiss: _dismissBanner),
           ),
+        ],
       ],
     );
   }
