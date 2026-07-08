@@ -32,7 +32,18 @@ void main() {
       expect(fiche['activite'], 'Service en salle');
     });
 
-    test('les deux packs renvoient des fiches distinctes pour la même activité', () {
+    test('trouve une fiche étudiant pour une activité du catalogue', () {
+      final fiche = service.find(
+        statutUtilisateur: 'étudiant',
+        activite: 'Service en salle',
+      );
+      expect(fiche, isNotNull);
+      expect(fiche!['statut_utilisateur'], 'étudiant');
+      expect(fiche['activite'], 'Service en salle');
+      expect(fiche['regles_etudiant'], isA<Map>());
+    });
+
+    test('les trois packs renvoient des fiches distinctes pour la même activité', () {
       final fonctionnaire = service.find(
         statutUtilisateur: 'fonctionnaire',
         activite: 'Tonte de pelouse',
@@ -41,9 +52,15 @@ void main() {
         statutUtilisateur: 'retraité',
         activite: 'Tonte de pelouse',
       );
+      final etudiant = service.find(
+        statutUtilisateur: 'étudiant',
+        activite: 'Tonte de pelouse',
+      );
       expect(fonctionnaire, isNotNull);
       expect(retraite, isNotNull);
-      expect(fonctionnaire!['id_fiche'], isNot(equals(retraite!['id_fiche'])));
+      expect(etudiant, isNotNull);
+      final ids = {fonctionnaire!['id_fiche'], retraite!['id_fiche'], etudiant!['id_fiche']};
+      expect(ids, hasLength(3));
     });
 
     test('la normalisation ignore accents/casse sur le statut', () {

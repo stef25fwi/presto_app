@@ -1045,7 +1045,22 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   static const _ficheStatutParSituation = <String, String>{
     'Fonctionnaire / agent public': 'fonctionnaire',
     'Retraité': 'retraité',
+    'Étudiant': 'étudiant',
   };
+
+  // Sous-clés de `regles_<statut>` traitées comme alertes bloquantes
+  // (mises en avant par les packs eux-mêmes, ex. mineur / titre de séjour
+  // pour le statut Étudiant). À étendre si un futur pack en ajoute.
+  static const _reglesAlertKeys = <String>['mineur', 'titre_sejour'];
+
+  // Sous-clés de `regles_<statut>` utilisées comme checklist de la section
+  // "Vérifier votre situation personnelle", par ordre de priorité (la
+  // première clé non vide trouvée est utilisée).
+  static const _reglesChecksPriorityKeys = <String>[
+    'declaration_caisse',
+    'bourse_assiduite',
+    'fiscalite_etudiant',
+  ];
 
   /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à
   /// l'activité actuellement sélectionnés, si elle existe.
@@ -1088,12 +1103,33 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final statutAlternatif = l(fiche['statut_alternatif']);
     final parcours = (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
     final fiscalite = (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
-    // Bloc optionnel propre à certains statuts (ex. cumul emploi-retraite).
-    final reglesSpecifiques =
-        (fiche['regles_retraite'] as Map?)?.cast<String, dynamic>();
-    final cumulLabel = s(fiche['statut_utilisateur']).toLowerCase().contains('retrait')
+    // Bloc optionnel propre à certains statuts (ex. `regles_retraite`,
+    // `regles_etudiant`). Détecté par préfixe pour rester générique aux
+    // packs sans lister chaque statut ici.
+    Map<String, dynamic>? reglesSpecifiques;
+    for (final entry in fiche.entries) {
+      final value = entry.value;
+      if (entry.key.startsWith('regles_') && value is Map) {
+        reglesSpecifiques = value.cast<String, dynamic>();
+        break;
+      }
+    }
+    final statutLower = s(fiche['statut_utilisateur']).toLowerCase();
+    final cumulLabel = statutLower.contains('retrait')
         ? 'Cumul emploi-retraite'
-        : 'Cumul d’activité';
+        : statutLower.contains('etudiant') || statutLower.contains('étudiant')
+            ? 'Points à vérifier avant de démarrer'
+            : 'Cumul d’activité';
+    // Sous-listes de `reglesSpecifiques` à traiter comme alertes bloquantes
+    // (mises en avant par les packs eux-mêmes, ex. mineur / titre de séjour
+    // pour le statut Étudiant). À étendre si un futur pack ajoute une clé
+    // équivalente.
+    final reglesAlerts = <String>[];
+    if (reglesSpecifiques != null) {
+      for (final key in _reglesAlertKeys) {
+        reglesAlerts.addAll(l(reglesSpecifiques[key]));
+      }
+    }
 
     final regulationTutorial = <Map<String, dynamic>>[
       {
@@ -1125,9 +1161,16 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         : (s(parcours['2_situation_personnelle']).isNotEmpty
             ? s(parcours['2_situation_personnelle'])
             : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.');
-    final reglesSpecifiquesChecks = reglesSpecifiques != null
-        ? l(reglesSpecifiques['declaration_caisse'])
-        : const <String>[];
+    var reglesSpecifiquesChecks = const <String>[];
+    if (reglesSpecifiques != null) {
+      for (final key in _reglesChecksPriorityKeys) {
+        final values = l(reglesSpecifiques[key]);
+        if (values.isNotEmpty) {
+          reglesSpecifiquesChecks = values;
+          break;
+        }
+      }
+    }
     final statusWarnings = <Map<String, dynamic>>[
       {
         'title': '$cumulLabel — $activite',
@@ -1158,6 +1201,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final blockingAlerts = <String>{
       ...(result['blockingAlerts'] as List).cast<String>(),
       ...alertes,
+      ...reglesAlerts,
     }.toList();
 
     final demarches = l(parcours['4_demarches']);
@@ -1181,6 +1225,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           {
             step['todos'] = [
               situationDescription,
+              ...reglesAlerts,
               if (s(fiche['organisme_cumul']).isNotEmpty)
                 'Contact utile : ${s(fiche['organisme_cumul'])}',
             ].where((e) => e.toString().isNotEmpty).toList();

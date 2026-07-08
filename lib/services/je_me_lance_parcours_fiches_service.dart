@@ -5,7 +5,8 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../utils/keyword_suggester.dart';
 
 /// Charge et indexe les fiches parcours par statut (ex. `fonctionnaire`,
-/// `retraité`) et activité, générées à partir des packs `parcours_fiches_*`.
+/// `retraité`, `étudiant`) et activité, générées à partir des packs
+/// `parcours_fiches_*`.
 ///
 /// Collection Firestore de référence : `parcoursFiches` (voir
 /// README_SCHEMA_FIRESTORE.md des packs). Ici les fiches sont embarquées
@@ -22,6 +23,7 @@ class JeMeLanceParcoursFichesService {
   static const _assetPaths = <String>[
     'assets/data/parcours_fiches_fonctionnaire.json',
     'assets/data/parcours_fiches_retraite.json',
+    'assets/data/parcours_fiches_etudiant.json',
   ];
 
   Map<String, Map<String, dynamic>>? _byKey;
