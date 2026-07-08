@@ -43,7 +43,18 @@ void main() {
       expect(fiche['regles_etudiant'], isA<Map>());
     });
 
-    test('les trois packs renvoient des fiches distinctes pour la même activité', () {
+    test('trouve une fiche salarié pour une activité du catalogue', () {
+      final fiche = service.find(
+        statutUtilisateur: 'salarié',
+        activite: 'Service en salle',
+      );
+      expect(fiche, isNotNull);
+      expect(fiche!['statut_utilisateur'], 'salarié');
+      expect(fiche['activite'], 'Service en salle');
+      expect(fiche['regles_salarie'], isA<Map>());
+    });
+
+    test('les quatre packs renvoient des fiches distinctes pour la même activité', () {
       final fonctionnaire = service.find(
         statutUtilisateur: 'fonctionnaire',
         activite: 'Tonte de pelouse',
@@ -56,11 +67,21 @@ void main() {
         statutUtilisateur: 'étudiant',
         activite: 'Tonte de pelouse',
       );
+      final salarie = service.find(
+        statutUtilisateur: 'salarié',
+        activite: 'Tonte de pelouse',
+      );
       expect(fonctionnaire, isNotNull);
       expect(retraite, isNotNull);
       expect(etudiant, isNotNull);
-      final ids = {fonctionnaire!['id_fiche'], retraite!['id_fiche'], etudiant!['id_fiche']};
-      expect(ids, hasLength(3));
+      expect(salarie, isNotNull);
+      final ids = {
+        fonctionnaire!['id_fiche'],
+        retraite!['id_fiche'],
+        etudiant!['id_fiche'],
+        salarie!['id_fiche'],
+      };
+      expect(ids, hasLength(4));
     });
 
     test('la normalisation ignore accents/casse sur le statut', () {
@@ -71,9 +92,9 @@ void main() {
       expect(fiche, isNotNull);
     });
 
-    test('retourne null pour un statut sans pack (ex. salarié)', () {
+    test('retourne null pour un statut sans pack (ex. indépendant)', () {
       final fiche = service.find(
-        statutUtilisateur: 'salarié',
+        statutUtilisateur: 'indépendant',
         activite: 'Service en salle',
       );
       expect(fiche, isNull);

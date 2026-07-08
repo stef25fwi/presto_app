@@ -1046,12 +1046,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'Fonctionnaire / agent public': 'fonctionnaire',
     'Retraité': 'retraité',
     'Étudiant': 'étudiant',
+    'Salarié': 'salarié',
   };
 
   // Sous-clés de `regles_<statut>` traitées comme alertes bloquantes
   // (mises en avant par les packs eux-mêmes, ex. mineur / titre de séjour
-  // pour le statut Étudiant). À étendre si un futur pack en ajoute.
-  static const _reglesAlertKeys = <String>['mineur', 'titre_sejour'];
+  // pour le statut Étudiant, alertes_generales pour le statut Salarié).
+  // À étendre si un futur pack en ajoute.
+  static const _reglesAlertKeys = <String>[
+    'mineur',
+    'titre_sejour',
+    'alertes_generales',
+  ];
 
   // Sous-clés de `regles_<statut>` utilisées comme checklist de la section
   // "Vérifier votre situation personnelle", par ordre de priorité (la
@@ -1060,6 +1066,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'declaration_caisse',
     'bourse_assiduite',
     'fiscalite_etudiant',
+    'clauses',
   ];
 
   /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à
