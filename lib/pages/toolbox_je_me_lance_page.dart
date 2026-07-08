@@ -785,7 +785,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // doivent jamais partager un parcours mis en cache (notamment le contenu
   // issu des fiches officielles, spécifique au statut Fonctionnaire).
   String get _cacheDomaineKey =>
-      '${_projectCtrl.text.trim()}|${_normalizedSituation}|$_selectedActivity';
+      '${_projectCtrl.text.trim()}|$_normalizedSituation|$_selectedActivity';
 
   Future<void> _recomputeDerivedWithCache() async {
     if (_shouldUseFonctionnaireFiche) {
