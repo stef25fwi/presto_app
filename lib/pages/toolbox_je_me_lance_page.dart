@@ -38,6 +38,45 @@ import '../data/city_postal_data.dart';
 import '../services/je_me_lance_parcours_fiches_service.dart';
 import '../services/region_resources_service.dart';
 
+/// Construit l'instantané JSON-compatible d'un parcours personnalisé,
+/// utilisé à la fois pour la sauvegarde locale explicite
+/// ([JourneyLocalStorageService.saveSnapshot]) et pour l'historique
+/// auto-écrasé ([JourneyLocalStorageService.saveHistorySnapshot]).
+Map<String, dynamic> _buildJourneySnapshot({
+  required String projectLabel,
+  required String region,
+  required String currentStatus,
+  required String selectedActivity,
+  required Map<String, dynamic> recommendation,
+  required List<String> blockingAlerts,
+  required Map<String, dynamic> costs,
+  required List<Map<String, dynamic>> aides,
+  required List<Map<String, dynamic>> plan30,
+  required Map<String, dynamic> summary,
+  required List<Map<String, dynamic>> regulationTutorial,
+  required List<Map<String, dynamic>> statusWarnings,
+  required Map<String, dynamic> recommendedLegalStatus,
+  required List<Map<String, dynamic>> steps,
+}) {
+  return {
+    'savedAt': DateTime.now().toIso8601String(),
+    'projectLabel': projectLabel,
+    'region': region,
+    'currentStatus': currentStatus,
+    'selectedActivity': selectedActivity,
+    'recommendation': recommendation,
+    'blockingAlerts': blockingAlerts,
+    'costs': costs,
+    'aides': aides,
+    'plan30': plan30,
+    'summary': summary,
+    'regulationTutorial': regulationTutorial,
+    'statusWarnings': statusWarnings,
+    'recommendedLegalStatus': recommendedLegalStatus,
+    'steps': steps,
+  };
+}
+
 Future<void> _openExternalUrl(BuildContext context, String url) async {
   final uri = Uri.tryParse(url);
   if (uri == null) return;
@@ -1713,6 +1752,46 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       _step = kTotalSteps;
     });
     await _saveDraft();
+
+    // Historique local : toujours écrasé automatiquement à chaque parcours
+    // terminé, sans quota ni action de l'utilisateur — distinct du parcours
+    // "véritablement sauvegardé" via le bouton "Sauvegarder". Best-effort :
+    // ne doit jamais bloquer ni faire échouer la validation du parcours.
+    unawaited(() async {
+      try {
+        await const JourneyLocalStorageService().saveHistorySnapshot(
+          _buildJourneySnapshot(
+            projectLabel: _projectCtrl.text.trim(),
+            region: _region,
+            currentStatus: _normalizedSituation,
+            selectedActivity: _selectedActivity,
+            recommendation: Map<String, dynamic>.from(_recommendation),
+            blockingAlerts: List<String>.from(_blockingAlerts),
+            costs: Map<String, dynamic>.from(_costs),
+            aides: _aides
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(),
+            plan30: _plan30
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(),
+            summary: Map<String, dynamic>.from(_summary),
+            regulationTutorial: _regulationTutorial
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(),
+            statusWarnings: _statusWarnings
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(),
+            recommendedLegalStatus:
+                Map<String, dynamic>.from(_recommendedLegalStatus),
+            steps: _progressSteps
+                .map((item) => Map<String, dynamic>.from(item))
+                .toList(),
+          ),
+        );
+      } catch (e) {
+        debugPrint('[Toolbox] history snapshot save failed: $e');
+      }
+    }());
 
     final user = _auth.currentUser;
     if (!_isLocalOnlyMode && user != null && _parcoursId != null) {
@@ -5281,25 +5360,22 @@ class _JourneySummaryPage extends StatelessWidget {
     return user == null || user.isAnonymous;
   }
 
-  Map<String, dynamic> _buildLocalSnapshot() {
-    return {
-      'savedAt': DateTime.now().toIso8601String(),
-      'projectLabel': projectLabel,
-      'region': region,
-      'currentStatus': currentStatus,
-      'selectedActivity': selectedActivity,
-      'recommendation': recommendation,
-      'blockingAlerts': blockingAlerts,
-      'costs': costs,
-      'aides': aides,
-      'plan30': plan30,
-      'summary': summary,
-      'regulationTutorial': regulationTutorial,
-      'statusWarnings': statusWarnings,
-      'recommendedLegalStatus': recommendedLegalStatus,
-      'steps': steps,
-    };
-  }
+  Map<String, dynamic> _buildLocalSnapshot() => _buildJourneySnapshot(
+        projectLabel: projectLabel,
+        region: region,
+        currentStatus: currentStatus,
+        selectedActivity: selectedActivity,
+        recommendation: recommendation,
+        blockingAlerts: blockingAlerts,
+        costs: costs,
+        aides: aides,
+        plan30: plan30,
+        summary: summary,
+        regulationTutorial: regulationTutorial,
+        statusWarnings: statusWarnings,
+        recommendedLegalStatus: recommendedLegalStatus,
+        steps: steps,
+      );
 
   static const JourneyLocalStorageService _localStorageService =
       JourneyLocalStorageService();
@@ -5308,23 +5384,71 @@ class _JourneySummaryPage extends StatelessWidget {
   static final JourneyEntitlementsService _entitlementsService =
       JourneyEntitlementsService();
 
-  Future<void> _saveLocally(BuildContext context) async {
-    final decision = await _entitlementsService.evaluateLocalSave();
-    if (!decision.allowed) {
+  /// Sauvegarde le parcours (véritable sauvegarde, distincte de
+  /// l'historique auto-écrasé) et, pour les abonnements IliPresto+/ilipro,
+  /// génère aussi un export PDF sur l'appareil et ouvre le menu de partage.
+  /// Les utilisateurs Gratuit ne sauvegardent qu'en local.
+  Future<void> _handleSave(BuildContext context) async {
+    final saveDecision = await _entitlementsService.evaluateLocalSave();
+    if (!saveDecision.allowed) {
       if (!context.mounted) return;
-      await _showSaveLimitReachedDialog(context, decision);
+      await _showSaveLimitReachedDialog(context, saveDecision);
       return;
     }
 
     await _localStorageService.saveSnapshot(_buildLocalSnapshot());
     await _entitlementsService.recordLocalSave();
 
+    if (!saveDecision.entitlements.canExportPdf) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Parcours sauvegardé localement sur cet appareil.'),
+        ),
+      );
+      return;
+    }
+
+    final pdfDecision = await _entitlementsService.evaluatePdfExport();
+    if (!pdfDecision.allowed) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Parcours sauvegardé localement. Export PDF : limite mensuelle déjà atteinte.',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Parcours sauvegardé localement sur cet appareil.'),
-      ),
+      const SnackBar(content: Text('Sauvegarde locale et génération du PDF…')),
     );
+
+    try {
+      final file = await _pdfExportService.generateJourneyPdf(
+        _buildLocalSnapshot(),
+      );
+      await _entitlementsService.recordPdfExport();
+
+      if (!context.mounted) return;
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'application/pdf')],
+        text: 'Mon parcours personnalisé — iliPresto+',
+      );
+    } catch (e) {
+      debugPrint('[Toolbox] pdf export failed: $e');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Parcours sauvegardé localement, mais l’export PDF a échoué.',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _showSaveLimitReachedDialog(
@@ -5345,85 +5469,6 @@ class _JourneySummaryPage extends StatelessWidget {
         );
       },
     );
-  }
-
-  Future<void> _showPremiumPdfDialog(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return const _UpgradeBottomSheet(
-          title: 'PDF & partage réservés à IliPresto+',
-          message:
-              'Vous pouvez sauvegarder ce parcours en local gratuitement. Pour l’exporter en PDF et le partager, activez l’abonnement IliPresto+.',
-          ctaLabel: 'Découvrir IliPresto+',
-          source: 'toolbox_pdf_export',
-        );
-      },
-    );
-  }
-
-  Future<void> _showPdfQuotaReachedDialog(
-    BuildContext context,
-    JourneyPdfExportDecision decision,
-  ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Limite d’export atteinte'),
-        content: Text(
-          'Vous avez déjà utilisé vos ${decision.entitlements.maxPdfExportsPerMonth} exports PDF inclus ce mois-ci avec IliPresto+. '
-          'La limite se réinitialise le mois prochain.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Compris'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handlePdfExport(BuildContext context) async {
-    final decision = await _entitlementsService.evaluatePdfExport();
-
-    if (decision.requiresUpgrade) {
-      if (!context.mounted) return;
-      await _showPremiumPdfDialog(context);
-      return;
-    }
-
-    if (!decision.allowed) {
-      if (!context.mounted) return;
-      await _showPdfQuotaReachedDialog(context, decision);
-      return;
-    }
-
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Génération du PDF en cours…')),
-    );
-
-    try {
-      final file = await _pdfExportService.generateJourneyPdf(
-        _buildLocalSnapshot(),
-      );
-      await _entitlementsService.recordPdfExport();
-
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'application/pdf')],
-        text: 'Mon parcours personnalisé — iliPresto+',
-      );
-    } catch (e) {
-      debugPrint('[Toolbox] pdf export failed: $e');
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('L’export PDF a échoué. Réessayez dans un instant.'),
-        ),
-      );
-    }
   }
 
   Future<void> _openResourceUrl(String url) async {
@@ -5830,7 +5875,7 @@ class _JourneySummaryPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Sauvegardez ce parcours sur cet appareil gratuitement. L’export PDF et le partage sont disponibles avec IliPresto+.',
+                            'Abonnement Gratuit : sauvegarde en local sur cet appareil. Avec IliPresto+ ou ilipro : sauvegarde en local + export PDF sur votre téléphone + partage.',
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               fontWeight: FontWeight.w600,
@@ -5838,22 +5883,14 @@ class _JourneySummaryPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 14),
-                          OutlinedButton.icon(
-                            onPressed: () => _saveLocally(context),
-                            icon: const Icon(Icons.save_outlined),
-                            label: const Text('Sauvegarder en local'),
-                          ),
-                          const SizedBox(height: 10),
                           ElevatedButton.icon(
-                            onPressed: () => _handlePdfExport(context),
+                            onPressed: () => _handleSave(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _ToolboxJeMeLancePageState.kBlue,
                               foregroundColor: Colors.white,
                             ),
-                            icon: const Icon(Icons.workspace_premium_outlined),
-                            label: const Text(
-                              'Exporter en PDF et partager avec IliPresto+',
-                            ),
+                            icon: const Icon(Icons.save_outlined),
+                            label: const Text('Sauvegarder'),
                           ),
                         ],
                       ),
