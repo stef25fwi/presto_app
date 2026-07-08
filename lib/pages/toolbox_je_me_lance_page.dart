@@ -1039,13 +1039,22 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     return _applyFicheToRecommendation(result, fiche);
   }
 
+  // Statuts couverts par un pack de fiches officielles. Ajouter une entrée
+  // ici suffit à brancher un nouveau statut une fois son pack déclaré dans
+  // JeMeLanceParcoursFichesService.
+  static const _ficheStatutParSituation = <String, String>{
+    'Fonctionnaire / agent public': 'fonctionnaire',
+    'Retraité': 'retraité',
+  };
+
   /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à
   /// l'activité actuellement sélectionnés, si elle existe.
   Map<String, dynamic>? _matchedParcoursFiche() {
-    if (_normalizedSituation != 'Fonctionnaire / agent public') return null;
+    final ficheStatut = _ficheStatutParSituation[_normalizedSituation];
+    if (ficheStatut == null) return null;
     if (_selectedActivity.trim().isEmpty) return null;
     return JeMeLanceParcoursFichesService.instance.find(
-      statutUtilisateur: 'fonctionnaire',
+      statutUtilisateur: ficheStatut,
       activite: _selectedActivity,
     );
   }
@@ -1079,6 +1088,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final statutAlternatif = l(fiche['statut_alternatif']);
     final parcours = (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
     final fiscalite = (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
+    // Bloc optionnel propre à certains statuts (ex. cumul emploi-retraite).
+    final reglesSpecifiques =
+        (fiche['regles_retraite'] as Map?)?.cast<String, dynamic>();
+    final cumulLabel = s(fiche['statut_utilisateur']).toLowerCase().contains('retrait')
+        ? 'Cumul emploi-retraite'
+        : 'Cumul d’activité';
 
     final regulationTutorial = <Map<String, dynamic>>[
       {
@@ -1103,14 +1118,23 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         },
     ];
 
-    final situationDescription = s(parcours['2_situation_personnelle']).isNotEmpty
-        ? s(parcours['2_situation_personnelle'])
-        : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.';
+    final reglesSpecifiquesResume =
+        reglesSpecifiques != null ? s(reglesSpecifiques['resume']) : '';
+    final situationDescription = reglesSpecifiquesResume.isNotEmpty
+        ? reglesSpecifiquesResume
+        : (s(parcours['2_situation_personnelle']).isNotEmpty
+            ? s(parcours['2_situation_personnelle'])
+            : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.');
+    final reglesSpecifiquesChecks = reglesSpecifiques != null
+        ? l(reglesSpecifiques['declaration_caisse'])
+        : const <String>[];
     final statusWarnings = <Map<String, dynamic>>[
       {
-        'title': 'Cumul d’activité — $activite',
+        'title': '$cumulLabel — $activite',
         'description': situationDescription,
-        'checks': documents.isNotEmpty ? documents : alertes,
+        'checks': reglesSpecifiquesChecks.isNotEmpty
+            ? reglesSpecifiquesChecks
+            : (documents.isNotEmpty ? documents : alertes),
       },
     ];
 
@@ -1194,15 +1218,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           }
         case 'gestion':
           {
-            final gestionTodos = [
-              if (s(fiscalite['seuil_micro_service_2026']).isNotEmpty)
-                'Seuil micro (prestation) 2026 : ${fiscalite['seuil_micro_service_2026']}',
-              if (s(fiscalite['seuil_micro_vente_2026']).isNotEmpty)
-                'Seuil micro (vente) 2026 : ${fiscalite['seuil_micro_vente_2026']}',
-              if (s(fiscalite['cotisations_micro_bic_service_2026']).isNotEmpty)
-                'Cotisations micro-BIC service 2026 : ${fiscalite['cotisations_micro_bic_service_2026']}',
-              if (s(fiscalite['cfe']).isNotEmpty) 'CFE : ${fiscalite['cfe']}',
-            ];
+            final gestionTodos = fiscalite.entries
+                .where((e) => s(e.value).isNotEmpty)
+                .map((e) => '${_fiscaliteLabel(e.key)} : ${s(e.value)}')
+                .toList();
             if (gestionTodos.isNotEmpty) step['todos'] = gestionTodos;
             break;
           }
@@ -1287,6 +1306,36 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       'recommendedLegalStatus': recommendedLegalStatus,
       'steps': steps,
     };
+  }
+
+  // Acronymes usuels rencontrés dans les clés `fiscalite` des fiches, pour un
+  // libellé plus lisible que la simple capitalisation mot à mot.
+  static const _fiscaliteAcronyms = <String, String>{
+    'cfe': 'CFE',
+    'tva': 'TVA',
+    'ca': 'CA',
+    'bic': 'BIC',
+    'cnav': 'CNAV',
+    'cnavpl': 'CNAVPL',
+    'zfrr': 'ZFRR',
+    'zup': 'ZUP',
+  };
+
+  /// Transforme une clé `fiscalite` (ex. `seuil_micro_service_2026_2028`) en
+  /// libellé lisible, sans dépendre du nom exact des clés d'un pack donné.
+  String _fiscaliteLabel(String key) {
+    return key
+        .split('_')
+        .where((w) => w.isNotEmpty)
+        .map((w) {
+          final lower = w.toLowerCase();
+          if (_fiscaliteAcronyms.containsKey(lower)) {
+            return _fiscaliteAcronyms[lower]!;
+          }
+          if (RegExp(r'^\d').hasMatch(w)) return w;
+          return w[0].toUpperCase() + w.substring(1);
+        })
+        .join(' ');
   }
 
   Map<String, dynamic> _buildSummary({
