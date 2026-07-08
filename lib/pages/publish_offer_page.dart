@@ -155,6 +155,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         normalized.contains('appcheck')) {
       return 'Vérification de sécurité échouée. Recharge la page puis réessaie.';
     }
+    if (normalized.contains('aucun texte reconnu') ||
+        normalized.contains('audio invalide') ||
+        normalized.contains('transcription vide') ||
+        normalized.contains('transcript vide')) {
+      return 'Veuillez ré-enregistrer votre audio.';
+    }
     return message;
   }
 
@@ -3450,7 +3456,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         } else {
           showErrorSnackBar(
             context,
-            'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}',
+            _formatMicroIaRuntimeError(e),
           );
         }
         _restorePublishAiFlowAfterError(fromVoice: true);
@@ -3508,7 +3514,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         } else {
           showErrorSnackBar(
             context,
-            'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
+            _formatMicroIaRuntimeError(e),
           );
         }
         _restorePublishAiFlowAfterError(fromVoice: true);
