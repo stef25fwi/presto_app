@@ -4817,6 +4817,156 @@ class _Bullet extends StatelessWidget {
   }
 }
 
+/// Tuile d'information « lisible » du parcours personnalisé.
+///
+/// Améliore la mise en page des cartes denses (ex. « Comprendre les règles de
+/// votre activité ») : au lieu d'un unique paragraphe « Titre : description »
+/// très condensé, elle sépare le titre (en-tête) du corps, et met en forme
+/// automatiquement le corps :
+/// - une énumération séparée par « ; » devient une liste à puces lisible ;
+/// - un lien (http) est isolé sur sa propre ligne, en couleur d'accent ;
+/// - sinon le texte reste un paragraphe aéré (interligne confortable).
+class _JourneyInfoTile extends StatelessWidget {
+  final int index;
+  final String title;
+  final String body;
+
+  const _JourneyInfoTile({
+    required this.index,
+    required this.title,
+    required this.body,
+  });
+
+  /// Découpe le corps en segments lisibles. Les fiches assemblent souvent des
+  /// listes avec « ; » (assurances, organismes, alertes...) : on les éclate en
+  /// puces. Un paragraphe sans « ; » reste un seul segment.
+  List<String> get _segments {
+    final trimmed = body.trim();
+    if (trimmed.isEmpty) return const [];
+    if (trimmed.contains(' ; ')) {
+      return trimmed
+          .split(' ; ')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return [trimmed];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final segments = _segments;
+    final isList = segments.length > 1;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8EBF1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1E8),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$index',
+                  style: const TextStyle(
+                    color: _ToolboxJeMeLancePageState.kOrange,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: _ToolboxJeMeLancePageState.kTextDark,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    height: 1.25,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (segments.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            if (isList)
+              ...segments.map((s) => _JourneyInfoBullet(text: s))
+            else
+              Text(
+                segments.first,
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontSize: 13.5,
+                  height: 1.5,
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Puce d'un segment mis en forme par [_JourneyInfoTile]. Isole les liens sur
+/// leur propre ligne, en couleur d'accent, pour ne pas casser la lecture.
+class _JourneyInfoBullet extends StatelessWidget {
+  final String text;
+  const _JourneyInfoBullet({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final isUrl = text.startsWith('http://') || text.startsWith('https://');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 6.5, right: 9),
+            child: Container(
+              width: 5,
+              height: 5,
+              decoration: const BoxDecoration(
+                color: _ToolboxJeMeLancePageState.kOrange,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: isUrl
+                    ? _ToolboxJeMeLancePageState.kBlue
+                    : Colors.grey.shade800,
+                fontSize: 13.5,
+                height: 1.45,
+                decoration: isUrl ? TextDecoration.underline : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CostRow extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -5708,15 +5858,18 @@ class _JourneySummaryPage extends StatelessWidget {
                                       'La structure tutorielle est prête, mais le contenu détaillé par activité reste à enrichir.',
                                 ),
                               ]
-                            : regulationTutorial
-                                .map(
-                                  (item) => _Bullet(
-                                    icon: Icons.menu_book_rounded,
-                                    text:
-                                        '${item['title']} : ${item['description']}',
+                            : [
+                                for (var i = 0;
+                                    i < regulationTutorial.length;
+                                    i++)
+                                  _JourneyInfoTile(
+                                    index: i + 1,
+                                    title:
+                                        '${regulationTutorial[i]['title'] ?? ''}',
+                                    body:
+                                        '${regulationTutorial[i]['description'] ?? ''}',
                                   ),
-                                )
-                                .toList(),
+                              ],
                       ),
                     ),
                     const SizedBox(height: 12),
