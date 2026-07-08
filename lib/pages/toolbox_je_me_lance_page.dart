@@ -5718,6 +5718,7 @@ class _JourneySummaryPage extends StatelessWidget {
                                   'Aucune aide spécifique n’a été remontée pour le moment.',
                             )
                           : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: relevantAides
                                   .map(
                                     (item) => _AidStatusSummaryTile(
