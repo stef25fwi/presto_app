@@ -59,11 +59,15 @@ Future<void> _settle(WidgetTester tester, {int times = 10}) async {
 Future<void> _scrollUntilFound(
   WidgetTester tester,
   Finder target, {
-  int maxDrags = 14,
+  int maxDrags = 45,
 }) async {
   for (var i = 0; i < maxDrags; i++) {
     if (target.evaluate().isNotEmpty) return;
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    // Pas de 700px : bien inférieur à la hauteur du viewport de test
+    // (3200px + cacheExtent), donc aucune tuile n'est « sautée » entre deux
+    // vérifications ; et 45 pas couvrent ~31 500px, largement de quoi
+    // atteindre la section 6 (coûts) même après les sections 4-5 très hautes.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -700));
     await _settle(tester, times: 3);
   }
 }
