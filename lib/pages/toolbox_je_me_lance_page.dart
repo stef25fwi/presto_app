@@ -5528,7 +5528,7 @@ class _JourneySummaryPage extends StatelessWidget {
                   triggerKey: _step4CardKey,
                   listBuilder: (scrollController) => ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
                   children: [
                     _HeaderInfoCard(
                       title: 'Mon parcours personnalisé',
