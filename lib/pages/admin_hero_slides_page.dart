@@ -115,36 +115,52 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   }
                 }
                 if (bytes == null) {
+                  const message = 'Ce fichier ne peut pas être lu.';
                   setSheetState(() {
-                    localError = 'Ce fichier ne peut pas être lu.';
+                    localError = message;
                   });
+                  if (context.mounted) {
+                    showErrorSnackBar(context, message);
+                  }
                   return;
                 }
 
                 final nonNullBytes = bytes;
                 if (nonNullBytes.isEmpty) {
+                  const message =
+                      'Le fichier sélectionné est vide. Choisissez un autre média.';
                   setSheetState(() {
-                    localError =
-                        'Le fichier sélectionné est vide. Choisissez un autre média.';
+                    localError = message;
                   });
+                  if (context.mounted) {
+                    showErrorSnackBar(context, message);
+                  }
                   return;
                 }
 
                 final mediaType = _mediaTypeFromName(normalizedName);
                 if (!_isSupportedHeroMedia(normalizedName)) {
+                  const message =
+                      'Format non supporté. Utilisez une image JPG/PNG/WEBP/AVIF/GIF/HEIC/HEIF ou une vidéo MP4/MOV/WEBM.';
                   setSheetState(() {
-                    localError =
-                        'Format non supporté. Utilisez une image JPG/PNG/WEBP/AVIF/GIF/HEIC/HEIF ou une vidéo MP4/MOV/WEBM.';
+                    localError = message;
                   });
+                  if (context.mounted) {
+                    showErrorSnackBar(context, message);
+                  }
                   return;
                 }
                 final byteLimit =
                     mediaType == 'video' ? _maxVideoBytes : _maxImageBytes;
                 if (nonNullBytes.lengthInBytes > byteLimit) {
+                  const message =
+                      'Fichier trop lourd. Réduisez la taille du média avant l\'envoi.';
                   setSheetState(() {
-                    localError =
-                        'Fichier trop lourd. Réduisez la taille du média avant l\'envoi.';
+                    localError = message;
                   });
+                  if (context.mounted) {
+                    showErrorSnackBar(context, message);
+                  }
                   return;
                 }
 
@@ -161,10 +177,14 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                   }
                 });
               } catch (error) {
+                final message =
+                    'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
                 setSheetState(() {
-                  localError =
-                      'Impossible de lire ce fichier : ${error.toString().split('\n').first}';
+                  localError = message;
                 });
+                if (context.mounted) {
+                  showErrorSnackBar(context, message);
+                }
               } finally {
                 setSheetState(() => isPickingFile = false);
               }
