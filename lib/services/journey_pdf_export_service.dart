@@ -137,7 +137,10 @@ class JourneyPdfExportService {
     );
 
     final Uint8List bytes = await document.save();
-    final dir = await getTemporaryDirectory();
+    // Répertoire documents de l'app (persistant) plutôt que temporaire, pour
+    // que le PDF reste réellement enregistré sur l'appareil et pas seulement
+    // le temps du partage.
+    final dir = await getApplicationDocumentsDirectory();
     final file = File(
       '${dir.path}/parcours_ilipresto_${DateTime.now().millisecondsSinceEpoch}.pdf',
     );
