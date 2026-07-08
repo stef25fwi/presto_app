@@ -65,13 +65,25 @@ void main() {
       expect(fiche['regles_independant'], isA<Map>());
     });
 
-    test('les cinq packs renvoient des fiches distinctes pour la même activité', () {
+    test("trouve une fiche demandeur d'emploi pour une activité du catalogue", () {
+      final fiche = service.find(
+        statutUtilisateur: "demandeur d'emploi",
+        activite: 'Service en salle',
+      );
+      expect(fiche, isNotNull);
+      expect(fiche!['statut_utilisateur'], 'demandeur d’emploi');
+      expect(fiche['activite'], 'Service en salle');
+      expect(fiche['regles_demandeur_emploi'], isA<Map>());
+    });
+
+    test('les six packs renvoient des fiches distinctes pour la même activité', () {
       const statuts = [
         'fonctionnaire',
         'retraité',
         'étudiant',
         'salarié',
         'indépendant',
+        "demandeur d'emploi",
       ];
       final ids = <Object>{};
       for (final statut in statuts) {

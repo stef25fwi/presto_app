@@ -1048,6 +1048,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'Étudiant': 'étudiant',
     'Salarié': 'salarié',
     'Indépendant': 'indépendant',
+    "Demandeur d'emploi": 'demandeur d’emploi',
   };
 
   // Sous-clés de `regles_<statut>` traitées comme alertes bloquantes
@@ -1069,6 +1070,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     'fiscalite_etudiant',
     'clauses',
     'conditions',
+    'actualisation',
   ];
 
   /// Fiche officielle (pack `parcoursFiches`) correspondant au statut et à

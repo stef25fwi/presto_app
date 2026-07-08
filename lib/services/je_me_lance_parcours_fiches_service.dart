@@ -26,6 +26,7 @@ class JeMeLanceParcoursFichesService {
     'assets/data/parcours_fiches_etudiant.json',
     'assets/data/parcours_fiches_salarie.json',
     'assets/data/parcours_fiches_independant.json',
+    'assets/data/parcours_fiches_demandeur_emploi.json',
   ];
 
   Map<String, Map<String, dynamic>>? _byKey;
