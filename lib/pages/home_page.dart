@@ -157,6 +157,36 @@ class _HomePageState extends State<HomePage>
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
   static const double _homeSlideTitleFontSize = 30;
 
+  double _responsiveHeroTitleFontSize(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 360) return 21;
+    if (width < 430) return 24;
+    if (width < 700) return 26;
+    return 30;
+  }
+
+  double _responsiveHeroSubtitleFontSize(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 360) return 13;
+    if (width < 430) return 14;
+    return 15;
+  }
+
+  double _responsiveHomeSlideTitleFontSize(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 360) return 21;
+    if (width < 430) return 24;
+    if (width < 700) return 26;
+    return 30;
+  }
+
+  double _responsiveHomeSlideSubtitleFontSize(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 360) return 12.5;
+    if (width < 430) return 13.5;
+    return 14;
+  }
+
   bool _isSeeding = false;
 
   /// Contrôle l'affichage des suggestions de recherche
@@ -1459,10 +1489,16 @@ class _HomePageState extends State<HomePage>
     int index, {
     VoidCallback? onTap,
   }) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final illustrationSize =
+        screenWidth < 360 ? 46.0 : (screenWidth < 430 ? 56.0 : 72.0);
+    final iconSize =
+        screenWidth < 360 ? 24.0 : (screenWidth < 430 ? 28.0 : 32.0);
+
     // Le slide 3 (infos) reprend le style d'icône bleue animée de la boîte à outils.
     if (index == _slides.length - 1) {
       return PrestoInfoIconAnimated(
-        size: 72,
+        size: illustrationSize,
         showBadge: false,
         onTap: onTap ?? () {},
       );
@@ -1470,8 +1506,8 @@ class _HomePageState extends State<HomePage>
 
     // On ignore complètement slide.imageAsset, on affiche juste une icône
     final child = Container(
-      width: 70,
-      height: 70,
+      width: illustrationSize,
+      height: illustrationSize,
       decoration: const BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
@@ -1479,7 +1515,7 @@ class _HomePageState extends State<HomePage>
       child: Icon(
         slide.icon ?? Icons.flash_on,
         color: kPrestoBlue,
-        size: 32,
+        size: iconSize,
       ),
     );
 
@@ -1544,7 +1580,7 @@ class _HomePageState extends State<HomePage>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         // ✅ Phrase principale en très gros sur toute la largeur
                         Text(
                           bigText,
@@ -1555,7 +1591,7 @@ class _HomePageState extends State<HomePage>
                             fontSize: 26,
                             fontWeight: FontWeight.w900,
                             height: 1.18,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 color: Color(0x4D000000),
                                 blurRadius: 6,
@@ -1574,7 +1610,7 @@ class _HomePageState extends State<HomePage>
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             height: 1.3,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 color: Color(0x40000000),
                                 blurRadius: 4,
@@ -1637,9 +1673,9 @@ class _HomePageState extends State<HomePage>
                               slide.title,
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
-                                fontSize: _homeSlideTitleFontSize,
+                                fontSize: _responsiveHomeSlideTitleFontSize(context),
                                 fontWeight: FontWeight.w900,
                                 height: 1.25,
                                 shadows: [
@@ -1656,9 +1692,9 @@ class _HomePageState extends State<HomePage>
                               slide.subtitle,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: 14,
+                                fontSize: _responsiveHomeSlideSubtitleFontSize(context),
                                 fontWeight: FontWeight.w500,
                                 shadows: [
                                   Shadow(
@@ -2042,7 +2078,8 @@ class _HeroSliderWithStableHeight extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     // Utilise la même formule que _PrestoStableHeroViewport dans hero_media_slider.dart
-    final stableHeight = (width * 0.52).clamp(184.0, 260.0).toDouble();
+    final factor = width < 360 ? 0.62 : (width < 700 ? 0.54 : 0.38);
+    final stableHeight = (width * factor).clamp(180.0, 360.0).toDouble();
 
     return SizedBox(
       width: double.infinity,

@@ -8,6 +8,11 @@ import 'package:video_player/video_player.dart';
 
 import '../models/hero_slide.dart';
 
+double _responsiveHeroHeightForWidth(double width) {
+  final factor = width < 360 ? 0.62 : (width < 700 ? 0.54 : 0.38);
+  return (width * factor).clamp(180.0, 360.0).toDouble();
+}
+
 String _muteKey(String uid) => 'hero_video_muted_$uid';
 
 class HeroMediaSlider extends StatefulWidget {
@@ -332,16 +337,43 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
   @override
   Widget build(BuildContext context) {
     if (!widget.slide.isVideo) {
-      return Image(
-        image: CachedNetworkImageProvider(widget.slide.mediaUrl),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          // Image already in cache → affichage instantané, zéro placeholder.
-          if (wasSynchronouslyLoaded || frame != null) return child;
-          return const _HeroMediaLoadingFallback();
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final imageProvider = CachedNetworkImageProvider(widget.slide.mediaUrl);
+          final previewWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.sizeOf(context).width;
+          final previewHeight =
+              constraints.maxHeight.isFinite ? constraints.maxHeight : 260.0;
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(color: const Color(0xFFF4F8FF)),
+              Image(
+                image: imageProvider,
+                fit: BoxFit.cover,
+                color: Colors.black.withValues(alpha: 0.08),
+                colorBlendMode: BlendMode.darken,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+              Center(
+                child: Image(
+                  image: imageProvider,
+                  fit: BoxFit.contain,
+                  width: previewWidth,
+                  height: previewHeight,
+                  errorBuilder: (_, __, ___) =>
+                      const _HeroMediaErrorFallback(),
+                  frameBuilder:
+                      (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded || frame != null) return child;
+                    return const _HeroMediaLoadingFallback();
+                  },
+                ),
+              ),
+            ],
+          );
         },
       );
     }
@@ -354,12 +386,16 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
       return const _HeroMediaLoadingFallback();
     }
 
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: controller.value.size.width,
-        height: controller.value.size.height,
-        child: VideoPlayer(controller),
+    return Container(
+      color: Colors.black,
+      alignment: Alignment.center,
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+          width: controller.value.size.width,
+          height: controller.value.size.height,
+          child: VideoPlayer(controller),
+        ),
       ),
     );
   }
@@ -411,13 +447,19 @@ class _PrestoStableHeroViewport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final stableHeight = (width * 0.52).clamp(184.0, 260.0).toDouble();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final stableHeight = _responsiveHeroHeightForWidth(width);
 
-    return SizedBox(
-      width: double.infinity,
-      height: stableHeight,
-      child: child,
+        return SizedBox(
+          width: double.infinity,
+          height: stableHeight,
+          child: child,
+        );
+      },
     );
   }
 }
