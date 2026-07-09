@@ -276,9 +276,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                 icon: userState.plan == SubscriptionPlan.ilipro
                     ? Icons.workspace_premium_rounded
                     : Icons.remove_circle_rounded,
-                color: userState.plan == SubscriptionPlan.ilipro
-                    ? _kSubscriptionOrange
-                    : _kSubscriptionOrange,
+                color: _kSubscriptionOrange,
                 items: plan.currentLimits,
               );
 
@@ -321,11 +319,12 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                   : () => _handleSubscriptionPlanAction(
                         context,
                         config,
-                        nextPlan,
+                        nextPlan!,
                         source: 'account_current_upgrade',
                       ),
               style: FilledButton.styleFrom(
-                backgroundColor: isTopPlan ? _kSubscriptionOrange : _kSubscriptionBlue,
+                backgroundColor:
+                    isTopPlan ? _kSubscriptionOrange : _kSubscriptionBlue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(
@@ -338,7 +337,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                   Text(
                     isTopPlan
                         ? 'Gérer mon abonnement'
-                        : 'Passer à ${subscriptionPlanLabel(nextPlan)}',
+                        : 'Passer à ${subscriptionPlanLabel(nextPlan!)}',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -400,7 +399,7 @@ class _SubscriptionPlansComparison extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth >= 940) {
           return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (var i = 0; i < cards.length; i++) ...[
                 Expanded(child: cards[i]),
