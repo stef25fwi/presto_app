@@ -3707,9 +3707,9 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: const Color(0xFFF8F8F8),
         body: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: const BoxConstraints(maxWidth: 680),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 28, 16, 100),
+              padding: const EdgeInsets.fromLTRB(8, 28, 8, 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -3879,7 +3879,7 @@ class _AccountPageState extends State<AccountPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
               child: Row(
                 children: const [
                   Icon(
@@ -3892,7 +3892,8 @@ class _AccountPageState extends State<AccountPage> {
                     child: Text(
                       'Espace confiance et activité',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
+                        height: 1.25,
                         fontWeight: FontWeight.w800,
                         color: kPrestoOrange,
                       ),
@@ -3975,7 +3976,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
             Container(
@@ -3993,14 +3994,15 @@ class _AccountPageState extends State<AccountPage> {
                 size: 22,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Row(
                 children: [
                   Text(
                     label,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 15.5,
+                      height: 1.3,
                       fontWeight: FontWeight.w500,
                       color: Colors.black87,
                     ),
@@ -4081,7 +4083,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
           children: [
             Container(
@@ -4093,12 +4095,13 @@ class _AccountPageState extends State<AccountPage> {
               ),
               child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 15.5,
+                  height: 1.3,
                   fontWeight: FontWeight.w500,
                   color: Colors.black87,
                 ),
