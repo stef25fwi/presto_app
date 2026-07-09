@@ -22,7 +22,7 @@ import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
 import 'pages/home_page.dart';
 import 'pages/publish_offer_page.dart';
-import 'pages/admin_space_page.dart';
+import 'pages/admin_space_loader.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'pages/toolbox_je_me_lance_page.dart';
 import 'services/city_search.dart';
@@ -180,6 +180,7 @@ class _PrestoStartupSplashScreen extends StatelessWidget {
           child: Text(
             'iliprestō',
             style: TextStyle(
+              fontFamily: 'Inter',
               fontSize: 54,
               fontWeight: FontWeight.w900,
               color: Colors.white,
@@ -1088,7 +1089,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),
         '/account': (_) => const HomePage(),
-        '/admin': (_) => const AdminSpacePage(),
+        '/admin': (_) => const AdminSpaceLoader(),
         if (!kReleaseMode)
           '/page-catalog': (_) => const PageCaptureCatalogPage(),
         if (!kReleaseMode)
@@ -1290,6 +1291,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: const Text(
                           'iliprestō',
                           style: TextStyle(
+                            fontFamily: 'Inter',
                             fontSize: 54,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
