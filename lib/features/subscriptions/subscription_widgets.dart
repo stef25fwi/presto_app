@@ -727,7 +727,11 @@ class SubscriptionComparisonCard extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           for (final feature in features) ...[
-            SubscriptionFeatureRow(label: feature, isPrimary: isPrimary),
+            SubscriptionFeatureRow(
+              label: feature,
+              isPrimary: isPrimary,
+              bold: kEmphasizedSubscriptionFeatures.contains(feature),
+            ),
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 12),
@@ -784,14 +788,23 @@ class SubscriptionComparisonCard extends StatelessWidget {
   }
 }
 
+/// Arguments centraux à mettre en avant partout où ils apparaissent dans les
+/// listes de features des cartes d'abonnement.
+const Set<String> kEmphasizedSubscriptionFeatures = {
+  '0 % de commission',
+  'Vous gardez 100 % de vos gains',
+};
+
 class SubscriptionFeatureRow extends StatelessWidget {
   final String label;
   final bool isPrimary;
+  final bool bold;
 
   const SubscriptionFeatureRow({
     super.key,
     required this.label,
     required this.isPrimary,
+    this.bold = false,
   });
 
   @override
@@ -808,10 +821,10 @@ class SubscriptionFeatureRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               height: 1.35,
-              fontWeight: FontWeight.w600,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
               color: _kSubscriptionTextPrimary,
             ),
           ),
