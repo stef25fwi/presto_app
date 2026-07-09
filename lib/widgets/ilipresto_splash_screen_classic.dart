@@ -263,6 +263,7 @@ class _ClassicBrandTitle extends StatelessWidget {
       'iliprestō',
       textAlign: TextAlign.center,
       style: TextStyle(
+        fontFamily: 'Inter',
         fontSize: 54,
         height: 1,
         fontWeight: FontWeight.w800,
