@@ -23,8 +23,8 @@ class ToolboxHubPage extends StatelessWidget {
 
     if (width < 360 || height < 640) return 52;
     if (width < 700) return 58;
-    if (width < 1100) return 64;
-    return 68;
+    if (width < 1100) return 58;
+    return 58;
   }
 
   @override
@@ -139,15 +139,13 @@ class ToolboxHubPage extends StatelessWidget {
               );
             }
 
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(6, 12, 6, 24),
-              child: Column(
-                children: [
-                  Expanded(child: firstCard),
-                  const SizedBox(height: 10),
-                  Expanded(child: secondCard),
-                ],
-              ),
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(6, 12, 6, 28),
+              children: [
+                firstCard,
+                const SizedBox(height: 22),
+                secondCard,
+              ],
             );
           },
         ),
@@ -204,7 +202,7 @@ class _ToolCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +246,6 @@ class _ToolCard extends StatelessWidget {
             ),
             SizedBox(height: compact ? 14 : 16),
             _BulletsGrid(bullets: bullets),
-            if (!compact) const Spacer(),
             SizedBox(height: compact ? 16 : 18),
             SizedBox(
               width: double.infinity,
