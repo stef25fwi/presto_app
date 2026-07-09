@@ -145,53 +145,6 @@ const String kDebugStartPage = String.fromEnvironment(
   defaultValue: '',
 );
 
-class _PrestoStartupSplashApp extends StatelessWidget {
-  const _PrestoStartupSplashApp();
-
-  static const Color _orange = Color(0xFFFF6600);
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: _PrestoStartupSplashScreen(),
-    );
-  }
-}
-
-class _PrestoStartupSplashScreen extends StatelessWidget {
-  const _PrestoStartupSplashScreen();
-
-  static const Color _orange = Color(0xFFFF6600);
-
-  @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: _orange,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: _orange,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        backgroundColor: _orange,
-        body: const Center(
-          child: Text(
-            'iliprestō',
-            style: TextStyle(
-              fontSize: 54,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1.3,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
   final isDarkBackground = estimated == Brightness.dark;
@@ -634,9 +587,8 @@ Future<void> main() async {
     WidgetsFlutterBinding.ensureInitialized();
     AppMonitoringService.instance.configureGlobalErrorHandling();
 
-    // Affiche immédiatement un premier frame Flutter indépendant de Firebase.
-    // Les initialisations lourdes continuent ensuite, puis PrestoApp remplace ce splash.
-    runApp(const _PrestoStartupSplashApp());
+    // Splash orange minimal désactivé :
+    // l'app démarre directement sur PrestoApp après les initialisations critiques.
     adminWebDebugStore.recordEvent(
       area: 'app',
       message: 'startup',
