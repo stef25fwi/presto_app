@@ -3192,6 +3192,130 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     );
   }
 
+  Widget _buildFullWidthActivitySelector() {
+    final isError = !_step3Valid;
+    final borderColor = isError ? const Color(0xFFFF3B30) : kBorder;
+    final backgroundColor = isError ? const Color(0xFFFFF5F5) : Colors.white;
+    final hasValue = _selectedActivity.isNotEmpty;
+    final value = hasValue ? _selectedActivity : 'Choisir une activité';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _showActivityPicker,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 108),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEAF8EF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.work_outline_rounded,
+                      color: Color(0xFF26A65B),
+                      size: 30,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Activité ',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  color: kTextDark,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '*',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  color: kOrange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Sélectionnez votre activité principale dans la liste.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6B7280),
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Champ du menu déroulant élargi sur toute la largeur de la tuile.
+              Container(
+                width: double.infinity,
+                height: 58,
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFDCE1EA)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight:
+                              hasValue ? FontWeight.w600 : FontWeight.w500,
+                          color: hasValue ? kTextDark : const Color(0xFF7A8498),
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF1E293B),
+                      size: 28,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStepActivity() {
     final suggestions = <String>[
       'Vente de gâteaux',
@@ -3221,38 +3345,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 'Votre activité influence la réglementation, les assurances recommandées et les interlocuteurs à contacter ensuite.',
           ),
           const SizedBox(height: 14),
-          _buildStarterSelector(
-            icon: Icons.work_outline_rounded,
-            iconColor: const Color(0xFF26A65B),
-            iconBackground: const Color(0xFFEAF8EF),
-            label: 'Activité',
-            value: _selectedActivity.isNotEmpty
-                ? _selectedActivity
-                : 'Choisir une activité',
-            helper: Row(
-              children: const [
-                Icon(
-                  Icons.format_list_bulleted_rounded,
-                  size: 20,
-                  color: Color(0xFF6B7280),
-                ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Sélectionnez votre activité dans la liste',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onTap: _showActivityPicker,
-            isError: !_step3Valid,
-            minHeight: 108,
-          ),
+          _buildFullWidthActivitySelector(),
           const SizedBox(height: 14),
           const Text('Suggestions rapides'),
           const SizedBox(height: 8),
