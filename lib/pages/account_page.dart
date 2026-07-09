@@ -3946,6 +3946,7 @@ class _AccountPageState extends State<AccountPage> {
             _buildOrangeMenuItem(
               icon: Icons.route_rounded,
               label: 'Je crée mon entreprise',
+              isProminent: true,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const MonEntrepriseParcoursPage(),
@@ -3972,7 +3973,39 @@ class _AccountPageState extends State<AccountPage> {
     required VoidCallback onTap,
     bool solidBackground = true,
     bool showProBadge = false,
+    bool isProminent = false,
   }) {
+    if (isProminent) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onTap,
+            icon: Icon(icon, size: 24),
+            label: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrestoOrange,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(62),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              elevation: 4,
+              shadowColor: kPrestoOrange.withValues(alpha: 0.35),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return InkWell(
       onTap: onTap,
       child: Padding(
