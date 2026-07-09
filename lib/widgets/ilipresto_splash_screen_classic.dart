@@ -264,6 +264,7 @@ class _ClassicBrandTitle extends StatelessWidget {
       textAlign: TextAlign.center,
       style: TextStyle(
         fontFamily: 'Inter',
+        fontFamilyFallback: ['Inter'],
         fontSize: 54,
         height: 1,
         fontWeight: FontWeight.w800,
