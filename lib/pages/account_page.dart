@@ -2886,6 +2886,24 @@ class _AccountPageState extends State<AccountPage> {
                       child: const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MonEntrepriseParcoursPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.route_rounded),
+                        label: const Text(
+                          'Je crée mon entreprise',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     SubscriptionSection(userId: user.uid),
                     const SizedBox(height: 28),
                     SizedBox(
