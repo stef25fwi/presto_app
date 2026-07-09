@@ -203,7 +203,10 @@ class _EmptyInlineNote extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          color: Color(0xFF9CA3AF),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -236,20 +239,30 @@ class _EmptyState extends StatelessWidget {
                 color: Color(0xFF6B7280),
               ),
             ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: _kOrange,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kOrange,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(62),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  elevation: 4,
+                  shadowColor: _kOrange,
                 ),
+                onPressed: onCreate,
+                icon: const Icon(Icons.rocket_launch_rounded, size: 22),
+                label: const Text('Je crée mon entreprise'),
               ),
-              onPressed: onCreate,
-              icon: const Icon(Icons.rocket_launch_rounded),
-              label: const Text('Créer mon parcours'),
             ),
           ],
         ),
@@ -271,73 +284,49 @@ class _JourneyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final projectLabel = '${snapshot['projectLabel'] ?? ''}'.trim();
-    final region = '${snapshot['region'] ?? ''}'.trim();
-    final currentStatus = '${snapshot['currentStatus'] ?? ''}'.trim();
-    final selectedActivity = '${snapshot['selectedActivity'] ?? ''}'.trim();
-    final recommendation =
-        (snapshot['recommendation'] as Map?)?.cast<String, dynamic>() ??
-            const {};
-    final statut = '${recommendation['statut'] ?? '—'}';
-    final savedAt = DateTime.tryParse('${snapshot['savedAt'] ?? ''}');
-
-    final title = selectedActivity.isNotEmpty
-        ? selectedActivity
-        : (projectLabel.isNotEmpty
-            ? projectLabel
-            : 'Mon parcours personnalisé');
+    final title = snapshot['businessLabel']?.toString().trim();
+    final status = snapshot['statusLabel']?.toString().trim();
+    final region = snapshot['regionLabel']?.toString().trim();
+    final updatedAt = snapshot['updatedAt']?.toString().trim();
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            title?.isNotEmpty == true ? title! : 'Parcours personnalisé',
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17),
           ),
           const SizedBox(height: 8),
-          if (region.isNotEmpty) _InfoLine(label: 'Région', value: region),
-          if (currentStatus.isNotEmpty)
-            _InfoLine(label: 'Statut actuel', value: currentStatus),
-          _InfoLine(label: 'Statut recommandé', value: statut),
-          if (savedAt != null) ...[
-            const SizedBox(height: 8),
+          if (status?.isNotEmpty == true)
+            Text('Statut : $status',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          if (region?.isNotEmpty == true)
+            Text('Région : $region',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          if (updatedAt?.isNotEmpty == true) ...[
+            const SizedBox(height: 6),
             Text(
-              '$dateLabel ${savedAt.day.toString().padLeft(2, '0')}/${savedAt.month.toString().padLeft(2, '0')}/${savedAt.year}',
-              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+              '$dateLabel $updatedAt',
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
             ),
           ],
           const SizedBox(height: 14),
-          OutlinedButton.icon(
-            onPressed: onResume,
-            icon: const Icon(Icons.open_in_new_rounded),
-            label: const Text('Reprendre / voir le parcours complet'),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onResume,
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: const Text('Ouvrir le parcours'),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InfoLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoLine({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        '$label : $value',
-        style: const TextStyle(color: Color(0xFF374151)),
       ),
     );
   }
