@@ -29,15 +29,15 @@ class AdminHeroSlidesPage extends StatefulWidget {
 }
 
 class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
+  // Formats volontairement limités aux images réellement prévisualisables
+  // dans Flutter Web / iPad / navigateur. HEIC/HEIF/AVIF peuvent être sélectionnés
+  // sur certains appareils mais ne se chargent pas toujours en preview locale.
   static const List<String> _imageExtensions = [
     'jpg',
     'jpeg',
     'png',
     'webp',
-    'avif',
     'gif',
-    'heic',
-    'heif',
   ];
   static const List<String> _videoExtensions = ['mp4', 'mov', 'webm'];
   static const int _maxImageBytes = 8 * 1024 * 1024;
@@ -141,7 +141,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                 final mediaType = _mediaTypeFromName(normalizedName);
                 if (!_isSupportedHeroMedia(normalizedName)) {
                   const message =
-                      'Format non supporté. Utilisez une image JPG/PNG/WEBP/AVIF/GIF/HEIC/HEIF ou une vidéo MP4/MOV/WEBM.';
+                      'Format non supporté. Utilisez une image JPG/PNG/WEBP/GIF ou une vidéo MP4/MOV/WEBM. Les images iPhone HEIC/HEIF doivent être converties en JPG avant l’envoi.';
                   setSheetState(() {
                     localError = message;
                   });
@@ -295,7 +295,7 @@ class _AdminHeroSlidesPageState extends State<AdminHeroSlidesPage> {
                                       isPickingFile
                                           ? 'Chargement en cours, veuillez patienter…'
                                           : selectedFileName.isEmpty
-                                              ? 'Formats image: jpg, jpeg, png, webp, avif, gif, heic, heif. Formats vidéo: mp4, mov, webm.'
+                                              ? 'Formats image: jpg, jpeg, png, webp, gif. Formats vidéo: mp4, mov, webm. Les photos iPhone HEIC doivent être converties en JPG.'
                                               : 'Type détecté: ${selectedMediaType == 'video' ? 'Vidéo' : 'Image'}',
                                       style: const TextStyle(
                                         color: Color(0xFF6B7280),
