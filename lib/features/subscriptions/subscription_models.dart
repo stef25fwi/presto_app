@@ -350,16 +350,25 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
 /// ou palier d'abonnement sans plafond).
 const int kUnlimitedJourneyQuota = 999999;
 
+/// Quota mensuel de sauvegardes locales du parcours pour le plan Gratuit.
+const int kFreeJourneyLocalSaveQuotaPerMonth = 2;
+
+/// Quota mensuel de sauvegardes locales du parcours pour ilipresto+.
+const int kIliPrestoPlusJourneyLocalSaveQuotaPerMonth = 5;
+
+/// Quota mensuel de sauvegardes locales du parcours pour ilipro.
+const int kIliProJourneyLocalSaveQuotaPerMonth = 10;
+
 /// Quota mensuel d'exports PDF pour ilipresto+ dans "Je crée mon entreprise".
-const int kIliPrestoPlusJourneyPdfExportQuotaPerMonth = 2;
+const int kIliPrestoPlusJourneyPdfExportQuotaPerMonth = 5;
 
 /// Quota mensuel d'exports PDF pour ilipro dans "Je crée mon entreprise".
 const int kIliProJourneyPdfExportQuotaPerMonth = 10;
 
 /// Règles d'abonnement pour la fonctionnalité "Mon parcours personnalisé" :
-/// - Gratuit : 1 sauvegarde locale par mois, aucun export PDF.
-/// - ilipresto+ : sauvegardes locales illimitées + 2 exports PDF par mois.
-/// - ilipro : sauvegardes locales illimitées + 10 exports PDF par mois.
+/// - Gratuit : 2 sauvegardes locales par mois, aucun export PDF.
+/// - ilipresto+ : 5 sauvegardes locales + 5 exports PDF par mois.
+/// - ilipro : 10 sauvegardes locales + 10 exports PDF par mois.
 /// Les PDF exportés doivent porter le logo iliPresto et un filigrane.
 class JourneyEntitlements {
   final int maxLocalSavesPerMonth;
@@ -389,8 +398,8 @@ JourneyEntitlements getJourneyEntitlementsForPlan(
 }) {
   switch (plan) {
     case SubscriptionPlan.free:
-      return JourneyEntitlements(
-        maxLocalSavesPerMonth: freeAccessMode ? kUnlimitedJourneyQuota : 1,
+      return const JourneyEntitlements(
+        maxLocalSavesPerMonth: kFreeJourneyLocalSaveQuotaPerMonth,
         canExportPdf: false,
         maxPdfExportsPerMonth: 0,
         pdfRequiresLogo: false,
@@ -398,7 +407,7 @@ JourneyEntitlements getJourneyEntitlementsForPlan(
       );
     case SubscriptionPlan.iliprestoPlus:
       return const JourneyEntitlements(
-        maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
+        maxLocalSavesPerMonth: kIliPrestoPlusJourneyLocalSaveQuotaPerMonth,
         canExportPdf: true,
         maxPdfExportsPerMonth: kIliPrestoPlusJourneyPdfExportQuotaPerMonth,
         pdfRequiresLogo: true,
@@ -406,7 +415,7 @@ JourneyEntitlements getJourneyEntitlementsForPlan(
       );
     case SubscriptionPlan.ilipro:
       return const JourneyEntitlements(
-        maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
+        maxLocalSavesPerMonth: kIliProJourneyLocalSaveQuotaPerMonth,
         canExportPdf: true,
         maxPdfExportsPerMonth: kIliProJourneyPdfExportQuotaPerMonth,
         pdfRequiresLogo: true,
