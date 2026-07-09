@@ -350,9 +350,12 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
 /// ou palier d'abonnement sans plafond).
 const int kUnlimitedJourneyQuota = 999999;
 
+/// Quota mensuel d'exports PDF pour la page "Je crée mon entreprise".
+const int kJourneyPdfExportQuotaPerMonth = 10;
+
 /// Règles d'abonnement pour la fonctionnalité "Mon parcours personnalisé" :
 /// - Gratuit : 1 sauvegarde locale par mois, aucun export PDF.
-/// - IliPresto+ / ilipro : sauvegardes locales illimitées + 2 exports PDF
+/// - IliPresto+ / ilipro : sauvegardes locales illimitées + 10 exports PDF
 ///   par mois, le PDF exporté devant porter le logo iliPresto et un filigrane.
 class JourneyEntitlements {
   final int maxLocalSavesPerMonth;
@@ -384,7 +387,7 @@ JourneyEntitlements getJourneyEntitlementsForPlan(
     return const JourneyEntitlements(
       maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
       canExportPdf: true,
-      maxPdfExportsPerMonth: kUnlimitedJourneyQuota,
+      maxPdfExportsPerMonth: kJourneyPdfExportQuotaPerMonth,
       pdfRequiresLogo: true,
       pdfRequiresWatermark: true,
     );
@@ -404,7 +407,7 @@ JourneyEntitlements getJourneyEntitlementsForPlan(
       return const JourneyEntitlements(
         maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
         canExportPdf: true,
-        maxPdfExportsPerMonth: 2,
+        maxPdfExportsPerMonth: kJourneyPdfExportQuotaPerMonth,
         pdfRequiresLogo: true,
         pdfRequiresWatermark: true,
       );
