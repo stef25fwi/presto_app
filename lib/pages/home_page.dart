@@ -1951,56 +1951,46 @@ class _HomePageState extends State<HomePage>
 
             const SizedBox(height: 6),
 
-            // ── Hero slider — hauteur stable dès le premier rendu ──────────────
-            Builder(
-              builder: (context) {
-                final width = MediaQuery.sizeOf(context).width;
-                final heroHeight =
-                    (width * 0.52).clamp(184.0, 260.0).toDouble();
-
-                return SizedBox(
-                  width: double.infinity,
-                  height: heroHeight,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: const Color(0x331A73E8),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.16),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                          BoxShadow(
-                            color: const Color(0x331A73E8),
-                            blurRadius: 26,
-                            spreadRadius: 1,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+            // ── Hero slider — prend tout l'espace restant ──────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: const Color(0x331A73E8),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(22),
-                        child: _HeroSliderWithStableHeight(
-                          cachedSlides: _heroSlidesService.filterSlidesForRegion(
-                            _cachedHeroSlides,
-                            _userRegion,
-                          ),
-                          heroSlidesStream: _heroSlidesStream,
-                          userRegion: _userRegion,
-                          fallbackBuilder: _buildFallbackHomeHeroSlider,
-                          carouselController: _carouselController,
-                        ),
+                      BoxShadow(
+                        color: const Color(0x331A73E8),
+                        blurRadius: 26,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 10),
                       ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: _HeroSliderWithStableHeight(
+                      cachedSlides: _heroSlidesService.filterSlidesForRegion(
+                        _cachedHeroSlides,
+                        _userRegion,
+                      ),
+                      heroSlidesStream: _heroSlidesStream,
+                      userRegion: _userRegion,
+                      fallbackBuilder: _buildFallbackHomeHeroSlider,
+                      carouselController: _carouselController,
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
 
             const SizedBox(height: 6),
