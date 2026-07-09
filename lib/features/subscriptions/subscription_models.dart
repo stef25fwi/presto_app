@@ -341,7 +341,7 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         hasVerifiedBadge: true,
         hasProBadge: true,
         maxActiveOffers: 50,
-        maxPhotosPerOffer: 20,
+        maxPhotosPerOffer: 10,
       );
   }
 }
