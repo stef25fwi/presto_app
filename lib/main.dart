@@ -25,6 +25,7 @@ import 'pages/publish_offer_page.dart';
 import 'pages/admin_space_loader.dart';
 import 'pages/consult_offers_page.dart' show UserPublicProfilePage;
 import 'pages/toolbox_je_me_lance_page.dart';
+import 'pages/subscription_checkout_result_page.dart';
 import 'services/city_search.dart';
 import 'services/app_check_bootstrap.dart';
 import 'services/app_route_parser.dart';
@@ -944,6 +945,21 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
 
     if (normalizedPath == '/account') {
       pendingPostAuthRoute = null;
+    }
+
+    // Retour du paiement Stripe Checkout : ?checkout=success|cancel.
+    if (normalizedPath == '/abonnement') {
+      final checkoutResult = parsed?.queryParameters['checkout'];
+      if (checkoutResult == 'success' || checkoutResult == 'cancel') {
+        return <Route<dynamic>>[
+          MaterialPageRoute(
+            settings: const RouteSettings(name: '/abonnement'),
+            builder: (_) => SubscriptionCheckoutResultPage(
+              success: checkoutResult == 'success',
+            ),
+          ),
+        ];
+      }
     }
 
     return <Route<dynamic>>[
