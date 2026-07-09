@@ -14,6 +14,8 @@ const Color _kSubscriptionBlue = Color(0xFF1A73E8);
 const Color _kSubscriptionBackground = Color(0xFFF7F8FA);
 const Color _kSubscriptionTextPrimary = Color(0xFF111827);
 const Color _kSubscriptionTextSecondary = Color(0xFF6B7280);
+const Color _kSubscriptionGreen = Color(0xFF138A46);
+const Color _kSubscriptionBorder = Color(0xFFE5E7EB);
 
 class SubscriptionSection extends StatelessWidget {
   final String userId;
@@ -57,39 +59,21 @@ class SubscriptionSection extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: _kSubscriptionBackground,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: _kSubscriptionBorder),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Mon abonnement',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kSubscriptionTextPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Découvrez les formules ilipresto+ et ilipro. Les abonnements seront activés prochainement.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: _kSubscriptionTextSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const _SubscriptionLaunchBanner(),
-                  const SizedBox(height: 14),
+                  const _SubscriptionSectionHeader(),
+                  const SizedBox(height: 18),
                   SubscriptionCurrentStatusCard(
                     userState: userState,
                     config: config,
@@ -99,12 +83,67 @@ class SubscriptionSection extends StatelessWidget {
                     config: config,
                     userState: userState,
                   ),
+                  const SizedBox(height: 14),
+                  const _SubscriptionFooterNote(),
                 ],
               ),
             );
           },
         );
       },
+    );
+  }
+}
+
+class _SubscriptionSectionHeader extends StatelessWidget {
+  const _SubscriptionSectionHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: _kSubscriptionBlue.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: const Icon(
+            Icons.workspace_premium_rounded,
+            color: _kSubscriptionBlue,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Mon abonnement iliprestō',
+                style: TextStyle(
+                  fontSize: 22,
+                  height: 1.05,
+                  fontWeight: FontWeight.w900,
+                  color: _kSubscriptionTextPrimary,
+                ),
+              ),
+              SizedBox(height: 7),
+              Text(
+                'Gérez votre formule, vos avantages et vos options.',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                  color: _kSubscriptionTextSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -121,26 +160,31 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final features = getFeaturesForSubscriptionPlan(
-      userState.plan,
-      freeAccessMode: config.freeAccessMode,
-    );
-    final messagingEntitlements = getConversationAttachmentEntitlements(
-      userState.plan,
-      freeAccessMode: config.freeAccessMode,
-    );
+    final plan = _planPresentationFor(userState.plan);
+    final nextPlan = _nextUpgradePlan(userState.plan);
+    final isTopPlan = nextPlan == null;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFD7BF)),
+        gradient: LinearGradient(
+          colors: [
+            plan.accent.withValues(alpha: 0.08),
+            Colors.white,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: plan.accent.withValues(alpha: 0.38),
+          width: 1.4,
+        ),
         boxShadow: [
           BoxShadow(
-            color: _kSubscriptionOrange.withValues(alpha: 0.10),
-            blurRadius: 16,
+            color: plan.accent.withValues(alpha: 0.10),
+            blurRadius: 18,
             offset: const Offset(0, 8),
           ),
         ],
@@ -150,214 +194,158 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _kSubscriptionOrange.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  'Bientôt disponible',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: _kSubscriptionOrange,
-                  ),
-                ),
+              _SubscriptionBadge(
+                label: 'FORMULE ACTUELLE',
+                color: _kSubscriptionBlue,
+                filled: false,
               ),
               const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _kSubscriptionBlue.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'Plan actuel : ${subscriptionPlanLabel(userState.plan)}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: _kSubscriptionBlue,
-                  ),
-                ),
+              const _SubscriptionBadge(
+                label: '✓ Actif',
+                color: _kSubscriptionGreen,
+                filled: false,
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Text(
-            'Accès gratuit actuellement actif',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: _kSubscriptionTextPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Pour le moment, toutes les fonctionnalités de l’application restent accessibles sans abonnement. Les offres ci-dessous sont en préparation et seront activées prochainement.',
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              fontWeight: FontWeight.w500,
-              color: _kSubscriptionTextSecondary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MiniStatusChip(
-                label: config.freeAccessMode
-                    ? 'Accès gratuit complet : actif'
-                    : 'Restrictions futures prêtes',
-                color: Colors.green.shade700,
+              _PlanIconBubble(
+                icon: plan.icon,
+                color: plan.accent,
+                size: 62,
               ),
-              _MiniStatusChip(
-                label: userState.phoneVerified
-                    ? 'Téléphone vérifié'
-                    : 'Téléphone vérifiable plus tard',
-                color: _kSubscriptionBlue,
-              ),
-              _MiniStatusChip(
-                label: features.canAccessStats
-                    ? 'Architecture premium prête'
-                    : 'Architecture évolutive prête',
-                color: _kSubscriptionOrange,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plan.title,
+                      style: const TextStyle(
+                        fontSize: 25,
+                        height: 1.05,
+                        fontWeight: FontWeight.w900,
+                        color: _kSubscriptionTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      plan.price,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: plan.accent,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      plan.currentSummary,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                        color: _kSubscriptionTextSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          Container(
+            height: 1,
+            color: plan.accent.withValues(alpha: 0.12),
+          ),
           const SizedBox(height: 14),
-          _SubscriptionMessagingRulesCard(
-            config: config,
-            plan: userState.plan,
-            entitlements: messagingEntitlements,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final showColumns = constraints.maxWidth >= 620;
+              final advantages = _BenefitColumn(
+                title: 'Avantages :',
+                icon: Icons.check_circle_outline_rounded,
+                color: _kSubscriptionBlue,
+                items: plan.currentAdvantages,
+              );
+              final limits = _BenefitColumn(
+                title: userState.plan == SubscriptionPlan.ilipro
+                    ? 'Premium :'
+                    : 'Limites :',
+                icon: userState.plan == SubscriptionPlan.ilipro
+                    ? Icons.workspace_premium_rounded
+                    : Icons.remove_circle_rounded,
+                color: _kSubscriptionOrange,
+                items: plan.currentLimits,
+              );
+
+              if (showColumns) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: advantages),
+                    Container(
+                      width: 1,
+                      height: 98,
+                      margin: const EdgeInsets.symmetric(horizontal: 14),
+                      color: _kSubscriptionBorder,
+                    ),
+                    Expanded(child: limits),
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  advantages,
+                  const SizedBox(height: 12),
+                  limits,
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => openSubscriptionManagement(
-                context,
-                stripeEnabled: config.stripeEnabled,
-                source: 'account_subscription_status',
-              ),
-              icon: const Icon(Icons.settings_outlined),
-              label: const Text('Gestion future des abonnements'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubscriptionMessagingRulesCard extends StatelessWidget {
-  final SubscriptionAppConfig config;
-  final SubscriptionPlan plan;
-  final ConversationAttachmentEntitlements entitlements;
-
-  const _SubscriptionMessagingRulesCard({
-    required this.config,
-    required this.plan,
-    required this.entitlements,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final title = config.freeAccessMode
-        ? 'Règles messagerie préparées'
-        : 'Règles messagerie actives';
-    final summary = config.freeAccessMode
-        ? 'Aujourd’hui, personne n’est limité. Quand le mode gratuit complet sera coupé, ces règles s’appliqueront.'
-        : 'Les limites ci-dessous sont actuellement pilotées par l’abonnement.';
-    final photoRule = entitlements.maxPhotosPerConversation >= 999
-        ? 'Photos: envoi étendu'
-        : 'Photos: ${entitlements.maxPhotosPerConversation} par conversation';
-    final audioRule = entitlements.maxAudioPerConversation >= 999
-        ? 'Audio: envoi étendu'
-        : 'Audio: ${entitlements.maxAudioPerConversation} par conversation';
-    final documentRule = entitlements.canSendDocuments
-        ? 'Documents et fichiers: autorisés'
-        : 'Documents et fichiers: ilipresto+ requis';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: _kSubscriptionTextPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            summary,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.35,
-              fontWeight: FontWeight.w500,
-              color: _kSubscriptionTextSecondary,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _SubscriptionRuleLine(
-              label: 'Plan', value: subscriptionPlanLabel(plan)),
-          _SubscriptionRuleLine(label: 'Photos', value: photoRule),
-          _SubscriptionRuleLine(label: 'Audio', value: audioRule),
-          _SubscriptionRuleLine(label: 'Fichiers', value: documentRule),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubscriptionRuleLine extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SubscriptionRuleLine({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 18),
           SizedBox(
-            width: 72,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: _kSubscriptionTextPrimary,
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: isTopPlan
+                  ? () => openSubscriptionManagement(
+                        context,
+                        stripeEnabled: config.stripeEnabled,
+                        source: 'account_current_ilipro_manage',
+                      )
+                  : () => _handleSubscriptionPlanAction(
+                        context,
+                        config,
+                        nextPlan!,
+                        source: 'account_current_upgrade',
+                      ),
+              style: FilledButton.styleFrom(
+                backgroundColor:
+                    isTopPlan ? _kSubscriptionOrange : _kSubscriptionBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: _kSubscriptionTextSecondary,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isTopPlan
+                        ? 'Gérer mon abonnement'
+                        : 'Passer à ${subscriptionPlanLabel(nextPlan!)}',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 15),
+                ],
               ),
             ),
           ),
@@ -367,7 +355,7 @@ class _SubscriptionRuleLine extends StatelessWidget {
   }
 }
 
-class SubscriptionPlanTabs extends StatefulWidget {
+class SubscriptionPlanTabs extends StatelessWidget {
   final SubscriptionAppConfig config;
   final AppUserSubscriptionState userState;
 
@@ -378,439 +366,640 @@ class SubscriptionPlanTabs extends StatefulWidget {
   });
 
   @override
-  State<SubscriptionPlanTabs> createState() => _SubscriptionPlanTabsState();
-}
-
-class _SubscriptionPlanTabsState extends State<SubscriptionPlanTabs>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this)
-      ..addListener(_handleTabChanged);
-  }
-
-  void _handleTabChanged() {
-    if (_tabController.indexIsChanging) return;
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _tabController
-      ..removeListener(_handleTabChanged)
-      ..dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final tabIndex = _tabController.index;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TabBar(
-            controller: _tabController,
-            labelColor: Colors.white,
-            unselectedLabelColor: _kSubscriptionTextSecondary,
-            indicator: BoxDecoration(
-              color: _kSubscriptionBlue,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            dividerColor: Colors.transparent,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-            ),
-            tabs: const [
-              Tab(text: 'Particulier'),
-              Tab(text: 'Professionnel'),
-            ],
-          ),
-          const SizedBox(height: 18),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: tabIndex == 0
-                ? _SubscriptionPlanPanel(
-                    key: const ValueKey('individual-plans'),
-                    cards: [
-                      SubscriptionComparisonCard(
-                        title: 'Gratuit',
-                        price: '0 €/mois',
-                        subtitle:
-                            'Utilisez ilipresto librement pendant la phase de lancement.',
-                        features: const [
-                          'Consulter les annonces',
-                          'Publier des annonces',
-                          'Échanger avec les utilisateurs',
-                          'Utiliser les fonctionnalités disponibles',
-                          'Accès complet actuellement actif',
-                        ],
-                        buttonLabel: 'Formule actuelle',
-                        onPressed: null,
-                        isPrimary: false,
-                      ),
-                      SubscriptionComparisonCard(
-                        title: 'ilipresto+',
-                        price: '1,99 €/mois',
-                        subtitle:
-                            'La formule pensée pour les particuliers qui veulent plus de confort, plus d’alertes et plus de contacts.',
-                        marketingHighlight:
-                            'Plus de contacts. Plus d’alertes. Plus de liberté. Seulement 1,99 €/mois.',
-                        badge: 'Bientôt disponible',
-                        features: const [
-                          'Compte vérifié',
-                          'Téléphone vérifié',
-                          'Appel direct facilité',
-                          'Messagerie illimitée',
-                          'Alertes sur vos catégories favorites',
-                          'Favoris illimités',
-                          'Assistant IA pour rédiger vos annonces',
-                          'Plus de photos par annonce',
-                          'Remontée simple d’annonce',
-                        ],
-                        buttonLabel: 'Me prévenir au lancement',
-                        onPressed: () async {
-                          await notifySubscriptionLaunch(
-                            context,
-                            subscriptionPlanKey(SubscriptionPlan.iliprestoPlus),
-                            stripeEnabled: widget.config.stripeEnabled,
-                            source: 'account_plan_ilipresto_plus_notify',
-                          );
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Les abonnements seront bientôt disponibles.',
-                                ),
-                              ),
-                            );
-                        },
-                        onSecondaryPressed: () => startSubscriptionCheckout(
-                          context,
-                          subscriptionPlanKey(SubscriptionPlan.iliprestoPlus),
-                          stripeEnabled: widget.config.stripeEnabled,
-                          source: 'account_plan_ilipresto_plus_checkout',
-                        ),
-                        secondaryButtonLabel: 'Préparer le paiement',
-                        isPrimary: true,
-                      ),
-                    ],
-                  )
-                : _SubscriptionPlanPanel(
-                    key: const ValueKey('pro-plans'),
-                    cards: [
-                      SubscriptionComparisonCard(
-                        title: 'Pro gratuit',
-                        price: '0 €/mois',
-                        subtitle:
-                            'Testez ilipresto et présentez vos services librement pendant la phase de lancement.',
-                        features: const [
-                          'Créer un profil professionnel',
-                          'Publier des annonces',
-                          'Être visible dans les résultats',
-                          'Recevoir des messages',
-                          'Présenter ses services',
-                          'Accès complet actuellement actif',
-                        ],
-                        buttonLabel: 'Continuer gratuitement',
-                        onPressed: null,
-                        isPrimary: false,
-                      ),
-                      SubscriptionComparisonCard(
-                        title: 'ilipro',
-                        price: '7,99 €/mois',
-                        subtitle:
-                            'La formule pour gagner en visibilité, inspirer confiance et recevoir plus de demandes.',
-                        marketingHighlight:
-                            'Soyez plus visible. Inspirez confiance. Recevez plus de demandes. Seulement 7,99 €/mois.',
-                        badge: 'Recommandé pour les prestataires',
-                        features: const [
-                          'Badge Pro visible',
-                          'Profil professionnel complet',
-                          'Téléphone vérifié',
-                          'Appel direct et contact rapide',
-                          'Bouton WhatsApp si activé',
-                          'Mise en avant dans les résultats',
-                          'Plus d’annonces actives',
-                          'Plus de photos par annonce',
-                          'Portfolio de réalisations',
-                          'Zone d’intervention personnalisée',
-                          'Statistiques de vues et de contacts',
-                          'Assistant IA complet',
-                          'Remontée automatique des annonces',
-                          'Support prioritaire',
-                        ],
-                        buttonLabel: 'Me prévenir au lancement',
-                        onPressed: () async {
-                          await notifySubscriptionLaunch(
-                            context,
-                            subscriptionPlanKey(SubscriptionPlan.ilipro),
-                            stripeEnabled: widget.config.stripeEnabled,
-                            source: 'account_plan_ilipro_notify',
-                          );
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Les abonnements seront bientôt disponibles.',
-                                ),
-                              ),
-                            );
-                        },
-                        onSecondaryPressed: () => startSubscriptionCheckout(
-                          context,
-                          subscriptionPlanKey(SubscriptionPlan.ilipro),
-                          stripeEnabled: widget.config.stripeEnabled,
-                          source: 'account_plan_ilipro_checkout',
-                        ),
-                        secondaryButtonLabel: 'Préparer le paiement',
-                        isPrimary: true,
-                      ),
-                    ],
-                  ),
-          ),
-        ],
-      ),
+    return _SubscriptionPlansComparison(
+      config: config,
+      userState: userState,
     );
   }
 }
 
-class SubscriptionComparisonCard extends StatelessWidget {
-  final String title;
-  final String price;
-  final String subtitle;
-  final List<String> features;
-  final String buttonLabel;
-  final VoidCallback? onPressed;
-  final bool isPrimary;
-  final String? badge;
-  final String? marketingHighlight;
-  final String? secondaryButtonLabel;
-  final VoidCallback? onSecondaryPressed;
+class _SubscriptionPlansComparison extends StatelessWidget {
+  final SubscriptionAppConfig config;
+  final AppUserSubscriptionState userState;
 
-  const SubscriptionComparisonCard({
-    super.key,
-    required this.title,
-    required this.price,
-    required this.subtitle,
-    required this.features,
-    required this.buttonLabel,
-    required this.onPressed,
-    required this.isPrimary,
-    this.badge,
-    this.marketingHighlight,
-    this.secondaryButtonLabel,
-    this.onSecondaryPressed,
+  const _SubscriptionPlansComparison({
+    required this.config,
+    required this.userState,
   });
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        isPrimary ? _kSubscriptionOrange : const Color(0xFFD1D5DB);
-    final background = isPrimary
-        ? const LinearGradient(
-            colors: [Color(0xFFFFF5EE), Color(0xFFFFFFFF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
-        : null;
+    final cards = _subscriptionPlanPresentations
+        .map(
+          (plan) => _SubscriptionPlanCard(
+            presentation: plan,
+            currentPlan: userState.plan,
+            config: config,
+          ),
+        )
+        .toList(growable: false);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 940) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                Expanded(child: cards[i]),
+                if (i != cards.length - 1) const SizedBox(width: 14),
+              ],
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              cards[i],
+              if (i != cards.length - 1) const SizedBox(height: 12),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SubscriptionPlanCard extends StatelessWidget {
+  final _PlanPresentation presentation;
+  final SubscriptionPlan currentPlan;
+  final SubscriptionAppConfig config;
+
+  const _SubscriptionPlanCard({
+    required this.presentation,
+    required this.currentPlan,
+    required this.config,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCurrent = presentation.plan == currentPlan;
+    final isFree = presentation.plan == SubscriptionPlan.free;
+    final actionColor = isCurrent
+        ? _kSubscriptionTextSecondary
+        : presentation.accent;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        gradient: background,
+        color: presentation.cardBackground,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: borderColor, width: isPrimary ? 1.6 : 1),
+        border: Border.all(
+          color: isCurrent
+              ? _kSubscriptionBorder
+              : presentation.accent.withValues(alpha: 0.75),
+          width: presentation.isHighlighted ? 1.5 : 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: (isPrimary ? _kSubscriptionOrange : Colors.black)
-                .withValues(alpha: isPrimary ? 0.12 : 0.05),
-            blurRadius: isPrimary ? 20 : 12,
-            offset: const Offset(0, 8),
+            color: (presentation.isHighlighted ? presentation.accent : Colors.black)
+                .withValues(alpha: presentation.isHighlighted ? 0.10 : 0.04),
+            blurRadius: presentation.isHighlighted ? 16 : 10,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (badge != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isPrimary
-                    ? _kSubscriptionOrange.withValues(alpha: 0.12)
-                    : _kSubscriptionBlue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                badge!,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: isPrimary ? _kSubscriptionOrange : _kSubscriptionBlue,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w900,
-              color: _kSubscriptionTextPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            price,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: isPrimary ? _kSubscriptionOrange : _kSubscriptionBlue,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              fontWeight: FontWeight.w500,
-              color: _kSubscriptionTextSecondary,
-            ),
-          ),
-          if (marketingHighlight != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isPrimary
-                    ? _kSubscriptionOrange.withValues(alpha: 0.08)
-                    : _kSubscriptionBlue.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                marketingHighlight!,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: isPrimary ? _kSubscriptionOrange : _kSubscriptionBlue,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          for (final feature in features) ...[
-            SubscriptionFeatureRow(label: feature, isPrimary: isPrimary),
-            const SizedBox(height: 10),
-          ],
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: isPrimary
-                ? FilledButton(
-                    onPressed: onPressed,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _kSubscriptionOrange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      buttonLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  )
-                : OutlinedButton(
-                    onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _kSubscriptionBlue,
-                      side: const BorderSide(color: Color(0xFFD1D5DB)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      buttonLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 520;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _PlanIconBubble(
+                    icon: presentation.icon,
+                    color: isCurrent && !presentation.isHighlighted
+                        ? _kSubscriptionTextSecondary
+                        : presentation.accent,
+                    size: compact ? 50 : 58,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              presentation.title,
+                              style: TextStyle(
+                                fontSize: compact ? 19 : 21,
+                                height: 1.05,
+                                fontWeight: FontWeight.w900,
+                                color: presentation.accent,
+                              ),
+                            ),
+                            if (presentation.badge != null)
+                              _SubscriptionBadge(
+                                label: presentation.badge!,
+                                color: presentation.accent,
+                                filled: true,
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          presentation.price,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: presentation.accent,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          presentation.summary,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            height: 1.28,
+                            fontWeight: FontWeight.w500,
+                            color: _kSubscriptionTextSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-          ),
-          if (isPrimary && secondaryButtonLabel != null) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: onSecondaryPressed,
-                child: Text(
-                  secondaryButtonLabel!,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
+                ],
               ),
-            ),
-          ],
-        ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 9,
+                children: presentation.features
+                    .map(
+                      (feature) => _CompactFeaturePill(
+                        label: feature,
+                        color: presentation.accent,
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: isCurrent
+                    ? OutlinedButton(
+                        onPressed: null,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: const Text(
+                          'Offre actuelle',
+                          style: TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      )
+                    : FilledButton(
+                        onPressed: () => isFree
+                            ? openSubscriptionManagement(
+                                context,
+                                stripeEnabled: config.stripeEnabled,
+                                source: 'account_plan_free_manage',
+                              )
+                            : _handleSubscriptionPlanAction(
+                                context,
+                                config,
+                                presentation.plan,
+                                source:
+                                    'account_plan_${subscriptionPlanKey(presentation.plan)}_select',
+                              ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: actionColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _buttonLabelFor(presentation.plan),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            if (!isFree) ...[
+                              const SizedBox(width: 7),
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 14,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class SubscriptionFeatureRow extends StatelessWidget {
-  final String label;
-  final bool isPrimary;
+class _BenefitColumn extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final List<String> items;
 
-  const SubscriptionFeatureRow({
-    super.key,
-    required this.label,
-    required this.isPrimary,
+  const _BenefitColumn({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.items,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.check_circle_rounded,
-          size: 18,
-          color: isPrimary ? _kSubscriptionOrange : Colors.green.shade600,
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.35,
-              fontWeight: FontWeight.w600,
-              color: _kSubscriptionTextPrimary,
-            ),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            color: color,
           ),
         ),
+        const SizedBox(height: 9),
+        for (final item in items) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  item,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.28,
+                    fontWeight: FontWeight.w600,
+                    color: _kSubscriptionTextPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
       ],
     );
   }
+}
+
+class _CompactFeaturePill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _CompactFeaturePill({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 210,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.check_circle_rounded,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12.5,
+                height: 1.25,
+                fontWeight: FontWeight.w600,
+                color: _kSubscriptionTextPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanIconBubble extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  const _PlanIconBubble({
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Icon(
+        icon,
+        color: color,
+        size: size * 0.48,
+      ),
+    );
+  }
+}
+
+class _SubscriptionBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool filled;
+
+  const _SubscriptionBadge({
+    required this.label,
+    required this.color,
+    required this.filled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: filled ? color.withValues(alpha: 0.10) : Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: filled ? 0.0 : 0.35)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          height: 1,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.2,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _SubscriptionFooterNote extends StatelessWidget {
+  const _SubscriptionFooterNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _kSubscriptionBorder),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.verified_user_outlined,
+            color: _kSubscriptionBlue,
+            size: 24,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Sans engagement, vous pouvez changer de formule à tout moment.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                color: _kSubscriptionTextPrimary,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: _kSubscriptionBlue,
+            size: 16,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanPresentation {
+  final SubscriptionPlan plan;
+  final String title;
+  final String price;
+  final String summary;
+  final String currentSummary;
+  final String? badge;
+  final IconData icon;
+  final Color accent;
+  final Color cardBackground;
+  final bool isHighlighted;
+  final List<String> features;
+  final List<String> currentAdvantages;
+  final List<String> currentLimits;
+
+  const _PlanPresentation({
+    required this.plan,
+    required this.title,
+    required this.price,
+    required this.summary,
+    required this.currentSummary,
+    required this.badge,
+    required this.icon,
+    required this.accent,
+    required this.cardBackground,
+    required this.isHighlighted,
+    required this.features,
+    required this.currentAdvantages,
+    required this.currentLimits,
+  });
+}
+
+const List<_PlanPresentation> _subscriptionPlanPresentations = [
+  _PlanPresentation(
+    plan: SubscriptionPlan.free,
+    title: 'Gratuit',
+    price: '0 €/mois',
+    summary: 'Pour découvrir la plateforme sans engagement.',
+    currentSummary:
+        'Idéal pour découvrir iliprestō et tester les premières fonctionnalités.',
+    badge: null,
+    icon: Icons.card_giftcard_rounded,
+    accent: _kSubscriptionBlue,
+    cardBackground: Colors.white,
+    isHighlighted: false,
+    features: [
+      'Publier une annonce simple',
+      'Consulter les annonces',
+      'Tester 1 annonce IA',
+      'Sauvegarder 1 parcours / mois',
+    ],
+    currentAdvantages: [
+      '1 annonce IA offerte',
+      '1 parcours sauvegardé / mois',
+      'Consultation des annonces',
+      'Accès aux fonctions de base',
+    ],
+    currentLimits: [
+      'Pas d’export PDF',
+      'Options premium désactivées',
+    ],
+  ),
+  _PlanPresentation(
+    plan: SubscriptionPlan.iliprestoPlus,
+    title: 'iliprestō+',
+    price: '1,99 €/mois',
+    summary: 'Plus de confort pour utiliser iliprestō au quotidien.',
+    currentSummary:
+        'La formule accessible pour sauvegarder, exporter et utiliser plus d’options pratiques.',
+    badge: 'Le plus accessible',
+    icon: Icons.star_rounded,
+    accent: _kSubscriptionBlue,
+    cardBackground: Color(0xFFF2F7FF),
+    isHighlighted: true,
+    features: [
+      '2 exports PDF / mois',
+      'PDF avec logo iliprestō',
+      'Sauvegarde locale',
+      'Plus d’options pratiques',
+    ],
+    currentAdvantages: [
+      'Sauvegarde locale des parcours',
+      '2 exports PDF par mois',
+      'PDF avec logo iliprestō',
+      'Expérience utilisateur améliorée',
+    ],
+    currentLimits: [
+      'Quota PDF mensuel limité',
+      'Options professionnelles réservées à ilipro',
+    ],
+  ),
+  _PlanPresentation(
+    plan: SubscriptionPlan.ilipro,
+    title: 'ilipro',
+    price: '9,99 €/mois',
+    summary:
+        'Pour les pros qui veulent recevoir plus d’opportunités.',
+    currentSummary:
+        'La formule pro pour renforcer votre visibilité et recevoir plus de demandes.',
+    badge: 'Pour les pros',
+    icon: Icons.business_center_rounded,
+    accent: _kSubscriptionOrange,
+    cardBackground: Color(0xFFFFF6EF),
+    isHighlighted: true,
+    features: [
+      'Visibilité renforcée',
+      'Alertes annonces',
+      'Jusqu’à 10 photos',
+      'Outils pro',
+    ],
+    currentAdvantages: [
+      'Visibilité professionnelle renforcée',
+      'Alertes sur les annonces pertinentes',
+      'Jusqu’à 10 photos par annonce',
+      'Outils pour développer son activité',
+    ],
+    currentLimits: [
+      'Vous profitez déjà de la meilleure formule iliprestō.',
+      'Les options premium pro sont activées.',
+    ],
+  ),
+];
+
+_PlanPresentation _planPresentationFor(SubscriptionPlan plan) {
+  return _subscriptionPlanPresentations.firstWhere(
+    (presentation) => presentation.plan == plan,
+    orElse: () => _subscriptionPlanPresentations.first,
+  );
+}
+
+SubscriptionPlan? _nextUpgradePlan(SubscriptionPlan plan) {
+  switch (plan) {
+    case SubscriptionPlan.free:
+      return SubscriptionPlan.iliprestoPlus;
+    case SubscriptionPlan.iliprestoPlus:
+      return SubscriptionPlan.ilipro;
+    case SubscriptionPlan.ilipro:
+      return null;
+  }
+}
+
+String _buttonLabelFor(SubscriptionPlan plan) {
+  switch (plan) {
+    case SubscriptionPlan.free:
+      return 'Choisir Gratuit';
+    case SubscriptionPlan.iliprestoPlus:
+      return 'Choisir iliprestō+';
+    case SubscriptionPlan.ilipro:
+      return 'Choisir ilipro';
+  }
+}
+
+Future<void> _handleSubscriptionPlanAction(
+  BuildContext context,
+  SubscriptionAppConfig config,
+  SubscriptionPlan plan, {
+  required String source,
+}) async {
+  final planKey = subscriptionPlanKey(plan);
+  if (config.stripeEnabled) {
+    await startSubscriptionCheckout(
+      context,
+      planKey,
+      stripeEnabled: config.stripeEnabled,
+      source: source,
+    );
+    return;
+  }
+
+  await notifySubscriptionLaunch(
+    context,
+    planKey,
+    stripeEnabled: config.stripeEnabled,
+    source: source,
+  );
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      const SnackBar(
+        content: Text('Les abonnements seront bientôt disponibles.'),
+      ),
+    );
 }
 
 class AdminSubscriptionTile extends StatefulWidget {
@@ -949,7 +1138,7 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Préparer et afficher les offres ilipresto+ et ilipro.',
+                          'Préparer et afficher les offres iliprestō+ et ilipro.',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -991,8 +1180,8 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                 ),
                 subtitle: Text(
                   config.freeAccessMode
-                      ? 'Aucune restriction abonnement n est appliquée aux utilisateurs.'
-                      : 'Les limites Gratuit vs ilipresto+ sont maintenant actives dans l app.',
+                      ? 'Aucune restriction abonnement n’est appliquée aux utilisateurs.'
+                      : 'Les limites Gratuit vs iliprestō+ sont maintenant actives dans l’app.',
                   style: const TextStyle(color: _kSubscriptionTextSecondary),
                 ),
                 value: config.freeAccessMode,
@@ -1037,7 +1226,7 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
                 child: const Text(
-                  'Stripe peut rester inactif: freeAccessMode permet déjà de préparer ou d activer les règles d accès côté app sans ouvrir le paiement.',
+                  'Stripe peut rester inactif : freeAccessMode permet déjà de préparer ou d’activer les règles d’accès côté app sans ouvrir le paiement.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,
@@ -1059,42 +1248,6 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
               ],
             ],
           ),
-        );
-      },
-    );
-  }
-}
-
-class _SubscriptionPlanPanel extends StatelessWidget {
-  final List<SubscriptionComparisonCard> cards;
-
-  const _SubscriptionPlanPanel({
-    super.key,
-    required this.cards,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final useRow = constraints.maxWidth >= 820;
-        if (useRow) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: cards[0]),
-              const SizedBox(width: 14),
-              Expanded(child: cards[1]),
-            ],
-          );
-        }
-
-        return Column(
-          children: [
-            cards[0],
-            const SizedBox(height: 14),
-            cards[1],
-          ],
         );
       },
     );
@@ -1125,45 +1278,6 @@ class _MiniStatusChip extends StatelessWidget {
           fontWeight: FontWeight.w800,
           color: color,
         ),
-      ),
-    );
-  }
-}
-
-class _SubscriptionLaunchBanner extends StatelessWidget {
-  const _SubscriptionLaunchBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _kSubscriptionBlue.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _kSubscriptionBlue.withValues(alpha: 0.14)),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Phase de lancement : l’accès reste gratuit pour tous.',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: _kSubscriptionBlue,
-            ),
-          ),
-          SizedBox(height: 6),
-          Text(
-            'Les abonnements sont en préparation. Aucune fonctionnalité n’est bloquée actuellement.',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: _kSubscriptionTextSecondary,
-            ),
-          ),
-        ],
       ),
     );
   }
