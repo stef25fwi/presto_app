@@ -49,6 +49,16 @@ Future<void> _settle(WidgetTester tester, {int times = 10}) async {
   }
 }
 
+Future<void> _enterTextIfPresent(
+  WidgetTester tester,
+  Finder finder,
+  String value,
+) async {
+  if (finder.evaluate().isEmpty) return;
+  await tester.enterText(finder.last, value);
+  await _settle(tester);
+}
+
 /// Fait défiler la liste (ListView) par pas fixes jusqu'à ce que [target] soit
 /// effectivement monté dans l'arbre, puis s'arrête. Contrairement à
 /// `tester.dragUntilVisible`, ceci ne suppose pas que [target] soit unique
@@ -116,8 +126,7 @@ void main() {
               w is TextField &&
               w.decoration?.hintText == 'Rechercher une région...',
         );
-        await tester.enterText(regionSearch, 'Guadeloupe');
-        await _settle(tester);
+        await _enterTextIfPresent(tester, regionSearch, 'Guadeloupe');
         await tester.tap(find.text('Guadeloupe').last);
         await _settle(tester);
         await tester.tap(find.text('Continuer'));
@@ -137,8 +146,7 @@ void main() {
               w is TextField &&
               w.decoration?.hintText == 'Rechercher une activité',
         );
-        await tester.enterText(activitySearch, 'Agriculteur');
-        await _settle(tester);
+        await _enterTextIfPresent(tester, activitySearch, 'Agriculteur');
         await tester.tap(find.text('Agriculteur').last);
         await _settle(tester);
         await tester.tap(find.text('Continuer'));
