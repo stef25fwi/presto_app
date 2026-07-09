@@ -6,6 +6,13 @@ export const EMAIL_PROVIDER_WEBHOOK_SECRET = defineSecret("EMAIL_PROVIDER_WEBHOO
 export const BREVO_API_KEY = defineSecret("BREVO_API_KEY");
 export const BREVO_WEBHOOK_SECRET = defineSecret("BREVO_WEBHOOK_SECRET");
 
+// Stripe : clés secrètes gérées par Secret Manager (jamais en clair dans le
+// dépôt). À définir via `firebase functions:secrets:set STRIPE_SECRET_KEY`
+// et `firebase functions:secrets:set STRIPE_WEBHOOK_SECRET` avant d'activer
+// stripeEnabled=true dans app_config/subscriptions.
+export const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
+export const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+
 export const EMAIL_PROVIDER_NAME = process.env.EMAIL_PROVIDER_NAME || "";
 export const DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr") as "fr" | "en";
 export const DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
@@ -21,6 +28,12 @@ export const MARKETPLACE_AUTO_APPROVE_ENABLED = process.env.MARKETPLACE_AUTO_APP
 export const MARKETPLACE_REPORT_REVIEW_THRESHOLD = Number(process.env.MARKETPLACE_REPORT_REVIEW_THRESHOLD || 3);
 export const MARKETPLACE_RECAPTCHA_MIN_SCORE = Number(process.env.MARKETPLACE_RECAPTCHA_MIN_SCORE || 0.5);
 export const MARKETPLACE_VIEW_RATE_LIMIT = Number(process.env.MARKETPLACE_VIEW_RATE_LIMIT || 20);
+
+// Identifiants de prix Stripe (pas des secrets — visibles dans le Dashboard
+// Stripe et dans les requêtes Checkout). À renseigner après création des
+// produits "iliprestō+" (1,99 €/mois) et "ilipro" (9,99 €/mois) dans Stripe.
+export const STRIPE_PRICE_ILIPRESTO_PLUS = process.env.STRIPE_PRICE_ILIPRESTO_PLUS || "";
+export const STRIPE_PRICE_ILIPRO = process.env.STRIPE_PRICE_ILIPRO || "";
 
 export const IS_EMULATOR =
 	process.env.FUNCTIONS_EMULATOR === "true" ||
@@ -56,3 +69,5 @@ export const EMAIL_PROVIDER_SECRETS = [
 	BREVO_API_KEY,
 	BREVO_WEBHOOK_SECRET,
 ];
+
+export const STRIPE_SECRETS = [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET];

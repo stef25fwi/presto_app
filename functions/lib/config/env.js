@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EMAIL_PROVIDER_SECRETS = exports.ENFORCE_APP_CHECK = exports.IS_PROD = exports.IS_EMULATOR = exports.MARKETPLACE_VIEW_RATE_LIMIT = exports.MARKETPLACE_RECAPTCHA_MIN_SCORE = exports.MARKETPLACE_REPORT_REVIEW_THRESHOLD = exports.MARKETPLACE_AUTO_APPROVE_ENABLED = exports.MARKETPLACE_LISTING_DRAFT_LIMIT = exports.MARKETPLACE_MAX_MEDIA_COUNT = exports.RECAPTCHA_ENTERPRISE_SITE_KEY = exports.GCP_PROJECT_ID = exports.APP_BASE_URL = exports.PROJECT_REGION = exports.EMAIL_FROM = exports.DEFAULT_TIMEZONE = exports.DEFAULT_LOCALE = exports.EMAIL_PROVIDER_NAME = exports.BREVO_WEBHOOK_SECRET = exports.BREVO_API_KEY = exports.EMAIL_PROVIDER_WEBHOOK_SECRET = exports.EMAIL_PROVIDER_API_KEY = exports.OPENAI_API_KEY = void 0;
+exports.STRIPE_SECRETS = exports.EMAIL_PROVIDER_SECRETS = exports.ENFORCE_APP_CHECK = exports.IS_PROD = exports.IS_EMULATOR = exports.STRIPE_PRICE_ILIPRO = exports.STRIPE_PRICE_ILIPRESTO_PLUS = exports.MARKETPLACE_VIEW_RATE_LIMIT = exports.MARKETPLACE_RECAPTCHA_MIN_SCORE = exports.MARKETPLACE_REPORT_REVIEW_THRESHOLD = exports.MARKETPLACE_AUTO_APPROVE_ENABLED = exports.MARKETPLACE_LISTING_DRAFT_LIMIT = exports.MARKETPLACE_MAX_MEDIA_COUNT = exports.RECAPTCHA_ENTERPRISE_SITE_KEY = exports.GCP_PROJECT_ID = exports.APP_BASE_URL = exports.PROJECT_REGION = exports.EMAIL_FROM = exports.DEFAULT_TIMEZONE = exports.DEFAULT_LOCALE = exports.EMAIL_PROVIDER_NAME = exports.STRIPE_WEBHOOK_SECRET = exports.STRIPE_SECRET_KEY = exports.BREVO_WEBHOOK_SECRET = exports.BREVO_API_KEY = exports.EMAIL_PROVIDER_WEBHOOK_SECRET = exports.EMAIL_PROVIDER_API_KEY = exports.OPENAI_API_KEY = void 0;
 exports.assertProdSecurityConfig = assertProdSecurityConfig;
 const params_1 = require("firebase-functions/params");
 exports.OPENAI_API_KEY = (0, params_1.defineSecret)("OPENAI_API_KEY");
@@ -8,6 +8,12 @@ exports.EMAIL_PROVIDER_API_KEY = (0, params_1.defineSecret)("EMAIL_PROVIDER_API_
 exports.EMAIL_PROVIDER_WEBHOOK_SECRET = (0, params_1.defineSecret)("EMAIL_PROVIDER_WEBHOOK_SECRET");
 exports.BREVO_API_KEY = (0, params_1.defineSecret)("BREVO_API_KEY");
 exports.BREVO_WEBHOOK_SECRET = (0, params_1.defineSecret)("BREVO_WEBHOOK_SECRET");
+// Stripe : clés secrètes gérées par Secret Manager (jamais en clair dans le
+// dépôt). À définir via `firebase functions:secrets:set STRIPE_SECRET_KEY`
+// et `firebase functions:secrets:set STRIPE_WEBHOOK_SECRET` avant d'activer
+// stripeEnabled=true dans app_config/subscriptions.
+exports.STRIPE_SECRET_KEY = (0, params_1.defineSecret)("STRIPE_SECRET_KEY");
+exports.STRIPE_WEBHOOK_SECRET = (0, params_1.defineSecret)("STRIPE_WEBHOOK_SECRET");
 exports.EMAIL_PROVIDER_NAME = process.env.EMAIL_PROVIDER_NAME || "";
 exports.DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr");
 exports.DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
@@ -22,6 +28,11 @@ exports.MARKETPLACE_AUTO_APPROVE_ENABLED = process.env.MARKETPLACE_AUTO_APPROVE_
 exports.MARKETPLACE_REPORT_REVIEW_THRESHOLD = Number(process.env.MARKETPLACE_REPORT_REVIEW_THRESHOLD || 3);
 exports.MARKETPLACE_RECAPTCHA_MIN_SCORE = Number(process.env.MARKETPLACE_RECAPTCHA_MIN_SCORE || 0.5);
 exports.MARKETPLACE_VIEW_RATE_LIMIT = Number(process.env.MARKETPLACE_VIEW_RATE_LIMIT || 20);
+// Identifiants de prix Stripe (pas des secrets — visibles dans le Dashboard
+// Stripe et dans les requêtes Checkout). À renseigner après création des
+// produits "iliprestō+" (1,99 €/mois) et "ilipro" (9,99 €/mois) dans Stripe.
+exports.STRIPE_PRICE_ILIPRESTO_PLUS = process.env.STRIPE_PRICE_ILIPRESTO_PLUS || "";
+exports.STRIPE_PRICE_ILIPRO = process.env.STRIPE_PRICE_ILIPRO || "";
 exports.IS_EMULATOR = process.env.FUNCTIONS_EMULATOR === "true" ||
     Boolean(process.env.FIREBASE_EMULATOR_HUB);
 exports.IS_PROD = exports.GCP_PROJECT_ID === "presto-app-74abe";
@@ -49,4 +60,5 @@ exports.EMAIL_PROVIDER_SECRETS = [
     exports.BREVO_API_KEY,
     exports.BREVO_WEBHOOK_SECRET,
 ];
+exports.STRIPE_SECRETS = [exports.STRIPE_SECRET_KEY, exports.STRIPE_WEBHOOK_SECRET];
 //# sourceMappingURL=env.js.map

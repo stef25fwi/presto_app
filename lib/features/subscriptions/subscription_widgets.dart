@@ -903,6 +903,35 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
     }
   }
 
+  Future<void> _toggleStripeEnabled(bool enabled) async {
+    if (_saving) return;
+
+    setState(() => _saving = true);
+    try {
+      await _service.updateStripeEnabled(
+        enabled,
+        updatedBy: FirebaseAuth.instance.currentUser?.uid,
+      );
+      if (!mounted) return;
+      showSuccessSnackBar(
+        context,
+        enabled
+            ? 'Paiement Stripe activé : les boutons ouvrent désormais le vrai paiement.'
+            : 'Paiement Stripe désactivé : les boutons repassent en "bientôt disponible".',
+      );
+    } catch (_) {
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Impossible de mettre à jour stripeEnabled.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<SubscriptionAppConfig>(
@@ -1005,6 +1034,24 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                 ),
                 value: config.freeAccessMode,
                 onChanged: _saving ? null : _toggleFreeAccessMode,
+              ),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'stripeEnabled',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: _kSubscriptionTextPrimary,
+                  ),
+                ),
+                subtitle: Text(
+                  config.stripeEnabled
+                      ? 'Paiement réel actif : les boutons ouvrent Stripe Checkout / le portail client.'
+                      : 'Paiement inactif : les boutons affichent "bientôt disponible". N\'active qu\'après avoir configuré les clés Stripe et les prix côté Cloud Functions.',
+                  style: const TextStyle(color: _kSubscriptionTextSecondary),
+                ),
+                value: config.stripeEnabled,
+                onChanged: _saving ? null : _toggleStripeEnabled,
               ),
               const SizedBox(height: 8),
               Wrap(
