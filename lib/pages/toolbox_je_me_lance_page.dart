@@ -2910,87 +2910,64 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
-        var query = '';
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final filtered = _availableActivities
-                .where(
-                  (activity) => activity
-                      .toLowerCase()
-                      .contains(query.trim().toLowerCase()),
-                )
-                .toList();
+        final activities = _availableActivities;
 
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  right: 20,
-                  top: 20,
-                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Choisir une activité',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: kTextDark,
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Choisir une activité',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: kTextDark,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher une activité',
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                      ),
-                      onChanged: (value) {
-                        setModalState(() {
-                          query = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 14),
-                    Flexible(
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (_, index) {
-                          final activity = filtered[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(activity),
-                            trailing: _selectedActivity == activity
-                                ? const Icon(Icons.check_circle, color: kBlue)
-                                : null,
-                            onTap: () {
-                              setState(() {
-                                _selectedActivity = activity;
-                                _activityType =
-                                    _resolveActivityTypeFromSelection(activity);
-                                _showStarterErrors = false;
-                              });
-                              Navigator.of(sheetContext).pop();
-                              _onAnyFieldChanged();
-                            },
-                          );
+                const SizedBox(height: 6),
+                const Text(
+                  'Sélectionnez uniquement une activité dans la liste. La saisie clavier est désactivée.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: activities.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, index) {
+                      final activity = activities[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(activity),
+                        trailing: _selectedActivity == activity
+                            ? const Icon(Icons.check_circle, color: kBlue)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedActivity = activity;
+                            _activityType =
+                                _resolveActivityTypeFromSelection(activity);
+                            _showStarterErrors = false;
+                          });
+                          Navigator.of(sheetContext).pop();
+                          _onAnyFieldChanged();
                         },
-                      ),
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+          ),
         );
       },
     );
@@ -3255,14 +3232,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             helper: Row(
               children: const [
                 Icon(
-                  Icons.search_rounded,
+                  Icons.format_list_bulleted_rounded,
                   size: 20,
                   color: Color(0xFF6B7280),
                 ),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Recherchez et sélectionnez votre activité',
+                    'Sélectionnez votre activité dans la liste',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -5407,30 +5384,7 @@ class _RegionPickerSheet extends StatefulWidget {
 }
 
 class _RegionPickerSheetState extends State<_RegionPickerSheet> {
-  final _searchCtrl = TextEditingController();
-  List<String> _filtered = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _filtered = widget.regions;
-    _searchCtrl.addListener(_onSearch);
-  }
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  void _onSearch() {
-    final q = _searchCtrl.text.toLowerCase().trim();
-    setState(() {
-      _filtered = q.isEmpty
-          ? widget.regions
-          : widget.regions.where((r) => r.toLowerCase().contains(q)).toList();
-    });
-  }
+  List<String> get _regions => widget.regions;
 
   @override
   Widget build(BuildContext context) {
@@ -5470,18 +5424,14 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                         color: Color(0xFF111827),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _searchCtrl,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher une région...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFFF6F7FB),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Sélectionnez uniquement une région dans la liste. La saisie clavier est désactivée.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF6B7280),
+                        height: 1.35,
                       ),
                     ),
                   ],
@@ -5492,9 +5442,9 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                 child: ListView.builder(
                   controller: scrollCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _filtered.length,
+                  itemCount: _regions.length,
                   itemBuilder: (_, i) {
-                    final r = _filtered[i];
+                    final r = _regions[i];
                     final selected = r == widget.currentRegion;
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
