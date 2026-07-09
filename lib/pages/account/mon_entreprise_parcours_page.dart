@@ -146,6 +146,33 @@ class _MonEntrepriseParcoursPageState
     setState(() => _exportingPdf = true);
     var loadingDialogOpen = false;
 
+    void showLoadingDialog() {
+      if (!mounted || loadingDialogOpen) return;
+      loadingDialogOpen = true;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+          title: Text('Préparation du PDF'),
+          content: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              ),
+              SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'Création du PDF avec logo et filigrane iliprestō...',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ).whenComplete(() => loadingDialogOpen = false);
+    }
+
     void closeLoadingDialog() {
       if (!mounted || !loadingDialogOpen) return;
       Navigator.of(context, rootNavigator: true).pop();
@@ -153,44 +180,13 @@ class _MonEntrepriseParcoursPageState
     }
 
     try {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) {
-          loadingDialogOpen = true;
-          return const AlertDialog(
-            title: Text('Préparation du PDF'),
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2.4),
-                ),
-                SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    'Création du PDF avec logo et filigrane iliprestō...',
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    } catch (_) {
-      // La vraie génération est lancée ci-dessous. Ce bloc ne doit jamais
-      // bloquer l'export si la boîte de dialogue ne peut pas s'afficher.
-    }
-  }
+      showLoadingDialog();
 
-  Future<void> _runPdfExport(Map<String, dynamic> snapshot) async {
-    try {
       final decision = await _entitlementsService.evaluatePdfExport();
       if (!mounted) return;
 
       if (!decision.allowed) {
-        setState(() => _exportingPdf = false);
+        closeLoadingDialog();
         final quotaText = decision.requiresUpgrade
             ? 'L’export PDF est réservé aux abonnements iliprestō+ et ilipro.'
             : 'Quota PDF atteint pour ce mois-ci. Vous avez déjà utilisé ${decision.usedThisMonth} / ${decision.entitlements.maxPdfExportsPerMonth} export(s).';
@@ -212,6 +208,7 @@ class _MonEntrepriseParcoursPageState
 
       final pdfFile = await _pdfExportService.generateJourneyPdf(snapshot);
       if (!mounted) return;
+      closeLoadingDialog();
 
       final box = context.findRenderObject() as RenderBox?;
       final result = await Share.shareXFiles(
@@ -228,7 +225,9 @@ class _MonEntrepriseParcoursPageState
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('PDF généré : la fenêtre de sauvegarde/partage a été ouverte.'),
+            content: Text(
+              'PDF généré : la fenêtre de sauvegarde/partage a été ouverte.',
+            ),
           ),
         );
       } else if (mounted) {
@@ -237,11 +236,13 @@ class _MonEntrepriseParcoursPageState
         );
       }
     } catch (e) {
+      closeLoadingDialog();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Impossible de générer le PDF : $e')),
       );
     } finally {
+      closeLoadingDialog();
       if (mounted) setState(() => _exportingPdf = false);
     }
   }
