@@ -16,10 +16,22 @@ class ToolboxHubPage extends StatelessWidget {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
 
+  double _responsiveToolButtonHeight(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final width = size.width;
+    final height = size.height;
+
+    if (width < 360 || height < 640) return 52;
+    if (width < 700) return 58;
+    if (width < 1100) return 64;
+    return 68;
+  }
+
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
     final isPhone = mq.size.width < 700;
+    final toolButtonHeight = _responsiveToolButtonHeight(context);
 
     final firstCard = _ToolCard(
       leading: const _IconBadge(
@@ -40,6 +52,7 @@ class ToolboxHubPage extends StatelessWidget {
       buttonGradient: const LinearGradient(
         colors: [Color(0xFF42A5F5), Color(0xFF1250B0)],
       ),
+      buttonHeight: toolButtonHeight,
       compact: isPhone,
       onPressed: () {
         Navigator.push(
@@ -69,6 +82,7 @@ class ToolboxHubPage extends StatelessWidget {
       buttonGradient: const LinearGradient(
         colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
       ),
+      buttonHeight: toolButtonHeight,
       compact: isPhone,
       onPressed: () {
         Navigator.push(
@@ -151,6 +165,7 @@ class _ToolCard extends StatelessWidget {
     required this.bullets,
     required this.buttonText,
     required this.buttonGradient,
+    required this.buttonHeight,
     required this.compact,
     required this.onPressed,
   });
@@ -162,6 +177,7 @@ class _ToolCard extends StatelessWidget {
   final List<String> bullets;
   final String buttonText;
   final LinearGradient buttonGradient;
+  final double buttonHeight;
   final bool compact;
   final VoidCallback onPressed;
 
@@ -236,7 +252,7 @@ class _ToolCard extends StatelessWidget {
             SizedBox(height: compact ? 16 : 18),
             SizedBox(
               width: double.infinity,
-              height: compact ? 54 : 58,
+              height: buttonHeight,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: buttonGradient,
@@ -255,16 +271,25 @@ class _ToolCard extends StatelessWidget {
                     shadowColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     elevation: 0,
+                    minimumSize: Size.fromHeight(buttonHeight),
+                    padding: EdgeInsets.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),
                   ),
                   onPressed: onPressed,
-                  child: Text(
-                    buttonText,
-                    style: TextStyle(
-                      fontSize: compact ? 15 : 16,
-                      fontWeight: FontWeight.w800,
+                  child: Center(
+                    child: Text(
+                      buttonText,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: buttonHeight <= 52 ? 14.5 : (compact ? 15 : 16),
+                        height: 1.08,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
