@@ -137,7 +137,7 @@ void main() {
               w is TextField &&
               w.decoration?.hintText == 'Rechercher une activité',
         );
-        await tester.enterText(activitySearch, 'Agriculteur');
+        await tester.enterText(activitySearch.last, 'Agriculteur');
         await _settle(tester);
         await tester.tap(find.text('Agriculteur').last);
         await _settle(tester);

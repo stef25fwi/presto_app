@@ -319,7 +319,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                   : () => _handleSubscriptionPlanAction(
                         context,
                         config,
-                        nextPlan!,
+                        nextPlan,
                         source: 'account_current_upgrade',
                       ),
               style: FilledButton.styleFrom(
@@ -337,7 +337,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                   Text(
                     isTopPlan
                         ? 'Gérer mon abonnement'
-                        : 'Passer à ${subscriptionPlanLabel(nextPlan!)}',
+                        : 'Passer à ${subscriptionPlanLabel(nextPlan)}',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,

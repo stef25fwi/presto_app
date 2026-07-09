@@ -114,7 +114,7 @@ void main() {
         final activitySearch = find.byWidgetPredicate(
           (w) => w is TextField && w.decoration?.hintText == 'Rechercher une activité',
         );
-        await tester.enterText(activitySearch, 'Service en salle');
+        await tester.enterText(activitySearch.last, 'Service en salle');
         await _settle(tester);
         await tester.tap(find.text('Service en salle').last);
         await _settle(tester);
