@@ -4,6 +4,7 @@ import '../../features/subscriptions/journey_entitlements_service.dart';
 import '../../features/subscriptions/subscription_models.dart';
 import '../../services/journey_local_storage_service.dart';
 import '../toolbox_je_me_lance_page.dart';
+import 'saved_journey_summary_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
 const Color _kBg = Color(0xFFF6F7FB);
@@ -17,8 +18,7 @@ const Color _kBg = Color(0xFFF6F7FB);
 ///   chaque parcours terminé, sans quota, et toujours écrasé par le suivant.
 ///
 /// Ainsi qu'un rappel du quota mensuel de sauvegarde/export en fonction de
-/// l'abonnement (Gratuit : 1 sauvegarde locale/mois, aucun export ;
-/// IliPresto+ : sauvegardes illimitées + 2 exports PDF/mois).
+/// l'abonnement.
 class MonEntrepriseParcoursPage extends StatefulWidget {
   const MonEntrepriseParcoursPage({super.key});
 
@@ -94,7 +94,7 @@ class _MonEntrepriseParcoursPageState
                         ? _JourneyCard(
                             snapshot: _savedSnapshot!,
                             dateLabel: 'Sauvegardé le',
-                            onResume: _openToolbox,
+                            onResume: () => _openSavedJourney(_savedSnapshot!),
                           )
                         : const _EmptyInlineNote(
                             'Aucun parcours sauvegardé pour le moment.',
@@ -106,7 +106,7 @@ class _MonEntrepriseParcoursPageState
                         ? _JourneyCard(
                             snapshot: _historySnapshot!,
                             dateLabel: 'Généré le',
-                            onResume: _openToolbox,
+                            onResume: () => _openSavedJourney(_historySnapshot!),
                           )
                         : const _EmptyInlineNote(
                             'Aucun parcours généré pour le moment.',
@@ -121,6 +121,14 @@ class _MonEntrepriseParcoursPageState
   void _openToolbox() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ToolboxJeMeLancePage()),
+    );
+  }
+
+  void _openSavedJourney(Map<String, dynamic> snapshot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SavedJourneySummaryPage(snapshot: snapshot),
+      ),
     );
   }
 
@@ -203,7 +211,10 @@ class _EmptyInlineNote extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          color: Color(0xFF9CA3AF),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -305,6 +316,8 @@ class _JourneyCard extends StatelessWidget {
           if (region.isNotEmpty) _InfoLine(label: 'Région', value: region),
           if (currentStatus.isNotEmpty)
             _InfoLine(label: 'Statut actuel', value: currentStatus),
+          if (selectedActivity.isNotEmpty)
+            _InfoLine(label: 'Activité', value: selectedActivity),
           _InfoLine(label: 'Statut recommandé', value: statut),
           if (savedAt != null) ...[
             const SizedBox(height: 8),
@@ -316,8 +329,8 @@ class _JourneyCard extends StatelessWidget {
           const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: onResume,
-            icon: const Icon(Icons.open_in_new_rounded),
-            label: const Text('Reprendre / voir le parcours complet'),
+            icon: const Icon(Icons.visibility_outlined),
+            label: const Text('Voir le parcours'),
           ),
         ],
       ),
