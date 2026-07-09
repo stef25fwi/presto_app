@@ -2548,16 +2548,18 @@ class _AccountPageState extends State<AccountPage> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 17,
+                  height: 1.25,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF16324F),
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 description,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 12.5,
+                  height: 1.4,
                   color: Colors.black54,
                   fontWeight: FontWeight.w500,
                 ),
@@ -2576,7 +2578,7 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(20),
@@ -2657,9 +2659,9 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: Colors.white,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
+              constraints: const BoxConstraints(maxWidth: 680),
               child: SingleChildScrollView(
                 controller: _scrollController,
                 padding: const EdgeInsets.only(bottom: 150),
