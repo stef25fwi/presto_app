@@ -52,6 +52,16 @@ Future<void> _settle(WidgetTester tester, {int times = 10}) async {
   }
 }
 
+Future<void> _enterTextIfPresent(
+  WidgetTester tester,
+  Finder finder,
+  String value,
+) async {
+  if (finder.evaluate().isEmpty) return;
+  await tester.enterText(finder.last, value);
+  await _settle(tester);
+}
+
 /// Fait défiler jusqu'à ce que [target] soit monté (evaluate().isNotEmpty ne
 /// lève jamais, que le finder matche 0, 1 ou plusieurs widgets — contrairement
 /// à dragUntilVisible qui exige une cible unique).
@@ -103,8 +113,7 @@ Future<void> _runAgriculteurJourney(
           w is TextField &&
           w.decoration?.hintText == 'Rechercher une région...',
     );
-    await tester.enterText(regionSearch, 'Guadeloupe');
-    await _settle(tester);
+    await _enterTextIfPresent(tester, regionSearch, 'Guadeloupe');
     await tester.tap(find.text('Guadeloupe').last);
     await _settle(tester);
     await tester.tap(find.text('Continuer'));
@@ -124,8 +133,7 @@ Future<void> _runAgriculteurJourney(
           w is TextField &&
           w.decoration?.hintText == 'Rechercher une activité',
     );
-    await tester.enterText(activitySearch, 'Agriculteur');
-    await _settle(tester);
+    await _enterTextIfPresent(tester, activitySearch, 'Agriculteur');
     await tester.tap(find.text('Agriculteur').last);
     await _settle(tester);
     await tester.tap(find.text('Continuer'));
