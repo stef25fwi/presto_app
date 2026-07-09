@@ -670,6 +670,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "ownerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "listings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "moderationStatus",
           "order": "ASCENDING"
         },

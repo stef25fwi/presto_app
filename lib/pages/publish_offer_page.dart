@@ -35,6 +35,10 @@ import '../services/admin_access_resolver.dart';
 import '../services/admin_web_debug_store.dart';
 import '../services/ai/listing_audio_ai_service.dart';
 import '../services/ai/trade_classifier_service.dart';
+import '../features/subscriptions/ai_draft_quota_service.dart';
+import '../features/subscriptions/subscription_config_service.dart';
+import '../features/subscriptions/subscription_limit_sheet.dart';
+import '../features/subscriptions/subscription_models.dart';
 import '../services/city_search.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/french_city_postal_validator.dart';
@@ -573,6 +577,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Service IA structuré pour le formulaire publier
   final AiDraftService _aiService = AiDraftService();
+  final AiDraftQuotaService _aiDraftQuotaService = AiDraftQuotaService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
   final TradeClassifierService _tradeClassifier = TradeClassifierService();
   bool _isClassifyingPhoto = false;
@@ -2260,15 +2265,84 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           : configuredLimit > _publishPhotoHardLimit
               ? _publishPhotoHardLimit
               : configuredLimit;
-      if (!mounted || normalizedLimit == _maxListingPhotos) {
-        return;
+      if (mounted && normalizedLimit != _maxListingPhotos) {
+        setState(() {
+          _maxListingPhotos = normalizedLimit;
+        });
       }
-      setState(() {
-        _maxListingPhotos = normalizedLimit;
-      });
     } catch (_) {
       // Garde la valeur par défaut si la remote config n'est pas disponible.
     }
+
+    // Une fois les restrictions d'abonnement réellement activées, le quota de
+    // photos par annonce du plan prend le relais du plafond générique
+    // ci-dessus. Tant que freeAccessMode=true (lancement), rien ne change.
+    await _applySubscriptionPhotoLimit();
+  }
+
+  Future<void> _applySubscriptionPhotoLimit() async {
+    try {
+      final config = await SubscriptionConfigService().getConfig();
+      if (config.freeAccessMode) return;
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      final snap =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final state = AppUserSubscriptionState.fromMap(snap.data());
+      final features = getFeaturesForSubscriptionPlan(
+        state.plan,
+        freeAccessMode: false,
+      );
+
+      if (!mounted || features.maxPhotosPerOffer == _maxListingPhotos) return;
+      setState(() {
+        _maxListingPhotos = features.maxPhotosPerOffer;
+      });
+    } catch (_) {
+      // Garde la valeur déjà appliquée (remote config) en cas d'échec.
+    }
+  }
+
+  /// Vérifie le quota d'annonces actives du plan Gratuit avant de publier une
+  /// nouvelle annonce. Ne bloque jamais la modification d'une annonce
+  /// existante ni sa suppression — uniquement la création d'une annonce
+  /// active supplémentaire au-delà du quota.
+  Future<bool> _enforceActiveOffersQuota(String uid) async {
+    final config = await SubscriptionConfigService().getConfig();
+    if (config.freeAccessMode) return true;
+
+    final userSnap =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final state = AppUserSubscriptionState.fromMap(userSnap.data());
+    final features =
+        getFeaturesForSubscriptionPlan(state.plan, freeAccessMode: false);
+
+    final countSnapshot = await FirebaseFirestore.instance
+        .collection('listings')
+        .where('ownerId', isEqualTo: uid)
+        .where('status', whereIn: ['active', 'pending'])
+        .count()
+        .get();
+    final activeOffersCount = countSnapshot.count ?? 0;
+
+    if (activeOffersCount < features.maxActiveOffers) {
+      return true;
+    }
+
+    if (!mounted) return false;
+    final stripeEnabled = await SubscriptionConfigService()
+        .getConfig()
+        .then((c) => c.stripeEnabled, onError: (_) => false);
+    if (!mounted) return false;
+    await showSubscriptionLimitSheet(
+      context,
+      message: kActiveOffersLimitMessage,
+      stripeEnabled: stripeEnabled,
+      source: 'active_offers_limit',
+    );
+    return false;
   }
 
   int get _visiblePhotoTileCount {
@@ -3621,6 +3695,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
+    final quotaDecision = await _aiDraftQuotaService.evaluate();
+    if (!quotaDecision.allowed) {
+      if (!mounted) return;
+      final stripeEnabled = await SubscriptionConfigService()
+          .getConfig()
+          .then((config) => config.stripeEnabled, onError: (_) => false);
+      if (!mounted) return;
+      await showSubscriptionLimitSheet(
+        context,
+        message: kAiDraftLimitMessage,
+        stripeEnabled: stripeEnabled,
+        source: 'ai_draft_limit',
+      );
+      return;
+    }
+
     final appCheckReady = await _ensureAppCheckReady(flow: 'publishAiAnalyze');
     if (!appCheckReady) return;
 
@@ -3646,6 +3736,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
 
       if (draft['success'] == true) {
+        unawaited(_aiDraftQuotaService.recordUsage());
         // Snapshot the controllers before applying so we can detect whether
         // anything actually changed — otherwise the user-edit guards may have
         // silently skipped every field, leaving them with no visible result.
@@ -4259,6 +4350,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
     final user = maybeUser;
+
+    final withinActiveOffersQuota = await _enforceActiveOffersQuota(user.uid);
+    if (!withinActiveOffersQuota) {
+      if (mounted) setState(() => _isSubmitting = false);
+      return;
+    }
 
     try {
       await UserProfileBootstrapService.prepareProfileFirestoreAccess(

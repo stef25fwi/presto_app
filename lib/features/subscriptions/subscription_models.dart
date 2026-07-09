@@ -132,6 +132,11 @@ class SubscriptionFeatures {
   final bool hasProBadge;
   final int maxActiveOffers;
   final int maxPhotosPerOffer;
+  final int maxMonthlyOfferReplies;
+  final int maxFavorites;
+  final int maxMonthlyAiAdDrafts;
+  final bool hasInstantAlerts;
+  final bool hasCategoryAlerts;
 
   const SubscriptionFeatures({
     required this.canUseDirectCall,
@@ -146,8 +151,56 @@ class SubscriptionFeatures {
     required this.hasProBadge,
     required this.maxActiveOffers,
     required this.maxPhotosPerOffer,
+    required this.maxMonthlyOfferReplies,
+    required this.maxFavorites,
+    required this.maxMonthlyAiAdDrafts,
+    required this.hasInstantAlerts,
+    required this.hasCategoryAlerts,
   });
+
+  bool get hasUnlimitedOfferReplies =>
+      maxMonthlyOfferReplies >= kUnlimitedSubscriptionQuota;
+
+  bool get hasUnlimitedFavorites => maxFavorites >= kUnlimitedSubscriptionQuota;
+
+  bool get hasUnlimitedAiAdDrafts =>
+      maxMonthlyAiAdDrafts >= kUnlimitedSubscriptionQuota;
 }
+
+/// Valeur utilisée pour représenter un quota d'abonnement "illimité" (mode
+/// d'accès libre ou palier d'abonnement sans plafond). Distincte de
+/// [kUnlimitedJourneyQuota] pour ne pas coupler les deux modèles de quotas.
+const int kUnlimitedSubscriptionQuota = 999999;
+
+/// Argument central à répéter partout où l'abonnement est mentionné.
+const String kSubscriptionZeroCommissionMessage =
+    "Avec iliprestō, vous payez seulement l'accès aux opportunités. Aucune "
+    "commission n'est prélevée sur vos prestations.";
+
+/// Messages standard affichés quand un quota gratuit est atteint. Réutilisés
+/// par l'app et par les callables Cloud Functions correspondantes.
+const String kOfferReplyLimitMessage =
+    "Vous avez utilisé vos 3 réponses gratuites ce mois-ci. Avec "
+    "iliprestō+ à 1,99 €/mois, répondez sans limite, sans commission, et "
+    "gardez 100 % de vos gains.";
+
+const String kFavoritesLimitMessage =
+    "La formule gratuite permet 5 favoris. Avec iliprestō+ à 1,99 €/mois, "
+    "vos favoris sont illimités, sans commission sur vos gains.";
+
+const String kAiDraftLimitMessage =
+    "Vous avez utilisé votre essai IA gratuit ce mois-ci. Avec iliprestō+ "
+    "à 1,99 €/mois, rédigez vos annonces avec l'IA sans limite, sans "
+    "commission, et gardez 100 % de vos gains.";
+
+const String kPhotoLimitMessage =
+    "Limite de photos atteinte pour votre formule. Passez à iliprestō+ ou "
+    "ilipro pour publier des annonces plus complètes, toujours sans "
+    "commission.";
+
+const String kActiveOffersLimitMessage =
+    "La formule gratuite permet 3 annonces actives. Avec iliprestō+, "
+    "publiez jusqu'à 10 annonces actives, sans commission.";
 
 class ConversationAttachmentEntitlements {
   final bool canSendDocuments;
@@ -205,7 +258,7 @@ String subscriptionPlanLabel(SubscriptionPlan plan) {
     case SubscriptionPlan.free:
       return 'Gratuit';
     case SubscriptionPlan.iliprestoPlus:
-      return 'ilipresto+';
+      return 'iliprestō+';
     case SubscriptionPlan.ilipro:
       return 'ilipro';
   }
@@ -294,6 +347,11 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
       hasProBadge: true,
       maxActiveOffers: 9999,
       maxPhotosPerOffer: 999,
+      maxMonthlyOfferReplies: kUnlimitedSubscriptionQuota,
+      maxFavorites: kUnlimitedSubscriptionQuota,
+      maxMonthlyAiAdDrafts: kUnlimitedSubscriptionQuota,
+      hasInstantAlerts: true,
+      hasCategoryAlerts: true,
     );
   }
 
@@ -303,7 +361,7 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         canUseDirectCall: false,
         canUseFavorites: true,
         canReceiveFavoriteAlerts: false,
-        canUseAiDraft: false,
+        canUseAiDraft: true,
         canUseVoiceAi: false,
         canBoostOffer: false,
         canAccessStats: false,
@@ -312,6 +370,11 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         hasProBadge: false,
         maxActiveOffers: 3,
         maxPhotosPerOffer: 3,
+        maxMonthlyOfferReplies: 3,
+        maxFavorites: 5,
+        maxMonthlyAiAdDrafts: 1,
+        hasInstantAlerts: false,
+        hasCategoryAlerts: false,
       );
     case SubscriptionPlan.iliprestoPlus:
       return const SubscriptionFeatures(
@@ -327,6 +390,11 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         hasProBadge: false,
         maxActiveOffers: 10,
         maxPhotosPerOffer: 12,
+        maxMonthlyOfferReplies: kUnlimitedSubscriptionQuota,
+        maxFavorites: kUnlimitedSubscriptionQuota,
+        maxMonthlyAiAdDrafts: kUnlimitedSubscriptionQuota,
+        hasInstantAlerts: true,
+        hasCategoryAlerts: true,
       );
     case SubscriptionPlan.ilipro:
       return const SubscriptionFeatures(
@@ -341,7 +409,12 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         hasVerifiedBadge: true,
         hasProBadge: true,
         maxActiveOffers: 50,
-        maxPhotosPerOffer: 20,
+        maxPhotosPerOffer: 10,
+        maxMonthlyOfferReplies: kUnlimitedSubscriptionQuota,
+        maxFavorites: kUnlimitedSubscriptionQuota,
+        maxMonthlyAiAdDrafts: kUnlimitedSubscriptionQuota,
+        hasInstantAlerts: true,
+        hasCategoryAlerts: true,
       );
   }
 }

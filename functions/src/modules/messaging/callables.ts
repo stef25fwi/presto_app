@@ -510,6 +510,61 @@ async function enforceMessagingAttachmentEntitlements({
   }
 }
 
+const FREE_PLAN_MONTHLY_OFFER_REPLY_LIMIT = 3;
+
+function currentUsagePeriodKey(): string {
+  const now = new Date();
+  const year = String(now.getUTCFullYear()).padStart(4, "0");
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+// Prépare la logique de quota "réponses aux annonces / mois" pour le plan
+// gratuit. Ne s'applique qu'une fois qu'on sait qu'on va vraiment créer une
+// nouvelle conversation (pas de recomptage si la conversation existe déjà).
+async function enforceOfferReplyQuota(currentUserId: string): Promise<void> {
+  const freeAccessMode = await readSubscriptionConfigFreeAccessMode();
+  if (freeAccessMode) {
+    return;
+  }
+
+  const userSnap = await db.collection(COLLECTIONS.users).doc(currentUserId).get();
+  const plan = normalizeSubscriptionPlan(userSnap.data()?.subscriptionPlan);
+  if (plan !== "free") {
+    return;
+  }
+
+  const period = currentUsagePeriodKey();
+  const counterRef = db
+    .collection(COLLECTIONS.users)
+    .doc(currentUserId)
+    .collection("usageCounters")
+    .doc(period);
+
+  await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(counterRef);
+    const usedThisMonth = Number((snap.data() ?? {}).offerRepliesCount || 0);
+
+    if (usedThisMonth >= FREE_PLAN_MONTHLY_OFFER_REPLY_LIMIT) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "free plan is limited to 3 new offer replies per month",
+        { reason: "free_plan_offer_reply_limit_reached" },
+      );
+    }
+
+    transaction.set(
+      counterRef,
+      {
+        period,
+        offerRepliesCount: usedThisMonth + 1,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
+}
+
 export function buildAttachmentMessageFallbackText(
   attachment: Pick<ConversationAttachment, "type" | "name">,
 ): string {
@@ -996,6 +1051,11 @@ export const ensureOfferConversation = onCall(MESSAGING_CALLABLE_OPTIONS, async 
     ? buildForkedConversationThreadId(conversationId)
     : conversationId;
   const convRef = convCol.doc(targetConversationId);
+
+  // Reaching this point means no existing conversation was reused above, so
+  // this call is genuinely starting a new contact with the offer owner —
+  // count it against the free plan's monthly reply quota before creating it.
+  await enforceOfferReplyQuota(currentUserId);
 
   if (targetConversationId != conversationId) {
     await convRef.set(

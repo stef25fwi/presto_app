@@ -80,7 +80,7 @@ class SubscriptionSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Découvrez les formules ilipresto+ et ilipro. Les abonnements seront activés prochainement.',
+                    'Découvrez les formules iliprestō+ et ilipro. 0 % de commission : vous gardez toujours 100 % de vos gains. Les abonnements seront activés prochainement.',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -281,7 +281,7 @@ class _SubscriptionMessagingRulesCard extends StatelessWidget {
         : 'Audio: ${entitlements.maxAudioPerConversation} par conversation';
     final documentRule = entitlements.canSendDocuments
         ? 'Documents et fichiers: autorisés'
-        : 'Documents et fichiers: ilipresto+ requis';
+        : 'Documents et fichiers: iliprestō+ requis';
 
     return Container(
       width: double.infinity,
@@ -448,36 +448,43 @@ class _SubscriptionPlanTabsState extends State<SubscriptionPlanTabs>
                         title: 'Gratuit',
                         price: '0 €/mois',
                         subtitle:
-                            'Utilisez ilipresto librement pendant la phase de lancement.',
+                            'Pour découvrir iliprestō et tester les outils essentiels.',
                         features: const [
                           'Consulter les annonces',
                           'Publier des annonces',
-                          'Échanger avec les utilisateurs',
-                          'Utiliser les fonctionnalités disponibles',
-                          'Accès complet actuellement actif',
+                          'Répondre à 3 annonces par mois',
+                          'Messagerie basique',
+                          '5 favoris maximum',
+                          'Alertes limitées',
+                          '1 assistance IA pour rédiger une annonce',
+                          '0 % de commission',
+                          'Vous gardez 100 % de vos gains',
                         ],
                         buttonLabel: 'Formule actuelle',
                         onPressed: null,
                         isPrimary: false,
                       ),
                       SubscriptionComparisonCard(
-                        title: 'ilipresto+',
+                        title: 'iliprestō+',
                         price: '1,99 €/mois',
                         subtitle:
-                            'La formule pensée pour les particuliers qui veulent plus de confort, plus d’alertes et plus de contacts.',
+                            'Pour ne plus rater les annonces autour de vous.',
                         marketingHighlight:
-                            'Plus de contacts. Plus d’alertes. Plus de liberté. Seulement 1,99 €/mois.',
+                            '1,99 €/mois. 0 % de commission. Vous gardez 100 % de vos gains.',
                         badge: 'Bientôt disponible',
                         features: const [
-                          'Compte vérifié',
-                          'Téléphone vérifié',
-                          'Appel direct facilité',
-                          'Messagerie illimitée',
-                          'Alertes sur vos catégories favorites',
+                          'Réponses aux annonces illimitées',
+                          'Alertes instantanées',
+                          'Alertes par catégorie',
                           'Favoris illimités',
-                          'Assistant IA pour rédiger vos annonces',
-                          'Plus de photos par annonce',
+                          'Messagerie complète',
+                          'Documents autorisés',
+                          'Appel direct facilité',
+                          'Assistant IA annonce illimité',
                           'Remontée simple d’annonce',
+                          'Badge membre actif',
+                          '0 % de commission',
+                          'Vous gardez 100 % de vos gains',
                         ],
                         buttonLabel: 'Me prévenir au lancement',
                         onPressed: () async {
@@ -516,14 +523,16 @@ class _SubscriptionPlanTabsState extends State<SubscriptionPlanTabs>
                         title: 'Pro gratuit',
                         price: '0 €/mois',
                         subtitle:
-                            'Testez ilipresto et présentez vos services librement pendant la phase de lancement.',
+                            'Pour découvrir iliprestō et tester les outils essentiels.',
                         features: const [
-                          'Créer un profil professionnel',
+                          'Consulter les annonces',
                           'Publier des annonces',
-                          'Être visible dans les résultats',
-                          'Recevoir des messages',
-                          'Présenter ses services',
-                          'Accès complet actuellement actif',
+                          'Répondre à 3 annonces par mois',
+                          'Messagerie basique',
+                          '3 annonces actives maximum',
+                          '1 assistance IA pour rédiger une annonce',
+                          '0 % de commission',
+                          'Vous gardez 100 % de vos gains',
                         ],
                         buttonLabel: 'Continuer gratuitement',
                         onPressed: null,
@@ -531,27 +540,26 @@ class _SubscriptionPlanTabsState extends State<SubscriptionPlanTabs>
                       ),
                       SubscriptionComparisonCard(
                         title: 'ilipro',
-                        price: '7,99 €/mois',
+                        price: '9,99 €/mois',
                         subtitle:
-                            'La formule pour gagner en visibilité, inspirer confiance et recevoir plus de demandes.',
+                            'Pour développer son activité locale avec plus de visibilité.',
                         marketingHighlight:
-                            'Soyez plus visible. Inspirez confiance. Recevez plus de demandes. Seulement 7,99 €/mois.',
+                            'Votre mini-vitrine locale, sans commission sur vos prestations.',
                         badge: 'Recommandé pour les prestataires',
                         features: const [
-                          'Badge Pro visible',
+                          'Tout iliprestō+',
                           'Profil professionnel complet',
-                          'Téléphone vérifié',
-                          'Appel direct et contact rapide',
-                          'Bouton WhatsApp si activé',
-                          'Mise en avant dans les résultats',
-                          'Plus d’annonces actives',
-                          'Plus de photos par annonce',
+                          'Badge Pro vérifié',
+                          'Mise en avant locale',
+                          'Statistiques de vues et de contacts',
                           'Portfolio de réalisations',
                           'Zone d’intervention personnalisée',
-                          'Statistiques de vues et de contacts',
-                          'Assistant IA complet',
-                          'Remontée automatique des annonces',
+                          'Réponses rapides',
+                          'Boosts / remontées inclus',
+                          '10 photos par annonce',
                           'Support prioritaire',
+                          '0 % de commission',
+                          'Vous gardez 100 % de vos gains',
                         ],
                         buttonLabel: 'Me prévenir au lancement',
                         onPressed: () async {
@@ -949,7 +957,7 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Préparer et afficher les offres ilipresto+ et ilipro.',
+                          'Préparer et afficher les offres iliprestō+ et ilipro.',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -991,8 +999,8 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                 ),
                 subtitle: Text(
                   config.freeAccessMode
-                      ? 'Aucune restriction abonnement n est appliquée aux utilisateurs.'
-                      : 'Les limites Gratuit vs ilipresto+ sont maintenant actives dans l app.',
+                      ? 'Phase de lancement : aucune restriction n’est appliquée. Tous les utilisateurs gardent l’accès complet.'
+                      : 'Restrictions abonnement actives : Gratuit, iliprestō+ et ilipro appliquent leurs quotas.',
                   style: const TextStyle(color: _kSubscriptionTextSecondary),
                 ),
                 value: config.freeAccessMode,
@@ -1037,7 +1045,7 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
                 child: const Text(
-                  'Stripe peut rester inactif: freeAccessMode permet déjà de préparer ou d activer les règles d accès côté app sans ouvrir le paiement.',
+                  'Stripe peut rester inactif : freeAccessMode permet déjà de préparer ou d’activer les règles d’accès côté app sans ouvrir le paiement.',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,

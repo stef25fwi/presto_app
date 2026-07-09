@@ -16,6 +16,9 @@ import 'package:presto_app/models/marketplace_enums.dart';
 import 'package:presto_app/models/marketplace_report.dart';
 import 'package:presto_app/services/admin_access_resolver.dart';
 import 'package:presto_app/services/app_route_parser.dart';
+import 'package:presto_app/features/subscriptions/subscription_config_service.dart';
+import 'package:presto_app/features/subscriptions/subscription_limit_sheet.dart';
+import 'package:presto_app/features/subscriptions/subscription_models.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
 import 'package:presto_app/services/user_profile_bootstrap_service.dart';
@@ -861,14 +864,54 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       return;
     }
 
-    final resolvedConversationId = await ConversationService.ensureConversation(
-      offerId: data.offerId,
-      offerTitle: data.title,
-      currentUserId: me,
-      otherUserId: data.advertiserId,
-      currentUserName: currentUserName,
-      otherUserName: data.advertiserName,
-    );
+    String resolvedConversationId;
+    try {
+      resolvedConversationId = await ConversationService.ensureConversation(
+        offerId: data.offerId,
+        offerTitle: data.title,
+        currentUserId: me,
+        otherUserId: data.advertiserId,
+        currentUserName: currentUserName,
+        otherUserName: data.advertiserName,
+      );
+    } on FirebaseFunctionsException catch (error) {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'blocked-ensure-conversation',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'code': error.code,
+          'reason': error.details is Map ? error.details['reason'] : null,
+        },
+      );
+      if (!context.mounted) return;
+      final reason =
+          error.details is Map ? error.details['reason'] as Object? : null;
+      if (error.code == 'resource-exhausted' &&
+          reason == 'free_plan_offer_reply_limit_reached') {
+        final stripeEnabled =
+            await SubscriptionConfigService().getConfig().then(
+                  (config) => config.stripeEnabled,
+                  onError: (_) => false,
+                );
+        if (!context.mounted) return;
+        await showSubscriptionLimitSheet(
+          context,
+          message: kOfferReplyLimitMessage,
+          stripeEnabled: stripeEnabled,
+          source: 'offer_reply_limit',
+        );
+        return;
+      }
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Impossible d’ouvrir la messagerie : ${error.message ?? error.code}',
+          ),
+        ),
+      );
+      return;
+    }
 
     if (!context.mounted) return;
     final targetRoute = buildMessagesRoute(
@@ -1324,6 +1367,23 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         },
       );
       if (!context.mounted) return;
+      final reason = e.details is Map ? e.details['reason'] as Object? : null;
+      if (e.code == 'resource-exhausted' &&
+          reason == 'free_plan_favorites_limit_reached') {
+        final stripeEnabled =
+            await SubscriptionConfigService().getConfig().then(
+                  (config) => config.stripeEnabled,
+                  onError: (_) => false,
+                );
+        if (!context.mounted) return;
+        await showSubscriptionLimitSheet(
+          context,
+          message: kFavoritesLimitMessage,
+          stripeEnabled: stripeEnabled,
+          source: 'favorites_limit',
+        );
+        return;
+      }
       final isLegacyUnavailable = !data.isMarketplace &&
           (e.code == 'not-found' || e.code == 'failed-precondition');
       messenger?.showSnackBar(

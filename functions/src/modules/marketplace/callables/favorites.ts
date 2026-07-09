@@ -19,6 +19,29 @@ function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
+function normalizeSubscriptionPlan(value: unknown): "free" | "ilipresto_plus" | "ilipro" {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "ilipresto_plus" || normalized === "iliprestoplus" || normalized === "ilipresto+") {
+    return "ilipresto_plus";
+  }
+  if (normalized === "ilipro") {
+    return "ilipro";
+  }
+  return "free";
+}
+
+const FREE_PLAN_MAX_FAVORITES = 5;
+
+async function readSubscriptionConfigFreeAccessMode(): Promise<boolean> {
+  const [snakeCaseSnap, camelCaseSnap] = await Promise.all([
+    db.collection("app_config").doc("subscriptions").get().catch(() => null),
+    db.collection(COLLECTIONS.appConfig).doc("subscriptions").get().catch(() => null),
+  ]);
+
+  const data = snakeCaseSnap?.data() ?? camelCaseSnap?.data() ?? {};
+  return data.freeAccessMode !== false;
+}
+
 export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const userId = requireAuthUid(request);
   const listingId = normalizeString(request.data?.listingId);
@@ -33,12 +56,15 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
     const userRef = db.collection(COLLECTIONS.users).doc(userId);
     const userFavoriteRef = userRef.collection("favorites").doc(listingId);
 
+    const freeAccessMode = await readSubscriptionConfigFreeAccessMode();
+
     let active = false;
     await db.runTransaction(async (transaction) => {
-      const [listingSnap, favoriteSnap, userFavoriteSnap] = await Promise.all([
+      const [listingSnap, favoriteSnap, userFavoriteSnap, userSnap] = await Promise.all([
         transaction.get(listingRef),
         transaction.get(favoriteRef),
         transaction.get(userFavoriteRef),
+        transaction.get(userRef),
       ]);
 
       const alreadyFavorite = favoriteSnap.exists || userFavoriteSnap.exists;
@@ -57,6 +83,7 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
 
         transaction.set(userRef, {
           favoriteOffersUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          activeFavoritesCount: admin.firestore.FieldValue.increment(-1),
         }, { merge: true });
         return;
       }
@@ -68,6 +95,19 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
       const listingData = (listingSnap.data() ?? {}) as Record<string, unknown>;
       if (normalizeString(listingData.status) !== "active" || normalizeString(listingData.visibility) !== "public") {
         throw new HttpsError("failed-precondition", "Only public active listings can be favorited");
+      }
+
+      if (!freeAccessMode) {
+        const userData = (userSnap.data() ?? {}) as Record<string, unknown>;
+        const plan = normalizeSubscriptionPlan(userData.subscriptionPlan);
+        const currentFavoritesCount = Number(userData.activeFavoritesCount || 0);
+        if (plan === "free" && currentFavoritesCount >= FREE_PLAN_MAX_FAVORITES) {
+          throw new HttpsError(
+            "resource-exhausted",
+            "free plan is limited to 5 favorites",
+            { reason: "free_plan_favorites_limit_reached" },
+          );
+        }
       }
 
       active = true;
@@ -90,6 +130,7 @@ export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: 
 
       transaction.set(userRef, {
         favoriteOffersUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        activeFavoritesCount: admin.firestore.FieldValue.increment(1),
       }, { merge: true });
     });
 
