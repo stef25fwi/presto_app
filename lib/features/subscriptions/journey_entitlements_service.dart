@@ -41,10 +41,10 @@ class JourneyEntitlementsService {
   /// l'utilisateur courant (plan d'abonnement + mode d'accès libre global).
   ///
   /// Même lorsque le mode d'accès gratuit complet est actif, on lit le vrai
-  /// plan utilisateur afin que les quotas PDF restent cohérents :
-  /// - Gratuit : aucun PDF ;
-  /// - ilipresto+ : 2 PDF/mois ;
-  /// - ilipro : 10 PDF/mois.
+  /// plan utilisateur afin que les quotas du parcours restent cohérents :
+  /// - Gratuit : 2 sauvegardes/mois, 0 PDF ;
+  /// - ilipresto+ : 5 sauvegardes/mois, 5 PDF/mois ;
+  /// - ilipro : 10 sauvegardes/mois, 10 PDF/mois.
   Future<JourneyEntitlements> resolveEntitlements() async {
     try {
       final config = await _configService.getConfig();
