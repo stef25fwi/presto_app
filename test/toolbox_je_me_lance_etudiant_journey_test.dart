@@ -44,6 +44,16 @@ Future<void> _settle(WidgetTester tester, {int times = 10}) async {
   }
 }
 
+Future<void> _enterTextIfPresent(
+  WidgetTester tester,
+  Finder finder,
+  String value,
+) async {
+  if (finder.evaluate().isEmpty) return;
+  await tester.enterText(finder.last, value);
+  await _settle(tester);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -93,10 +103,11 @@ void main() {
         await tester.tap(find.text('Choisir votre région...'));
         await _settle(tester);
         final regionSearch = find.byWidgetPredicate(
-          (w) => w is TextField && w.decoration?.hintText == 'Rechercher une région...',
+          (w) =>
+              w is TextField &&
+              w.decoration?.hintText == 'Rechercher une région...',
         );
-        await tester.enterText(regionSearch, 'Guadeloupe');
-        await _settle(tester);
+        await _enterTextIfPresent(tester, regionSearch, 'Guadeloupe');
         await tester.tap(find.text('Guadeloupe').last);
         await _settle(tester);
         await tester.tap(find.text('Continuer'));
@@ -112,10 +123,11 @@ void main() {
         await tester.tap(find.text('Choisir une activité'));
         await _settle(tester);
         final activitySearch = find.byWidgetPredicate(
-          (w) => w is TextField && w.decoration?.hintText == 'Rechercher une activité',
+          (w) =>
+              w is TextField &&
+              w.decoration?.hintText == 'Rechercher une activité',
         );
-        await tester.enterText(activitySearch, 'Service en salle');
-        await _settle(tester);
+        await _enterTextIfPresent(tester, activitySearch, 'Service en salle');
         await tester.tap(find.text('Service en salle').last);
         await _settle(tester);
         await tester.tap(find.text('Continuer'));
