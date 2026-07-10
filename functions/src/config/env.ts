@@ -5,6 +5,7 @@ export const EMAIL_PROVIDER_API_KEY = defineSecret("EMAIL_PROVIDER_API_KEY");
 export const EMAIL_PROVIDER_WEBHOOK_SECRET = defineSecret("EMAIL_PROVIDER_WEBHOOK_SECRET");
 export const BREVO_API_KEY = defineSecret("BREVO_API_KEY");
 export const BREVO_WEBHOOK_SECRET = defineSecret("BREVO_WEBHOOK_SECRET");
+export const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 
 export const EMAIL_PROVIDER_NAME = process.env.EMAIL_PROVIDER_NAME || "";
 export const DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr") as "fr" | "en";
