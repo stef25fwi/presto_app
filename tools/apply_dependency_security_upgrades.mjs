@@ -8,7 +8,9 @@ const packageJson = JSON.parse(await fs.readFile(path, 'utf8'));
 packageJson.dependencies = {
   ...packageJson.dependencies,
   '@google-cloud/speech': '^7.5.0',
-  'firebase-admin': '^14.1.0',
+  // firebase-functions 7.2.5 déclare une compatibilité jusqu'à firebase-admin 13.x.
+  // Ne pas forcer npm : conserver une résolution de pairs officiellement supportée.
+  'firebase-admin': '^13.10.0',
 };
 
 packageJson.overrides = {
