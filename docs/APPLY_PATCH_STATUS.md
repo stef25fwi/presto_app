@@ -1,6 +1,6 @@
 # Échec du générateur de durcissement
 
-Commit source : `666ae6d1a2909c5f54fd4a8499bb14058b415001`
+Commit source : `0c7399f6cdb2227247ceba0d5babc3d12fd9eb48`
 
 ```text
 production hardening patches: OK
