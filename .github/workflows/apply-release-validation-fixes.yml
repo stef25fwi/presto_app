@@ -1,6 +1,13 @@
 name: Apply release validation fixes
 
 on:
+  push:
+    branches:
+      - audit/prod-hardening-p0-p11
+    paths:
+      - tools/apply_release_validation_fixes.mjs
+      - tools/apply_validation_round2_fixes.mjs
+      - .github/workflows/apply-release-validation-fixes.yml
   workflow_dispatch:
 
 permissions:
@@ -26,7 +33,10 @@ jobs:
       - name: Apply final validation fixes
         id: patch
         continue-on-error: true
-        run: node tools/apply_release_validation_fixes.mjs
+        run: |
+          set -euo pipefail
+          node tools/apply_release_validation_fixes.mjs
+          node tools/apply_validation_round2_fixes.mjs
 
       - name: Commit generated fixes
         if: steps.patch.outcome == 'success'
@@ -41,8 +51,9 @@ jobs:
             functions/scripts/test_user_authority_rules.mjs \
             lib/features/subscriptions/subscription_widgets.dart \
             lib/pages/toolbox_je_me_lance_page.dart \
-            test/auth_email_static_test.dart
-          git commit -m "fix: corrige les derniers contrôles de release"
+            test/auth_email_static_test.dart \
+            tools/check_web_bundle_size.mjs
+          git commit -m "fix: matérialise les derniers correctifs de release"
           git push origin HEAD:audit/prod-hardening-p0-p11
 
       - name: Enforce patch success
