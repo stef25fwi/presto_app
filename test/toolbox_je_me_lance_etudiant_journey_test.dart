@@ -92,7 +92,8 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.runAsync(() async {
-        await tester.pumpWidget(const MaterialApp(home: ToolboxJeMeLancePage()));
+        await tester
+            .pumpWidget(const MaterialApp(home: ToolboxJeMeLancePage()));
         // Attente réelle (pas horloge fake) : tester.pump(Duration) n'avance
         // que l'horloge simulée, il ne laisse pas le temps à un vrai file
         // read (chargement des assets fiches) de se terminer.
@@ -122,13 +123,16 @@ void main() {
         // --- Étape 3 : activité = Service en salle (présente dans le pack étudiant) ---
         await tester.tap(find.text('Choisir une activité'));
         await _settle(tester);
-        final activitySearch = find.byWidgetPredicate(
-          (w) =>
-              w is TextField &&
-              w.decoration?.hintText == 'Rechercher une activité',
+
+        final activityOption = find.text('Service en salle');
+        await tester.dragUntilVisible(
+          activityOption,
+          find.byType(Scrollable).last,
+          const Offset(0, -300),
         );
-        await _enterTextIfPresent(tester, activitySearch, 'Service en salle');
-        await tester.tap(find.text('Service en salle').last);
+        await _settle(tester);
+
+        await tester.tap(activityOption.last);
         await _settle(tester);
         await tester.tap(find.text('Continuer'));
         await _settle(tester);
@@ -191,7 +195,8 @@ void main() {
         // d'action (ListView : les sections hors-écran ne sont montées
         // qu'une fois scrollées en vue).
         for (var i = 0; i < 6; i++) {
-          await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+          await tester.drag(
+              find.byType(Scrollable).first, const Offset(0, -2000));
           await _settle(tester, times: 5);
         }
         expect(find.textContaining('Crous'), findsWidgets);
@@ -205,11 +210,13 @@ void main() {
         // Plan 30 jours : cadrage hebdomadaire propre à la fiche, injecté en
         // tête de chaque semaine, en plus des tâches génériques.
         for (var i = 0; i < 6; i++) {
-          await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+          await tester.drag(
+              find.byType(Scrollable).first, const Offset(0, -2000));
           await _settle(tester, times: 5);
         }
         expect(
-          find.textContaining('Vérifier situation étudiant, âge, titre de séjour'),
+          find.textContaining(
+              'Vérifier situation étudiant, âge, titre de séjour'),
           findsOneWidget,
         );
       });

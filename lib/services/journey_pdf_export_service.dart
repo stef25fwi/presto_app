@@ -26,7 +26,8 @@ class JourneyPdfExportService {
 
   Future<XFile> generateJourneyPdf(Map<String, dynamic> journey) async {
     final bytes = await _buildPdfBytes(journey);
-    final safeActivity = _sanitizeFilePart('${journey['selectedActivity'] ?? ''}');
+    final safeActivity =
+        _sanitizeFilePart('${journey['selectedActivity'] ?? ''}');
     final suffix = safeActivity.isEmpty ? 'parcours' : safeActivity;
     final fileName = 'ilipresto_$suffix.pdf';
 
@@ -78,7 +79,8 @@ class JourneyPdfExportService {
           _sectionTitle('Recommandation'),
           _highlightBox(
             title: 'Statut conseillé',
-            text: '${recommendation['statut'] ?? recommendation['recommended'] ?? '—'}',
+            text:
+                '${recommendation['statut'] ?? recommendation['recommended'] ?? '—'}',
           ),
           if ('${recommendation['why'] ?? recommendation['justification'] ?? ''}'
               .trim()
@@ -108,14 +110,16 @@ class JourneyPdfExportService {
             pw.SizedBox(height: 14),
             _sectionTitle('Résumé du parcours'),
             ...summary.entries.map(
-              (entry) => _kv(_prettyLabel('${entry.key}'), _formatValue(entry.value)),
+              (entry) =>
+                  _kv(_prettyLabel(entry.key), _formatValue(entry.value)),
             ),
           ],
           if (costs.isNotEmpty) ...[
             pw.SizedBox(height: 14),
             _sectionTitle('Coûts et points financiers'),
             ...costs.entries.map(
-              (entry) => _kv(_prettyLabel('${entry.key}'), _formatValue(entry.value)),
+              (entry) =>
+                  _kv(_prettyLabel(entry.key), _formatValue(entry.value)),
             ),
           ],
           if (regulationTutorial.isNotEmpty) ...[
@@ -245,7 +249,8 @@ class JourneyPdfExportService {
     );
   }
 
-  pw.Widget _coverBlock(pw.ImageProvider logoImage, Map<String, dynamic> journey) {
+  pw.Widget _coverBlock(
+      pw.ImageProvider logoImage, Map<String, dynamic> journey) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
       decoration: pw.BoxDecoration(
@@ -383,7 +388,8 @@ class JourneyPdfExportService {
 
   pw.Widget _kv(String label, String value) {
     final cleaned = value.trim();
-    if (cleaned.isEmpty || cleaned == 'null') return pw.SizedBox(width: 0, height: 0);
+    if (cleaned.isEmpty || cleaned == 'null')
+      return pw.SizedBox(width: 0, height: 0);
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.RichText(
@@ -417,7 +423,8 @@ class JourneyPdfExportService {
   }
 
   pw.Widget _timelineItem(Map<String, dynamic> item) {
-    final title = '${item['title'] ?? item['label'] ?? item['name'] ?? 'Étape'}';
+    final title =
+        '${item['title'] ?? item['label'] ?? item['name'] ?? 'Étape'}';
     final description =
         '${item['description'] ?? item['text'] ?? item['summary'] ?? item['desc'] ?? item['objective'] ?? ''}'
             .trim();
@@ -483,7 +490,7 @@ class JourneyPdfExportService {
   static String _formatValue(dynamic value) {
     if (value is Map) {
       return value.entries
-          .map((entry) => '${_prettyLabel('${entry.key}')} : ${entry.value}')
+          .map((entry) => '${_prettyLabel(entry.key)} : ${entry.value}')
           .join(' · ');
     }
     if (value is List) return value.map((item) => '$item').join(' · ');
