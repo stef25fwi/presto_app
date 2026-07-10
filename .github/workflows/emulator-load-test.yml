@@ -1,0 +1,50 @@
+name: Firestore Emulator load test
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emulator-load-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  load-1000:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@13
+
+      - name: Run 1000 virtual sessions against Firestore Emulator
+        env:
+          LOAD_VIRTUAL_USERS: '1000'
+          LOAD_CONCURRENCY: '100'
+          LOAD_PAGE_SIZE: '20'
+          LOAD_MAX_ERROR_RATE: '0.01'
+          LOAD_MAX_P95_MS: '2500'
+        run: npm --prefix functions run test:load:1000
+
+      - name: Upload load-test result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firestore-emulator-load-${{ github.sha }}
+          path: load-tests/results/firestore-emulator-1000-users.json
+          if-no-files-found: warn
+          retention-days: 30
