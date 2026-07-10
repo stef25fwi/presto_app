@@ -37,6 +37,7 @@ jobs:
           node tools/apply_validation_fixes.mjs
           node tools/apply_identity_authority_hardening.mjs
           node tools/apply_dependency_security_upgrades.mjs
+          node tools/apply_stripe_ordering_hardening.mjs
           npm --prefix functions install --package-lock-only --ignore-scripts
 
       - name: Commit generated changes
