@@ -1,6 +1,6 @@
 # Échec du générateur de durcissement
 
-Commit source : `f71ef4ac0354ad67518cebe86da78979fc0d8baa`
+Commit source : `98c22fcbcafb827ae3283a9ea31fea57a0f0b92a`
 
 ```text
 production hardening patches: OK
@@ -40,6 +40,6 @@ npm error to accept an incorrect (and potentially broken) dependency resolution.
 npm error
 npm error
 npm error For a full report see:
-npm error /home/runner/.npm/_logs/2026-07-10T05_00_44_887Z-eresolve-report.txt
-npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2026-07-10T05_00_44_887Z-debug-0.log
+npm error /home/runner/.npm/_logs/2026-07-10T05_02_09_484Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2026-07-10T05_02_09_484Z-debug-0.log
 ```
