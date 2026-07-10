@@ -45,24 +45,33 @@ async function main() {
     await assertSucceeds(updateDoc(userRef, { displayName: 'Nouveau pseudo' }));
 
     const forbiddenUpdates = [
-      { uid: 'another_user' },
-      { email: 'attacker@example.com' },
-      { subscriptionPlan: 'ilipro' },
-      { subscriptionStatus: 'active' },
-      { subscriptionExpiresAt: new Date('2099-01-01T00:00:00Z') },
-      { stripeCustomerId: 'cus_fake' },
-      { stripeSubscriptionId: 'sub_fake' },
-      { stripePriceId: 'price_fake' },
-      { phoneVerified: true },
-      { proVerified: true },
-      { siretVerified: true },
-      { emailVerified: true },
-      { accountStatus: 'disabled' },
-      { role: 'admin' },
+      ['uid', { uid: 'another_user' }],
+      ['email', { email: 'attacker@example.com' }],
+      ['subscriptionPlan', { subscriptionPlan: 'ilipro' }],
+      ['subscriptionStatus', { subscriptionStatus: 'active' }],
+      [
+        'subscriptionExpiresAt',
+        { subscriptionExpiresAt: new Date('2099-01-01T00:00:00Z') },
+      ],
+      ['stripeCustomerId', { stripeCustomerId: 'cus_fake' }],
+      ['stripeSubscriptionId', { stripeSubscriptionId: 'sub_fake' }],
+      ['stripePriceId', { stripePriceId: 'price_fake' }],
+      ['phoneVerified', { phoneVerified: true }],
+      ['proVerified', { proVerified: true }],
+      ['siretVerified', { siretVerified: true }],
+      ['emailVerified', { emailVerified: true }],
+      ['accountStatus', { accountStatus: 'disabled' }],
+      ['role', { role: 'admin' }],
     ];
 
-    for (const update of forbiddenUpdates) {
-      await assertFails(updateDoc(userRef, update));
+    for (const [field, update] of forbiddenUpdates) {
+      try {
+        await assertFails(updateDoc(userRef, update));
+      } catch (error) {
+        throw new Error(`Protected field unexpectedly writable: ${field}`, {
+          cause: error,
+        });
+      }
     }
 
     await assertFails(deleteDoc(userRef));
