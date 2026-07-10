@@ -30,6 +30,7 @@ jobs:
         run: |
           node tools/apply_prod_hardening_patches.mjs
           node tools/apply_startup_hardening.mjs
+          node tools/apply_auth_client_hardening.mjs
 
       - name: Commit generated changes
         run: |
@@ -42,6 +43,7 @@ jobs:
           git add firestore.rules \
             functions/src/index.ts \
             lib/main.dart \
+            lib/services/auth_service.dart \
             lib/services/app_monitoring_service.dart \
             lib/services/public_offers_query_helpers.dart \
             lib/pages/consult_offers_page.dart \
