@@ -33,6 +33,7 @@ jobs:
           node tools/apply_auth_client_hardening.mjs
           node tools/apply_account_cleanup_patch.mjs
           node tools/apply_cursor_pagination.mjs
+          node tools/apply_validation_fixes.mjs
 
       - name: Commit generated changes
         run: |
@@ -42,15 +43,21 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add firestore.rules \
+          git add .github/workflows/deploy.yml \
+            .github/workflows/pr-validation.yml \
+            .github/workflows/audit-branch-validation.yml \
+            firestore.rules \
+            functions/scripts/test_canonical_marketplace_rules.mjs \
             functions/src/index.ts \
             functions/src/modules/auth/account_deletion.ts \
+            functions/src/modules/billing/stripe_webhook.ts \
             lib/main.dart \
             lib/services/auth_service.dart \
             lib/services/app_monitoring_service.dart \
             lib/services/public_offers_query_helpers.dart \
             lib/pages/consult_offers_page.dart \
             lib/pages/admin_space_page.dart \
-            test/toolbox_je_me_lance_etudiant_journey_test.dart
+            test/toolbox_je_me_lance_etudiant_journey_test.dart \
+            tools/apply_auth_client_hardening.mjs
           git commit -m "security: applique le durcissement préproduction"
           git push origin HEAD:audit/prod-hardening-p0-p11
