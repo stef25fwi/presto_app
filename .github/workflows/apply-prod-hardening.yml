@@ -35,6 +35,7 @@ jobs:
           node tools/normalize_cursor_patch_script.mjs
           node tools/apply_cursor_pagination.mjs
           node tools/apply_validation_fixes.mjs
+          node tools/apply_identity_authority_hardening.mjs
 
       - name: Commit generated changes
         run: |
@@ -49,6 +50,7 @@ jobs:
             .github/workflows/audit-branch-validation.yml \
             firestore.rules \
             functions/scripts/test_canonical_marketplace_rules.mjs \
+            functions/scripts/test_user_authority_rules.mjs \
             functions/src/index.ts \
             functions/src/modules/auth/account_deletion.ts \
             functions/src/modules/billing/stripe_webhook.ts \
