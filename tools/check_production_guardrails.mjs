@@ -43,6 +43,26 @@ const checks = [
     required: 'expiresAt:',
     message: 'rate-limit documents must carry a TTL field',
   },
+  {
+    file: 'functions/src/config/env.ts',
+    required: 'defineSecret("STRIPE_PRICE_ILIPRESTO_PLUS")',
+    message: 'ilipresto+ Stripe Price ID must remain a bound runtime secret',
+  },
+  {
+    file: 'functions/src/config/env.ts',
+    required: 'defineSecret("STRIPE_PRICE_ILIPRO")',
+    message: 'ilipro Stripe Price ID must remain a bound runtime secret',
+  },
+  {
+    file: 'functions/src/modules/billing/callables.ts',
+    required: 'secrets: STRIPE_CHECKOUT_SECRETS',
+    message: 'checkout callable must bind both Stripe Price ID secrets',
+  },
+  {
+    file: 'functions/src/modules/billing/callables.ts',
+    required: 'priceId.startsWith("price_")',
+    message: 'checkout must validate Stripe Price ID format',
+  },
 ];
 
 async function main() {
