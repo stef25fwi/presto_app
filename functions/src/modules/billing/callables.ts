@@ -1,5 +1,13 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { APP_BASE_URL, ENFORCE_APP_CHECK, PROJECT_REGION, STRIPE_SECRET_KEY } from "../../config/env";
+import {
+  APP_BASE_URL,
+  ENFORCE_APP_CHECK,
+  PROJECT_REGION,
+  STRIPE_CHECKOUT_SECRETS,
+  STRIPE_PRICE_ILIPRESTO_PLUS,
+  STRIPE_PRICE_ILIPRO,
+  STRIPE_SECRET_KEY,
+} from "../../config/env";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 
@@ -26,24 +34,44 @@ function normalizePlan(value: unknown): "ilipresto_plus" | "ilipro" {
 }
 
 function priceIdForPlan(plan: "ilipresto_plus" | "ilipro"): string {
+  const canonicalSecret = plan === "ilipresto_plus"
+    ? STRIPE_PRICE_ILIPRESTO_PLUS.value()
+    : STRIPE_PRICE_ILIPRO.value();
+
   const candidates = plan === "ilipresto_plus"
     ? [
+        canonicalSecret,
         process.env.STRIPE_PRICE_ILIPRESTO_PLUS,
         process.env.STRIPE_PRICE_ILIPRESTO_PLUS_MONTHLY,
         process.env.STRIPE_PRICE_ILIPRESTO,
       ]
     : [
+        canonicalSecret,
         process.env.STRIPE_PRICE_ILIPRO,
         process.env.STRIPE_PRICE_ILIPRO_MONTHLY,
       ];
 
-  const priceId = candidates.map((value) => String(value || "").trim()).find((value) => value.length > 0);
+  const priceId = candidates
+    .map((value) => String(value || "").trim())
+    .find((value) => value.length > 0);
+
   if (!priceId) {
+    const secretName = plan === "ilipresto_plus"
+      ? "STRIPE_PRICE_ILIPRESTO_PLUS"
+      : "STRIPE_PRICE_ILIPRO";
     throw new HttpsError(
       "failed-precondition",
-      `price id Stripe manquant pour ${plan}. Configure STRIPE_PRICE_ILIPRESTO_PLUS ou STRIPE_PRICE_ILIPRO.`,
+      `Price ID Stripe manquant pour ${plan}. Configure le secret Firebase ${secretName}.`,
     );
   }
+
+  if (!priceId.startsWith("price_")) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Identifiant Stripe invalide pour ${plan} : une valeur commençant par price_ est attendue.`,
+    );
+  }
+
   return priceId;
 }
 
@@ -142,14 +170,14 @@ async function getOrCreateStripeCustomer(userId: string, authToken: StripeObject
 export const createSubscriptionCheckoutSession = onCall({
   region: PROJECT_REGION,
   enforceAppCheck: ENFORCE_APP_CHECK,
-  secrets: [STRIPE_SECRET_KEY],
+  secrets: STRIPE_CHECKOUT_SECRETS,
 }, async (request) => {
   const auth = request.auth;
   if (!auth?.uid) {
     throw new HttpsError("unauthenticated", "Connexion requise pour s’abonner");
   }
 
-  const plan = normalizePlan(request.data?.plan);
+  const plan = normalizePlan(request.data?.plan ?? request.data?.subscriptionPlan);
   const priceId = priceIdForPlan(plan);
   const customerId = await getOrCreateStripeCustomer(auth.uid, auth.token as StripeObject);
 
