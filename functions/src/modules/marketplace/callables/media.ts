@@ -211,6 +211,10 @@ export const processOfferPhoto = onCall(
   {
     region: PROJECT_REGION,
     timeoutSeconds: 60,
+    memory: "1GiB",
+    cpu: 1,
+    concurrency: 4,
+    maxInstances: 20,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (request) => {

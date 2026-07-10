@@ -253,6 +253,8 @@ service cloud.firestore {
         'isSuperadmin',
         'superAdmin',
         'trustScore',
+        'uid',
+        'email',
         'accountStatus',
         'emailVerified',
         'phoneVerified',
