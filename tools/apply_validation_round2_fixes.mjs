@@ -6,30 +6,85 @@ import fs from 'node:fs/promises';
 await import('./apply_release_validation_fixes.mjs');
 
 function replaceOnce(content, before, after, label) {
-  if (after && content.includes(after)) return content;
   const count = content.split(before).length - 1;
-  if (!after && count === 0) return content;
-  if (count !== 1) {
-    throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
-  }
-  return content.replace(before, after);
+  if (count === 1) return content.replace(before, after);
+  if (count === 0 && content.includes(after)) return content;
+  throw new Error(`${label}: expected one source occurrence, found ${count}`);
 }
 
 async function patchRegionPickerAndContactWidth() {
   const path = 'lib/pages/toolbox_je_me_lance_page.dart';
   let content = await fs.readFile(path, 'utf8');
 
+  const regionBefore =
+    "class _RegionPickerSheetState extends State<_RegionPickerSheet> {\n" +
+    "  List<String> get _regions => widget.regions;\n\n" +
+    "  @override\n" +
+    "  Widget build(BuildContext context) {\n" +
+    "    return DraggableScrollableSheet(\n" +
+    "      initialChildSize: 0.75,\n" +
+    "      minChildSize: 0.4,\n" +
+    "      maxChildSize: 0.95,\n" +
+    "      expand: false,\n" +
+    "      builder: (ctx, scrollCtrl) {\n" +
+    "        return Container(\n" +
+    "          decoration: BoxDecoration(\n" +
+    "            color: Colors.white,\n" +
+    "            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),\n" +
+    "          ),\n" +
+    "          child: Column(";
+  const regionAfter =
+    "class _RegionPickerSheetState extends State<_RegionPickerSheet> {\n" +
+    "  List<String> get _regions => widget.regions;\n\n" +
+    "  @override\n" +
+    "  Widget build(BuildContext context) {\n" +
+    "    return DraggableScrollableSheet(\n" +
+    "      initialChildSize: 0.75,\n" +
+    "      minChildSize: 0.4,\n" +
+    "      maxChildSize: 0.95,\n" +
+    "      expand: false,\n" +
+    "      builder: (ctx, scrollCtrl) {\n" +
+    "        return Material(\n" +
+    "          color: Colors.white,\n" +
+    "          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),\n" +
+    "          clipBehavior: Clip.antiAlias,\n" +
+    "          child: Column(";
   content = replaceOnce(
     content,
-    "        return Container(\n          decoration: BoxDecoration(\n            color: Colors.white,\n            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),\n          ),\n          child: Column(",
-    "        return Material(\n          color: Colors.white,\n          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),\n          clipBehavior: Clip.antiAlias,\n          child: Column(",
+    regionBefore,
+    regionAfter,
     'region picker material ancestor',
   );
 
+  const contactBefore =
+    "class _TaskContactLink extends StatelessWidget {\n" +
+    "  final String label;\n" +
+    "  final VoidCallback onTap;\n\n" +
+    "  const _TaskContactLink({required this.label, required this.onTap});\n\n" +
+    "  @override\n" +
+    "  Widget build(BuildContext context) {\n" +
+    "    return InkWell(\n" +
+    "      onTap: onTap,\n" +
+    "      borderRadius: BorderRadius.circular(999),\n" +
+    "      child: Container(\n" +
+    "        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),";
+  const contactAfter =
+    "class _TaskContactLink extends StatelessWidget {\n" +
+    "  final String label;\n" +
+    "  final VoidCallback onTap;\n\n" +
+    "  const _TaskContactLink({required this.label, required this.onTap});\n\n" +
+    "  @override\n" +
+    "  Widget build(BuildContext context) {\n" +
+    "    return InkWell(\n" +
+    "      onTap: onTap,\n" +
+    "      borderRadius: BorderRadius.circular(999),\n" +
+    "      child: Container(\n" +
+    "        constraints: const BoxConstraints(maxWidth: 280),\n" +
+    "        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),";
   content = replaceOnce(
     content,
-    "      child: Container(\n        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),\n        decoration: BoxDecoration(\n          color: const Color(0xFFEFF6FF),",
-    "      child: Container(\n        constraints: const BoxConstraints(maxWidth: 280),\n        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),\n        decoration: BoxDecoration(\n          color: const Color(0xFFEFF6FF),",
+    contactBefore,
+    contactAfter,
     'task contact chip max width',
   );
 
