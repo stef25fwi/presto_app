@@ -45,6 +45,7 @@ jobs:
           node tools/apply_identity_authority_hardening.mjs
           node tools/apply_dependency_security_upgrades.mjs
           node tools/apply_stripe_ordering_hardening.mjs
+          node tools/apply_function_resource_limits.mjs
           npm --prefix functions install --package-lock-only --ignore-scripts
 
       - name: Commit generated changes
@@ -67,6 +68,8 @@ jobs:
             functions/src/index.ts \
             functions/src/modules/auth/account_deletion.ts \
             functions/src/modules/billing/stripe_webhook.ts \
+            functions/src/modules/marketplace/callables/media.ts \
+            functions/src/modules/messaging/callables.ts \
             lib/main.dart \
             lib/services/auth_service.dart \
             lib/services/app_monitoring_service.dart \
