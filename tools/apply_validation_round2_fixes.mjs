@@ -12,54 +12,9 @@ function replaceOnce(content, before, after, label) {
   return content.replace(before, after);
 }
 
-async function patchSubscriptionWidgetApi() {
-  const path = 'lib/features/subscriptions/subscription_widgets.dart';
-  let content = await fs.readFile(path, 'utf8');
-
-  content = content.replaceAll(
-    'SubscriptionPlanTabs(',
-    '_SubscriptionPlanTabs(',
-  );
-  content = replaceOnce(
-    content,
-    'class SubscriptionPlanTabs extends StatelessWidget {',
-    'class _SubscriptionPlanTabs extends StatelessWidget {',
-    'private subscription tabs class',
-  );
-  content = replaceOnce(
-    content,
-    '  const SubscriptionPlanTabs({',
-    '  const _SubscriptionPlanTabs({',
-    'private subscription tabs constructor',
-  );
-
-  await fs.writeFile(path, content, 'utf8');
-}
-
-async function patchAccountDeletionStaticTest() {
-  const path = 'test/auth_email_static_test.dart';
-  let content = await fs.readFile(path, 'utf8');
-
-  content = replaceOnce(
-    content,
-    "  test('Suppression de compte exige réauthentification avant delete', () {\n    final source = File('lib/services/auth_service.dart').readAsStringSync();\n\n    expect(source, contains('reauthenticateWithCredential'));\n    expect(source, contains('.delete()'));\n  });",
-    "  test('Suppression de compte exige réauthentification et callable serveur', () {\n    final source = File('lib/services/auth_service.dart').readAsStringSync();\n\n    expect(source, contains('reauthenticateWithCredential'));\n    expect(source, contains(\"name: 'requestAccountDeletion'\"));\n    expect(source, isNot(contains(\"collection('users').doc(user.uid).delete\")));\n    expect(source, isNot(contains('await user.delete()')));\n  });",
-    'account deletion static test',
-  );
-
-  await fs.writeFile(path, content, 'utf8');
-}
-
-async function patchToolboxLayout() {
+async function patchRegionPickerAndContactWidth() {
   const path = 'lib/pages/toolbox_je_me_lance_page.dart';
   let content = await fs.readFile(path, 'utf8');
-
-  content = replaceOnce(
-    content,
-    '      height: 94,',
-    '      height: 106,',
-    'toolbox header height',
-  );
 
   content = replaceOnce(
     content,
@@ -127,9 +82,7 @@ async function patchWebBudgets() {
   await fs.writeFile(path, content, 'utf8');
 }
 
-await patchSubscriptionWidgetApi();
-await patchAccountDeletionStaticTest();
-await patchToolboxLayout();
+await patchRegionPickerAndContactWidth();
 await patchRulesDiagnostics();
 await patchWebBudgets();
 
