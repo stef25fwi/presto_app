@@ -63,6 +63,21 @@ const checks = [
     required: 'priceId.startsWith("price_")',
     message: 'checkout must validate Stripe Price ID format',
   },
+  {
+    file: 'functions/src/modules/billing/callables.ts',
+    required: 'DEFAULT_STRIPE_RETURN_BASE_URL = "https://ilipresto.web.app"',
+    message: 'Stripe must return to the canonical ilipresto web application',
+  },
+  {
+    file: 'functions/src/modules/billing/callables.ts',
+    required: 'url.searchParams.set("section", "subscriptions")',
+    message: 'Stripe return URLs must target the subscriptions section',
+  },
+  {
+    file: 'lib/features/subscriptions/subscription_checkout_service.dart',
+    required: 'prepareSubscriptionReturnHistory();',
+    message: 'web checkout must preserve the subscriptions page in browser history',
+  },
 ];
 
 async function main() {

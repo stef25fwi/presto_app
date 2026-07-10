@@ -1,6 +1,5 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import {
-  APP_BASE_URL,
   ENFORCE_APP_CHECK,
   PROJECT_REGION,
   STRIPE_CHECKOUT_SECRETS,
@@ -21,6 +20,8 @@ type StripeSession = StripeObject & {
   id?: string;
   url?: string | null;
 };
+
+const DEFAULT_STRIPE_RETURN_BASE_URL = "https://ilipresto.web.app";
 
 function normalizePlan(value: unknown): "ilipresto_plus" | "ilipro" {
   const raw = String(value || "").trim().toLowerCase();
@@ -75,16 +76,36 @@ function priceIdForPlan(plan: "ilipresto_plus" | "ilipro"): string {
   return priceId;
 }
 
+function stripeReturnBaseUrl(): string {
+  const configured = String(process.env.STRIPE_RETURN_BASE_URL || "").trim();
+  return (configured || DEFAULT_STRIPE_RETURN_BASE_URL).replace(/\/+$/, "");
+}
+
+function subscriptionReturnUrl(status?: "success" | "cancel" | "portal"): string {
+  const url = new URL("/account", `${stripeReturnBaseUrl()}/`);
+  url.searchParams.set("section", "subscriptions");
+  if (status) {
+    url.searchParams.set("subscription", status);
+  }
+  return url.toString();
+}
+
 function successUrl(): string {
-  return String(process.env.STRIPE_SUCCESS_URL || `${APP_BASE_URL}/account?subscription=success`).trim();
+  return String(
+    process.env.STRIPE_SUCCESS_URL || subscriptionReturnUrl("success"),
+  ).trim();
 }
 
 function cancelUrl(): string {
-  return String(process.env.STRIPE_CANCEL_URL || `${APP_BASE_URL}/account?subscription=cancel`).trim();
+  return String(
+    process.env.STRIPE_CANCEL_URL || subscriptionReturnUrl("cancel"),
+  ).trim();
 }
 
 function portalReturnUrl(): string {
-  return String(process.env.STRIPE_PORTAL_RETURN_URL || `${APP_BASE_URL}/account`).trim();
+  return String(
+    process.env.STRIPE_PORTAL_RETURN_URL || subscriptionReturnUrl("portal"),
+  ).trim();
 }
 
 function stripeSecret(): string {
