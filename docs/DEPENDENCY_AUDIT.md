@@ -1,6 +1,6 @@
 # Audit des dépendances Functions
 
-Généré sur le commit `eefb919f45d4b4fe4703e13ea82154d2635a20ba`.
+Rapport reproductible généré à partir de `functions/package-lock.json`.
 
 - Critiques : **0**
 - Hautes : **0**
