@@ -20,7 +20,11 @@ function requireRecentAuthenticatedUid(request: {
 
   const authTime = Number(request.auth?.token?.auth_time || 0);
   const nowSeconds = Math.floor(Date.now() / 1000);
-  if (!Number.isFinite(authTime) || authTime <= 0 || nowSeconds - authTime > RECENT_AUTH_MAX_AGE_SECONDS) {
+  if (
+    !Number.isFinite(authTime) ||
+    authTime <= 0 ||
+    nowSeconds - authTime > RECENT_AUTH_MAX_AGE_SECONDS
+  ) {
     throw new HttpsError(
       "failed-precondition",
       "recent authentication required",
@@ -164,10 +168,14 @@ async function deleteUserStorage(uid: string): Promise<void> {
     `stt_streaming/${uid}/`,
   ];
 
-  await Promise.all(prefixes.map((prefix) => bucket.deleteFiles({ prefix, force: true })));
+  await Promise.all(
+    prefixes.map((prefix) => bucket.deleteFiles({ prefix, force: true })),
+  );
 
   const [sttFiles] = await bucket.getFiles({ prefix: `stt/${uid}_` });
-  await Promise.all(sttFiles.map((file) => file.delete({ ignoreNotFound: true })));
+  await Promise.all(
+    sttFiles.map((file) => file.delete({ ignoreNotFound: true })),
+  );
 }
 
 export const requestAccountDeletion = onCall(
@@ -201,8 +209,8 @@ export const requestAccountDeletion = onCall(
     const [deletedDocuments, anonymizedConversations] = await Promise.all([
       deleteUserOwnedDocuments(uid),
       anonymizeConversations(uid),
-      deleteUserStorage(uid),
-    ]).then(([deleted, anonymized]) => [deleted, anonymized]);
+    ]);
+    await deleteUserStorage(uid);
 
     await userRef.set(
       {
