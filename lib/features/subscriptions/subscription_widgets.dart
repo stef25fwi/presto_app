@@ -17,7 +17,7 @@ const Color _muted = Color(0xFF6B7280);
 const Color _green = Color(0xFF138A46);
 const Color _border = Color(0xFFE5E7EB);
 
-enum _OfferAudience { particuliers, pro }
+enum OfferAudience { particuliers, pro }
 
 class SubscriptionSection extends StatelessWidget {
   final String userId;
@@ -102,7 +102,7 @@ class SubscriptionDetailsPage extends StatefulWidget {
 }
 
 class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
-  _OfferAudience _audience = _OfferAudience.particuliers;
+  OfferAudience _audience = OfferAudience.particuliers;
 
   @override
   Widget build(BuildContext context) {
@@ -202,8 +202,8 @@ class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
 }
 
 class _AudienceSelector extends StatelessWidget {
-  final _OfferAudience audience;
-  final ValueChanged<_OfferAudience> onChanged;
+  final OfferAudience audience;
+  final ValueChanged<OfferAudience> onChanged;
 
   const _AudienceSelector({required this.audience, required this.onChanged});
 
@@ -223,9 +223,9 @@ class _AudienceSelector extends StatelessWidget {
             child: _AudienceButton(
               label: 'Particuliers',
               icon: Icons.person_rounded,
-              selected: audience == _OfferAudience.particuliers,
+              selected: audience == OfferAudience.particuliers,
               color: _blue,
-              onTap: () => onChanged(_OfferAudience.particuliers),
+              onTap: () => onChanged(OfferAudience.particuliers),
             ),
           ),
           const SizedBox(width: 6),
@@ -233,9 +233,9 @@ class _AudienceSelector extends StatelessWidget {
             child: _AudienceButton(
               label: 'Pro',
               icon: Icons.business_center_rounded,
-              selected: audience == _OfferAudience.pro,
+              selected: audience == OfferAudience.pro,
               color: _orange,
-              onTap: () => onChanged(_OfferAudience.pro),
+              onTap: () => onChanged(OfferAudience.pro),
             ),
           ),
         ],
@@ -433,21 +433,21 @@ class SubscriptionPlanTabs extends StatelessWidget {
   final SubscriptionAppConfig config;
   final AppUserSubscriptionState userState;
   final bool showCurrentPlan;
-  final _OfferAudience audience;
+  final OfferAudience audience;
 
   const SubscriptionPlanTabs({
     super.key,
     required this.config,
     required this.userState,
     this.showCurrentPlan = false,
-    this.audience = _OfferAudience.particuliers,
+    this.audience = OfferAudience.particuliers,
   });
 
   @override
   Widget build(BuildContext context) {
     final plans = _plans
         .where((plan) {
-          final audienceMatches = audience == _OfferAudience.particuliers
+          final audienceMatches = audience == OfferAudience.particuliers
               ? plan.plan != SubscriptionPlan.ilipro
               : plan.plan == SubscriptionPlan.ilipro;
           return audienceMatches &&

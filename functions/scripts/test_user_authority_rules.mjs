@@ -57,7 +57,7 @@ async function main() {
       { proVerified: true },
       { siretVerified: true },
       { emailVerified: true },
-      { accountStatus: 'active' },
+      { accountStatus: 'disabled' },
       { role: 'admin' },
     ];
 

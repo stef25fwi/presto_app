@@ -52,7 +52,8 @@ void main() {
       final page = read('lib/pages/account/delete_account_page.dart');
 
       expect(auth, contains('deleteCurrentAccount'));
-      expect(auth, contains('.delete()'));
+      expect(auth, contains("name: 'requestAccountDeletion'"));
+      expect(auth, isNot(contains('await user.delete()')));
       expect(page, contains('SUPPRIMER'));
     });
   });
