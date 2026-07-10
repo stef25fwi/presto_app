@@ -36,6 +36,8 @@ jobs:
           node tools/apply_cursor_pagination.mjs
           node tools/apply_validation_fixes.mjs
           node tools/apply_identity_authority_hardening.mjs
+          node tools/apply_dependency_security_upgrades.mjs
+          npm --prefix functions install --package-lock-only --ignore-scripts
 
       - name: Commit generated changes
         run: |
@@ -49,6 +51,8 @@ jobs:
             .github/workflows/pr-validation.yml \
             .github/workflows/audit-branch-validation.yml \
             firestore.rules \
+            functions/package.json \
+            functions/package-lock.json \
             functions/scripts/test_canonical_marketplace_rules.mjs \
             functions/scripts/test_user_authority_rules.mjs \
             functions/src/index.ts \
