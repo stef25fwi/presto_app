@@ -1,0 +1,59 @@
+name: Pull request validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Verify generated hardening patches
+        run: |
+          node tools/apply_prod_hardening_patches.mjs
+          git diff --exit-code
+          node tools/check_production_guardrails.mjs
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+          cache: true
+
+      - run: flutter config --enable-web
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test --reporter expanded
+
+      - run: npm --prefix functions ci
+      - run: npm --prefix functions run build
+      - run: npm --prefix functions test
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@13
+
+      - name: Test Firestore rules
+        run: npm --prefix functions run test:firestore
+
+      - name: Build web
+        run: bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
+
+      - name: Check bundle size
+        run: node tools/check_web_bundle_size.mjs
