@@ -2,6 +2,7 @@
 
 import fs from 'node:fs/promises';
 
+// Déclencheur contrôlé : ce script est appliqué une fois sur la branche d’audit.
 await import('./apply_release_validation_fixes.mjs');
 
 function replaceOnce(content, before, after, label) {
