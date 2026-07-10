@@ -32,10 +32,10 @@ jobs:
           cache: npm
           cache-dependency-path: functions/package-lock.json
 
-      - name: Setup Flutter 3.41.4
+      - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.4'
+          flutter-version: '3.44.6'
           channel: stable
           cache: true
 
@@ -51,6 +51,9 @@ jobs:
           node tools/apply_startup_hardening.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/apply_auth_client_hardening.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/apply_account_cleanup_patch.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/normalize_cursor_patch_script.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/apply_cursor_pagination.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/apply_validation_fixes.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           git diff --exit-code 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/check_production_guardrails.mjs 2>&1 | tee -a audit_validation_logs/patches.log
 
@@ -114,6 +117,8 @@ jobs:
       - name: Web release build
         id: web_build
         continue-on-error: true
+        env:
+          APPCHECK_RECAPTCHA_SITE_KEY: ci-audit-placeholder
         run: |
           set -o pipefail
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run 2>&1 | tee audit_validation_logs/web_build.log
