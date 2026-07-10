@@ -31,6 +31,7 @@ jobs:
           node tools/apply_prod_hardening_patches.mjs
           node tools/apply_startup_hardening.mjs
           node tools/apply_auth_client_hardening.mjs
+          node tools/apply_account_cleanup_patch.mjs
 
       - name: Commit generated changes
         run: |
@@ -42,6 +43,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add firestore.rules \
             functions/src/index.ts \
+            functions/src/modules/auth/account_deletion.ts \
             lib/main.dart \
             lib/services/auth_service.dart \
             lib/services/app_monitoring_service.dart \
