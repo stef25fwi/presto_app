@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-validation-${{ github.event.pull_request.number }}
+  group: pr-validation-${{ github.event.pull_request.number }}-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
