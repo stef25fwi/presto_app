@@ -1,13 +1,6 @@
 name: Apply cursor pagination
 
 on:
-  push:
-    branches:
-      - audit/prod-hardening-p0-p11
-    paths:
-      - tools/apply_cursor_pagination.mjs
-      - tools/normalize_cursor_patch_script.mjs
-      - .github/workflows/apply-cursor-pagination.yml
   workflow_dispatch:
 
 permissions:
