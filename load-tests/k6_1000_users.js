@@ -5,13 +5,22 @@ import { Rate, Trend } from 'k6/metrics';
 const errors = new Rate('ilipresto_errors');
 const listingsLatency = new Trend('listings_latency', true);
 
-const appBaseUrl = __ENV.APP_BASE_URL || 'https://ilipresto.web.app';
-const projectId = __ENV.FIRESTORE_PROJECT_ID || 'presto-app-74abe';
+const appBaseUrl = (__ENV.APP_BASE_URL || '').trim();
+const projectId = (__ENV.FIRESTORE_PROJECT_ID || '').trim();
 const allowProduction = (__ENV.ALLOW_PRODUCTION_LOAD_TEST || '').toLowerCase() === 'true';
 
-if (appBaseUrl.includes('ilipresto.web.app') && !allowProduction) {
+if (!appBaseUrl) {
+  throw new Error('APP_BASE_URL is required. Use a dedicated staging Hosting URL.');
+}
+if (!projectId) {
+  throw new Error('FIRESTORE_PROJECT_ID is required. Use a dedicated staging Firebase project.');
+}
+
+const targetsProductionHosting = appBaseUrl.includes('ilipresto.web.app');
+const targetsProductionFirestore = projectId === 'presto-app-74abe';
+if ((targetsProductionHosting || targetsProductionFirestore) && !allowProduction) {
   throw new Error(
-    'Production load testing is disabled. Use a staging APP_BASE_URL or set ALLOW_PRODUCTION_LOAD_TEST=true explicitly.',
+    'Production load testing is disabled. Both APP_BASE_URL and FIRESTORE_PROJECT_ID must target staging.',
   );
 }
 
