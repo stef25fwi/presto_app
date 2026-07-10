@@ -895,6 +895,12 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
 
     if (normalizedPath == '/account') {
       pendingPostAuthRoute = null;
+      return <Route<dynamic>>[
+        MaterialPageRoute(
+          settings: const RouteSettings(name: '/account'),
+          builder: (_) => const HomePage(initialIndex: 4),
+        ),
+      ];
     }
 
     return <Route<dynamic>>[
@@ -1039,7 +1045,7 @@ class _PrestoAppState extends State<PrestoApp> with WidgetsBindingObserver {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),
-        '/account': (_) => const HomePage(),
+        '/account': (_) => const HomePage(initialIndex: 4),
         '/admin': (_) => const AdminSpacePage(),
         if (!kReleaseMode)
           '/page-catalog': (_) => const PageCaptureCatalogPage(),
@@ -1148,6 +1154,7 @@ class _SplashScreenState extends State<SplashScreen>
     // on revient sur l'accueil. L'utilisateur accédera au compte via le bouton Compte.
     if (webPath == '/account') {
       pendingPostAuthRoute = null;
+      return const HomePage(initialIndex: 4);
       return const HomePage();
     }
     if (webPath == '/publish') {
