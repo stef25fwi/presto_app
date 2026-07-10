@@ -100,6 +100,7 @@ export {
 } from "./modules/messaging/callables";
 export { registerPushToken, unregisterPushToken, broadcastTestNotification, sendSelfTestNotification } from "./modules/notifications/callables";
 export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";
+export { reportClientMonitoringEvent } from "./modules/monitoring/callables";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";

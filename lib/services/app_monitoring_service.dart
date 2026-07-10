@@ -8,6 +8,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'firebase_functions_region.dart';
+
 class AppMonitoringService {
   AppMonitoringService._();
 
@@ -271,18 +273,17 @@ class AppMonitoringService {
     if (Firebase.apps.isEmpty) return;
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      await FirebaseFirestore.instance.collection(collectionName).add(
-        <String, dynamic>{
-          'createdAt': FieldValue.serverTimestamp(),
+      await callPrestoFunction<dynamic>(
+        functions: prestoFirebaseFunctions,
+        name: 'reportClientMonitoringEvent',
+        timeout: const Duration(seconds: 8),
+        area: 'monitoring',
+        parameters: <String, dynamic>{
           'createdAtClient': DateTime.now().toUtc().toIso8601String(),
           'level': level,
           'scope': scope,
           'action': action,
           'message': _sanitizeValue(message),
-          'userId': user?.uid ?? 'anonymous',
-          'emailVerified': user?.emailVerified,
           'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,
           'releaseMode': kReleaseMode,
           'appBuild': appBuild,
@@ -290,7 +291,7 @@ class AppMonitoringService {
           'buildTime': buildTime,
           'data': cleanedData,
         },
-      ).timeout(const Duration(seconds: 5));
+      );
     } catch (error) {
       debugPrint('[MONITORING][write_failed] $error');
     }
