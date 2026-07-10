@@ -17,7 +17,7 @@ jobs:
   validate-and-deploy:
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
 
@@ -31,7 +31,14 @@ jobs:
       - name: Verify generated hardening patches are committed
         run: |
           node tools/apply_prod_hardening_patches.mjs
+          node tools/apply_startup_hardening.mjs
+          node tools/apply_auth_client_hardening.mjs
+          node tools/apply_account_cleanup_patch.mjs
+          node tools/normalize_cursor_patch_script.mjs
+          node tools/apply_cursor_pagination.mjs
+          node tools/apply_validation_fixes.mjs
           git diff --exit-code
+          node tools/check_production_guardrails.mjs
 
       - name: Decode Google Credentials
         env:
@@ -58,10 +65,10 @@ jobs:
         with:
           credentials_json: '${{ env.GOOGLE_CREDENTIALS_JSON }}'
 
-      - name: Setup Flutter 3.41.4
+      - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.4'
+          flutter-version: '3.44.6'
           channel: 'stable'
           cache: true
 
