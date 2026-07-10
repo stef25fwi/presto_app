@@ -4,6 +4,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { PROJECT_REGION, STRIPE_SECRET_KEY } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
+import { archiveUserListings } from "./account_deletion_cleanup";
 
 const RECENT_AUTH_MAX_AGE_SECONDS = 10 * 60;
 const BATCH_WRITE_LIMIT = 400;
@@ -206,10 +207,12 @@ export const requestAccountDeletion = onCall(
 
     await cancelStripeSubscription(subscriptionId);
 
-    const [deletedDocuments, anonymizedConversations] = await Promise.all([
-      deleteUserOwnedDocuments(uid),
-      anonymizeConversations(uid),
-    ]);
+    const [deletedDocuments, anonymizedConversations, archivedListings] =
+      await Promise.all([
+        deleteUserOwnedDocuments(uid),
+        anonymizeConversations(uid),
+        archiveUserListings(uid),
+      ]);
     await deleteUserStorage(uid);
 
     await userRef.set(
@@ -251,6 +254,7 @@ export const requestAccountDeletion = onCall(
       uid,
       deletedDocuments,
       anonymizedConversations,
+      archivedListings,
       stripeSubscriptionCanceled: Boolean(subscriptionId),
     });
 
@@ -258,6 +262,7 @@ export const requestAccountDeletion = onCall(
       ok: true,
       deletedDocuments,
       anonymizedConversations,
+      archivedListings,
     };
   },
 );
