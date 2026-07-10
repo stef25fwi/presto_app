@@ -45,12 +45,15 @@ async function patchAuthStaticTest() {
 async function patchUserAuthorityTest() {
   const path = 'functions/scripts/test_user_authority_rules.mjs';
   let content = await read(path);
-  content = replaceOnce(
-    content,
-    "      { accountStatus: 'active' },",
-    "      { accountStatus: 'disabled' },",
-    'changed protected account status value',
-  );
+  if (content.includes("      { accountStatus: 'active' },")) {
+    content = content.replace(
+      "      { accountStatus: 'active' },",
+      "      { accountStatus: 'disabled' },",
+    );
+  } else if (!content.includes("      { accountStatus: 'disabled' },") &&
+             !content.includes("      { accountStatus: 'suspended' },")) {
+    throw new Error('protected account status test not found');
+  }
   await write(path, content);
 }
 
@@ -175,6 +178,7 @@ async function patchJourneyLayouts() {
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                softWrap: true,
                 style: const TextStyle(
                   color: Color(0xFF1A73E8),
                   fontSize: 12,
@@ -192,21 +196,9 @@ async function patchJourneyLayouts() {
   await write(path, content);
 }
 
-async function patchWebAssets() {
-  const path = 'pubspec.yaml';
-  let content = await read(path);
-  const redundantMarkdownAsset =
-    '    - docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/\n';
-  if (content.includes(redundantMarkdownAsset)) {
-    content = content.replace(redundantMarkdownAsset, '');
-  }
-  await write(path, content);
-}
-
 await patchSubscriptionApi();
 await patchAuthStaticTest();
 await patchUserAuthorityTest();
 await patchJourneyLayouts();
-await patchWebAssets();
 
 console.log('release validation fixes: OK');
