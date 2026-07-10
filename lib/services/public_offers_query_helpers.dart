@@ -353,8 +353,6 @@ List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
       .where('status', isEqualTo: 'active')
       .where('visibility', isEqualTo: 'public');
   Query<Map<String, dynamic>> filteredQuery = baseQuery;
-  final hasServerFilter = (categoryId?.trim().isNotEmpty ?? false) ||
-      (cityId?.trim().isNotEmpty ?? false);
 
   switch (pickPublicListingsBrowseFilterField(
     categoryId: categoryId,
