@@ -190,13 +190,14 @@ class AuthService {
   }
 
   Future<void> syncEmailVerifiedToFirestore() async {
-    final user = _requireUser();
-
-    await _db.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'emailVerified': user.emailVerified,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    _requireUser();
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'syncMyEmailVerification',
+      timeout: const Duration(seconds: 15),
+      parameters: const <String, dynamic>{},
+      area: 'auth',
+    );
   }
 
   Future<void> changePassword({
@@ -376,7 +377,6 @@ class AuthService {
     final data = <String, Object?>{
       'uid': user.uid,
       'email': user.email,
-      'emailVerified': user.emailVerified,
       'displayName': user.displayName,
       'phoneNumber': user.phoneNumber,
       'updatedAt': FieldValue.serverTimestamp(),
