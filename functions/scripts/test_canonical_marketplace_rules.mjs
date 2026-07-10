@@ -94,6 +94,8 @@ async function main() {
     }));
     await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { proVerified: true }));
     await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { stripeCustomerId: 'cus_fake' }));
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { uid: 'another_user' }));
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { email: 'attacker@example.com' }));
     await assertFails(setDoc(doc(premiumUserDb, 'users', 'premium_user'), {
       displayName: 'Premium frauduleux',
       subscriptionPlan: 'ilipro',

@@ -346,6 +346,7 @@ List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
   bool latestFirst = true,
   String? categoryId,
   String? cityId,
+  DocumentSnapshot<Map<String, dynamic>>? startAfterDocument,
 }) {
   final fs = firestore ?? FirebaseFirestore.instance;
   final col = fs.collection(kListingsCollection);
@@ -380,9 +381,12 @@ List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
   // Une seule requête canonique indexée. Les anciens fallbacks parallèles
   // multipliaient les lectures Firestore et pouvaient charger des résultats non
   // filtrés côté client. Un index manquant doit désormais être détecté en CI.
-  final canonicalQuery = latestFirst
+  Query<Map<String, dynamic>> canonicalQuery = latestFirst
       ? filteredQuery.orderBy('createdAt', descending: true)
       : filteredQuery;
+  if (startAfterDocument != null) {
+    canonicalQuery = canonicalQuery.startAfterDocument(startAfterDocument);
+  }
   return <Query<Map<String, dynamic>>>[canonicalQuery.limit(limit)];
 }
 

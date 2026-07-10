@@ -375,8 +375,6 @@ class AuthService {
     // Les rôles, l’état du compte, l’abonnement et createdAt sont exclusivement
     // créés par le backend. Le client n’écrit que des champs de profil sûrs.
     final data = <String, Object?>{
-      'uid': user.uid,
-      'email': user.email,
       'displayName': user.displayName,
       'phoneNumber': user.phoneNumber,
       'updatedAt': FieldValue.serverTimestamp(),

@@ -45,6 +45,8 @@ async function main() {
     await assertSucceeds(updateDoc(userRef, { displayName: 'Nouveau pseudo' }));
 
     const forbiddenUpdates = [
+      { uid: 'another_user' },
+      { email: 'attacker@example.com' },
       { subscriptionPlan: 'ilipro' },
       { subscriptionStatus: 'active' },
       { subscriptionExpiresAt: new Date('2099-01-01T00:00:00Z') },

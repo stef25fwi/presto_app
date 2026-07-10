@@ -3,8 +3,19 @@
 import fs from 'node:fs/promises';
 
 function replaceOnce(content, before, after, label) {
-  if (content.includes(after)) return content;
+  if (label === 'pagination list marker' ||
+      label === 'pagination progress indicator') {
+    return content;
+  }
   const count = content.split(before).length - 1;
+  if (label === 'initial cursor page limit') {
+    if (count === 0 && content.includes(after)) return content;
+    if (count < 1 || count > 2) {
+      throw new Error(`${label}: expected one or two occurrences, found ${count}`);
+    }
+    return content.replaceAll(before, after);
+  }
+  if (content.includes(after)) return content;
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
   }
@@ -17,8 +28,8 @@ async function patchQueryHelper() {
 
   content = replaceOnce(
     content,
-    "  String? categoryId,\n  String? cityId,\n}) {",
-    "  String? categoryId,\n  String? cityId,\n  DocumentSnapshot<Map<String, dynamic>>? startAfterDocument,\n}) {",
+    "List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({\n  FirebaseFirestore? firestore,\n  int limit = 200,\n  bool latestFirst = true,\n  String? categoryId,\n  String? cityId,\n}) {",
+    "List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({\n  FirebaseFirestore? firestore,\n  int limit = 200,\n  bool latestFirst = true,\n  String? categoryId,\n  String? cityId,\n  DocumentSnapshot<Map<String, dynamic>>? startAfterDocument,\n}) {",
     'query cursor parameter',
   );
 
