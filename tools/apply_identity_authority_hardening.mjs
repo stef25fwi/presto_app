@@ -14,12 +14,14 @@ function replaceOnce(content, before, after, label) {
 
 const rulesPath = 'firestore.rules';
 let rules = await fs.readFile(rulesPath, 'utf8');
-rules = replaceOnce(
-  rules,
-  "        'accountStatus',\n        'emailVerified',",
-  "        'uid',\n        'email',\n        'accountStatus',\n        'emailVerified',",
-  'protected identity fields',
-);
+if (!(rules.includes("        'uid',") && rules.includes("        'email',"))) {
+  rules = replaceOnce(
+    rules,
+    "        'accountStatus',\n        'emailVerified',",
+    "        'uid',\n        'email',\n        'accountStatus',\n        'emailVerified',",
+    'protected identity fields',
+  );
+}
 await fs.writeFile(rulesPath, rules, 'utf8');
 
 const authPath = 'lib/services/auth_service.dart';
@@ -30,26 +32,30 @@ await fs.writeFile(authPath, auth, 'utf8');
 
 const canonicalPath = 'functions/scripts/test_canonical_marketplace_rules.mjs';
 let canonical = await fs.readFile(canonicalPath, 'utf8');
-const legacyCanonicalWrite =
-  "    await assertSucceeds(setDoc(doc(userDb, 'users', 'user_1'), { displayName: 'X' }));";
-if (canonical.includes(legacyCanonicalWrite)) {
+if (!canonical.includes("{ uid: 'another_user' }") ||
+    !canonical.includes("{ email: 'attacker@example.com' }")) {
+  const marker = "    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { stripeCustomerId: 'cus_fake' }));";
+  if (!canonical.includes(marker)) {
+    throw new Error('canonical authority marker not found');
+  }
   canonical = canonical.replace(
-    legacyCanonicalWrite,
-    "    await assertSucceeds(setDoc(\n      doc(userDb, 'users', 'user_1'),\n      { displayName: 'X' },\n      { merge: true },\n    ));",
+    marker,
+    `${marker}\n    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { uid: 'another_user' }));\n    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { email: 'attacker@example.com' }));`,
   );
-} else if (!canonical.includes('Un propriétaire peut modifier uniquement les champs ordinaires')) {
-  throw new Error('canonical profile test is neither legacy nor already hardened');
 }
 await fs.writeFile(canonicalPath, canonical, 'utf8');
 
 const authorityPath = 'functions/scripts/test_user_authority_rules.mjs';
 let authority = await fs.readFile(authorityPath, 'utf8');
-authority = replaceOnce(
-  authority,
-  "      { subscriptionPlan: 'ilipro' },",
-  "      { uid: 'another_user' },\n      { email: 'attacker@example.com' },\n      { subscriptionPlan: 'ilipro' },",
-  'identity authority test cases',
-);
+if (!authority.includes("{ uid: 'another_user' }") ||
+    !authority.includes("{ email: 'attacker@example.com' }")) {
+  authority = replaceOnce(
+    authority,
+    "      { subscriptionPlan: 'ilipro' },",
+    "      { uid: 'another_user' },\n      { email: 'attacker@example.com' },\n      { subscriptionPlan: 'ilipro' },",
+    'identity authority test cases',
+  );
+}
 await fs.writeFile(authorityPath, authority, 'utf8');
 
 console.log('identity authority hardening: OK');
