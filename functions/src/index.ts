@@ -109,6 +109,7 @@ export {
   createSubscriptionCheckoutSession,
   createSubscriptionPortalSession,
 } from "./modules/billing/callables";
+export { handleStripeWebhook } from "./modules/billing/stripe_webhook";
 
 export {
   enqueueEmailJobsFromEventTrigger,
