@@ -33,12 +33,26 @@ async function patchFirestoreRules() {
   const path = 'firestore.rules';
   let content = await read(path);
 
-  content = replaceOnce(
-    content,
-    "        'trustScore'\n      ];",
-    "        'trustScore',\n        'accountStatus',\n        'emailVerified',\n        'phoneVerified',\n        'proVerified',\n        'siretVerified',\n        'subscriptionPlan',\n        'subscriptionStatus',\n        'subscriptionExpiresAt',\n        'subscriptionCancelAtPeriodEnd',\n        'stripeCustomerId',\n        'stripe_customer_id',\n        'stripeSubscriptionId',\n        'stripe_subscription_id',\n        'stripePriceId',\n        'stripe_price_id',\n        'stripeUpdatedAt',\n        'lastStripeEventId',\n        'deletionRequestedAt',\n        'deletionCompletedAt',\n        'deletedAt'\n      ];",
-    'firestore protected user fields',
+  const requiredProtectedFields = [
+    "'subscriptionPlan'",
+    "'subscriptionStatus'",
+    "'proVerified'",
+    "'stripeCustomerId'",
+    "'lastStripeEventId'",
+    "'deletedAt'",
+  ];
+  const protectedFieldsAlreadyApplied = requiredProtectedFields.every((field) =>
+    content.includes(field),
   );
+
+  if (!protectedFieldsAlreadyApplied) {
+    content = replaceOnce(
+      content,
+      "        'trustScore'\n      ];",
+      "        'trustScore',\n        'accountStatus',\n        'emailVerified',\n        'phoneVerified',\n        'proVerified',\n        'siretVerified',\n        'subscriptionPlan',\n        'subscriptionStatus',\n        'subscriptionExpiresAt',\n        'subscriptionCancelAtPeriodEnd',\n        'stripeCustomerId',\n        'stripe_customer_id',\n        'stripeSubscriptionId',\n        'stripe_subscription_id',\n        'stripePriceId',\n        'stripe_price_id',\n        'stripeUpdatedAt',\n        'lastStripeEventId',\n        'deletionRequestedAt',\n        'deletionCompletedAt',\n        'deletedAt'\n      ];",
+      'firestore protected user fields',
+    );
+  }
 
   content = replaceOnce(
     content,
