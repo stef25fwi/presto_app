@@ -32,6 +32,7 @@ jobs:
           node tools/apply_startup_hardening.mjs
           node tools/apply_auth_client_hardening.mjs
           node tools/apply_account_cleanup_patch.mjs
+          node tools/apply_cursor_pagination.mjs
 
       - name: Commit generated changes
         run: |
