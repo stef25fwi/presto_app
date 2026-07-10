@@ -25,6 +25,8 @@
     "marketplace:migrate:profiles": "node --experimental-strip-types scripts/migrateProfilesToUsers.ts --apply",
     "test:firestore:public-listings": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_public_listings_rules.mjs\"",
     "test:firestore:canonical-rules": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_canonical_marketplace_rules.mjs\"",
+    "test:firestore:user-authority": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_user_authority_rules.mjs\"",
+    "test:firestore": "npm run test:firestore:public-listings && npm run test:firestore:canonical-rules && npm run test:firestore:user-authority",
     "test": "npm run build && node --test $(find lib -name '*.test.js' -print)",
     "email:audit:new-events": "node scripts/audit_new_email_events.mjs",
     "brevo:webhook:smoke": "node scripts/brevo_webhook_smoke_test.mjs",
