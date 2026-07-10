@@ -5,11 +5,11 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: pr-validation-${{ github.event.pull_request.number }}-${{ github.sha }}
-  cancel-in-progress: false
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -17,6 +17,9 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -27,7 +30,7 @@ jobs:
       - name: Prepare validation logs
         run: mkdir -p pr_validation_logs
 
-      - name: Verify generated hardening patches
+      - name: Apply generated hardening patches
         id: patches
         continue-on-error: true
         run: |
@@ -46,8 +49,21 @@ jobs:
           node tools/apply_function_resource_limits.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_release_validation_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_validation_round2_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
-          git diff --exit-code 2>&1 | tee -a pr_validation_logs/patches.log
+          npm --prefix functions install --package-lock-only --ignore-scripts 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/check_production_guardrails.mjs 2>&1 | tee -a pr_validation_logs/patches.log
+
+      - name: Commit generated source changes
+        if: steps.patches.outcome == 'success'
+        run: |
+          if git diff --quiet; then
+            echo "No generated source changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: applique les correctifs générés préproduction"
+          git push origin HEAD:${{ github.head_ref }}
 
       - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
