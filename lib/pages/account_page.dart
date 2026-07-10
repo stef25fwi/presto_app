@@ -70,10 +70,7 @@ class _AccountPageState extends State<AccountPage> {
 
   final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
-  Future<void> _trackLogin({
-    String? authMethod,
-    bool isNewUser = false,
-  }) async {
+  Future<void> _trackLogin({String? authMethod, bool isNewUser = false}) async {
     final sw = Stopwatch()..start();
     try {
       // ✅ Métriques enrichies
@@ -95,7 +92,9 @@ class _AccountPageState extends State<AccountPage> {
 
       sw.stop();
       PrestoMonitoring.I.trackFunctionsCall(
-          name: 'trackUserLogin', ms: sw.elapsedMilliseconds);
+        name: 'trackUserLogin',
+        ms: sw.elapsedMilliseconds,
+      );
     } catch (e) {
       PrestoMonitoring.I.trackError('trackUserLogin', e);
       debugPrint('[Tracking] Error: $e');
@@ -189,10 +188,7 @@ class _AccountPageState extends State<AccountPage> {
     _adminLoadingTimedOut = false;
   }
 
-  bool _shouldShowAdminDebugCard(
-    User user, {
-    AdminAccessState? state,
-  }) {
+  bool _shouldShowAdminDebugCard(User user, {AdminAccessState? state}) {
     final resolvedState = state ?? _lastAdminAccessState;
     final email = (user.email ?? '').trim().toLowerCase();
     return email == 'sahai.stephane@gmail.com' ||
@@ -296,26 +292,29 @@ class _AccountPageState extends State<AccountPage> {
     );
     _adminAccessFuture = future;
     unawaited(
-      future.then((state) {
-        if (!mounted || _adminAccessFuture != future) {
-          return;
-        }
-        _adminLoadingTimeoutTimer?.cancel();
-        setState(() {
-          _lastAdminAccessState = state;
-          _adminLastCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
-          _adminLoadingTimedOut = false;
-        });
-        if (state.effectiveIsAdmin) {
-          unawaited(adminAudioRuntimeStore.enableCloudSync());
-        }
-        if (returnOnLocalAdminEvidence && !state.serverCheckAttempted) {
-          unawaited(_refreshAdminAccessServerForUser(uid));
-        }
-      }).catchError((Object error, StackTrace stackTrace) {
-        _adminLoadingTimeoutTimer?.cancel();
-        debugPrint('[AdminProfile] admin access resolution failed: $error');
-      }),
+      future
+          .then((state) {
+            if (!mounted || _adminAccessFuture != future) {
+              return;
+            }
+            _adminLoadingTimeoutTimer?.cancel();
+            setState(() {
+              _lastAdminAccessState = state;
+              _adminLastCheckedAt =
+                  state.serverCheckedAt ?? _adminLastCheckedAt;
+              _adminLoadingTimedOut = false;
+            });
+            if (state.effectiveIsAdmin) {
+              unawaited(adminAudioRuntimeStore.enableCloudSync());
+            }
+            if (returnOnLocalAdminEvidence && !state.serverCheckAttempted) {
+              unawaited(_refreshAdminAccessServerForUser(uid));
+            }
+          })
+          .catchError((Object error, StackTrace stackTrace) {
+            _adminLoadingTimeoutTimer?.cancel();
+            debugPrint('[AdminProfile] admin access resolution failed: $error');
+          }),
     );
   }
 
@@ -451,7 +450,9 @@ class _AccountPageState extends State<AccountPage> {
       }
       sw.stop();
       PrestoMonitoring.I.trackFunctionsCall(
-          name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
+        name: 'adminGetMicroIaConfig',
+        ms: sw.elapsedMilliseconds,
+      );
       unawaited(adminAudioRuntimeStore.enableCloudSync());
       return Map<String, dynamic>.from(res.data as Map);
     } catch (e) {
@@ -542,10 +543,7 @@ class _AccountPageState extends State<AccountPage> {
     return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
   }
 
-  Widget _buildAdminDebugCard(
-    User user, {
-    required AdminAccessState state,
-  }) {
+  Widget _buildAdminDebugCard(User user, {required AdminAccessState state}) {
     final serverDebug = _adminServerDebug(state);
     final serverCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
     final localSource = _adminLocalSource(state);
@@ -741,9 +739,7 @@ class _AccountPageState extends State<AccountPage> {
               child: ElevatedButton.icon(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const AdminSpaceLoader(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const AdminSpaceLoader()),
                   );
                 },
                 icon: const Icon(Icons.open_in_new_rounded),
@@ -779,7 +775,7 @@ class _AccountPageState extends State<AccountPage> {
       'Montage meuble',
       'Électricité',
       'Plomberie',
-      'Peinture'
+      'Peinture',
     ],
     'Aide à domicile': ['Ménage', 'Repassage', 'Courses'],
     'Garde d’enfants': ['Sortie d’école', 'Soirée', 'Mercredi'],
@@ -828,9 +824,7 @@ class _AccountPageState extends State<AccountPage> {
     });
   }
 
-  void _resetProfileState({
-    bool clearControllers = true,
-  }) {
+  void _resetProfileState({bool clearControllers = true}) {
     _activeProfileUid = null;
     _profileLoaded = false;
     _profileLoadRequested = false;
@@ -899,7 +893,8 @@ class _AccountPageState extends State<AccountPage> {
           error.code == 'unauthenticated') {
         // Token may be stale — force one refresh and retry.
         debugPrint(
-            '[Profile] Auth error, forcing token refresh: ${error.code}');
+          '[Profile] Auth error, forcing token refresh: ${error.code}',
+        );
         await FirebaseAuth.instance.currentUser
             ?.getIdToken(true)
             .timeout(const Duration(seconds: 8));
@@ -921,9 +916,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>?>
-      _fetchCachedUserProfileDocument(
-    String uid,
-  ) async {
+  _fetchCachedUserProfileDocument(String uid) async {
     try {
       return await FirebaseFirestore.instance
           .collection('users')
@@ -985,8 +978,9 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   String _inferPhoneCountryCodeFromCity(String cityValue) {
-    final match =
-        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(cityValue.trim());
+    final match = RegExp(
+      r'\b(97\d{3}|98\d{3}|\d{5})\b',
+    ).firstMatch(cityValue.trim());
     if (match == null) return '+33';
     final postal = match.group(1)!;
     final dept = (postal.startsWith('97') || postal.startsWith('98'))
@@ -1093,10 +1087,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   String _firstStoredProfilePhotoPath(Map<String, dynamic>? data) {
-    return _firstNonEmptyProfileValue(
-      data,
-      const ['profilePhotoPath'],
-    );
+    return _firstNonEmptyProfileValue(data, const ['profilePhotoPath']);
   }
 
   bool _isResolvableStorageProfilePhoto(String value) {
@@ -1120,8 +1111,9 @@ class _AccountPageState extends State<AccountPage> {
       final ref = storedPath.isNotEmpty
           ? FirebaseStorage.instance.ref().child(storedPath)
           : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
-      final downloadUrl =
-          await ref.getDownloadURL().timeout(const Duration(seconds: 12));
+      final downloadUrl = await ref.getDownloadURL().timeout(
+        const Duration(seconds: 12),
+      );
       final normalizedUrl = downloadUrl.trim();
       if (normalizedUrl.isEmpty || !mounted || _activeProfileUid != user.uid) {
         return;
@@ -1142,7 +1134,8 @@ class _AccountPageState extends State<AccountPage> {
           .set(profilePhotoPayload, SetOptions(merge: true));
     } catch (error) {
       debugPrint(
-          '[ProfilePhoto] storage hydration failed uid=${user.uid}: $error');
+        '[ProfilePhoto] storage hydration failed uid=${user.uid}: $error',
+      );
     }
   }
 
@@ -1353,92 +1346,102 @@ class _AccountPageState extends State<AccountPage> {
       }
     }());
 
-    unawaited(UserProfileBootstrapService.prepareProfileFirestoreAccess(
-      user: user,
-      forceRefreshToken: false,
-      forceRefreshAppCheckToken: false,
-    ).catchError((Object error) {
-      debugPrint('[Profile] prepareProfileFirestoreAccess ignored: $error');
-      return null;
-    }));
+    unawaited(
+      UserProfileBootstrapService.prepareProfileFirestoreAccess(
+        user: user,
+        forceRefreshToken: false,
+        forceRefreshAppCheckToken: false,
+      ).catchError((Object error) {
+        debugPrint('[Profile] prepareProfileFirestoreAccess ignored: $error');
+        return null;
+      }),
+    );
 
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    _profileDocSub =
-        userRef.snapshots(includeMetadataChanges: true).listen((snapshot) {
-      if (!mounted || _activeProfileUid != uid) return;
-      if (snapshot.metadata.hasPendingWrites) return;
+    _profileDocSub = userRef
+        .snapshots(includeMetadataChanges: true)
+        .listen(
+          (snapshot) {
+            if (!mounted || _activeProfileUid != uid) return;
+            if (snapshot.metadata.hasPendingWrites) return;
 
-      final previousPseudo = _profilePseudoController.text.trim();
-      final previousCity = _profileCityController.text.trim();
-      final previousPhoneCountryCode = _profilePhoneCountryCode;
-      final previousPhone = _profilePhoneController.text.trim();
-      final previousFavoriteCategories = _favoriteCategories.toSet();
-      final previousSelectedFavoriteCategories =
-          _selectedFavoriteCategories.toSet();
-      final previousSelectedFavoriteSubcategories =
-          _selectedFavoriteSubcategories.toSet();
-      final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
+            final previousPseudo = _profilePseudoController.text.trim();
+            final previousCity = _profileCityController.text.trim();
+            final previousPhoneCountryCode = _profilePhoneCountryCode;
+            final previousPhone = _profilePhoneController.text.trim();
+            final previousFavoriteCategories = _favoriteCategories.toSet();
+            final previousSelectedFavoriteCategories =
+                _selectedFavoriteCategories.toSet();
+            final previousSelectedFavoriteSubcategories =
+                _selectedFavoriteSubcategories.toSet();
+            final previousDraftFavoriteSelections = _draftFavoriteSelections
+                .toSet();
 
-      final data = snapshot.data();
-      var hydratedPhotoUrl = '';
+            final data = snapshot.data();
+            var hydratedPhotoUrl = '';
 
-      setState(() {
-        _applyImmediateAuthProfile(user);
-        if (data != null) {
-          _applyUserProfileDocument(
-            user,
-            data: data,
-            previousPseudo: previousPseudo,
-            previousCity: previousCity,
-            previousPhoneCountryCode: previousPhoneCountryCode,
-            previousPhone: previousPhone,
-            previousFavoriteCategories: previousFavoriteCategories,
-            previousSelectedFavoriteCategories:
-                previousSelectedFavoriteCategories,
-            previousSelectedFavoriteSubcategories:
-                previousSelectedFavoriteSubcategories,
-            previousDraftFavoriteSelections: previousDraftFavoriteSelections,
-          );
-          final hydratedEmail = _firstNonEmptyProfileValue(
-            data,
-            const ['email'],
-            fallbackValues: <String>[_profileEmail, user.email ?? ''],
-          );
-          if (hydratedEmail.isNotEmpty) {
-            _profileEmail = hydratedEmail;
-          }
-          hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
-          final photoUploadedRecently = _profilePhotoUploadedAt != null &&
-              DateTime.now().difference(_profilePhotoUploadedAt!) <
-                  const Duration(seconds: 10);
-          if (hydratedPhotoUrl.isNotEmpty && !photoUploadedRecently) {
-            _profilePhotoUrl = hydratedPhotoUrl;
-          }
-        }
-        _profileLoadError = false;
-        _profileLoaded = true;
-        _profileLoadRequested = true;
-        _profileSyncInProgress = false;
-        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
-      });
+            setState(() {
+              _applyImmediateAuthProfile(user);
+              if (data != null) {
+                _applyUserProfileDocument(
+                  user,
+                  data: data,
+                  previousPseudo: previousPseudo,
+                  previousCity: previousCity,
+                  previousPhoneCountryCode: previousPhoneCountryCode,
+                  previousPhone: previousPhone,
+                  previousFavoriteCategories: previousFavoriteCategories,
+                  previousSelectedFavoriteCategories:
+                      previousSelectedFavoriteCategories,
+                  previousSelectedFavoriteSubcategories:
+                      previousSelectedFavoriteSubcategories,
+                  previousDraftFavoriteSelections:
+                      previousDraftFavoriteSelections,
+                );
+                final hydratedEmail = _firstNonEmptyProfileValue(
+                  data,
+                  const ['email'],
+                  fallbackValues: <String>[_profileEmail, user.email ?? ''],
+                );
+                if (hydratedEmail.isNotEmpty) {
+                  _profileEmail = hydratedEmail;
+                }
+                hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+                final photoUploadedRecently =
+                    _profilePhotoUploadedAt != null &&
+                    DateTime.now().difference(_profilePhotoUploadedAt!) <
+                        const Duration(seconds: 10);
+                if (hydratedPhotoUrl.isNotEmpty && !photoUploadedRecently) {
+                  _profilePhotoUrl = hydratedPhotoUrl;
+                }
+              }
+              _profileLoadError = false;
+              _profileLoaded = true;
+              _profileLoadRequested = true;
+              _profileSyncInProgress = false;
+              _lastMissingRequiredCount =
+                  _missingRequiredProfileFields().length;
+            });
 
-      if (data != null &&
-          (hydratedPhotoUrl.isEmpty ||
-              _isResolvableStorageProfilePhoto(hydratedPhotoUrl))) {
-        unawaited(_hydrateProfilePhotoFromStorage(user, data));
-      }
-    }, onError: (Object error) {
-      if (!mounted || _activeProfileUid != uid) {
-        return;
-      }
-      debugPrint('[Profile] snapshot users/$uid failed: $error');
-      setState(() {
-        _profileLoadError = true;
-        _profileLoaded = true;
-        _profileLoadRequested = true;
-        _profileSyncInProgress = false;
-      });
-    });
+            if (data != null &&
+                (hydratedPhotoUrl.isEmpty ||
+                    _isResolvableStorageProfilePhoto(hydratedPhotoUrl))) {
+              unawaited(_hydrateProfilePhotoFromStorage(user, data));
+            }
+          },
+          onError: (Object error) {
+            if (!mounted || _activeProfileUid != uid) {
+              return;
+            }
+            debugPrint('[Profile] snapshot users/$uid failed: $error');
+            setState(() {
+              _profileLoadError = true;
+              _profileLoaded = true;
+              _profileLoadRequested = true;
+              _profileSyncInProgress = false;
+            });
+          },
+        );
   }
 
   void _applyUserProfileDocument(
@@ -1502,8 +1505,9 @@ class _AccountPageState extends State<AccountPage> {
       } else {
         if (_profilePhoneController.text.trim().isEmpty) {
           _applyLoadedProfilePhone('');
-          final inferred =
-              _inferPhoneCountryCodeFromCity(_profileCityController.text);
+          final inferred = _inferPhoneCountryCodeFromCity(
+            _profileCityController.text,
+          );
           if (inferred != '+33') {
             _profilePhoneCountryCode = inferred;
           }
@@ -1514,8 +1518,9 @@ class _AccountPageState extends State<AccountPage> {
           .map((e) => e.toString())
           .toList();
       final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
-      _favoriteCategories =
-          hasFavoriteCategoriesKey ? favs.toSet() : previousFavoriteCategories;
+      _favoriteCategories = hasFavoriteCategoriesKey
+          ? favs.toSet()
+          : previousFavoriteCategories;
       _draftFavoriteSelections = hasFavoriteCategoriesKey
           ? _favoriteCategories.toSet()
           : previousDraftFavoriteSelections;
@@ -1523,8 +1528,9 @@ class _AccountPageState extends State<AccountPage> {
           (data['selectedFavoriteCategories'] as List<dynamic>? ?? [])
               .map((e) => e.toString())
               .toList();
-      final hasSelectedFavoriteCategoriesKey =
-          data.containsKey('selectedFavoriteCategories');
+      final hasSelectedFavoriteCategoriesKey = data.containsKey(
+        'selectedFavoriteCategories',
+      );
       _selectedFavoriteCategories = hasSelectedFavoriteCategoriesKey
           ? selectedCats.toSet()
           : previousSelectedFavoriteCategories;
@@ -1532,8 +1538,9 @@ class _AccountPageState extends State<AccountPage> {
           (data['selectedFavoriteSubcategories'] as List<dynamic>? ?? [])
               .map((e) => e.toString())
               .toList();
-      final hasSelectedFavoriteSubcategoriesKey =
-          data.containsKey('selectedFavoriteSubcategories');
+      final hasSelectedFavoriteSubcategoriesKey = data.containsKey(
+        'selectedFavoriteSubcategories',
+      );
       _selectedFavoriteSubcategories = hasSelectedFavoriteSubcategoriesKey
           ? selectedSubcats.toSet()
           : previousSelectedFavoriteSubcategories;
@@ -1545,7 +1552,8 @@ class _AccountPageState extends State<AccountPage> {
                 .toSet();
       }
 
-      final hasStoredFavorites = hasFavoriteCategoriesKey ||
+      final hasStoredFavorites =
+          hasFavoriteCategoriesKey ||
           hasSelectedFavoriteCategoriesKey ||
           hasSelectedFavoriteSubcategoriesKey;
       final mergedFavoriteSelections = <String>{
@@ -1563,14 +1571,15 @@ class _AccountPageState extends State<AccountPage> {
         const ['accountType'],
         fallbackValues: <String>[_profileAccountType],
       );
-      _profileAccountType =
-          loadedAccountType.isNotEmpty ? loadedAccountType : 'Particulier';
+      _profileAccountType = loadedAccountType.isNotEmpty
+          ? loadedAccountType
+          : 'Particulier';
     } else {
       if (_canHydrateProfileField(_profilePseudoController)) {
         _profilePseudoController.text =
             user.displayName?.trim().isNotEmpty == true
-                ? user.displayName!.trim()
-                : previousPseudo;
+            ? user.displayName!.trim()
+            : previousPseudo;
       }
       if (_canHydrateProfileField(_profileCityController)) {
         _profileCityController.text = previousCity;
@@ -1581,8 +1590,9 @@ class _AccountPageState extends State<AccountPage> {
           _profilePhoneController.text = previousPhone;
         }
       } else {
-        final inferred =
-            _inferPhoneCountryCodeFromCity(_profileCityController.text);
+        final inferred = _inferPhoneCountryCodeFromCity(
+          _profileCityController.text,
+        );
         if (inferred != '+33') {
           _profilePhoneCountryCode = inferred;
         }
@@ -1624,7 +1634,8 @@ class _AccountPageState extends State<AccountPage> {
 
       if (result?.user != null) {
         final isNew = result!.additionalUserInfo?.isNewUser ?? false;
-        final providerId = result.additionalUserInfo?.providerId ??
+        final providerId =
+            result.additionalUserInfo?.providerId ??
             result.user!.providerData.firstOrNull?.providerId ??
             '';
         final authMethod = switch (providerId) {
@@ -1709,8 +1720,9 @@ class _AccountPageState extends State<AccountPage> {
   bool _validateProfile() {
     final pseudo = _profilePseudoController.text.trim();
     final city = _profileCityController.text.trim();
-    final departmentCode =
-        ProfileDepartmentResolver.resolveDepartmentCode(city: city);
+    final departmentCode = ProfileDepartmentResolver.resolveDepartmentCode(
+      city: city,
+    );
     final departmentLabel = departmentCode == null
         ? ''
         : ProfileDepartmentResolver.departmentDisplayName(departmentCode);
@@ -1718,8 +1730,10 @@ class _AccountPageState extends State<AccountPage> {
       _departmentController.text = departmentLabel;
     }
     final phone = _profilePhoneController.text.trim();
-    final normalizedPhone =
-        _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
+    final normalizedPhone = _normalizeProfilePhoneForSave(
+      _profilePhoneCountryCode,
+      phone,
+    );
 
     // Validation pseudo
     if (pseudo.isEmpty) {
@@ -1728,18 +1742,25 @@ class _AccountPageState extends State<AccountPage> {
     }
     if (pseudo.length < 2) {
       showErrorSnackBar(
-          context, "Le pseudo doit contenir au moins 2 caractères");
+        context,
+        "Le pseudo doit contenir au moins 2 caractères",
+      );
       return false;
     }
     if (pseudo.length > 50) {
       showErrorSnackBar(
-          context, "Le pseudo ne doit pas dépasser 50 caractères");
+        context,
+        "Le pseudo ne doit pas dépasser 50 caractères",
+      );
       return false;
     }
-    if (!RegExp(r'^[a-zA-Z0-9àâäæéèêëïîôùûüœçÀÂÄÆÉÈÊËÏÎÔÙÛÜŒÇ\s\-_\.]+$')
-        .hasMatch(pseudo)) {
-      showErrorSnackBar(context,
-          "Le pseudo ne peut contenir que des lettres, chiffres et caractères spéciaux (-, _, .)");
+    if (!RegExp(
+      r'^[a-zA-Z0-9àâäæéèêëïîôùûüœçÀÂÄÆÉÈÊËÏÎÔÙÛÜŒÇ\s\-_\.]+$',
+    ).hasMatch(pseudo)) {
+      showErrorSnackBar(
+        context,
+        "Le pseudo ne peut contenir que des lettres, chiffres et caractères spéciaux (-, _, .)",
+      );
       return false;
     }
 
@@ -1755,7 +1776,9 @@ class _AccountPageState extends State<AccountPage> {
 
     if (!RegExp(r'^\+[0-9]{10,15}$').hasMatch(normalizedPhone)) {
       showErrorSnackBar(
-          context, "Le numéro de téléphone doit contenir 10-15 chiffres");
+        context,
+        "Le numéro de téléphone doit contenir 10-15 chiffres",
+      );
       return false;
     }
 
@@ -1837,10 +1860,7 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Future<bool> _saveProfile(
-    User user, {
-    bool showSuccess = true,
-  }) async {
+  Future<bool> _saveProfile(User user, {bool showSuccess = true}) async {
     if (!mounted) return false;
 
     if (!_validateProfile()) {
@@ -1852,8 +1872,9 @@ class _AccountPageState extends State<AccountPage> {
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
 
-      final departmentCode =
-          ProfileDepartmentResolver.resolveDepartmentCode(city: city);
+      final departmentCode = ProfileDepartmentResolver.resolveDepartmentCode(
+        city: city,
+      );
 
       final departmentLabel = departmentCode == null
           ? ''
@@ -1861,8 +1882,10 @@ class _AccountPageState extends State<AccountPage> {
 
       _departmentController.text = departmentLabel;
       final phone = _profilePhoneController.text.trim();
-      final normalizedPhone =
-          _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
+      final normalizedPhone = _normalizeProfilePhoneForSave(
+        _profilePhoneCountryCode,
+        phone,
+      );
 
       final profileData = UserProfileSavePayload.build(
         uid: user.uid,
@@ -1884,8 +1907,9 @@ class _AccountPageState extends State<AccountPage> {
         await refreshAppCheckToken(reason: 'profile-save');
       } catch (_) {}
 
-      final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
       debugPrint('[ProfileSave] write path=users/${user.uid}');
       await userRef
           .set(profileData, SetOptions(merge: true))
@@ -1935,7 +1959,9 @@ class _AccountPageState extends State<AccountPage> {
       debugPrint('[ProfileSave] Error path=users/${user.uid}: $e');
       if (mounted) {
         showErrorSnackBar(
-            context, 'Erreur lors de la sauvegarde du profil: $e');
+          context,
+          'Erreur lors de la sauvegarde du profil: $e',
+        );
       }
       return false;
     } finally {
@@ -1973,10 +1999,7 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  void _mutateDraftCategory(
-    String category, {
-    Set<String>? selections,
-  }) {
+  void _mutateDraftCategory(String category, {Set<String>? selections}) {
     final targetSelections = selections ?? _draftFavoriteSelections;
 
     if (targetSelections.contains(category)) {
@@ -2005,12 +2028,12 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _applyDraftFavorites(User user) async {
     final draft = _draftFavoriteSelections.toSet();
     final previousFavoriteCategories = _favoriteCategories.toSet();
-    final previousSelectedFavoriteCategories =
-        _selectedFavoriteCategories.toSet();
-    final previousSelectedFavoriteSubcategories =
-        _selectedFavoriteSubcategories.toSet();
-    final previousSelectedFavoriteDepartements =
-        _selectedFavoriteDepartements.toSet();
+    final previousSelectedFavoriteCategories = _selectedFavoriteCategories
+        .toSet();
+    final previousSelectedFavoriteSubcategories = _selectedFavoriteSubcategories
+        .toSet();
+    final previousSelectedFavoriteDepartements = _selectedFavoriteDepartements
+        .toSet();
 
     final selectedCats = draft.where((e) => !e.contains('—')).toSet();
     final selectedSubcats = draft.where((e) => e.contains('—')).toSet();
@@ -2118,8 +2141,10 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: kPrestoBlue, width: 1.4),
+                          borderSide: const BorderSide(
+                            color: kPrestoBlue,
+                            width: 1.4,
+                          ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -2148,8 +2173,9 @@ class _AccountPageState extends State<AccountPage> {
                             activeColor: kPrestoBlue,
                             title: Text(
                               label,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             subtitle: Text(code),
                             onChanged: (_) {
@@ -2182,8 +2208,9 @@ class _AccountPageState extends State<AccountPage> {
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            onPressed: () => Navigator.of(context)
-                                .pop(Set<String>.from(draft)),
+                            onPressed: () => Navigator.of(
+                              context,
+                            ).pop(Set<String>.from(draft)),
                             child: const Text('Valider'),
                           ),
                         ),
@@ -2242,8 +2269,9 @@ class _AccountPageState extends State<AccountPage> {
                           final selected = workingSelections.contains(cat);
 
                           return ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 4),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
                             selected: selected,
                             selectedTileColor: overlayTheme.selectionFillColor,
                             iconColor: overlayTheme.selectionAccentColor,
@@ -2322,8 +2350,9 @@ class _AccountPageState extends State<AccountPage> {
       backgroundColor: overlayTheme.surfaceColor,
       shape: overlayTheme.sheetShape,
       builder: (ctx) {
-        final selectedCategories =
-            workingSelections.where((e) => !e.contains('—')).toList();
+        final selectedCategories = workingSelections
+            .where((e) => !e.contains('—'))
+            .toList();
         if (selectedCategories.isEmpty) {
           return SafeArea(
             child: SizedBox(
@@ -2354,18 +2383,25 @@ class _AccountPageState extends State<AccountPage> {
 
         return StatefulBuilder(
           builder: (context, sheetSetState) {
-            final visibleCategories =
-                workingSelections.where((e) => !e.contains('—')).toList();
+            final visibleCategories = workingSelections
+                .where((e) => !e.contains('—'))
+                .toList();
             final items =
                 <({String category, String? subcategory, bool isHeader})>[];
             for (final category in visibleCategories) {
-              items
-                  .add((category: category, subcategory: null, isHeader: true));
+              items.add((
+                category: category,
+                subcategory: null,
+                isHeader: true,
+              ));
               final subs =
                   _subCategoriesByCategory[category] ?? const <String>[];
               for (final sub in subs) {
-                items.add(
-                    (category: category, subcategory: sub, isHeader: false));
+                items.add((
+                  category: category,
+                  subcategory: sub,
+                  isHeader: false,
+                ));
               }
             }
 
@@ -2394,8 +2430,10 @@ class _AccountPageState extends State<AccountPage> {
                           final item = items[index];
                           if (item.isHeader) {
                             return Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 10, bottom: 6),
+                              padding: const EdgeInsets.only(
+                                top: 10,
+                                bottom: 6,
+                              ),
                               child: Text(
                                 item.category,
                                 style: const TextStyle(
@@ -2412,8 +2450,9 @@ class _AccountPageState extends State<AccountPage> {
                           final selected = workingSelections.contains(label);
 
                           return ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 4),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
                             selected: selected,
                             selectedTileColor: overlayTheme.selectionFillColor,
                             iconColor: overlayTheme.selectionAccentColor,
@@ -2622,20 +2661,19 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _profilePseudoController.text.trim();
-    final displayName =
-        pseudo.isNotEmpty ? pseudo : _deriveImmediatePseudo(user);
+    final displayName = pseudo.isNotEmpty
+        ? pseudo
+        : _deriveImmediatePseudo(user);
     final visibleEmail = _profileEmail.trim().isNotEmpty
         ? _profileEmail.trim()
         : (user.email ?? '');
     final visiblePhotoUrl = customProfilePhotoUrl(_profilePhotoUrl) ?? '';
-    final draftCategoryLabels = _draftFavoriteSelections
-        .where((entry) => !entry.contains('—'))
-        .toList()
-      ..sort();
-    final draftSubcategoryLabels = _draftFavoriteSelections
-        .where((entry) => entry.contains('—'))
-        .toList()
-      ..sort();
+    final draftCategoryLabels =
+        _draftFavoriteSelections.where((entry) => !entry.contains('—')).toList()
+          ..sort();
+    final draftSubcategoryLabels =
+        _draftFavoriteSelections.where((entry) => entry.contains('—')).toList()
+          ..sort();
 
     if (_profileAccountType == 'Entreprise') {
       return _buildEnterpriseScaffold(user, displayName, visiblePhotoUrl);
@@ -2698,15 +2736,20 @@ class _AccountPageState extends State<AccountPage> {
                         padding: const EdgeInsets.only(top: 12),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              vertical: 8, horizontal: 12),
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.red.shade50,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.warning_amber,
-                                  size: 14, color: Colors.red.shade700),
+                              Icon(
+                                Icons.warning_amber,
+                                size: 14,
+                                color: Colors.red.shade700,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -2735,8 +2778,9 @@ class _AccountPageState extends State<AccountPage> {
                               !_isProfileSectionExpanded;
                         });
                       },
-                      alwaysVisibleChild:
-                          _profileLoaded ? _buildProfileCompletenessBanner() : null,
+                      alwaysVisibleChild: _profileLoaded
+                          ? _buildProfileCompletenessBanner()
+                          : null,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -2786,7 +2830,9 @@ class _AccountPageState extends State<AccountPage> {
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 12),
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE8F0FE),
                                 borderRadius: BorderRadius.circular(12),
@@ -2823,18 +2869,23 @@ class _AccountPageState extends State<AccountPage> {
                                 setState(() {
                                   _draftFavoriteSelections.remove(category);
                                   _draftFavoriteSelections.removeWhere(
-                                      (e) => e.startsWith('\$category — '));
+                                    (e) => e.startsWith('\$category — '),
+                                  );
                                 });
                                 unawaited(_applyDraftFavorites(user));
                               },
                               onRemoveSubcategory: (label) {
-                                setState(() =>
-                                    _draftFavoriteSelections.remove(label));
+                                setState(
+                                  () => _draftFavoriteSelections.remove(label),
+                                );
                                 unawaited(_applyDraftFavorites(user));
                               },
                               onRemoveDepartement: (code) {
-                                setState(() =>
-                                    _selectedFavoriteDepartements.remove(code));
+                                setState(
+                                  () => _selectedFavoriteDepartements.remove(
+                                    code,
+                                  ),
+                                );
                                 unawaited(_applyDraftFavorites(user));
                               },
                             ),
@@ -2882,9 +2933,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    RepaintBoundary(
-                      child: const SizedBox.shrink(),
-                    ),
+                    RepaintBoundary(child: const SizedBox.shrink()),
                     const SizedBox(height: 24),
                     SubscriptionSection(userId: user.uid),
                     const SizedBox(height: 28),
@@ -2922,9 +2971,7 @@ class _AccountPageState extends State<AccountPage> {
                             : const Icon(Icons.logout),
                         label: Text(
                           _isSigningOut ? 'Déconnexion...' : 'Se déconnecter',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),
@@ -2940,10 +2987,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAdminSpaceEntry(User user) {
     if (_adminAccessFuture == null || _adminAccessFutureUid != user.uid) {
-      _refreshAdminAccessForUser(
-        user.uid,
-        returnOnLocalAdminEvidence: true,
-      );
+      _refreshAdminAccessForUser(user.uid, returnOnLocalAdminEvidence: true);
     }
 
     return FutureBuilder<AdminAccessState>(
@@ -3046,7 +3090,8 @@ class _AccountPageState extends State<AccountPage> {
               title: 'Vérification admin temporairement indisponible',
               message:
                   'Tes droits admin sont reconnus localement mais la vérification serveur a échoué. Réessaie ou reconnecte-toi.',
-              detail: accessState.serverErrorMessage ??
+              detail:
+                  accessState.serverErrorMessage ??
                   accessState.serverErrorCode ??
                   'Erreur inconnue côté serveur.',
             );
@@ -3110,8 +3155,10 @@ class _AccountPageState extends State<AccountPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.admin_panel_settings,
-                          color: kPrestoBlue.withValues(alpha: 0.95)),
+                      Icon(
+                        Icons.admin_panel_settings,
+                        color: kPrestoBlue.withValues(alpha: 0.95),
+                      ),
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
@@ -3124,7 +3171,9 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.shade50,
                           borderRadius: BorderRadius.circular(999),
@@ -3189,7 +3238,9 @@ class _AccountPageState extends State<AccountPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: (configLoaded ? kPrestoBlue : Colors.orange)
                               .withValues(alpha: 0.08),
@@ -3209,7 +3260,9 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: kPrestoOrange.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(999),
@@ -3246,17 +3299,16 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                         textStyle: const TextStyle(fontWeight: FontWeight.w800),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             );
-            if (_shouldShowAdminDebugCard(
-              user,
-              state: accessState,
-            )) {
+            if (_shouldShowAdminDebugCard(user, state: accessState)) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -3282,8 +3334,8 @@ class _AccountPageState extends State<AccountPage> {
     final fallbackDetail = detail?.trim().isNotEmpty == true
         ? detail!.trim()
         : (state.serverErrorCode != null
-            ? _adminStateErrorDetail(state)
-            : null);
+              ? _adminStateErrorDetail(state)
+              : null);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -3298,21 +3350,22 @@ class _AccountPageState extends State<AccountPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.admin_panel_settings,
-                  color: kPrestoBlue.withValues(alpha: 0.95)),
+              Icon(
+                Icons.admin_panel_settings,
+                color: kPrestoBlue.withValues(alpha: 0.95),
+              ),
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
                   'Espace admin',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(999),
@@ -3392,7 +3445,9 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ),
@@ -3419,16 +3474,20 @@ class _AccountPageState extends State<AccountPage> {
 
   String get _profileFirstName {
     final pseudo = _profilePseudoController.text.trim();
-    final parts =
-        pseudo.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = pseudo
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '';
     return parts.first;
   }
 
   String get _profileLastName {
     final pseudo = _profilePseudoController.text.trim();
-    final parts =
-        pseudo.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = pseudo
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.length <= 1) return '';
     return parts.skip(1).join(' ');
   }
@@ -3513,8 +3572,9 @@ class _AccountPageState extends State<AccountPage> {
                   const CircleAvatar(
                     radius: 45,
                     backgroundColor: Colors.white,
-                    backgroundImage:
-                        AssetImage('assets/images/default_avatar.webp'),
+                    backgroundImage: AssetImage(
+                      'assets/images/default_avatar.webp',
+                    ),
                   ),
                   if (visiblePhotoUrl.isNotEmpty)
                     ClipOval(
@@ -3625,8 +3685,10 @@ class _AccountPageState extends State<AccountPage> {
               if (user.emailVerified) ...[
                 const SizedBox(height: 10),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F0FE),
                     borderRadius: BorderRadius.circular(20),
@@ -3733,8 +3795,9 @@ class _AccountPageState extends State<AccountPage> {
                   const CircleAvatar(
                     radius: 45,
                     backgroundColor: Colors.white,
-                    backgroundImage:
-                        AssetImage('assets/images/default_avatar.webp'),
+                    backgroundImage: AssetImage(
+                      'assets/images/default_avatar.webp',
+                    ),
                   ),
                   if (visiblePhotoUrl.isNotEmpty)
                     ClipOval(
@@ -3761,11 +3824,7 @@ class _AccountPageState extends State<AccountPage> {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2.5),
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 15,
-                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 15),
               ),
             ),
           ],
@@ -3807,8 +3866,10 @@ class _AccountPageState extends State<AccountPage> {
               ],
               const SizedBox(height: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F0FE),
                   borderRadius: BorderRadius.circular(20),
@@ -3862,11 +3923,7 @@ class _AccountPageState extends State<AccountPage> {
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
               child: Row(
                 children: const [
-                  Icon(
-                    Icons.shield_rounded,
-                    color: kPrestoOrange,
-                    size: 30,
-                  ),
+                  Icon(Icons.shield_rounded, color: kPrestoOrange, size: 30),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -3889,9 +3946,11 @@ class _AccountPageState extends State<AccountPage> {
               onTap: () {
                 final uid = FirebaseAuth.instance.currentUser?.uid;
                 if (uid == null) return;
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => FicheProPage(uid: uid, isOwner: true),
-                ));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => FicheProPage(uid: uid, isOwner: true),
+                  ),
+                );
               },
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
@@ -3909,17 +3968,17 @@ class _AccountPageState extends State<AccountPage> {
               label: 'Mes avis',
               solidBackground: false,
               showProBadge: true,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const MesAvisPage()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const MesAvisPage())),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
             _buildOrangeMenuItem(
               icon: Icons.add_circle_outline_rounded,
               label: 'Créer mon activité',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ToolboxPage()),
-              ),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
             ),
             const Divider(height: 1, thickness: 1, indent: 72),
             _buildOrangeMenuItem(
@@ -3955,7 +4014,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
         child: Row(
           children: [
             Container(
@@ -4010,7 +4069,9 @@ class _AccountPageState extends State<AccountPage> {
           icon: Icons.campaign_rounded,
           label: 'Mes annonces',
           onTap: () => showPrestoSnackBar(
-              context, 'Annonces — Bientôt disponible depuis ici'),
+            context,
+            'Annonces — Bientôt disponible depuis ici',
+          ),
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
         _buildBlueMenuItem(
@@ -4018,9 +4079,7 @@ class _AccountPageState extends State<AccountPage> {
           label: 'Sécurité du compte',
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const AccountSecurityPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const AccountSecurityPage()),
             );
           },
         ),
@@ -4028,9 +4087,9 @@ class _AccountPageState extends State<AccountPage> {
         _buildBlueMenuItem(
           icon: Icons.gavel_rounded,
           label: 'Mentions légales',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const LegalInfoPage()),
-          ),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const LegalInfoPage())),
         ),
         const Divider(height: 1, thickness: 1, indent: 72),
         _buildBlueMenuItem(
@@ -4061,7 +4120,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
         child: Row(
           children: [
             Container(
@@ -4162,16 +4221,19 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
                     title: Text(
                       '${e.value} (${e.key})',
                       style: TextStyle(
-                        fontWeight:
-                            isDrom ? FontWeight.w700 : FontWeight.normal,
+                        fontWeight: isDrom
+                            ? FontWeight.w700
+                            : FontWeight.normal,
                         color: isDrom ? kPrestoBlue : Colors.black87,
                         fontSize: 13,
                       ),
                     ),
                     value: _current.contains(e.key),
-                    onChanged: (v) => setState(() => v == true
-                        ? _current.add(e.key)
-                        : _current.remove(e.key)),
+                    onChanged: (v) => setState(
+                      () => v == true
+                          ? _current.add(e.key)
+                          : _current.remove(e.key),
+                    ),
                     controlAffinity: ListTileControlAffinity.leading,
                     activeColor: const Color(0xFF009688),
                   );
@@ -4198,8 +4260,9 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
           ),
           onPressed: () =>
               Navigator.of(context).pop(Set<String>.from(_current)),
-          child:
-              Text(_current.isEmpty ? 'Tous' : 'Valider (${_current.length})'),
+          child: Text(
+            _current.isEmpty ? 'Tous' : 'Valider (${_current.length})',
+          ),
         ),
       ],
     );

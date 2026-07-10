@@ -32,15 +32,21 @@ class SubscriptionSection extends StatelessWidget {
       stream: configService.watchConfig(),
       builder: (context, configSnapshot) {
         if (configSnapshot.hasError) return const SizedBox.shrink();
-        final config = configSnapshot.data ?? const SubscriptionAppConfig.defaults();
+        final config =
+            configSnapshot.data ?? const SubscriptionAppConfig.defaults();
         if (!config.subscriptionSectionEnabled) return const SizedBox.shrink();
         return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .snapshots(),
           builder: (context, userSnapshot) {
-            final userState = AppUserSubscriptionState.fromMap(userSnapshot.data?.data());
+            final userState = AppUserSubscriptionState.fromMap(
+              userSnapshot.data?.data(),
+            );
             return Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
               decoration: BoxDecoration(
                 color: _background,
                 borderRadius: BorderRadius.circular(28),
@@ -58,7 +64,8 @@ class SubscriptionSection extends StatelessWidget {
                 children: [
                   const _Header(
                     title: 'Mon abonnement iliprestō',
-                    subtitle: 'Gérez votre formule, vos avantages et vos options.',
+                    subtitle:
+                        'Gérez votre formule, vos avantages et vos options.',
                   ),
                   const SizedBox(height: 18),
                   SubscriptionCurrentStatusCard(
@@ -90,7 +97,8 @@ class SubscriptionDetailsPage extends StatefulWidget {
   });
 
   @override
-  State<SubscriptionDetailsPage> createState() => _SubscriptionDetailsPageState();
+  State<SubscriptionDetailsPage> createState() =>
+      _SubscriptionDetailsPageState();
 }
 
 class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
@@ -114,20 +122,23 @@ class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
       body: StreamBuilder<SubscriptionAppConfig>(
         stream: configService.watchConfig(),
         builder: (context, configSnapshot) {
-          final config = configSnapshot.data ?? const SubscriptionAppConfig.defaults();
+          final config =
+              configSnapshot.data ?? const SubscriptionAppConfig.defaults();
           return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .doc(widget.userId)
                 .snapshots(),
             builder: (context, userSnapshot) {
-              final userState = AppUserSubscriptionState.fromMap(userSnapshot.data?.data());
+              final userState = AppUserSubscriptionState.fromMap(
+                userSnapshot.data?.data(),
+              );
               return SafeArea(
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 680),
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      padding: const EdgeInsets.fromLTRB(6, 8, 6, 32),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -160,7 +171,8 @@ class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
                           const SizedBox(height: 14),
                           _AudienceSelector(
                             audience: _audience,
-                            onChanged: (value) => setState(() => _audience = value),
+                            onChanged: (value) =>
+                                setState(() => _audience = value),
                           ),
                           const SizedBox(height: 16),
                           AnimatedSwitcher(
@@ -260,7 +272,9 @@ class _AudienceButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: selected ? Border.all(color: color.withValues(alpha: 0.45)) : null,
+            border: selected
+                ? Border.all(color: color.withValues(alpha: 0.45))
+                : null,
             boxShadow: selected
                 ? [
                     BoxShadow(
@@ -313,7 +327,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
     final plan = _planFor(userState.plan);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [plan.accent.withValues(alpha: 0.08), Colors.white],
@@ -321,7 +335,10 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: plan.accent.withValues(alpha: 0.38), width: 1.4),
+        border: Border.all(
+          color: plan.accent.withValues(alpha: 0.38),
+          width: 1.4,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,14 +402,19 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
               child: FilledButton(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => SubscriptionDetailsPage(userId: userId, service: service),
+                    builder: (_) => SubscriptionDetailsPage(
+                      userId: userId,
+                      service: service,
+                    ),
                   ),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: _blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: const Text(
                   'Découvrir les autres offres',
@@ -423,12 +445,15 @@ class SubscriptionPlanTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plans = _plans.where((plan) {
-      final audienceMatches = audience == _OfferAudience.particuliers
-          ? plan.plan != SubscriptionPlan.ilipro
-          : plan.plan == SubscriptionPlan.ilipro;
-      return audienceMatches && (showCurrentPlan || plan.plan != userState.plan);
-    }).toList(growable: false);
+    final plans = _plans
+        .where((plan) {
+          final audienceMatches = audience == _OfferAudience.particuliers
+              ? plan.plan != SubscriptionPlan.ilipro
+              : plan.plan == SubscriptionPlan.ilipro;
+          return audienceMatches &&
+              (showCurrentPlan || plan.plan != userState.plan);
+        })
+        .toList(growable: false);
 
     return Column(
       children: [
@@ -462,7 +487,7 @@ class _PlanCard extends StatelessWidget {
     final isFree = presentation.plan == SubscriptionPlan.free;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
       decoration: BoxDecoration(
         color: presentation.cardBackground,
         borderRadius: BorderRadius.circular(24),
@@ -486,7 +511,11 @@ class _PlanCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _PlanIcon(icon: presentation.icon, color: presentation.accent, size: 54),
+              _PlanIcon(
+                icon: presentation.icon,
+                color: presentation.accent,
+                size: 54,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -508,7 +537,10 @@ class _PlanCard extends StatelessWidget {
                         if (isCurrent)
                           const _Badge(label: 'ACTUELLE', color: _green)
                         else if (presentation.badge != null)
-                          _Badge(label: presentation.badge!, color: presentation.accent),
+                          _Badge(
+                            label: presentation.badge!,
+                            color: presentation.accent,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 5),
@@ -536,7 +568,10 @@ class _PlanCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _BenefitList(items: presentation.features, color: presentation.accent),
+          _BenefitList(
+            items: presentation.features,
+            color: presentation.accent,
+          ),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -558,7 +593,9 @@ class _PlanCard extends StatelessWidget {
                       backgroundColor: presentation.accent,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
                     child: Text(
                       _buttonLabel(presentation.plan),
@@ -664,7 +701,11 @@ class _PlanIcon extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _PlanIcon({required this.icon, required this.color, required this.size});
+  const _PlanIcon({
+    required this.icon,
+    required this.color,
+    required this.size,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -714,7 +755,7 @@ class _FooterNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -803,7 +844,8 @@ const List<_PlanPresentation> _plans = [
     title: 'iliprestō+',
     price: '1,99 €/mois',
     summary: 'La formule particuliers avec davantage de confort et d’outils.',
-    currentSummary: 'Plus de possibilités pour publier, sauvegarder et exporter vos parcours.',
+    currentSummary:
+        'Plus de possibilités pour publier, sauvegarder et exporter vos parcours.',
     badge: 'Particuliers',
     icon: Icons.star_rounded,
     accent: _blue,
@@ -830,7 +872,8 @@ const List<_PlanPresentation> _plans = [
     title: 'ilipro',
     price: '9,99 €/mois',
     summary: 'La formule complète dédiée aux professionnels.',
-    currentSummary: 'Développez votre visibilité et recevez davantage d’opportunités.',
+    currentSummary:
+        'Développez votre visibilité et recevez davantage d’opportunités.',
     badge: 'Professionnels',
     icon: Icons.business_center_rounded,
     accent: _orange,
@@ -856,10 +899,8 @@ const List<_PlanPresentation> _plans = [
   ),
 ];
 
-_PlanPresentation _planFor(SubscriptionPlan plan) => _plans.firstWhere(
-      (item) => item.plan == plan,
-      orElse: () => _plans.first,
-    );
+_PlanPresentation _planFor(SubscriptionPlan plan) =>
+    _plans.firstWhere((item) => item.plan == plan, orElse: () => _plans.first);
 
 String _buttonLabel(SubscriptionPlan plan) {
   switch (plan) {
@@ -908,7 +949,8 @@ class AdminSubscriptionTile extends StatefulWidget {
 class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
   bool _saving = false;
 
-  SubscriptionConfigService get _service => widget.service ?? SubscriptionConfigService();
+  SubscriptionConfigService get _service =>
+      widget.service ?? SubscriptionConfigService();
 
   @override
   void initState() {
@@ -928,9 +970,14 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
         enabled,
         updatedBy: FirebaseAuth.instance.currentUser?.uid,
       );
-      if (mounted) showSuccessSnackBar(context, 'Visibilité des abonnements mise à jour.');
+      if (mounted)
+        showSuccessSnackBar(context, 'Visibilité des abonnements mise à jour.');
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, 'Impossible de mettre à jour la configuration.');
+      if (mounted)
+        showErrorSnackBar(
+          context,
+          'Impossible de mettre à jour la configuration.',
+        );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -944,9 +991,14 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
         enabled,
         updatedBy: FirebaseAuth.instance.currentUser?.uid,
       );
-      if (mounted) showSuccessSnackBar(context, 'Mode d’accès abonnement mis à jour.');
+      if (mounted)
+        showSuccessSnackBar(context, 'Mode d’accès abonnement mis à jour.');
     } catch (_) {
-      if (mounted) showErrorSnackBar(context, 'Impossible de mettre à jour freeAccessMode.');
+      if (mounted)
+        showErrorSnackBar(
+          context,
+          'Impossible de mettre à jour freeAccessMode.',
+        );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -983,7 +1035,9 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Accès gratuit complet'),
-                subtitle: const Text('Désactivez-le pour appliquer les limites des formules.'),
+                subtitle: const Text(
+                  'Désactivez-le pour appliquer les limites des formules.',
+                ),
                 value: config.freeAccessMode,
                 onChanged: _saving ? null : _toggleFreeAccess,
               ),
@@ -993,7 +1047,9 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
                 runSpacing: 8,
                 children: [
                   _AdminChip(
-                    label: config.stripeEnabled ? 'Stripe activé' : 'Stripe non activé',
+                    label: config.stripeEnabled
+                        ? 'Stripe activé'
+                        : 'Stripe non activé',
                     color: config.stripeEnabled ? _green : _muted,
                   ),
                   _AdminChip(
@@ -1028,7 +1084,11 @@ class _AdminChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
