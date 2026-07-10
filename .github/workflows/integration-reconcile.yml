@@ -1,9 +1,9 @@
 name: Reconcile and Validate Ilipresto Integration
 
 on:
-  push:
+  pull_request:
     branches:
-      - integration/latest-ilipresto-20260709
+      - main
 
 permissions:
   contents: write
@@ -173,5 +173,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/pages/account/mon_entreprise_parcours_page.dart lib/main.dart firebase.json .github/workflows/integration-reconcile.yml
+          if git diff --cached --quiet; then
+            echo "Aucune modification à valider."
+            exit 0
+          fi
           git commit -m "fix: intègre bouton parcours et correctifs admin ciblés"
           git push origin "HEAD:${INTEGRATION_BRANCH}"
