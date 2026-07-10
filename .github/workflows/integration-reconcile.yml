@@ -16,7 +16,6 @@ env:
 
 jobs:
   reconcile-and-validate:
-    environment: recaptcha
     runs-on: ubuntu-latest
     steps:
       - name: Checkout integration branch
@@ -168,7 +167,7 @@ jobs:
 
       - name: Build Flutter web release
         env:
-          APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.APPCHECK_RECAPTCHA_SITE_KEY }}
+          APPCHECK_RECAPTCHA_SITE_KEY: integration-validation-placeholder
         run: bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
       - name: Commit validated integration
