@@ -7,6 +7,14 @@ export const BREVO_API_KEY = defineSecret("BREVO_API_KEY");
 export const BREVO_WEBHOOK_SECRET = defineSecret("BREVO_WEBHOOK_SECRET");
 export const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 export const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+export const STRIPE_PRICE_ILIPRESTO_PLUS = defineSecret("STRIPE_PRICE_ILIPRESTO_PLUS");
+export const STRIPE_PRICE_ILIPRO = defineSecret("STRIPE_PRICE_ILIPRO");
+
+export const STRIPE_CHECKOUT_SECRETS = [
+	STRIPE_SECRET_KEY,
+	STRIPE_PRICE_ILIPRESTO_PLUS,
+	STRIPE_PRICE_ILIPRO,
+];
 
 export const EMAIL_PROVIDER_NAME = process.env.EMAIL_PROVIDER_NAME || "";
 export const DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr") as "fr" | "en";
