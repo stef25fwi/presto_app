@@ -54,10 +54,25 @@ class SubscriptionConfigService {
     bool enabled, {
     String? updatedBy,
   }) async {
-    const baseConfig = SubscriptionAppConfig.defaults();
+    final baseConfig = await getConfig();
 
     await _configRef.set(
       baseConfig.copyWith(subscriptionSectionEnabled: enabled).toFirestoreMap(
+            includeServerTimestamp: true,
+            nextUpdatedBy: updatedBy,
+          ),
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<void> updateStripeEnabled(
+    bool enabled, {
+    String? updatedBy,
+  }) async {
+    final baseConfig = await getConfig();
+
+    await _configRef.set(
+      baseConfig.copyWith(stripeEnabled: enabled).toFirestoreMap(
             includeServerTimestamp: true,
             nextUpdatedBy: updatedBy,
           ),
@@ -69,7 +84,7 @@ class SubscriptionConfigService {
     bool enabled, {
     String? updatedBy,
   }) async {
-    const baseConfig = SubscriptionAppConfig.defaults();
+    final baseConfig = await getConfig();
 
     await _configRef.set(
       baseConfig.copyWith(freeAccessMode: enabled).toFirestoreMap(
