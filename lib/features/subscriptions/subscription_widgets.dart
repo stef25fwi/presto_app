@@ -75,13 +75,10 @@ class SubscriptionSection extends StatelessWidget {
                   const _SubscriptionSectionHeader(),
                   const SizedBox(height: 18),
                   SubscriptionCurrentStatusCard(
+                    userId: userId,
                     userState: userState,
                     config: config,
-                  ),
-                  const SizedBox(height: 18),
-                  SubscriptionPlanTabs(
-                    config: config,
-                    userState: userState,
+                    service: configService,
                   ),
                   const SizedBox(height: 14),
                   const _SubscriptionFooterNote(),
@@ -91,6 +88,156 @@ class SubscriptionSection extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class SubscriptionDetailsPage extends StatelessWidget {
+  final String userId;
+  final SubscriptionConfigService? service;
+
+  const SubscriptionDetailsPage({
+    super.key,
+    required this.userId,
+    this.service,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final configService = service ?? SubscriptionConfigService();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: _kSubscriptionBlue,
+        centerTitle: true,
+        title: const Text(
+          'Mon abonnement iliprestō',
+          style: TextStyle(
+            color: _kSubscriptionBlue,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      body: StreamBuilder<SubscriptionAppConfig>(
+        stream: configService.watchConfig(),
+        builder: (context, configSnapshot) {
+          final config =
+              configSnapshot.data ?? const SubscriptionAppConfig.defaults();
+
+          return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(userId)
+                .snapshots(),
+            builder: (context, userSnapshot) {
+              final userState = AppUserSubscriptionState.fromMap(
+                userSnapshot.data?.data(),
+              );
+
+              return SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 620),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _SubscriptionDetailsHeader(),
+                          const SizedBox(height: 18),
+                          SubscriptionPlanTabs(
+                            config: config,
+                            userState: userState,
+                            showCurrentPlan: true,
+                          ),
+                          const SizedBox(height: 14),
+                          const _SubscriptionFooterNote(),
+                          if (configSnapshot.hasError) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              'La configuration abonnement n’a pas pu être chargée. Les valeurs par défaut sont affichées.',
+                              style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SubscriptionDetailsHeader extends StatelessWidget {
+  const _SubscriptionDetailsHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F7FF),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _kSubscriptionBlue.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: _kSubscriptionBlue.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.workspace_premium_rounded,
+              color: _kSubscriptionBlue,
+              size: 25,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choisissez votre formule',
+                  style: TextStyle(
+                    fontSize: 22,
+                    height: 1.05,
+                    fontWeight: FontWeight.w900,
+                    color: _kSubscriptionTextPrimary,
+                  ),
+                ),
+                SizedBox(height: 7),
+                Text(
+                  'Comparez Gratuit, iliprestō+ et ilipro, puis activez la formule adaptée à votre usage.',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                    color: _kSubscriptionTextSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -149,13 +296,17 @@ class _SubscriptionSectionHeader extends StatelessWidget {
 }
 
 class SubscriptionCurrentStatusCard extends StatelessWidget {
+  final String userId;
   final AppUserSubscriptionState userState;
   final SubscriptionAppConfig config;
+  final SubscriptionConfigService? service;
 
   const SubscriptionCurrentStatusCard({
     super.key,
+    required this.userId,
     required this.userState,
     required this.config,
+    this.service,
   });
 
   @override
@@ -310,18 +461,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: isTopPlan
-                  ? () => openSubscriptionManagement(
-                        context,
-                        stripeEnabled: config.stripeEnabled,
-                        source: 'account_current_ilipro_manage',
-                      )
-                  : () => _handleSubscriptionPlanAction(
-                        context,
-                        config,
-                        nextPlan!,
-                        source: 'account_current_upgrade',
-                      ),
+              onPressed: () => _openSubscriptionDetails(context),
               style: FilledButton.styleFrom(
                 backgroundColor:
                     isTopPlan ? _kSubscriptionOrange : _kSubscriptionBlue,
@@ -336,8 +476,8 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                 children: [
                   Text(
                     isTopPlan
-                        ? 'Gérer mon abonnement'
-                        : 'Passer à ${subscriptionPlanLabel(nextPlan!)}',
+                        ? 'Voir mon abonnement'
+                        : 'Passer à ${subscriptionPlanLabel(nextPlan)}',
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
@@ -353,16 +493,29 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
       ),
     );
   }
+
+  void _openSubscriptionDetails(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SubscriptionDetailsPage(
+          userId: userId,
+          service: service,
+        ),
+      ),
+    );
+  }
 }
 
 class SubscriptionPlanTabs extends StatelessWidget {
   final SubscriptionAppConfig config;
   final AppUserSubscriptionState userState;
+  final bool showCurrentPlan;
 
   const SubscriptionPlanTabs({
     super.key,
     required this.config,
     required this.userState,
+    this.showCurrentPlan = false,
   });
 
   @override
@@ -370,6 +523,7 @@ class SubscriptionPlanTabs extends StatelessWidget {
     return _SubscriptionPlansComparison(
       config: config,
       userState: userState,
+      showCurrentPlan: showCurrentPlan,
     );
   }
 }
@@ -377,16 +531,18 @@ class SubscriptionPlanTabs extends StatelessWidget {
 class _SubscriptionPlansComparison extends StatelessWidget {
   final SubscriptionAppConfig config;
   final AppUserSubscriptionState userState;
+  final bool showCurrentPlan;
 
   const _SubscriptionPlansComparison({
     required this.config,
     required this.userState,
+    required this.showCurrentPlan,
   });
 
   @override
   Widget build(BuildContext context) {
     final cards = _subscriptionPlanPresentations
-        .where((plan) => plan.plan != userState.plan)
+        .where((plan) => showCurrentPlan || plan.plan != userState.plan)
         .map(
           (plan) => _SubscriptionPlanCard(
             presentation: plan,
@@ -1045,10 +1201,12 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
         context,
         'Visibilité de la section abonnement mise à jour.',
       );
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       showErrorSnackBar(
-          context, 'Impossible de mettre à jour la configuration.');
+        context,
+        'Impossible de mettre à jour la configuration.',
+      );
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -1275,9 +1433,9 @@ class _MiniStatusChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
           color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
