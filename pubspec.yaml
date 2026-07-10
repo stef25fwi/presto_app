@@ -56,6 +56,7 @@ dependencies:
   flutter_app_badger: ^1.5.0
   flutter_image_compress: ^2.3.0
   cached_network_image: ^3.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -112,6 +113,7 @@ flutter:
     - assets/data/parcours_fiches_demandeur_emploi.json
     - assets/data/parcours_fiches_sans_activite.json
     - assets/carousel_home/
+    - docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/
 
 dependency_overrides:
   flutter_app_badger:
