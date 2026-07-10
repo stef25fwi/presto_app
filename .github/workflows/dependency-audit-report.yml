@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - audit/prod-hardening-p0-p11
-    paths-ignore:
-      - docs/DEPENDENCY_AUDIT.md
-      - docs/DEPENDENCY_AUDIT.json
+    paths:
+      - functions/package.json
+      - functions/package-lock.json
+      - .github/workflows/dependency-audit-report.yml
   workflow_dispatch:
 
 permissions:
@@ -51,7 +52,7 @@ jobs:
           const lines = [
             '# Audit des dépendances Functions',
             '',
-            `Généré sur le commit \`${process.env.GITHUB_SHA}\`.`,
+            'Rapport reproductible généré à partir de `functions/package-lock.json`.',
             '',
             `- Critiques : **${metadata.critical ?? 0}**`,
             `- Hautes : **${metadata.high ?? 0}**`,
@@ -68,12 +69,13 @@ jobs:
           fs.writeFileSync('docs/DEPENDENCY_AUDIT.md', `${lines.join('\n')}\n`);
           NODE
 
-      - name: Commit report
+      - name: Commit report only when dependency results changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/DEPENDENCY_AUDIT.md docs/DEPENDENCY_AUDIT.json
           if git diff --cached --quiet; then
+            echo "Dependency report unchanged."
             exit 0
           fi
           git commit -m "security: publie le rapport npm audit"
