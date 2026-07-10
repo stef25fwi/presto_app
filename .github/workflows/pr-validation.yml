@@ -14,7 +14,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -27,13 +27,19 @@ jobs:
       - name: Verify generated hardening patches
         run: |
           node tools/apply_prod_hardening_patches.mjs
+          node tools/apply_startup_hardening.mjs
+          node tools/apply_auth_client_hardening.mjs
+          node tools/apply_account_cleanup_patch.mjs
+          node tools/normalize_cursor_patch_script.mjs
+          node tools/apply_cursor_pagination.mjs
+          node tools/apply_validation_fixes.mjs
           git diff --exit-code
           node tools/check_production_guardrails.mjs
 
-      - name: Setup Flutter
+      - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.4'
+          flutter-version: '3.44.6'
           channel: stable
           cache: true
 
@@ -53,6 +59,8 @@ jobs:
         run: npm --prefix functions run test:firestore
 
       - name: Build web
+        env:
+          APPCHECK_RECAPTCHA_SITE_KEY: ci-pr-placeholder
         run: bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run
 
       - name: Check bundle size
