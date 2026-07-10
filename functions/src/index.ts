@@ -110,6 +110,7 @@ export { generatePaymentInfoAudio } from "./modules/admin/callables";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 export {
   createSubscriptionCheckoutSession,
+  getSubscriptionCheckoutStatus,
   createSubscriptionPortalSession,
 } from "./modules/billing/callables";
 export { handleStripeWebhook } from "./modules/billing/stripe_webhook";

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  isDeletedAccountStatus,
   normalizedInvoiceStatus,
   shouldApplyStripeEvent,
 } from "./stripe_webhook";
@@ -32,4 +33,21 @@ test("les événements payés sont normalisés en paid", () => {
     normalizedInvoiceStatus("invoice.paid", { status: "open" }),
     "paid",
   );
+});
+
+test("les actions requises et créances irrécouvrables sont distinguées", () => {
+  assert.equal(
+    normalizedInvoiceStatus("invoice.payment_action_required", { status: "open" }),
+    "action_required",
+  );
+  assert.equal(
+    normalizedInvoiceStatus("invoice.marked_uncollectible", { status: "open" }),
+    "uncollectible",
+  );
+});
+
+test("un webhook tardif ne réhydrate pas un compte supprimé", () => {
+  assert.equal(isDeletedAccountStatus("deletion_processing"), true);
+  assert.equal(isDeletedAccountStatus("deleted"), true);
+  assert.equal(isDeletedAccountStatus("active"), false);
 });
