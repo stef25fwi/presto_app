@@ -61,6 +61,7 @@ jobs:
           node tools/apply_dependency_security_upgrades.mjs
           node tools/apply_stripe_ordering_hardening.mjs
           node tools/apply_function_resource_limits.mjs
+          node tools/apply_validation_round2_fixes.mjs
           npm --prefix functions install --package-lock-only --ignore-scripts
           node tools/check_production_guardrails.mjs
 
@@ -87,15 +88,19 @@ jobs:
             functions/src/modules/marketplace/callables/media.ts \
             functions/src/modules/messaging/callables.ts \
             lib/main.dart \
+            lib/features/subscriptions/subscription_widgets.dart \
             lib/services/auth_service.dart \
             lib/services/app_monitoring_service.dart \
             lib/services/public_offers_query_helpers.dart \
             lib/pages/consult_offers_page.dart \
             lib/pages/admin_space_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            test/auth_email_static_test.dart \
             test/toolbox_je_me_lance_etudiant_journey_test.dart \
             tools/apply_auth_client_hardening.mjs \
-            tools/apply_cursor_pagination.mjs
-          git commit -m "security: applique le durcissement préproduction"
+            tools/apply_cursor_pagination.mjs \
+            tools/check_web_bundle_size.mjs
+          git commit -m "fix: corrige les derniers blocages préproduction"
           git push origin HEAD:audit/prod-hardening-p0-p11
 
       - name: Publish patch failure report
