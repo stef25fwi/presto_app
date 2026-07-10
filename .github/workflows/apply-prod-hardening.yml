@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - audit/prod-hardening-p0-p11
+    paths-ignore:
+      - docs/APPLY_PATCH_STATUS.md
   workflow_dispatch:
 
 permissions:
@@ -27,7 +29,11 @@ jobs:
           node-version: '22'
 
       - name: Apply idempotent patches
+        id: patches
+        continue-on-error: true
         run: |
+          set -euo pipefail
+          exec > >(tee apply_patch.log) 2>&1
           node tools/apply_prod_hardening_patches.mjs
           node tools/apply_startup_hardening.mjs
           node tools/apply_auth_client_hardening.mjs
@@ -41,6 +47,7 @@ jobs:
           npm --prefix functions install --package-lock-only --ignore-scripts
 
       - name: Commit generated changes
+        if: steps.patches.outcome == 'success'
         run: |
           if git diff --quiet; then
             echo "No generated changes."
@@ -70,3 +77,25 @@ jobs:
             tools/apply_cursor_pagination.mjs
           git commit -m "security: applique le durcissement préproduction"
           git push origin HEAD:audit/prod-hardening-p0-p11
+
+      - name: Publish patch failure report
+        if: steps.patches.outcome != 'success'
+        run: |
+          {
+            echo '# Échec du générateur de durcissement'
+            echo
+            echo "Commit source : \`${GITHUB_SHA}\`"
+            echo
+            echo '```text'
+            tail -n 160 apply_patch.log
+            echo '```'
+          } > docs/APPLY_PATCH_STATUS.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/APPLY_PATCH_STATUS.md
+          git commit -m "test: publie l’échec du générateur de durcissement"
+          git push origin HEAD:audit/prod-hardening-p0-p11
+
+      - name: Enforce successful patching
+        if: steps.patches.outcome != 'success'
+        run: exit 1
