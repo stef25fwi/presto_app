@@ -27,7 +27,9 @@ jobs:
           node-version: '22'
 
       - name: Apply idempotent patches
-        run: node tools/apply_prod_hardening_patches.mjs
+        run: |
+          node tools/apply_prod_hardening_patches.mjs
+          node tools/apply_startup_hardening.mjs
 
       - name: Commit generated changes
         run: |
@@ -39,6 +41,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add firestore.rules \
             functions/src/index.ts \
+            lib/main.dart \
             lib/services/app_monitoring_service.dart \
             lib/services/public_offers_query_helpers.dart \
             lib/pages/consult_offers_page.dart \
