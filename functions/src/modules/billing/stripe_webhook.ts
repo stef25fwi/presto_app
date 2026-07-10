@@ -159,12 +159,32 @@ async function findUserId(object: JsonMap): Promise<string> {
   if (!customerId) return "";
   for (const field of ["stripeCustomerId", "stripe_customer_id"]) {
     const snap = await db.collection(COLLECTIONS.users).where(field, "==", customerId).limit(1).get();
-    if (!snap.empty) return snap.docs[0].id;
+    const firstDocument = snap.docs[0];
+    if (firstDocument) return firstDocument.id;
   }
   return "";
 }
 
-async function syncSubscription(subscription: JsonMap, eventId: string): Promise<void> {
+export function shouldApplyStripeEvent(
+  lastEventCreatedAt: number,
+  incomingEventCreatedAt: number,
+): boolean {
+  return incomingEventCreatedAt <= 0 || lastEventCreatedAt <= incomingEventCreatedAt;
+}
+
+export function normalizedInvoiceStatus(eventType: string, invoice: JsonMap): string {
+  if (eventType === "invoice.payment_failed") return "payment_failed";
+  if (eventType === "invoice.payment_succeeded" || eventType === "invoice.paid") {
+    return "paid";
+  }
+  return asString(invoice.status || (invoice.paid === true ? "paid" : "open"));
+}
+
+async function syncSubscription(
+  subscription: JsonMap,
+  eventId: string,
+  eventCreatedAtMs: number,
+): Promise<void> {
   const subscriptionId = asString(subscription.id);
   if (!subscriptionId) throw new Error("Abonnement Stripe sans identifiant");
 
@@ -199,6 +219,7 @@ async function syncSubscription(subscription: JsonMap, eventId: string): Promise
     currency: asString(subscription.currency || "eur").toUpperCase(),
     latest_invoice_id: asString(subscription.latest_invoice),
     last_stripe_event_id: eventId,
+    last_stripe_event_created_at: eventCreatedAtMs,
     stripe_updated_at: FieldValue.serverTimestamp(),
   };
 
@@ -215,21 +236,39 @@ async function syncSubscription(subscription: JsonMap, eventId: string): Promise
     subscriptionCancelAtPeriodEnd: cancelAtPeriodEnd,
     stripeUpdatedAt: FieldValue.serverTimestamp(),
     lastStripeEventId: eventId,
+    lastStripeEventCreatedAt: eventCreatedAtMs,
   };
 
-  const batch = db.batch();
-  batch.set(db.collection(COLLECTIONS.subscriptions).doc(subscriptionId), subscriptionData, { merge: true });
-  batch.set(db.collection(COLLECTIONS.users).doc(userId), userData, { merge: true });
-  await batch.commit();
+  const subscriptionRef =
+    db.collection(COLLECTIONS.subscriptions).doc(subscriptionId);
+  const userRef = db.collection(COLLECTIONS.users).doc(userId);
+
+  await db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(subscriptionRef);
+    const lastEventCreatedAt = asNumber(
+      existing.data()?.last_stripe_event_created_at,
+    );
+    if (!shouldApplyStripeEvent(lastEventCreatedAt, eventCreatedAtMs)) {
+      return;
+    }
+
+    transaction.set(subscriptionRef, subscriptionData, { merge: true });
+    transaction.set(userRef, userData, { merge: true });
+  });
 }
 
-async function syncInvoice(invoice: JsonMap, eventId: string): Promise<void> {
+async function syncInvoice(
+  invoice: JsonMap,
+  eventId: string,
+  eventType: string,
+  eventCreatedAtMs: number,
+): Promise<void> {
   const invoiceId = asString(invoice.id);
   if (!invoiceId) throw new Error("Facture Stripe sans identifiant");
 
   const userId = await findUserId(invoice);
   const subscriptionId = asString(invoice.subscription);
-  const status = asString(invoice.status || (invoice.paid === true ? "paid" : "open"));
+  const status = normalizedInvoiceStatus(eventType, invoice);
   const data = {
     stripe_invoice_id: invoiceId,
     stripe_subscription_id: subscriptionId,
@@ -247,24 +286,37 @@ async function syncInvoice(invoice: JsonMap, eventId: string): Promise<void> {
     period_start: unixMs(invoice.period_start),
     period_end: unixMs(invoice.period_end),
     last_stripe_event_id: eventId,
+    last_stripe_event_created_at: eventCreatedAtMs,
     stripe_updated_at: FieldValue.serverTimestamp(),
   };
-  await db.collection(COLLECTIONS.billingInvoices).doc(invoiceId).set(data, { merge: true });
+
+  const invoiceRef = db.collection(COLLECTIONS.billingInvoices).doc(invoiceId);
+  await db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(invoiceRef);
+    const lastEventCreatedAt = asNumber(
+      existing.data()?.last_stripe_event_created_at,
+    );
+    if (!shouldApplyStripeEvent(lastEventCreatedAt, eventCreatedAtMs)) {
+      return;
+    }
+    transaction.set(invoiceRef, data, { merge: true });
+  });
 
   if (subscriptionId) {
     const subscription = await stripeGet(`/v1/subscriptions/${encodeURIComponent(subscriptionId)}`);
-    await syncSubscription(subscription, eventId);
+    await syncSubscription(subscription, eventId, eventCreatedAtMs);
   }
 }
 
 async function processEvent(event: StripeEvent): Promise<void> {
   const object = asMap(event.data?.object);
+  const eventCreatedAtMs = asNumber(event.created) * 1000;
   switch (event.type) {
     case "checkout.session.completed": {
       const subscriptionId = asString(object.subscription);
       if (subscriptionId) {
         const subscription = await stripeGet(`/v1/subscriptions/${encodeURIComponent(subscriptionId)}`);
-        await syncSubscription(subscription, event.id);
+        await syncSubscription(subscription, event.id, eventCreatedAtMs);
       }
       return;
     }
@@ -273,7 +325,7 @@ async function processEvent(event: StripeEvent): Promise<void> {
     case "customer.subscription.deleted":
     case "customer.subscription.paused":
     case "customer.subscription.resumed":
-      await syncSubscription(object, event.id);
+      await syncSubscription(object, event.id, eventCreatedAtMs);
       return;
     case "invoice.created":
     case "invoice.finalized":
@@ -281,7 +333,7 @@ async function processEvent(event: StripeEvent): Promise<void> {
     case "invoice.payment_succeeded":
     case "invoice.payment_failed":
     case "invoice.voided":
-      await syncInvoice(object, event.id);
+      await syncInvoice(object, event.id, event.type, eventCreatedAtMs);
       return;
     default:
       return;

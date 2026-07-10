@@ -1,0 +1,29 @@
+name: Production guardrails
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify generated patches are committed
+        run: |
+          node tools/apply_prod_hardening_patches.mjs
+          git diff --exit-code
+
+      - name: Check production guardrails
+        run: node tools/check_production_guardrails.mjs

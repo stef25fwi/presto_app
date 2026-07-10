@@ -25,6 +25,9 @@
     "marketplace:migrate:profiles": "node --experimental-strip-types scripts/migrateProfilesToUsers.ts --apply",
     "test:firestore:public-listings": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_public_listings_rules.mjs\"",
     "test:firestore:canonical-rules": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_canonical_marketplace_rules.mjs\"",
+    "test:firestore:user-authority": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/test_user_authority_rules.mjs\"",
+    "test:firestore": "npm run test:firestore:public-listings && npm run test:firestore:canonical-rules && npm run test:firestore:user-authority",
+    "test:load:1000": "firebase emulators:exec --config ../firebase.json --only firestore \"node scripts/load_test_1000_users.mjs\"",
     "test": "npm run build && node --test $(find lib -name '*.test.js' -print)",
     "email:audit:new-events": "node scripts/audit_new_email_events.mjs",
     "brevo:webhook:smoke": "node scripts/brevo_webhook_smoke_test.mjs",
@@ -45,10 +48,10 @@
     "admin:claims:verify": "node scripts/migrate_admin_claims.mjs --verify"
   },
   "dependencies": {
-    "@google-cloud/speech": "^6.7.1",
+    "@google-cloud/speech": "^7.5.0",
     "@google-cloud/vertexai": "^1.10.0",
     "ffmpeg-static": "^5.2.0",
-    "firebase-admin": "^13.6.0",
+    "firebase-admin": "^13.10.0",
     "firebase-functions": "^7.2.5",
     "google-auth-library": "^9.15.1",
     "nodemailer": "^9.0.1",
@@ -61,5 +64,8 @@
     "@types/node": "^20.19.39",
     "firebase": "^11.10.0",
     "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.9.16"
   }
 }

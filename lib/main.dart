@@ -600,10 +600,12 @@ Future<void> main() async {
     // précharge en parallèle de l'init Firebase (I/O), sans bloquer le 1er rendu.
     unawaited(CitySearch.instance.ensureLoaded());
 
-    await typographySettings.load();
+    // La typographie distante ne bloque plus le premier rendu.
+    unawaited(typographySettings.load());
 
     await ensureFirebaseInitialized(source: 'main');
-    await CookieConsentService.instance.load();
+    // Le consentement est chargé en parallèle et l’UI réagit à son état.
+    unawaited(CookieConsentService.instance.load());
 
     await bootstrapAppCheck();
 

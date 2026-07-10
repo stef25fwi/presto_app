@@ -262,12 +262,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   String? _filterCityName;
   bool _departmentResetScheduled = false;
 
-  // Pagination / loading state
+  // Pagination par curseur : chaque page ne relit plus les documents déjà
+  // affichés. La limite maximale borne aussi le coût d'une session.
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _paginationDocs =
+      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  String? _paginationKey;
+  bool _isLoadingNextPage = false;
+  bool _hasMorePages = true;
 
-  // + Pagination progressive (moins brutale: 10 par page au lieu de 20)
-  static const int _initialLimit = 10;
-  static const int _pageSize = 10;
+  static const int _initialLimit = 20;
+  static const int _pageSize = 20;
   static const int _maxLimit = 100;
   int _pageLimit = _initialLimit;
 
@@ -774,12 +779,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   void _maybeLoadMore() {
     if (!_scrollController.hasClients) return;
-    if (_hasActiveClientFilters) return;
-    if (_pageLimit >= _maxLimit) return;
-    if (_lastSnapshotRawCount < _pageLimit) return;
+    if (_hasActiveClientFilters || _isLoadingNextPage || !_hasMorePages) return;
+    if (_paginationDocs.length >= _maxLimit || _lastDoc == null) return;
 
     final position = _scrollController.position;
-    // Seuil : quand on approche du bas (500px), on augmente la limite progressivement
     const thresholdPx = 500.0;
     if (position.maxScrollExtent - position.pixels > thresholdPx) return;
 
@@ -790,10 +793,62 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     if (!canRequest) return;
 
     _lastPaginationRequestAt = now;
+    unawaited(_loadNextPage());
+  }
 
-    setState(() {
-      _pageLimit = math.min(_pageLimit + _pageSize, _maxLimit);
-    });
+  Future<void> _loadNextPage() async {
+    if (_hasActiveClientFilters || _isLoadingNextPage || !_hasMorePages) return;
+    final cursor = _lastDoc;
+    final key = _paginationKey;
+    if (cursor == null || key == null || _paginationDocs.length >= _maxLimit) {
+      return;
+    }
+
+    final requestedLimit =
+        math.min(_pageSize, _maxLimit - _paginationDocs.length);
+    setState(() => _isLoadingNextPage = true);
+
+    try {
+      final nextDocs = await loadMergedPublicOfferQueryVariants(
+        queries: _buildCurrentListingsQueries(
+          limit: requestedLimit,
+          startAfterDocument: cursor,
+        ),
+        source: 'consult_listings_next_page',
+      );
+      if (!mounted || _paginationKey != key) return;
+
+      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{
+        for (final doc in _paginationDocs) doc.id: doc,
+      };
+      for (final doc in nextDocs) {
+        byId.putIfAbsent(doc.id, () => doc);
+      }
+
+      setState(() {
+        _paginationDocs = byId.values.toList(growable: false);
+        if (nextDocs.isNotEmpty) _lastDoc = nextDocs.last;
+        _hasMorePages = nextDocs.length == requestedLimit &&
+            _paginationDocs.length < _maxLimit;
+        _lastSnapshotRawCount = _paginationDocs.length;
+        _lastResultCount = _buildDisplayedOfferDocs(_paginationDocs).length;
+        _offersWarmCache[key] = _paginationDocs;
+        _displayedDocsCacheSignature = null;
+        _displayedDocsCache = null;
+        _renderItemsCacheSignature = null;
+        _renderItemsCache = null;
+      });
+    } catch (error) {
+      _logConsultOffersFetch(
+        'next-page-error',
+        details: <String, Object?>{
+          'message': error.toString(),
+          'loadedCount': _paginationDocs.length,
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingNextPage = false);
+    }
   }
 
   /// ✅ Précharge les données région/département au démarrage
@@ -872,12 +927,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   List<Query<Map<String, dynamic>>> _buildCurrentListingsQueries({
     required int limit,
+    DocumentSnapshot<Map<String, dynamic>>? startAfterDocument,
   }) {
     return buildMarketplaceListingsBrowseQueries(
       limit: limit,
       latestFirst: true,
       categoryId: _effectiveListingsCategoryId(),
       cityId: _effectiveListingsCityId(),
+      startAfterDocument: startAfterDocument,
     );
   }
 
@@ -888,7 +945,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     }
 
     _offersWarmLoadsInFlight.add(key);
-    final limit = _hasActiveClientFilters ? _maxLimit : _pageLimit;
+    final limit = _hasActiveClientFilters ? _maxLimit : _initialLimit;
 
     try {
       final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
@@ -941,6 +998,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     _cachedOffersStreamKey = null;
     _offersWarmCache.remove(key);
     _offersWarmLoadsInFlight.remove(key);
+    _paginationDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    _paginationKey = null;
+    _lastDoc = null;
+    _hasMorePages = true;
 
     try {
       await _primeOffersWarmCache(key);
@@ -956,8 +1017,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getOffersStream() {
     final key = _buildOffersStreamKey();
     if (_cachedOffersStream == null || _cachedOffersStreamKey != key) {
-      unawaited(_primeOffersWarmCache(key));
+      if (!_hasActiveClientFilters && _paginationKey != key) {
+        _paginationKey = key;
+        _paginationDocs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        _lastDoc = null;
+        _hasMorePages = true;
+      }
+      // Le stream principal est l’unique chargement initial. Le warm load
+      // parallèle doublait les lectures Firestore pour le même écran.
       _cachedOffersStream = _watchCombinedOffers().map((docs) {
+        if (!_hasActiveClientFilters && _paginationKey == key) {
+          _paginationDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>
+              .of(docs, growable: false);
+          _lastDoc = docs.isEmpty ? null : docs.last;
+          _hasMorePages =
+              docs.length >= _initialLimit && docs.length < _maxLimit;
+        }
         final displayedCount = _buildDisplayedOfferDocs(docs).length;
         _offersWarmCache[key] = docs;
         if (mounted &&
@@ -983,7 +1058,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     // change la clé (_buildOffersStreamKey), ce qui recrée un nouveau stream
     // et déclenche un nouveau fetch. Le refresh manuel reste assuré par le
     // bouton "Actualiser" qui invalide le cache du stream.
-    final limit = _hasActiveClientFilters ? _maxLimit : _pageLimit;
+    final limit = _hasActiveClientFilters ? _maxLimit : _initialLimit;
     final categoryId = _effectiveListingsCategoryId();
     final cityId = _effectiveListingsCityId();
 
@@ -2081,7 +2156,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       );
                     }
 
-                    final rawDocs = snapshot.data ?? const [];
+                    final snapshotDocs = snapshot.data ?? const <
+                        QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                    final rawDocs = !_hasActiveClientFilters &&
+                            _paginationKey == currentOffersStreamKey &&
+                            _paginationDocs.isNotEmpty
+                        ? _paginationDocs
+                        : snapshotDocs;
                     _lastSnapshotRawCount = rawDocs.length;
 
                     final docs = _getDisplayedOfferDocsMemo(

@@ -2326,7 +2326,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       color: kOrange,
       padding: EdgeInsets.only(top: topInset),
       child: SizedBox(
-        height: 94,
+        height: 108,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: kPageHorizontalPadding,
@@ -2346,6 +2346,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     Text(
                       _currentStepTitle,
                       textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -2877,20 +2879,23 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 ),
                 const SizedBox(height: 14),
                 ..._starterStatuses.map(
-                  (status) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(status),
-                    trailing: _situation == status
-                        ? const Icon(Icons.check_circle, color: kBlue)
-                        : null,
-                    onTap: () {
-                      setState(() {
-                        _situation = status;
-                        _showStarterErrors = false;
-                      });
-                      Navigator.of(sheetContext).pop();
-                      _onAnyFieldChanged();
-                    },
+                  (status) => Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(status),
+                      trailing: _situation == status
+                          ? const Icon(Icons.check_circle, color: kBlue)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _situation = status;
+                          _showStarterErrors = false;
+                        });
+                        Navigator.of(sheetContext).pop();
+                        _onAnyFieldChanged();
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -2945,22 +2950,25 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (_, index) {
                       final activity = activities[index];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(activity),
-                        trailing: _selectedActivity == activity
-                            ? const Icon(Icons.check_circle, color: kBlue)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedActivity = activity;
-                            _activityType =
-                                _resolveActivityTypeFromSelection(activity);
-                            _showStarterErrors = false;
-                          });
-                          Navigator.of(sheetContext).pop();
-                          _onAnyFieldChanged();
-                        },
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(activity),
+                          trailing: _selectedActivity == activity
+                              ? const Icon(Icons.check_circle, color: kBlue)
+                              : null,
+                          onTap: () {
+                            setState(() {
+                              _selectedActivity = activity;
+                              _activityType =
+                                  _resolveActivityTypeFromSelection(activity);
+                              _showStarterErrors = false;
+                            });
+                            Navigator.of(sheetContext).pop();
+                            _onAnyFieldChanged();
+                          },
+                        ),
                       );
                     },
                   ),
@@ -5487,11 +5495,10 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
       maxChildSize: 0.95,
       expand: false,
       builder: (ctx, scrollCtrl) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+        return Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               const SizedBox(height: 12),
@@ -7060,6 +7067,7 @@ class _TaskContactLinkChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 280),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: const Color(0xFFEFF6FF),
@@ -7075,12 +7083,16 @@ class _TaskContactLinkChip extends StatelessWidget {
               color: Color(0xFF1A73E8),
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF1A73E8),
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFF1A73E8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],

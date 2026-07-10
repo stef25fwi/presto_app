@@ -74,12 +74,34 @@ async function main() {
 
     const anonDb = testEnv.unauthenticatedContext().firestore();
     const userDb = testEnv.authenticatedContext('user_1').firestore();
+    const newUserDb = testEnv.authenticatedContext('user_new').firestore();
+    const premiumUserDb = testEnv.authenticatedContext('premium_user').firestore();
 
     // Limitation du SDK de test: request.app/App Check n'est pas simulable ici.
     // On couvre donc les refus sans App Check, qui sont le fail-closed critique.
     await assertFails(setDoc(doc(anonDb, 'users', 'anon_user'), { displayName: 'Anon' }));
-    await assertFails(setDoc(doc(userDb, 'users', 'user_1'), { displayName: 'X' }));
-    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { displayName: 'Y' }));
+
+    // Un propriétaire peut modifier uniquement les champs ordinaires de son profil.
+    await assertSucceeds(updateDoc(doc(userDb, 'users', 'user_1'), { displayName: 'Y' }));
+    await assertSucceeds(setDoc(doc(newUserDb, 'users', 'user_new'), {
+      displayName: 'Nouvel utilisateur',
+    }));
+
+    // Les droits premium, vérifications et identifiants Stripe restent serveur-only.
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), {
+      subscriptionPlan: 'ilipro',
+      subscriptionStatus: 'active',
+    }));
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { proVerified: true }));
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { stripeCustomerId: 'cus_fake' }));
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { uid: 'another_user' }));
+    await assertFails(updateDoc(doc(userDb, 'users', 'user_1'), { email: 'attacker@example.com' }));
+    await assertFails(setDoc(doc(premiumUserDb, 'users', 'premium_user'), {
+      displayName: 'Premium frauduleux',
+      subscriptionPlan: 'ilipro',
+      subscriptionStatus: 'active',
+    }));
+
     await assertFails(setDoc(doc(userDb, 'users', 'user_1', 'favoriteOffers', 'listing_public'), {
       listingId: 'listing_public',
     }));

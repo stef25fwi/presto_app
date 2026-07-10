@@ -9,6 +9,8 @@ setGlobalOptions({
 export { onUserCreated, onUserUpdated } from "./modules/auth/triggers";
 export { onAuthUserCreated } from "./modules/auth/on_auth_user_created";
 export { onUserRolesChanged } from "./modules/auth/role_claims_sync";
+export { requestAccountDeletion } from "./modules/auth/account_deletion";
+export { syncMyEmailVerification } from "./modules/auth/email_verification_sync";
 export {
   placesAutocomplete,
   placesDetails,
@@ -99,6 +101,7 @@ export {
 } from "./modules/messaging/callables";
 export { registerPushToken, unregisterPushToken, broadcastTestNotification, sendSelfTestNotification } from "./modules/notifications/callables";
 export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";
+export { reportClientMonitoringEvent } from "./modules/monitoring/callables";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
