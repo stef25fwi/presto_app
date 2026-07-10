@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/firebase_functions_region.dart';
 import 'subscription_models.dart';
+import 'subscription_return_history.dart';
 
 enum SubscriptionActionType {
   checkout,
@@ -114,6 +115,13 @@ class SubscriptionCheckoutService {
             'URL Stripe invalide ou manquante.',
           );
         }
+
+        // Sur le Web, la navigation Flutter interne ne modifie pas toujours
+        // l'URL du navigateur. On remplace donc l'entrée courante par la route
+        // Compte/Abonnements avant d'ouvrir Stripe dans le même onglet. Le
+        // bouton Retour du navigateur restaure ainsi la page des abonnements
+        // au lieu de recharger la racine et le splash.
+        prepareSubscriptionReturnHistory();
 
         final opened = await launchUrl(
           uri,
