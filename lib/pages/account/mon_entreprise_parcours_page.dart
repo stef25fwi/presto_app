@@ -362,20 +362,30 @@ class _EmptyState extends StatelessWidget {
                 color: Color(0xFF6B7280),
               ),
             ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: _kOrange,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kOrange,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(62),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  elevation: 4,
+                  shadowColor: _kOrange,
                 ),
+                onPressed: onCreate,
+                icon: const Icon(Icons.rocket_launch_rounded, size: 22),
+                label: const Text('Je crée mon entreprise'),
               ),
-              onPressed: onCreate,
-              icon: const Icon(Icons.rocket_launch_rounded),
-              label: const Text('Créer mon parcours'),
             ),
           ],
         ),
