@@ -44,6 +44,7 @@ jobs:
           node tools/apply_dependency_security_upgrades.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_stripe_ordering_hardening.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_function_resource_limits.mjs 2>&1 | tee -a pr_validation_logs/patches.log
+          node tools/apply_release_validation_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           git diff --exit-code 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/check_production_guardrails.mjs 2>&1 | tee -a pr_validation_logs/patches.log
 
