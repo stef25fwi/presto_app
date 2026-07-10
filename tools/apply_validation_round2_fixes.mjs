@@ -100,6 +100,9 @@ async function patchRegionPickerAndContactWidth() {
 async function patchRulesDiagnostics() {
   const path = 'functions/scripts/test_user_authority_rules.mjs';
   let content = await fs.readFile(path, 'utf8');
+  if (content.includes('for (const [field, update] of forbiddenUpdates)')) {
+    return;
+  }
 
   content = replaceOnce(
     content,
@@ -114,6 +117,9 @@ async function patchRulesDiagnostics() {
 async function patchWebBudgets() {
   const path = 'tools/check_web_bundle_size.mjs';
   let content = await fs.readFile(path, 'utf8');
+  if (content.includes('const maxAssetsBytes') && content.includes('assetsBytes')) {
+    return;
+  }
 
   content = replaceOnce(
     content,
