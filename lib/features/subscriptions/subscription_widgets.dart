@@ -386,6 +386,7 @@ class _SubscriptionPlansComparison extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cards = _subscriptionPlanPresentations
+        .where((plan) => plan.plan != userState.plan)
         .map(
           (plan) => _SubscriptionPlanCard(
             presentation: plan,
@@ -437,9 +438,8 @@ class _SubscriptionPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCurrent = presentation.plan == currentPlan;
     final isFree = presentation.plan == SubscriptionPlan.free;
-    final actionColor = isCurrent
-        ? _kSubscriptionTextSecondary
-        : presentation.accent;
+    final actionColor =
+        isCurrent ? _kSubscriptionTextSecondary : presentation.accent;
 
     return Container(
       width: double.infinity,
@@ -455,7 +455,9 @@ class _SubscriptionPlanCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: (presentation.isHighlighted ? presentation.accent : Colors.black)
+            color: (presentation.isHighlighted
+                    ? presentation.accent
+                    : Colors.black)
                 .withValues(alpha: presentation.isHighlighted ? 0.10 : 0.04),
             blurRadius: presentation.isHighlighted ? 16 : 10,
             offset: const Offset(0, 6),
@@ -912,8 +914,7 @@ const List<_PlanPresentation> _subscriptionPlanPresentations = [
     plan: SubscriptionPlan.ilipro,
     title: 'ilipro',
     price: '9,99 €/mois',
-    summary:
-        'Pour les pros qui veulent recevoir plus d’opportunités.',
+    summary: 'Pour les pros qui veulent recevoir plus d’opportunités.',
     currentSummary:
         'La formule pro pour renforcer votre visibilité et recevoir plus de demandes.',
     badge: 'Pour les pros',
