@@ -39,6 +39,7 @@ jobs:
           node tools/apply_auth_client_hardening.mjs
           node tools/apply_account_cleanup_patch.mjs
           node tools/normalize_cursor_patch_script.mjs
+          node tools/fix_cursor_query_signature_patch.mjs
           node tools/apply_cursor_pagination.mjs
           node tools/apply_validation_fixes.mjs
           node tools/apply_identity_authority_hardening.mjs
