@@ -5495,11 +5495,10 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
       maxChildSize: 0.95,
       expand: false,
       builder: (ctx, scrollCtrl) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+        return Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               const SizedBox(height: 12),
@@ -7068,6 +7067,7 @@ class _TaskContactLinkChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
+        constraints: const BoxConstraints(maxWidth: 280),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: const Color(0xFFEFF6FF),
