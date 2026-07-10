@@ -2,6 +2,8 @@
 
 import fs from 'node:fs/promises';
 
+await import('./apply_release_validation_fixes.mjs');
+
 function replaceOnce(content, before, after, label) {
   if (after && content.includes(after)) return content;
   const count = content.split(before).length - 1;
