@@ -13,6 +13,7 @@ async function write(path, content) {
 function replaceOnce(content, before, after, label) {
   if (after && content.includes(after)) return content;
   const count = content.split(before).length - 1;
+  if (!after && count === 0) return content;
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one source occurrence, found ${count}`);
   }
