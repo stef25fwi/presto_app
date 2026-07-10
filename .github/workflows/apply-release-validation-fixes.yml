@@ -1,0 +1,70 @@
+name: Apply release validation fixes
+
+on:
+  push:
+    branches:
+      - audit/prod-hardening-p0-p11
+    paths-ignore:
+      - docs/RELEASE_VALIDATION_PATCH_STATUS.md
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-release-validation-fixes
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit/prod-hardening-p0-p11
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply final validation fixes
+        id: patch
+        continue-on-error: true
+        run: node tools/apply_release_validation_fixes.mjs
+
+      - name: Commit generated fixes
+        if: steps.patch.outcome == 'success'
+        run: |
+          if git diff --quiet; then
+            echo "No release validation changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            pubspec.yaml \
+            functions/scripts/test_user_authority_rules.mjs \
+            lib/features/subscriptions/subscription_widgets.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            test/auth_email_static_test.dart
+          git commit -m "fix: corrige les derniers contrôles de release"
+          git push origin HEAD:audit/prod-hardening-p0-p11
+
+      - name: Publish patch failure
+        if: steps.patch.outcome != 'success'
+        run: |
+          cat > docs/RELEASE_VALIDATION_PATCH_STATUS.md <<'REPORT'
+          # Échec des correctifs de validation release
+
+          Le script `tools/apply_release_validation_fixes.mjs` n’a pas pu appliquer une transformation attendue.
+          REPORT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/RELEASE_VALIDATION_PATCH_STATUS.md
+          git commit -m "test: publie l’échec des correctifs release"
+          git push origin HEAD:audit/prod-hardening-p0-p11
+
+      - name: Enforce patch success
+        if: steps.patch.outcome != 'success'
+        run: exit 1
