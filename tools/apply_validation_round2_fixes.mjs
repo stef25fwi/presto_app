@@ -57,27 +57,33 @@ async function patchRegionPickerAndContactWidth() {
   );
 
   const contactBefore =
-    "class _TaskContactLink extends StatelessWidget {\n" +
+    "class _TaskContactLinkChip extends StatelessWidget {\n" +
     "  final String label;\n" +
     "  final VoidCallback onTap;\n\n" +
-    "  const _TaskContactLink({required this.label, required this.onTap});\n\n" +
+    "  const _TaskContactLinkChip({\n" +
+    "    required this.label,\n" +
+    "    required this.onTap,\n" +
+    "  });\n\n" +
     "  @override\n" +
     "  Widget build(BuildContext context) {\n" +
     "    return InkWell(\n" +
-    "      onTap: onTap,\n" +
     "      borderRadius: BorderRadius.circular(999),\n" +
+    "      onTap: onTap,\n" +
     "      child: Container(\n" +
     "        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),";
   const contactAfter =
-    "class _TaskContactLink extends StatelessWidget {\n" +
+    "class _TaskContactLinkChip extends StatelessWidget {\n" +
     "  final String label;\n" +
     "  final VoidCallback onTap;\n\n" +
-    "  const _TaskContactLink({required this.label, required this.onTap});\n\n" +
+    "  const _TaskContactLinkChip({\n" +
+    "    required this.label,\n" +
+    "    required this.onTap,\n" +
+    "  });\n\n" +
     "  @override\n" +
     "  Widget build(BuildContext context) {\n" +
     "    return InkWell(\n" +
-    "      onTap: onTap,\n" +
     "      borderRadius: BorderRadius.circular(999),\n" +
+    "      onTap: onTap,\n" +
     "      child: Container(\n" +
     "        constraints: const BoxConstraints(maxWidth: 280),\n" +
     "        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),";
