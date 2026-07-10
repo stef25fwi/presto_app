@@ -1,4 +1,4 @@
-name: Apply production hardening patches
+name: Apply and validate production hardening
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
       - audit/prod-hardening-p0-p11
     paths-ignore:
       - docs/APPLY_PATCH_STATUS.md
+      - docs/AUDIT_VALIDATION_STATUS.md
+      - audit_validation_logs/**
   workflow_dispatch:
 
 permissions:
@@ -16,8 +18,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  apply:
+  apply-and-validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,13 +30,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Prepare logs
+        run: mkdir -p audit_validation_logs
 
       - name: Apply idempotent patches
         id: patches
         continue-on-error: true
         run: |
           set -euo pipefail
-          exec > >(tee apply_patch.log) 2>&1
+          exec > >(tee audit_validation_logs/patches.log) 2>&1
           node tools/apply_prod_hardening_patches.mjs
           node tools/apply_startup_hardening.mjs
           node tools/apply_auth_client_hardening.mjs
@@ -47,6 +62,7 @@ jobs:
           node tools/apply_stripe_ordering_hardening.mjs
           node tools/apply_function_resource_limits.mjs
           npm --prefix functions install --package-lock-only --ignore-scripts
+          node tools/check_production_guardrails.mjs
 
       - name: Commit generated changes
         if: steps.patches.outcome == 'success'
@@ -91,7 +107,7 @@ jobs:
             echo "Commit source : \`${GITHUB_SHA}\`"
             echo
             echo '```text'
-            tail -n 160 apply_patch.log
+            tail -n 180 audit_validation_logs/patches.log
             echo '```'
           } > docs/APPLY_PATCH_STATUS.md
           git config user.name "github-actions[bot]"
@@ -100,6 +116,142 @@ jobs:
           git commit -m "test: publie l’échec du générateur de durcissement"
           git push origin HEAD:audit/prod-hardening-p0-p11
 
-      - name: Enforce successful patching
-        if: steps.patches.outcome != 'success'
-        run: exit 1
+      - name: Flutter dependencies
+        id: flutter_deps
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter config --enable-web 2>&1 | tee audit_validation_logs/flutter_deps.log
+          flutter pub get 2>&1 | tee -a audit_validation_logs/flutter_deps.log
+
+      - name: Flutter analyze
+        id: flutter_analyze
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter analyze --fatal-infos 2>&1 | tee audit_validation_logs/flutter_analyze.log
+
+      - name: Flutter tests
+        id: flutter_test
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter test --reporter expanded 2>&1 | tee audit_validation_logs/flutter_test.log
+
+      - name: Functions dependencies
+        id: functions_deps
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm --prefix functions ci 2>&1 | tee audit_validation_logs/functions_deps.log
+
+      - name: Functions build
+        id: functions_build
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm --prefix functions run build 2>&1 | tee audit_validation_logs/functions_build.log
+
+      - name: Functions tests
+        id: functions_test
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm --prefix functions test 2>&1 | tee audit_validation_logs/functions_test.log
+
+      - name: Install Firebase CLI
+        id: firebase_cli
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm install -g firebase-tools@13 2>&1 | tee audit_validation_logs/firebase_cli.log
+
+      - name: Firestore rules tests
+        id: firestore_rules
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npm --prefix functions run test:firestore 2>&1 | tee audit_validation_logs/firestore_rules.log
+
+      - name: Web release build
+        id: web_build
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          APPCHECK_RECAPTCHA_SITE_KEY=audit-placeholder-site-key \
+            bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run \
+            2>&1 | tee audit_validation_logs/web_build.log
+
+      - name: Web bundle budget
+        id: bundle_budget
+        if: steps.patches.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          node tools/check_web_bundle_size.mjs 2>&1 | tee audit_validation_logs/bundle_budget.log
+
+      - name: Generate validation report
+        if: always() && steps.patches.outcome == 'success'
+        run: |
+          cat > docs/AUDIT_VALIDATION_STATUS.md <<'REPORT'
+          # Validation automatique — branche audit/prod-hardening-p0-p11
+
+          Généré par GitHub Actions sur le commit `${{ github.sha }}`.
+
+          | Contrôle | Résultat |
+          |---|---|
+          | Patchs idempotents et garde-fous | `${{ steps.patches.outcome }}` |
+          | Dépendances Flutter | `${{ steps.flutter_deps.outcome }}` |
+          | Flutter analyze | `${{ steps.flutter_analyze.outcome }}` |
+          | Tests Flutter | `${{ steps.flutter_test.outcome }}` |
+          | Dépendances Functions | `${{ steps.functions_deps.outcome }}` |
+          | Build Functions | `${{ steps.functions_build.outcome }}` |
+          | Tests Functions | `${{ steps.functions_test.outcome }}` |
+          | Firebase CLI | `${{ steps.firebase_cli.outcome }}` |
+          | Tests Firestore Rules | `${{ steps.firestore_rules.outcome }}` |
+          | Build Web release | `${{ steps.web_build.outcome }}` |
+          | Budget bundle Web | `${{ steps.bundle_budget.outcome }}` |
+
+          Les 100 dernières lignes de chaque contrôle sont conservées ci-dessous.
+          REPORT
+
+          for file in audit_validation_logs/*.log; do
+            printf '\n## %s\n\n```text\n' "$(basename "$file")" >> docs/AUDIT_VALIDATION_STATUS.md
+            tail -n 100 "$file" >> docs/AUDIT_VALIDATION_STATUS.md
+            printf '\n```\n' >> docs/AUDIT_VALIDATION_STATUS.md
+          done
+
+      - name: Commit validation report
+        if: always() && steps.patches.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/AUDIT_VALIDATION_STATUS.md audit_validation_logs
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test: publie le rapport de validation préproduction"
+          git push origin HEAD:audit/prod-hardening-p0-p11
+
+      - name: Enforce successful validation
+        if: always()
+        run: |
+          if [ "${{ steps.patches.outcome }}" != "success" ]; then
+            echo "Patch generation failed."
+            exit 1
+          fi
+          outcomes='${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+          if echo "$outcomes" | grep -Eq 'failure|cancelled|skipped'; then
+            echo "Validation failed: $outcomes"
+            exit 1
+          fi
+          echo "Validation succeeded: $outcomes"
