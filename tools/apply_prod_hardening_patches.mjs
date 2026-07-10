@@ -126,12 +126,60 @@ async function patchLayoutTest() {
   await write(path, content);
 }
 
+async function patchMonitoringClient() {
+  const path = 'lib/services/app_monitoring_service.dart';
+  let content = await read(path);
+
+  content = replaceOnce(
+    content,
+    "import 'package:cloud_firestore/cloud_firestore.dart';\nimport 'package:firebase_auth/firebase_auth.dart';\n",
+    '',
+    'monitoring direct firestore imports',
+  );
+  content = replaceOnce(
+    content,
+    "import 'package:flutter/widgets.dart';\n",
+    "import 'package:flutter/widgets.dart';\n\nimport 'firebase_functions_region.dart';\n",
+    'monitoring callable import',
+  );
+  content = replaceOnce(
+    content,
+    "  static const String collectionName = 'app_monitoring_events';\n\n",
+    '',
+    'monitoring collection constant',
+  );
+
+  content = replaceRegexOnce(
+    content,
+    /      final user = FirebaseAuth\.instance\.currentUser;\n\n      await FirebaseFirestore\.instance\.collection\(collectionName\)\.add\([\s\S]*?      \)\.timeout\(const Duration\(seconds: 5\)\);/,
+    "      await callPrestoFunction<dynamic>(\n        functions: prestoFirebaseFunctions,\n        name: 'reportClientMonitoringEvent',\n        timeout: const Duration(seconds: 8),\n        area: 'monitoring',\n        parameters: <String, dynamic>{\n          'createdAtClient': DateTime.now().toUtc().toIso8601String(),\n          'level': level,\n          'scope': scope,\n          'action': action,\n          'message': _sanitizeValue(message),\n          'platform': kIsWeb ? 'web' : defaultTargetPlatform.name,\n          'releaseMode': kReleaseMode,\n          'appBuild': appBuild,\n          'gitCommit': gitCommit,\n          'buildTime': buildTime,\n          'data': cleanedData,\n        },\n      );",
+    "name: 'reportClientMonitoringEvent'",
+    'monitoring callable write',
+  );
+
+  await write(path, content);
+}
+
+async function patchFunctionsExports() {
+  const path = 'functions/src/index.ts';
+  let content = await read(path);
+  content = replaceOnce(
+    content,
+    'export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";\n',
+    'export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";\nexport { reportClientMonitoringEvent } from "./modules/monitoring/callables";\n',
+    'monitoring function export',
+  );
+  await write(path, content);
+}
+
 async function main() {
   await patchFirestoreRules();
   await patchPublicOffersQueries();
   await patchConsultOffersWarmLoad();
   await patchAdminFetchOnce();
   await patchLayoutTest();
+  await patchMonitoringClient();
+  await patchFunctionsExports();
   console.log('production hardening patches: OK');
 }
 
