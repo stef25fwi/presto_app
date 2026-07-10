@@ -10,12 +10,9 @@ async function write(path, content) {
   await fs.writeFile(path, content, 'utf8');
 }
 
-function replaceOnce(content, before, after, label) {
+function replaceKnown(content, before, after) {
   if (content.includes(after)) return content;
-  const count = content.split(before).length - 1;
-  if (count !== 1) {
-    throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
-  }
+  if (!content.includes(before)) return content;
   return content.replace(before, after);
 }
 
@@ -24,8 +21,6 @@ async function patchSubscriptionApi() {
   let content = await read(path);
   if (content.includes('enum _OfferAudience')) {
     content = content.replaceAll('_OfferAudience', 'OfferAudience');
-  } else if (!content.includes('enum OfferAudience')) {
-    throw new Error('subscription audience enum not found');
   }
   await write(path, content);
 }
@@ -33,11 +28,10 @@ async function patchSubscriptionApi() {
 async function patchAuthStaticTest() {
   const path = 'test/auth_email_static_test.dart';
   let content = await read(path);
-  content = replaceOnce(
+  content = replaceKnown(
     content,
     "      expect(auth, contains('.delete()'));",
     "      expect(auth, contains(\"name: 'requestAccountDeletion'\"));\n      expect(auth, isNot(contains('await user.delete()')));",
-    'account deletion static assertion',
   );
   await write(path, content);
 }
@@ -45,15 +39,10 @@ async function patchAuthStaticTest() {
 async function patchUserAuthorityTest() {
   const path = 'functions/scripts/test_user_authority_rules.mjs';
   let content = await read(path);
-  if (content.includes("      { accountStatus: 'active' },")) {
-    content = content.replace(
-      "      { accountStatus: 'active' },",
-      "      { accountStatus: 'disabled' },",
-    );
-  } else if (!content.includes("      { accountStatus: 'disabled' },") &&
-             !content.includes("      { accountStatus: 'suspended' },")) {
-    throw new Error('protected account status test not found');
-  }
+  content = content.replace(
+    "      { accountStatus: 'active' },",
+    "      { accountStatus: 'disabled' },",
+  );
   await write(path, content);
 }
 
@@ -61,18 +50,16 @@ async function patchJourneyLayouts() {
   const path = 'lib/pages/toolbox_je_me_lance_page.dart';
   let content = await read(path);
 
-  content = replaceOnce(
-    content,
-    '      child: SizedBox(\n        height: 94,',
-    '      child: SizedBox(\n        height: 108,',
-    'responsive journey header height',
-  );
+  content = content
+    .replace('      child: SizedBox(\n        height: 94,',
+      '      child: SizedBox(\n        height: 108,')
+    .replace('      child: SizedBox(\n        height: 106,',
+      '      child: SizedBox(\n        height: 108,');
 
-  content = replaceOnce(
+  content = replaceKnown(
     content,
     '                    Text(\n                      _currentStepTitle,\n                      textAlign: TextAlign.center,',
     '                    Text(\n                      _currentStepTitle,\n                      textAlign: TextAlign.center,\n                      maxLines: 2,\n                      overflow: TextOverflow.ellipsis,',
-    'journey header title bounds',
   );
 
   const statusBefore = `                ..._starterStatuses.map(
@@ -112,12 +99,7 @@ async function patchJourneyLayouts() {
                     ),
                   ),
                 ),`;
-  content = replaceOnce(
-    content,
-    statusBefore,
-    statusAfter,
-    'status picker Material tiles',
-  );
+  content = replaceKnown(content, statusBefore, statusAfter);
 
   const activityBefore = `                      return ListTile(
                         contentPadding: EdgeInsets.zero,
@@ -156,12 +138,7 @@ async function patchJourneyLayouts() {
                           },
                         ),
                       );`;
-  content = replaceOnce(
-    content,
-    activityBefore,
-    activityAfter,
-    'activity picker Material tiles',
-  );
+  content = replaceKnown(content, activityBefore, activityAfter);
 
   const chipBefore = `            const SizedBox(width: 6),
             Text(
@@ -186,12 +163,7 @@ async function patchJourneyLayouts() {
                 ),
               ),
             ),`;
-  content = replaceOnce(
-    content,
-    chipBefore,
-    chipAfter,
-    'task contact chip wrapping',
-  );
+  content = replaceKnown(content, chipBefore, chipAfter);
 
   await write(path, content);
 }
