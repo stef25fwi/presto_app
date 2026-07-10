@@ -379,28 +379,13 @@ List<Query<Map<String, dynamic>>> buildMarketplaceListingsBrowseQueries({
       break;
   }
 
-  final queries = <Query<Map<String, dynamic>>>[];
-  if (latestFirst) {
-    queries
-        .add(filteredQuery.orderBy('createdAt', descending: true).limit(limit));
-  }
-
-  // Fallback sans orderBy : conserve le contrat public active/public, évite un
-  // échec global si l'index composite n'est pas prêt.
-  queries.add(filteredQuery.limit(limit));
-
-  if (hasServerFilter) {
-    if (latestFirst) {
-      queries
-          .add(baseQuery.orderBy('createdAt', descending: true).limit(limit));
-    }
-    // Dernier secours : fetch public non filtré, puis filtrage exact côté
-    // client. Cela évite qu'une seule forme de requête indexée bloque toute la
-    // page Je consulte avec permission-denied/failed-precondition.
-    queries.add(baseQuery.limit(limit));
-  }
-
-  return queries;
+  // Une seule requête canonique indexée. Les anciens fallbacks parallèles
+  // multipliaient les lectures Firestore et pouvaient charger des résultats non
+  // filtrés côté client. Un index manquant doit désormais être détecté en CI.
+  final canonicalQuery = latestFirst
+      ? filteredQuery.orderBy('createdAt', descending: true)
+      : filteredQuery;
+  return <Query<Map<String, dynamic>>>[canonicalQuery.limit(limit)];
 }
 
 /// Executes every [queries] variant, merges results by document ID and returns

@@ -1897,18 +1897,18 @@ class _EmailDashboardContent extends StatelessWidget {
         .where('created_at', isGreaterThanOrEqualTo: threshold)
         .orderBy('created_at', descending: true)
         .limit(1000)
-        .snapshots();
+        .get().asStream();
     final jobsStream = FirebaseFirestore.instance
         .collection('email_jobs')
         .where('updated_at', isGreaterThanOrEqualTo: threshold)
         .orderBy('updated_at', descending: true)
         .limit(60)
-        .snapshots();
+        .get().asStream();
     final ticketsStream = FirebaseFirestore.instance
         .collection('support_tickets')
         .orderBy('updated_at', descending: true)
         .limit(60)
-        .snapshots();
+        .get().asStream();
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: logsStream,
@@ -3780,27 +3780,27 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
     _usersStream = FirebaseFirestore.instance
         .collection('users')
         .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
+        .get().asStream();
     _activeUsersStream = FirebaseFirestore.instance
         .collection('users')
         .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
+        .get().asStream();
     _listingsStream = FirebaseFirestore.instance
         .collection('listings')
         .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
+        .get().asStream();
     _subscriptionsStream = FirebaseFirestore.instance
         .collection('subscriptions')
         .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
+        .get().asStream();
     _billingInvoicesStream = FirebaseFirestore.instance
         .collection('billing_invoices')
         .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .snapshots();
+        .get().asStream();
     _analyticsStream = FirebaseFirestore.instance
         .collection('analyticsSnapshots')
         .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
-        .snapshots();
+        .get().asStream();
   }
 
   Future<void> _openDomainDetails(_AdminDomainLiveData data) async {

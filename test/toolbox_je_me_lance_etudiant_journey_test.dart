@@ -70,21 +70,8 @@ void main() {
   testWidgets(
     'le statut Étudiant + activité du catalogue alimente le parcours avec la fiche officielle',
     (tester) async {
-      // La page contient des avertissements de layout préexistants
-      // (débordement de l'indicateur d'étapes du header, ListTile sans
-      // Material ancestor dans le picker d'activité) sans lien avec le
-      // pipeline de fiches ; on ne laisse pas ce bruit faire échouer ce
-      // test de bout en bout.
-      final oldOnError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        final message = details.exception.toString();
-        if (message.contains('RenderFlex overflowed') ||
-            message.contains('ListTile background color')) {
-          return;
-        }
-        oldOnError?.call(details);
-      };
-      addTearDown(() => FlutterError.onError = oldOnError);
+      // Les erreurs de layout ne sont plus neutralisées : tout overflow ou
+      // usage Material invalide doit faire échouer le test et bloquer la CI.
 
       tester.view.physicalSize = const Size(430, 3200);
       tester.view.devicePixelRatio = 1;

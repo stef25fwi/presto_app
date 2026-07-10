@@ -252,7 +252,27 @@ service cloud.firestore {
         'isModerator',
         'isSuperadmin',
         'superAdmin',
-        'trustScore'
+        'trustScore',
+        'accountStatus',
+        'emailVerified',
+        'phoneVerified',
+        'proVerified',
+        'siretVerified',
+        'subscriptionPlan',
+        'subscriptionStatus',
+        'subscriptionExpiresAt',
+        'subscriptionCancelAtPeriodEnd',
+        'stripeCustomerId',
+        'stripe_customer_id',
+        'stripeSubscriptionId',
+        'stripe_subscription_id',
+        'stripePriceId',
+        'stripe_price_id',
+        'stripeUpdatedAt',
+        'lastStripeEventId',
+        'deletionRequestedAt',
+        'deletionCompletedAt',
+        'deletedAt'
       ];
     }
 
@@ -379,7 +399,8 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && userId == uid()
         && !changedKeys().hasAny(protectedUserFields());
-      allow delete: if isSignedIn() && userId == uid();
+      // La suppression de compte passe exclusivement par requestAccountDeletion.
+      allow delete: if false;
 
       match /push_tokens/{tokenId} {
         allow read, create, update, delete: if false;
