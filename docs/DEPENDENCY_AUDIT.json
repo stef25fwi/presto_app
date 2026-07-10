@@ -1,27 +1,6 @@
 {
   "auditReportVersion": 2,
   "vulnerabilities": {
-    "@google-cloud/common": {
-      "name": "@google-cloud/common",
-      "severity": "moderate",
-      "isDirect": false,
-      "via": [
-        "retry-request",
-        "teeny-request"
-      ],
-      "effects": [
-        "@google-cloud/speech"
-      ],
-      "range": "0.32.1 - 5.0.2",
-      "nodes": [
-        "node_modules/@google-cloud/common"
-      ],
-      "fixAvailable": {
-        "name": "@google-cloud/speech",
-        "version": "7.5.0",
-        "isSemVerMajor": true
-      }
-    },
     "@google-cloud/firestore": {
       "name": "@google-cloud/firestore",
       "severity": "moderate",
@@ -39,25 +18,6 @@
       "fixAvailable": {
         "name": "firebase-admin",
         "version": "10.3.0",
-        "isSemVerMajor": true
-      }
-    },
-    "@google-cloud/speech": {
-      "name": "@google-cloud/speech",
-      "severity": "moderate",
-      "isDirect": true,
-      "via": [
-        "@google-cloud/common",
-        "uuid"
-      ],
-      "effects": [],
-      "range": "3.0.0 - 6.7.1",
-      "nodes": [
-        "node_modules/@google-cloud/speech"
-      ],
-      "fixAvailable": {
-        "name": "@google-cloud/speech",
-        "version": "7.5.0",
         "isSemVerMajor": true
       }
     },
@@ -81,52 +41,6 @@
         "version": "10.3.0",
         "isSemVerMajor": true
       }
-    },
-    "@grpc/grpc-js": {
-      "name": "@grpc/grpc-js",
-      "severity": "high",
-      "isDirect": false,
-      "via": [
-        {
-          "source": 1120587,
-          "name": "@grpc/grpc-js",
-          "dependency": "@grpc/grpc-js",
-          "title": "@grpc/grpc-js: A malformed request can cause a server crash",
-          "url": "https://github.com/advisories/GHSA-5375-pq7m-f5r2",
-          "severity": "high",
-          "cwe": [
-            "CWE-248"
-          ],
-          "cvss": {
-            "score": 7.5,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
-          },
-          "range": "<1.9.16"
-        },
-        {
-          "source": 1120593,
-          "name": "@grpc/grpc-js",
-          "dependency": "@grpc/grpc-js",
-          "title": "@grpc/grpc-js: An incoming malformed compressed message can cause a client or server crash",
-          "url": "https://github.com/advisories/GHSA-99f4-grh7-6pcq",
-          "severity": "high",
-          "cwe": [
-            "CWE-248",
-            "CWE-400"
-          ],
-          "cvss": {
-            "score": 7.5,
-            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
-          },
-          "range": "<1.9.16"
-        }
-      ],
-      "effects": [],
-      "range": "<=1.9.15",
-      "nodes": [
-        "node_modules/@firebase/firestore/node_modules/@grpc/grpc-js"
-      ],
-      "fixAvailable": true
     },
     "firebase-admin": {
       "name": "firebase-admin",
@@ -194,7 +108,7 @@
       ],
       "range": "4.0.5-experimental - 4.6.1",
       "nodes": [
-        "node_modules/google-gax"
+        "node_modules/@google-cloud/firestore/node_modules/google-gax"
       ],
       "fixAvailable": {
         "name": "firebase-admin",
@@ -210,7 +124,6 @@
         "teeny-request"
       ],
       "effects": [
-        "@google-cloud/common",
         "@google-cloud/storage",
         "google-gax"
       ],
@@ -232,7 +145,6 @@
         "uuid"
       ],
       "effects": [
-        "@google-cloud/common",
         "@google-cloud/storage",
         "retry-request"
       ],
@@ -270,7 +182,6 @@
         }
       ],
       "effects": [
-        "@google-cloud/speech",
         "gaxios",
         "google-gax",
         "teeny-request"
@@ -280,8 +191,8 @@
         "node_modules/uuid"
       ],
       "fixAvailable": {
-        "name": "@google-cloud/speech",
-        "version": "7.5.0",
+        "name": "firebase-admin",
+        "version": "10.3.0",
         "isSemVerMajor": true
       }
     }
@@ -290,18 +201,18 @@
     "vulnerabilities": {
       "info": 0,
       "low": 0,
-      "moderate": 11,
-      "high": 1,
+      "moderate": 9,
+      "high": 0,
       "critical": 0,
-      "total": 12
+      "total": 9
     },
     "dependencies": {
-      "prod": 325,
-      "dev": 107,
-      "optional": 40,
+      "prod": 342,
+      "dev": 109,
+      "optional": 53,
       "peer": 5,
       "peerOptional": 0,
-      "total": 476
+      "total": 508
     }
   }
 }
