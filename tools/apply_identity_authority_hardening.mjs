@@ -30,12 +30,16 @@ await fs.writeFile(authPath, auth, 'utf8');
 
 const canonicalPath = 'functions/scripts/test_canonical_marketplace_rules.mjs';
 let canonical = await fs.readFile(canonicalPath, 'utf8');
-canonical = replaceOnce(
-  canonical,
-  "    await assertSucceeds(setDoc(doc(userDb, 'users', 'user_1'), { displayName: 'X' }));",
-  "    await assertSucceeds(setDoc(\n      doc(userDb, 'users', 'user_1'),\n      { displayName: 'X' },\n      { merge: true },\n    ));",
-  'canonical merge profile write',
-);
+const legacyCanonicalWrite =
+  "    await assertSucceeds(setDoc(doc(userDb, 'users', 'user_1'), { displayName: 'X' }));";
+if (canonical.includes(legacyCanonicalWrite)) {
+  canonical = canonical.replace(
+    legacyCanonicalWrite,
+    "    await assertSucceeds(setDoc(\n      doc(userDb, 'users', 'user_1'),\n      { displayName: 'X' },\n      { merge: true },\n    ));",
+  );
+} else if (!canonical.includes('Un propriétaire peut modifier uniquement les champs ordinaires')) {
+  throw new Error('canonical profile test is neither legacy nor already hardened');
+}
 await fs.writeFile(canonicalPath, canonical, 'utf8');
 
 const authorityPath = 'functions/scripts/test_user_authority_rules.mjs';
