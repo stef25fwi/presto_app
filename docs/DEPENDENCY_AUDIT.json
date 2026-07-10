@@ -38,7 +38,7 @@
       ],
       "fixAvailable": {
         "name": "firebase-admin",
-        "version": "14.1.0",
+        "version": "10.3.0",
         "isSemVerMajor": true
       }
     },
@@ -78,7 +78,7 @@
       ],
       "fixAvailable": {
         "name": "firebase-admin",
-        "version": "14.1.0",
+        "version": "10.3.0",
         "isSemVerMajor": true
       }
     },
@@ -136,14 +136,34 @@
         "@google-cloud/firestore",
         "@google-cloud/storage"
       ],
-      "effects": [],
+      "effects": [
+        "firebase-functions"
+      ],
       "range": "7.0.0 - 8.2.0 || >=11.0.0",
       "nodes": [
         "node_modules/firebase-admin"
       ],
       "fixAvailable": {
         "name": "firebase-admin",
-        "version": "14.1.0",
+        "version": "10.3.0",
+        "isSemVerMajor": true
+      }
+    },
+    "firebase-functions": {
+      "name": "firebase-functions",
+      "severity": "moderate",
+      "isDirect": true,
+      "via": [
+        "firebase-admin"
+      ],
+      "effects": [],
+      "range": "2.2.0 - 2.3.1 || >=5.0.0",
+      "nodes": [
+        "node_modules/firebase-functions"
+      ],
+      "fixAvailable": {
+        "name": "firebase-functions",
+        "version": "4.9.0",
         "isSemVerMajor": true
       }
     },
@@ -178,7 +198,7 @@
       ],
       "fixAvailable": {
         "name": "firebase-admin",
-        "version": "14.1.0",
+        "version": "10.3.0",
         "isSemVerMajor": true
       }
     },
@@ -200,7 +220,7 @@
       ],
       "fixAvailable": {
         "name": "firebase-admin",
-        "version": "14.1.0",
+        "version": "10.3.0",
         "isSemVerMajor": true
       }
     },
@@ -222,7 +242,7 @@
       ],
       "fixAvailable": {
         "name": "firebase-admin",
-        "version": "14.1.0",
+        "version": "10.3.0",
         "isSemVerMajor": true
       }
     },
@@ -270,10 +290,10 @@
     "vulnerabilities": {
       "info": 0,
       "low": 0,
-      "moderate": 10,
+      "moderate": 11,
       "high": 1,
       "critical": 0,
-      "total": 11
+      "total": 12
     },
     "dependencies": {
       "prod": 325,
