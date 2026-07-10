@@ -9,6 +9,7 @@ setGlobalOptions({
 export { onUserCreated, onUserUpdated } from "./modules/auth/triggers";
 export { onAuthUserCreated } from "./modules/auth/on_auth_user_created";
 export { onUserRolesChanged } from "./modules/auth/role_claims_sync";
+export { requestAccountDeletion } from "./modules/auth/account_deletion";
 export {
   placesAutocomplete,
   placesDetails,
