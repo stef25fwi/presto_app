@@ -29,10 +29,19 @@ class SubscriptionActionRequest {
 class SubscriptionCheckoutService {
   const SubscriptionCheckoutService();
 
+  static bool _openingStripe = false;
+
   Future<void> handleAction(
     BuildContext context,
     SubscriptionActionRequest request,
   ) async {
+    if (_openingStripe) {
+      return _showSnackBar(
+        context,
+        'Ouverture de Stripe déjà en cours…',
+      );
+    }
+
     switch (request.action) {
       case SubscriptionActionType.checkout:
         final plan = request.plan;
@@ -42,9 +51,9 @@ class SubscriptionCheckoutService {
             'Cette formule ne nécessite pas de paiement.',
           );
         }
-        return _openFirstWorkingStripeUrl(
+        return _openStripeUrl(
           context,
-          callableNames: _checkoutCallableNames,
+          callableName: 'createSubscriptionCheckoutSession',
           payload: <String, dynamic>{
             'plan': subscriptionPlanKey(plan),
             'subscriptionPlan': subscriptionPlanKey(plan),
@@ -55,9 +64,9 @@ class SubscriptionCheckoutService {
               : 'Stripe n’est pas activé dans la configuration abonnement.',
         );
       case SubscriptionActionType.manage:
-        return _openFirstWorkingStripeUrl(
+        return _openStripeUrl(
           context,
-          callableNames: _portalCallableNames,
+          callableName: 'createSubscriptionPortalSession',
           payload: <String, dynamic>{
             'source': request.source,
           },
@@ -73,89 +82,66 @@ class SubscriptionCheckoutService {
     }
   }
 
-  static const List<String> _checkoutCallableNames = [
-    // Nouvelle couche abonnement.
-    'createSubscriptionCheckoutSession',
-    // Noms compatibles avec les implémentations Stripe déjà testées.
-    'createStripeCheckoutSession',
-    'createCheckoutSession',
-    'createSubscriptionCheckout',
-    'createStripeSubscriptionCheckout',
-    'createStripeSubscriptionCheckoutSession',
-    'startSubscriptionCheckout',
-    'createBillingCheckoutSession',
-  ];
-
-  static const List<String> _portalCallableNames = [
-    // Nouvelle couche abonnement.
-    'createSubscriptionPortalSession',
-    // Noms compatibles avec les implémentations Stripe déjà testées.
-    'createStripePortalSession',
-    'createCustomerPortalSession',
-    'createBillingPortalSession',
-    'createPortalSession',
-    'createStripeCustomerPortalSession',
-  ];
-
-  Future<void> _openFirstWorkingStripeUrl(
+  Future<void> _openStripeUrl(
     BuildContext context, {
-    required List<String> callableNames,
+    required String callableName,
     required Map<String, dynamic> payload,
     required String unavailableMessage,
   }) async {
-    FirebaseFunctionsException? lastFirebaseError;
-    Object? lastGenericError;
+    FirebaseFunctionsException? firebaseError;
+    Object? genericError;
 
-    for (final callableName in callableNames) {
-      try {
-        final rawUrl = await _fetchStripeUrl(callableName, payload);
-        final uri = Uri.tryParse(rawUrl.trim());
-        if (uri == null || !uri.hasScheme) {
-          throw const SubscriptionCheckoutException(
-            'URL Stripe invalide ou manquante.',
-          );
-        }
-
-        // Sur le Web, la navigation Flutter interne ne modifie pas toujours
-        // l'URL du navigateur. On remplace donc l'entrée courante par la route
-        // Compte/Abonnements avant d'ouvrir Stripe dans le même onglet. Le
-        // bouton Retour du navigateur restaure ainsi la page des abonnements
-        // au lieu de recharger la racine et le splash.
-        prepareSubscriptionReturnHistory();
-
-        final opened = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-          webOnlyWindowName: '_self',
+    _openingStripe = true;
+    try {
+      final rawUrl = await _fetchStripeUrl(callableName, payload);
+      final uri = Uri.tryParse(rawUrl.trim());
+      if (uri == null || !_isTrustedStripeUri(uri)) {
+        throw const SubscriptionCheckoutException(
+          'L’adresse de paiement retournée n’est pas une URL Stripe sécurisée.',
         );
-        if (!opened) {
-          throw const SubscriptionCheckoutException(
-            'Impossible d’ouvrir la page Stripe.',
-          );
-        }
-        return;
-      } on FirebaseFunctionsException catch (error) {
-        lastFirebaseError = error;
-        // Si la callable n’existe pas, on essaie le nom compatible suivant.
-        if (error.code == 'not-found' || error.code == 'unimplemented') {
-          continue;
-        }
-        break;
-      } catch (error) {
-        lastGenericError = error;
-        break;
       }
+
+      // Sur le Web, la navigation Flutter interne ne modifie pas toujours
+      // l'URL du navigateur. On remplace donc l'entrée courante par la route
+      // Compte/Abonnements avant d'ouvrir Stripe dans le même onglet. Le
+      // bouton Retour du navigateur restaure ainsi la page des abonnements
+      // au lieu de recharger la racine et le splash.
+      prepareSubscriptionReturnHistory();
+
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
+      );
+      if (!opened) {
+        throw const SubscriptionCheckoutException(
+          'Impossible d’ouvrir la page Stripe.',
+        );
+      }
+      return;
+    } on FirebaseFunctionsException catch (error) {
+      firebaseError = error;
+    } catch (error) {
+      genericError = error;
+    } finally {
+      _openingStripe = false;
     }
 
     if (!context.mounted) return;
     await _showSnackBar(
       context,
       _messageForFailure(
-        lastFirebaseError: lastFirebaseError,
-        lastGenericError: lastGenericError,
+        firebaseError: firebaseError,
+        genericError: genericError,
         fallback: unavailableMessage,
       ),
     );
+  }
+
+  bool _isTrustedStripeUri(Uri uri) {
+    if (uri.scheme.toLowerCase() != 'https') return false;
+    final host = uri.host.toLowerCase();
+    return host == 'stripe.com' || host.endsWith('.stripe.com');
   }
 
   Future<String> _fetchStripeUrl(
@@ -164,7 +150,7 @@ class SubscriptionCheckoutService {
   ) async {
     final callable = prestoFirebaseFunctions.httpsCallable(
       callableName,
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
     );
     final response = await callable.call<Map<dynamic, dynamic>>(payload);
     final data = Map<String, dynamic>.from(response.data);
@@ -193,19 +179,26 @@ class SubscriptionCheckoutService {
   }
 
   String _messageForFailure({
-    required FirebaseFunctionsException? lastFirebaseError,
-    required Object? lastGenericError,
+    required FirebaseFunctionsException? firebaseError,
+    required Object? genericError,
     required String fallback,
   }) {
-    if (lastFirebaseError != null) {
-      final message = lastFirebaseError.message?.trim();
+    if (firebaseError != null) {
+      final message = firebaseError.message?.trim();
       if (message != null && message.isNotEmpty) return message;
-      if (lastFirebaseError.code == 'unauthenticated') {
-        return 'Connectez-vous pour gérer votre abonnement.';
+      switch (firebaseError.code) {
+        case 'unauthenticated':
+          return 'Connectez-vous pour gérer votre abonnement.';
+        case 'permission-denied':
+          return 'Cette opération Stripe n’est pas autorisée.';
+        case 'resource-exhausted':
+          return 'Stripe reçoit trop de demandes. Réessayez dans un instant.';
+        case 'unavailable':
+          return 'Stripe est temporairement indisponible.';
       }
     }
-    if (lastGenericError is SubscriptionCheckoutException) {
-      return lastGenericError.message;
+    if (genericError is SubscriptionCheckoutException) {
+      return genericError.message;
     }
     return fallback;
   }

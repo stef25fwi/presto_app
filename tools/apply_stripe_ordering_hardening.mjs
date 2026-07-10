@@ -5,6 +5,24 @@ import fs from 'node:fs/promises';
 const path = 'functions/src/modules/billing/stripe_webhook.ts';
 let content = await fs.readFile(path, 'utf8');
 
+// Ce script reste compatible avec l'ancien webhook, mais ne doit jamais tenter
+// de réécrire une implémentation plus récente qui possède déjà les garanties
+// d'ordre, de transaction et de normalisation attendues.
+const hardenedMarkers = [
+  'export function shouldApplyStripeEvent(',
+  'export function normalizedInvoiceStatus(',
+  'last_stripe_event_created_at: eventCreatedAtMs',
+  'lastStripeEventCreatedAt: eventCreatedAtMs',
+  'await db.runTransaction(async (transaction) => {',
+  'eventType: string,',
+  'eventCreatedAtMs: number,',
+];
+
+if (hardenedMarkers.every((marker) => content.includes(marker))) {
+  console.log('stripe ordering hardening: already hardened');
+  process.exit(0);
+}
+
 function replaceOnce(before, after, label) {
   if (content.includes(after)) return;
   const count = content.split(before).length - 1;
