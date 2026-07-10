@@ -1,12 +1,6 @@
 name: Apply validation round 2 fixes
 
 on:
-  push:
-    branches:
-      - audit/prod-hardening-p0-p11
-    paths:
-      - tools/apply_validation_round2.mjs
-      - .github/workflows/apply-validation-round2.yml
   workflow_dispatch:
 
 permissions:
