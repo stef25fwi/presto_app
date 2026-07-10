@@ -956,7 +956,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getOffersStream() {
     final key = _buildOffersStreamKey();
     if (_cachedOffersStream == null || _cachedOffersStreamKey != key) {
-      unawaited(_primeOffersWarmCache(key));
+      // Le stream principal est l’unique chargement initial. Le warm load
+      // parallèle doublait les lectures Firestore pour le même écran.
       _cachedOffersStream = _watchCombinedOffers().map((docs) {
         final displayedCount = _buildDisplayedOfferDocs(docs).length;
         _offersWarmCache[key] = docs;
