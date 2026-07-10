@@ -119,6 +119,18 @@ class AppUserSubscriptionState {
   }
 }
 
+/// Valeur utilisée pour représenter un quota fonctionnel "illimité".
+const int kUnlimitedSubscriptionFeatureQuota = 999999;
+
+/// Quota mensuel de brouillons IA texte pour le plan Gratuit.
+const int kFreeAiDraftQuotaPerMonth = 2;
+
+/// Quota mensuel d'IA vocale pour le plan Gratuit.
+const int kFreeVoiceAiQuotaPerMonth = 1;
+
+/// Quota mensuel d'IA vocale pour ilipresto+.
+const int kIliPrestoPlusVoiceAiQuotaPerMonth = 5;
+
 class SubscriptionFeatures {
   final bool canUseDirectCall;
   final bool canUseFavorites;
@@ -132,6 +144,8 @@ class SubscriptionFeatures {
   final bool hasProBadge;
   final int maxActiveOffers;
   final int maxPhotosPerOffer;
+  final int maxAiDraftsPerMonth;
+  final int maxVoiceAiUsesPerMonth;
 
   const SubscriptionFeatures({
     required this.canUseDirectCall,
@@ -146,7 +160,15 @@ class SubscriptionFeatures {
     required this.hasProBadge,
     required this.maxActiveOffers,
     required this.maxPhotosPerOffer,
+    required this.maxAiDraftsPerMonth,
+    required this.maxVoiceAiUsesPerMonth,
   });
+
+  bool get hasUnlimitedAiDrafts =>
+      maxAiDraftsPerMonth >= kUnlimitedSubscriptionFeatureQuota;
+
+  bool get hasUnlimitedVoiceAiUses =>
+      maxVoiceAiUsesPerMonth >= kUnlimitedSubscriptionFeatureQuota;
 }
 
 class ConversationAttachmentEntitlements {
@@ -280,38 +302,23 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
   SubscriptionPlan plan, {
   bool freeAccessMode = true,
 }) {
-  if (freeAccessMode) {
-    return const SubscriptionFeatures(
-      canUseDirectCall: true,
-      canUseFavorites: true,
-      canReceiveFavoriteAlerts: true,
-      canUseAiDraft: true,
-      canUseVoiceAi: true,
-      canBoostOffer: true,
-      canAccessStats: true,
-      canCreateProProfile: true,
-      hasVerifiedBadge: true,
-      hasProBadge: true,
-      maxActiveOffers: 9999,
-      maxPhotosPerOffer: 999,
-    );
-  }
-
   switch (plan) {
     case SubscriptionPlan.free:
-      return const SubscriptionFeatures(
-        canUseDirectCall: false,
+      return SubscriptionFeatures(
+        canUseDirectCall: freeAccessMode,
         canUseFavorites: true,
         canReceiveFavoriteAlerts: false,
-        canUseAiDraft: false,
-        canUseVoiceAi: false,
-        canBoostOffer: false,
+        canUseAiDraft: true,
+        canUseVoiceAi: true,
+        canBoostOffer: freeAccessMode,
         canAccessStats: false,
         canCreateProProfile: false,
         hasVerifiedBadge: false,
         hasProBadge: false,
         maxActiveOffers: 3,
-        maxPhotosPerOffer: 3,
+        maxPhotosPerOffer: 1,
+        maxAiDraftsPerMonth: kFreeAiDraftQuotaPerMonth,
+        maxVoiceAiUsesPerMonth: kFreeVoiceAiQuotaPerMonth,
       );
     case SubscriptionPlan.iliprestoPlus:
       return const SubscriptionFeatures(
@@ -326,7 +333,9 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         hasVerifiedBadge: true,
         hasProBadge: false,
         maxActiveOffers: 10,
-        maxPhotosPerOffer: 12,
+        maxPhotosPerOffer: 5,
+        maxAiDraftsPerMonth: kUnlimitedSubscriptionFeatureQuota,
+        maxVoiceAiUsesPerMonth: kIliPrestoPlusVoiceAiQuotaPerMonth,
       );
     case SubscriptionPlan.ilipro:
       return const SubscriptionFeatures(
@@ -340,8 +349,10 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
         canCreateProProfile: true,
         hasVerifiedBadge: true,
         hasProBadge: true,
-        maxActiveOffers: 50,
-        maxPhotosPerOffer: 20,
+        maxActiveOffers: 30,
+        maxPhotosPerOffer: 10,
+        maxAiDraftsPerMonth: kUnlimitedSubscriptionFeatureQuota,
+        maxVoiceAiUsesPerMonth: kUnlimitedSubscriptionFeatureQuota,
       );
   }
 }
@@ -350,10 +361,26 @@ SubscriptionFeatures getFeaturesForSubscriptionPlan(
 /// ou palier d'abonnement sans plafond).
 const int kUnlimitedJourneyQuota = 999999;
 
+/// Quota mensuel de sauvegardes locales du parcours pour le plan Gratuit.
+const int kFreeJourneyLocalSaveQuotaPerMonth = 2;
+
+/// Quota mensuel de sauvegardes locales du parcours pour ilipresto+.
+const int kIliPrestoPlusJourneyLocalSaveQuotaPerMonth = 5;
+
+/// Quota mensuel de sauvegardes locales du parcours pour ilipro.
+const int kIliProJourneyLocalSaveQuotaPerMonth = 10;
+
+/// Quota mensuel d'exports PDF pour ilipresto+ dans "Je crée mon entreprise".
+const int kIliPrestoPlusJourneyPdfExportQuotaPerMonth = 5;
+
+/// Quota mensuel d'exports PDF pour ilipro dans "Je crée mon entreprise".
+const int kIliProJourneyPdfExportQuotaPerMonth = 10;
+
 /// Règles d'abonnement pour la fonctionnalité "Mon parcours personnalisé" :
-/// - Gratuit : 1 sauvegarde locale par mois, aucun export PDF.
-/// - IliPresto+ / ilipro : sauvegardes locales illimitées + 2 exports PDF
-///   par mois, le PDF exporté devant porter le logo iliPresto et un filigrane.
+/// - Gratuit : 2 sauvegardes locales par mois, aucun export PDF.
+/// - ilipresto+ : 5 sauvegardes locales + 5 exports PDF par mois.
+/// - ilipro : 10 sauvegardes locales + 10 exports PDF par mois.
+/// Les PDF exportés doivent porter le logo iliPresto et un filigrane.
 class JourneyEntitlements {
   final int maxLocalSavesPerMonth;
   final bool canExportPdf;
@@ -380,31 +407,28 @@ JourneyEntitlements getJourneyEntitlementsForPlan(
   SubscriptionPlan plan, {
   bool freeAccessMode = true,
 }) {
-  if (freeAccessMode) {
-    return const JourneyEntitlements(
-      maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
-      canExportPdf: true,
-      maxPdfExportsPerMonth: kUnlimitedJourneyQuota,
-      pdfRequiresLogo: true,
-      pdfRequiresWatermark: true,
-    );
-  }
-
   switch (plan) {
     case SubscriptionPlan.free:
       return const JourneyEntitlements(
-        maxLocalSavesPerMonth: 1,
+        maxLocalSavesPerMonth: kFreeJourneyLocalSaveQuotaPerMonth,
         canExportPdf: false,
         maxPdfExportsPerMonth: 0,
         pdfRequiresLogo: false,
         pdfRequiresWatermark: false,
       );
     case SubscriptionPlan.iliprestoPlus:
+      return const JourneyEntitlements(
+        maxLocalSavesPerMonth: kIliPrestoPlusJourneyLocalSaveQuotaPerMonth,
+        canExportPdf: true,
+        maxPdfExportsPerMonth: kIliPrestoPlusJourneyPdfExportQuotaPerMonth,
+        pdfRequiresLogo: true,
+        pdfRequiresWatermark: true,
+      );
     case SubscriptionPlan.ilipro:
       return const JourneyEntitlements(
-        maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
+        maxLocalSavesPerMonth: kIliProJourneyLocalSaveQuotaPerMonth,
         canExportPdf: true,
-        maxPdfExportsPerMonth: 2,
+        maxPdfExportsPerMonth: kIliProJourneyPdfExportQuotaPerMonth,
         pdfRequiresLogo: true,
         pdfRequiresWatermark: true,
       );
