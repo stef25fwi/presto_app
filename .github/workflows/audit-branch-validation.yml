@@ -4,13 +4,10 @@ on:
   push:
     branches:
       - audit/prod-hardening-p0-p11
-    paths-ignore:
-      - docs/AUDIT_VALIDATION_STATUS.md
-      - audit_validation_logs/**
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: audit-branch-validation
@@ -52,8 +49,13 @@ jobs:
           node tools/apply_auth_client_hardening.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/apply_account_cleanup_patch.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/normalize_cursor_patch_script.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/fix_cursor_query_signature_patch.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/apply_cursor_pagination.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/apply_validation_fixes.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/apply_identity_authority_hardening.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/apply_dependency_security_upgrades.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/apply_stripe_ordering_hardening.mjs 2>&1 | tee -a audit_validation_logs/patches.log
+          node tools/apply_function_resource_limits.mjs 2>&1 | tee -a audit_validation_logs/patches.log
           git diff --exit-code 2>&1 | tee -a audit_validation_logs/patches.log
           node tools/check_production_guardrails.mjs 2>&1 | tee -a audit_validation_logs/patches.log
 
@@ -130,13 +132,11 @@ jobs:
           set -o pipefail
           node tools/check_web_bundle_size.mjs 2>&1 | tee audit_validation_logs/bundle_budget.log
 
-      - name: Generate validation report
+      - name: Generate validation summary
         if: always()
         run: |
-          cat > docs/AUDIT_VALIDATION_STATUS.md <<'REPORT'
+          cat > audit_validation_logs/STATUS.md <<'REPORT'
           # Validation automatique — branche audit/prod-hardening-p0-p11
-
-          Généré par GitHub Actions sur le commit `${{ github.sha }}`.
 
           | Contrôle | Résultat |
           |---|---|
@@ -151,27 +151,15 @@ jobs:
           | Tests Firestore Rules | `${{ steps.firestore_rules.outcome }}` |
           | Build Web release | `${{ steps.web_build.outcome }}` |
           | Budget bundle Web | `${{ steps.bundle_budget.outcome }}` |
-
-          Les logs détaillés sont conservés dans `audit_validation_logs/`.
           REPORT
 
-          for file in audit_validation_logs/*.log; do
-            printf '\n## %s\n\n```text\n' "$(basename "$file")" >> docs/AUDIT_VALIDATION_STATUS.md
-            tail -n 80 "$file" >> docs/AUDIT_VALIDATION_STATUS.md
-            printf '\n```\n' >> docs/AUDIT_VALIDATION_STATUS.md
-          done
-
-      - name: Commit validation report
+      - name: Upload validation report
         if: always()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/AUDIT_VALIDATION_STATUS.md audit_validation_logs
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "test: publie le rapport de validation préproduction"
-          git push origin HEAD:audit/prod-hardening-p0-p11
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-validation-${{ github.sha }}
+          path: audit_validation_logs
+          retention-days: 14
 
       - name: Enforce successful validation
         if: always()
