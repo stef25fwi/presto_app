@@ -159,7 +159,8 @@ async function findUserId(object: JsonMap): Promise<string> {
   if (!customerId) return "";
   for (const field of ["stripeCustomerId", "stripe_customer_id"]) {
     const snap = await db.collection(COLLECTIONS.users).where(field, "==", customerId).limit(1).get();
-    if (!snap.empty) return snap.docs[0].id;
+    const firstDocument = snap.docs[0];
+    if (firstDocument) return firstDocument.id;
   }
   return "";
 }
