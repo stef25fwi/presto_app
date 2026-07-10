@@ -567,7 +567,14 @@ export function buildProcessedConversationAttachmentPath({
 }
 
 export const processConversationAttachmentPhoto = onCall(
-  MESSAGING_CALLABLE_OPTIONS,
+  {
+    ...MESSAGING_CALLABLE_OPTIONS,
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    cpu: 1,
+    concurrency: 4,
+    maxInstances: 20,
+  },
   async (request) => {
     const uid = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();

@@ -3,10 +3,13 @@ import * as admin from "firebase-admin";
 import { PROJECT_REGION } from "../../config/env";
 
 /**
- * Auth trigger v1 — crée le document `users/{uid}` dès qu'un compte
- * Firebase Auth est provisionné (avant même la première connexion côté client).
+ * Auth trigger v1 — garantit un document `users/{uid}` canonique dès qu'un
+ * compte Firebase Auth est provisionné.
  *
- * Complémentaire de `onUserCreated` (trigger Firestore sur le doc user).
+ * Le trigger utilise une transaction et `merge` pour couvrir la course où le
+ * client écrit ses champs de profil avant la fin du trigger Auth. Les champs
+ * d'autorité (rôle, abonnement, vérifications et createdAt) restent toujours
+ * définis par l'Admin SDK.
  */
 export const onAuthUserCreated = functionsV1
   .region(PROJECT_REGION)
@@ -14,14 +17,29 @@ export const onAuthUserCreated = functionsV1
   .onCreate(async (user) => {
     const uid = user.uid;
     const docRef = admin.firestore().collection("users").doc(uid);
-    const snap = await docRef.get();
-    if (!snap.exists) {
-      await docRef.set({
-        uid,
-        email: user.email || null,
-        displayName: user.displayName || null,
-        photoURL: user.photoURL || null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    }
+
+    await admin.firestore().runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(docRef);
+      const existing = snapshot.data() || {};
+
+      transaction.set(
+        docRef,
+        {
+          uid,
+          email: user.email || existing.email || null,
+          displayName: user.displayName || existing.displayName || null,
+          photoURL: user.photoURL || existing.photoURL || null,
+          accountStatus: existing.accountStatus || "active",
+          role: existing.role || "user",
+          subscriptionPlan: existing.subscriptionPlan || "free",
+          subscriptionStatus: existing.subscriptionStatus || "inactive",
+          phoneVerified: existing.phoneVerified === true,
+          proVerified: existing.proVerified === true,
+          createdAt:
+            existing.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    });
   });

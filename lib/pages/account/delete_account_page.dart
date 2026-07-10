@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/auth_error_mapper.dart';
@@ -20,6 +21,13 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   bool _loading = false;
   bool _hidePassword = true;
 
+  bool get _usesPasswordProvider {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.providerData
+            .any((provider) => provider.providerId == 'password') ==
+        true;
+  }
+
   @override
   void dispose() {
     _passwordCtrl.dispose();
@@ -34,11 +42,10 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
 
     try {
       await AuthService.instance.deleteCurrentAccount(
-        password: _passwordCtrl.text,
+        password: _usesPasswordProvider ? _passwordCtrl.text : null,
       );
 
       if (!mounted) return;
-
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       if (!mounted) return;
@@ -52,6 +59,8 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
 
   @override
   Widget build(BuildContext context) {
+    final usesPasswordProvider = _usesPasswordProvider;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
@@ -69,33 +78,58 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           child: ListView(
             children: [
               const Text(
-                'Cette action est définitive. Ton profil sera anonymisé et ton compte de connexion sera supprimé.',
-                style:
-                    TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+                'Cette action est définitive. Ton abonnement sera annulé, tes données privées seront supprimées et ton profil sera anonymisé dans les conversations conservées.',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordCtrl,
-                obscureText: _hidePassword,
-                decoration: InputDecoration(
-                  labelText: 'Mot de passe',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(_hidePassword
-                        ? Icons.visibility
-                        : Icons.visibility_off),
-                    onPressed: () =>
-                        setState(() => _hidePassword = !_hidePassword),
+              if (usesPasswordProvider) ...[
+                TextFormField(
+                  controller: _passwordCtrl,
+                  obscureText: _hidePassword,
+                  autofillHints: const [AutofillHints.password],
+                  decoration: InputDecoration(
+                    labelText: 'Mot de passe',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      tooltip: _hidePassword
+                          ? 'Afficher le mot de passe'
+                          : 'Masquer le mot de passe',
+                      icon: Icon(
+                        _hidePassword ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () =>
+                          setState(() => _hidePassword = !_hidePassword),
+                    ),
+                  ),
+                  validator: (value) {
+                    if ((value ?? '').isEmpty) {
+                      return 'Mot de passe obligatoire.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+              ] else ...[
+                const Card(
+                  elevation: 0,
+                  color: Color(0xFFFFF3EA),
+                  child: Padding(
+                    padding: EdgeInsets.all(14),
+                    child: Text(
+                      'Compte Google ou Apple : pour ta sécurité, la suppression est autorisée uniquement après une connexion récente. Reconnecte-toi puis reviens ici si un message te le demande.',
+                      style: TextStyle(height: 1.35),
+                    ),
                   ),
                 ),
-                validator: (value) {
-                  if ((value ?? '').isEmpty) return 'Mot de passe obligatoire.';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
+              ],
               TextFormField(
                 controller: _confirmCtrl,
+                textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(
                   labelText: 'Tape SUPPRIMER',
                   border: OutlineInputBorder(),
@@ -111,10 +145,20 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: _loading ? null : _delete,
                   child: _loading
-                      ? const CircularProgressIndicator()
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Supprimer définitivement'),
                 ),
               ),

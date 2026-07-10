@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import 'firebase_functions_region.dart';
 
 enum AuthStatus {
   loading,
@@ -19,6 +22,7 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   User? get currentUser => _auth.currentUser;
 
@@ -186,13 +190,14 @@ class AuthService {
   }
 
   Future<void> syncEmailVerifiedToFirestore() async {
-    final user = _requireUser();
-
-    await _db.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'emailVerified': user.emailVerified,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    _requireUser();
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'syncMyEmailVerification',
+      timeout: const Duration(seconds: 15),
+      parameters: const <String, dynamic>{},
+      area: 'auth',
+    );
   }
 
   Future<void> changePassword({
@@ -256,36 +261,57 @@ class AuthService {
   }
 
   Future<void> deleteCurrentAccount({
-    required String password,
+    String? password,
   }) async {
     final user = _requireUser();
-    final email = user.email;
 
-    if (email == null || email.isEmpty) {
-      throw FirebaseAuthException(
-        code: 'missing-email',
-        message: 'Email du compte introuvable.',
+    if (_isPasswordUser(user)) {
+      final email = user.email;
+      final normalizedPassword = password ?? '';
+      if (email == null || email.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'missing-email',
+          message: 'Email du compte introuvable.',
+        );
+      }
+      if (normalizedPassword.isEmpty) {
+        throw FirebaseAuthException(
+          code: 'missing-password',
+          message: 'Mot de passe obligatoire.',
+        );
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: normalizedPassword,
       );
+      await user.reauthenticateWithCredential(credential);
+    } else {
+      final lastSignIn = user.metadata.lastSignInTime;
+      final isRecent = lastSignIn != null &&
+          DateTime.now().difference(lastSignIn) <= const Duration(minutes: 10);
+      if (!isRecent) {
+        throw FirebaseAuthException(
+          code: 'requires-recent-login',
+          message:
+              'Reconnecte-toi avec Google ou Apple avant de supprimer le compte.',
+        );
+      }
     }
 
-    final credential = EmailAuthProvider.credential(
-      email: email,
-      password: password,
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'requestAccountDeletion',
+      timeout: const Duration(seconds: 120),
+      parameters: const <String, dynamic>{},
+      area: 'account-deletion',
     );
 
-    await user.reauthenticateWithCredential(credential);
-
-    await _db.collection('users').doc(user.uid).set({
-      'accountStatus': 'deleted',
-      'deletedAt': FieldValue.serverTimestamp(),
-      'email': null,
-      'displayName': 'Utilisateur supprimé',
-      'phoneNumber': null,
-      'photoUrl': null,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await user.delete();
+    try {
+      await _auth.signOut();
+    } catch (_) {
+      // Le backend a déjà supprimé le compte Auth : la session locale peut être invalide.
+    }
   }
 
   Future<UserCredential> signInWithGoogle() async {
@@ -345,23 +371,15 @@ class AuthService {
     Map<String, Object?> extra = const {},
   }) async {
     final ref = _db.collection('users').doc(user.uid);
-    final snap = await ref.get();
 
+    // Les rôles, l’état du compte, l’abonnement et createdAt sont exclusivement
+    // créés par le backend. Le client n’écrit que des champs de profil sûrs.
     final data = <String, Object?>{
-      'uid': user.uid,
-      'email': user.email,
-      'emailVerified': user.emailVerified,
       'displayName': user.displayName,
       'phoneNumber': user.phoneNumber,
-      'accountStatus': 'active',
-      'role': 'user',
       'updatedAt': FieldValue.serverTimestamp(),
       ...extra,
     };
-
-    if (!snap.exists) {
-      data['createdAt'] = FieldValue.serverTimestamp();
-    }
 
     await ref.set(data, SetOptions(merge: true));
   }
