@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../features/subscriptions/journey_entitlements_service.dart';
 import '../../features/subscriptions/subscription_models.dart';
 import '../../services/journey_local_storage_service.dart';
+import '../../services/journey_pdf_export_service.dart';
 import '../toolbox_je_me_lance_page.dart';
+import 'saved_journey_summary_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
 const Color _kBg = Color(0xFFF6F7FB);
@@ -17,8 +20,7 @@ const Color _kBg = Color(0xFFF6F7FB);
 ///   chaque parcours terminé, sans quota, et toujours écrasé par le suivant.
 ///
 /// Ainsi qu'un rappel du quota mensuel de sauvegarde/export en fonction de
-/// l'abonnement (Gratuit : 1 sauvegarde locale/mois, aucun export ;
-/// IliPresto+ : sauvegardes illimitées + 2 exports PDF/mois).
+/// l'abonnement.
 class MonEntrepriseParcoursPage extends StatefulWidget {
   const MonEntrepriseParcoursPage({super.key});
 
@@ -30,9 +32,11 @@ class MonEntrepriseParcoursPage extends StatefulWidget {
 class _MonEntrepriseParcoursPageState
     extends State<MonEntrepriseParcoursPage> {
   static const _localStorageService = JourneyLocalStorageService();
+  static const _pdfExportService = JourneyPdfExportService();
   final _entitlementsService = JourneyEntitlementsService();
 
   bool _loading = true;
+  bool _exportingPdf = false;
   Map<String, dynamic>? _savedSnapshot;
   Map<String, dynamic>? _historySnapshot;
   JourneyEntitlements? _entitlements;
@@ -94,7 +98,9 @@ class _MonEntrepriseParcoursPageState
                         ? _JourneyCard(
                             snapshot: _savedSnapshot!,
                             dateLabel: 'Sauvegardé le',
-                            onResume: _openToolbox,
+                            isExportingPdf: _exportingPdf,
+                            onResume: () => _openSavedJourney(_savedSnapshot!),
+                            onExportPdf: () => _exportPdf(_savedSnapshot!),
                           )
                         : const _EmptyInlineNote(
                             'Aucun parcours sauvegardé pour le moment.',
@@ -106,7 +112,9 @@ class _MonEntrepriseParcoursPageState
                         ? _JourneyCard(
                             snapshot: _historySnapshot!,
                             dateLabel: 'Généré le',
-                            onResume: _openToolbox,
+                            isExportingPdf: _exportingPdf,
+                            onResume: () => _openSavedJourney(_historySnapshot!),
+                            onExportPdf: () => _exportPdf(_historySnapshot!),
                           )
                         : const _EmptyInlineNote(
                             'Aucun parcours généré pour le moment.',
@@ -122,6 +130,121 @@ class _MonEntrepriseParcoursPageState
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ToolboxJeMeLancePage()),
     );
+  }
+
+  void _openSavedJourney(Map<String, dynamic> snapshot) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SavedJourneySummaryPage(snapshot: snapshot),
+      ),
+    );
+  }
+
+  Future<void> _exportPdf(Map<String, dynamic> snapshot) async {
+    if (_exportingPdf) return;
+
+    setState(() => _exportingPdf = true);
+    var loadingDialogOpen = false;
+
+    void showLoadingDialog() {
+      if (!mounted || loadingDialogOpen) return;
+      loadingDialogOpen = true;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+          title: Text('Préparation du PDF'),
+          content: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              ),
+              SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  'Création du PDF avec logo et filigrane iliprestō...',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ).whenComplete(() => loadingDialogOpen = false);
+    }
+
+    void closeLoadingDialog() {
+      if (!mounted || !loadingDialogOpen) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      loadingDialogOpen = false;
+    }
+
+    try {
+      showLoadingDialog();
+
+      final decision = await _entitlementsService.evaluatePdfExport();
+      if (!mounted) return;
+
+      if (!decision.allowed) {
+        closeLoadingDialog();
+        final quotaText = decision.requiresUpgrade
+            ? 'L’export PDF est réservé aux abonnements iliprestō+ et ilipro.'
+            : 'Quota PDF atteint pour ce mois-ci. Vous avez déjà utilisé ${decision.usedThisMonth} / ${decision.entitlements.maxPdfExportsPerMonth} export(s).';
+        await showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Export PDF indisponible'),
+            content: Text(quotaText),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Compris'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final pdfFile = await _pdfExportService.generateJourneyPdf(snapshot);
+      if (!mounted) return;
+      closeLoadingDialog();
+
+      final box = context.findRenderObject() as RenderBox?;
+      final result = await Share.shareXFiles(
+        [pdfFile],
+        subject: 'Mon parcours personnalisé iliprestō',
+        text: 'Voici mon parcours personnalisé généré par iliprestō.',
+        sharePositionOrigin:
+            box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+      );
+
+      if (result.status == ShareResultStatus.success) {
+        await _entitlementsService.recordPdfExport();
+        await _load();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'PDF généré : la fenêtre de sauvegarde/partage a été ouverte.',
+            ),
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Export PDF annulé.')),
+        );
+      }
+    } catch (e) {
+      closeLoadingDialog();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de générer le PDF : $e')),
+      );
+    } finally {
+      closeLoadingDialog();
+      if (mounted) setState(() => _exportingPdf = false);
+    }
   }
 
   Widget _buildQuotaCard() {
@@ -203,7 +326,10 @@ class _EmptyInlineNote extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          color: Color(0xFF9CA3AF),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -236,20 +362,30 @@ class _EmptyState extends StatelessWidget {
                 color: Color(0xFF6B7280),
               ),
             ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: _kOrange,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _kOrange,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(62),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                  elevation: 4,
+                  shadowColor: _kOrange,
                 ),
+                onPressed: onCreate,
+                icon: const Icon(Icons.rocket_launch_rounded, size: 22),
+                label: const Text('Je crée mon entreprise'),
               ),
-              onPressed: onCreate,
-              icon: const Icon(Icons.rocket_launch_rounded),
-              label: const Text('Créer mon parcours'),
             ),
           ],
         ),
@@ -261,12 +397,16 @@ class _EmptyState extends StatelessWidget {
 class _JourneyCard extends StatelessWidget {
   final Map<String, dynamic> snapshot;
   final String dateLabel;
+  final bool isExportingPdf;
   final VoidCallback onResume;
+  final VoidCallback onExportPdf;
 
   const _JourneyCard({
     required this.snapshot,
     required this.dateLabel,
+    required this.isExportingPdf,
     required this.onResume,
+    required this.onExportPdf,
   });
 
   @override
@@ -305,6 +445,8 @@ class _JourneyCard extends StatelessWidget {
           if (region.isNotEmpty) _InfoLine(label: 'Région', value: region),
           if (currentStatus.isNotEmpty)
             _InfoLine(label: 'Statut actuel', value: currentStatus),
+          if (selectedActivity.isNotEmpty)
+            _InfoLine(label: 'Activité', value: selectedActivity),
           _InfoLine(label: 'Statut recommandé', value: statut),
           if (savedAt != null) ...[
             const SizedBox(height: 8),
@@ -314,10 +456,37 @@ class _JourneyCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
-          OutlinedButton.icon(
-            onPressed: onResume,
-            icon: const Icon(Icons.open_in_new_rounded),
-            label: const Text('Reprendre / voir le parcours complet'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onResume,
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('Voir'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: isExportingPdf ? null : onExportPdf,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _kOrange,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: isExportingPdf
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.picture_as_pdf_outlined),
+                  label: Text(isExportingPdf ? 'PDF...' : 'PDF'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

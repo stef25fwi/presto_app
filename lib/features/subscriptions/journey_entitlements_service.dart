@@ -39,21 +39,20 @@ class JourneyEntitlementsService {
 
   /// Détermine les droits applicables au parcours personnalisé pour
   /// l'utilisateur courant (plan d'abonnement + mode d'accès libre global).
+  ///
+  /// Même lorsque le mode d'accès gratuit complet est actif, on lit le vrai
+  /// plan utilisateur afin que les quotas du parcours restent cohérents :
+  /// - Gratuit : 2 sauvegardes/mois, 0 PDF ;
+  /// - ilipresto+ : 5 sauvegardes/mois, 5 PDF/mois ;
+  /// - ilipro : 10 sauvegardes/mois, 10 PDF/mois.
   Future<JourneyEntitlements> resolveEntitlements() async {
     try {
       final config = await _configService.getConfig();
-      if (config.freeAccessMode) {
-        return getJourneyEntitlementsForPlan(
-          SubscriptionPlan.free,
-          freeAccessMode: true,
-        );
-      }
-
       final uid = _auth.currentUser?.uid;
       if (uid == null) {
         return getJourneyEntitlementsForPlan(
           SubscriptionPlan.free,
-          freeAccessMode: false,
+          freeAccessMode: config.freeAccessMode,
         );
       }
 
@@ -61,7 +60,7 @@ class JourneyEntitlementsService {
       final state = AppUserSubscriptionState.fromMap(snap.data());
       return getJourneyEntitlementsForPlan(
         state.plan,
-        freeAccessMode: false,
+        freeAccessMode: config.freeAccessMode,
       );
     } catch (e) {
       debugPrint(

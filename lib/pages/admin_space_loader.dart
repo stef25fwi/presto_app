@@ -1,49 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'admin_space_page.dart' deferred as admin_space;
+import 'admin_space_page.dart';
 
-/// Charge l'espace admin en différé (split de bundle sur le web).
+/// Point d’entrée stable vers l’espace admin.
 ///
-/// L'espace admin ne concerne qu'une poignée d'utilisateurs : le différer
-/// évite d'embarquer son code dans le bundle initial téléchargé par tous
-/// les visiteurs. Sur mobile, `loadLibrary()` complète immédiatement.
-class AdminSpaceLoader extends StatefulWidget {
+/// `admin_space_page.dart` est déjà importé normalement par `main.dart`. Le
+/// charger également avec `deferred as` créait deux modes de chargement pour
+/// la même bibliothèque et pouvait provoquer une `DeferredLoadException` sur
+/// Flutter web après un déploiement. Ce chargeur reste utilisable par les
+/// autres points d’entrée, sans créer de fragment JavaScript différé ambigu.
+class AdminSpaceLoader extends StatelessWidget {
   const AdminSpaceLoader({super.key});
 
   @override
-  State<AdminSpaceLoader> createState() => _AdminSpaceLoaderState();
-}
-
-class _AdminSpaceLoaderState extends State<AdminSpaceLoader> {
-  late final Future<void> _library = admin_space.loadLibrary();
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _library,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Espace admin')),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Le module admin n\'a pas pu être chargé. '
-                  'Vérifiez votre connexion puis réessayez.\n\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          );
-        }
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return admin_space.AdminSpacePage();
-      },
-    );
-  }
+  Widget build(BuildContext context) => const AdminSpacePage();
 }
