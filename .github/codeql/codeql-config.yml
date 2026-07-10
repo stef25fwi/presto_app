@@ -1,0 +1,17 @@
+name: ilipresto-codeql
+
+paths:
+  - functions
+  - tools
+  - load-tests
+
+paths-ignore:
+  - functions/lib
+  - functions/node_modules
+  - functions/.firebase
+  - functions/coverage
+  - .backups
+  - build
+  - docs
+  - audit_logs
+  - _archive
