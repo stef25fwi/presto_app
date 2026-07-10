@@ -14,13 +14,22 @@ function replaceOnce(before, after, label) {
   content = content.replace(before, after);
 }
 
+function replaceFirstOfTwo(before, after, label) {
+  if (content.includes(after)) return;
+  const count = content.split(before).length - 1;
+  if (count !== 2) {
+    throw new Error(`${label}: expected exactly two source occurrences, found ${count}`);
+  }
+  content = content.replace(before, after);
+}
+
 replaceOnce(
   'async function syncSubscription(subscription: JsonMap, eventId: string): Promise<void> {',
   'export function shouldApplyStripeEvent(\n  lastEventCreatedAt: number,\n  incomingEventCreatedAt: number,\n): boolean {\n  return incomingEventCreatedAt <= 0 || lastEventCreatedAt <= incomingEventCreatedAt;\n}\n\nexport function normalizedInvoiceStatus(eventType: string, invoice: JsonMap): string {\n  if (eventType === "invoice.payment_failed") return "payment_failed";\n  if (eventType === "invoice.payment_succeeded" || eventType === "invoice.paid") {\n    return "paid";\n  }\n  return asString(invoice.status || (invoice.paid === true ? "paid" : "open"));\n}\n\nasync function syncSubscription(\n  subscription: JsonMap,\n  eventId: string,\n  eventCreatedAtMs: number,\n): Promise<void> {',
   'stripe ordering helpers and subscription signature',
 );
 
-replaceOnce(
+replaceFirstOfTwo(
   '    last_stripe_event_id: eventId,\n    stripe_updated_at: FieldValue.serverTimestamp(),',
   '    last_stripe_event_id: eventId,\n    last_stripe_event_created_at: eventCreatedAtMs,\n    stripe_updated_at: FieldValue.serverTimestamp(),',
   'subscription event ordering field',
