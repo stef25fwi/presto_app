@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show PlatformDispatcher;
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -14,8 +12,6 @@ class AppMonitoringService {
   AppMonitoringService._();
 
   static final AppMonitoringService instance = AppMonitoringService._();
-
-  static const String collectionName = 'app_monitoring_events';
 
   static const String appBuild =
       String.fromEnvironment('APP_BUILD', defaultValue: 'dev');
