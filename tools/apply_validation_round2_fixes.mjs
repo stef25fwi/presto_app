@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs/promises';
+
+function replaceOnce(content, before, after, label) {
+  if (after && content.includes(after)) return content;
+  const count = content.split(before).length - 1;
+  if (!after && count === 0) return content;
+  if (count !== 1) {
+    throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
+  }
+  return content.replace(before, after);
+}
+
+async function patchSubscriptionWidgetApi() {
+  const path = 'lib/features/subscriptions/subscription_widgets.dart';
+  let content = await fs.readFile(path, 'utf8');
+
+  content = content.replaceAll(
+    'SubscriptionPlanTabs(',
+    '_SubscriptionPlanTabs(',
+  );
+  content = replaceOnce(
+    content,
+    'class SubscriptionPlanTabs extends StatelessWidget {',
+    'class _SubscriptionPlanTabs extends StatelessWidget {',
+    'private subscription tabs class',
+  );
+  content = replaceOnce(
+    content,
+    '  const SubscriptionPlanTabs({',
+    '  const _SubscriptionPlanTabs({',
+    'private subscription tabs constructor',
+  );
+
+  await fs.writeFile(path, content, 'utf8');
+}
+
+async function patchAccountDeletionStaticTest() {
+  const path = 'test/auth_email_static_test.dart';
+  let content = await fs.readFile(path, 'utf8');
+
+  content = replaceOnce(
+    content,
+    "  test('Suppression de compte exige réauthentification avant delete', () {\n    final source = File('lib/services/auth_service.dart').readAsStringSync();\n\n    expect(source, contains('reauthenticateWithCredential'));\n    expect(source, contains('.delete()'));\n  });",
+    "  test('Suppression de compte exige réauthentification et callable serveur', () {\n    final source = File('lib/services/auth_service.dart').readAsStringSync();\n\n    expect(source, contains('reauthenticateWithCredential'));\n    expect(source, contains(\"name: 'requestAccountDeletion'\"));\n    expect(source, isNot(contains(\"collection('users').doc(user.uid).delete\")));\n    expect(source, isNot(contains('await user.delete()')));\n  });",
+    'account deletion static test',
+  );
+
+  await fs.writeFile(path, content, 'utf8');
+}
+
+async function patchToolboxLayout() {
+  const path = 'lib/pages/toolbox_je_me_lance_page.dart';
+  let content = await fs.readFile(path, 'utf8');
+
+  content = replaceOnce(
+    content,
+    '      height: 94,',
+    '      height: 106,',
+    'toolbox header height',
+  );
+
+  content = replaceOnce(
+    content,
+    "        return Container(\n          decoration: BoxDecoration(\n            color: Colors.white,\n            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),\n          ),\n          child: Column(",
+    "        return Material(\n          color: Colors.white,\n          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),\n          clipBehavior: Clip.antiAlias,\n          child: Column(",
+    'region picker material ancestor',
+  );
+
+  content = replaceOnce(
+    content,
+    "      child: Container(\n        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),\n        decoration: BoxDecoration(\n          color: const Color(0xFFEFF6FF),",
+    "      child: Container(\n        constraints: const BoxConstraints(maxWidth: 280),\n        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),\n        decoration: BoxDecoration(\n          color: const Color(0xFFEFF6FF),",
+    'task contact chip max width',
+  );
+
+  await fs.writeFile(path, content, 'utf8');
+}
+
+async function patchRulesDiagnostics() {
+  const path = 'functions/scripts/test_user_authority_rules.mjs';
+  let content = await fs.readFile(path, 'utf8');
+
+  content = replaceOnce(
+    content,
+    "    const forbiddenUpdates = [\n      { uid: 'another_user' },\n      { email: 'attacker@example.com' },\n      { subscriptionPlan: 'ilipro' },\n      { subscriptionStatus: 'active' },\n      { subscriptionExpiresAt: new Date('2099-01-01T00:00:00Z') },\n      { stripeCustomerId: 'cus_fake' },\n      { stripeSubscriptionId: 'sub_fake' },\n      { stripePriceId: 'price_fake' },\n      { phoneVerified: true },\n      { proVerified: true },\n      { siretVerified: true },\n      { emailVerified: true },\n      { accountStatus: 'disabled' },\n      { role: 'admin' },\n    ];\n\n    for (const update of forbiddenUpdates) {\n      await assertFails(updateDoc(userRef, update));\n    }",
+    "    const forbiddenUpdates = [\n      ['uid', { uid: 'another_user' }],\n      ['email', { email: 'attacker@example.com' }],\n      ['subscriptionPlan', { subscriptionPlan: 'ilipro' }],\n      ['subscriptionStatus', { subscriptionStatus: 'active' }],\n      ['subscriptionExpiresAt', { subscriptionExpiresAt: new Date('2099-01-01T00:00:00Z') }],\n      ['stripeCustomerId', { stripeCustomerId: 'cus_fake' }],\n      ['stripeSubscriptionId', { stripeSubscriptionId: 'sub_fake' }],\n      ['stripePriceId', { stripePriceId: 'price_fake' }],\n      ['phoneVerified', { phoneVerified: true }],\n      ['proVerified', { proVerified: true }],\n      ['siretVerified', { siretVerified: true }],\n      ['emailVerified', { emailVerified: true }],\n      ['accountStatus', { accountStatus: 'disabled' }],\n      ['role', { role: 'admin' }],\n    ];\n\n    for (const [field, update] of forbiddenUpdates) {\n      try {\n        await assertFails(updateDoc(userRef, update));\n      } catch (error) {\n        throw new Error(`Protected field unexpectedly writable: ${field}`, {\n          cause: error,\n        });\n      }\n    }",
+    'named protected user rule cases',
+  );
+
+  await fs.writeFile(path, content, 'utf8');
+}
+
+async function patchWebBudgets() {
+  const path = 'tools/check_web_bundle_size.mjs';
+  let content = await fs.readFile(path, 'utf8');
+
+  content = replaceOnce(
+    content,
+    "const maxMainBytes = Number(process.env.MAX_MAIN_DART_JS_BYTES || 12 * 1024 * 1024);\nconst maxTotalBytes = Number(process.env.MAX_WEB_BUILD_BYTES || 50 * 1024 * 1024);",
+    "const maxMainBytes = Number(process.env.MAX_MAIN_DART_JS_BYTES || 12 * 1024 * 1024);\nconst maxAssetsBytes = Number(process.env.MAX_WEB_ASSETS_BYTES || 35 * 1024 * 1024);\n// Le total inclut le moteur Flutter/CanvasKit livré par le SDK. On le borne\n// séparément du JavaScript et des assets applicatifs pour éviter un faux échec.\nconst maxTotalBytes = Number(process.env.MAX_WEB_BUILD_BYTES || 75 * 1024 * 1024);",
+    'web budget constants',
+  );
+
+  content = replaceOnce(
+    content,
+    "  const files = await collectFiles(buildDir);\n  const totalBytes = files.reduce((sum, file) => sum + file.bytes, 0);",
+    "  const files = await collectFiles(buildDir);\n  const totalBytes = files.reduce((sum, file) => sum + file.bytes, 0);\n  const assetsBytes = files\n    .filter((file) => file.path.startsWith('assets/'))\n    .reduce((sum, file) => sum + file.bytes, 0);",
+    'web asset size calculation',
+  );
+
+  content = replaceOnce(
+    content,
+    "  console.log(`main.dart.js: ${formatMiB(mainBytes)} / ${formatMiB(maxMainBytes)}`);\n  console.log(`build/web total: ${formatMiB(totalBytes)} / ${formatMiB(maxTotalBytes)}`);",
+    "  console.log(`main.dart.js: ${formatMiB(mainBytes)} / ${formatMiB(maxMainBytes)}`);\n  console.log(`assets/: ${formatMiB(assetsBytes)} / ${formatMiB(maxAssetsBytes)}`);\n  console.log(`build/web total: ${formatMiB(totalBytes)} / ${formatMiB(maxTotalBytes)}`);",
+    'web asset budget output',
+  );
+
+  content = replaceOnce(
+    content,
+    "  if (totalBytes > maxTotalBytes) {\n    throw new Error(`build/web exceeds the production budget: ${formatMiB(totalBytes)}`);\n  }",
+    "  if (assetsBytes > maxAssetsBytes) {\n    throw new Error(`web assets exceed the production budget: ${formatMiB(assetsBytes)}`);\n  }\n  if (totalBytes > maxTotalBytes) {\n    throw new Error(`build/web exceeds the production budget: ${formatMiB(totalBytes)}`);\n  }",
+    'web asset budget enforcement',
+  );
+
+  await fs.writeFile(path, content, 'utf8');
+}
+
+await patchSubscriptionWidgetApi();
+await patchAccountDeletionStaticTest();
+await patchToolboxLayout();
+await patchRulesDiagnostics();
+await patchWebBudgets();
+
+console.log('validation round 2 fixes: OK');
