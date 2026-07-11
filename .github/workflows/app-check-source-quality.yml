@@ -1,0 +1,29 @@
+name: App Check source quality
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-check-source-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  app-check-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Test App Check audit
+        run: node --test tools/quality/check_functions_app_check.test.mjs
+
+      - name: Audit callable Functions
+        run: node tools/quality/check_functions_app_check.mjs functions/src
