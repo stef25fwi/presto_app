@@ -44,6 +44,18 @@ class SubscriptionSection extends StatelessWidget {
             final userState = AppUserSubscriptionState.fromMap(
               userSnapshot.data?.data(),
             );
+            if (config.stripeEnabled &&
+                userState.plan == SubscriptionPlan.free) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                unawaited(
+                  prefetchSubscriptionCheckout(
+                    subscriptionPlanKey(SubscriptionPlan.iliprestoPlus),
+                    stripeEnabled: true,
+                    source: 'account_subscription_overview_prefetch',
+                  ),
+                );
+              });
+            }
             return Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
@@ -103,6 +115,31 @@ class SubscriptionDetailsPage extends StatefulWidget {
 
 class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
   OfferAudience _audience = OfferAudience.particuliers;
+  final Set<SubscriptionPlan> _prefetchScheduled = <SubscriptionPlan>{};
+
+  void _scheduleCheckoutPrefetch({
+    required SubscriptionAppConfig config,
+    required AppUserSubscriptionState userState,
+  }) {
+    final targetPlan = _audience == OfferAudience.particuliers
+        ? SubscriptionPlan.iliprestoPlus
+        : SubscriptionPlan.ilipro;
+    if (!config.stripeEnabled ||
+        targetPlan == userState.plan ||
+        !_prefetchScheduled.add(targetPlan)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        prefetchSubscriptionCheckout(
+          subscriptionPlanKey(targetPlan),
+          stripeEnabled: true,
+          source: 'account_subscription_details_prefetch',
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +170,7 @@ class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
               final userState = AppUserSubscriptionState.fromMap(
                 userSnapshot.data?.data(),
               );
+              _scheduleCheckoutPrefetch(config: config, userState: userState);
               return SafeArea(
                 child: Center(
                   child: ConstrainedBox(

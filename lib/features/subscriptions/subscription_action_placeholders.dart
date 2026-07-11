@@ -23,6 +23,18 @@ Future<void> startSubscriptionCheckout(
   );
 }
 
+Future<void> prefetchSubscriptionCheckout(
+  String plan, {
+  bool stripeEnabled = false,
+  String source = 'subscription_prefetch',
+}) async {
+  if (!stripeEnabled) return;
+  await _checkoutService.prefetchCheckout(
+    subscriptionPlanFromKey(plan),
+    source: source,
+  );
+}
+
 Future<void> openSubscriptionManagement(
   BuildContext context, {
   bool stripeEnabled = false,
