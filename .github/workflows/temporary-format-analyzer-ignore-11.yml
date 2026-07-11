@@ -1,0 +1,47 @@
+name: Temporary format analyzer ignore 11
+
+on:
+  push:
+    branches:
+      - agent/phase-0-analyzer-ignore-11
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-0-analyzer-ignore-11
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format targeted Dart files
+        run: |
+          dart format \
+            lib/features/account/signed_out_account_fallback.dart \
+            lib/pages/fiche_pro_page.dart \
+            tools/convert_communes_by_dept.dart
+
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            echo 'No formatting change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/features/account/signed_out_account_fallback.dart \
+            lib/pages/fiche_pro_page.dart \
+            tools/convert_communes_by_dept.dart
+          git commit -m 'style: formate le nettoyage analyzer à 11'
+          git push origin HEAD:agent/phase-0-analyzer-ignore-11
