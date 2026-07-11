@@ -9,6 +9,7 @@ void main() {
         sentPayload = payload;
         return <String, Object?>{
           'ok': false,
+          'correlationId': 'request-1234',
           'adminActionId': 'action-1',
           'requestedCount': 2,
           'succeededCount': 1,
@@ -29,13 +30,16 @@ void main() {
     final summary = await service.deleteListings(
       listingIds: <String>[' a ', 'b', 'a', ''],
       reason: ' contenu interdit ',
+      correlationId: 'request-1234',
     );
 
     expect(sentPayload, <String, Object?>{
       'listingIds': <String>['a', 'b'],
       'reason': 'contenu interdit',
+      'correlationId': 'request-1234',
     });
     expect(summary.ok, isFalse);
+    expect(summary.correlationId, 'request-1234');
     expect(summary.adminActionId, 'action-1');
     expect(summary.succeededIds, <String>['a']);
     expect(summary.failures.single.listingId, 'b');
@@ -52,6 +56,7 @@ void main() {
       ],
     });
 
+    expect(summary.correlationId, isEmpty);
     expect(summary.requestedCount, 2);
     expect(summary.succeededCount, 2);
     expect(summary.failedCount, 0);
