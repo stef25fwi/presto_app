@@ -32,7 +32,7 @@ class FirestoreAdminListingsRepository implements AdminListingsRepository {
     Object? startAfter,
     int pageSize = 30,
   }) async {
-    final normalizedPageSize = pageSize.clamp(1, 50);
+    final normalizedPageSize = pageSize.clamp(1, 50).toInt();
     Query<Map<String, dynamic>> query = _firestore
         .collection('listings')
         .orderBy('createdAt', descending: true)
