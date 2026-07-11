@@ -21,6 +21,13 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
       - name: Wire admin listings management
         run: node tools/temporary_wire_admin_listings_management_v3.mjs
 
