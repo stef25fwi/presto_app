@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a reproducible quality baseline for the iliprestō repository.
-
-The script uses only the Python standard library so it can run locally and in
-GitHub Actions without additional dependencies. It is intentionally read-only:
-it scans the repository and writes reports below the requested output folder.
-"""
+"""Create a read-only, reproducible quality baseline for iliprestō."""
 
 from __future__ import annotations
 
@@ -13,30 +8,18 @@ import datetime as dt
 import json
 import os
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable
-
 
 EXCLUDED_PARTS = {
-    ".dart_tool",
-    ".git",
-    ".idea",
-    ".vscode",
-    ".backups",
-    "backups",
-    "build",
-    "build_logs",
-    "coverage",
-    "downloads",
-    "node_modules",
+    ".dart_tool", ".git", ".idea", ".vscode", ".backups", "backups",
+    "build", "build_logs", "coverage", "downloads", "node_modules",
     "release_apk",
 }
-
 SOURCE_EXTENSIONS = {".dart", ".js", ".mjs", ".cjs", ".ts", ".tsx"}
 DOC_EXTENSIONS = {".md", ".mdx", ".rst"}
-TEST_NAME_RE = re.compile(r"(?:^|[_-])test(?:[_-]|\.)|_test\.dart$", re.IGNORECASE)
-ANALYZER_IGNORE_RE = re.compile(r"^\s{4}([a-z0-9_]+):\s*ignore\s*$", re.MULTILINE)
+TEST_RE = re.compile(r"(?:^|[_-])test(?:[_-]|\.)|_test\.dart$", re.I)
+ANALYZER_IGNORE_RE = re.compile(r"^\s{4}([a-z0-9_]+):\s*ignore\s*$", re.M)
 
 
 @dataclass(frozen=True)
@@ -47,102 +30,80 @@ class FileMetric:
     kind: str
 
 
-def is_excluded(path: Path, root: Path) -> bool:
+def excluded(path: Path, root: Path) -> bool:
+    relative = path.relative_to(root)
+    if set(relative.parts) & EXCLUDED_PARTS:
+        return True
+    return len(relative.parts) >= 2 and relative.parts[:2] == ("functions", "lib")
+
+
+def classify(relative: Path) -> str:
+    normalized = relative.as_posix().lower()
+    suffix = relative.suffix.lower()
+    if TEST_RE.search(relative.name) or normalized.startswith("test/") or "/test/" in f"/{normalized}/":
+        return "test"
+    if suffix in DOC_EXTENSIONS:
+        return "documentation"
+    if normalized.startswith(".github/workflows/") and suffix in {".yml", ".yaml"}:
+        return "workflow"
+    # `docs/` is also the Firebase Hosting build output. Only authored Markdown
+    # is documentation; generated JS/assets must not inflate source metrics.
+    if normalized.startswith("docs/"):
+        return "other"
+    if suffix in SOURCE_EXTENSIONS:
+        return "source"
+    return "other"
+
+
+def line_count(path: Path) -> int:
     try:
-        relative = path.relative_to(root)
-    except ValueError:
-        return True
-    parts = set(relative.parts)
-    if parts & EXCLUDED_PARTS:
-        return True
-    if len(relative.parts) >= 2 and relative.parts[0] == "functions" and relative.parts[1] == "lib":
-        return True
-    return False
-
-
-def iter_files(root: Path) -> Iterable[Path]:
-    for path in root.rglob("*"):
-        if path.is_file() and not is_excluded(path, root):
-            yield path
-
-
-def count_lines(path: Path) -> int:
-    try:
-        with path.open("r", encoding="utf-8", errors="replace") as handle:
-            return sum(1 for _ in handle)
+        return sum(1 for _ in path.open("r", encoding="utf-8", errors="replace"))
     except OSError:
         return 0
 
 
-def classify(path: Path) -> str:
-    normalized = path.as_posix().lower()
-    if TEST_NAME_RE.search(path.name) or "/test/" in f"/{normalized}/" or normalized.startswith("test/"):
-        return "test"
-    if path.suffix.lower() in DOC_EXTENSIONS:
-        return "documentation"
-    if path.suffix.lower() in SOURCE_EXTENSIONS:
-        return "source"
-    if normalized.startswith(".github/workflows/") and path.suffix.lower() in {".yml", ".yaml"}:
-        return "workflow"
-    return "other"
-
-
-def parse_lcov(path: Path) -> dict[str, float | int | None]:
+def lcov_summary(path: Path) -> dict[str, float | int | None]:
     if not path.exists():
         return {"lines_found": 0, "lines_hit": 0, "percent": None}
-
-    found = 0
-    hit = 0
-    for raw_line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        if raw_line.startswith("LF:"):
-            found += int(raw_line[3:] or 0)
-        elif raw_line.startswith("LH:"):
-            hit += int(raw_line[3:] or 0)
-    percent = round((hit / found) * 100, 2) if found else 0.0
-    return {"lines_found": found, "lines_hit": hit, "percent": percent}
-
-
-def scan_patterns(root: Path, dart_files: list[Path]) -> dict[str, int]:
-    patterns = {
-        "set_state_calls": re.compile(r"\bsetState\s*\("),
-        "stream_builders": re.compile(r"\bStreamBuilder\s*<"),
-        "future_builders": re.compile(r"\bFutureBuilder\s*<"),
-        "firestore_singletons": re.compile(r"FirebaseFirestore\.instance"),
-        "firestore_snapshots": re.compile(r"\.snapshots\s*\("),
-        "firestore_gets": re.compile(r"\.get\s*\("),
-        "debug_prints": re.compile(r"\b(?:print|debugPrint)\s*\("),
-        "cached_network_images": re.compile(r"\bCachedNetworkImage\s*\("),
+    found = hit = 0
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("LF:"):
+            found += int(line[3:] or 0)
+        elif line.startswith("LH:"):
+            hit += int(line[3:] or 0)
+    return {
+        "lines_found": found,
+        "lines_hit": hit,
+        "percent": round(hit * 100 / found, 2) if found else 0.0,
     }
+
+
+def pattern_counts(dart_files: list[Path]) -> dict[str, int]:
+    patterns = {
+        "set_state_calls": r"\bsetState\s*\(",
+        "stream_builders": r"\bStreamBuilder\s*<",
+        "future_builders": r"\bFutureBuilder\s*<",
+        "firestore_singletons": r"FirebaseFirestore\.instance",
+        "firestore_snapshots": r"\.snapshots\s*\(",
+        "firestore_gets": r"\.get\s*\(",
+        "debug_prints": r"\b(?:print|debugPrint)\s*\(",
+        "cached_network_images": r"\bCachedNetworkImage\s*\(",
+    }
+    compiled = {name: re.compile(pattern) for name, pattern in patterns.items()}
     totals = {name: 0 for name in patterns}
     for path in dart_files:
-        try:
-            text = path.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            continue
-        for name, regex in patterns.items():
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for name, regex in compiled.items():
             totals[name] += len(regex.findall(text))
     return totals
 
 
-def load_quality_gates(root: Path) -> dict:
-    path = root / "quality" / "quality-gates.json"
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
+def table(rows: list[tuple[str, object]]) -> str:
+    return "\n".join(["| Indicateur | Valeur |", "|---|---:|"] + [f"| {k} | {v} |" for k, v in rows])
 
 
-def markdown_table(rows: list[tuple[str, object]]) -> str:
-    output = ["| Indicateur | Valeur |", "|---|---:|"]
-    output.extend(f"| {label} | {value} |" for label, value in rows)
-    return "\n".join(output)
-
-
-def render_baseline(report: dict) -> str:
-    coverage = report["coverage"]
-    coverage_display = "non mesurée" if coverage["percent"] is None else f"{coverage['percent']} %"
+def baseline_md(report: dict) -> str:
+    coverage = report["coverage"]["percent"]
     rows = [
         ("Fichiers source", report["counts"]["source_files"]),
         ("Lignes source", report["counts"]["source_lines"]),
@@ -154,168 +115,137 @@ def render_baseline(report: dict) -> str:
         ("Fichiers > 800 lignes", report["oversized"]["over_800"]),
         ("Fichiers > 1 200 lignes", report["oversized"]["over_1200"]),
         ("Règles analyzer ignorées", len(report["analyzer_ignored_rules"])),
-        ("Couverture Flutter", coverage_display),
+        ("Couverture Flutter", "non mesurée" if coverage is None else f"{coverage} %"),
     ]
-    pattern_rows = [(key.replace("_", " ").capitalize(), value) for key, value in report["patterns"].items()]
-    return "\n".join(
-        [
-            "# Baseline qualité iliprestō",
-            "",
-            f"Générée le `{report['generated_at_utc']}` depuis `{report['git_ref']}`.",
-            "",
-            "## Résumé",
-            "",
-            markdown_table(rows),
-            "",
-            "## Indicateurs de structure et de performance potentielle",
-            "",
-            markdown_table(pattern_rows),
-            "",
-            "## Interprétation",
-            "",
-            "- Un fichier de plus de 1 200 lignes est classé critique pour la maintenabilité.",
-            "- Les appels `setState`, builders asynchrones et accès Firestore sont des indicateurs à examiner, pas des erreurs automatiques.",
-            "- La couverture n'est fiable qu'après `flutter test --coverage`.",
-            "- Les rapports détaillés listent les fichiers à traiter par priorité.",
-            "",
-        ]
-    )
+    pattern_rows = [(name.replace("_", " ").capitalize(), value) for name, value in report["patterns"].items()]
+    return f"""# Baseline qualité iliprestō
+
+Générée le `{report['generated_at_utc']}` depuis `{report['git_ref']}`.
+
+## Résumé
+
+{table(rows)}
+
+## Indicateurs de structure et de performance potentielle
+
+{table(pattern_rows)}
+
+## Interprétation
+
+- Un fichier de plus de 1 200 lignes est critique pour la maintenabilité.
+- Les compteurs Flutter et Firestore sont des signaux à examiner, pas des erreurs automatiques.
+- La couverture est fiable après `flutter test --coverage`.
+"""
 
 
-def render_oversized(metrics: list[FileMetric]) -> str:
-    oversized = [metric for metric in metrics if metric.kind == "source" and metric.lines > 500]
-    oversized.sort(key=lambda item: item.lines, reverse=True)
+def oversized_md(metrics: list[FileMetric]) -> str:
+    items = sorted((m for m in metrics if m.kind == "source" and m.lines > 500), key=lambda m: m.lines, reverse=True)
     lines = [
-        "# Fichiers source surdimensionnés",
-        "",
-        "Seuils : surveillance à 500 lignes, priorité haute à 800 lignes, criticité à 1 200 lignes.",
-        "",
-        "| Priorité | Fichier | Lignes |",
-        "|---|---|---:|",
+        "# Fichiers source surdimensionnés", "",
+        "Seuils : surveillance à 500 lignes, priorité haute à 800 lignes, criticité à 1 200 lignes.", "",
+        "| Priorité | Fichier | Lignes |", "|---|---|---:|",
     ]
-    for metric in oversized:
-        priority = "P0" if metric.lines > 1200 else "P1" if metric.lines > 800 else "P2"
-        lines.append(f"| {priority} | `{metric.path}` | {metric.lines} |")
-    if not oversized:
-        lines.append("| — | Aucun fichier au-dessus du seuil | 0 |")
-    lines.append("")
-    return "\n".join(lines)
-
-
-def render_debt(report: dict, metrics: list[FileMetric]) -> str:
-    items: list[tuple[str, str, str, str, str]] = []
-    counter = 1
-    for metric in sorted(metrics, key=lambda item: item.lines, reverse=True):
-        if metric.kind != "source" or metric.lines <= 500:
-            continue
-        priority = "P0" if metric.lines > 1200 else "P1" if metric.lines > 800 else "P2"
-        items.append((f"TECH-{counter:03d}", priority, metric.path, f"Fichier de {metric.lines} lignes à découper par responsabilité.", "À qualifier"))
-        counter += 1
-
-    if report["analyzer_ignored_rules"]:
-        items.append((f"TECH-{counter:03d}", "P1", "analysis_options.yaml", f"{len(report['analyzer_ignored_rules'])} catégories de diagnostics sont ignorées globalement.", "À traiter progressivement"))
-        counter += 1
-
-    if report["coverage"]["percent"] is None:
-        items.append((f"TECH-{counter:03d}", "P0", "test/", "Couverture non mesurée : exécuter `flutter test --coverage` puis publier l'artefact LCOV.", "Ouvert"))
-
-    lines = [
-        "# Registre initial de dette technique",
-        "",
-        "Ce fichier est généré automatiquement. Les responsables, échéances et décisions doivent être suivis dans GitHub Issues.",
-        "",
-        "| ID | Priorité | Zone | Dette observée | Statut |",
-        "|---|---|---|---|---|",
-    ]
-    for identifier, priority, area, description, status in items:
-        lines.append(f"| {identifier} | {priority} | `{area}` | {description} | {status} |")
+    for item in items:
+        priority = "P0" if item.lines > 1200 else "P1" if item.lines > 800 else "P2"
+        lines.append(f"| {priority} | `{item.path}` | {item.lines} |")
     if not items:
+        lines.append("| — | Aucun fichier au-dessus du seuil | 0 |")
+    return "\n".join(lines) + "\n"
+
+
+def debt_md(report: dict, metrics: list[FileMetric]) -> str:
+    rows: list[tuple[str, str, str, str, str]] = []
+    for index, item in enumerate(sorted((m for m in metrics if m.kind == "source" and m.lines > 500), key=lambda m: m.lines, reverse=True), 1):
+        priority = "P0" if item.lines > 1200 else "P1" if item.lines > 800 else "P2"
+        rows.append((f"TECH-{index:03d}", priority, item.path, f"Fichier de {item.lines} lignes à découper par responsabilité.", "À qualifier"))
+    next_id = len(rows) + 1
+    ignored = report["analyzer_ignored_rules"]
+    if ignored:
+        rows.append((f"TECH-{next_id:03d}", "P1", "analysis_options.yaml", f"{len(ignored)} diagnostics sont ignorés globalement.", "À traiter progressivement"))
+    lines = [
+        "# Registre initial de dette technique", "",
+        "Rapport généré automatiquement ; le suivi opérationnel se fait dans GitHub Issues.", "",
+        "| ID | Priorité | Zone | Dette observée | Statut |", "|---|---|---|---|---|",
+    ]
+    lines += [f"| {a} | {b} | `{c}` | {d} | {e} |" for a, b, c, d, e in rows]
+    if not rows:
         lines.append("| — | — | — | Aucune dette détectée par les règles actuelles. | — |")
-    lines.append("")
-    return "\n".join(lines)
+    return "\n".join(lines) + "\n"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", default=".", help="Repository root")
-    parser.add_argument("--output-dir", default="quality_reports", help="Report directory")
+    parser.add_argument("--root", default=".")
+    parser.add_argument("--output-dir", default="quality_reports")
     parser.add_argument("--git-ref", default=os.environ.get("GITHUB_SHA", "local"))
-    parser.add_argument("--enforce", action="store_true", help="Apply configured hard limits")
+    parser.add_argument("--enforce", action="store_true")
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
-    output_dir = (root / args.output_dir).resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output = (root / args.output_dir).resolve()
+    output.mkdir(parents=True, exist_ok=True)
 
     metrics: list[FileMetric] = []
     dart_files: list[Path] = []
-    for path in iter_files(root):
-        suffix = path.suffix.lower()
-        kind = classify(path.relative_to(root))
+    for path in root.rglob("*"):
+        if not path.is_file() or excluded(path, root):
+            continue
+        relative = path.relative_to(root)
+        kind = classify(relative)
         if kind in {"source", "test", "documentation", "workflow"}:
-            metrics.append(FileMetric(path=path.relative_to(root).as_posix(), lines=count_lines(path), bytes=path.stat().st_size, kind=kind))
-        if suffix == ".dart":
+            metrics.append(FileMetric(relative.as_posix(), line_count(path), path.stat().st_size, kind))
+        if relative.suffix.lower() == ".dart":
             dart_files.append(path)
 
-    analysis_options = root / "analysis_options.yaml"
-    analyzer_ignored_rules: list[str] = []
-    if analysis_options.exists():
-        analyzer_ignored_rules = ANALYZER_IGNORE_RE.findall(analysis_options.read_text(encoding="utf-8", errors="replace"))
-
-    source_metrics = [metric for metric in metrics if metric.kind == "source"]
-    test_metrics = [metric for metric in metrics if metric.kind == "test"]
-    doc_metrics = [metric for metric in metrics if metric.kind == "documentation"]
-    workflow_metrics = [metric for metric in metrics if metric.kind == "workflow"]
+    by_kind = {kind: [m for m in metrics if m.kind == kind] for kind in ("source", "test", "documentation", "workflow")}
+    analyzer_path = root / "analysis_options.yaml"
+    ignored = ANALYZER_IGNORE_RE.findall(analyzer_path.read_text(encoding="utf-8", errors="replace")) if analyzer_path.exists() else []
+    gates_path = root / "quality" / "quality-gates.json"
+    gates = json.loads(gates_path.read_text(encoding="utf-8")) if gates_path.exists() else {}
 
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "git_ref": args.git_ref,
         "counts": {
-            "source_files": len(source_metrics),
-            "source_lines": sum(metric.lines for metric in source_metrics),
-            "test_files": len(test_metrics),
-            "test_lines": sum(metric.lines for metric in test_metrics),
-            "documentation_files": len(doc_metrics),
-            "workflow_files": len(workflow_metrics),
+            "source_files": len(by_kind["source"]),
+            "source_lines": sum(m.lines for m in by_kind["source"]),
+            "test_files": len(by_kind["test"]),
+            "test_lines": sum(m.lines for m in by_kind["test"]),
+            "documentation_files": len(by_kind["documentation"]),
+            "workflow_files": len(by_kind["workflow"]),
         },
         "oversized": {
-            "over_500": sum(metric.lines > 500 for metric in source_metrics),
-            "over_800": sum(metric.lines > 800 for metric in source_metrics),
-            "over_1200": sum(metric.lines > 1200 for metric in source_metrics),
+            "over_500": sum(m.lines > 500 for m in by_kind["source"]),
+            "over_800": sum(m.lines > 800 for m in by_kind["source"]),
+            "over_1200": sum(m.lines > 1200 for m in by_kind["source"]),
         },
-        "analyzer_ignored_rules": sorted(set(analyzer_ignored_rules)),
-        "coverage": parse_lcov(root / "coverage" / "lcov.info"),
-        "patterns": scan_patterns(root, dart_files),
-        "largest_source_files": [asdict(metric) for metric in sorted(source_metrics, key=lambda item: item.lines, reverse=True)[:50]],
-        "quality_gates": load_quality_gates(root),
+        "analyzer_ignored_rules": sorted(set(ignored)),
+        "coverage": lcov_summary(root / "coverage" / "lcov.info"),
+        "patterns": pattern_counts(dart_files),
+        "largest_source_files": [asdict(m) for m in sorted(by_kind["source"], key=lambda m: m.lines, reverse=True)[:50]],
+        "quality_gates": gates,
     }
 
-    (output_dir / "baseline.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    (output_dir / "baseline.md").write_text(render_baseline(report), encoding="utf-8")
-    (output_dir / "oversized-files.md").write_text(render_oversized(metrics), encoding="utf-8")
-    (output_dir / "technical-debt-register.md").write_text(render_debt(report, metrics), encoding="utf-8")
-
+    (output / "baseline.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (output / "baseline.md").write_text(baseline_md(report), encoding="utf-8")
+    (output / "oversized-files.md").write_text(oversized_md(metrics), encoding="utf-8")
+    (output / "technical-debt-register.md").write_text(debt_md(report, metrics), encoding="utf-8")
     print(json.dumps(report["counts"], ensure_ascii=False))
-    print(f"Reports written to {output_dir}")
 
-    if args.enforce:
-        gates = report.get("quality_gates", {})
-        max_file_lines = int(gates.get("source", {}).get("hard_max_lines", 0) or 0)
-        min_coverage = float(gates.get("coverage", {}).get("minimum_percent", 0) or 0)
-        failures: list[str] = []
-        if max_file_lines:
-            offenders = [metric.path for metric in source_metrics if metric.lines > max_file_lines]
-            if offenders:
-                failures.append(f"{len(offenders)} source files exceed {max_file_lines} lines")
-        measured = report["coverage"]["percent"]
-        if measured is not None and measured < min_coverage:
-            failures.append(f"coverage {measured}% is below {min_coverage}%")
-        if failures:
-            for failure in failures:
-                print(f"QUALITY_GATE_FAILED: {failure}")
-            return 1
-    return 0
+    if not args.enforce:
+        return 0
+    max_lines = int(gates.get("source", {}).get("hard_max_lines", 0) or 0)
+    min_coverage = float(gates.get("coverage", {}).get("minimum_percent", 0) or 0)
+    failures: list[str] = []
+    if max_lines and any(m.lines > max_lines for m in by_kind["source"]):
+        failures.append(f"a source file exceeds {max_lines} lines")
+    measured = report["coverage"]["percent"]
+    if measured is not None and measured < min_coverage:
+        failures.append(f"coverage {measured}% is below {min_coverage}%")
+    for failure in failures:
+        print(f"QUALITY_GATE_FAILED: {failure}")
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
