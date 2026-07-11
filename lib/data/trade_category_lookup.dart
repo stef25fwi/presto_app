@@ -10,7 +10,7 @@
 ///   }
 ///
 /// Le champ [metierId] est retourné par la Cloud Function `classifyServicePhoto`
-/// sous la forme { "metier": "<metierId>", "confidence": 0.0-1.0 }.
+/// sous la forme { "metier": "&lt;metierId&gt;", "confidence": 0.0-1.0 }.
 /// La catégorie et la sous-catégorie sont résolues localement (0 ms) sans
 /// aucun appel réseau supplémentaire.
 
@@ -224,7 +224,7 @@ const Map<String, TradeCategoryMatch> kTradeLookup = {
       'garde domicile',
       'temps plein',
       'nourrice',
-      'assistante maternelle'
+      'assistante maternelle',
     ],
   ),
 
