@@ -123,9 +123,7 @@ class _AdminListingsManagementPageState
       barrierDismissible: !_deleting,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(
-            'Supprimer ${_selectedIds.length} annonce(s) ?',
-          ),
+          title: Text('Supprimer ${_selectedIds.length} annonce(s) ?'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +214,8 @@ class _AdminListingsManagementPageState
 
   @override
   Widget build(BuildContext context) {
-    final allVisibleSelected = _items.isNotEmpty &&
+    final allVisibleSelected =
+        _items.isNotEmpty &&
         _items.every((item) => _selectedIds.contains(item.id));
 
     return Scaffold(

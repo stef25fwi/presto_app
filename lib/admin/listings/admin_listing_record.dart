@@ -47,10 +47,7 @@ class AdminListingRecord {
   bool get isActiveForStatistics => status != 'deleted' && status != 'archived';
 }
 
-String _firstNonEmpty(
-  Iterable<Object?> values, {
-  String fallback = '',
-}) {
+String _firstNonEmpty(Iterable<Object?> values, {String fallback = ''}) {
   for (final value in values) {
     final text = (value ?? '').toString().trim();
     if (text.isNotEmpty) return text;
