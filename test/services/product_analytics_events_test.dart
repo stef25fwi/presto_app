@@ -19,6 +19,23 @@ void main() {
     });
   });
 
+  test('construit un événement favori typé pour ajout et retrait', () {
+    final added = ProductAnalyticsEvent.engagementFavoriteChanged(
+      listingId: 'listing-42',
+      added: true,
+    );
+    final removed = ProductAnalyticsEvent.engagementFavoriteChanged(
+      listingId: 'listing-42',
+      added: false,
+    );
+
+    expect(added.name, 'engagement_favorite_changed');
+    expect(added.stage, ProductFunnelStage.engagement);
+    expect(added.parameters['listing_id'], 'listing-42');
+    expect(added.parameters['added'], isTrue);
+    expect(removed.parameters['added'], isFalse);
+  });
+
   test('refuse les noms hors snake_case ou supérieurs à 40 caractères', () {
     expect(
       () => ProductAnalyticsEvent(
