@@ -6,7 +6,7 @@
 - [x] Rapport des fichiers surdimensionnés.
 - [x] Mesure LCOV dans GitHub Actions.
 - [x] Registre de seuils versionné.
-- [ ] Exécuter la baseline et enregistrer les valeurs réelles de `main`.
+- [x] Exécuter la baseline et enregistrer les valeurs réelles dans `docs/audit/baseline-2026-07-11.md`.
 
 ## Phase 1 — Architecture Flutter
 
