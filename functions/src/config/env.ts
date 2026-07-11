@@ -1,5 +1,7 @@
 import { defineSecret } from "firebase-functions/params";
 
+import { resolveAppCheckEnforcement } from "./app_check_policy";
+
 export const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 export const EMAIL_PROVIDER_API_KEY = defineSecret("EMAIL_PROVIDER_API_KEY");
 export const EMAIL_PROVIDER_WEBHOOK_SECRET = defineSecret("EMAIL_PROVIDER_WEBHOOK_SECRET");
@@ -41,11 +43,12 @@ export const IS_PROD = GCP_PROJECT_ID === "presto-app-74abe";
 const rawSafeMode = String(process.env.APPCHECK_SAFE_MODE || "").toLowerCase() === "true";
 const rawEnforce = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase();
 
-export const ENFORCE_APP_CHECK = IS_EMULATOR
-	? false
-	: IS_PROD
-		? rawEnforce !== "false" && !rawSafeMode
-		: rawEnforce === "true" && !rawSafeMode;
+export const ENFORCE_APP_CHECK = resolveAppCheckEnforcement({
+	isEmulator: IS_EMULATOR,
+	isProduction: IS_PROD,
+	enforceValue: rawEnforce,
+	safeModeValue: rawSafeMode,
+});
 
 export function assertProdSecurityConfig(): void {
 	if (IS_PROD && !IS_EMULATOR && !ENFORCE_APP_CHECK) {
