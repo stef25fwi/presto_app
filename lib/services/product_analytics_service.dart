@@ -3,6 +3,7 @@ import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 
 import 'cookie_consent_service.dart';
+import 'product_analytics_events.dart';
 
 class ProductAnalyticsService {
   ProductAnalyticsService({
@@ -19,6 +20,10 @@ class ProductAnalyticsService {
   FirebaseAnalytics? get _analyticsInstance {
     if (!CookieConsentService.instance.canUseAnalytics) return null;
     return _analytics ??= _analyticsOverride ?? FirebaseAnalytics.instance;
+  }
+
+  Future<void> logProductEvent(ProductAnalyticsEvent event) {
+    return logEvent(event.name, parameters: event.parameters);
   }
 
   Future<void> logEvent(
