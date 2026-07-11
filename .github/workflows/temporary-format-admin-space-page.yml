@@ -1,0 +1,40 @@
+name: Temporary format admin space page
+
+on:
+  push:
+    branches:
+      - agent/phase-1-format-admin-space-page
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-1-format-admin-space-page
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format admin space page
+        run: dart format lib/pages/admin_space_page.dart
+
+      - name: Commit formatting only
+        run: |
+          if git diff --quiet; then
+            echo 'No formatting change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/pages/admin_space_page.dart
+          git commit -m 'style: formate l espace admin sans changement métier'
+          git push origin HEAD:agent/phase-1-format-admin-space-page
