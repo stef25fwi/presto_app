@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/admin_access_state.dart';
+import 'admin_access_policy.dart';
 import 'firebase_functions_region.dart';
 
 class AdminAccessResolver {
@@ -16,9 +17,9 @@ class AdminAccessResolver {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
-  })  : _injectedAuth = auth,
-        _injectedFirestore = firestore,
-        _injectedFunctions = functions;
+  }) : _injectedAuth = auth,
+       _injectedFirestore = firestore,
+       _injectedFunctions = functions;
 
   final FirebaseAuth? _injectedAuth;
   final FirebaseFirestore? _injectedFirestore;
@@ -36,6 +37,7 @@ class AdminAccessResolver {
   static const Duration _documentCacheTimeout = Duration(seconds: 3);
   static const Duration _serverTimeout = Duration(seconds: 15);
   static const String _adminAccessCallableName = 'getMyAdminAccessStatus';
+  static const AdminAccessPolicy _accessPolicy = AdminAccessPolicy();
 
   Future<AdminAccessState> resolveAdminAccess({
     bool forceRefresh = false,
@@ -66,10 +68,7 @@ class AdminAccessResolver {
         user = await _auth
             .authStateChanges()
             .firstWhere((candidate) => candidate != null)
-            .timeout(
-              _authRestoreTimeout,
-              onTimeout: () => null,
-            );
+            .timeout(_authRestoreTimeout, onTimeout: () => null);
       } catch (e) {
         _diag('authStateChanges error: $e');
       }
@@ -126,10 +125,11 @@ class AdminAccessResolver {
       tokenResult = await resolvedUser.getIdTokenResult(forceRefresh);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
       final tokenRoles = _rolesFromValue(claims['roles']);
-      final tokenPrimaryRole = _firstNormalizedText(
-        claims,
-        const ['primaryRole', 'role', 'adminRole'],
-      );
+      final tokenPrimaryRole = _firstNormalizedText(claims, const [
+        'primaryRole',
+        'role',
+        'adminRole',
+      ]);
       final tokenHasAdmin = _hasAdminAccess(
         claims,
         roles: tokenRoles,
@@ -169,15 +169,17 @@ class AdminAccessResolver {
     }
 
     _diag(
-        'firestore profilePath=users/${resolvedUser.uid} adminPath=admins/${resolvedUser.uid}');
+      'firestore profilePath=users/${resolvedUser.uid} adminPath=admins/${resolvedUser.uid}',
+    );
 
     final userSnap = await _getDocumentWithFallback('users', resolvedUser.uid);
     final profileData = userSnap?.data();
     final profileRoles = _rolesFromValue(profileData?['roles']);
-    final profilePrimaryRole = _firstNormalizedText(
-      profileData,
-      const ['primaryRole', 'role', 'adminRole'],
-    );
+    final profilePrimaryRole = _firstNormalizedText(profileData, const [
+      'primaryRole',
+      'role',
+      'adminRole',
+    ]);
     final profileHasAdmin = _hasAdminAccess(
       profileData,
       roles: profileRoles,
@@ -255,10 +257,11 @@ class AdminAccessResolver {
         final refreshed = await resolvedUser.getIdTokenResult(true);
         final claims = refreshed.claims ?? const <String, dynamic>{};
         final refreshedRoles = _rolesFromValue(claims['roles']);
-        final refreshedPrimaryRole = _firstNormalizedText(
-          claims,
-          const ['primaryRole', 'role', 'adminRole'],
-        );
+        final refreshedPrimaryRole = _firstNormalizedText(claims, const [
+          'primaryRole',
+          'role',
+          'adminRole',
+        ]);
         final refreshedTokenHasAdmin = _hasAdminAccess(
           claims,
           roles: refreshedRoles,
@@ -301,10 +304,11 @@ class AdminAccessResolver {
   }) async {
     final claims = tokenResult.claims ?? const <String, dynamic>{};
     final tokenRoles = _rolesFromValue(claims['roles']);
-    final tokenPrimaryRole = _firstNormalizedText(
-      claims,
-      const ['primaryRole', 'role', 'adminRole'],
-    );
+    final tokenPrimaryRole = _firstNormalizedText(claims, const [
+      'primaryRole',
+      'role',
+      'adminRole',
+    ]);
     final tokenHasAdmin = _hasAdminAccess(
       claims,
       roles: tokenRoles,
@@ -326,8 +330,9 @@ class AdminAccessResolver {
     // trusts those claims. Attempting a client write here would silently fail
     // with PERMISSION_DENIED, so we only record the in-memory evidence so the
     // resolver finalize can prefer the token-only path.
-    final normalizedRoles =
-        tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
+    final normalizedRoles = tokenRoles.isEmpty
+        ? const <String>['user']
+        : tokenRoles;
     final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
     debugPrint(
       '[AdminResolver] sync: token claims indicate admin for uid=${user.uid}; '
@@ -436,9 +441,11 @@ class AdminAccessResolver {
       } on FirebaseFunctionsException catch (error) {
         if (!retrying && error.code == 'unauthenticated') {
           debugPrint(
-              '[AdminResolver] server verification failed unauthenticated');
+            '[AdminResolver] server verification failed unauthenticated',
+          );
           debugPrint(
-              '[AdminResolver] retrying via direct HTTP with explicit token');
+            '[AdminResolver] retrying via direct HTTP with explicit token',
+          );
           _diag(
             'call error function=$_adminAccessCallableName '
             'code=${error.code} message=${error.message ?? ''} '
@@ -523,9 +530,7 @@ class AdminAccessResolver {
     final url = Uri.parse(
       'https://$kFirebaseFunctionsRegion-$projectId.cloudfunctions.net/$_adminAccessCallableName',
     );
-    _diag(
-      'call http-fallback start url=$url uid=${user.uid}',
-    );
+    _diag('call http-fallback start url=$url uid=${user.uid}');
     try {
       final response = await http
           .post(
@@ -594,7 +599,8 @@ class AdminAccessResolver {
       final errBody = body['error'] is Map
           ? Map<String, dynamic>.from(body['error'] as Map)
           : <String, dynamic>{};
-      final errCode = _normalizedText(errBody['status'])?.toLowerCase() ??
+      final errCode =
+          _normalizedText(errBody['status'])?.toLowerCase() ??
           'http-${response.statusCode}';
       final errMsg =
           _normalizedText(errBody['message']) ?? 'HTTP ${response.statusCode}';
@@ -729,11 +735,13 @@ class AdminAccessResolver {
           .get(const GetOptions(source: Source.server))
           .timeout(_documentServerTimeout);
       _diag(
-          'firestore read success path=$path source=server exists=${serverSnapshot.exists}');
+        'firestore read success path=$path source=server exists=${serverSnapshot.exists}',
+      );
       return serverSnapshot;
     } catch (error) {
       debugPrint(
-          '[AdminResolver] $collection/$docId server read fallback: $error');
+        '[AdminResolver] $collection/$docId server read fallback: $error',
+      );
       _diag('firestore read failed path=$path source=server error=$error');
       try {
         _diag('firestore read start path=$path source=cache');
@@ -741,13 +749,16 @@ class AdminAccessResolver {
             .get(const GetOptions(source: Source.cache))
             .timeout(_documentCacheTimeout);
         _diag(
-            'firestore read success path=$path source=cache exists=${cacheSnapshot.exists}');
+          'firestore read success path=$path source=cache exists=${cacheSnapshot.exists}',
+        );
         return cacheSnapshot;
       } catch (cacheError) {
         debugPrint(
-            '[AdminResolver] $collection/$docId cache read failed: $cacheError');
+          '[AdminResolver] $collection/$docId cache read failed: $cacheError',
+        );
         _diag(
-            'firestore read failed path=$path source=cache error=$cacheError');
+          'firestore read failed path=$path source=cache error=$cacheError',
+        );
         return null;
       }
     }
@@ -758,18 +769,22 @@ class AdminAccessResolver {
     final effectiveIsAdmin = sourceOfTruth != 'none';
     final reason = switch (sourceOfTruth) {
       'server' => 'server-confirmed-admin',
-      'token' => state.serverCheckSucceeded && state.serverIsAdmin == false
-          ? 'token-fallback-after-server-denied'
-          : 'token-claims-confirmed-admin',
-      'profile' => state.serverCheckSucceeded && state.serverIsAdmin == false
-          ? 'profile-fallback-after-server-denied'
-          : 'profile-confirmed-admin',
-      'adminDoc' => state.serverCheckSucceeded && state.serverIsAdmin == false
-          ? 'admin-doc-fallback-after-server-denied'
-          : 'admin-doc-confirmed-admin',
-      _ => state.serverCheckSucceeded
-          ? 'no-admin-source-after-server-check'
-          : 'no-admin-source',
+      'token' =>
+        state.serverCheckSucceeded && state.serverIsAdmin == false
+            ? 'token-fallback-after-server-denied'
+            : 'token-claims-confirmed-admin',
+      'profile' =>
+        state.serverCheckSucceeded && state.serverIsAdmin == false
+            ? 'profile-fallback-after-server-denied'
+            : 'profile-confirmed-admin',
+      'adminDoc' =>
+        state.serverCheckSucceeded && state.serverIsAdmin == false
+            ? 'admin-doc-fallback-after-server-denied'
+            : 'admin-doc-confirmed-admin',
+      _ =>
+        state.serverCheckSucceeded
+            ? 'no-admin-source-after-server-check'
+            : 'no-admin-source',
     };
 
     final finalized = _step(
@@ -820,10 +835,7 @@ class AdminAccessResolver {
       final rebound = await _auth
           .userChanges()
           .firstWhere((candidate) => candidate?.uid == user.uid)
-          .timeout(
-            _authRebindTimeout,
-            onTimeout: () => null,
-          );
+          .timeout(_authRebindTimeout, onTimeout: () => null);
       if (rebound != null) {
         _diag('auth rebind success uid=${rebound.uid}');
         return rebound;
@@ -875,62 +887,21 @@ class AdminAccessResolver {
     return '${value.substring(0, 10)}...${value.substring(value.length - 10)}';
   }
 
-  List<String> _rolesFromValue(dynamic value) {
-    final Iterable<dynamic> rawValues;
-    if (value is String) {
-      rawValues = value.split(RegExp(r'[,\s]+'));
-    } else if (value is Iterable) {
-      rawValues = value;
-    } else if (value is Map) {
-      rawValues = value.entries
-          .where((entry) => entry.value == true)
-          .map((entry) => entry.key);
-    } else {
-      return const <String>[];
-    }
-
-    return rawValues
-        .map((entry) => entry.toString().trim().toLowerCase())
-        .where((entry) => entry.isNotEmpty)
-        .toList(growable: false);
-  }
+  List<String> _rolesFromValue(dynamic value) =>
+      _accessPolicy.normalizeRoles(value);
 
   bool _hasAdminAccess(
     Map<String, dynamic>? data, {
     required List<String> roles,
     required String? primaryRole,
-  }) {
-    if (roles.contains('admin') || roles.contains('superadmin')) {
-      return true;
-    }
-    if (primaryRole == 'admin' || primaryRole == 'superadmin') {
-      return true;
-    }
-    return data?['admin'] == true ||
-        data?['isAdmin'] == true ||
-        data?['superadmin'] == true ||
-        data?['superAdmin'] == true;
-  }
+  }) => _accessPolicy.hasAdminAccess(
+    data,
+    roles: roles,
+    primaryRole: primaryRole,
+  );
 
-  String? _firstNormalizedText(
-    Map<String, dynamic>? data,
-    List<String> keys,
-  ) {
-    if (data == null) return null;
-    for (final key in keys) {
-      final value = _normalizedText(data[key]);
-      if (value != null) return value;
-    }
-    return null;
-  }
-
-  String? _normalizedText(dynamic value) {
-    final text = value?.toString().trim();
-    if (text == null || text.isEmpty) {
-      return null;
-    }
-    return text.toLowerCase();
-  }
+  String? _firstNormalizedText(Map<String, dynamic>? data, List<String> keys) =>
+      _accessPolicy.firstNormalizedText(data, keys);
 
   DateTime? _dateTimeFromMilliseconds(dynamic value) {
     if (value is num) {

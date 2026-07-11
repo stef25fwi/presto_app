@@ -6,10 +6,11 @@ void main() {
 
   group('normalizeRoles', () {
     test('normalise une chaîne séparée par espaces ou virgules', () {
-      expect(
-        policy.normalizeRoles(' User, ADMIN  superAdmin '),
-        <String>['user', 'admin', 'superadmin'],
-      );
+      expect(policy.normalizeRoles(' User, ADMIN  superAdmin '), <String>[
+        'user',
+        'admin',
+        'superadmin',
+      ]);
     });
 
     test('normalise une liste et ignore les valeurs vides', () {
