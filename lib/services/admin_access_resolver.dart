@@ -903,6 +903,8 @@ class AdminAccessResolver {
   String? _firstNormalizedText(Map<String, dynamic>? data, List<String> keys) =>
       _accessPolicy.firstNormalizedText(data, keys);
 
+  String? _normalizedText(dynamic value) => _accessPolicy.normalizeText(value);
+
   DateTime? _dateTimeFromMilliseconds(dynamic value) {
     if (value is num) {
       return DateTime.fromMillisecondsSinceEpoch(value.toInt());
