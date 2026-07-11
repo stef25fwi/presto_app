@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../pages/offers/offer_details_page.dart';
@@ -12,10 +11,7 @@ import 'widgets/admin_risk_score_badge.dart';
 class AdminConversationDetailPage extends StatefulWidget {
   final AdminConversationModel conversation;
 
-  const AdminConversationDetailPage({
-    super.key,
-    required this.conversation,
-  });
+  const AdminConversationDetailPage({super.key, required this.conversation});
 
   @override
   State<AdminConversationDetailPage> createState() =>
@@ -36,16 +32,17 @@ class _AdminConversationDetailPageState
         reason: reason,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Statut mis à jour: $status')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Statut mis à jour: $status')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _toggleWatchlist() async {
-    final confirm = await showDialog<bool>(
+    final confirm =
+        await showDialog<bool>(
           context: context,
           builder: (_) => AdminConfirmSensitiveActionDialog(
             title: widget.conversation.adminWatchlisted
@@ -53,8 +50,9 @@ class _AdminConversationDetailPageState
                 : 'Ajouter à la watchlist',
             message:
                 'Cette action sera journalisée dans l\'audit administrateur.',
-            confirmLabel:
-                widget.conversation.adminWatchlisted ? 'Retirer' : 'Ajouter',
+            confirmLabel: widget.conversation.adminWatchlisted
+                ? 'Retirer'
+                : 'Ajouter',
           ),
         ) ??
         false;
