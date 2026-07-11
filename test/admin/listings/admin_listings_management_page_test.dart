@@ -4,6 +4,7 @@ import 'package:presto_app/admin/listings/admin_listing_record.dart';
 import 'package:presto_app/admin/listings/admin_listings_management_page.dart';
 import 'package:presto_app/admin/listings/admin_listings_repository.dart';
 import 'package:presto_app/admin/shared/admin_bulk_listing_service.dart';
+import 'package:presto_app/core/observability/correlation_id.dart';
 
 class _FakeAdminListingsRepository implements AdminListingsRepository {
   _FakeAdminListingsRepository(this.items);
@@ -89,10 +90,11 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Confirmer'));
       await tester.pumpAndSettle();
 
-      expect(sentPayload, <String, Object?>{
-        'listingIds': <String>['listing-a', 'listing-b'],
-        'reason': 'contenu interdit',
-      });
+      expect(sentPayload?['listingIds'], <String>['listing-a', 'listing-b']);
+      expect(sentPayload?['reason'], 'contenu interdit');
+      final correlationId = sentPayload?['correlationId'];
+      expect(correlationId, isA<String>());
+      expect(normalizeCorrelationId(correlationId), correlationId);
       expect(find.text('Peinture salon'), findsNothing);
       expect(find.text('Jardinage'), findsOneWidget);
       expect(find.text('Supprimer 1 sélectionnée(s)'), findsOneWidget);
