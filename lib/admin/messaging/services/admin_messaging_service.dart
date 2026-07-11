@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../admin_messaging_pagination_policy.dart';
 import '../models/admin_attachment_model.dart';
 import '../models/admin_conversation_model.dart';
 import '../models/admin_message_report_model.dart';
@@ -20,8 +21,11 @@ class AdminPagedResult<T> {
 class AdminMessagingService {
   final FirebaseFirestore _firestore;
 
+  static const AdminMessagingPaginationPolicy _paginationPolicy =
+      AdminMessagingPaginationPolicy();
+
   AdminMessagingService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<List<AdminConversationModel>> watchConversations({
     int limit = 120,
@@ -75,13 +79,24 @@ class AdminMessagingService {
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
-    final snapshot = await query.limit(pageSize).get();
+    final normalizedPageSize = _paginationPolicy.normalizePageSize(pageSize);
+    final snapshot = await query
+        .limit(_paginationPolicy.queryLimit(normalizedPageSize))
+        .get();
+    final visibleDocs = _paginationPolicy
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
+          snapshot.docs,
+          requestedPageSize: normalizedPageSize,
+        );
     return AdminPagedResult<AdminConversationModel>(
-      items: snapshot.docs
+      items: visibleDocs
           .map(AdminConversationModel.fromDocument)
           .toList(growable: false),
-      lastDocument: snapshot.docs.isEmpty ? startAfter : snapshot.docs.last,
-      hasMore: snapshot.docs.length == pageSize,
+      lastDocument: visibleDocs.isEmpty ? startAfter : visibleDocs.last,
+      hasMore: _paginationPolicy.hasMore(
+        receivedCount: snapshot.docs.length,
+        requestedPageSize: normalizedPageSize,
+      ),
     );
   }
 
@@ -90,7 +105,9 @@ class AdminMessagingService {
     String? status,
     String? priority,
   }) {
-    Query<Map<String, dynamic>> query = _firestore.collection('message_reports');
+    Query<Map<String, dynamic>> query = _firestore.collection(
+      'message_reports',
+    );
     final normalizedStatus = status?.trim();
     final normalizedPriority = priority?.trim();
     if (normalizedStatus != null && normalizedStatus.isNotEmpty) {
@@ -116,7 +133,9 @@ class AdminMessagingService {
     String? status,
     String? priority,
   }) async {
-    Query<Map<String, dynamic>> query = _firestore.collection('message_reports');
+    Query<Map<String, dynamic>> query = _firestore.collection(
+      'message_reports',
+    );
     final normalizedStatus = status?.trim();
     final normalizedPriority = priority?.trim();
     if (normalizedStatus != null && normalizedStatus.isNotEmpty) {
@@ -129,13 +148,24 @@ class AdminMessagingService {
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
-    final snapshot = await query.limit(pageSize).get();
+    final normalizedPageSize = _paginationPolicy.normalizePageSize(pageSize);
+    final snapshot = await query
+        .limit(_paginationPolicy.queryLimit(normalizedPageSize))
+        .get();
+    final visibleDocs = _paginationPolicy
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
+          snapshot.docs,
+          requestedPageSize: normalizedPageSize,
+        );
     return AdminPagedResult<AdminMessageReportModel>(
-      items: snapshot.docs
+      items: visibleDocs
           .map(AdminMessageReportModel.fromDocument)
           .toList(growable: false),
-      lastDocument: snapshot.docs.isEmpty ? startAfter : snapshot.docs.last,
-      hasMore: snapshot.docs.length == pageSize,
+      lastDocument: visibleDocs.isEmpty ? startAfter : visibleDocs.last,
+      hasMore: _paginationPolicy.hasMore(
+        receivedCount: snapshot.docs.length,
+        requestedPageSize: normalizedPageSize,
+      ),
     );
   }
 
@@ -183,13 +213,24 @@ class AdminMessagingService {
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
-    final snapshot = await query.limit(pageSize).get();
+    final normalizedPageSize = _paginationPolicy.normalizePageSize(pageSize);
+    final snapshot = await query
+        .limit(_paginationPolicy.queryLimit(normalizedPageSize))
+        .get();
+    final visibleDocs = _paginationPolicy
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
+          snapshot.docs,
+          requestedPageSize: normalizedPageSize,
+        );
     return AdminPagedResult<AdminMessagingUserModel>(
-      items: snapshot.docs
+      items: visibleDocs
           .map(AdminMessagingUserModel.fromDocument)
           .toList(growable: false),
-      lastDocument: snapshot.docs.isEmpty ? startAfter : snapshot.docs.last,
-      hasMore: snapshot.docs.length == pageSize,
+      lastDocument: visibleDocs.isEmpty ? startAfter : visibleDocs.last,
+      hasMore: _paginationPolicy.hasMore(
+        receivedCount: snapshot.docs.length,
+        requestedPageSize: normalizedPageSize,
+      ),
     );
   }
 
@@ -212,7 +253,9 @@ class AdminMessagingService {
     String? moderationStatus,
     String? fileType,
   }) async {
-    Query<Map<String, dynamic>> query = _firestore.collection('message_attachments');
+    Query<Map<String, dynamic>> query = _firestore.collection(
+      'message_attachments',
+    );
     final normalizedStatus = moderationStatus?.trim();
     final normalizedFileType = fileType?.trim();
     if (normalizedStatus != null && normalizedStatus.isNotEmpty) {
@@ -225,13 +268,24 @@ class AdminMessagingService {
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
-    final snapshot = await query.limit(pageSize).get();
+    final normalizedPageSize = _paginationPolicy.normalizePageSize(pageSize);
+    final snapshot = await query
+        .limit(_paginationPolicy.queryLimit(normalizedPageSize))
+        .get();
+    final visibleDocs = _paginationPolicy
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
+          snapshot.docs,
+          requestedPageSize: normalizedPageSize,
+        );
     return AdminPagedResult<AdminAttachmentModel>(
-      items: snapshot.docs
+      items: visibleDocs
           .map(AdminAttachmentModel.fromDocument)
           .toList(growable: false),
-      lastDocument: snapshot.docs.isEmpty ? startAfter : snapshot.docs.last,
-      hasMore: snapshot.docs.length == pageSize,
+      lastDocument: visibleDocs.isEmpty ? startAfter : visibleDocs.last,
+      hasMore: _paginationPolicy.hasMore(
+        receivedCount: snapshot.docs.length,
+        requestedPageSize: normalizedPageSize,
+      ),
     );
   }
 }
