@@ -1,0 +1,48 @@
+name: Temporary add public listings first-page cache
+
+on:
+  push:
+    branches:
+      - agent/phase-4-public-listings-first-page-cache
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-4-public-listings-first-page-cache
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Apply cache refactor
+        run: |
+          node tools/temporary_add_public_listings_first_page_cache.mjs
+          dart format lib/data/marketplace/listing_repository.dart \
+            test/data/marketplace/listing_first_page_cache_test.dart
+
+      - name: Commit cache refactor
+        run: |
+          if git diff --quiet; then
+            echo 'No generated change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/data/marketplace/listing_repository.dart \
+            test/data/marketplace/listing_first_page_cache_test.dart
+          git commit -m 'perf: met en cache la première page des annonces publiques'
+          git push origin HEAD:agent/phase-4-public-listings-first-page-cache
