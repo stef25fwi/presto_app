@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../core/observability/correlation_id.dart';
 import '../../services/firebase_functions_region.dart';
 import 'admin_bulk_deletion_policy.dart';
 
@@ -47,9 +48,11 @@ class AdminBulkListingDeleteSummary {
     required this.succeededCount,
     required this.failedCount,
     required this.results,
+    this.correlationId = '',
   });
 
   final bool ok;
+  final String correlationId;
   final String adminActionId;
   final int requestedCount;
   final int succeededCount;
@@ -81,6 +84,7 @@ class AdminBulkListingDeleteSummary {
     }
     return AdminBulkListingDeleteSummary(
       ok: map['ok'] == true,
+      correlationId: (map['correlationId'] ?? '').toString().trim(),
       adminActionId: (map['adminActionId'] ?? '').toString().trim(),
       requestedCount: requestedCount,
       succeededCount: succeededCount,
@@ -121,6 +125,7 @@ class AdminBulkListingService {
   Future<AdminBulkListingDeleteSummary> deleteListings({
     required Iterable<String> listingIds,
     required String reason,
+    String? correlationId,
   }) async {
     final normalizedIds = _policy.normalizeIds(listingIds);
     if (normalizedIds.isEmpty) {
@@ -149,6 +154,7 @@ class AdminBulkListingService {
     final data = await _caller(<String, Object?>{
       'listingIds': normalizedIds,
       'reason': normalizedReason,
+      'correlationId': resolveCorrelationId(correlationId),
     });
     return AdminBulkListingDeleteSummary.fromData(data);
   }
