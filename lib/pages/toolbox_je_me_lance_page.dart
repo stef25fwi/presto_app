@@ -2584,9 +2584,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Widget _buildStarterCard() {
-    final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 370;
-
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(

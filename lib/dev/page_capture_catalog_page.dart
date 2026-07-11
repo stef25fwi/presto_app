@@ -176,9 +176,8 @@ class PageCaptureCatalogPage extends StatelessWidget {
       group: 'Authentification',
       description: 'Confirmation envoi email de réinitialisation.',
       status: PageStatus.active,
-      builder: (_) => const ResetPasswordSuccessPage(
-        email: 'demo@ilipresto.fr',
-      ),
+      builder: (_) =>
+          const ResetPasswordSuccessPage(email: 'demo@ilipresto.fr'),
     ),
     PageCaptureEntry(
       number: 12,
@@ -416,16 +415,16 @@ class PageCaptureCatalogPage extends StatelessWidget {
       (grouped[e.group] ??= []).add(e);
     }
 
-    final activeCount =
-        entries.where((e) => e.status == PageStatus.active).length;
-    final deprecatedCount =
-        entries.where((e) => e.status == PageStatus.deprecated).length;
+    final activeCount = entries
+        .where((e) => e.status == PageStatus.active)
+        .length;
+    final deprecatedCount = entries
+        .where((e) => e.status == PageStatus.deprecated)
+        .length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
-      appBar: AppBar(
-        title: const Text('Catalogue des pages'),
-      ),
+      appBar: AppBar(title: const Text('Catalogue des pages')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
@@ -539,7 +538,6 @@ class _EntryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final route = '/page-catalog?page=${item.id}';
     return ListTile(
       tileColor: Colors.white,
       shape: RoundedRectangleBorder(
