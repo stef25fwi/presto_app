@@ -1,0 +1,45 @@
+name: Apply account compact spacing
+
+on:
+  push:
+    branches:
+      - ui/compact-account-spacing
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-account-compact-spacing
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/compact-account-spacing
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply compact account layout
+        run: node tools/apply_account_compact_spacing_bootstrap.mjs
+
+      - name: Commit generated Flutter changes
+        run: |
+          if git diff --quiet; then
+            echo "Account compact spacing already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart \
+                  lib/widgets/account_notifications_tile.dart \
+                  lib/widgets/account_profile_sections.dart \
+                  lib/features/subscriptions/subscription_widgets.dart \
+                  tools/apply_account_compact_spacing.mjs
+          git commit -m "ui(account): réduit les marges des cartes"
+          git push origin HEAD:ui/compact-account-spacing
