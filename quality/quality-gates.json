@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "coverage": {
-    "minimum_percent": 11.9,
+    "minimum_percent": 12.2,
     "target_percent": 70,
     "critical_modules_target_percent": 85,
-    "ramp_plan": [11.9, 25, 40, 55, 70]
+    "ramp_plan": [12.2, 25, 40, 55, 70]
   },
   "source": {
     "warning_lines": 500,
