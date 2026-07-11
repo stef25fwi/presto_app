@@ -8,6 +8,24 @@ import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
 import '../../services/firestore_web_safe_reads.dart';
 
+int normalizePublicListingsPageSize(int value) {
+  if (value < 1) return 1;
+  if (value > 100) return 100;
+  return value;
+}
+
+class PublicListingsPage {
+  const PublicListingsPage({
+    required this.items,
+    required this.lastDocument,
+    required this.hasMore,
+  });
+
+  final List<MarketplaceListing> items;
+  final QueryDocumentSnapshot<Map<String, dynamic>>? lastDocument;
+  final bool hasMore;
+}
+
 class ListingRepository {
   ListingRepository({
     FirebaseFirestore? firestore,
@@ -114,12 +132,10 @@ class ListingRepository {
         );
   }
 
-  Stream<List<MarketplaceListing>> watchPublicListings({
+  Query<Map<String, dynamic>> _publicListingsQuery({
     String? categoryId,
     String? cityId,
-    int limit = 100,
   }) {
-    final pageSize = limit < 1 ? 1 : (limit > 100 ? 100 : limit);
     Query<Map<String, dynamic>> query = _listings
         .where('status', isEqualTo: 'active')
         .where('visibility', isEqualTo: 'public');
@@ -129,9 +145,16 @@ class ListingRepository {
     if (cityId != null && cityId.trim().isNotEmpty) {
       query = query.where('cityId', isEqualTo: cityId.trim());
     }
+    return query.orderBy('createdAt', descending: true);
+  }
 
-    return query
-        .orderBy('createdAt', descending: true)
+  Stream<List<MarketplaceListing>> watchPublicListings({
+    String? categoryId,
+    String? cityId,
+    int limit = 100,
+  }) {
+    final pageSize = normalizePublicListingsPageSize(limit);
+    return _publicListingsQuery(categoryId: categoryId, cityId: cityId)
         .limit(pageSize)
         .webSafeSnapshots(debugKey: 'home.latestOffers')
         .map(
@@ -146,24 +169,42 @@ class ListingRepository {
     String? cityId,
     int limit = 50,
   }) async {
-    final pageSize = limit < 1 ? 1 : (limit > 100 ? 100 : limit);
-    Query<Map<String, dynamic>> query = _listings
-        .where('status', isEqualTo: 'active')
-        .where('visibility', isEqualTo: 'public');
-    if (categoryId != null && categoryId.trim().isNotEmpty) {
-      query = query.where('categoryId', isEqualTo: categoryId.trim());
-    }
-    if (cityId != null && cityId.trim().isNotEmpty) {
-      query = query.where('cityId', isEqualTo: cityId.trim());
+    final page = await fetchPublicListingsPage(
+      categoryId: categoryId,
+      cityId: cityId,
+      limit: limit,
+    );
+    return page.items;
+  }
+
+  Future<PublicListingsPage> fetchPublicListingsPage({
+    String? categoryId,
+    String? cityId,
+    int limit = 50,
+    QueryDocumentSnapshot<Map<String, dynamic>>? startAfter,
+  }) async {
+    final pageSize = normalizePublicListingsPageSize(limit);
+    Query<Map<String, dynamic>> query = _publicListingsQuery(
+      categoryId: categoryId,
+      cityId: cityId,
+    );
+    if (startAfter != null) {
+      query = query.startAfterDocument(startAfter);
     }
 
-    final snapshot = await query
-        .orderBy('createdAt', descending: true)
-        .limit(pageSize)
-        .get();
-    return snapshot.docs
-        .map(MarketplaceListing.fromFirestore)
-        .toList(growable: false);
+    final snapshot = await query.limit(pageSize + 1).get();
+    final hasMore = snapshot.docs.length > pageSize;
+    final visibleDocs = hasMore
+        ? snapshot.docs.take(pageSize).toList(growable: false)
+        : snapshot.docs;
+
+    return PublicListingsPage(
+      items: visibleDocs
+          .map(MarketplaceListing.fromFirestore)
+          .toList(growable: false),
+      lastDocument: visibleDocs.isEmpty ? null : visibleDocs.last,
+      hasMore: hasMore,
+    );
   }
 
   Future<void> incrementView({

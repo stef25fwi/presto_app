@@ -18,11 +18,15 @@ void main() {
       isTrue,
     );
     expect(
-      source.contains(".limit(pageSize)\n        .get()"),
+      source.contains('query.limit(pageSize + 1).get()'),
       isTrue,
     );
     expect(
-      source.contains('limit > 100 ? 100 : limit'),
+      source.contains('query = query.startAfterDocument(startAfter)'),
+      isTrue,
+    );
+    expect(
+      source.contains('if (value > 100) return 100'),
       isTrue,
     );
   });
