@@ -206,10 +206,7 @@ class _AdminMessagingRail extends StatelessWidget {
   final AdminMessagingSection selected;
   final ValueChanged<AdminMessagingSection> onSelect;
 
-  const _AdminMessagingRail({
-    required this.selected,
-    required this.onSelect,
-  });
+  const _AdminMessagingRail({required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -262,15 +259,17 @@ class _AdminMessagingTopSelector extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Wrap(
           spacing: 8,
-          children: AdminMessagingSection.values.map((section) {
-            final selectedChip = section == selected;
-            return ChoiceChip(
-              selected: selectedChip,
-              label: Text(section.label),
-              avatar: Icon(section.icon, size: 18),
-              onSelected: (_) => onSelect(section),
-            );
-          }).toList(growable: false),
+          children: AdminMessagingSection.values
+              .map((section) {
+                final selectedChip = section == selected;
+                return ChoiceChip(
+                  selected: selectedChip,
+                  label: Text(section.label),
+                  avatar: Icon(section.icon, size: 18),
+                  onSelected: (_) => onSelect(section),
+                );
+              })
+              .toList(growable: false),
         ),
       ),
     );
@@ -295,7 +294,7 @@ class _AdminMessagingDataset {
 
 class _AdminMessagingDatasetBuilder extends StatelessWidget {
   final Widget Function(BuildContext context, _AdminMessagingDataset dataset)
-      builder;
+  builder;
 
   const _AdminMessagingDatasetBuilder({required this.builder});
 
@@ -328,10 +327,13 @@ class _AdminMessagingDatasetBuilder extends StatelessWidget {
                           attachmentsSnapshot,
                           notificationsSnapshot,
                         ];
-                        final hasError = snapshots.any((snapshot) => snapshot.hasError);
+                        final hasError = snapshots.any(
+                          (snapshot) => snapshot.hasError,
+                        );
                         final isWaiting = snapshots.any(
                           (snapshot) =>
-                              snapshot.connectionState == ConnectionState.waiting &&
+                              snapshot.connectionState ==
+                                  ConnectionState.waiting &&
                               !snapshot.hasData,
                         );
 
@@ -346,17 +348,21 @@ class _AdminMessagingDatasetBuilder extends StatelessWidget {
                         }
 
                         if (isWaiting) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
 
                         return builder(
                           context,
                           _AdminMessagingDataset(
-                            conversations: conversationsSnapshot.data ?? const [],
+                            conversations:
+                                conversationsSnapshot.data ?? const [],
                             reports: reportsSnapshot.data ?? const [],
                             users: usersSnapshot.data ?? const [],
                             attachments: attachmentsSnapshot.data ?? const [],
-                            notifications: notificationsSnapshot.data ?? const [],
+                            notifications:
+                                notificationsSnapshot.data ?? const [],
                           ),
                         );
                       },
@@ -385,13 +391,14 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return _AdminMessagingDatasetBuilder(
       builder: (context, dataset) {
-        final derivedAnalytics = const AdminMessagingAnalyticsService().buildSnapshot(
-          conversations: dataset.conversations,
-          attachments: dataset.attachments,
-          users: dataset.users,
-          reports: dataset.reports,
-          notifications: dataset.notifications,
-        );
+        final derivedAnalytics = const AdminMessagingAnalyticsService()
+            .buildSnapshot(
+              conversations: dataset.conversations,
+              attachments: dataset.attachments,
+              users: dataset.users,
+              reports: dataset.reports,
+              notifications: dataset.notifications,
+            );
         return StreamBuilder<AdminMessagingAnalyticsSnapshot?>(
           stream: AdminMessagingMetricsService().watchCurrentMetrics(),
           builder: (context, metricsSnapshot) {
@@ -433,7 +440,8 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                             '${analytics.activeToday} actives aujourd\'hui\n${analytics.unansweredConversations} avec non-lu',
                         icon: Icons.forum_rounded,
                         color: const Color(0xFF1D4ED8),
-                        onTap: () => onOpenSection(AdminMessagingSection.conversations),
+                        onTap: () =>
+                            onOpenSection(AdminMessagingSection.conversations),
                       ),
                       AdminMessagingStatCard(
                         title: 'Signalements',
@@ -442,7 +450,8 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                             '${analytics.pendingReports} en attente\n${analytics.resolvedReports} traités',
                         icon: Icons.flag_rounded,
                         color: const Color(0xFFD97706),
-                        onTap: () => onOpenSection(AdminMessagingSection.reports),
+                        onTap: () =>
+                            onOpenSection(AdminMessagingSection.reports),
                       ),
                       AdminMessagingStatCard(
                         title: 'Risque élevé',
@@ -460,7 +469,8 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                             '${analytics.pushDeliveredCount} délivrés\n${analytics.pushFailedCount} en échec',
                         icon: Icons.notifications_active_rounded,
                         color: const Color(0xFF0F766E),
-                        onTap: () => onOpenSection(AdminMessagingSection.notifications),
+                        onTap: () =>
+                            onOpenSection(AdminMessagingSection.notifications),
                       ),
                     ],
                   ),
@@ -478,7 +488,8 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                         const Divider(height: 20),
                         _PriorityRow(
                           title: 'Réponse prestataires',
-                          value: '${analytics.providerResponseRate.toStringAsFixed(0)} %',
+                          value:
+                              '${analytics.providerResponseRate.toStringAsFixed(0)} %',
                           subtitle:
                               'délai moyen ${analytics.averageResponseHours.toStringAsFixed(1)} h',
                           color: const Color(0xFF1D4ED8),
@@ -504,22 +515,27 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                         _QuickActionButton(
                           label: 'Ouvrir les conversations',
                           icon: Icons.forum_rounded,
-                          onTap: () => onOpenSection(AdminMessagingSection.conversations),
+                          onTap: () => onOpenSection(
+                            AdminMessagingSection.conversations,
+                          ),
                         ),
                         _QuickActionButton(
                           label: 'Traiter les signalements',
                           icon: Icons.flag_rounded,
-                          onTap: () => onOpenSection(AdminMessagingSection.reports),
+                          onTap: () =>
+                              onOpenSection(AdminMessagingSection.reports),
                         ),
                         _QuickActionButton(
                           label: 'Vérifier les utilisateurs',
                           icon: Icons.groups_rounded,
-                          onTap: () => onOpenSection(AdminMessagingSection.users),
+                          onTap: () =>
+                              onOpenSection(AdminMessagingSection.users),
                         ),
                         _QuickActionButton(
                           label: 'Consulter l\'audit',
                           icon: Icons.fact_check_rounded,
-                          onTap: () => onOpenSection(AdminMessagingSection.audit),
+                          onTap: () =>
+                              onOpenSection(AdminMessagingSection.audit),
                         ),
                         _QuickActionButton(
                           label: 'Modération historique',
@@ -527,7 +543,8 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute<void>(
-                                builder: (_) => const AdminMessagingModerationPage(),
+                                builder: (_) =>
+                                    const AdminMessagingModerationPage(),
                               ),
                             );
                           },
@@ -539,25 +556,30 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                   _AdminDashboardSectionCard(
                     title: 'Derniers signalements',
                     child: Column(
-                      children: dataset.reports.take(4).map((report) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.flag_rounded),
-                          title: Text(report.reason),
-                          subtitle: Text(
-                            'Conversation ${report.conversationId.isEmpty ? 'inconnue' : report.conversationId} • ${report.status}',
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    AdminMessageReportDetailPage(report: report),
+                      children: dataset.reports
+                          .take(4)
+                          .map((report) {
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.flag_rounded),
+                              title: Text(report.reason),
+                              subtitle: Text(
+                                'Conversation ${report.conversationId.isEmpty ? 'inconnue' : report.conversationId} • ${report.status}',
                               ),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        AdminMessageReportDetailPage(
+                                          report: report,
+                                        ),
+                                  ),
+                                );
+                              },
                             );
-                          },
-                        );
-                      }).toList(growable: false),
+                          })
+                          .toList(growable: false),
                     ),
                   ),
                 ],
@@ -578,7 +600,8 @@ class _AdminConversationsSection extends StatefulWidget {
       _AdminConversationsSectionState();
 }
 
-class _AdminConversationsSectionState extends State<_AdminConversationsSection> {
+class _AdminConversationsSectionState
+    extends State<_AdminConversationsSection> {
   final AdminMessagingService _service = AdminMessagingService();
   final TextEditingController _controller = TextEditingController();
   final List<AdminConversationModel> _items = <AdminConversationModel>[];
@@ -656,18 +679,17 @@ class _AdminConversationsSectionState extends State<_AdminConversationsSection> 
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items.where((conversation) {
-      return _matchesQuery(
-        _query,
-        [
-          conversation.id,
-          conversation.contextTitle,
-          conversation.participantSummary,
-          conversation.status,
-          conversation.region,
-        ],
-      );
-    }).toList(growable: false);
+    final filtered = _items
+        .where((conversation) {
+          return _matchesQuery(_query, [
+            conversation.id,
+            conversation.contextTitle,
+            conversation.participantSummary,
+            conversation.status,
+            conversation.region,
+          ]);
+        })
+        .toList(growable: false);
 
     return _AdminMessagingSectionContainer(
       title: 'Conversations récentes',
@@ -764,8 +786,9 @@ class _AdminConversationsSectionState extends State<_AdminConversationsSection> 
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
-                      backgroundColor:
-                          const Color(0xFF1D4ED8).withValues(alpha: 0.12),
+                      backgroundColor: const Color(
+                        0xFF1D4ED8,
+                      ).withValues(alpha: 0.12),
                       child: const Icon(
                         Icons.forum_rounded,
                         color: Color(0xFF1D4ED8),
@@ -789,7 +812,9 @@ class _AdminConversationsSectionState extends State<_AdminConversationsSection> 
                               AdminConversationStatusBadge(
                                 status: conversation.status,
                               ),
-                              AdminRiskScoreBadge(score: conversation.riskScore),
+                              AdminRiskScoreBadge(
+                                score: conversation.riskScore,
+                              ),
                               if (conversation.adminWatchlisted)
                                 _MiniTag(
                                   label: 'Watchlist',
@@ -928,19 +953,18 @@ class _AdminReportsSectionState extends State<_AdminReportsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items.where((report) {
-      return _matchesQuery(
-        _query,
-        [
-          report.conversationId,
-          report.reason,
-          report.status,
-          report.priority,
-          report.reportedUserId,
-          report.reportedBy,
-        ],
-      );
-    }).toList(growable: false);
+    final filtered = _items
+        .where((report) {
+          return _matchesQuery(_query, [
+            report.conversationId,
+            report.reason,
+            report.status,
+            report.priority,
+            report.reportedUserId,
+            report.reportedBy,
+          ]);
+        })
+        .toList(growable: false);
 
     return _AdminMessagingSectionContainer(
       title: 'Signalements messagerie',
@@ -1073,9 +1097,8 @@ class _AdminReportsSectionState extends State<_AdminReportsSection> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => AdminMessageReportDetailPage(
-                            report: report,
-                          ),
+                          builder: (_) =>
+                              AdminMessageReportDetailPage(report: report),
                         ),
                       );
                     },
@@ -1195,19 +1218,18 @@ class _AdminMessagingUsersSectionState
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items.where((user) {
-      return _matchesQuery(
-        _query,
-        [
-          user.uid,
-          user.name,
-          user.email,
-          user.role,
-          user.region,
-          user.messagingStatus,
-        ],
-      );
-    }).toList(growable: false);
+    final filtered = _items
+        .where((user) {
+          return _matchesQuery(_query, [
+            user.uid,
+            user.name,
+            user.email,
+            user.role,
+            user.region,
+            user.messagingStatus,
+          ]);
+        })
+        .toList(growable: false);
 
     return _AdminMessagingSectionContainer(
       title: 'Utilisateurs messagerie',
@@ -1220,7 +1242,12 @@ class _AdminMessagingUsersSectionState
             AdminMessagingFilterBar(
               controller: _controller,
               hintText: 'Recherche par nom, email, rôle, région, statut…',
-              quickFilters: const ['actif', 'bloqué', 'suspendu', 'prestataire'],
+              quickFilters: const [
+                'actif',
+                'bloqué',
+                'suspendu',
+                'prestataire',
+              ],
               onSubmitted: (value) => setState(() => _query = value),
               onQuickFilterTap: (value) {
                 _controller.text = value;
@@ -1300,8 +1327,9 @@ class _AdminMessagingUsersSectionState
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
-                      backgroundColor:
-                          const Color(0xFF0F766E).withValues(alpha: 0.12),
+                      backgroundColor: const Color(
+                        0xFF0F766E,
+                      ).withValues(alpha: 0.12),
                       child: Text(
                         user.name.trim().isEmpty
                             ? '?'
@@ -1437,8 +1465,8 @@ class _AdminDashboardStatGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 1200
             ? 4
             : constraints.maxWidth >= 700
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         return GridView.builder(
           itemCount: cards.length,
           shrinkWrap: true,
@@ -1460,10 +1488,7 @@ class _AdminDashboardSectionCard extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _AdminDashboardSectionCard({
-    required this.title,
-    required this.child,
-  });
+  const _AdminDashboardSectionCard({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -1520,24 +1545,15 @@ class _PriorityRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Color(0xFF6B7280)),
-              ),
+              Text(subtitle, style: const TextStyle(color: Color(0xFF6B7280))),
             ],
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-          ),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
         ),
       ],
     );
@@ -1605,11 +1621,7 @@ class _AdminMessagingEmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.inbox_rounded,
-            size: 42,
-            color: Color(0xFF9CA3AF),
-          ),
+          const Icon(Icons.inbox_rounded, size: 42, color: Color(0xFF9CA3AF)),
           const SizedBox(height: 12),
           Text(
             title,
