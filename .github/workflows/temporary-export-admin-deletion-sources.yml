@@ -20,19 +20,20 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p admin-deletion-audit/export
-          grep -RInE \
-            'delete|deletedAt|deleted_entities|admin_actions|audit|histor|commune|bulk' \
-            lib functions/src functions/test functions/tests \
+          roots=(lib)
+          for candidate in functions/src functions/test functions/tests; do
+            if [ -d "$candidate" ]; then
+              roots+=("$candidate")
+            fi
+          done
+          pattern='delete|deletedAt|deleted_entities|admin_actions|audit|histor|commune|bulk'
+          grep -RInE "$pattern" "${roots[@]}" \
             > admin-deletion-audit/locations.txt 2>/dev/null || true
-          grep -RIlE \
-            'delete|deletedAt|deleted_entities|admin_actions|audit|histor|commune|bulk' \
-            lib functions/src functions/test functions/tests \
-            2>/dev/null \
-            | sort -u \
-            | while IFS= read -r path; do
-                mkdir -p "admin-deletion-audit/export/$(dirname "$path")"
-                cp "$path" "admin-deletion-audit/export/$path"
-              done
+          while IFS= read -r path; do
+            [ -n "$path" ] || continue
+            mkdir -p "admin-deletion-audit/export/$(dirname "$path")"
+            cp "$path" "admin-deletion-audit/export/$path"
+          done < <(grep -RIlE "$pattern" "${roots[@]}" 2>/dev/null | sort -u || true)
           if [ -f lib/pages/admin_space_page.dart ]; then
             mkdir -p admin-deletion-audit/export/lib/pages
             cp lib/pages/admin_space_page.dart admin-deletion-audit/export/lib/pages/
