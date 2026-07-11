@@ -40,6 +40,12 @@ jobs:
       - name: Generate post-test quality baseline
         run: python3 tools/quality/audit_repository.py --output-dir quality_reports/post-test --enforce
 
+      - name: Measure critical module coverage
+        run: |
+          python3 tools/quality/check_critical_coverage.py \
+            --output-dir quality_reports/critical-coverage \
+            --enforce
+
       - name: Publish job summary
         if: always()
         run: |
@@ -47,6 +53,10 @@ jobs:
             cat quality_reports/post-test/baseline.md >> "$GITHUB_STEP_SUMMARY"
           elif [ -f quality_reports/pre-test/baseline.md ]; then
             cat quality_reports/pre-test/baseline.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f quality_reports/critical-coverage/critical-coverage.md ]; then
+            printf '\n' >> "$GITHUB_STEP_SUMMARY"
+            cat quality_reports/critical-coverage/critical-coverage.md >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload quality reports
