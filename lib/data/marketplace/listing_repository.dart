@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../core/cache/expiring_memory_cache.dart';
 import '../../models/marketplace_enums.dart';
 import '../../models/marketplace_listing.dart';
 import '../../models/marketplace_listing_draft.dart';
@@ -12,6 +13,18 @@ int normalizePublicListingsPageSize(int value) {
   if (value < 1) return 1;
   if (value > 100) return 100;
   return value;
+}
+
+String publicListingsFirstPageCacheKey({
+  String? categoryId,
+  String? cityId,
+  required int limit,
+}) {
+  return <String>[
+    categoryId?.trim().toLowerCase() ?? '',
+    cityId?.trim().toLowerCase() ?? '',
+    normalizePublicListingsPageSize(limit).toString(),
+  ].join('|');
 }
 
 class PublicListingsPage {
@@ -31,26 +44,34 @@ class ListingRepository {
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? prestoFirebaseFunctions,
-        _analytics = analytics ?? ProductAnalyticsService();
+    ExpiringMemoryCache<String, PublicListingsPage>? publicListingsCache,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? prestoFirebaseFunctions,
+       _analytics = analytics ?? ProductAnalyticsService(),
+       _publicListingsCache =
+           publicListingsCache ??
+           ExpiringMemoryCache<String, PublicListingsPage>(
+             defaultTtl: const Duration(seconds: 30),
+             maximumEntries: 30,
+           );
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
   final ProductAnalyticsService _analytics;
+  final ExpiringMemoryCache<String, PublicListingsPage> _publicListingsCache;
 
   CollectionReference<Map<String, dynamic>> get _listings =>
       _firestore.collection('listings');
 
   Future<String> createDraft(MarketplaceListingDraft draft) async {
-    await _analytics
-        .logEvent('listing_create_started', parameters: <String, Object?>{
-      'category_id': draft.categoryId,
-      'city_id': draft.cityId,
-    });
-    final payload = <String, dynamic>{
-      'draft': draft.toFirestore(),
-    };
+    await _analytics.logEvent(
+      'listing_create_started',
+      parameters: <String, Object?>{
+        'category_id': draft.categoryId,
+        'city_id': draft.cityId,
+      },
+    );
+    final payload = <String, dynamic>{'draft': draft.toFirestore()};
     final response = await callPrestoFunction<dynamic>(
       functions: _functions,
       name: 'createListingDraft',
@@ -64,15 +85,18 @@ class ListingRepository {
     final draftId = (data['draftId'] ?? '').toString().trim();
     if (draftId.isEmpty) {
       throw StateError(
-          'Le serveur n’a pas renvoyé d’identifiant de brouillon.');
+        'Le serveur n’a pas renvoyé d’identifiant de brouillon.',
+      );
     }
 
-    await _analytics
-        .logEvent('listing_create_completed', parameters: <String, Object?>{
-      'draft_id': draftId,
-      'category_id': draft.categoryId,
-      'media_count': draft.media.length,
-    });
+    await _analytics.logEvent(
+      'listing_create_completed',
+      parameters: <String, Object?>{
+        'draft_id': draftId,
+        'category_id': draft.categoryId,
+        'media_count': draft.media.length,
+      },
+    );
     return draftId;
   }
 
@@ -109,13 +133,16 @@ class ListingRepository {
           const <String, dynamic>{},
     );
     final result = ListingSubmissionResult.fromMap(data);
-    await _analytics
-        .logEvent('listing_submitted', parameters: <String, Object?>{
-      'listing_id': result.listingId,
-      'status': result.status.value,
-      'moderation_status': result.moderationStatus.value,
-      'risk_score': result.riskScore,
-    });
+    _publicListingsCache.clear();
+    await _analytics.logEvent(
+      'listing_submitted',
+      parameters: <String, Object?>{
+        'listing_id': result.listingId,
+        'status': result.status.value,
+        'moderation_status': result.moderationStatus.value,
+        'risk_score': result.riskScore,
+      },
+    );
     return result;
   }
 
@@ -182,8 +209,52 @@ class ListingRepository {
     String? cityId,
     int limit = 50,
     QueryDocumentSnapshot<Map<String, dynamic>>? startAfter,
-  }) async {
+  }) {
     final pageSize = normalizePublicListingsPageSize(limit);
+    if (startAfter != null) {
+      return _loadPublicListingsPage(
+        categoryId: categoryId,
+        cityId: cityId,
+        pageSize: pageSize,
+        startAfter: startAfter,
+      );
+    }
+
+    final cacheKey = publicListingsFirstPageCacheKey(
+      categoryId: categoryId,
+      cityId: cityId,
+      limit: pageSize,
+    );
+    return _publicListingsCache.getOrLoad(
+      cacheKey,
+      () => _loadPublicListingsPage(
+        categoryId: categoryId,
+        cityId: cityId,
+        pageSize: pageSize,
+      ),
+    );
+  }
+
+  Future<void> preloadPublicListings({
+    String? categoryId,
+    String? cityId,
+    int limit = 20,
+  }) async {
+    await fetchPublicListingsPage(
+      categoryId: categoryId,
+      cityId: cityId,
+      limit: limit,
+    );
+  }
+
+  void invalidatePublicListingsCache() => _publicListingsCache.clear();
+
+  Future<PublicListingsPage> _loadPublicListingsPage({
+    String? categoryId,
+    String? cityId,
+    required int pageSize,
+    QueryDocumentSnapshot<Map<String, dynamic>>? startAfter,
+  }) async {
     Query<Map<String, dynamic>> query = _publicListingsQuery(
       categoryId: categoryId,
       cityId: cityId,
