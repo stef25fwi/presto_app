@@ -50,7 +50,7 @@
       "label": "Messagerie",
       "patterns": [
         "lib/pages/messages/**",
-        "lib/data/marketplace/chat_repository.dart",
+        "lib/data/marketplace/chat_*.dart",
         "lib/services/**/*message*.dart"
       ],
       "minimum_percent": 0.2,
