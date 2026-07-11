@@ -148,6 +148,20 @@ class ProductAnalyticsEvent {
     );
   }
 
+  factory ProductAnalyticsEvent.engagementFavoriteChanged({
+    required String listingId,
+    required bool added,
+  }) {
+    return ProductAnalyticsEvent(
+      name: 'engagement_favorite_changed',
+      stage: ProductFunnelStage.engagement,
+      parameters: <String, Object?>{
+        'listing_id': listingId,
+        'added': added,
+      },
+    );
+  }
+
   factory ProductAnalyticsEvent.conversionPlanSelected({
     required String planId,
     required String billingPeriod,
