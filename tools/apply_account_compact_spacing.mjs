@@ -11,8 +11,8 @@ async function write(path, content) {
 }
 
 function replaceOnce(content, before, after, label) {
-  if (content.includes(after)) return content;
   const count = content.split(before).length - 1;
+  if (count === 0 && content.includes(after)) return content;
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
   }
@@ -52,32 +52,28 @@ account = replaceOnce(
   'profile completeness padding',
 );
 
-account = replaceOnce(
+account = transformRange(
   account,
-  `          width: 38,\n          height: 38,`,
-  `          width: 34,\n          height: 34,`,
-  'account section icon size',
-);
-
-account = replaceOnce(
-  account,
-  `        const SizedBox(width: 12),\n        Expanded(\n          child: Column(\n            crossAxisAlignment: CrossAxisAlignment.start,`,
-  `        const SizedBox(width: 8),\n        Expanded(\n          child: Column(\n            crossAxisAlignment: CrossAxisAlignment.start,`,
-  'account section icon gap',
-);
-
-account = replaceOnce(
-  account,
-  'padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),',
-  'padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),',
-  'account section card padding',
-);
-
-account = replaceOnce(
-  account,
-  `          if (alwaysVisibleChild != null) ...[\n            const SizedBox(height: 14),\n            alwaysVisibleChild,\n          ],\n          if (!isCollapsible || isExpanded) ...[\n            const SizedBox(height: 14),`,
-  `          if (alwaysVisibleChild != null) ...[\n            const SizedBox(height: 10),\n            alwaysVisibleChild,\n          ],\n          if (!isCollapsible || isExpanded) ...[\n            const SizedBox(height: 10),`,
-  'account section inner gaps',
+  '  Widget _buildAccountSectionCard({',
+  '  Widget _buildProfile(User user) {',
+  (range) => range
+    .replace(
+      `          width: 38,\n          height: 38,`,
+      `          width: 34,\n          height: 34,`,
+    )
+    .replace(
+      `        const SizedBox(width: 12),\n        Expanded(\n          child: Column(\n            crossAxisAlignment: CrossAxisAlignment.start,`,
+      `        const SizedBox(width: 8),\n        Expanded(\n          child: Column(\n            crossAxisAlignment: CrossAxisAlignment.start,`,
+    )
+    .replace(
+      'padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),',
+      'padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),',
+    )
+    .replace(
+      `          if (alwaysVisibleChild != null) ...[\n            const SizedBox(height: 14),\n            alwaysVisibleChild,\n          ],\n          if (!isCollapsible || isExpanded) ...[\n            const SizedBox(height: 14),`,
+      `          if (alwaysVisibleChild != null) ...[\n            const SizedBox(height: 10),\n            alwaysVisibleChild,\n          ],\n          if (!isCollapsible || isExpanded) ...[\n            const SizedBox(height: 10),`,
+    ),
+  'account section card compact spacing',
 );
 
 account = replaceOnce(
