@@ -29,7 +29,7 @@ void main() {
     );
     expect(
       () => ProductAnalyticsEvent(
-        name: 'a${'b' * 40}',
+        name: 'a${List<String>.filled(40, 'b').join()}',
         stage: ProductFunnelStage.engagement,
       ),
       throwsArgumentError,
