@@ -1,3 +1,4 @@
+// Vérifie les bornes de pagination appliquées avant toute requête Firestore.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/data/marketplace/listing_repository.dart';
 
