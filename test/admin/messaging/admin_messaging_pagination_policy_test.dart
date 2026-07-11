@@ -14,18 +14,9 @@ void main() {
   });
 
   test('détecte hasMore uniquement avec un document supplémentaire', () {
-    expect(
-      policy.hasMore(receivedCount: 39, requestedPageSize: 40),
-      isFalse,
-    );
-    expect(
-      policy.hasMore(receivedCount: 40, requestedPageSize: 40),
-      isFalse,
-    );
-    expect(
-      policy.hasMore(receivedCount: 41, requestedPageSize: 40),
-      isTrue,
-    );
+    expect(policy.hasMore(receivedCount: 39, requestedPageSize: 40), isFalse);
+    expect(policy.hasMore(receivedCount: 40, requestedPageSize: 40), isFalse);
+    expect(policy.hasMore(receivedCount: 41, requestedPageSize: 40), isTrue);
   });
 
   test('masque le document témoin dans les éléments visibles', () {

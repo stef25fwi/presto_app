@@ -2,8 +2,8 @@ class AdminMessagingPaginationPolicy {
   const AdminMessagingPaginationPolicy({
     this.defaultPageSize = 40,
     this.maximumPageSize = 100,
-  })  : assert(defaultPageSize > 0),
-        assert(maximumPageSize >= defaultPageSize);
+  }) : assert(defaultPageSize > 0),
+       assert(maximumPageSize >= defaultPageSize);
 
   final int defaultPageSize;
   final int maximumPageSize;
@@ -18,17 +18,11 @@ class AdminMessagingPaginationPolicy {
     return normalizePageSize(requestedPageSize) + 1;
   }
 
-  bool hasMore({
-    required int receivedCount,
-    required int requestedPageSize,
-  }) {
+  bool hasMore({required int receivedCount, required int requestedPageSize}) {
     return receivedCount > normalizePageSize(requestedPageSize);
   }
 
-  List<T> visibleItems<T>(
-    Iterable<T> items, {
-    required int requestedPageSize,
-  }) {
+  List<T> visibleItems<T>(Iterable<T> items, {required int requestedPageSize}) {
     return List<T>.unmodifiable(
       items.take(normalizePageSize(requestedPageSize)),
     );
