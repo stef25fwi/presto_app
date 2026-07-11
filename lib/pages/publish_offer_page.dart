@@ -53,8 +53,8 @@ import '../utils/recording_path_web.dart'
 import '../widgets/ai_publish_control.dart';
 import '../widgets/city_postal_autocomplete_field.dart';
 import 'publish_offer_widgets.dart';
+import '../features/offers/presentation/widgets/publish_offer_photos_section.dart';
 import '../widgets/phone_input_field.dart';
-import '../widgets/photo_selector_tile.dart';
 import '../widgets/orbiting_ai_visual.dart';
 
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
@@ -4766,58 +4766,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _recompute();
                               },
                               validator: (_) => null,
-                            ),
-                          if (_category != null) const SizedBox(height: 16),
-
-                          // PHOTOS
-                          Row(
-                            children: [
-                              Text(
-                                'Photos de l\'offre',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                '(optionnel, 2 photos maximum)',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                                                   // PHOTOS
+                          PublishOfferPhotosSection(
+                            visibleTileCount: _visiblePhotoTileCount,
+                            maximumPhotos: _publishPhotoHardLimit,
+                            selectedPhotos: _selectedPhotos,
+                            selectedPhotoBytes: _selectedPhotoBytes,
+                            onPhotoTap: _onPhotoTileTap,
+                            onPhotoLongPress: _pickImage,
+                            onPhotoRemove: _removePhotoAt,
                           ),
-                          const SizedBox(height: 12),
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: _visiblePhotoTileCount,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 10,
-                              crossAxisSpacing: 10,
-                              childAspectRatio: 1.8,
-                            ),
-                            itemBuilder: (context, index) {
-                              final hasPhoto = index < _selectedPhotos.length;
-                              return PhotoSelectorTile(
-                                label: 'Photo ${index + 1}',
-                                file: hasPhoto ? _selectedPhotos[index] : null,
-                                bytes: hasPhoto &&
-                                        index < _selectedPhotoBytes.length
-                                    ? _selectedPhotoBytes[index]
-                                    : null,
-                                onTap: () => _onPhotoTileTap(index),
-                                onLongPress: () => _pickImage(index),
-                                onRemove: hasPhoto
-                                    ? () => _removePhotoAt(index)
-                                    : null,
-                              );
-                            },
+                          const SizedBox(height: 16),
+
                           ),
                           const SizedBox(height: 16),
 
