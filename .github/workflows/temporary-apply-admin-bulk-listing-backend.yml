@@ -1,0 +1,39 @@
+name: Temporary apply admin bulk listing backend
+
+on:
+  push:
+    branches:
+      - agent/phase-5-admin-deletion-backend
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-5-admin-deletion-backend
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply targeted backend exports
+        run: node tools/temporary_apply_admin_bulk_listing_backend.mjs
+
+      - name: Commit targeted changes
+        run: |
+          if git diff --quiet; then
+            echo 'No generated change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            functions/src/index.ts \
+            functions/src/modules/marketplace/callables/listings.ts
+          git commit -m 'feat: branche la suppression admin multiple des annonces'
+          git push origin HEAD:agent/phase-5-admin-deletion-backend
