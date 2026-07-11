@@ -26,4 +26,27 @@ jobs:
         run: node --test tools/quality/check_functions_app_check.test.mjs
 
       - name: Audit callable Functions
-        run: node tools/quality/check_functions_app_check.mjs functions/src
+        id: audit
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          mkdir -p quality_reports/app-check
+          node tools/quality/check_functions_app_check.mjs functions/src \
+            2>&1 | tee quality_reports/app-check/report.json
+
+      - name: Upload App Check audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-check-source-audit-${{ github.sha }}
+          path: quality_reports/app-check/report.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce App Check audit
+        if: always()
+        run: |
+          if [ '${{ steps.audit.outcome }}' != 'success' ]; then
+            echo 'App Check source audit failed. Download the audit artifact for details.'
+            exit 1
+          fi
