@@ -19,7 +19,6 @@ analyzer:
     unused_field: ignore
     unused_element: ignore
     unused_import: ignore
-    unnecessary_import: ignore
     unnecessary_non_null_assertion: ignore
     use_build_context_synchronously: ignore
     strict_top_level_inference: ignore
