@@ -84,7 +84,7 @@ class AdminMessagingService {
         .limit(_paginationPolicy.queryLimit(normalizedPageSize))
         .get();
     final visibleDocs = _paginationPolicy
-        .visibleItems<DocumentSnapshot<Map<String, dynamic>>>(
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
           snapshot.docs,
           requestedPageSize: normalizedPageSize,
         );
@@ -153,7 +153,7 @@ class AdminMessagingService {
         .limit(_paginationPolicy.queryLimit(normalizedPageSize))
         .get();
     final visibleDocs = _paginationPolicy
-        .visibleItems<DocumentSnapshot<Map<String, dynamic>>>(
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
           snapshot.docs,
           requestedPageSize: normalizedPageSize,
         );
@@ -218,7 +218,7 @@ class AdminMessagingService {
         .limit(_paginationPolicy.queryLimit(normalizedPageSize))
         .get();
     final visibleDocs = _paginationPolicy
-        .visibleItems<DocumentSnapshot<Map<String, dynamic>>>(
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
           snapshot.docs,
           requestedPageSize: normalizedPageSize,
         );
@@ -273,7 +273,7 @@ class AdminMessagingService {
         .limit(_paginationPolicy.queryLimit(normalizedPageSize))
         .get();
     final visibleDocs = _paginationPolicy
-        .visibleItems<DocumentSnapshot<Map<String, dynamic>>>(
+        .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
           snapshot.docs,
           requestedPageSize: normalizedPageSize,
         );
