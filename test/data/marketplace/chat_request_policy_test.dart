@@ -29,13 +29,14 @@ void main() {
         throwsA(isA<ChatRequestException>()),
       );
       expect(
-        () => policy.normalizeMessage('a' * 2001),
+        () => policy.normalizeMessage(List<String>.filled(2001, 'a').join()),
         throwsA(isA<ChatRequestException>()),
       );
     });
 
     test('accepte exactement 2000 caractères', () {
-      expect(policy.normalizeMessage('a' * 2000).length, 2000);
+      final message = List<String>.filled(2000, 'a').join();
+      expect(policy.normalizeMessage(message).length, 2000);
     });
 
     test('lit threadId et l alias conversationId', () {
