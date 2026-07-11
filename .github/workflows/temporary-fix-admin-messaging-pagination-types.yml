@@ -1,0 +1,37 @@
+name: Temporary fix admin messaging pagination types
+
+on:
+  push:
+    branches:
+      - agent/phase-4-admin-messaging-pagination
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-4-admin-messaging-pagination
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply pagination type fix
+        run: node tools/temporary_fix_admin_messaging_pagination_types.mjs
+
+      - name: Commit targeted change
+        run: |
+          if git diff --quiet; then
+            echo 'No generated change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/admin/messaging/services/admin_messaging_service.dart
+          git commit -m 'fix: utilise les QueryDocumentSnapshot de pagination admin'
+          git push origin HEAD:agent/phase-4-admin-messaging-pagination
