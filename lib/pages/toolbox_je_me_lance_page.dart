@@ -82,9 +82,9 @@ Future<void> _openExternalUrl(BuildContext context, String url) async {
   if (uri == null) return;
   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Impossible d\'ouvrir $url')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Impossible d\'ouvrir $url')));
   }
 }
 
@@ -101,18 +101,21 @@ List<RegionResource> _planContactsForTask(
   final lowerActivity = activity.toLowerCase().trim();
   final lowerStatus = currentStatus.toLowerCase().trim();
   final isDromRegion = RegionResourcesService.isDROM(region);
-  final isArtisanActivity = lowerActivity.contains('artisan') ||
+  final isArtisanActivity =
+      lowerActivity.contains('artisan') ||
       lowerActivity.contains('btp') ||
       lowerActivity.contains('travaux') ||
       lowerActivity.contains('coiffure') ||
       lowerActivity.contains('esthétique') ||
       lowerActivity.contains('reparation') ||
       lowerActivity.contains('réparation');
-  final isCommerceActivity = lowerActivity.contains('commerce') ||
+  final isCommerceActivity =
+      lowerActivity.contains('commerce') ||
       lowerActivity.contains('vente') ||
       lowerActivity.contains('restauration') ||
       lowerActivity.contains('livraison');
-  final isServiceActivity = lowerActivity.contains('conseil') ||
+  final isServiceActivity =
+      lowerActivity.contains('conseil') ||
       lowerActivity.contains('formation') ||
       lowerActivity.contains('digitale') ||
       lowerActivity.contains('événementiel') ||
@@ -374,8 +377,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     // Tentative 1 : tri serveur sur updatedAt (peut échouer si types inconsistants)
     try {
-      final snap =
-          await col.orderBy('updatedAt', descending: true).limit(1).get();
+      final snap = await col
+          .orderBy('updatedAt', descending: true)
+          .limit(1)
+          .get();
       if (snap.docs.isNotEmpty) return snap.docs.first;
       return null;
     } catch (e) {
@@ -419,13 +424,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       final territory = (data['territory'] as Map?)?.cast<String, dynamic>();
       final profile = (data['profile'] as Map?)?.cast<String, dynamic>();
 
-      final profileRegion = [
-        territory?['region'],
-        profile?['region'],
-        data['region'],
-      ]
-          .map((value) => value?.toString().trim() ?? '')
-          .firstWhere((value) => value.isNotEmpty, orElse: () => '');
+      final profileRegion =
+          [territory?['region'], profile?['region'], data['region']]
+              .map((value) => value?.toString().trim() ?? '')
+              .firstWhere((value) => value.isNotEmpty, orElse: () => '');
 
       if (profileRegion.isEmpty) return;
 
@@ -474,8 +476,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         await _prefillRegionFromProfile(user.uid);
 
         // Créer un nouveau parcours
-        final doc =
-            _db.collection('users').doc(user.uid).collection('parcours').doc();
+        final doc = _db
+            .collection('users')
+            .doc(user.uid)
+            .collection('parcours')
+            .doc();
 
         _parcoursId = doc.id;
         _journeyStatus = 'draft';
@@ -604,12 +609,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           .collection('parcours')
           .doc(_parcoursId)
           .set({
-        'status': _journeyStatus,
-        'step': _step,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'data': _exportData(),
-        'derived': _exportDerived(),
-      }, SetOptions(merge: true));
+            'status': _journeyStatus,
+            'step': _step,
+            'updatedAt': FieldValue.serverTimestamp(),
+            'data': _exportData(),
+            'derived': _exportDerived(),
+          }, SetOptions(merge: true));
 
       if (mounted) setState(() => _saving = false);
     } on FirebaseException catch (e) {
@@ -640,24 +645,24 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // Data import/export
   // --------------------------
   Map<String, dynamic> _exportData() => {
-        'projectText': _projectCtrl.text.trim(),
-        'selectedActivity': _selectedActivity,
-        'activityType': _activityType,
-        'clientele': _clientele,
-        'businessModel': _businessModel,
-        'situation': _situation,
-        'territory': {
-          'region': _region,
-          'departement': _departement,
-          'commune': _commune,
-        },
-        'ambition': _ambition,
-        'caVise': _caVise,
-        'depensesPro': _depensesPro,
-        'besoinTva': _besoinTva,
-        'association': _association,
-        'protectionPatrimoine': _protectionPatrimoine,
-      };
+    'projectText': _projectCtrl.text.trim(),
+    'selectedActivity': _selectedActivity,
+    'activityType': _activityType,
+    'clientele': _clientele,
+    'businessModel': _businessModel,
+    'situation': _situation,
+    'territory': {
+      'region': _region,
+      'departement': _departement,
+      'commune': _commune,
+    },
+    'ambition': _ambition,
+    'caVise': _caVise,
+    'depensesPro': _depensesPro,
+    'besoinTva': _besoinTva,
+    'association': _association,
+    'protectionPatrimoine': _protectionPatrimoine,
+  };
 
   void _importData(Map<String, dynamic> data) {
     _projectCtrl.text = (data['projectText'] ?? '') as String;
@@ -688,28 +693,29 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Map<String, dynamic> _exportDerived() => {
-        'recommendation': _recommendation,
-        'blockingAlerts': _blockingAlerts,
-        'costs': _costs,
-        'plan30': _plan30,
-        'aides': _aides,
-        'summary': _summary,
-        'regulationTutorial': _regulationTutorial,
-        'statusWarnings': _statusWarnings,
-        'recommendedLegalStatus': _recommendedLegalStatus,
-        'steps': _tutorialSteps,
-        'progress': {
-          'completedSteps': _progressSteps
-              .where((step) => (step['status'] ?? 'todo') == 'done')
-              .map((step) => step['id'])
-              .toList(),
-          'currentStep': _progressSteps.indexWhere(
-                (step) => (step['status'] ?? 'todo') != 'done',
-              ) +
-              1,
-          'percent': _tutorialProgressValue,
-        },
-      };
+    'recommendation': _recommendation,
+    'blockingAlerts': _blockingAlerts,
+    'costs': _costs,
+    'plan30': _plan30,
+    'aides': _aides,
+    'summary': _summary,
+    'regulationTutorial': _regulationTutorial,
+    'statusWarnings': _statusWarnings,
+    'recommendedLegalStatus': _recommendedLegalStatus,
+    'steps': _tutorialSteps,
+    'progress': {
+      'completedSteps': _progressSteps
+          .where((step) => (step['status'] ?? 'todo') == 'done')
+          .map((step) => step['id'])
+          .toList(),
+      'currentStep':
+          _progressSteps.indexWhere(
+            (step) => (step['status'] ?? 'todo') != 'done',
+          ) +
+          1,
+      'percent': _tutorialProgressValue,
+    },
+  };
 
   void _importDerived(Map<String, dynamic> derived) {
     _recommendation =
@@ -717,27 +723,32 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _blockingAlerts =
         (derived['blockingAlerts'] as List?)?.map((e) => '$e').toList() ?? [];
     _costs = (derived['costs'] as Map?)?.cast<String, dynamic>() ?? {};
-    _plan30 = (derived['plan30'] as List?)
+    _plan30 =
+        (derived['plan30'] as List?)
             ?.map((e) => (e as Map).cast<String, dynamic>())
             .toList() ??
         [];
-    _aides = (derived['aides'] as List?)
+    _aides =
+        (derived['aides'] as List?)
             ?.map((e) => (e as Map).cast<String, dynamic>())
             .toList() ??
         [];
     _summary = (derived['summary'] as Map?)?.cast<String, dynamic>() ?? {};
-    _regulationTutorial = (derived['regulationTutorial'] as List?)
+    _regulationTutorial =
+        (derived['regulationTutorial'] as List?)
             ?.map((e) => (e as Map).cast<String, dynamic>())
             .toList() ??
         [];
-    _statusWarnings = (derived['statusWarnings'] as List?)
+    _statusWarnings =
+        (derived['statusWarnings'] as List?)
             ?.map((e) => (e as Map).cast<String, dynamic>())
             .toList() ??
         [];
     _recommendedLegalStatus =
         (derived['recommendedLegalStatus'] as Map?)?.cast<String, dynamic>() ??
-            {};
-    _tutorialSteps = (derived['steps'] as List?)
+        {};
+    _tutorialSteps =
+        (derived['steps'] as List?)
             ?.map((e) => (e as Map).cast<String, dynamic>())
             .toList() ??
         [];
@@ -745,7 +756,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         (derived['progress'] as Map?)?.cast<String, dynamic>() ?? {};
     final completedSteps =
         (progress['completedSteps'] as List?)?.map((e) => '$e').toSet() ??
-            <String>{};
+        <String>{};
     if (_tutorialSteps.isNotEmpty) {
       _progressSteps = _tutorialSteps
           .map(
@@ -779,8 +790,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _statusWarnings = (r['statusWarnings'] as List)
         .map((e) => (e as Map).cast<String, dynamic>())
         .toList();
-    _recommendedLegalStatus =
-        (r['recommendedLegalStatus'] as Map).cast<String, dynamic>();
+    _recommendedLegalStatus = (r['recommendedLegalStatus'] as Map)
+        .cast<String, dynamic>();
     _tutorialSteps = (r['steps'] as List)
         .map((e) => (e as Map).cast<String, dynamic>())
         .toList();
@@ -809,13 +820,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     }
 
     try {
-      final firestored =
-          await _parcoursFichesService.loadFonctionnaireDerivedData(
-        activity: _selectedActivity,
-        region: _region,
-        currentStatus: _normalizedSituation,
-        fallback: fallback,
-      );
+      final firestored = await _parcoursFichesService
+          .loadFonctionnaireDerivedData(
+            activity: _selectedActivity,
+            region: _region,
+            currentStatus: _normalizedSituation,
+            fallback: fallback,
+          );
       return firestored ?? fallback;
     } catch (e) {
       debugPrint('[Toolbox] fonctionnaire parcours fiche fallback: $e');
@@ -914,7 +925,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final text = _projectCtrl.text.toLowerCase();
     final isDromRegion = isDROM(_region);
     final hasManyCosts = _depensesPro >= 8000; // tweak threshold
-    final wantsGrowth = _ambition.contains('Croissance') ||
+    final wantsGrowth =
+        _ambition.contains('Croissance') ||
         _ambition.contains('Lever') ||
         _ambition.contains('Revenu principal') ||
         _caVise >= 60000;
@@ -942,15 +954,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final blocking = <String>[];
     if (likelyRegulatedKeywords.any((k) => text.contains(k))) {
       blocking.add(
-          "Activité potentiellement réglementée : vérification (diplômes/assurances/autorisations) recommandée avant création.");
+        "Activité potentiellement réglementée : vérification (diplômes/assurances/autorisations) recommandée avant création.",
+      );
     }
     if (_normalizedSituation == 'Fonctionnaire / agent public') {
       blocking.add(
-          "Cumul : demande écrite hiérarchique + règles spécifiques (temps partiel / durée encadrée).");
+        "Cumul : demande écrite hiérarchique + règles spécifiques (temps partiel / durée encadrée).",
+      );
     }
     if (_normalizedSituation == "Demandeur d'emploi") {
       blocking.add(
-          "Aides France Travail : attention au timing (ARCE/ACRE) avant certaines démarches.");
+        "Aides France Travail : attention au timing (ARCE/ACRE) avant certaines démarches.",
+      );
     }
 
     final statusWarnings = _buildStatusWarnings();
@@ -992,11 +1007,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     // Costs (rough placeholders; you can localize later)
     final costs = <String, dynamic>{
       'formalitesEstimees': _estimateFormalites(statut),
-      'annonceLegale':
-          (statut.contains('SAS') || statut.contains('EURL')) ? 180 : 0,
+      'annonceLegale': (statut.contains('SAS') || statut.contains('EURL'))
+          ? 180
+          : 0,
       'assuranceProAn': 250,
-      'comptableAn':
-          (statut.contains('SAS') || statut.contains('EURL')) ? 1200 : 0,
+      'comptableAn': (statut.contains('SAS') || statut.contains('EURL'))
+          ? 1200
+          : 0,
       'banqueOutilsAn': 120,
       'note':
           "Estimations indicatives. Les montants varient selon activité et département.",
@@ -1005,13 +1022,22 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     // Aides (checklist)
     final aides = <Map<String, dynamic>>[
       _aid("ACRE", "Exonération partielle de cotisations au démarrage", true),
-      _aid("ARCE", "Capital France Travail (si ARE + conditions)",
-          _normalizedSituation == "Demandeur d'emploi"),
+      _aid(
+        "ARCE",
+        "Capital France Travail (si ARE + conditions)",
+        _normalizedSituation == "Demandeur d'emploi",
+      ),
       _aid("Prêt d'honneur", "Initiative France / Réseau Entreprendre", true),
-      _aid("Aides territoriales",
-          "Région / Département / Agglo (selon territoire)", true),
-      _aid("Fonds européens",
-          "FEDER / FSE+ / FEADER (via programmes régionaux)", true),
+      _aid(
+        "Aides territoriales",
+        "Région / Département / Agglo (selon territoire)",
+        true,
+      ),
+      _aid(
+        "Fonds européens",
+        "FEDER / FSE+ / FEADER (via programmes régionaux)",
+        true,
+      ),
       if (isDromRegion) ...[
         _aid(
           "LODEOM",
@@ -1045,20 +1071,27 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       ),
       _task("Semaine 3", "Monter dossier ACRE / France Travail (si concerné)"),
       _task(
-          "Semaine 3", "Préparer dossier subvention (résumé + budget + devis)"),
+        "Semaine 3",
+        "Préparer dossier subvention (résumé + budget + devis)",
+      ),
       _task("Semaine 4", "Déposer formalités via guichet unique"),
       _task("Semaine 4", "Assurances + compte bancaire pro si nécessaire"),
-      _task("Semaine 4",
-          "1ère action commerciale (prospection / pub / partenariats)"),
+      _task(
+        "Semaine 4",
+        "1ère action commerciale (prospection / pub / partenariats)",
+      ),
     ];
 
     final regulationTutorial = _buildRegulationTutorial(
       isDromRegion: isDromRegion,
-      hasRegulatedSignal:
-          likelyRegulatedKeywords.any((keyword) => text.contains(keyword)),
+      hasRegulatedSignal: likelyRegulatedKeywords.any(
+        (keyword) => text.contains(keyword),
+      ),
     );
-    final summary =
-        _buildSummary(statut: statut, hasBlockingAlerts: blocking.isNotEmpty);
+    final summary = _buildSummary(
+      statut: statut,
+      hasBlockingAlerts: blocking.isNotEmpty,
+    );
     final recommendedLegalStatus = {
       'recommended': statut,
       'justification': why,
@@ -1146,7 +1179,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     Map<String, dynamic> fiche,
   ) {
     String s(dynamic v) => (v ?? '').toString().trim();
-    List<String> l(dynamic v) => (v as List?)
+    List<String> l(dynamic v) =>
+        (v as List?)
             ?.map((e) => '$e'.trim())
             .where((e) => e.isNotEmpty)
             .toList() ??
@@ -1165,8 +1199,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final organismes = l(fiche['organismes_accompagnement']);
     final modesExercice = l(fiche['modes_exercice']);
     final statutAlternatif = l(fiche['statut_alternatif']);
-    final parcours = (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
-    final fiscalite = (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final parcours =
+        (fiche['parcours'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final fiscalite =
+        (fiche['fiscalite'] as Map?)?.cast<String, dynamic>() ?? const {};
     // Champs supplémentaires de la fiche officielle, pour que le parcours
     // reprenne l'intégralité des informations présentes dans les fiches
     // statut+activité (.md) : famille d'activité, nature fiscale probable,
@@ -1180,12 +1216,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     // `sources_officielles` a deux formats selon l'ancienneté du pack :
     // une liste d'URLs brutes (packs historiques) ou une liste d'objets
     // {titre, url, resume} (packs plus récents) — on gère les deux.
-    final sourcesOfficielles = (fiche['sources_officielles'] as List?)
-            ?.map((e) {
-              if (e is Map) return e.cast<String, dynamic>();
-              return <String, dynamic>{'titre': '', 'url': '$e', 'resume': ''};
-            })
-            .toList() ??
+    final sourcesOfficielles =
+        (fiche['sources_officielles'] as List?)?.map((e) {
+          if (e is Map) return e.cast<String, dynamic>();
+          return <String, dynamic>{'titre': '', 'url': '$e', 'resume': ''};
+        }).toList() ??
         const <Map<String, dynamic>>[];
     // Bloc optionnel propre à certains statuts (ex. `regles_retraite`,
     // `regles_etudiant`). Détecté par préfixe pour rester générique aux
@@ -1202,8 +1237,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final cumulLabel = statutLower.contains('retrait')
         ? 'Cumul emploi-retraite'
         : statutLower.contains('etudiant') || statutLower.contains('étudiant')
-            ? 'Points à vérifier avant de démarrer'
-            : 'Cumul d’activité';
+        ? 'Points à vérifier avant de démarrer'
+        : 'Cumul d’activité';
     // Sous-listes de `reglesSpecifiques` à traiter comme alertes bloquantes
     // (mises en avant par les packs eux-mêmes, ex. mineur / titre de séjour
     // pour le statut Étudiant). À étendre si un futur pack ajoute une clé
@@ -1252,10 +1287,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           'description': organismes.join(' ; '),
         },
       if (organismeControle.isNotEmpty)
-        {
-          'title': 'Organisme(s) de contrôle',
-          'description': organismeControle,
-        },
+        {'title': 'Organisme(s) de contrôle', 'description': organismeControle},
       if (alertes.isNotEmpty)
         {
           'title': 'Alertes spécifiques à l’activité',
@@ -1274,13 +1306,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           },
     ];
 
-    final reglesSpecifiquesResume =
-        reglesSpecifiques != null ? s(reglesSpecifiques['resume']) : '';
+    final reglesSpecifiquesResume = reglesSpecifiques != null
+        ? s(reglesSpecifiques['resume'])
+        : '';
     final situationDescription = reglesSpecifiquesResume.isNotEmpty
         ? reglesSpecifiquesResume
         : (s(parcours['2_situation_personnelle']).isNotEmpty
-            ? s(parcours['2_situation_personnelle'])
-            : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.');
+              ? s(parcours['2_situation_personnelle'])
+              : 'Vérifiez le cumul d’activité auprès de ${s(fiche['organisme_cumul'])}.');
     var reglesSpecifiquesChecks = const <String>[];
     if (reglesSpecifiques != null) {
       for (final key in _reglesChecksPriorityKeys) {
@@ -1301,8 +1334,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       },
     ];
 
-    final existingLegal =
-        (result['recommendedLegalStatus'] as Map).cast<String, dynamic>();
+    final existingLegal = (result['recommendedLegalStatus'] as Map)
+        .cast<String, dynamic>();
     final recommendedLegalStatus = {
       'recommended': s(fiche['statut_recommande']).isNotEmpty
           ? fiche['statut_recommande']
@@ -1415,16 +1448,19 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final aides = (result['aides'] as List)
         .map((e) => Map<String, dynamic>.from(e as Map))
         .toList();
-    final existingAideNames =
-        aides.map((a) => '${a['name']}'.toLowerCase()).toSet();
+    final existingAideNames = aides
+        .map((a) => '${a['name']}'.toLowerCase())
+        .toSet();
     for (final name in ficheAides) {
       final key = name.toLowerCase();
       if (existingAideNames.contains(key)) continue;
-      aides.add(_aid(
-        name,
-        'Dispositif identifié pour l’activité « $activite » (fiche officielle).',
-        true,
-      ));
+      aides.add(
+        _aid(
+          name,
+          'Dispositif identifié pour l’activité « $activite » (fiche officielle).',
+          true,
+        ),
+      );
       existingAideNames.add(key);
     }
 
@@ -1450,15 +1486,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     for (final task in (result['plan30'] as List)) {
       final week = '${(task as Map)['week']}';
       final idx = weekLabels.indexOf(week);
-      if (idx != -1 && idx < ficheWeeks.length && !insertedWeeks.contains(week)) {
+      if (idx != -1 &&
+          idx < ficheWeeks.length &&
+          !insertedWeeks.contains(week)) {
         plan30.add(_task(week, stripWeekPrefix(ficheWeeks[idx])));
         insertedWeeks.add(week);
       }
       plan30.add(Map<String, dynamic>.from(task));
     }
 
-    final recommendation =
-        Map<String, dynamic>.from(result['recommendation'] as Map);
+    final recommendation = Map<String, dynamic>.from(
+      result['recommendation'] as Map,
+    );
     if (s(fiche['statut_recommande']).isNotEmpty) {
       recommendation['statut'] = fiche['statut_recommande'];
     }
@@ -1613,10 +1652,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         'description':
             'Certaines activités nécessitent une responsabilité civile professionnelle, voire une assurance spécifique comme la décennale selon le métier.',
       },
-      {
-        'title': 'Vigilances territoriales',
-        'description': territoryNote,
-      },
+      {'title': 'Vigilances territoriales', 'description': territoryNote},
     ];
   }
 
@@ -1743,10 +1779,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   List<Map<String, dynamic>> _cloneProgressSteps(
-      List<Map<String, dynamic>> source) {
+    List<Map<String, dynamic>> source,
+  ) {
     return source
-        .map((step) => Map<String, dynamic>.from(step)
-          ..putIfAbsent('status', () => 'todo'))
+        .map(
+          (step) =>
+              Map<String, dynamic>.from(step)
+                ..putIfAbsent('status', () => 'todo'),
+        )
         .toList();
   }
 
@@ -1759,17 +1799,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Map<String, dynamic> _task(String week, String label) => {
-        'week': week,
-        'label': label,
-        'done': false,
-      };
+    'week': week,
+    'label': label,
+    'done': false,
+  };
 
   Map<String, dynamic> _aid(String name, String desc, bool relevant) => {
-        'name': name,
-        'desc': desc,
-        'relevant': relevant,
-        'status': 'à checker', // à checker / demandé / obtenu
-      };
+    'name': name,
+    'desc': desc,
+    'relevant': relevant,
+    'status': 'à checker', // à checker / demandé / obtenu
+  };
 
   Map<String, dynamic> _estimateFormalites(String statut) {
     if (statut.contains('Micro')) return {'min': 0, 'max': 50};
@@ -1858,8 +1898,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             statusWarnings: _statusWarnings
                 .map((item) => Map<String, dynamic>.from(item))
                 .toList(),
-            recommendedLegalStatus:
-                Map<String, dynamic>.from(_recommendedLegalStatus),
+            recommendedLegalStatus: Map<String, dynamic>.from(
+              _recommendedLegalStatus,
+            ),
             steps: _progressSteps
                 .map((item) => Map<String, dynamic>.from(item))
                 .toList(),
@@ -1879,10 +1920,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             .collection('parcours')
             .doc(_parcoursId)
             .set({
-          'status': 'completed',
-          'completedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+              'status': 'completed',
+              'completedAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('[Toolbox] complete journey final sync error: $e');
         if (!mounted) return;
@@ -1919,8 +1960,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           blockingAlerts: List<String>.from(_blockingAlerts),
           costs: Map<String, dynamic>.from(_costs),
           aides: _aides.map((item) => Map<String, dynamic>.from(item)).toList(),
-          plan30:
-              _plan30.map((item) => Map<String, dynamic>.from(item)).toList(),
+          plan30: _plan30
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
           summary: Map<String, dynamic>.from(_summary),
           regulationTutorial: _regulationTutorial
               .map((item) => Map<String, dynamic>.from(item))
@@ -1928,8 +1970,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           statusWarnings: _statusWarnings
               .map((item) => Map<String, dynamic>.from(item))
               .toList(),
-          recommendedLegalStatus:
-              Map<String, dynamic>.from(_recommendedLegalStatus),
+          recommendedLegalStatus: Map<String, dynamic>.from(
+            _recommendedLegalStatus,
+          ),
           steps: _progressSteps
               .map((item) => Map<String, dynamic>.from(item))
               .toList(),
@@ -1945,8 +1988,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content:
-            Text('Le parcours est repassé en brouillon pour modification.'),
+        content: Text(
+          'Le parcours est repassé en brouillon pour modification.',
+        ),
       ),
     );
   }
@@ -1996,8 +2040,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     });
 
     if (canPersist) {
-      final doc =
-          _db.collection('users').doc(user.uid).collection('parcours').doc();
+      final doc = _db
+          .collection('users')
+          .doc(user.uid)
+          .collection('parcours')
+          .doc();
       _parcoursId = doc.id;
       final now = FieldValue.serverTimestamp();
       await doc.set({
@@ -2041,9 +2088,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible d\'ouvrir $url')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Impossible d\'ouvrir $url')));
     }
   }
 
@@ -2088,11 +2135,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       );
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: chips,
-    );
+    return Wrap(spacing: 8, runSpacing: 8, children: chips);
   }
 
   Widget _buildHeaderStatusPanel() {
@@ -2184,17 +2227,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final items = <Map<String, String>>[
       {
         'label': 'Etape',
-        'value':
-            _journeyStatus == 'completed' ? 'Finalise' : '$_step/$kTotalSteps',
+        'value': _journeyStatus == 'completed'
+            ? 'Finalise'
+            : '$_step/$kTotalSteps',
       },
-      {
-        'label': 'Sortie',
-        'value': 'Statut + aides',
-      },
-      {
-        'label': 'Cadence',
-        'value': _saving ? 'Synchro' : 'Auto-save',
-      },
+      {'label': 'Sortie', 'value': 'Statut + aides'},
+      {'label': 'Cadence', 'value': _saving ? 'Synchro' : 'Auto-save'},
     ];
 
     return Wrap(
@@ -2202,10 +2240,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       runSpacing: 10,
       children: items
           .map(
-            (item) => _HeroMetricPill(
-              label: item['label']!,
-              value: item['value']!,
-            ),
+            (item) =>
+                _HeroMetricPill(label: item['label']!, value: item['value']!),
           )
           .toList(),
     );
@@ -2234,42 +2270,41 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                        ? _ErrorState(message: _error!, onRetry: _bootstrap)
-                        : SingleChildScrollView(
-                            controller: _pageScrollController,
-                            padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildStepPageShell(_buildCurrentStepPage()),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: kPageHorizontalPadding,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      if (_journeyStatus == 'completed') ...[
-                                        _InfoBox(
-                                          icon: Icons.verified_outlined,
-                                          title: 'Parcours validé',
-                                          text: _isLocalOnlyMode
-                                              ? 'Ce parcours a été validé localement. Toute nouvelle modification remettra le parcours en brouillon.'
-                                              : 'Ce parcours a été validé et sauvegardé. Toute nouvelle modification remettra le parcours en brouillon.',
-                                        ),
-                                        const SizedBox(height: 12),
-                                        _buildCompletionActionsCard(),
-                                        const SizedBox(height: 12),
-                                      ],
-                                      const SizedBox(height: 14),
-                                      _buildNavButtons(),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                    ? _ErrorState(message: _error!, onRetry: _bootstrap)
+                    : SingleChildScrollView(
+                        controller: _pageScrollController,
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildStepPageShell(_buildCurrentStepPage()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: kPageHorizontalPadding,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (_journeyStatus == 'completed') ...[
+                                    _InfoBox(
+                                      icon: Icons.verified_outlined,
+                                      title: 'Parcours validé',
+                                      text: _isLocalOnlyMode
+                                          ? 'Ce parcours a été validé localement. Toute nouvelle modification remettra le parcours en brouillon.'
+                                          : 'Ce parcours a été validé et sauvegardé. Toute nouvelle modification remettra le parcours en brouillon.',
+                                    ),
+                                    const SizedBox(height: 12),
+                                    _buildCompletionActionsCard(),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  const SizedBox(height: 14),
+                                  _buildNavButtons(),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
+                        ),
+                      ),
               ),
             ],
           ),
@@ -2406,10 +2441,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         constraints: BoxConstraints(minHeight: minHeight - 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 6),
-            child,
-          ],
+          children: [const SizedBox(height: 6), child],
         ),
       ),
     );
@@ -2473,19 +2505,22 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           Row(
             children: [
               _buildProgressCircle(
-                  number: 1,
-                  active: progressLabel == 1,
-                  done: progressLabel > 1),
+                number: 1,
+                active: progressLabel == 1,
+                done: progressLabel > 1,
+              ),
               _buildProgressLine(active: progressLabel > 1),
               _buildProgressCircle(
-                  number: 2,
-                  active: progressLabel == 2,
-                  done: progressLabel > 2),
+                number: 2,
+                active: progressLabel == 2,
+                done: progressLabel > 2,
+              ),
               _buildProgressLine(active: progressLabel > 2),
               _buildProgressCircle(
-                  number: 3,
-                  active: progressLabel == 3,
-                  done: progressLabel == 3),
+                number: 3,
+                active: progressLabel == 3,
+                done: progressLabel == 3,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -2668,11 +2703,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     ),
                   ),
             onTap: () {
-              final regions = kFrenchCitiesData
-                  .map((c) => c.region)
-                  .toSet()
-                  .toList()
-                ..sort();
+              final regions =
+                  kFrenchCitiesData.map((c) => c.region).toSet().toList()
+                    ..sort();
               _showRegionPicker(regions);
             },
             isError: _showStarterErrors && _region.isEmpty,
@@ -2961,8 +2994,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                           onTap: () {
                             setState(() {
                               _selectedActivity = activity;
-                              _activityType =
-                                  _resolveActivityTypeFromSelection(activity);
+                              _activityType = _resolveActivityTypeFromSelection(
+                                activity,
+                              );
                               _showStarterErrors = false;
                             });
                             Navigator.of(sheetContext).pop();
@@ -3010,8 +3044,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             decoration: InputDecoration(
               hintText: "Ex : Créer une entreprise de vente de gâteaux",
               prefixIcon: const Icon(Icons.search),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -3023,13 +3058,15 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             spacing: 8,
             runSpacing: 8,
             children: suggestions
-                .map((s) => ActionChip(
-                      label: Text(s),
-                      onPressed: () {
-                        _projectCtrl.text = s;
-                        _onAnyFieldChanged();
-                      },
-                    ))
+                .map(
+                  (s) => ActionChip(
+                    label: Text(s),
+                    onPressed: () {
+                      _projectCtrl.text = s;
+                      _onAnyFieldChanged();
+                    },
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: 14),
@@ -3184,17 +3221,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                 'Votre statut sert à afficher les règles de cumul, les aides mobilisables et les démarches prioritaires.',
           ),
           const SizedBox(height: 14),
-          ...items
-              .map((s) => _SelectRow(
-                    icon: Icons.work_outline,
-                    title: s,
-                    selected: _situation == s,
-                    onTap: () {
-                      setState(() => _situation = s);
-                      _onAnyFieldChanged();
-                    },
-                  ))
-              .toList(),
+          ...items.map(
+            (s) => _SelectRow(
+              icon: Icons.work_outline,
+              title: s,
+              selected: _situation == s,
+              onTap: () {
+                setState(() => _situation = s);
+                _onAnyFieldChanged();
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -3303,8 +3340,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight:
-                              hasValue ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: hasValue
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           color: hasValue ? kTextDark : const Color(0xFF7A8498),
                         ),
                       ),
@@ -3376,8 +3414,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                     onPressed: () {
                       setState(() {
                         _selectedActivity = activity;
-                        _activityType =
-                            _resolveActivityTypeFromSelection(activity);
+                        _activityType = _resolveActivityTypeFromSelection(
+                          activity,
+                        );
                         if (_projectCtrl.text.trim().isEmpty) {
                           _projectCtrl.text = activity;
                         }
@@ -3469,8 +3508,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _departementCtrl,
             decoration: InputDecoration(
               labelText: "Département (ex: 971) – optionnel",
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -3484,8 +3524,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             controller: _communeCtrl,
             decoration: InputDecoration(
               labelText: "Commune – optionnel",
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -3539,7 +3580,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   Widget _buildNavButtons() {
-    final canNext = (_step == 1 && _starterStepValid) ||
+    final canNext =
+        (_step == 1 && _starterStepValid) ||
         (_step == 2 && _step2Valid) ||
         (_step == 3 && _step3Valid) ||
         (_step == 4 && _step4Valid);
@@ -3566,10 +3608,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             _step == 1
                 ? 'Choisissez votre région pour passer à l’étape suivante.'
                 : _step == 2
-                    ? 'Sélectionnez votre statut actuel pour continuer.'
-                    : _step == 3
-                        ? 'Choisissez votre activité pour accéder à la vérification finale.'
-                        : 'Dernière étape avant l’ouverture du parcours personnalisé.',
+                ? 'Sélectionnez votre statut actuel pour continuer.'
+                : _step == 3
+                ? 'Choisissez votre activité pour accéder à la vérification finale.'
+                : 'Dernière étape avant l’ouverture du parcours personnalisé.',
             style: TextStyle(
               color: Colors.grey.shade700,
               fontSize: 13,
@@ -3599,8 +3641,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               const SizedBox(width: 10),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed:
-                      canNext ? (isFinalStep ? _completeJourney : _next) : null,
+                  onPressed: canNext
+                      ? (isFinalStep ? _completeJourney : _next)
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kBlue,
                     foregroundColor: Colors.white,
@@ -3633,7 +3676,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   Widget _buildMyPath() {
     // Always show "Mon parcours", but if nothing typed, show a gentle empty state
-    final hasAny = _projectCtrl.text.trim().isNotEmpty ||
+    final hasAny =
+        _projectCtrl.text.trim().isNotEmpty ||
         _situation.isNotEmpty ||
         _region.isNotEmpty;
     if (!hasAny) {
@@ -3653,16 +3697,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final planB = (_recommendation['planB'] ?? '') as String;
     final prios =
         (_recommendation['priorites'] as List?)?.map((e) => '$e').toList() ??
-            [];
+        [];
 
     final formalites =
         (_costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ?? {};
     final fMin = formalites['min'] ?? 0;
     final fMax = formalites['max'] ?? 0;
-    final relevantAidesCount =
-        _aides.where((a) => (a['relevant'] ?? true) as bool).length;
-    final completedTasksCount =
-        _plan30.where((t) => (t['done'] ?? false) as bool).length;
+    final relevantAidesCount = _aides
+        .where((a) => (a['relevant'] ?? true) as bool)
+        .length;
+    final completedTasksCount = _plan30
+        .where((t) => (t['done'] ?? false) as bool)
+        .length;
     final hasBlockingAlerts = _blockingAlerts.isNotEmpty;
 
     return Column(
@@ -3738,12 +3784,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: prios
-                      .map(
-                        (p) => _PriorityChip(
-                          label: p,
-                          color: kBlue,
-                        ),
-                      )
+                      .map((p) => _PriorityChip(label: p, color: kBlue))
                       .toList(),
                 ),
               ],
@@ -3756,8 +3797,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             title: "Alertes à vérifier",
             child: Column(
               children: _blockingAlerts
-                  .map((a) =>
-                      _Bullet(icon: Icons.warning_amber_rounded, text: a))
+                  .map(
+                    (a) => _Bullet(icon: Icons.warning_amber_rounded, text: a),
+                  )
                   .toList(),
             ),
           ),
@@ -3768,25 +3810,30 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           child: Column(
             children: [
               _CostRow(
-                  icon: Icons.receipt_long_outlined,
-                  label: "Frais de formalités",
-                  value: "≈ $fMin à $fMax €"),
+                icon: Icons.receipt_long_outlined,
+                label: "Frais de formalités",
+                value: "≈ $fMin à $fMax €",
+              ),
               _CostRow(
-                  icon: Icons.campaign_outlined,
-                  label: "Annonce légale",
-                  value: "≈ ${_costs['annonceLegale'] ?? 0} €"),
+                icon: Icons.campaign_outlined,
+                label: "Annonce légale",
+                value: "≈ ${_costs['annonceLegale'] ?? 0} €",
+              ),
               _CostRow(
-                  icon: Icons.shield_outlined,
-                  label: "Assurance pro / an",
-                  value: "≈ ${_costs['assuranceProAn'] ?? 0} €"),
+                icon: Icons.shield_outlined,
+                label: "Assurance pro / an",
+                value: "≈ ${_costs['assuranceProAn'] ?? 0} €",
+              ),
               _CostRow(
-                  icon: Icons.calculate_outlined,
-                  label: "Comptable / an",
-                  value: "≈ ${_costs['comptableAn'] ?? 0} €"),
+                icon: Icons.calculate_outlined,
+                label: "Comptable / an",
+                value: "≈ ${_costs['comptableAn'] ?? 0} €",
+              ),
               _CostRow(
-                  icon: Icons.account_balance_wallet_outlined,
-                  label: "Banque + outils / an",
-                  value: "≈ ${_costs['banqueOutilsAn'] ?? 0} €"),
+                icon: Icons.account_balance_wallet_outlined,
+                label: "Banque + outils / an",
+                value: "≈ ${_costs['banqueOutilsAn'] ?? 0} €",
+              ),
               const SizedBox(height: 8),
               _ResultCallout(
                 icon: Icons.info_outline,
@@ -3895,7 +3942,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           Text(
             "Organismes officiels pour créer votre entreprise en $_region.",
             style: TextStyle(
-                color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 10),
           ...resources.map(
@@ -3936,8 +3985,8 @@ class _HeaderCircleButton extends StatelessWidget {
       child: Material(
         color: outlined
             ? (light
-                ? Colors.white.withValues(alpha: 0.14)
-                : const Color(0xFFF5F7FB))
+                  ? Colors.white.withValues(alpha: 0.14)
+                  : const Color(0xFFF5F7FB))
             : Colors.transparent,
         shape: outlined
             ? RoundedRectangleBorder(
@@ -3973,8 +4022,8 @@ class _StepperBar extends StatelessWidget {
     final activeLabel = step == 1
         ? 'Région en cours de sélection'
         : step == 2
-            ? 'Projet en cours de cadrage'
-            : 'Situation en cours de qualification';
+        ? 'Projet en cours de cadrage'
+        : 'Situation en cours de qualification';
 
     Widget dot(int n, String label) {
       final active = step == n;
@@ -3982,8 +4031,8 @@ class _StepperBar extends StatelessWidget {
       final color = done
           ? const Color(0xFF1A73E8)
           : active
-              ? const Color(0xFF1A73E8)
-              : Colors.grey.shade300;
+          ? const Color(0xFF1A73E8)
+          : Colors.grey.shade300;
 
       final txtColor = done || active ? Colors.white : Colors.grey.shade700;
 
@@ -4012,22 +4061,24 @@ class _StepperBar extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(label,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+          Text(
+            label,
+            style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+          ),
         ],
       );
     }
 
     Widget line() => Expanded(
-          child: Container(
-            height: 3,
-            margin: const EdgeInsets.only(bottom: 18),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-        );
+      child: Container(
+        height: 3,
+        margin: const EdgeInsets.only(bottom: 18),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
 
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 12, 6, 12),
@@ -4035,10 +4086,7 @@ class _StepperBar extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white,
-            Color(0xFFF8FAFF),
-          ],
+          colors: [Colors.white, Color(0xFFF8FAFF)],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade200),
@@ -4298,10 +4346,7 @@ class _HeaderInfoCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFFBF7),
-            Color(0xFFF5F8FF),
-          ],
+          colors: [Color(0xFFFFFBF7), Color(0xFFF5F8FF)],
         ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: const Color(0xFFE5E7EB)),
@@ -4542,15 +4587,21 @@ class _InfoBox extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15)), // Plus épais
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
+                ), // Plus épais
                 const SizedBox(height: 4),
-                Text(text,
-                    style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -4566,9 +4617,10 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-            fontWeight: FontWeight.w800, fontSize: 16)); // Plus épais
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+    ); // Plus épais
   }
 }
 
@@ -4663,10 +4715,7 @@ class _RecommendationHero extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.10),
-            const Color(0xFFFFF7ED),
-          ],
+          colors: [color.withValues(alpha: 0.10), const Color(0xFFFFF7ED)],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: color.withValues(alpha: 0.18)),
@@ -4684,8 +4733,11 @@ class _RecommendationHero extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 alignment: Alignment.center,
-                child: Icon(Icons.workspace_premium_outlined,
-                    color: color, size: 22),
+                child: Icon(
+                  Icons.workspace_premium_outlined,
+                  color: color,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -5277,13 +5329,16 @@ class _AidStatusTile extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
-                  border:
-                      Border.all(color: _statusColor.withValues(alpha: 0.16)),
+                  border: Border.all(
+                    color: _statusColor.withValues(alpha: 0.16),
+                  ),
                 ),
                 child: Text(
                   status,
@@ -5312,7 +5367,9 @@ class _AidStatusTile extends StatelessWidget {
                   ),
                   items: const [
                     DropdownMenuItem(
-                        value: 'à checker', child: Text('à checker')),
+                      value: 'à checker',
+                      child: Text('à checker'),
+                    ),
                     DropdownMenuItem(value: 'demandé', child: Text('demandé')),
                     DropdownMenuItem(value: 'obtenu', child: Text('obtenu')),
                   ],
@@ -5374,8 +5431,10 @@ class _PlanTaskTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(999),
@@ -5566,16 +5625,19 @@ class _RegionPickerSheetState extends State<_RegionPickerSheet> {
                       title: Text(
                         r,
                         style: TextStyle(
-                          fontWeight:
-                              selected ? FontWeight.w800 : FontWeight.w600,
+                          fontWeight: selected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
                           color: selected
                               ? const Color(0xFF1A73E8)
                               : const Color(0xFF111827),
                         ),
                       ),
                       trailing: selected
-                          ? const Icon(Icons.check_circle_rounded,
-                              color: Color(0xFF1A73E8))
+                          ? const Icon(
+                              Icons.check_circle_rounded,
+                              color: Color(0xFF1A73E8),
+                            )
                           : null,
                       onTap: () => widget.onSelect(r),
                     );
@@ -5638,21 +5700,21 @@ class _JourneySummaryPage extends StatelessWidget {
   }
 
   Map<String, dynamic> _buildLocalSnapshot() => _buildJourneySnapshot(
-        projectLabel: projectLabel,
-        region: region,
-        currentStatus: currentStatus,
-        selectedActivity: selectedActivity,
-        recommendation: recommendation,
-        blockingAlerts: blockingAlerts,
-        costs: costs,
-        aides: aides,
-        plan30: plan30,
-        summary: summary,
-        regulationTutorial: regulationTutorial,
-        statusWarnings: statusWarnings,
-        recommendedLegalStatus: recommendedLegalStatus,
-        steps: steps,
-      );
+    projectLabel: projectLabel,
+    region: region,
+    currentStatus: currentStatus,
+    selectedActivity: selectedActivity,
+    recommendation: recommendation,
+    blockingAlerts: blockingAlerts,
+    costs: costs,
+    aides: aides,
+    plan30: plan30,
+    summary: summary,
+    regulationTutorial: regulationTutorial,
+    statusWarnings: statusWarnings,
+    recommendedLegalStatus: recommendedLegalStatus,
+    steps: steps,
+  );
 
   static const JourneyLocalStorageService _localStorageService =
       JourneyLocalStorageService();
@@ -5713,10 +5775,9 @@ class _JourneySummaryPage extends StatelessWidget {
       await _entitlementsService.recordPdfExport();
 
       if (!context.mounted) return;
-      await Share.shareXFiles(
-        [pdfFile],
-        text: 'Mon parcours personnalisé — iliPresto+',
-      );
+      await Share.shareXFiles([
+        pdfFile,
+      ], text: 'Mon parcours personnalisé — iliPresto+');
     } catch (e) {
       debugPrint('[Toolbox] pdf export failed: $e');
       if (!context.mounted) return;
@@ -5762,11 +5823,13 @@ class _JourneySummaryPage extends StatelessWidget {
     final why = (recommendation['why'] ?? '') as String;
     final prios =
         (recommendation['priorites'] as List?)?.map((e) => '$e').toList() ??
-            const <String>[];
-    final relevantAides =
-        aides.where((item) => (item['relevant'] ?? true) as bool).toList();
-    final activityLabel =
-        selectedActivity.isNotEmpty ? selectedActivity : projectLabel;
+        const <String>[];
+    final relevantAides = aides
+        .where((item) => (item['relevant'] ?? true) as bool)
+        .toList();
+    final activityLabel = selectedActivity.isNotEmpty
+        ? selectedActivity
+        : projectLabel;
     final summaryRegion = '${summary['region'] ?? region}';
     final summaryStatus = '${summary['currentStatus'] ?? currentStatus}';
     final summaryActivity = '${summary['activity'] ?? activityLabel}';
@@ -5777,9 +5840,10 @@ class _JourneySummaryPage extends StatelessWidget {
     final tutorialProgress = steps.isEmpty
         ? 0.0
         : steps.where((step) => (step['status'] ?? 'todo') == 'done').length /
-            steps.length;
-    final completedSteps =
-        steps.where((step) => (step['status'] ?? 'todo') == 'done').length;
+              steps.length;
+    final completedSteps = steps
+        .where((step) => (step['status'] ?? 'todo') == 'done')
+        .length;
     final headerSubtitle = [
       if (summaryActivity.isNotEmpty) 'Créer une activité de $summaryActivity',
       if (summaryRegion.isNotEmpty) 'en $summaryRegion',
@@ -5789,416 +5853,435 @@ class _JourneySummaryPage extends StatelessWidget {
         (recommendedLegalStatus['recommended'] ?? statut) as String;
     final legalJustification =
         (recommendedLegalStatus['justification'] ?? why) as String;
-    final legalPlanB = (recommendedLegalStatus['planB'] ??
-        recommendation['planB'] ??
-        '') as String;
+    final legalPlanB =
+        (recommendedLegalStatus['planB'] ?? recommendation['planB'] ?? '')
+            as String;
     final legalDisclaimer =
         (recommendedLegalStatus['disclaimer'] ?? '') as String;
     final formalites =
         (costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ??
-            const {};
+        const {};
     final formalitesMin = formalites['min'] ?? 0;
     final formalitesMax = formalites['max'] ?? 0;
 
     return _ScreenCaptureGuard(
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: _ToolboxJeMeLancePageState.kOrange,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6F7FB),
-        body: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              Container(
-                color: _ToolboxJeMeLancePageState.kOrange,
-                padding:
-                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                child: SizedBox(
-                  height: 64,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
+        value: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: _ToolboxJeMeLancePageState.kOrange,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF6F7FB),
+          body: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Container(
+                  color: _ToolboxJeMeLancePageState.kOrange,
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top,
+                  ),
+                  child: SizedBox(
+                    height: 64,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          _HeaderCircleButton(
+                            icon: Icons.arrow_back_ios_new_rounded,
+                            onTap: () => Navigator.of(context).maybePop(),
+                            outlined: false,
+                            light: true,
+                          ),
+                          const Expanded(
+                            child: Text(
+                              'Mon parcours personnalisé',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 44),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: _GuestSignupGate(
+                    enabled: _isGuestUser,
+                    triggerKey: _step4CardKey,
+                    listBuilder: (scrollController) => ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
                       children: [
-                        _HeaderCircleButton(
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () => Navigator.of(context).maybePop(),
-                          outlined: false,
-                          light: true,
+                        _HeaderInfoCard(
+                          title: 'Mon parcours personnalisé',
+                          subtitle: headerSubtitle.isNotEmpty
+                              ? headerSubtitle
+                              : 'Votre guide de démarrage est prêt.',
+                          accent: _ToolboxJeMeLancePageState.kBlue,
+                          icon: Icons.route_outlined,
+                          eyebrow: 'Parcours généré',
+                          progressValue: tutorialProgress,
+                          progressLabel:
+                              '$completedSteps étape(s) terminée(s) sur ${steps.length}',
                         ),
-                        const Expanded(
-                          child: Text(
-                            'Mon parcours personnalisé',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: 'Résumé de ma situation',
+                          child: Column(
+                            children: [
+                              _SummaryFactRow(
+                                label: 'Région',
+                                value: summaryRegion,
+                              ),
+                              _SummaryFactRow(
+                                label: 'Statut actuel',
+                                value: summaryStatus,
+                              ),
+                              _SummaryFactRow(
+                                label: 'Activité',
+                                value: summaryActivity,
+                              ),
+                              _SummaryFactRow(
+                                label: 'Niveau de vigilance',
+                                value: vigilanceLevel,
+                              ),
+                              _SummaryFactRow(
+                                label: 'Parcours recommandé',
+                                value: recommendedPath,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Votre parcours est adapté à votre région, à votre situation actuelle et à votre activité. Suivez les étapes dans l’ordre pour avancer sans oublier les points importants.',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: '1. Comprendre les règles de votre activité',
+                          child: Column(
+                            children: regulationTutorial.isEmpty
+                                ? [
+                                    const _InfoBox(
+                                      icon: Icons.info_outline,
+                                      title:
+                                          'Tutoriel réglementation à compléter',
+                                      text:
+                                          'La structure tutorielle est prête, mais le contenu détaillé par activité reste à enrichir.',
+                                    ),
+                                  ]
+                                : [
+                                    for (
+                                      var i = 0;
+                                      i < regulationTutorial.length;
+                                      i++
+                                    )
+                                      _JourneyInfoTile(
+                                        index: i + 1,
+                                        title:
+                                            '${regulationTutorial[i]['title'] ?? ''}',
+                                        body:
+                                            '${regulationTutorial[i]['description'] ?? ''}',
+                                      ),
+                                  ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: '2. Vérifier votre situation personnelle',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: statusWarnings.isEmpty
+                                ? [
+                                    const _InfoBox(
+                                      icon: Icons.verified_outlined,
+                                      title: 'Aucune vigilance spécifique',
+                                      text:
+                                          'Aucun bloc statut particulier n’a été généré à ce stade.',
+                                    ),
+                                  ]
+                                : statusWarnings
+                                      .map(
+                                        (item) => _StatusGuidanceCard(
+                                          title: '${item['title']}',
+                                          description: '${item['description']}',
+                                          checks:
+                                              (item['checks'] as List?)
+                                                  ?.map((e) => '$e')
+                                                  .toList() ??
+                                              const <String>[],
+                                        ),
+                                      )
+                                      .toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: '3. Choisir le bon cadre pour démarrer',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _RecommendationHero(
+                                statut: legalRecommendation,
+                                why: legalJustification,
+                                color: _ToolboxJeMeLancePageState.kBlue,
+                                helper: blockingAlerts.isNotEmpty
+                                    ? 'Des points de vigilance doivent être vérifiés avant de lancer les démarches.'
+                                    : 'La recommandation est prête pour passer aux prochaines actions.',
+                              ),
+                              if (legalDisclaimer.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                _ResultCallout(
+                                  icon: Icons.info_outline,
+                                  title: 'Important',
+                                  text: legalDisclaimer,
+                                  tone: const Color(0xFF6B7280),
+                                ),
+                              ],
+                              if (legalPlanB.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                _ResultCallout(
+                                  icon: Icons.swap_horiz,
+                                  title: 'Si votre activité se développe',
+                                  text: legalPlanB,
+                                  tone: const Color(0xFF7C3AED),
+                                ),
+                              ],
+                              if (prios.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: prios
+                                      .map(
+                                        (item) => _PriorityChip(
+                                          label: item,
+                                          color:
+                                              _ToolboxJeMeLancePageState.kBlue,
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        KeyedSubtree(
+                          key: _step4CardKey,
+                          child: _Card(
+                            title: '4. Faire les démarches étape par étape',
+                            child: Column(
+                              children: steps.isEmpty
+                                  ? [
+                                      const _InfoBox(
+                                        icon: Icons.route_outlined,
+                                        title: 'Étapes à structurer',
+                                        text:
+                                            'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
+                                      ),
+                                    ]
+                                  : steps
+                                        .map(
+                                          (item) => _TutorialStepSummaryTile(
+                                            order:
+                                                (item['order'] as num?)
+                                                    ?.toInt() ??
+                                                0,
+                                            title: '${item['title']}',
+                                            objective: '${item['objective']}',
+                                            status:
+                                                '${item['status'] ?? 'todo'}',
+                                            todos:
+                                                (item['todos'] as List?)
+                                                    ?.map((e) => '$e')
+                                                    .toList() ??
+                                                const <String>[],
+                                          ),
+                                        )
+                                        .toList(),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 44),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: '5. Identifier les aides possibles',
+                          child: relevantAides.isEmpty
+                              ? const _InfoBox(
+                                  icon: Icons.volunteer_activism_outlined,
+                                  title: 'Aucune aide identifiée',
+                                  text:
+                                      'Aucune aide spécifique n’a été remontée pour le moment.',
+                                )
+                              : Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: relevantAides
+                                      .map(
+                                        (item) => _AidStatusSummaryTile(
+                                          name: '${item['name']}',
+                                          description: '${item['desc']}',
+                                          status:
+                                              '${item['status'] ?? 'à checker'}',
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: '6. Prévoir les coûts de lancement',
+                          child: Column(
+                            children: [
+                              if (blockingAlerts.isNotEmpty)
+                                _ResultCallout(
+                                  icon: Icons.warning_amber_rounded,
+                                  title: 'Alertes à vérifier',
+                                  text:
+                                      '${blockingAlerts.length} point(s) de vigilance détecté(s) avant lancement.',
+                                  tone: const Color(0xFFD97706),
+                                ),
+                              if (blockingAlerts.isNotEmpty)
+                                const SizedBox(height: 10),
+                              ...[
+                                _CostRow(
+                                  icon: Icons.receipt_long_outlined,
+                                  label: 'Frais de formalités',
+                                  value: '≈ $formalitesMin à $formalitesMax €',
+                                  explanation:
+                                      "Cette fourchette couvre surtout les frais de création et d'immatriculation. En micro-entreprise, ils restent souvent faibles. Pour une société, des frais administratifs supplémentaires peuvent s'ajouter selon la forme choisie.",
+                                ),
+                                _CostRow(
+                                  icon: Icons.campaign_outlined,
+                                  label: 'Annonce légale',
+                                  value: '≈ ${costs['annonceLegale'] ?? 0} €',
+                                  explanation:
+                                      "Ce coût concerne principalement les sociétés comme SASU, SAS, EURL ou SARL. Il est en général nul en micro-entreprise. Le montant affiché correspond à une estimation standard de publication.",
+                                ),
+                                _CostRow(
+                                  icon: Icons.shield_outlined,
+                                  label: 'Assurance professionnelle',
+                                  value: '≈ ${costs['assuranceProAn'] ?? 0} €',
+                                  explanation:
+                                      "Montant indicatif annuel pour une RC Pro de base. Le prix varie selon votre métier, votre niveau de risque, vos garanties et votre chiffre d'affaires.",
+                                ),
+                                _CostRow(
+                                  icon: Icons.calculate_outlined,
+                                  label: 'Comptable / an',
+                                  value: '≈ ${costs['comptableAn'] ?? 0} €',
+                                  explanation:
+                                      "Ce budget devient surtout utile pour une société ou une EI au réel. En micro-entreprise, il peut être nul si vous gérez seul la comptabilité et les déclarations.",
+                                ),
+                                _CostRow(
+                                  icon: Icons.account_balance_wallet_outlined,
+                                  label: 'Banque + outils / an',
+                                  value: '≈ ${costs['banqueOutilsAn'] ?? 0} €',
+                                  explanation:
+                                      "Cette estimation regroupe les frais de compte pro, de facturation et quelques outils de gestion de base. Elle peut monter si vous ajoutez des services de paiement, CRM ou automatisation.",
+                                ),
+                                _ResultCallout(
+                                  icon: Icons.info_outline,
+                                  title: 'Note de lecture',
+                                  text: '${costs['note'] ?? ''}',
+                                  tone: const Color(0xFF6B7280),
+                                ),
+                                if ((costs['ficheCoutsIndicatifs'] as List?)
+                                        ?.isNotEmpty ==
+                                    true) ...[
+                                  const SizedBox(height: 12),
+                                  const _SectionTitle(
+                                    'Coûts détaillés propres à votre activité',
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ...(costs['ficheCoutsIndicatifs'] as List)
+                                      .map(
+                                        (item) =>
+                                            _JourneyInfoBullet(text: '$item'),
+                                      ),
+                                ],
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: '7. Votre plan d’action sur 30 jours',
+                          child: plan30.isEmpty
+                              ? const _InfoBox(
+                                  icon: Icons.task_alt_rounded,
+                                  title: 'Plan non disponible',
+                                  text:
+                                      'Le plan d’action sera visible dès qu’une recommandation complète est générée.',
+                                )
+                              : Column(
+                                  children: plan30
+                                      .map(
+                                        (item) => _PlanTaskSummaryTile(
+                                          title: '${item['label']}',
+                                          week: '${item['week']}',
+                                          completed:
+                                              (item['done'] ?? false) as bool,
+                                          contacts: _planContactsForTask(
+                                            region,
+                                            '${item['label']}',
+                                            activity: selectedActivity,
+                                            currentStatus: currentStatus,
+                                          ),
+                                          onOpenContact: (url) =>
+                                              _openResourceUrl(url),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                        ),
+                        const SizedBox(height: 12),
+                        _Card(
+                          title: 'Sauvegarde & partage',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Abonnement Gratuit : sauvegarde en local sur cet appareil. Avec IliPresto+ ou ilipro : sauvegarde en local + export PDF sur votre téléphone + partage.',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              ElevatedButton.icon(
+                                onPressed: () => _handleSave(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      _ToolboxJeMeLancePageState.kBlue,
+                                  foregroundColor: Colors.white,
+                                ),
+                                icon: const Icon(Icons.save_outlined),
+                                label: const Text('Sauvegarder'),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: _GuestSignupGate(
-                  enabled: _isGuestUser,
-                  triggerKey: _step4CardKey,
-                  listBuilder: (scrollController) => ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
-                  children: [
-                    _HeaderInfoCard(
-                      title: 'Mon parcours personnalisé',
-                      subtitle: headerSubtitle.isNotEmpty
-                          ? headerSubtitle
-                          : 'Votre guide de démarrage est prêt.',
-                      accent: _ToolboxJeMeLancePageState.kBlue,
-                      icon: Icons.route_outlined,
-                      eyebrow: 'Parcours généré',
-                      progressValue: tutorialProgress,
-                      progressLabel:
-                          '$completedSteps étape(s) terminée(s) sur ${steps.length}',
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: 'Résumé de ma situation',
-                      child: Column(
-                        children: [
-                          _SummaryFactRow(
-                              label: 'Région', value: summaryRegion),
-                          _SummaryFactRow(
-                              label: 'Statut actuel', value: summaryStatus),
-                          _SummaryFactRow(
-                              label: 'Activité', value: summaryActivity),
-                          _SummaryFactRow(
-                              label: 'Niveau de vigilance',
-                              value: vigilanceLevel),
-                          _SummaryFactRow(
-                              label: 'Parcours recommandé',
-                              value: recommendedPath),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Votre parcours est adapté à votre région, à votre situation actuelle et à votre activité. Suivez les étapes dans l’ordre pour avancer sans oublier les points importants.',
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '1. Comprendre les règles de votre activité',
-                      child: Column(
-                        children: regulationTutorial.isEmpty
-                            ? [
-                                const _InfoBox(
-                                  icon: Icons.info_outline,
-                                  title: 'Tutoriel réglementation à compléter',
-                                  text:
-                                      'La structure tutorielle est prête, mais le contenu détaillé par activité reste à enrichir.',
-                                ),
-                              ]
-                            : [
-                                for (var i = 0;
-                                    i < regulationTutorial.length;
-                                    i++)
-                                  _JourneyInfoTile(
-                                    index: i + 1,
-                                    title:
-                                        '${regulationTutorial[i]['title'] ?? ''}',
-                                    body:
-                                        '${regulationTutorial[i]['description'] ?? ''}',
-                                  ),
-                              ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '2. Vérifier votre situation personnelle',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: statusWarnings.isEmpty
-                            ? [
-                                const _InfoBox(
-                                  icon: Icons.verified_outlined,
-                                  title: 'Aucune vigilance spécifique',
-                                  text:
-                                      'Aucun bloc statut particulier n’a été généré à ce stade.',
-                                ),
-                              ]
-                            : statusWarnings
-                                .map(
-                                  (item) => _StatusGuidanceCard(
-                                    title: '${item['title']}',
-                                    description: '${item['description']}',
-                                    checks: (item['checks'] as List?)
-                                            ?.map((e) => '$e')
-                                            .toList() ??
-                                        const <String>[],
-                                  ),
-                                )
-                                .toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '3. Choisir le bon cadre pour démarrer',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _RecommendationHero(
-                            statut: legalRecommendation,
-                            why: legalJustification,
-                            color: _ToolboxJeMeLancePageState.kBlue,
-                            helper: blockingAlerts.isNotEmpty
-                                ? 'Des points de vigilance doivent être vérifiés avant de lancer les démarches.'
-                                : 'La recommandation est prête pour passer aux prochaines actions.',
-                          ),
-                          if (legalDisclaimer.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            _ResultCallout(
-                              icon: Icons.info_outline,
-                              title: 'Important',
-                              text: legalDisclaimer,
-                              tone: const Color(0xFF6B7280),
-                            ),
-                          ],
-                          if (legalPlanB.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            _ResultCallout(
-                              icon: Icons.swap_horiz,
-                              title: 'Si votre activité se développe',
-                              text: legalPlanB,
-                              tone: const Color(0xFF7C3AED),
-                            ),
-                          ],
-                          if (prios.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: prios
-                                  .map(
-                                    (item) => _PriorityChip(
-                                      label: item,
-                                      color: _ToolboxJeMeLancePageState.kBlue,
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    KeyedSubtree(
-                      key: _step4CardKey,
-                      child: _Card(
-                        title: '4. Faire les démarches étape par étape',
-                        child: Column(
-                          children: steps.isEmpty
-                              ? [
-                                  const _InfoBox(
-                                    icon: Icons.route_outlined,
-                                    title: 'Étapes à structurer',
-                                    text:
-                                        'Les étapes tutoriels seront affichées ici dès qu’elles sont générées.',
-                                  ),
-                                ]
-                              : steps
-                                  .map(
-                                    (item) => _TutorialStepSummaryTile(
-                                      order: (item['order'] as num?)
-                                              ?.toInt() ??
-                                          0,
-                                      title: '${item['title']}',
-                                      objective: '${item['objective']}',
-                                      status: '${item['status'] ?? 'todo'}',
-                                      todos: (item['todos'] as List?)
-                                              ?.map((e) => '$e')
-                                              .toList() ??
-                                          const <String>[],
-                                    ),
-                                  )
-                                  .toList(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '5. Identifier les aides possibles',
-                      child: relevantAides.isEmpty
-                          ? const _InfoBox(
-                              icon: Icons.volunteer_activism_outlined,
-                              title: 'Aucune aide identifiée',
-                              text:
-                                  'Aucune aide spécifique n’a été remontée pour le moment.',
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: relevantAides
-                                  .map(
-                                    (item) => _AidStatusSummaryTile(
-                                      name: '${item['name']}',
-                                      description: '${item['desc']}',
-                                      status:
-                                          '${item['status'] ?? 'à checker'}',
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '6. Prévoir les coûts de lancement',
-                      child: Column(
-                        children: [
-                          if (blockingAlerts.isNotEmpty)
-                            _ResultCallout(
-                              icon: Icons.warning_amber_rounded,
-                              title: 'Alertes à vérifier',
-                              text:
-                                  '${blockingAlerts.length} point(s) de vigilance détecté(s) avant lancement.',
-                              tone: const Color(0xFFD97706),
-                            ),
-                          if (blockingAlerts.isNotEmpty)
-                            const SizedBox(height: 10),
-                          ...[
-                            _CostRow(
-                              icon: Icons.receipt_long_outlined,
-                              label: 'Frais de formalités',
-                              value: '≈ $formalitesMin à $formalitesMax €',
-                              explanation:
-                                  "Cette fourchette couvre surtout les frais de création et d'immatriculation. En micro-entreprise, ils restent souvent faibles. Pour une société, des frais administratifs supplémentaires peuvent s'ajouter selon la forme choisie.",
-                            ),
-                            _CostRow(
-                              icon: Icons.campaign_outlined,
-                              label: 'Annonce légale',
-                              value: '≈ ${costs['annonceLegale'] ?? 0} €',
-                              explanation:
-                                  "Ce coût concerne principalement les sociétés comme SASU, SAS, EURL ou SARL. Il est en général nul en micro-entreprise. Le montant affiché correspond à une estimation standard de publication.",
-                            ),
-                            _CostRow(
-                              icon: Icons.shield_outlined,
-                              label: 'Assurance professionnelle',
-                              value: '≈ ${costs['assuranceProAn'] ?? 0} €',
-                              explanation:
-                                  "Montant indicatif annuel pour une RC Pro de base. Le prix varie selon votre métier, votre niveau de risque, vos garanties et votre chiffre d'affaires.",
-                            ),
-                            _CostRow(
-                              icon: Icons.calculate_outlined,
-                              label: 'Comptable / an',
-                              value: '≈ ${costs['comptableAn'] ?? 0} €',
-                              explanation:
-                                  "Ce budget devient surtout utile pour une société ou une EI au réel. En micro-entreprise, il peut être nul si vous gérez seul la comptabilité et les déclarations.",
-                            ),
-                            _CostRow(
-                              icon: Icons.account_balance_wallet_outlined,
-                              label: 'Banque + outils / an',
-                              value: '≈ ${costs['banqueOutilsAn'] ?? 0} €',
-                              explanation:
-                                  "Cette estimation regroupe les frais de compte pro, de facturation et quelques outils de gestion de base. Elle peut monter si vous ajoutez des services de paiement, CRM ou automatisation.",
-                            ),
-                            _ResultCallout(
-                              icon: Icons.info_outline,
-                              title: 'Note de lecture',
-                              text: '${costs['note'] ?? ''}',
-                              tone: const Color(0xFF6B7280),
-                            ),
-                            if ((costs['ficheCoutsIndicatifs'] as List?)
-                                    ?.isNotEmpty ==
-                                true) ...[
-                              const SizedBox(height: 12),
-                              const _SectionTitle(
-                                'Coûts détaillés propres à votre activité',
-                              ),
-                              const SizedBox(height: 8),
-                              ...(costs['ficheCoutsIndicatifs'] as List)
-                                  .map(
-                                    (item) =>
-                                        _JourneyInfoBullet(text: '$item'),
-                                  ),
-                            ],
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: '7. Votre plan d’action sur 30 jours',
-                      child: plan30.isEmpty
-                          ? const _InfoBox(
-                              icon: Icons.task_alt_rounded,
-                              title: 'Plan non disponible',
-                              text:
-                                  'Le plan d’action sera visible dès qu’une recommandation complète est générée.',
-                            )
-                          : Column(
-                              children: plan30
-                                  .map(
-                                    (item) => _PlanTaskSummaryTile(
-                                      title: '${item['label']}',
-                                      week: '${item['week']}',
-                                      completed:
-                                          (item['done'] ?? false) as bool,
-                                      contacts: _planContactsForTask(
-                                        region,
-                                        '${item['label']}',
-                                        activity: selectedActivity,
-                                        currentStatus: currentStatus,
-                                      ),
-                                      onOpenContact: (url) =>
-                                          _openResourceUrl(url),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Card(
-                      title: 'Sauvegarde & partage',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Abonnement Gratuit : sauvegarde en local sur cet appareil. Avec IliPresto+ ou ilipro : sauvegarde en local + export PDF sur votre téléphone + partage.',
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                              height: 1.35,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          ElevatedButton.icon(
-                            onPressed: () => _handleSave(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _ToolboxJeMeLancePageState.kBlue,
-                              foregroundColor: Colors.white,
-                            ),
-                            icon: const Icon(Icons.save_outlined),
-                            label: const Text('Sauvegarder'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -6278,7 +6361,7 @@ class _GuestSignupGateState extends State<_GuestSignupGate> {
 
     final targetMidY =
         targetBox.localToGlobal(Offset.zero, ancestor: viewportBox).dy +
-            targetBox.size.height / 2;
+        targetBox.size.height / 2;
 
     if (targetMidY <= viewportBox.size.height * 0.5) {
       setState(() => _bannerVisible = true);
@@ -6377,8 +6460,11 @@ class _GuestSignupBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     child: const Padding(
                       padding: EdgeInsets.all(4),
-                      child: Icon(Icons.close_rounded,
-                          size: 20, color: Color(0xFF9CA3AF)),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: Color(0xFF9CA3AF),
+                      ),
                     ),
                   ),
                 ],
@@ -6552,8 +6638,10 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
       QueryDocumentSnapshot<Map<String, dynamic>>? latestDoc;
 
       try {
-        final ordered =
-            await col.orderBy('updatedAt', descending: true).limit(1).get();
+        final ordered = await col
+            .orderBy('updatedAt', descending: true)
+            .limit(1)
+            .get();
         if (ordered.docs.isNotEmpty) {
           latestDoc = ordered.docs.first;
         }
@@ -6595,34 +6683,40 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
         _selectedActivity = '${data['selectedActivity'] ?? ''}';
         _recommendation =
             (derived['recommendation'] as Map?)?.cast<String, dynamic>() ??
-                const {};
+            const {};
         _blockingAlerts =
             (derived['blockingAlerts'] as List?)?.map((e) => '$e').toList() ??
-                const [];
+            const [];
         _costs =
             (derived['costs'] as Map?)?.cast<String, dynamic>() ?? const {};
-        _aides = (derived['aides'] as List?)
+        _aides =
+            (derived['aides'] as List?)
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
             const [];
-        _plan30 = (derived['plan30'] as List?)
+        _plan30 =
+            (derived['plan30'] as List?)
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
             const [];
         _summary =
             (derived['summary'] as Map?)?.cast<String, dynamic>() ?? const {};
-        _regulationTutorial = (derived['regulationTutorial'] as List?)
+        _regulationTutorial =
+            (derived['regulationTutorial'] as List?)
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
             const [];
-        _statusWarnings = (derived['statusWarnings'] as List?)
+        _statusWarnings =
+            (derived['statusWarnings'] as List?)
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
             const [];
-        _recommendedLegalStatus = (derived['recommendedLegalStatus'] as Map?)
+        _recommendedLegalStatus =
+            (derived['recommendedLegalStatus'] as Map?)
                 ?.cast<String, dynamic>() ??
             const {};
-        _steps = (derived['steps'] as List?)
+        _steps =
+            (derived['steps'] as List?)
                 ?.map((e) => (e as Map).cast<String, dynamic>())
                 .toList() ??
             const [];
@@ -6640,9 +6734,7 @@ class _ToolboxMyParcoursPageState extends State<ToolboxMyParcoursPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null) {
@@ -6761,10 +6853,7 @@ class _SummaryFactRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SummaryFactRow({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryFactRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -6912,10 +7001,7 @@ class _TutorialStepSummaryTile extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Text(
                   '$order',
-                  style: TextStyle(
-                    color: _tone,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: TextStyle(color: _tone, fontWeight: FontWeight.w800),
                 ),
               ),
               const SizedBox(width: 10),
@@ -6985,8 +7071,9 @@ class _PlanTaskSummaryTile extends StatelessWidget {
             completed
                 ? Icons.check_circle_rounded
                 : Icons.radio_button_unchecked,
-            color:
-                completed ? const Color(0xFF0F766E) : const Color(0xFF9CA3AF),
+            color: completed
+                ? const Color(0xFF0F766E)
+                : const Color(0xFF9CA3AF),
             size: 22,
           ),
           const SizedBox(width: 12),
@@ -6995,8 +7082,10 @@ class _PlanTaskSummaryTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(999),
@@ -7056,10 +7145,7 @@ class _TaskContactLinkChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _TaskContactLinkChip({
-    required this.label,
-    required this.onTap,
-  });
+  const _TaskContactLinkChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
