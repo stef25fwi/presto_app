@@ -39,6 +39,15 @@ void main() {
       expect(policy.normalizeMessage(message).length, 2000);
     });
 
+    test('respecte une limite configurable', () {
+      const shortPolicy = ChatRequestPolicy(maxMessageLength: 5);
+      expect(shortPolicy.normalizeMessage('12345'), '12345');
+      expect(
+        () => shortPolicy.normalizeMessage('123456'),
+        throwsA(isA<ChatRequestException>()),
+      );
+    });
+
     test('lit threadId et l alias conversationId', () {
       expect(policy.extractThreadId({'threadId': ' t-1 '}), 't-1');
       expect(policy.extractThreadId({'conversationId': ' c-1 '}), 'c-1');
