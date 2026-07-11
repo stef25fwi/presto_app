@@ -6,29 +6,28 @@ let text = fs.readFileSync(path, 'utf8');
 const widgetImport =
   "import '../features/offers/presentation/widgets/publish_offer_photos_section.dart';\n";
 const importAnchor = "import 'publish_offer_widgets.dart';\n";
-const startMarker = '                          // PHOTOS\n';
+const subcategoryValidator = '                              validator: (_) => null,\n';
 const endMarker = '                          // VILLE + CP + AUTOCOMPLÉTION\n';
-
-if (text.includes('PublishOfferPhotosSection(')) {
-  console.log('PublishOfferPhotosSection is already connected.');
-  process.exit(0);
-}
 
 if (!text.includes(importAnchor)) {
   throw new Error('publish_offer_widgets import anchor not found');
-}
-
-const start = text.indexOf(startMarker);
-const end = text.indexOf(endMarker, start + startMarker.length);
-if (start < 0 || end < 0) {
-  throw new Error('publish offer photos section markers not found');
 }
 
 if (!text.includes(widgetImport)) {
   text = text.replace(importAnchor, `${importAnchor}${widgetImport}`);
 }
 
-const replacement = `                          // PHOTOS
+const end = text.indexOf(endMarker);
+const start = text.lastIndexOf(subcategoryValidator, end);
+if (start < 0 || end < 0 || start >= end) {
+  throw new Error('subcategory/photos section anchors not found');
+}
+
+const replacement = `                              validator: (_) => null,
+                            ),
+                          if (_category != null) const SizedBox(height: 16),
+
+                          // PHOTOS
                           PublishOfferPhotosSection(
                             visibleTileCount: _visiblePhotoTileCount,
                             maximumPhotos: _publishPhotoHardLimit,
