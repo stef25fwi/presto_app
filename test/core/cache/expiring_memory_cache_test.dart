@@ -24,23 +24,25 @@ void main() {
     expect(cache.length, 0);
   });
 
-  test('getOrLoad évite un second chargement tant que la valeur est fraîche',
-      () async {
-    var loadCount = 0;
-    final cache = ExpiringMemoryCache<String, String>(
-      defaultTtl: const Duration(hours: 1),
-      clock: () => now,
-    );
+  test(
+    'getOrLoad évite un second chargement tant que la valeur est fraîche',
+    () async {
+      var loadCount = 0;
+      final cache = ExpiringMemoryCache<String, String>(
+        defaultTtl: const Duration(hours: 1),
+        clock: () => now,
+      );
 
-    Future<String> loader() async {
-      loadCount += 1;
-      return 'ilipresto';
-    }
+      Future<String> loader() async {
+        loadCount += 1;
+        return 'ilipresto';
+      }
 
-    expect(await cache.getOrLoad('brand', loader), 'ilipresto');
-    expect(await cache.getOrLoad('brand', loader), 'ilipresto');
-    expect(loadCount, 1);
-  });
+      expect(await cache.getOrLoad('brand', loader), 'ilipresto');
+      expect(await cache.getOrLoad('brand', loader), 'ilipresto');
+      expect(loadCount, 1);
+    },
+  );
 
   test('getOrLoad mutualise les chargements simultanés', () async {
     var loadCount = 0;
@@ -66,46 +68,51 @@ void main() {
     expect(cache.get('taxonomy'), 'services');
   });
 
-  test('une invalidation empêche un ancien chargement de repeupler le cache',
-      () async {
-    final completers = <Completer<String>>[];
-    final cache = ExpiringMemoryCache<String, String>(
-      defaultTtl: const Duration(hours: 1),
-      clock: () => now,
-    );
+  test(
+    'une invalidation empêche un ancien chargement de repeupler le cache',
+    () async {
+      final completers = <Completer<String>>[];
+      final cache = ExpiringMemoryCache<String, String>(
+        defaultTtl: const Duration(hours: 1),
+        clock: () => now,
+      );
 
-    Future<String> loader() {
+      Future<String> loader() {
+        final completer = Completer<String>();
+        completers.add(completer);
+        return completer.future;
+      }
+
+      final staleFuture = cache.getOrLoad('profile', loader);
+      cache.invalidate('profile');
+      final freshFuture = cache.getOrLoad('profile', loader);
+      expect(completers.length, 2);
+
+      completers.first.complete('stale');
+      completers.last.complete('fresh');
+      expect(await staleFuture, 'stale');
+      expect(await freshFuture, 'fresh');
+      expect(cache.get('profile'), 'fresh');
+    },
+  );
+
+  test(
+    'un put manuel n est pas écrasé par un chargement plus ancien',
+    () async {
       final completer = Completer<String>();
-      completers.add(completer);
-      return completer.future;
-    }
+      final cache = ExpiringMemoryCache<String, String>(
+        defaultTtl: const Duration(hours: 1),
+        clock: () => now,
+      );
 
-    final staleFuture = cache.getOrLoad('profile', loader);
-    cache.invalidate('profile');
-    final freshFuture = cache.getOrLoad('profile', loader);
-    expect(completers.length, 2);
+      final pending = cache.getOrLoad('plans', () => completer.future);
+      cache.put('plans', 'manual');
+      completer.complete('stale');
 
-    completers.first.complete('stale');
-    completers.last.complete('fresh');
-    expect(await staleFuture, 'stale');
-    expect(await freshFuture, 'fresh');
-    expect(cache.get('profile'), 'fresh');
-  });
-
-  test('un put manuel n est pas écrasé par un chargement plus ancien', () async {
-    final completer = Completer<String>();
-    final cache = ExpiringMemoryCache<String, String>(
-      defaultTtl: const Duration(hours: 1),
-      clock: () => now,
-    );
-
-    final pending = cache.getOrLoad('plans', () => completer.future);
-    cache.put('plans', 'manual');
-    completer.complete('stale');
-
-    expect(await pending, 'stale');
-    expect(cache.get('plans'), 'manual');
-  });
+      expect(await pending, 'stale');
+      expect(cache.get('plans'), 'manual');
+    },
+  );
 
   test('évince la valeur la moins récemment utilisée au dépassement', () {
     final cache = ExpiringMemoryCache<String, int>(
