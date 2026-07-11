@@ -1,9 +1,8 @@
 name: Temporary export admin deletion sources
 
 on:
-  push:
-    branches:
-      - agent/phase-5-admin-deletion-backend
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -14,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/phase-5-admin-deletion-backend
+          ref: ${{ github.head_ref }}
           fetch-depth: 1
 
       - name: Collect relevant sources
