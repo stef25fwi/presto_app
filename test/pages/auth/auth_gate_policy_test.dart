@@ -1,3 +1,4 @@
+// Tests de décision pure du garde d’authentification, sans dépendance Firebase.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/auth/auth_gate_policy.dart';
 
