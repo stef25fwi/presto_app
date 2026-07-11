@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../toolbox_je_me_lance_page.dart';
 import '../toolbox_page.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
