@@ -222,7 +222,7 @@ profileSections = replaceAllAtLeast(
   profileSections,
   'vertical: 14,',
   'vertical: 11,',
-  3,
+  2,
   'account section tile vertical 14 padding',
 );
 profileSections = replaceAllAtLeast(
