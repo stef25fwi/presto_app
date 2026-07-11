@@ -19,7 +19,10 @@ class ProductAnalyticsEvent {
     required this.stage,
     Map<String, Object?> parameters = const <String, Object?>{},
   }) : parameters = Map<String, Object?>.unmodifiable(
-          _validate(name, parameters),
+          <String, Object?>{
+            ..._validateParameters(name, parameters),
+            'funnel_stage': stage.name,
+          },
         );
 
   final String name;
@@ -48,7 +51,7 @@ class ProductAnalyticsEvent {
     'uid',
   };
 
-  static Map<String, Object?> _validate(
+  static Map<String, Object?> _validateParameters(
     String name,
     Map<String, Object?> parameters,
   ) {
@@ -84,20 +87,7 @@ class ProductAnalyticsEvent {
         'Seuls String, num, bool et null sont autorisés.',
       );
     }
-    validated['funnel_stage'] = stageValueForName(name);
     return validated;
-  }
-
-  /// Le stage est injecté par le constructeur après validation du nom.
-  static String stageValueForName(String name) {
-    if (name.startsWith('acquisition_')) return 'acquisition';
-    if (name.startsWith('registration_')) return 'registration';
-    if (name.startsWith('activation_')) return 'activation';
-    if (name.startsWith('engagement_')) return 'engagement';
-    if (name.startsWith('conversion_')) return 'conversion';
-    if (name.startsWith('retention_')) return 'retention';
-    if (name.startsWith('revenue_')) return 'revenue';
-    return 'other';
   }
 
   factory ProductAnalyticsEvent.acquisitionLandingViewed({
