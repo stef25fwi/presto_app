@@ -236,7 +236,7 @@ extension on _MessagingModerationMode {
 
 class _MessagingModerationConfigService {
   _MessagingModerationConfigService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -261,40 +261,33 @@ class _MessagingModerationConfigService {
     final snapshot = await _configRef.get();
     final data = snapshot.data();
     final moderation = data?['moderation'];
-    final hasMode = moderation is Map &&
+    final hasMode =
+        moderation is Map &&
         (moderation['messagingMode'] ?? '').toString().trim().isNotEmpty;
     if (hasMode) {
       return;
     }
 
-    await _configRef.set(
-      <String, dynamic>{
-        'moderation': <String, dynamic>{
-          'messagingMode': _MessagingModerationMode.hybrid.firestoreValue,
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-        if (updatedBy != null && updatedBy.trim().isNotEmpty)
-          'updatedBy': updatedBy.trim(),
+    await _configRef.set(<String, dynamic>{
+      'moderation': <String, dynamic>{
+        'messagingMode': _MessagingModerationMode.hybrid.firestoreValue,
       },
-      SetOptions(merge: true),
-    );
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (updatedBy != null && updatedBy.trim().isNotEmpty)
+        'updatedBy': updatedBy.trim(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateMode(
     _MessagingModerationMode mode, {
     String? updatedBy,
   }) async {
-    await _configRef.set(
-      <String, dynamic>{
-        'moderation': <String, dynamic>{
-          'messagingMode': mode.firestoreValue,
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-        if (updatedBy != null && updatedBy.trim().isNotEmpty)
-          'updatedBy': updatedBy.trim(),
-      },
-      SetOptions(merge: true),
-    );
+    await _configRef.set(<String, dynamic>{
+      'moderation': <String, dynamic>{'messagingMode': mode.firestoreValue},
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (updatedBy != null && updatedBy.trim().isNotEmpty)
+        'updatedBy': updatedBy.trim(),
+    }, SetOptions(merge: true));
   }
 }
 
@@ -387,10 +380,7 @@ class _AdminMessagingModerationTileState
                       color: accentColor.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
-                      Icons.shield_rounded,
-                      color: accentColor,
-                    ),
+                    child: const Icon(Icons.shield_rounded, color: accentColor),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -439,8 +429,9 @@ class _AdminMessagingModerationTileState
                   ),
                 ],
                 selected: {mode},
-                onSelectionChanged:
-                    _saving ? null : (selection) => _setMode(selection.first),
+                onSelectionChanged: _saving
+                    ? null
+                    : (selection) => _setMode(selection.first),
               ),
               const SizedBox(height: 14),
               Wrap(
@@ -694,12 +685,14 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final fallback = data['fallbackEnabled'] == true;
       final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
       final lang = (data['languageCode'] ?? 'fr-FR').toString().trim();
-      final audioQualityStr = (data['audioQuality'] ??
-              data['audio_quality'] ??
-              data['microia_audio_quality'] ??
-              'MEDIUM')
-          .toString();
-      final ultraFast = (data['ultraFastEnabled'] ??
+      final audioQualityStr =
+          (data['audioQuality'] ??
+                  data['audio_quality'] ??
+                  data['microia_audio_quality'] ??
+                  'MEDIUM')
+              .toString();
+      final ultraFast =
+          (data['ultraFastEnabled'] ??
               data['microia_ultra_fast_enabled'] ??
               data['microia_ultrafast_enabled'] ??
               data['microia_ultra_fast'] ??
@@ -786,12 +779,14 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final threshold =
           (data['qualityThreshold'] as num?)?.toDouble() ?? _quality;
       final languageCode = (data['languageCode'] ?? lang).toString();
-      final audioQualityStr = (data['audioQuality'] ??
-              data['audio_quality'] ??
-              data['microia_audio_quality'] ??
-              microIaAudioQualityToRcValue(_audioQuality))
-          .toString();
-      final ultraFast = (data['ultraFastEnabled'] ??
+      final audioQualityStr =
+          (data['audioQuality'] ??
+                  data['audio_quality'] ??
+                  data['microia_audio_quality'] ??
+                  microIaAudioQualityToRcValue(_audioQuality))
+              .toString();
+      final ultraFast =
+          (data['ultraFastEnabled'] ??
               data['microia_ultra_fast_enabled'] ??
               data['microia_ultrafast_enabled'] ??
               data['microia_ultra_fast'] ??
@@ -873,7 +868,8 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                       final callable = _functions.httpsCallable(
                         'adminSetMicroIaConfig',
                         options: HttpsCallableOptions(
-                            timeout: const Duration(seconds: 30)),
+                          timeout: const Duration(seconds: 30),
+                        ),
                       );
 
                       final lang = _languages.isNotEmpty
@@ -913,9 +909,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
 
 Map<String, dynamic> _stringKeyMap(dynamic value) {
   if (value is Map) {
-    return value.map(
-      (key, entry) => MapEntry(key.toString(), entry),
-    );
+    return value.map((key, entry) => MapEntry(key.toString(), entry));
   }
   return <String, dynamic>{};
 }
@@ -1016,9 +1010,12 @@ bool _isCompleteAdminUser(Map<String, dynamic> data) {
     data['profilePhotoUrl'],
     data['imageUrl'],
   ].any((value) => value != null && value.toString().trim().isNotEmpty);
-  final score = [hasIdentity, hasPhone, hasLocation, hasAvatar]
-      .where((value) => value)
-      .length;
+  final score = [
+    hasIdentity,
+    hasPhone,
+    hasLocation,
+    hasAvatar,
+  ].where((value) => value).length;
   return score >= 3;
 }
 
@@ -1060,47 +1057,53 @@ String _buildAdminDomainCsv({
   required _AdminDomainLiveData data,
   required _AdminDashboardWindow window,
 }) {
-  final rows = <String>[
-    'domaine,periode,type,label,valeur',
-  ];
+  final rows = <String>['domaine,periode,type,label,valeur'];
 
   for (final stat in data.highlights) {
-    rows.add([
-      data.domain.title,
-      window.label,
-      'highlight',
-      stat.label,
-      stat.value,
-    ].map(_escapeCsv).join(','));
+    rows.add(
+      [
+        data.domain.title,
+        window.label,
+        'highlight',
+        stat.label,
+        stat.value,
+      ].map(_escapeCsv).join(','),
+    );
   }
 
   for (var index = 0; index < data.series.length; index += 1) {
-    rows.add([
-      data.domain.title,
-      window.label,
-      'trend_point',
-      'jour_${index + 1}',
-      data.series[index].toStringAsFixed(2),
-    ].map(_escapeCsv).join(','));
+    rows.add(
+      [
+        data.domain.title,
+        window.label,
+        'trend_point',
+        'jour_${index + 1}',
+        data.series[index].toStringAsFixed(2),
+      ].map(_escapeCsv).join(','),
+    );
   }
 
   for (final metric in data.domain.metrics) {
-    rows.add([
-      data.domain.title,
-      window.label,
-      'catalog_metric',
-      metric,
-      '',
-    ].map(_escapeCsv).join(','));
+    rows.add(
+      [
+        data.domain.title,
+        window.label,
+        'catalog_metric',
+        metric,
+        '',
+      ].map(_escapeCsv).join(','),
+    );
   }
 
-  rows.add([
-    data.domain.title,
-    window.label,
-    'note',
-    'note',
-    data.note,
-  ].map(_escapeCsv).join(','));
+  rows.add(
+    [
+      data.domain.title,
+      window.label,
+      'note',
+      'note',
+      data.note,
+    ].map(_escapeCsv).join(','),
+  );
 
   return rows.join('\n');
 }
@@ -1155,10 +1158,7 @@ class _AdminDashboardStat {
   final String label;
   final String value;
 
-  const _AdminDashboardStat({
-    required this.label,
-    required this.value,
-  });
+  const _AdminDashboardStat({required this.label, required this.value});
 }
 
 class _AdminDomainLiveData {
@@ -1252,8 +1252,9 @@ class _AdminDashboardComputed {
     final totalAccounts = _toInt(userStats?['totalAccounts']);
     final onlineUsers = _toInt(userStats?['onlineUsers']);
     final proLogins = _toInt(userStats?['proLogins']);
-    final start = _startOfDay(DateTime.now())
-        .subtract(Duration(days: window.dayCount - 1));
+    final start = _startOfDay(
+      DateTime.now(),
+    ).subtract(Duration(days: window.dayCount - 1));
     final bucketCount = window.dayCount;
 
     final userSeries = List<double>.filled(bucketCount, 0);
@@ -1270,16 +1271,20 @@ class _AdminDashboardComputed {
       if (_isCompleteAdminUser(data)) {
         completedProfiles += 1;
       }
-      final index =
-          _bucketIndexFor(_asDateTime(data['createdAt']), start, bucketCount);
+      final index = _bucketIndexFor(
+        _asDateTime(data['createdAt']),
+        start,
+        bucketCount,
+      );
       if (index != null) {
         userSeries[index] += 1;
       }
     }
 
     final activeUsers = activeUserDocs.length;
-    final dormantUsers =
-        totalAccounts > activeUsers ? totalAccounts - activeUsers : 0;
+    final dormantUsers = totalAccounts > activeUsers
+        ? totalAccounts - activeUsers
+        : 0;
 
     var activeListings = 0;
     var expiredListings = 0;
@@ -1298,13 +1303,16 @@ class _AdminDashboardComputed {
     for (final doc in listingDocs) {
       final data = doc.data();
       final status = (data['status'] ?? '').toString().trim().toLowerCase();
-      final moderation =
-          (data['moderationStatus'] ?? '').toString().trim().toLowerCase();
+      final moderation = (data['moderationStatus'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
       final expiresAt = _asDateTime(data['expiresAt']);
       final createdAt = _asDateTime(data['createdAt']);
       final publishedAt = _asDateTime(data['publishedAt']) ?? createdAt;
-      final ownerId =
-          (data['ownerId'] ?? data['userId'] ?? '').toString().trim();
+      final ownerId = (data['ownerId'] ?? data['userId'] ?? '')
+          .toString()
+          .trim();
       final categoryLabel =
           (data['category'] ?? data['categoryId'] ?? 'Sans catégorie')
               .toString()
@@ -1314,8 +1322,11 @@ class _AdminDashboardComputed {
         owners.add(ownerId);
       }
       if (categoryLabel.isNotEmpty) {
-        categoryCounts.update(categoryLabel, (value) => value + 1,
-            ifAbsent: () => 1);
+        categoryCounts.update(
+          categoryLabel,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
       }
 
       if (status == 'active') {
@@ -1356,13 +1367,15 @@ class _AdminDashboardComputed {
       }
     }
 
-    final avgLifespanDays =
-        lifespanCount == 0 ? 0.0 : lifespanDaysSum / lifespanCount;
+    final avgLifespanDays = lifespanCount == 0
+        ? 0.0
+        : lifespanDaysSum / lifespanCount;
     final avgRisk = listingDocs.isEmpty ? 0.0 : totalRisk / listingDocs.length;
     final conversionRatio = totalViews == 0 ? 0.0 : totalContacts / totalViews;
     final topCategory = _topEntryLabel(categoryCounts, fallback: '—');
-    final advertiserRatio =
-        activeUsers == 0 ? 0.0 : owners.length / activeUsers;
+    final advertiserRatio = activeUsers == 0
+        ? 0.0
+        : owners.length / activeUsers;
 
     final analyticsTotals = <String, int>{};
     var analyticsCoverageDays = 0;
@@ -1385,8 +1398,11 @@ class _AdminDashboardComputed {
 
       metrics.forEach((key, value) {
         final current = _toInt(value);
-        analyticsTotals.update(key, (existing) => existing + current,
-            ifAbsent: () => current);
+        analyticsTotals.update(
+          key,
+          (existing) => existing + current,
+          ifAbsent: () => current,
+        );
         totalDayEvents += current;
       });
 
@@ -1402,8 +1418,10 @@ class _AdminDashboardComputed {
     final messagesStarted = analyticsTotals['listing_message_started'] ?? 0;
     final premiumUpgrades = analyticsTotals['premium_upgrade_completed'] ?? 0;
     final reportEvents = analyticsTotals['listing_reported'] ?? 0;
-    final totalTrackedEvents = analyticsTotals.values
-        .fold<int>(0, (runningTotal, value) => runningTotal + value);
+    final totalTrackedEvents = analyticsTotals.values.fold<int>(
+      0,
+      (runningTotal, value) => runningTotal + value,
+    );
 
     int sumByKeyPattern(RegExp pattern) {
       var sum = 0;
@@ -1415,8 +1433,9 @@ class _AdminDashboardComputed {
       return sum;
     }
 
-    final errorEvents =
-        sumByKeyPattern(RegExp(r'error|failed', caseSensitive: false));
+    final errorEvents = sumByKeyPattern(
+      RegExp(r'error|failed', caseSensitive: false),
+    );
     final crashEvents = sumByKeyPattern(RegExp(r'crash', caseSensitive: false));
 
     double? metricFromMap(Map<String, dynamic> metrics, List<String> keys) {
@@ -1437,28 +1456,22 @@ class _AdminDashboardComputed {
       final data = doc.data();
       if ((data['metricGroup'] ?? '').toString() != 'marketplace') continue;
       final metrics = _stringKeyMap(data['metrics']);
-      final latency = metricFromMap(
-        metrics,
-        const [
-          'api_latency_ms_avg',
-          'api_latency_ms',
-          'latency_ms',
-          'api_avg_ms',
-        ],
-      );
+      final latency = metricFromMap(metrics, const [
+        'api_latency_ms_avg',
+        'api_latency_ms',
+        'latency_ms',
+        'api_avg_ms',
+      ]);
       if (latency != null) {
         latencySum += latency;
         latencyCount += 1;
       }
-      final load = metricFromMap(
-        metrics,
-        const [
-          'app_load_ms_avg',
-          'app_load_ms',
-          'app_start_ms',
-          'page_load_ms',
-        ],
-      );
+      final load = metricFromMap(metrics, const [
+        'app_load_ms_avg',
+        'app_load_ms',
+        'app_start_ms',
+        'page_load_ms',
+      ]);
       if (load != null) {
         loadSum += load;
         loadCount += 1;
@@ -1474,8 +1487,10 @@ class _AdminDashboardComputed {
 
     var activeSubscriptions = 0;
     for (final doc in subscriptionDocs) {
-      final status =
-          (doc.data()['status'] ?? '').toString().trim().toLowerCase();
+      final status = (doc.data()['status'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
       if (status == 'active' || status == 'trialing' || status == 'paid') {
         activeSubscriptions += 1;
       }
@@ -1492,7 +1507,8 @@ class _AdminDashboardComputed {
         data['amount_paid'] ?? data['amount_due'] ?? data['amount'] ?? 0,
       );
       final issuedAt = _asDateTime(
-          data['createdAt'] ?? data['issued_at'] ?? data['updatedAt']);
+        data['createdAt'] ?? data['issued_at'] ?? data['updatedAt'],
+      );
       final index = _bucketIndexFor(issuedAt, start, bucketCount);
       if (status == 'paid' ||
           status == 'succeeded' ||
@@ -1512,34 +1528,40 @@ class _AdminDashboardComputed {
     }
 
     final arpu = activeUsers == 0 ? 0.0 : totalRevenue / activeUsers;
-    final paidConversion =
-        activeUsers == 0 ? 0.0 : activeSubscriptions / activeUsers;
+    final paidConversion = activeUsers == 0
+        ? 0.0
+        : activeSubscriptions / activeUsers;
 
     final topPlatform = _topSourceLabel(userStats?['loginsByPlatform']);
     final topMethod = _topSourceLabel(userStats?['loginsByMethod']);
 
-    final domainByTitle = {
-      for (final domain in domains) domain.title: domain,
-    };
+    final domainByTitle = {for (final domain in domains) domain.title: domain};
 
     _AdminMetricDomain domain(String title) =>
         domainByTitle[title] ??
         _AdminMetricDomain(
-            title: title,
-            icon: Icons.dashboard,
-            color: const Color(0xFF1A73E8),
-            metrics: const []);
+          title: title,
+          icon: Icons.dashboard,
+          color: const Color(0xFF1A73E8),
+          metrics: const [],
+        );
 
     final liveDomains = [
       _AdminDomainLiveData(
         domain: domain('Acquisition & trafic'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Nouveaux', value: _formatCompactNumber(userDocs.length)),
+            label: 'Nouveaux',
+            value: _formatCompactNumber(userDocs.length),
+          ),
           _AdminDashboardStat(
-              label: 'Actifs', value: _formatCompactNumber(activeUsers)),
+            label: 'Actifs',
+            value: _formatCompactNumber(activeUsers),
+          ),
           _AdminDashboardStat(
-              label: 'En ligne', value: _formatCompactNumber(onlineUsers)),
+            label: 'En ligne',
+            value: _formatCompactNumber(onlineUsers),
+          ),
           _AdminDashboardStat(label: 'Top accès', value: topPlatform),
         ],
         series: userSeries,
@@ -1551,17 +1573,23 @@ class _AdminDashboardComputed {
         domain: domain('Annonces & contenu'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Publiées',
-              value: _formatCompactNumber(listingDocs.length)),
+            label: 'Publiées',
+            value: _formatCompactNumber(listingDocs.length),
+          ),
           _AdminDashboardStat(
-              label: 'Actives', value: _formatCompactNumber(activeListings)),
+            label: 'Actives',
+            value: _formatCompactNumber(activeListings),
+          ),
           _AdminDashboardStat(
-              label: 'Expirées', value: _formatCompactNumber(expiredListings)),
+            label: 'Expirées',
+            value: _formatCompactNumber(expiredListings),
+          ),
           _AdminDashboardStat(
-              label: 'Vie moy.',
-              value: avgLifespanDays <= 0
-                  ? '—'
-                  : '${avgLifespanDays.toStringAsFixed(1)} j'),
+            label: 'Vie moy.',
+            value: avgLifespanDays <= 0
+                ? '—'
+                : '${avgLifespanDays.toStringAsFixed(1)} j',
+          ),
         ],
         series: listingSeries,
         trendLabel: 'Annonces créées / jour',
@@ -1572,16 +1600,22 @@ class _AdminDashboardComputed {
         domain: domain('Utilisateurs'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Total comptes',
-              value: _formatCompactNumber(totalAccounts)),
+            label: 'Total comptes',
+            value: _formatCompactNumber(totalAccounts),
+          ),
           _AdminDashboardStat(
-              label: 'Dormants', value: _formatCompactNumber(dormantUsers)),
+            label: 'Dormants',
+            value: _formatCompactNumber(dormantUsers),
+          ),
           _AdminDashboardStat(
-              label: 'Annonceurs', value: _formatCompactNumber(owners.length)),
+            label: 'Annonceurs',
+            value: _formatCompactNumber(owners.length),
+          ),
           _AdminDashboardStat(
-              label: 'Profils complets',
-              value:
-                  '${_formatCompactNumber(completedProfiles)}/${_formatCompactNumber(userDocs.length)}'),
+            label: 'Profils complets',
+            value:
+                '${_formatCompactNumber(completedProfiles)}/${_formatCompactNumber(userDocs.length)}',
+          ),
         ],
         series: userSeries,
         trendLabel: 'Nouveaux inscrits / jour',
@@ -1592,14 +1626,21 @@ class _AdminDashboardComputed {
         domain: domain('Engagement'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Vues', value: _formatCompactNumber(totalViews)),
+            label: 'Vues',
+            value: _formatCompactNumber(totalViews),
+          ),
           _AdminDashboardStat(
-              label: 'Contacts', value: _formatCompactNumber(totalContacts)),
+            label: 'Contacts',
+            value: _formatCompactNumber(totalContacts),
+          ),
           _AdminDashboardStat(
-              label: 'Conv. vue→contact',
-              value: _formatPercent(conversionRatio)),
+            label: 'Conv. vue→contact',
+            value: _formatPercent(conversionRatio),
+          ),
           _AdminDashboardStat(
-              label: 'Recherches', value: _formatCompactNumber(searches)),
+            label: 'Recherches',
+            value: _formatCompactNumber(searches),
+          ),
         ],
         series: viewSeries,
         trendLabel: 'Vues annonces / jour',
@@ -1610,19 +1651,23 @@ class _AdminDashboardComputed {
         domain: domain('Transactions & revenus'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Upgrades premium',
-              value: _formatCompactNumber(premiumUpgrades)),
+            label: 'Upgrades premium',
+            value: _formatCompactNumber(premiumUpgrades),
+          ),
           _AdminDashboardStat(
-              label: 'Abonnements actifs',
-              value: _formatCompactNumber(activeSubscriptions)),
+            label: 'Abonnements actifs',
+            value: _formatCompactNumber(activeSubscriptions),
+          ),
           _AdminDashboardStat(
-              label: 'ARPU',
-              value: arpu <= 0 ? '0 EUR' : '${arpu.toStringAsFixed(2)} EUR'),
+            label: 'ARPU',
+            value: arpu <= 0 ? '0 EUR' : '${arpu.toStringAsFixed(2)} EUR',
+          ),
           _AdminDashboardStat(
-              label: 'GMV',
-              value: totalRevenue <= 0
-                  ? '0 EUR'
-                  : '${_formatCompactNumber(totalRevenue)} EUR'),
+            label: 'GMV',
+            value: totalRevenue <= 0
+                ? '0 EUR'
+                : '${_formatCompactNumber(totalRevenue)} EUR',
+          ),
         ],
         series: billingSeries,
         trendLabel: 'Revenus facturés / jour',
@@ -1633,19 +1678,23 @@ class _AdminDashboardComputed {
         domain: domain('Qualité & modération'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Signalements',
-              value: _formatCompactNumber(reportEvents > reportedListings
-                  ? reportEvents
-                  : reportedListings)),
+            label: 'Signalements',
+            value: _formatCompactNumber(
+              reportEvents > reportedListings ? reportEvents : reportedListings,
+            ),
+          ),
           _AdminDashboardStat(
-              label: 'Fraude détectée',
-              value: _formatCompactNumber(blockedListings)),
+            label: 'Fraude détectée',
+            value: _formatCompactNumber(blockedListings),
+          ),
           _AdminDashboardStat(
-              label: 'En revue',
-              value: _formatCompactNumber(manualReviewListings)),
+            label: 'En revue',
+            value: _formatCompactNumber(manualReviewListings),
+          ),
           _AdminDashboardStat(
-              label: 'Risque moyen',
-              value: avgRisk <= 0 ? '0' : avgRisk.toStringAsFixed(1)),
+            label: 'Risque moyen',
+            value: avgRisk <= 0 ? '0' : avgRisk.toStringAsFixed(1),
+          ),
         ],
         series: moderationSeries,
         trendLabel: 'Signalements / jour',
@@ -1656,30 +1705,39 @@ class _AdminDashboardComputed {
         domain: domain('Technique & performance'),
         highlights: [
           _AdminDashboardStat(
-              label: 'Événements suivis',
-              value: _formatCompactNumber(totalTrackedEvents)),
+            label: 'Événements suivis',
+            value: _formatCompactNumber(totalTrackedEvents),
+          ),
           _AdminDashboardStat(
-              label: 'Jours couverts',
-              value: _formatCompactNumber(analyticsCoverageDays)),
+            label: 'Jours couverts',
+            value: _formatCompactNumber(analyticsCoverageDays),
+          ),
           _AdminDashboardStat(
-              label: 'Dernière maj',
-              value: latestAnalyticsDay == null
-                  ? '—'
-                  : _dateKey(latestAnalyticsDay)),
+            label: 'Dernière maj',
+            value: latestAnalyticsDay == null
+                ? '—'
+                : _dateKey(latestAnalyticsDay),
+          ),
           _AdminDashboardStat(
-              label: 'Crash+erreurs', value: _formatPercent(errorCrashRate)),
+            label: 'Crash+erreurs',
+            value: _formatPercent(errorCrashRate),
+          ),
           _AdminDashboardStat(
-              label: 'Uptime estimée', value: _formatPercent(uptimeRatio)),
+            label: 'Uptime estimée',
+            value: _formatPercent(uptimeRatio),
+          ),
           _AdminDashboardStat(
-              label: 'Latence API',
-              value: avgApiLatencyMs <= 0
-                  ? 'n/d'
-                  : '${avgApiLatencyMs.toStringAsFixed(0)} ms'),
+            label: 'Latence API',
+            value: avgApiLatencyMs <= 0
+                ? 'n/d'
+                : '${avgApiLatencyMs.toStringAsFixed(0)} ms',
+          ),
           _AdminDashboardStat(
-              label: 'Chargement moyen',
-              value: avgLoadMs <= 0
-                  ? 'n/d'
-                  : '${avgLoadMs.toStringAsFixed(0)} ms'),
+            label: 'Chargement moyen',
+            value: avgLoadMs <= 0
+                ? 'n/d'
+                : '${avgLoadMs.toStringAsFixed(0)} ms',
+          ),
         ],
         series: instrumentationSeries,
         trendLabel: 'Événements instrumentés / jour',
@@ -1809,9 +1867,15 @@ class _EmailDashboardStats {
       }
 
       incrementBucket(
-          byProvider, provider.isEmpty ? 'unknown' : provider, status);
+        byProvider,
+        provider.isEmpty ? 'unknown' : provider,
+        status,
+      );
       incrementBucket(
-          byTemplate, template.isEmpty ? 'unknown' : template, status);
+        byTemplate,
+        template.isEmpty ? 'unknown' : template,
+        status,
+      );
     }
 
     return _EmailDashboardStats(
@@ -1846,10 +1910,7 @@ class _EmailDashboardPageState extends State<EmailDashboardPage> {
         foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
-        title: const Text(
-          'Dashboard email',
-          style: kPrestoAppBarTitleStyle,
-        ),
+        title: const Text('Dashboard email', style: kPrestoAppBarTitleStyle),
       ),
       body: SafeArea(
         child: Column(
@@ -1870,9 +1931,7 @@ class _EmailDashboardPageState extends State<EmailDashboardPage> {
                 ],
               ),
             ),
-            Expanded(
-              child: _EmailDashboardContent(window: _window),
-            ),
+            Expanded(child: _EmailDashboardContent(window: _window)),
           ],
         ),
       ),
@@ -1890,25 +1949,29 @@ class _EmailDashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final threshold =
-        DateTime.now().subtract(window.duration).millisecondsSinceEpoch;
+    final threshold = DateTime.now()
+        .subtract(window.duration)
+        .millisecondsSinceEpoch;
     final logsStream = FirebaseFirestore.instance
         .collection('email_logs')
         .where('created_at', isGreaterThanOrEqualTo: threshold)
         .orderBy('created_at', descending: true)
         .limit(1000)
-        .get().asStream();
+        .get()
+        .asStream();
     final jobsStream = FirebaseFirestore.instance
         .collection('email_jobs')
         .where('updated_at', isGreaterThanOrEqualTo: threshold)
         .orderBy('updated_at', descending: true)
         .limit(60)
-        .get().asStream();
+        .get()
+        .asStream();
     final ticketsStream = FirebaseFirestore.instance
         .collection('support_tickets')
         .orderBy('updated_at', descending: true)
         .limit(60)
-        .get().asStream();
+        .get()
+        .asStream();
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: logsStream,
@@ -1928,8 +1991,9 @@ class _EmailDashboardContent extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final stats =
-            _EmailDashboardStats.fromLogs(logsSnapshot.data?.docs ?? []);
+        final stats = _EmailDashboardStats.fromLogs(
+          logsSnapshot.data?.docs ?? [],
+        );
 
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: jobsStream,
@@ -1945,8 +2009,10 @@ class _EmailDashboardContent extends StatelessWidget {
             }
 
             final deadLetters = (snapshot.data?.docs ?? [])
-                .where((doc) =>
-                    (doc.data()['status'] ?? '').toString() == 'dead_letter')
+                .where(
+                  (doc) =>
+                      (doc.data()['status'] ?? '').toString() == 'dead_letter',
+                )
                 .toList();
 
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -1964,26 +2030,32 @@ class _EmailDashboardContent extends StatelessWidget {
 
                 final tickets = (ticketsSnapshot.data?.docs ?? [])
                     .where(
-                        (doc) => _toInt(doc.data()['updated_at']) >= threshold)
+                      (doc) => _toInt(doc.data()['updated_at']) >= threshold,
+                    )
                     .toList();
                 final openTickets = tickets
-                    .where((doc) =>
-                        (doc.data()['status'] ?? 'open').toString() == 'open')
+                    .where(
+                      (doc) =>
+                          (doc.data()['status'] ?? 'open').toString() == 'open',
+                    )
                     .length;
-                final hasAlert = deadLetters.isNotEmpty ||
+                final hasAlert =
+                    deadLetters.isNotEmpty ||
                     stats.failed > 0 ||
                     stats.bounceRate >= 0.05 ||
                     stats.complaintRate >= 0.01;
 
                 final providerEntries = stats.byProvider.entries.toList()
                   ..sort((a, b) {
-                    return (b.value['sent'] ?? 0)
-                        .compareTo(a.value['sent'] ?? 0);
+                    return (b.value['sent'] ?? 0).compareTo(
+                      a.value['sent'] ?? 0,
+                    );
                   });
                 final templateEntries = stats.byTemplate.entries.toList()
                   ..sort((a, b) {
-                    return (b.value['sent'] ?? 0)
-                        .compareTo(a.value['sent'] ?? 0);
+                    return (b.value['sent'] ?? 0).compareTo(
+                      a.value['sent'] ?? 0,
+                    );
                   });
 
                 return SingleChildScrollView(
@@ -2102,10 +2174,8 @@ class _EmailDashboardContent extends StatelessWidget {
                               subtitle:
                                   '${deadLetters.length} job(s) en échec terminal',
                               color: Colors.red.shade700,
-                              onTap: () => _showDeadLettersSheet(
-                                context,
-                                deadLetters,
-                              ),
+                              onTap: () =>
+                                  _showDeadLettersSheet(context, deadLetters),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -2116,10 +2186,8 @@ class _EmailDashboardContent extends StatelessWidget {
                               subtitle:
                                   '$openTickets ouvert(s) sur ${tickets.length}',
                               color: prestoBlue,
-                              onTap: () => _showSupportTicketsSheet(
-                                context,
-                                tickets,
-                              ),
+                              onTap: () =>
+                                  _showSupportTicketsSheet(context, tickets),
                             ),
                           ),
                         ],
@@ -2205,7 +2273,9 @@ class _EmailDashboardContent extends StatelessWidget {
                           message: 'Aucun template remonté sur cette fenêtre.',
                         )
                       else
-                        ...templateEntries.take(8).map(
+                        ...templateEntries
+                            .take(8)
+                            .map(
                               (entry) => Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: _BreakdownCard(
@@ -2247,8 +2317,8 @@ void _showDeadLettersSheet(
                     (doc) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _AdminListTile(
-                        title:
-                            (doc.data()['template_code'] ?? doc.id).toString(),
+                        title: (doc.data()['template_code'] ?? doc.id)
+                            .toString(),
                         subtitle:
                             'Raison: ${(doc.data()['dead_letter_reason'] ?? 'indisponible').toString()}\nMaj: ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
                         trailing: _StatusBadge(
@@ -2285,15 +2355,17 @@ void _showSupportTicketsSheet(
                     (doc) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _AdminListTile(
-                        title: (doc.data()['ticket_number'] ??
-                                doc.data()['subject'] ??
-                                doc.id)
-                            .toString(),
+                        title:
+                            (doc.data()['ticket_number'] ??
+                                    doc.data()['subject'] ??
+                                    doc.id)
+                                .toString(),
                         subtitle:
                             '${(doc.data()['subject'] ?? 'Sans sujet').toString()}\n${(doc.data()['category'] ?? 'general_support').toString()} • ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
                         trailing: _StatusBadge(
                           label: (doc.data()['status'] ?? 'open').toString(),
-                          color: (doc.data()['status'] ?? 'open').toString() ==
+                          color:
+                              (doc.data()['status'] ?? 'open').toString() ==
                                   'open'
                               ? const Color(0xFFFF6600)
                               : const Color(0xFF1A73E8),
@@ -2343,9 +2415,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     super.dispose();
   }
 
-  Future<User?> _ensureSignedInUser({
-    bool forceRefreshToken = false,
-  }) async {
+  Future<User?> _ensureSignedInUser({bool forceRefreshToken = false}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return null;
@@ -2385,17 +2455,17 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     try {
       final accessState = await _adminAccessResolver
           .resolveAdminAccess(
-        forceRefresh: true,
-        returnOnLocalAdminEvidence: true,
-      )
+            forceRefresh: true,
+            returnOnLocalAdminEvidence: true,
+          )
           .timeout(
-        const Duration(seconds: 6),
-        onTimeout: () {
-          throw TimeoutException(
-            'admin verification timed out after 6 seconds',
+            const Duration(seconds: 6),
+            onTimeout: () {
+              throw TimeoutException(
+                'admin verification timed out after 6 seconds',
+              );
+            },
           );
-        },
-      );
       if (!mounted) return;
       setState(() {
         _adminAccessState = accessState;
@@ -2460,7 +2530,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     } catch (error) {
       if (!mounted) return;
       debugPrint(
-          '[AdminSpace] adminCheckComplete=true isAdmin=false error=$error');
+        '[AdminSpace] adminCheckComplete=true isAdmin=false error=$error',
+      );
       setState(() {
         _adminAccessGranted = false;
         _adminStatusError = error;
@@ -2536,7 +2607,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   }
 
   List<_FirebaseDeployDiagnosticRule> _matchFirebaseDeployDiagnostics(
-      String rawOutput) {
+    String rawOutput,
+  ) {
     final normalized = rawOutput.toLowerCase();
     return _kFirebaseDeployDiagnosticRules.where((rule) {
       return rule.needles.any(normalized.contains);
@@ -2661,8 +2733,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               runSpacing: 8,
               children: _kFirebaseDeployDiagnosticRules.take(4).map((rule) {
                 return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: rule.color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(999),
@@ -2876,8 +2950,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.green.shade50,
                   borderRadius: BorderRadius.circular(999),
@@ -2941,8 +3017,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             runSpacing: 8,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: prestoBlue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
@@ -2957,8 +3035,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: prestoOrange.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
@@ -2986,9 +3066,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       return;
     }
     try {
-      final signedInUser = await _ensureSignedInUser(
-        forceRefreshToken: true,
-      );
+      final signedInUser = await _ensureSignedInUser(forceRefreshToken: true);
       if (signedInUser == null) {
         throw StateError('unauthenticated: no current user');
       }
@@ -3012,8 +3090,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
           try {
             final callable = _functions.httpsCallable(
               'adminGetUserStats',
-              options:
-                  HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+              options: HttpsCallableOptions(
+                timeout: const Duration(seconds: 15),
+              ),
             );
             final res = await callable.call<dynamic>({});
             final data = (res.data is Map)
@@ -3049,8 +3128,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     final usersSubtitle = _userStatsLoading
         ? 'Chargement…'
         : (totalAccounts == null || onlineUsers == null || proLogins == null)
-            ? '—'
-            : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
+        ? '—'
+        : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -3059,10 +3138,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
-        title: const Text(
-          'Espace admin',
-          style: kPrestoAppBarTitleStyle,
-        ),
+        title: const Text('Espace admin', style: kPrestoAppBarTitleStyle),
         actions: [
           _AdminChip(
             label: 'Admin',
@@ -3082,17 +3158,17 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               Text(
                 'Gestion & configuration',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 "Paramètres système, modération et outils d’administration.",
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 14),
               _ProfileCard(
@@ -3151,8 +3227,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     subtitle: _kpiSnapshot == null
                         ? 'Chargement…'
                         : _kpiSnapshot!.messagesStarted == 0
-                            ? 'Aucun message\nenregistré'
-                            : '${_formatCompactNumber(_kpiSnapshot!.messagesStarted)}\ndémarrés',
+                        ? 'Aucun message\nenregistré'
+                        : '${_formatCompactNumber(_kpiSnapshot!.messagesStarted)}\ndémarrés',
                     badge: null,
                     iconColor: prestoBlue,
                   ),
@@ -3162,9 +3238,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     subtitle: _kpiSnapshot == null
                         ? 'Chargement…'
                         : (_kpiSnapshot!.reportedListings == 0 &&
-                                _kpiSnapshot!.blockedListings == 0)
-                            ? 'Aucune alerte\nen cours'
-                            : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
+                              _kpiSnapshot!.blockedListings == 0)
+                        ? 'Aucune alerte\nen cours'
+                        : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
                     badge: null,
                     iconColor: prestoBlue,
                   ),
@@ -3405,10 +3481,12 @@ class _BroadcastNotificationAdminPageState
   static const Color prestoOrange = Color(0xFFFF6600);
 
   final AdminBroadcastService _service = AdminBroadcastService();
-  final TextEditingController _titleController =
-      TextEditingController(text: 'Notification test');
+  final TextEditingController _titleController = TextEditingController(
+    text: 'Notification test',
+  );
   final TextEditingController _bodyController = TextEditingController(
-      text: 'Ceci est une notification test envoyée à tous les utilisateurs.');
+    text: 'Ceci est une notification test envoyée à tous les utilisateurs.',
+  );
 
   _NotifTestTarget _target = _NotifTestTarget.me;
   bool _sending = false;
@@ -3569,10 +3647,7 @@ class _BroadcastNotificationAdminPageState
         foregroundColor: Colors.white,
         elevation: 0.5,
         titleSpacing: 16,
-        title: const Text(
-          'Notification test',
-          style: kPrestoAppBarTitleStyle,
-        ),
+        title: const Text('Notification test', style: kPrestoAppBarTitleStyle),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -3621,11 +3696,11 @@ class _BroadcastNotificationAdminPageState
                         child: Text(
                           _target == _NotifTestTarget.me
                               ? 'Envoie une notification test sur TES appareils '
-                                  'uniquement, pour vérifier la réception (écran '
-                                  'verrouillé compris).'
+                                    'uniquement, pour vérifier la réception (écran '
+                                    'verrouillé compris).'
                               : 'Envoie immédiatement la notification à TOUS les '
-                                  'utilisateurs ayant un appareil enregistré. '
-                                  'À utiliser avec précaution.',
+                                    'utilisateurs ayant un appareil enregistré. '
+                                    'À utiliser avec précaution.',
                           style: const TextStyle(
                             color: Colors.black87,
                             fontWeight: FontWeight.w600,
@@ -3680,8 +3755,8 @@ class _BroadcastNotificationAdminPageState
                   _sending
                       ? 'Envoi en cours...'
                       : _target == _NotifTestTarget.me
-                          ? 'Envoyer sur mes appareils'
-                          : 'Envoyer à tous les utilisateurs',
+                      ? 'Envoyer sur mes appareils'
+                      : 'Envoyer à tous les utilisateurs',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -3713,8 +3788,11 @@ class _AdminChip extends StatelessWidget {
           CircleAvatar(
             radius: 12,
             backgroundColor: Colors.grey.shade200,
-            child: const Icon(Icons.person_rounded,
-                size: 16, color: Colors.black54),
+            child: const Icon(
+              Icons.person_rounded,
+              size: 16,
+              color: Colors.black54,
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -3774,33 +3852,40 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
   }
 
   void _rebuildStreams() {
-    final start = _startOfDay(DateTime.now())
-        .subtract(Duration(days: _window.dayCount - 1));
+    final start = _startOfDay(
+      DateTime.now(),
+    ).subtract(Duration(days: _window.dayCount - 1));
     final startTimestamp = Timestamp.fromDate(start);
     _usersStream = FirebaseFirestore.instance
         .collection('users')
         .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .get().asStream();
+        .get()
+        .asStream();
     _activeUsersStream = FirebaseFirestore.instance
         .collection('users')
         .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
-        .get().asStream();
+        .get()
+        .asStream();
     _listingsStream = FirebaseFirestore.instance
         .collection('listings')
         .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
-        .get().asStream();
+        .get()
+        .asStream();
     _subscriptionsStream = FirebaseFirestore.instance
         .collection('subscriptions')
         .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .get().asStream();
+        .get()
+        .asStream();
     _billingInvoicesStream = FirebaseFirestore.instance
         .collection('billing_invoices')
         .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
-        .get().asStream();
+        .get()
+        .asStream();
     _analyticsStream = FirebaseFirestore.instance
         .collection('analyticsSnapshots')
         .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
-        .get().asStream();
+        .get()
+        .asStream();
   }
 
   Future<void> _openDomainDetails(_AdminDomainLiveData data) async {
@@ -3897,22 +3982,24 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
               child: Text(
                 'Dashboard admin: métriques clés',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
               ),
             ),
             _StatusBadge(
-                label: _window.shortLabel, color: const Color(0xFF1A73E8)),
+              label: _window.shortLabel,
+              color: const Color(0xFF1A73E8),
+            ),
           ],
         ),
         const SizedBox(height: 6),
         Text(
           'Première vague branchée sur Firestore, Functions et analyticsSnapshots, avec filtre période et tendances miniatures.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.black54,
-                fontWeight: FontWeight.w600,
-              ),
+            color: Colors.black54,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 14),
         Wrap(
@@ -3944,14 +4031,17 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                       stream: _subscriptionsStream,
                       builder: (context, subscriptionsSnapshot) {
                         return StreamBuilder<
-                            QuerySnapshot<Map<String, dynamic>>>(
+                          QuerySnapshot<Map<String, dynamic>>
+                        >(
                           stream: _billingInvoicesStream,
                           builder: (context, billingInvoicesSnapshot) {
                             return StreamBuilder<
-                                QuerySnapshot<Map<String, dynamic>>>(
+                              QuerySnapshot<Map<String, dynamic>>
+                            >(
                               stream: _analyticsStream,
                               builder: (context, analyticsSnapshot) {
-                                final hasError = usersSnapshot.hasError ||
+                                final hasError =
+                                    usersSnapshot.hasError ||
                                     activeUsersSnapshot.hasError ||
                                     listingsSnapshot.hasError ||
                                     subscriptionsSnapshot.hasError ||
@@ -3964,7 +4054,8 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                   );
                                 }
 
-                                final waiting = usersSnapshot.connectionState ==
+                                final waiting =
+                                    usersSnapshot.connectionState ==
                                         ConnectionState.waiting ||
                                     activeUsersSnapshot.connectionState ==
                                         ConnectionState.waiting ||
@@ -3985,10 +4076,10 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                     listingsSnapshot.data?.docs ?? const [];
                                 final subscriptionDocs =
                                     subscriptionsSnapshot.data?.docs ??
-                                        const [];
+                                    const [];
                                 final billingDocs =
                                     billingInvoicesSnapshot.data?.docs ??
-                                        const [];
+                                    const [];
                                 final analyticsDocs =
                                     analyticsSnapshot.data?.docs ?? const [];
 
@@ -4000,8 +4091,9 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                     widget.userStatsLoading) {
                                   return const Center(
                                     child: Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 24),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 24,
+                                      ),
                                       child: CircularProgressIndicator(),
                                     ),
                                   );
@@ -4009,36 +4101,43 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
 
                                 final computed =
                                     _AdminDashboardComputed.fromSources(
-                                  userDocs: userDocs,
-                                  activeUserDocs: activeUserDocs,
-                                  listingDocs: listingDocs,
-                                  analyticsDocs: analyticsDocs,
-                                  subscriptionDocs: subscriptionDocs,
-                                  billingDocs: billingDocs,
-                                  userStats: widget.userStats,
-                                  window: _window,
-                                  domains: widget.domains,
-                                );
+                                      userDocs: userDocs,
+                                      activeUserDocs: activeUserDocs,
+                                      listingDocs: listingDocs,
+                                      analyticsDocs: analyticsDocs,
+                                      subscriptionDocs: subscriptionDocs,
+                                      billingDocs: billingDocs,
+                                      userStats: widget.userStats,
+                                      window: _window,
+                                      domains: widget.domains,
+                                    );
 
                                 if (widget.onComputed != null) {
-                                  WidgetsBinding.instance
-                                      .addPostFrameCallback((_) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
                                     if (!mounted) return;
-                                    widget.onComputed!(_AdminKpiSnapshot(
-                                      publishedListings:
-                                          computed.publishedListings,
-                                      activeListings: computed.activeListings,
-                                      expiredListings: computed.expiredListings,
-                                      messagesStarted: computed.messagesStarted,
-                                      reportedListings:
-                                          computed.reportedListings,
-                                      blockedListings: computed.blockedListings,
-                                      manualReviewListings:
-                                          computed.manualReviewListings,
-                                      activeSubscriptions:
-                                          computed.activeSubscriptions,
-                                      premiumUpgrades: computed.premiumUpgrades,
-                                    ));
+                                    widget.onComputed!(
+                                      _AdminKpiSnapshot(
+                                        publishedListings:
+                                            computed.publishedListings,
+                                        activeListings: computed.activeListings,
+                                        expiredListings:
+                                            computed.expiredListings,
+                                        messagesStarted:
+                                            computed.messagesStarted,
+                                        reportedListings:
+                                            computed.reportedListings,
+                                        blockedListings:
+                                            computed.blockedListings,
+                                        manualReviewListings:
+                                            computed.manualReviewListings,
+                                        activeSubscriptions:
+                                            computed.activeSubscriptions,
+                                        premiumUpgrades:
+                                            computed.premiumUpgrades,
+                                      ),
+                                    );
                                   });
                                 }
 
@@ -4057,35 +4156,40 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                         _MetricCard(
                                           label: 'Nouveaux inscrits',
                                           value: _formatCompactNumber(
-                                              computed.newUsers),
+                                            computed.newUsers,
+                                          ),
                                           icon: Icons.person_add_alt_1_rounded,
                                           color: const Color(0xFF1A73E8),
                                         ),
                                         _MetricCard(
                                           label: 'Utilisateurs actifs',
                                           value: _formatCompactNumber(
-                                              computed.activeUsers),
+                                            computed.activeUsers,
+                                          ),
                                           icon: Icons.groups_rounded,
                                           color: const Color(0xFF0F9D58),
                                         ),
                                         _MetricCard(
                                           label: 'Annonces publiées',
                                           value: _formatCompactNumber(
-                                              computed.publishedListings),
+                                            computed.publishedListings,
+                                          ),
                                           icon: Icons.campaign_rounded,
                                           color: const Color(0xFFFF6600),
                                         ),
                                         _MetricCard(
                                           label: 'Vues annonces',
                                           value: _formatCompactNumber(
-                                              computed.listingViews),
+                                            computed.listingViews,
+                                          ),
                                           icon: Icons.visibility_rounded,
                                           color: const Color(0xFF8E24AA),
                                         ),
                                         _MetricCard(
                                           label: 'Factures payées',
                                           value: _formatCompactNumber(
-                                              computed.paidInvoices),
+                                            computed.paidInvoices,
+                                          ),
                                           icon: Icons.receipt_long_rounded,
                                           color: const Color(0xFF00897B),
                                         ),
@@ -4174,7 +4278,8 @@ class _AdminMetricDomainCard extends StatelessWidget {
                       color: domain.color.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: domain.color.withValues(alpha: 0.20)),
+                        color: domain.color.withValues(alpha: 0.20),
+                      ),
                     ),
                     child: Icon(domain.icon, color: domain.color, size: 20),
                   ),
@@ -4225,10 +4330,7 @@ class _AdminMetricDomainCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   for (final metric in domain.metrics)
-                    _AdminMetricPill(
-                      label: metric,
-                      color: domain.color,
-                    ),
+                    _AdminMetricPill(label: metric, color: domain.color),
                 ],
               ),
               if (onTap != null) ...[
@@ -4276,19 +4378,13 @@ class _AdminMiniChart extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-            ),
+            style: TextStyle(color: color, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 8),
           SizedBox(
             height: 56,
             child: CustomPaint(
-              painter: _AdminSparklinePainter(
-                color: color,
-                points: points,
-              ),
+              painter: _AdminSparklinePainter(color: color, points: points),
               child: const SizedBox.expand(),
             ),
           ),
@@ -4302,10 +4398,7 @@ class _AdminSparklinePainter extends CustomPainter {
   final Color color;
   final List<double> points;
 
-  const _AdminSparklinePainter({
-    required this.color,
-    required this.points,
-  });
+  const _AdminSparklinePainter({required this.color, required this.points});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -4332,8 +4425,9 @@ class _AdminSparklinePainter extends CustomPainter {
 
     final span = (maxValue - minValue).abs();
     final effectiveSpan = span <= 0 ? 1.0 : span;
-    final xStep =
-        points.length <= 1 ? size.width : size.width / (points.length - 1);
+    final xStep = points.length <= 1
+        ? size.width
+        : size.width / (points.length - 1);
 
     final path = Path();
     final fillPath = Path();
@@ -4382,10 +4476,7 @@ class _AdminMetricPill extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _AdminMetricPill({
-    required this.label,
-    required this.color,
-  });
+  const _AdminMetricPill({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -4436,8 +4527,10 @@ class _ProfileCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey.shade200,
-                  child:
-                      const Icon(Icons.person_rounded, color: Colors.black54),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: Colors.black54,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -4451,8 +4544,10 @@ class _ProfileCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(999),
@@ -4460,8 +4555,11 @@ class _ProfileCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle_rounded,
-                          size: 16, color: Colors.green.shade700),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 16,
+                        color: Colors.green.shade700,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Actif',
@@ -4478,8 +4576,11 @@ class _ProfileCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.fingerprint_rounded,
-                    size: 18, color: Colors.black54),
+                const Icon(
+                  Icons.fingerprint_rounded,
+                  size: 18,
+                  color: Colors.black54,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -4501,9 +4602,12 @@ class _ProfileCard extends StatelessWidget {
                     foregroundColor: Colors.black87,
                     side: const BorderSide(color: Colors.black12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -4516,13 +4620,16 @@ class _ProfileCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: prestoBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(999),
-                    border:
-                        Border.all(color: prestoBlue.withValues(alpha: 0.20)),
+                    border: Border.all(
+                      color: prestoBlue.withValues(alpha: 0.20),
+                    ),
                   ),
                   child: Text(
                     role,
@@ -4718,10 +4825,7 @@ class _BottomSheetScaffold extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _BottomSheetScaffold({
-    required this.title,
-    required this.child,
-  });
+  const _BottomSheetScaffold({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -4830,9 +4934,8 @@ class _AdminMessagingEntryCard extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => AdminMessagingDashboardPage(
-                accessState: accessState,
-              ),
+              builder: (_) =>
+                  AdminMessagingDashboardPage(accessState: accessState),
             ),
           );
         },
@@ -4911,10 +5014,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: color,
-        ),
+        style: TextStyle(fontWeight: FontWeight.w800, color: color),
       ),
     );
   }
@@ -4945,8 +5045,8 @@ class _EmailSummaryTile extends StatelessWidget {
         final subtitle = snapshot.hasError
             ? 'Accès snapshot\nà vérifier'
             : data == null
-                ? 'Aucun snapshot\ndisponible'
-                : '${hours > 0 ? hours : 1} h\nEnvoyés: $sent\nÉchecs: $failed\nDL: $deadLetters';
+            ? 'Aucun snapshot\ndisponible'
+            : '${hours > 0 ? hours : 1} h\nEnvoyés: $sent\nÉchecs: $failed\nDL: $deadLetters';
 
         return _KpiTile(
           icon: Icons.mark_email_unread_rounded,
@@ -5153,8 +5253,10 @@ class _KpiTile extends StatelessWidget {
                 Align(
                   alignment: Alignment.topRight,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(999),
@@ -5412,8 +5514,11 @@ class _MicroIaCard extends StatelessWidget {
                     color: prestoBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.autorenew_rounded,
-                      color: prestoBlue, size: 18),
+                  child: Icon(
+                    Icons.autorenew_rounded,
+                    color: prestoBlue,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -5476,7 +5581,7 @@ class _MicroIaCard extends StatelessWidget {
                       color: Colors.black87,
                     ),
                   ),
-                )
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -5485,10 +5590,7 @@ class _MicroIaCard extends StatelessWidget {
               runSpacing: 10,
               children: [
                 for (final code in languages)
-                  _LangChip(
-                    code: code,
-                    onRemove: () => onRemoveLanguage(code),
-                  ),
+                  _LangChip(code: code, onRemove: () => onRemoveLanguage(code)),
                 _AddChip(onTap: onAddLanguage),
               ],
             ),
@@ -5515,8 +5617,9 @@ class _MicroIaCard extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text('Enregistrer les changements'),
@@ -5535,7 +5638,7 @@ class _MicroIaCard extends StatelessWidget {
                       color: Colors.black87,
                     ),
                   ),
-                )
+                ),
               ],
             ),
             const SizedBox(height: 6),
