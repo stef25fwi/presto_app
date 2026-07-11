@@ -112,6 +112,7 @@ export {
   createSubscriptionCheckoutSession,
   getSubscriptionCheckoutStatus,
   createSubscriptionPortalSession,
+  auditStripeCatalog,
 } from "./modules/billing/callables";
 export { handleStripeWebhook } from "./modules/billing/stripe_webhook";
 
