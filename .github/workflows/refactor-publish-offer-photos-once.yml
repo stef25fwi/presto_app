@@ -1,0 +1,78 @@
+name: Refactor publish photos once
+
+on:
+  push:
+    branches: [agent/phase-1-publish-offer-refactor]
+    paths:
+      - .github/workflows/refactor-publish-offer-photos-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-1-publish-offer-refactor
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract photos section from PublishOfferPage
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('lib/pages/publish_offer_page.dart')
+          text = path.read_text(encoding='utf-8')
+
+          old_import = "import 'publish_offer_widgets.dart';\n"
+          new_import = (
+              old_import
+              + "import '../features/offers/presentation/widgets/"
+                "publish_offer_photos_section.dart';\n"
+          )
+          if 'publish_offer_photos_section.dart' not in text:
+              if old_import not in text:
+                  raise SystemExit('Publish widgets import anchor not found')
+              text = text.replace(old_import, new_import, 1)
+
+          start_marker = '                          // PHOTOS\n'
+          end_marker = '                          // VILLE + CP + AUTOCOMPLÉTION\n'
+          start = text.find(start_marker)
+          end = text.find(end_marker, start + len(start_marker))
+          if start < 0 or end < 0:
+              raise SystemExit('Photos section markers not found')
+
+          replacement = '''                          // PHOTOS
+                          PublishOfferPhotosSection(
+                            visibleTileCount: _visiblePhotoTileCount,
+                            maximumPhotos: _publishPhotoHardLimit,
+                            selectedPhotos: _selectedPhotos,
+                            selectedPhotoBytes: _selectedPhotoBytes,
+                            onPhotoTap: _onPhotoTileTap,
+                            onPhotoLongPress: _pickImage,
+                            onPhotoRemove: _removePhotoAt,
+                          ),
+                          const SizedBox(height: 16),
+
+'''
+          text = text[:start] + replacement + text[end:]
+
+          photo_tile_import = "import '../widgets/photo_selector_tile.dart';\n"
+          candidate = text.replace(photo_tile_import, '', 1)
+          if 'PhotoSelectorTile' not in candidate:
+              text = candidate
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Remove temporary workflow and commit
+        run: |
+          rm .github/workflows/refactor-publish-offer-photos-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/publish_offer_page.dart .github/workflows/refactor-publish-offer-photos-once.yml
+          git commit -m "refactor(publish): branche la section photos extraite"
+          git push origin HEAD:agent/phase-1-publish-offer-refactor
