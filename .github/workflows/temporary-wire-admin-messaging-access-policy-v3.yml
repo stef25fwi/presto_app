@@ -1,0 +1,54 @@
+name: Temporary wire admin messaging access policy v3
+
+on:
+  push:
+    branches:
+      - agent/phase-2-admin-messaging-access-policy-v3
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-2-admin-messaging-access-policy-v3
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply targeted access policy wiring
+        run: node tools/temporary_wire_admin_messaging_access_policy_v3.mjs
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format changed Dart files
+        run: |
+          dart format \
+            lib/admin/messaging/admin_messaging_access_policy.dart \
+            lib/admin/messaging/admin_messaging_center_page.dart \
+            test/admin/messaging/admin_messaging_access_policy_test.dart
+
+      - name: Commit targeted changes
+        run: |
+          if git diff --quiet; then
+            echo 'No generated change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/admin/messaging/admin_messaging_access_policy.dart \
+            lib/admin/messaging/admin_messaging_center_page.dart \
+            test/admin/messaging/admin_messaging_access_policy_test.dart
+          git commit -m 'refactor: branche la policy d accès messagerie admin'
+          git push origin HEAD:agent/phase-2-admin-messaging-access-policy-v3
