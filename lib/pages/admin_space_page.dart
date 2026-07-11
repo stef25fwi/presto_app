@@ -3148,8 +3148,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) =>
-                              const AdminListingsManagementPage(),
+                          builder: (_) => const AdminListingsManagementPage(),
                         ),
                       );
                     },
