@@ -56,9 +56,11 @@ String _firstNonEmpty(Iterable<Object?> values, {String fallback = ''}) {
 }
 
 DateTime? _readDate(Object? value) {
-  if (value is Timestamp) return value.toDate();
-  if (value is DateTime) return value;
-  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-  if (value is String) return DateTime.tryParse(value);
+  if (value is Timestamp) return value.toDate().toUtc();
+  if (value is DateTime) return value.toUtc();
+  if (value is int) {
+    return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
+  }
+  if (value is String) return DateTime.tryParse(value)?.toUtc();
   return null;
 }
