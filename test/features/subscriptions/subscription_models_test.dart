@@ -1,145 +1,117 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/subscriptions/subscription_models.dart';
-import 'package:presto_app/features/subscriptions/subscription_plan_key.dart';
 
 void main() {
-  group('SubscriptionPlanKey', () {
-    test('normalise les alias historiques', () {
-      expect(subscriptionPlanKeyFromId('free'), SubscriptionPlanKey.free);
-      expect(subscriptionPlanKeyFromId('gratuit'), SubscriptionPlanKey.free);
-      expect(
-        subscriptionPlanKeyFromId('ilipresto_plus'),
-        SubscriptionPlanKey.iliPrestoPlus,
-      );
-      expect(
-        subscriptionPlanKeyFromId('ilipresto+'),
-        SubscriptionPlanKey.iliPrestoPlus,
-      );
-      expect(subscriptionPlanKeyFromId('pro'), SubscriptionPlanKey.iliPro);
-      expect(subscriptionPlanKeyFromId('inconnu'), SubscriptionPlanKey.free);
+  group('normalisation des plans et statuts', () {
+    test('normalise les alias de plan existants', () {
+      expect(subscriptionPlanFromKey('free'), SubscriptionPlan.free);
+      expect(subscriptionPlanFromKey('ilipresto_plus'), SubscriptionPlan.iliprestoPlus);
+      expect(subscriptionPlanFromKey('iliprestoplus'), SubscriptionPlan.iliprestoPlus);
+      expect(subscriptionPlanFromKey('ilipresto+'), SubscriptionPlan.iliprestoPlus);
+      expect(subscriptionPlanFromKey('ilipro'), SubscriptionPlan.ilipro);
+      expect(subscriptionPlanFromKey('inconnu'), SubscriptionPlan.free);
+    });
+
+    test('normalise les statuts existants', () {
+      expect(subscriptionStatusFromKey('active'), SubscriptionStatus.active);
+      expect(subscriptionStatusFromKey('past_due'), SubscriptionStatus.pastDue);
+      expect(subscriptionStatusFromKey('pastdue'), SubscriptionStatus.pastDue);
+      expect(subscriptionStatusFromKey('cancelled'), SubscriptionStatus.canceled);
+      expect(subscriptionStatusFromKey(null), SubscriptionStatus.inactive);
+    });
+
+    test('sérialise les clés stables', () {
+      expect(subscriptionPlanKey(SubscriptionPlan.free), 'free');
+      expect(subscriptionPlanKey(SubscriptionPlan.iliprestoPlus), 'ilipresto_plus');
+      expect(subscriptionPlanKey(SubscriptionPlan.ilipro), 'ilipro');
+      expect(subscriptionStatusKey(SubscriptionStatus.pastDue), 'past_due');
     });
   });
 
-  group('features par plan', () {
-    test('gratuit applique les limites les plus strictes', () {
-      final features = getFeaturesForSubscriptionPlan(SubscriptionPlanKey.free);
-
+  group('fonctionnalités par plan', () {
+    test('gratuit applique les quotas attendus', () {
+      final features = getFeaturesForSubscriptionPlan(SubscriptionPlan.free);
       expect(features.maxActiveOffers, 3);
-      expect(features.photosPerOffer, 1);
-      expect(features.aiDraftsPerMonth, 2);
-      expect(features.voiceAiDraftsPerMonth, 1);
-      expect(features.favoriteAlertsEnabled, isFalse);
-      expect(features.analyticsEnabled, isFalse);
-      expect(features.proProfileEnabled, isFalse);
-      expect(features.savedJourneysPerMonth, 1);
-      expect(features.pdfExportsPerMonth, 0);
+      expect(features.maxPhotosPerOffer, 1);
+      expect(features.maxAiDraftsPerMonth, kFreeAiDraftQuotaPerMonth);
+      expect(features.maxVoiceAiUsesPerMonth, kFreeVoiceAiQuotaPerMonth);
+      expect(features.canReceiveFavoriteAlerts, isFalse);
+      expect(features.canAccessStats, isFalse);
+      expect(features.canCreateProProfile, isFalse);
     });
 
-    test('iliprestō+ active les alertes et exports limités', () {
-      final features = getFeaturesForSubscriptionPlan(
-        SubscriptionPlanKey.iliPrestoPlus,
-      );
-
+    test('iliprestō+ active les avantages grand public', () {
+      final features = getFeaturesForSubscriptionPlan(SubscriptionPlan.iliprestoPlus);
       expect(features.maxActiveOffers, 10);
-      expect(features.photosPerOffer, 3);
-      expect(features.aiDraftsPerMonth, 30);
-      expect(features.voiceAiDraftsPerMonth, 10);
-      expect(features.favoriteAlertsEnabled, isTrue);
-      expect(features.pdfExportsPerMonth, 2);
-      expect(features.proProfileEnabled, isFalse);
+      expect(features.maxPhotosPerOffer, 5);
+      expect(features.hasUnlimitedAiDrafts, isTrue);
+      expect(features.maxVoiceAiUsesPerMonth, kIliPrestoPlusVoiceAiQuotaPerMonth);
+      expect(features.canReceiveFavoriteAlerts, isTrue);
+      expect(features.canAccessStats, isFalse);
+      expect(features.canCreateProProfile, isFalse);
     });
 
     test('ilipro conserve les capacités professionnelles', () {
-      final features = getFeaturesForSubscriptionPlan(
-        SubscriptionPlanKey.iliPro,
-      );
-
+      final features = getFeaturesForSubscriptionPlan(SubscriptionPlan.ilipro);
       expect(features.maxActiveOffers, 30);
-      expect(features.photosPerOffer, 10);
-      expect(features.aiDraftsPerMonth, -1);
-      expect(features.voiceAiDraftsPerMonth, -1);
-      expect(features.analyticsEnabled, isTrue);
-      expect(features.proProfileEnabled, isTrue);
-      expect(features.pdfExportsPerMonth, -1);
+      expect(features.maxPhotosPerOffer, 10);
+      expect(features.hasUnlimitedAiDrafts, isTrue);
+      expect(features.hasUnlimitedVoiceAiUses, isTrue);
+      expect(features.canAccessStats, isTrue);
+      expect(features.canCreateProProfile, isTrue);
+      expect(features.hasProBadge, isTrue);
     });
   });
 
-  group('SubscriptionUsage', () {
-    SubscriptionUsage usage({
-      int pdfExports = 0,
-      int journeys = 0,
-    }) {
-      final now = DateTime.utc(2026, 7, 11);
-      return SubscriptionUsage(
-        userId: 'user-1',
-        period: '2026-07',
-        aiDraftsUsed: 0,
-        voiceAiDraftsUsed: 0,
-        journeysCreated: journeys,
-        pdfExports: pdfExports,
-        createdAt: now,
-        updatedAt: now,
-      );
-    }
-
-    test('quota PDF gratuit reste bloqué', () {
-      expect(
-        usage().canExportPdf(getFeaturesForSubscriptionPlan(
-          SubscriptionPlanKey.free,
-        )),
-        isFalse,
-      );
+  group('droits du parcours entrepreneur', () {
+    test('gratuit peut sauvegarder mais pas exporter en PDF', () {
+      final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.free);
+      expect(rights.maxLocalSavesPerMonth, kFreeJourneyLocalSaveQuotaPerMonth);
+      expect(rights.canExportPdf, isFalse);
+      expect(rights.maxPdfExportsPerMonth, 0);
+      expect(rights.pdfRequiresLogo, isFalse);
+      expect(rights.pdfRequiresWatermark, isFalse);
     });
 
-    test('quota iliprestō+ autorise deux exports puis bloque', () {
-      final features = getFeaturesForSubscriptionPlan(
-        SubscriptionPlanKey.iliPrestoPlus,
-      );
-      expect(usage(pdfExports: 0).canExportPdf(features), isTrue);
-      expect(usage(pdfExports: 1).canExportPdf(features), isTrue);
-      expect(usage(pdfExports: 2).canExportPdf(features), isFalse);
+    test('iliprestō+ applique les quotas PDF et le branding', () {
+      final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus);
+      expect(rights.maxLocalSavesPerMonth, kIliPrestoPlusJourneyLocalSaveQuotaPerMonth);
+      expect(rights.maxPdfExportsPerMonth, kIliPrestoPlusJourneyPdfExportQuotaPerMonth);
+      expect(rights.canExportPdf, isTrue);
+      expect(rights.pdfRequiresLogo, isTrue);
+      expect(rights.pdfRequiresWatermark, isTrue);
     });
 
-    test('quota illimité accepte toute consommation positive', () {
-      final features = getFeaturesForSubscriptionPlan(
-        SubscriptionPlanKey.iliPro,
-      );
-      expect(usage(pdfExports: 10_000).canExportPdf(features), isTrue);
-    });
-
-    test('copyWith et JSON conservent les compteurs', () {
-      final original = usage(pdfExports: 1, journeys: 1);
-      final updated = original.copyWith(pdfExports: 2);
-      final restored = SubscriptionUsage.fromJson(updated.toJson());
-
-      expect(updated.journeysCreated, 1);
-      expect(restored.pdfExports, 2);
-      expect(restored.period, '2026-07');
+    test('ilipro applique les quotas professionnels', () {
+      final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.ilipro);
+      expect(rights.maxLocalSavesPerMonth, kIliProJourneyLocalSaveQuotaPerMonth);
+      expect(rights.maxPdfExportsPerMonth, kIliProJourneyPdfExportQuotaPerMonth);
+      expect(rights.canExportPdf, isTrue);
     });
   });
 
-  group('SubscriptionPurchase', () {
-    test('sérialise et restaure une transaction confirmée', () {
-      final createdAt = DateTime.utc(2026, 7, 11, 12);
-      final purchase = SubscriptionPurchase(
-        id: 'purchase-1',
-        userId: 'user-1',
-        plan: 'ilipresto_plus',
-        amount: 1.99,
-        currency: 'EUR',
-        status: 'completed',
-        transactionId: 'txn-1',
-        createdAt: createdAt,
-        updatedAt: createdAt,
+  group('pièces jointes de conversation', () {
+    test('gratuit est limité lorsque le mode libre est désactivé', () {
+      final rights = getConversationAttachmentEntitlements(
+        SubscriptionPlan.free,
+        freeAccessMode: false,
       );
+      expect(rights.canSendDocuments, isFalse);
+      expect(rights.maxPhotosPerConversation, 1);
+      expect(rights.maxAudioPerConversation, 1);
+    });
 
-      final restored = SubscriptionPurchase.fromJson(purchase.toJson());
-
-      expect(restored.id, 'purchase-1');
-      expect(restored.plan, 'ilipresto_plus');
-      expect(restored.amount, 1.99);
-      expect(restored.status, 'completed');
-      expect(restored.transactionId, 'txn-1');
+    test('les plans payants autorisent les documents', () {
+      for (final plan in <SubscriptionPlan>[
+        SubscriptionPlan.iliprestoPlus,
+        SubscriptionPlan.ilipro,
+      ]) {
+        final rights = getConversationAttachmentEntitlements(
+          plan,
+          freeAccessMode: false,
+        );
+        expect(rights.canSendDocuments, isTrue, reason: plan.name);
+      }
     });
   });
 }
