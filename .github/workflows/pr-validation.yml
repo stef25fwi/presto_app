@@ -49,6 +49,7 @@ jobs:
           node tools/apply_function_resource_limits.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_release_validation_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_validation_round2_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
+          node tools/apply_account_compact_spacing_bootstrap.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           npm --prefix functions install --package-lock-only --ignore-scripts 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/check_production_guardrails.mjs 2>&1 | tee -a pr_validation_logs/patches.log
 
