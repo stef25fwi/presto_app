@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "maximum_ignored_rules": 14,
+  "maximum_ignored_rules": 13,
   "target_ignored_rules": 0,
-  "ramp_plan": [14, 10, 5, 0]
+  "ramp_plan": [13, 10, 5, 0]
 }
