@@ -25,9 +25,9 @@ class MesProjetsFichePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add_rounded),
             tooltip: 'Nouveau projet',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ToolboxPage()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
           ),
         ],
       ),
@@ -47,16 +47,20 @@ class _NotSignedIn extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.folder_off_rounded,
-                size: 56, color: Color(0xFFD1D5DB)),
+            const Icon(
+              Icons.folder_off_rounded,
+              size: 56,
+              color: Color(0xFFD1D5DB),
+            ),
             const SizedBox(height: 16),
             const Text(
               'Connectez-vous pour accéder à vos projets.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w500),
+                fontSize: 15,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -82,8 +86,10 @@ class _ParcoursListBody extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-              child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(_kOrange)));
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(_kOrange),
+            ),
+          );
         }
 
         if (snapshot.hasError) {
@@ -135,37 +141,47 @@ class _EmptyState extends StatelessWidget {
                 color: _kOrange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Icon(Icons.folder_open_rounded,
-                  size: 38, color: _kOrange),
+              child: const Icon(
+                Icons.folder_open_rounded,
+                size: 38,
+                color: _kOrange,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
               'Aucun projet sauvegardé',
               style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF111827)),
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
               'Utilisez la boîte à outils pour créer\nvotre premier projet d\'entreprise.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 14, color: Color(0xFF6B7280), height: 1.4),
+                fontSize: 14,
+                color: Color(0xFF6B7280),
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: _kOrange,
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ToolboxPage()),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
               icon: const Icon(Icons.rocket_launch_rounded),
               label: const Text('Démarrer un projet'),
             ),
@@ -246,9 +262,9 @@ class _ParcoursCard extends StatelessWidget {
       elevation: 0,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ToolboxPage()),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ToolboxPage())),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -297,7 +313,9 @@ class _ParcoursCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: _isCompleted
                                 ? const Color(0xFFD1FAE5)
@@ -343,8 +361,11 @@ class _ParcoursCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(Icons.chevron_right_rounded,
-                  color: Color(0xFFD1D5DB), size: 22),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFFD1D5DB),
+                size: 22,
+              ),
             ],
           ),
         ),
