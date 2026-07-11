@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: pr-validation-${{ github.event.pull_request.number }}
@@ -14,7 +14,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,10 +28,10 @@ jobs:
           cache-dependency-path: functions/package-lock.json
 
       - name: Prepare validation logs
-        run: mkdir -p pr_validation_logs
+        run: mkdir -p pr_validation_logs quality_reports/pr
 
-      - name: Apply generated hardening patches
-        id: patches
+      - name: Verify generated hardening patches are committed
+        id: generated_check
         continue-on-error: true
         run: |
           set -o pipefail
@@ -51,19 +51,12 @@ jobs:
           node tools/apply_validation_round2_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           npm --prefix functions install --package-lock-only --ignore-scripts 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/check_production_guardrails.mjs 2>&1 | tee -a pr_validation_logs/patches.log
-
-      - name: Commit generated source changes
-        if: steps.patches.outcome == 'success'
-        run: |
-          if git diff --quiet; then
-            echo "No generated source changes."
-            exit 0
+          if ! git diff --quiet; then
+            echo 'Generated changes are missing from this branch.' | tee -a pr_validation_logs/patches.log
+            git status --short | tee -a pr_validation_logs/patches.log
+            git diff --stat | tee -a pr_validation_logs/patches.log
+            exit 1
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "chore: applique les correctifs générés préproduction"
-          git push origin HEAD:${{ github.head_ref }}
 
       - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
@@ -87,12 +80,22 @@ jobs:
           set -o pipefail
           flutter analyze --fatal-infos 2>&1 | tee pr_validation_logs/flutter_analyze.log
 
-      - name: Flutter tests
+      - name: Flutter tests with coverage
         id: flutter_test
         continue-on-error: true
         run: |
           set -o pipefail
-          flutter test --reporter expanded 2>&1 | tee pr_validation_logs/flutter_test.log
+          flutter test --coverage --reporter expanded 2>&1 | tee pr_validation_logs/flutter_test.log
+
+      - name: Enforce repository quality gates
+        id: quality_gate
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python3 tools/quality/audit_repository.py \
+            --output-dir quality_reports/pr \
+            --git-ref '${{ github.sha }}' \
+            --enforce 2>&1 | tee pr_validation_logs/quality_gate.log
 
       - name: Functions dependencies
         id: functions_deps
@@ -145,6 +148,15 @@ jobs:
           set -o pipefail
           node tools/check_web_bundle_size.mjs 2>&1 | tee pr_validation_logs/bundle_budget.log
 
+      - name: Upload web preview artifact
+        if: steps.web_build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-preview-${{ github.sha }}
+          path: build/web
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Write validation summary
         if: always()
         run: |
@@ -153,10 +165,11 @@ jobs:
 
           | Contrôle | Résultat |
           |---|---|
-          | Patchs et garde-fous | `${{ steps.patches.outcome }}` |
+          | Correctifs générés déjà commités | `${{ steps.generated_check.outcome }}` |
           | Dépendances Flutter | `${{ steps.flutter_deps.outcome }}` |
           | Flutter analyze | `${{ steps.flutter_analyze.outcome }}` |
-          | Tests Flutter | `${{ steps.flutter_test.outcome }}` |
+          | Tests Flutter + couverture | `${{ steps.flutter_test.outcome }}` |
+          | Seuils qualité | `${{ steps.quality_gate.outcome }}` |
           | Dépendances Functions | `${{ steps.functions_deps.outcome }}` |
           | Build Functions | `${{ steps.functions_build.outcome }}` |
           | Tests Functions | `${{ steps.functions_test.outcome }}` |
@@ -171,15 +184,78 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pr-validation-${{ github.sha }}
-          path: pr_validation_logs
+          path: |
+            pr_validation_logs
+            quality_reports/pr
+            coverage/lcov.info
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Enforce validation result
         if: always()
         run: |
-          outcomes='${{ steps.patches.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
           if echo "$outcomes" | grep -Eq 'failure|cancelled'; then
             echo "Validation failed: $outcomes"
             exit 1
           fi
           echo "Validation succeeded: $outcomes"
+
+  preview:
+    name: Firebase Hosting preview
+    needs: validate
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-preview-${{ github.sha }}
+          path: build/web
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check preview credentials
+        id: preview_config
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          if [ -n "$FIREBASE_TOKEN" ] && [ -n "$FIREBASE_PROJECT_ID" ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'Firebase preview skipped: FIREBASE_TOKEN or FIREBASE_PROJECT_ID is missing.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Install Firebase CLI
+        if: steps.preview_config.outputs.enabled == 'true'
+        run: npm install -g firebase-tools@13
+
+      - name: Deploy isolated preview channel
+        if: steps.preview_config.outputs.enabled == 'true'
+        id: preview_deploy
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -o pipefail
+          firebase hosting:channel:deploy "pr-${{ github.event.pull_request.number }}" \
+            --expires 7d \
+            --project "$FIREBASE_PROJECT_ID" \
+            --token "$FIREBASE_TOKEN" \
+            --non-interactive 2>&1 | tee preview-deploy.log
+          preview_url=$(grep -Eo 'https://[^ ]+\.web\.app' preview-deploy.log | tail -1 || true)
+          if [ -n "$preview_url" ]; then
+            echo "url=$preview_url" >> "$GITHUB_OUTPUT"
+            curl --fail --silent --show-error --retry 4 --retry-delay 4 "$preview_url" >/dev/null
+            echo "Preview: $preview_url" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Preview deployed but URL could not be parsed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
