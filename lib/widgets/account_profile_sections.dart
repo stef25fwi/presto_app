@@ -4,7 +4,7 @@ import '../services/city_search.dart';
 import '../constants.dart';
 import 'phone_input_field.dart';
 
-const double _kAccountSectionTileHorizontalPadding = 10;
+const double _kAccountSectionTileHorizontalPadding = 8;
 
 class AccountProfileFormSection extends StatefulWidget {
   final String firstName;
@@ -113,7 +113,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: _kAccountSectionTileHorizontalPadding,
-            vertical: 14,
+            vertical: 11,
           ),
           child: Column(
             children: [
@@ -423,7 +423,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: _kAccountSectionTileHorizontalPadding,
-            vertical: 12,
+            vertical: 10,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,7 +603,7 @@ class AccountMessagesSection extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(
             horizontal: _kAccountSectionTileHorizontalPadding,
-            vertical: 14,
+            vertical: 11,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,7 +650,7 @@ class AccountProUpgradeSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: _kAccountSectionTileHorizontalPadding,
-        vertical: 18,
+        vertical: 12,
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
