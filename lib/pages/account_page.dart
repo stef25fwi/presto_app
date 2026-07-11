@@ -2615,7 +2615,7 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(20),
@@ -2695,7 +2695,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: Colors.white,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: SingleChildScrollView(
@@ -2765,7 +2765,7 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.person_rounded,
                       title: 'Mon profil',
@@ -2815,9 +2815,9 @@ class _AccountPageState extends State<AccountPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     const AccountNotificationsTile(),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.tune_rounded,
                       title: 'Mes alertes "Nouvelle annonce"',
@@ -2847,7 +2847,7 @@ class _AccountPageState extends State<AccountPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             AccountFavoriteCategoriesSection(
                               categoriesCount: draftCategoryLabels.length,
                               subcategoriesCount: draftSubcategoryLabels.length,
@@ -2893,7 +2893,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.campaign_outlined,
                       title: 'Gérer mes annonces',
@@ -2913,7 +2913,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.favorite_border_rounded,
                       title: 'Mes annonces favorites',
@@ -2934,9 +2934,9 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                     ),
                     RepaintBoundary(child: const SizedBox.shrink()),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     SubscriptionSection(userId: user.uid),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -2954,7 +2954,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildAdminSpaceEntry(user),
                     SizedBox(
                       width: double.infinity,
@@ -3751,7 +3751,7 @@ class _AccountPageState extends State<AccountPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(6, 16, 6, 80),
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 80),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -3761,9 +3761,9 @@ class _AccountPageState extends State<AccountPage> {
                     visiblePhotoUrl,
                     locationText,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                   _buildEspaceConfianceCard(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   _buildEnterpriseMenuSection(user),
                 ],
               ),
@@ -3920,7 +3920,7 @@ class _AccountPageState extends State<AccountPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+              padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
               child: Row(
                 children: const [
                   Icon(Icons.shield_rounded, color: kPrestoOrange, size: 30),
@@ -4014,7 +4014,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
           children: [
             Container(
@@ -4120,7 +4120,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
           children: [
             Container(
