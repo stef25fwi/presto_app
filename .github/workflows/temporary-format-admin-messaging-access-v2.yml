@@ -1,0 +1,47 @@
+name: Temporary format admin messaging access v2
+
+on:
+  push:
+    branches:
+      - agent/phase-2-admin-messaging-access-policy-v2
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-2-admin-messaging-access-policy-v2
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format access policy files
+        run: |
+          dart format \
+            lib/admin/messaging/admin_messaging_access_policy.dart \
+            lib/admin/messaging/admin_messaging_center_page.dart \
+            test/admin/messaging/admin_messaging_access_policy_test.dart
+
+      - name: Commit formatted files
+        run: |
+          if git diff --quiet; then
+            echo 'No formatting change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/admin/messaging/admin_messaging_access_policy.dart \
+            lib/admin/messaging/admin_messaging_center_page.dart \
+            test/admin/messaging/admin_messaging_access_policy_test.dart
+          git commit -m 'style: formate la policy et le centre messagerie admin'
+          git push origin HEAD:agent/phase-2-admin-messaging-access-policy-v2
