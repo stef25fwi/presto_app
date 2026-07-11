@@ -194,7 +194,7 @@ def main() -> int:
         kind = classify(relative)
         if kind in {"source", "test", "documentation", "workflow"}:
             metrics.append(FileMetric(relative.as_posix(), line_count(path), path.stat().st_size, kind))
-        if relative.suffix.lower() == ".dart":
+        if kind == "source" and relative.suffix.lower() == ".dart":
             dart_files.append(path)
 
     by_kind = {kind: [m for m in metrics if m.kind == kind] for kind in ("source", "test", "documentation", "workflow")}
