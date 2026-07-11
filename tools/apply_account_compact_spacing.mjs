@@ -147,7 +147,7 @@ account = transformRange(
 account = transformRange(
   account,
   '  Widget _buildBlueMenuItem({',
-  '  Widget _buildDefaultHeader(',
+  '\n}\n\nclass _DeptPickerDialog',
   (range) => range
     .replaceAll(
       'padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),',
