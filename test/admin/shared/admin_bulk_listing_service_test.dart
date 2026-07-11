@@ -43,16 +43,14 @@ void main() {
   });
 
   test('calcule les compteurs absents à partir des résultats', () {
-    final summary = AdminBulkListingDeleteSummary.fromData(
-      <String, Object?>{
-        'ok': true,
-        'adminActionId': 'action-2',
-        'results': <Object?>[
-          <String, Object?>{'listingId': 'a', 'ok': true},
-          <String, Object?>{'listingId': 'b', 'ok': true},
-        ],
-      },
-    );
+    final summary = AdminBulkListingDeleteSummary.fromData(<String, Object?>{
+      'ok': true,
+      'adminActionId': 'action-2',
+      'results': <Object?>[
+        <String, Object?>{'listingId': 'a', 'ok': true},
+        <String, Object?>{'listingId': 'b', 'ok': true},
+      ],
+    });
 
     expect(summary.requestedCount, 2);
     expect(summary.succeededCount, 2);
@@ -83,17 +81,15 @@ void main() {
 
   test('refuse une réponse backend incohérente', () {
     expect(
-      () => AdminBulkListingDeleteSummary.fromData(
-        <String, Object?>{
-          'ok': true,
-          'requestedCount': 2,
-          'succeededCount': 2,
-          'failedCount': 0,
-          'results': <Object?>[
-            <String, Object?>{'listingId': 'a', 'ok': true},
-          ],
-        },
-      ),
+      () => AdminBulkListingDeleteSummary.fromData(<String, Object?>{
+        'ok': true,
+        'requestedCount': 2,
+        'succeededCount': 2,
+        'failedCount': 0,
+        'results': <Object?>[
+          <String, Object?>{'listingId': 'a', 'ok': true},
+        ],
+      }),
       throwsFormatException,
     );
   });

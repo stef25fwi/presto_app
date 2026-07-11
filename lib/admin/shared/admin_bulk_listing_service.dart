@@ -3,9 +3,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../services/firebase_functions_region.dart';
 import 'admin_bulk_deletion_policy.dart';
 
-typedef AdminBulkListingCaller = Future<Object?> Function(
-  Map<String, Object?> payload,
-);
+typedef AdminBulkListingCaller =
+    Future<Object?> Function(Map<String, Object?> payload);
 
 class AdminBulkListingDeleteItemResult {
   const AdminBulkListingDeleteItemResult({
@@ -69,9 +68,11 @@ class AdminBulkListingDeleteSummary {
     final results = rawResults
         .map(AdminBulkListingDeleteItemResult.fromData)
         .toList(growable: false);
-    final succeededCount = _readInt(map['succeededCount']) ??
+    final succeededCount =
+        _readInt(map['succeededCount']) ??
         results.where((result) => result.ok).length;
-    final failedCount = _readInt(map['failedCount']) ??
+    final failedCount =
+        _readInt(map['failedCount']) ??
         results.where((result) => !result.ok).length;
     final requestedCount = _readInt(map['requestedCount']) ?? results.length;
     if (requestedCount != results.length ||
@@ -109,8 +110,8 @@ class AdminBulkListingService {
     AdminBulkDeletionPolicy policy = const AdminBulkDeletionPolicy(
       maxBatchSize: 50,
     ),
-  })  : _caller = caller ?? _callFirebase,
-        _policy = policy;
+  }) : _caller = caller ?? _callFirebase,
+       _policy = policy;
 
   static const int maxListingIds = 50;
 
@@ -152,16 +153,15 @@ class AdminBulkListingService {
     return AdminBulkListingDeleteSummary.fromData(data);
   }
 
-  static Future<Object?> _callFirebase(
-    Map<String, Object?> payload,
-  ) async {
-    final HttpsCallableResult<dynamic> result = await callPrestoFunction<dynamic>(
-      functions: prestoFirebaseFunctions,
-      name: 'adminBulkDeleteListings',
-      timeout: const Duration(minutes: 5),
-      parameters: payload,
-      area: 'admin-listings',
-    );
+  static Future<Object?> _callFirebase(Map<String, Object?> payload) async {
+    final HttpsCallableResult<dynamic> result =
+        await callPrestoFunction<dynamic>(
+          functions: prestoFirebaseFunctions,
+          name: 'adminBulkDeleteListings',
+          timeout: const Duration(minutes: 5),
+          parameters: payload,
+          area: 'admin-listings',
+        );
     return result.data;
   }
 }
