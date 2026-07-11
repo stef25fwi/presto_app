@@ -1,0 +1,37 @@
+name: Temporary wire admin listings page v2
+
+on:
+  push:
+    branches:
+      - agent/phase-5-admin-listings-management-ui-v2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-5-admin-listings-management-ui-v2
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Wire admin listings page
+        run: node tools/temporary_wire_admin_listings_page_v2.mjs
+
+      - name: Commit admin navigation change
+        run: |
+          if git diff --quiet; then
+            echo 'No generated change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/pages/admin_space_page.dart
+          git commit -m 'feat: ouvre la gestion des annonces depuis l espace admin'
+          git push origin HEAD:agent/phase-5-admin-listings-management-ui-v2
