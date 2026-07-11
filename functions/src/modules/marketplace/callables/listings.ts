@@ -907,7 +907,7 @@ function isFoundOnIliPrestoReason(reason: string | undefined): boolean {
 
 const JOB_DONE_OVERLAY_HOURS = 10;
 
-async function closeOrDeleteListingForOwner({
+export async function closeOrDeleteListingForOwner({
   actorId,
   listingId,
   reason,
