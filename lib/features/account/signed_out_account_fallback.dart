@@ -74,10 +74,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
     super.dispose();
   }
 
-  Future<void> _trackLogin({
-    String? authMethod,
-    bool isNewUser = false,
-  }) async {
+  Future<void> _trackLogin({String? authMethod, bool isNewUser = false}) async {
     logRuntimeAction(
       area: 'account',
       action: 'signed-out-fallback-login',
@@ -132,8 +129,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         context,
         _isSignup
             ? _isBusinessSignup
-                ? 'Compte entreprise créé. Complétez votre profil.'
-                : 'Compte créé. Vérifiez votre e-mail.'
+                  ? 'Compte entreprise créé. Complétez votre profil.'
+                  : 'Compte créé. Vérifiez votre e-mail.'
             : 'Connexion réussie.',
       );
       if (_isSignup && _isBusinessSignup) {
@@ -239,9 +236,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         logRuntimeAction(
           area: 'account',
           action: 'signed-out-fallback-auth',
-          details: <String, Object?>{
-            'source': widget.source,
-          },
+          details: <String, Object?>{'source': widget.source},
         );
       });
     }
@@ -277,8 +272,10 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
             final cardRadius = isFullBleed ? 0.0 : 24.0;
             final maxCardWidth = isFullBleed ? constraints.maxWidth : 560.0;
             final availableHeight =
-                (constraints.maxHeight - (verticalPadding * 2))
-                    .clamp(420.0, double.infinity) as double;
+                (constraints.maxHeight - (verticalPadding * 2)).clamp(
+                  420.0,
+                  double.infinity,
+                );
 
             return Center(
               child: ConstrainedBox(
@@ -325,8 +322,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           child: Image.asset(
                                             'assets/images/logowebp.webp',
                                             width: 72,
@@ -365,8 +363,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                   Text(
                                     _isSignup
                                         ? _isBusinessSignup
-                                            ? 'Votre espace entreprise crée un profil complet utilisable pour la vérification, les annonces, les avis et les demandes.'
-                                            : 'Créez votre profil utilisateur avec email, pseudo et vérification de compte.'
+                                              ? 'Votre espace entreprise crée un profil complet utilisable pour la vérification, les annonces, les avis et les demandes.'
+                                              : 'Créez votre profil utilisateur avec email, pseudo et vérification de compte.'
                                         : 'Retrouvez vos annonces, messages, avis et prestations depuis votre profil sécurisé.',
                                     style: const TextStyle(
                                       color: textMuted,
@@ -386,9 +384,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                             onTap: _isLoading
                                                 ? null
                                                 : () => setState(
-                                                      () => _isBusinessSignup =
-                                                          false,
-                                                    ),
+                                                    () => _isBusinessSignup =
+                                                        false,
+                                                  ),
                                           ),
                                         ),
                                         const SizedBox(width: 10),
@@ -401,9 +399,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                             onTap: _isLoading
                                                 ? null
                                                 : () => setState(
-                                                      () => _isBusinessSignup =
-                                                          true,
-                                                    ),
+                                                    () => _isBusinessSignup =
+                                                        true,
+                                                  ),
                                           ),
                                         ),
                                       ],
@@ -412,8 +410,10 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                     ProSiretSignupSection(
                                       visible: _isBusinessSignup,
                                       onSiretChanged: (value) {
-                                        final cleaned =
-                                            value.replaceAll(RegExp(r'\D'), '');
+                                        final cleaned = value.replaceAll(
+                                          RegExp(r'\D'),
+                                          '',
+                                        );
                                         setState(() {
                                           _signupSiretRaw = value;
                                           if (_verifiedSignupSiret != cleaned) {
@@ -523,9 +523,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                       onPressed: _isLoading
                                           ? null
                                           : () => setState(
-                                                () => _obscurePassword =
-                                                    !_obscurePassword,
-                                              ),
+                                              () => _obscurePassword =
+                                                  !_obscurePassword,
+                                            ),
                                       icon: Icon(
                                         _obscurePassword
                                             ? Icons.visibility_outlined
@@ -540,10 +540,12 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                     Align(
                                       alignment: Alignment.centerRight,
                                       child: TextButton(
-                                        onPressed:
-                                            _isLoading ? null : _resetPassword,
-                                        child:
-                                            const Text('Mot de passe oublié ?'),
+                                        onPressed: _isLoading
+                                            ? null
+                                            : _resetPassword,
+                                        child: const Text(
+                                          'Mot de passe oublié ?',
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -560,9 +562,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                       ],
                                       validator: (value) =>
                                           AuthValidators.passwordConfirmation(
-                                        value,
-                                        _passwordController.text,
-                                      ),
+                                            value,
+                                            _passwordController.text,
+                                          ),
                                       enabled: !_isLoading,
                                       suffixIcon: IconButton(
                                         tooltip: _obscurePasswordConfirm
@@ -571,9 +573,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                         onPressed: _isLoading
                                             ? null
                                             : () => setState(
-                                                  () => _obscurePasswordConfirm =
-                                                      !_obscurePasswordConfirm,
-                                                ),
+                                                () => _obscurePasswordConfirm =
+                                                    !_obscurePasswordConfirm,
+                                              ),
                                         icon: Icon(
                                           _obscurePasswordConfirm
                                               ? Icons.visibility_outlined
@@ -598,20 +600,23 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                         : Icons.login_rounded,
                                     label: _isSignup
                                         ? _isBusinessSignup
-                                            ? 'Créer le compte entreprise'
-                                            : 'Créer le compte'
+                                              ? 'Créer le compte entreprise'
+                                              : 'Créer le compte'
                                         : 'Se connecter',
                                   ),
                                   const SizedBox(height: 12),
                                   OutlinedButton.icon(
-                                    onPressed:
-                                        _isLoading ? null : _signInWithGoogle,
+                                    onPressed: _isLoading
+                                        ? null
+                                        : _signInWithGoogle,
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: statusBlue,
-                                      side:
-                                          const BorderSide(color: borderColor),
+                                      side: const BorderSide(
+                                        color: borderColor,
+                                      ),
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 14),
+                                        vertical: 14,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(18),
                                       ),
@@ -637,7 +642,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                           ? 'J’ai déjà un compte'
                                           : 'Créer un nouveau compte',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w800),
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -698,10 +704,7 @@ class _AccountTypeButton extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(color: color, fontWeight: FontWeight.w900),
               ),
             ),
           ],
@@ -712,9 +715,7 @@ class _AccountTypeButton extends StatelessWidget {
 }
 
 class _GoogleLogo extends StatelessWidget {
-  const _GoogleLogo({
-    this.size = 22,
-  });
+  const _GoogleLogo({this.size = 22});
 
   final double size;
 
@@ -738,7 +739,8 @@ class _GoogleLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final strokeWidth = size.width * 0.16;
-    final rect = Offset(strokeWidth / 2, strokeWidth / 2) &
+    final rect =
+        Offset(strokeWidth / 2, strokeWidth / 2) &
         Size(size.width - strokeWidth, size.height - strokeWidth);
 
     Paint arcPaint(Color color) => Paint()
