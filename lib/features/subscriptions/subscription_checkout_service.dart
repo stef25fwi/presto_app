@@ -30,6 +30,34 @@ class SubscriptionCheckoutService {
   const SubscriptionCheckoutService();
 
   static bool _openingStripe = false;
+  static final Map<String, _CachedStripeDestination> _checkoutCache =
+      <String, _CachedStripeDestination>{};
+  static final Map<String, Future<_CachedStripeDestination?>>
+      _checkoutPrefetches = <String, Future<_CachedStripeDestination?>>{};
+
+  Future<void> prefetchCheckout(
+    SubscriptionPlan plan, {
+    String source = 'subscription_prefetch',
+  }) async {
+    if (plan == SubscriptionPlan.free) return;
+    final key = subscriptionPlanKey(plan);
+    if (_readCachedCheckout(key) != null || _checkoutPrefetches.containsKey(key)) {
+      return;
+    }
+
+    final future = _fetchCheckoutDestination(
+      key,
+      source: source,
+      swallowErrors: true,
+    );
+    _checkoutPrefetches[key] = future;
+    try {
+      final destination = await future;
+      if (destination != null) _checkoutCache[key] = destination;
+    } finally {
+      _checkoutPrefetches.remove(key);
+    }
+  }
 
   Future<void> handleAction(
     BuildContext context,
@@ -93,19 +121,56 @@ class SubscriptionCheckoutService {
 
     _openingStripe = true;
     try {
-      final rawUrl = await _fetchStripeUrl(callableName, payload);
-      final uri = Uri.tryParse(rawUrl.trim());
+      final checkoutKey = callableName == 'createSubscriptionCheckoutSession'
+          ? (payload['plan'] ?? '').toString().trim()
+          : '';
+
+      _CachedStripeDestination? destination;
+      if (checkoutKey.isNotEmpty) {
+        destination = _readCachedCheckout(checkoutKey);
+        final pending = _checkoutPrefetches[checkoutKey];
+        if (destination == null && pending != null) {
+          destination = await pending;
+        }
+      }
+
+      if (destination == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                duration: Duration(seconds: 8),
+                content: Row(
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Ouverture sécurisée de Stripe…'),
+                  ],
+                ),
+              ),
+            );
+        }
+        final data = await _fetchStripeData(callableName, payload);
+        final rawUrl = _extractUrl(data);
+        destination = _destinationFromResponse(data, rawUrl);
+        if (checkoutKey.isNotEmpty) _checkoutCache[checkoutKey] = destination;
+      }
+
+      final uri = Uri.tryParse(destination.url.trim());
       if (uri == null || !_isTrustedStripeUri(uri)) {
         throw const SubscriptionCheckoutException(
           'L’adresse de paiement retournée n’est pas une URL Stripe sécurisée.',
         );
       }
 
-      // Sur le Web, la navigation Flutter interne ne modifie pas toujours
-      // l'URL du navigateur. On remplace donc l'entrée courante par la route
-      // Compte/Abonnements avant d'ouvrir Stripe dans le même onglet. Le
-      // bouton Retour du navigateur restaure ainsi la page des abonnements
-      // au lieu de recharger la racine et le splash.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
       prepareSubscriptionReturnHistory();
 
       final opened = await launchUrl(
@@ -128,6 +193,7 @@ class SubscriptionCheckoutService {
     }
 
     if (!context.mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     await _showSnackBar(
       context,
       _messageForFailure(
@@ -138,23 +204,80 @@ class SubscriptionCheckoutService {
     );
   }
 
+  Future<_CachedStripeDestination?> _fetchCheckoutDestination(
+    String planKey, {
+    required String source,
+    required bool swallowErrors,
+  }) async {
+    try {
+      final data = await _fetchStripeData(
+        'createSubscriptionCheckoutSession',
+        <String, dynamic>{
+          'plan': planKey,
+          'subscriptionPlan': planKey,
+          'source': source,
+        },
+      );
+      final rawUrl = _extractUrl(data);
+      final uri = Uri.tryParse(rawUrl.trim());
+      if (uri == null || !_isTrustedStripeUri(uri)) {
+        throw const SubscriptionCheckoutException(
+          'L’adresse de paiement retournée n’est pas une URL Stripe sécurisée.',
+        );
+      }
+      return _destinationFromResponse(data, rawUrl);
+    } catch (_) {
+      if (swallowErrors) return null;
+      rethrow;
+    }
+  }
+
+  _CachedStripeDestination _destinationFromResponse(
+    Map<String, dynamic> data,
+    String url,
+  ) {
+    final rawExpiresAt = data['expiresAt'] ?? data['expires_at'];
+    final parsed = rawExpiresAt is num
+        ? rawExpiresAt.toInt()
+        : int.tryParse((rawExpiresAt ?? '').toString()) ?? 0;
+    final expiresAtMs = parsed > 0 && parsed < 1000000000000
+        ? parsed * 1000
+        : parsed;
+    final fallbackMs = DateTime.now().millisecondsSinceEpoch +
+        const Duration(minutes: 20).inMilliseconds;
+    return _CachedStripeDestination(
+      url: url,
+      expiresAtMs: expiresAtMs > 0 ? expiresAtMs : fallbackMs,
+    );
+  }
+
+  _CachedStripeDestination? _readCachedCheckout(String key) {
+    final cached = _checkoutCache[key];
+    if (cached == null) return null;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (cached.expiresAtMs <= now + const Duration(seconds: 20).inMilliseconds) {
+      _checkoutCache.remove(key);
+      return null;
+    }
+    return cached;
+  }
+
   bool _isTrustedStripeUri(Uri uri) {
     if (uri.scheme.toLowerCase() != 'https') return false;
     final host = uri.host.toLowerCase();
     return host == 'stripe.com' || host.endsWith('.stripe.com');
   }
 
-  Future<String> _fetchStripeUrl(
+  Future<Map<String, dynamic>> _fetchStripeData(
     String callableName,
     Map<String, dynamic> payload,
   ) async {
     final callable = prestoFirebaseFunctions.httpsCallable(
       callableName,
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
     );
     final response = await callable.call<Map<dynamic, dynamic>>(payload);
-    final data = Map<String, dynamic>.from(response.data);
-    return _extractUrl(data);
+    return Map<String, dynamic>.from(response.data);
   }
 
   String _extractUrl(Map<String, dynamic> data) {
@@ -208,6 +331,16 @@ class SubscriptionCheckoutService {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+class _CachedStripeDestination {
+  final String url;
+  final int expiresAtMs;
+
+  const _CachedStripeDestination({
+    required this.url,
+    required this.expiresAtMs,
+  });
 }
 
 class SubscriptionCheckoutException implements Exception {

@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import {
   ENFORCE_APP_CHECK,
   PROJECT_REGION,
@@ -32,7 +33,8 @@ type StripeList = StripeObject & {
 const DEFAULT_STRIPE_RETURN_BASE_URL = "https://ilipresto.web.app";
 const CHECKOUT_IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000;
 const CHECKOUT_EXPIRATION_SECONDS = 30 * 60;
-const PRICE_CACHE_TTL_MS = 5 * 60 * 1000;
+const PRICE_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const CHECKOUT_SESSION_CACHE_SAFETY_MS = 60 * 1000;
 const BLOCKING_SUBSCRIPTION_STATUSES = new Set([
   "active",
   "trialing",
@@ -208,7 +210,14 @@ export function checkoutIdempotencyBucket(nowMs: number): number {
 }
 
 export function isBlockingSubscriptionStatus(status: unknown): boolean {
-  return BLOCKING_SUBSCRIPTION_STATUSES.has(asString(status).toLowerCase());
+  const raw = asString(status).toLowerCase().replace(/[\s-]/g, "_");
+  const normalized = raw === "pastdue" ? "past_due" : raw;
+  return BLOCKING_SUBSCRIPTION_STATUSES.has(normalized);
+}
+
+export function isCheckoutIntentFresh(expiresAtMs: number, nowMs: number): boolean {
+  return Number.isFinite(expiresAtMs)
+    && expiresAtMs > nowMs + CHECKOUT_SESSION_CACHE_SAFETY_MS;
 }
 
 async function stripeRequest<T extends StripeObject>(
@@ -523,12 +532,97 @@ async function logCheckoutSession(
   }, { merge: true });
 }
 
+function checkoutIntentDocumentId(userId: string, plan: SubscriptionPlan): string {
+  return `${userId}_${plan}`;
+}
+
+function localCustomerId(userData: StripeObject): string {
+  return asString(userData.stripeCustomerId || userData.stripe_customer_id);
+}
+
+function localSubscriptionId(userData: StripeObject): string {
+  return asString(userData.stripeSubscriptionId || userData.stripe_subscription_id);
+}
+
+function localSubscriptionStatus(userData: StripeObject): string {
+  return asString(userData.subscriptionStatus || userData.subscription_status);
+}
+
+function isMissingCustomerError(error: unknown): boolean {
+  return error instanceof StripeApiError
+    && (error.status === 404 || error.code === "resource_missing")
+    && (!error.param || error.param === "customer");
+}
+
+async function clearInvalidCustomerReference(
+  userRef: FirebaseFirestore.DocumentReference,
+): Promise<void> {
+  await userRef.set({
+    stripeCustomerId: FieldValue.delete(),
+    stripe_customer_id: FieldValue.delete(),
+    stripeUpdatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+}
+
+async function destinationForLocalSubscription(
+  userData: StripeObject,
+): Promise<{ url: string; destination: "portal" | "invoice"; subscriptionId: string } | null> {
+  const status = localSubscriptionStatus(userData);
+  if (!isBlockingSubscriptionStatus(status)) return null;
+
+  let customerId = localCustomerId(userData);
+  const subscriptionId = localSubscriptionId(userData);
+  const normalizedStatus = status.toLowerCase().replace(/[\s-]/g, "_");
+
+  if (["incomplete", "past_due", "pastdue", "unpaid"].includes(normalizedStatus) && subscriptionId) {
+    const subscription = await stripeRequest<StripeObject>(
+      "GET",
+      `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    );
+    customerId = customerId || asString(subscription.customer);
+    if (!customerId) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Votre abonnement Stripe est en cours de synchronisation. Réessayez dans un instant.",
+      );
+    }
+    return existingSubscriptionDestination(subscription, customerId);
+  }
+
+  if (!customerId && subscriptionId) {
+    const subscription = await stripeRequest<StripeObject>(
+      "GET",
+      `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    );
+    customerId = asString(subscription.customer);
+  }
+
+  if (!customerId) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Votre abonnement Stripe est en cours de synchronisation. Réessayez dans un instant.",
+    );
+  }
+
+  const portal = await createPortalUrl(customerId);
+  const portalUrl = asString(portal.url);
+  if (!portalUrl) {
+    throw new HttpsError("internal", "Stripe n’a pas retourné d’URL de gestion");
+  }
+  return { url: portalUrl, destination: "portal", subscriptionId };
+}
+
 export const createSubscriptionCheckoutSession = onCall({
   region: PROJECT_REGION,
   enforceAppCheck: ENFORCE_APP_CHECK,
   secrets: STRIPE_CHECKOUT_SECRETS,
-  timeoutSeconds: 60,
+  timeoutSeconds: 30,
+  minInstances: 1,
+  maxInstances: 20,
+  concurrency: 80,
+  memory: "256MiB",
 }, async (request) => {
+  const startedAt = Date.now();
   try {
     const auth = request.auth;
     if (!auth?.uid) {
@@ -538,49 +632,68 @@ export const createSubscriptionCheckoutSession = onCall({
     const plan = normalizePlan(request.data?.plan ?? request.data?.subscriptionPlan);
     const priceId = priceIdForPlan(plan);
     const source = checkoutSource(request.data?.source);
+    const userRef = db.collection(COLLECTIONS.users).doc(auth.uid);
+    const intentRef = db
+      .collection("stripe_checkout_intents")
+      .doc(checkoutIntentDocumentId(auth.uid, plan));
 
-    await validatePriceForPlan(plan, priceId);
-    const customerId = await getOrCreateStripeCustomer(auth.uid, auth.token as StripeObject);
+    const [userSnap, intentSnap] = await Promise.all([
+      userRef.get(),
+      intentRef.get(),
+    ]);
+    const userData = (userSnap.data() || {}) as StripeObject;
 
-    const blockingSubscription = await findBlockingSubscription(customerId);
-    if (blockingSubscription) {
-      const destination = await existingSubscriptionDestination(
-        blockingSubscription,
-        customerId,
-      );
-      await db.collection("stripe_checkout_redirects").add({
-        user_id: auth.uid,
-        customer_id: customerId,
-        requested_plan: plan,
-        existing_price_id: subscriptionPriceId(blockingSubscription),
-        existing_subscription_id: destination.subscriptionId,
-        destination: destination.destination,
-        reason: "existing_subscription",
+    const existingDestination = await destinationForLocalSubscription(userData);
+    if (existingDestination) {
+      console.info("STRIPE_CHECKOUT_PERFORMANCE", {
+        userId: auth.uid,
+        plan,
+        destination: existingDestination.destination,
+        durationMs: Date.now() - startedAt,
         source,
-        stripe_mode: stripeMode(),
-        created_at: FieldValue.serverTimestamp(),
       });
       return {
         ok: true,
-        url: destination.url,
-        destination: destination.destination,
+        ...existingDestination,
         reason: "existing_subscription",
-        subscriptionId: destination.subscriptionId,
+        serverDurationMs: Date.now() - startedAt,
+      };
+    }
+
+    const intentData = (intentSnap.data() || {}) as StripeObject;
+    const cachedUrl = asString(intentData.url);
+    const cachedExpiresAtMs = asNumber(intentData.expires_at_ms);
+    if (cachedUrl && isCheckoutIntentFresh(cachedExpiresAtMs, Date.now())) {
+      console.info("STRIPE_CHECKOUT_PERFORMANCE", {
+        userId: auth.uid,
+        plan,
+        destination: "checkout",
+        cacheHit: true,
+        durationMs: Date.now() - startedAt,
+        source,
+      });
+      return {
+        ok: true,
+        url: cachedUrl,
+        destination: "checkout",
+        sessionId: asString(intentData.session_id),
+        expiresAt: cachedExpiresAtMs,
+        cacheHit: true,
+        serverDurationMs: Date.now() - startedAt,
       };
     }
 
     const nowSeconds = Math.floor(Date.now() / 1000);
+    const email = extractEmail(userData, asString(auth.token?.email));
+    const customerId = localCustomerId(userData);
     const params: Record<string, string> = {
       mode: "subscription",
-      customer: customerId,
       client_reference_id: auth.uid,
       success_url: checkoutSuccessUrl(),
       cancel_url: cancelUrl(),
       locale: "fr",
       billing_address_collection: "auto",
       allow_promotion_codes: process.env.STRIPE_ALLOW_PROMOTION_CODES === "false" ? "false" : "true",
-      "customer_update[address]": "auto",
-      "customer_update[name]": "auto",
       "line_items[0][price]": priceId,
       "line_items[0][quantity]": "1",
       "metadata[firebaseUid]": auth.uid,
@@ -592,6 +705,14 @@ export const createSubscriptionCheckoutSession = onCall({
       expires_at: String(nowSeconds + CHECKOUT_EXPIRATION_SECONDS),
     };
 
+    if (customerId) {
+      params.customer = customerId;
+      params["customer_update[address]"] = "auto";
+      params["customer_update[name]"] = "auto";
+    } else if (email) {
+      params.customer_email = email;
+    }
+
     if (plan === "ilipro") {
       params["tax_id_collection[enabled]"] = "true";
     }
@@ -600,44 +721,141 @@ export const createSubscriptionCheckoutSession = onCall({
     }
 
     const bucket = checkoutIdempotencyBucket(Date.now());
-    const session = await stripeRequest<StripeSession>(
-      "POST",
-      "/v1/checkout/sessions",
-      params,
-      {
-        idempotencyKey: idempotencyKey([
-          "checkout",
-          stripeMode(),
-          auth.uid,
-          plan,
-          bucket,
-        ]),
-      },
-    );
+    const checkoutKeyParts: Array<string | number> = [
+      "checkout",
+      stripeMode(),
+      auth.uid,
+      plan,
+      bucket,
+    ];
 
-    const url = asString(session.url);
-    if (!url) {
-      throw new HttpsError("internal", "Stripe n’a pas retourné d’URL de paiement");
+    let session: StripeSession;
+    try {
+      session = await stripeRequest<StripeSession>(
+        "POST",
+        "/v1/checkout/sessions",
+        params,
+        { idempotencyKey: idempotencyKey(checkoutKeyParts) },
+      );
+    } catch (error) {
+      if (!customerId || !isMissingCustomerError(error)) throw error;
+
+      await clearInvalidCustomerReference(userRef);
+      delete params.customer;
+      delete params["customer_update[address]"];
+      delete params["customer_update[name]"];
+      if (email) params.customer_email = email;
+
+      session = await stripeRequest<StripeSession>(
+        "POST",
+        "/v1/checkout/sessions",
+        params,
+        {
+          idempotencyKey: idempotencyKey([
+            ...checkoutKeyParts,
+            "customer-recovery",
+          ]),
+        },
+      );
     }
 
-    await logCheckoutSession(session, {
+    const url = asString(session.url);
+    const sessionId = asString(session.id);
+    if (!url || !sessionId) {
+      throw new HttpsError("internal", "Stripe n’a pas retourné de session de paiement valide");
+    }
+
+    const expiresAtMs = asNumber(session.expires_at) > 0
+      ? asNumber(session.expires_at) * 1000
+      : Date.now() + CHECKOUT_EXPIRATION_SECONDS * 1000;
+
+    const batch = db.batch();
+    batch.set(intentRef, {
       user_id: auth.uid,
-      customer_id: customerId,
+      plan,
+      price_id: priceId,
+      session_id: sessionId,
+      url,
+      expires_at_ms: expiresAtMs,
+      stripe_mode: stripeMode(),
+      source,
+      updated_at: FieldValue.serverTimestamp(),
+      created_at: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    batch.set(db.collection("stripe_checkout_sessions").doc(sessionId), {
+      user_id: auth.uid,
+      customer_id: customerId || null,
       plan,
       price_id: priceId,
       source,
       destination: "checkout",
-      expires_at: asNumber(session.expires_at) * 1000,
+      stripe_mode: stripeMode(),
+      stripe_session_status: asString(session.status || "open"),
+      expires_at: expiresAtMs,
+      created_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await batch.commit();
+
+    console.info("STRIPE_CHECKOUT_PERFORMANCE", {
+      userId: auth.uid,
+      plan,
+      destination: "checkout",
+      cacheHit: false,
+      customerReused: Boolean(customerId),
+      durationMs: Date.now() - startedAt,
+      source,
     });
 
     return {
       ok: true,
       url,
       destination: "checkout",
-      sessionId: asString(session.id),
+      sessionId,
+      expiresAt: expiresAtMs,
+      cacheHit: false,
+      serverDurationMs: Date.now() - startedAt,
     };
   } catch (error) {
     throw mapStripeError(error);
+  }
+});
+
+export const auditStripeCatalog = onSchedule({
+  region: PROJECT_REGION,
+  schedule: "every 6 hours",
+  timeZone: "UTC",
+  secrets: STRIPE_CHECKOUT_SECRETS,
+  timeoutSeconds: 60,
+  memory: "256MiB",
+}, async () => {
+  const startedAt = Date.now();
+  try {
+    validatedPriceCache.clear();
+    const plusPriceId = priceIdForPlan("ilipresto_plus");
+    const proPriceId = priceIdForPlan("ilipro");
+    await Promise.all([
+      validatePriceForPlan("ilipresto_plus", plusPriceId),
+      validatePriceForPlan("ilipro", proPriceId),
+    ]);
+    await db.collection("stripe_runtime_health").doc("catalog").set({
+      ok: true,
+      stripe_mode: stripeMode(),
+      ilipresto_plus_price_id: plusPriceId,
+      ilipro_price_id: proPriceId,
+      checked_at: FieldValue.serverTimestamp(),
+      duration_ms: Date.now() - startedAt,
+      error: FieldValue.delete(),
+    }, { merge: true });
+  } catch (error) {
+    await db.collection("stripe_runtime_health").doc("catalog").set({
+      ok: false,
+      stripe_mode: stripeMode(),
+      checked_at: FieldValue.serverTimestamp(),
+      duration_ms: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    }, { merge: true });
+    throw error;
   }
 });
 

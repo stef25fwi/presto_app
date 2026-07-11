@@ -5,27 +5,16 @@ import fs from 'node:fs/promises';
 const path = 'functions/src/modules/billing/stripe_webhook.ts';
 let content = await fs.readFile(path, 'utf8');
 
-// Ce script reste compatible avec l'ancien webhook, mais ne doit jamais tenter
-// de réécrire une implémentation plus récente qui possède déjà les garanties
-// d'ordre, de transaction et de normalisation attendues.
-const hardenedMarkers = [
-  'export function shouldApplyStripeEvent(',
-  'export function normalizedInvoiceStatus(',
-  'last_stripe_event_created_at: eventCreatedAtMs',
-  'lastStripeEventCreatedAt: eventCreatedAtMs',
-  'await db.runTransaction(async (transaction) => {',
-  'eventType: string,',
-  'eventCreatedAtMs: number,',
-];
-
-if (hardenedMarkers.every((marker) => content.includes(marker))) {
-  console.log('stripe ordering hardening: already hardened');
-  process.exit(0);
-}
-
 function replaceOnce(before, after, label) {
   if (content.includes(after)) return;
   const count = content.split(before).length - 1;
+  const webhookAlreadyHardened =
+    content.includes('export function shouldApplyStripeEvent(') &&
+    content.includes('last_stripe_event_created_at') &&
+    content.includes('normalizedInvoiceStatus(');
+  if (count === 0 && webhookAlreadyHardened) {
+    return;
+  }
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
   }
@@ -102,3 +91,13 @@ replaceOnce(
 
 await fs.writeFile(path, content, 'utf8');
 console.log('stripe ordering hardening: OK');
+
+try {
+  await import('./apply_stripe_checkout_latency_optimization.mjs');
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.startsWith('audit export:')) throw error;
+  console.log('stripe checkout latency core applied; finalizing current index shape');
+}
+
+await import('./finalize_stripe_checkout_latency_optimization.mjs');
