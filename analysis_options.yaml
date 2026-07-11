@@ -28,7 +28,6 @@ analyzer:
     curly_braces_in_flow_control_structures: ignore
     no_leading_underscores_for_local_identifiers: ignore
     prefer_conditional_assignment: ignore
-    asset_directory_does_not_exist: ignore
 
 linter:
   rules:
