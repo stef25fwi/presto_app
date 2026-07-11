@@ -25,7 +25,6 @@ analyzer:
     dead_code: ignore
     dead_code_on_catch_subtype: ignore
     unnecessary_cast: ignore
-    unnecessary_to_list_in_spreads: ignore
     curly_braces_in_flow_control_structures: ignore
     no_leading_underscores_for_local_identifiers: ignore
     prefer_conditional_assignment: ignore
