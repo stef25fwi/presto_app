@@ -66,8 +66,8 @@
         "lib/pages/admin_*.dart",
         "lib/services/admin_*.dart"
       ],
-      "minimum_percent": 0.6,
-      "minimum_tracked_files_percent": 93.0,
+      "minimum_percent": 2.1,
+      "minimum_tracked_files_percent": 94.0,
       "target_percent": 85
     },
     {
