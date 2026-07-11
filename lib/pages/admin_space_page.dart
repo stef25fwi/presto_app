@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/admin/listings/admin_listings_management_page.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_dashboard_page.dart';
 import 'admin_hero_slides_page.dart';
 import 'admin_messaging_moderation_page.dart';
@@ -3144,6 +3145,14 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                         : 'Actives: ${_formatCompactNumber(_kpiSnapshot!.activeListings)}\nTotal: ${_formatCompactNumber(_kpiSnapshot!.publishedListings)}\nExpirées: ${_formatCompactNumber(_kpiSnapshot!.expiredListings)}',
                     badge: null,
                     iconColor: prestoOrange,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              const AdminListingsManagementPage(),
+                        ),
+                      );
+                    },
                   ),
                   _KpiTile(
                     icon: Icons.chat_bubble_rounded,
