@@ -119,7 +119,8 @@ Future<void> main() async {
     final outFile = File('${outDir.path}/cities_$dept.json');
     await outFile.writeAsString(encoder.convert(sortedMap));
     print(
-        'Written dept $dept -> ${sortedMap.length} cities -> ${outFile.path}');
+      'Written dept $dept -> ${sortedMap.length} cities -> ${outFile.path}',
+    );
   }
 
   print('DONE.');
