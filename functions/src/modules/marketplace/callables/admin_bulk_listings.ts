@@ -1,5 +1,9 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";
+import {
+  buildOperationLogContext,
+  resolveCorrelationId,
+} from "../../../observability/correlation";
 import { writeAdminActionLog } from "../services/admin_audit";
 import {
   AdminBulkListingInputError,
@@ -36,6 +40,12 @@ export const adminBulkDeleteListings = onCall(
   },
   async (request) => {
     const actorId = requireAuthUid(request);
+    const correlationId = resolveCorrelationId(request.data?.correlationId);
+    const logContext = buildOperationLogContext({
+      correlationId,
+      operation: "admin_bulk_delete_listings",
+      actorId,
+    });
     const actorRoles = extractRolesFromAuthToken(
       request.auth?.token as Record<string, unknown> | undefined,
     );
@@ -44,6 +54,8 @@ export const adminBulkDeleteListings = onCall(
       ["admin", "superadmin"],
       "Admin role required",
     );
+
+    console.info("ADMIN_BULK_DELETE_LISTINGS_STARTED", logContext);
 
     try {
       const listingIds = normalizeAdminBulkListingIds(
@@ -81,17 +93,31 @@ export const adminBulkDeleteListings = onCall(
           failedCount: summary.failedCount,
         },
         metadata: {
+          correlationId,
           reason,
           results: summary.results,
         },
       });
 
+      console.info("ADMIN_BULK_DELETE_LISTINGS_COMPLETED", {
+        ...logContext,
+        adminActionId,
+        requestedCount: summary.requestedCount,
+        succeededCount: summary.succeededCount,
+        failedCount: summary.failedCount,
+      });
+
       return {
         ok: summary.failedCount === 0,
+        correlationId,
         adminActionId,
         ...summary,
       };
     } catch (error) {
+      console.error("ADMIN_BULK_DELETE_LISTINGS_FAILED", {
+        ...logContext,
+        errorName: error instanceof Error ? error.name : "unknown",
+      });
       if (error instanceof AdminBulkListingInputError) {
         throw new HttpsError("invalid-argument", error.message);
       }
