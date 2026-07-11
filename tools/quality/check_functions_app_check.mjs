@@ -5,12 +5,54 @@ import { fileURLToPath } from 'node:url';
 const ON_CALL_PATTERN = /\bonCall\s*\(/g;
 const REQUIRED_OPTION_PATTERN = /enforceAppCheck\s*:\s*ENFORCE_APP_CHECK/;
 const FORBIDDEN_FALSE_PATTERN = /enforceAppCheck\s*:\s*false\b/;
+const OPTION_CONST_PATTERN = /const\s+([A-Z][A-Z0-9_]*)\s*=\s*\{([\s\S]*?)\}\s*as const\s*;/g;
+
+function collectSafeOptionConstants(source) {
+  const definitions = new Map();
+  for (const match of source.matchAll(OPTION_CONST_PATTERN)) {
+    definitions.set(match[1], match[2]);
+  }
+
+  const safe = new Set();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [name, body] of definitions) {
+      if (safe.has(name)) continue;
+      if (REQUIRED_OPTION_PATTERN.test(body)) {
+        safe.add(name);
+        changed = true;
+        continue;
+      }
+      const spreadDependencies = [...body.matchAll(/\.\.\.([A-Z][A-Z0-9_]*)/g)]
+        .map((match) => match[1]);
+      if (spreadDependencies.some((dependency) => safe.has(dependency))) {
+        safe.add(name);
+        changed = true;
+      }
+    }
+  }
+  return safe;
+}
+
+function readFirstArgument(source, position) {
+  const afterCall = source.slice(position).replace(/^\bonCall\s*\(/, '').trimStart();
+  if (afterCall.startsWith('{')) {
+    return { type: 'object', value: afterCall.slice(0, 1400) };
+  }
+  const identifier = afterCall.match(/^([A-Za-z_$][\w$]*)/);
+  if (identifier) {
+    return { type: 'identifier', value: identifier[1] };
+  }
+  return { type: 'unknown', value: afterCall.slice(0, 120) };
+}
 
 export function auditAppCheckSource(source, filePath = '<memory>') {
   const violations = [];
   const callablePositions = [...source.matchAll(ON_CALL_PATTERN)].map(
     (match) => match.index ?? 0,
   );
+  const safeOptionConstants = collectSafeOptionConstants(source);
 
   if (FORBIDDEN_FALSE_PATTERN.test(source)) {
     violations.push({
@@ -21,8 +63,12 @@ export function auditAppCheckSource(source, filePath = '<memory>') {
   }
 
   for (const position of callablePositions) {
-    const snippet = source.slice(position, position + 1400);
-    if (!REQUIRED_OPTION_PATTERN.test(snippet)) {
+    const firstArgument = readFirstArgument(source, position);
+    const isSafeObject =
+      firstArgument.type === 'object' && REQUIRED_OPTION_PATTERN.test(firstArgument.value);
+    const isSafeIdentifier =
+      firstArgument.type === 'identifier' && safeOptionConstants.has(firstArgument.value);
+    if (!isSafeObject && !isSafeIdentifier) {
       violations.push({
         file: filePath,
         type: 'missing-enforcement',
