@@ -1,0 +1,48 @@
+name: Temporary export admin deletion sources
+
+on:
+  push:
+    branches:
+      - agent/phase-5-admin-deletion-backend
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-5-admin-deletion-backend
+          fetch-depth: 1
+
+      - name: Collect relevant sources
+        run: |
+          set -euo pipefail
+          mkdir -p admin-deletion-audit/export
+          grep -RInE \
+            'delete|deletedAt|deleted_entities|admin_actions|audit|histor|commune|bulk' \
+            lib functions/src functions/test functions/tests \
+            > admin-deletion-audit/locations.txt 2>/dev/null || true
+          grep -RIlE \
+            'delete|deletedAt|deleted_entities|admin_actions|audit|histor|commune|bulk' \
+            lib functions/src functions/test functions/tests \
+            2>/dev/null \
+            | sort -u \
+            | while IFS= read -r path; do
+                mkdir -p "admin-deletion-audit/export/$(dirname "$path")"
+                cp "$path" "admin-deletion-audit/export/$path"
+              done
+          if [ -f lib/pages/admin_space_page.dart ]; then
+            mkdir -p admin-deletion-audit/export/lib/pages
+            cp lib/pages/admin_space_page.dart admin-deletion-audit/export/lib/pages/
+          fi
+
+      - name: Upload audit sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-deletion-sources-${{ github.sha }}
+          path: admin-deletion-audit
+          if-no-files-found: error
+          retention-days: 3
