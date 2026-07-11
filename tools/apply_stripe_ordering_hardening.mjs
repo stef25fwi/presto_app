@@ -92,4 +92,12 @@ replaceOnce(
 await fs.writeFile(path, content, 'utf8');
 console.log('stripe ordering hardening: OK');
 
-await import('./apply_stripe_checkout_latency_optimization.mjs');
+try {
+  await import('./apply_stripe_checkout_latency_optimization.mjs');
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.startsWith('audit export:')) throw error;
+  console.log('stripe checkout latency core applied; finalizing current index shape');
+}
+
+await import('./finalize_stripe_checkout_latency_optimization.mjs');
