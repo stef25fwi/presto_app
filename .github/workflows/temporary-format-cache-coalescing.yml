@@ -1,0 +1,45 @@
+name: Temporary format cache coalescing
+
+on:
+  push:
+    branches:
+      - agent/phase-4-cache-request-coalescing
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-4-cache-request-coalescing
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format cache files
+        run: |
+          dart format \
+            lib/core/cache/expiring_memory_cache.dart \
+            test/core/cache/expiring_memory_cache_test.dart
+
+      - name: Commit formatted files
+        run: |
+          if git diff --quiet; then
+            echo 'No formatting change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/core/cache/expiring_memory_cache.dart \
+            test/core/cache/expiring_memory_cache_test.dart
+          git commit -m 'style: formate la mutualisation du cache'
+          git push origin HEAD:agent/phase-4-cache-request-coalescing
