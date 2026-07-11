@@ -1,0 +1,40 @@
+name: Temporary audit admin space format
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Generate format diff only
+        run: |
+          dart format lib/pages/admin_space_page.dart
+          mkdir -p format-audit
+          git diff -- lib/pages/admin_space_page.dart > format-audit/admin-space-format.diff
+          git diff --stat -- lib/pages/admin_space_page.dart > format-audit/stat.txt
+          cp lib/pages/admin_space_page.dart format-audit/admin_space_page.formatted.dart
+
+      - name: Upload format audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-space-format-audit-${{ github.sha }}
+          path: format-audit
+          if-no-files-found: error
+          retention-days: 2
