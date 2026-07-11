@@ -17,6 +17,23 @@ test('accepte un callable protégé par la policy centrale', () => {
   assert.deepEqual(result.violations, []);
 });
 
+test('accepte des constantes d options sûres et leurs extensions', () => {
+  const result = auditAppCheckSource(`
+    const BASE_OPTIONS = {
+      region: PROJECT_REGION,
+      enforceAppCheck: ENFORCE_APP_CHECK,
+    } as const;
+    const HOT_OPTIONS = {
+      ...BASE_OPTIONS,
+      minInstances: 1,
+    } as const;
+    export const first = onCall(BASE_OPTIONS, async () => ({ ok: true }));
+    export const second = onCall(HOT_OPTIONS, async () => ({ ok: true }));
+  `);
+  assert.equal(result.callableCount, 2);
+  assert.deepEqual(result.violations, []);
+});
+
 test('refuse un callable sans option App Check', () => {
   const result = auditAppCheckSource(`
     export const insecure = onCall(
@@ -27,6 +44,15 @@ test('refuse un callable sans option App Check', () => {
   assert.equal(result.violations.length, 1);
   assert.equal(result.violations[0].type, 'missing-enforcement');
   assert.equal(result.violations[0].file, 'insecure.ts');
+});
+
+test('refuse une constante d options qui ne propage pas la policy', () => {
+  const result = auditAppCheckSource(`
+    const OPTIONS = { region: PROJECT_REGION } as const;
+    export const insecure = onCall(OPTIONS, async () => ({ ok: true }));
+  `);
+  assert.equal(result.violations.length, 1);
+  assert.equal(result.violations[0].type, 'missing-enforcement');
 });
 
 test('refuse une désactivation explicite', () => {
