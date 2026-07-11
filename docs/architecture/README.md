@@ -16,3 +16,4 @@ Compléments :
 - [Décisions d’architecture](../adr/README.md)
 
 Toute évolution sensible doit mettre à jour la documentation concernée dans la même pull request.
+Une revue documentaire fait partie de la Definition of Done des changements d’architecture.
