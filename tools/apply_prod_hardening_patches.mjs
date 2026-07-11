@@ -154,9 +154,17 @@ async function patchMonitoringClient() {
   content = replaceOnce(
     content,
     "import 'package:flutter/widgets.dart';\n",
-    "import 'package:flutter/widgets.dart';\n\nimport 'firebase_functions_region.dart';\n",
-    'monitoring callable import',
+    '',
+    'monitoring unnecessary widgets import',
   );
+  if (!content.includes("import 'firebase_functions_region.dart';")) {
+    content = replaceOnce(
+      content,
+      "import 'package:flutter/foundation.dart';\n",
+      "import 'package:flutter/foundation.dart';\n\nimport 'firebase_functions_region.dart';\n",
+      'monitoring callable import',
+    );
+  }
   content = replaceOnce(
     content,
     "  static const String collectionName = 'app_monitoring_events';\n\n",
