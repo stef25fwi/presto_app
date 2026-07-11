@@ -31,6 +31,7 @@ void main() {
   group('fonctionnalités par plan', () {
     test('gratuit applique les quotas attendus', () {
       final features = getFeaturesForSubscriptionPlan(SubscriptionPlan.free);
+
       expect(features.maxActiveOffers, 3);
       expect(features.maxPhotosPerOffer, 1);
       expect(features.maxAiDraftsPerMonth, kFreeAiDraftQuotaPerMonth);
@@ -41,11 +42,17 @@ void main() {
     });
 
     test('iliprestō+ active les avantages grand public', () {
-      final features = getFeaturesForSubscriptionPlan(SubscriptionPlan.iliprestoPlus);
+      final features = getFeaturesForSubscriptionPlan(
+        SubscriptionPlan.iliprestoPlus,
+      );
+
       expect(features.maxActiveOffers, 10);
       expect(features.maxPhotosPerOffer, 5);
       expect(features.hasUnlimitedAiDrafts, isTrue);
-      expect(features.maxVoiceAiUsesPerMonth, kIliPrestoPlusVoiceAiQuotaPerMonth);
+      expect(
+        features.maxVoiceAiUsesPerMonth,
+        kIliPrestoPlusVoiceAiQuotaPerMonth,
+      );
       expect(features.canReceiveFavoriteAlerts, isTrue);
       expect(features.canAccessStats, isFalse);
       expect(features.canCreateProProfile, isFalse);
@@ -53,6 +60,7 @@ void main() {
 
     test('ilipro conserve les capacités professionnelles', () {
       final features = getFeaturesForSubscriptionPlan(SubscriptionPlan.ilipro);
+
       expect(features.maxActiveOffers, 30);
       expect(features.maxPhotosPerOffer, 10);
       expect(features.hasUnlimitedAiDrafts, isTrue);
@@ -66,6 +74,7 @@ void main() {
   group('droits du parcours entrepreneur', () {
     test('gratuit peut sauvegarder mais pas exporter en PDF', () {
       final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.free);
+
       expect(rights.maxLocalSavesPerMonth, kFreeJourneyLocalSaveQuotaPerMonth);
       expect(rights.canExportPdf, isFalse);
       expect(rights.maxPdfExportsPerMonth, 0);
@@ -74,9 +83,18 @@ void main() {
     });
 
     test('iliprestō+ applique les quotas PDF et le branding', () {
-      final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus);
-      expect(rights.maxLocalSavesPerMonth, kIliPrestoPlusJourneyLocalSaveQuotaPerMonth);
-      expect(rights.maxPdfExportsPerMonth, kIliPrestoPlusJourneyPdfExportQuotaPerMonth);
+      final rights = getJourneyEntitlementsForPlan(
+        SubscriptionPlan.iliprestoPlus,
+      );
+
+      expect(
+        rights.maxLocalSavesPerMonth,
+        kIliPrestoPlusJourneyLocalSaveQuotaPerMonth,
+      );
+      expect(
+        rights.maxPdfExportsPerMonth,
+        kIliPrestoPlusJourneyPdfExportQuotaPerMonth,
+      );
       expect(rights.canExportPdf, isTrue);
       expect(rights.pdfRequiresLogo, isTrue);
       expect(rights.pdfRequiresWatermark, isTrue);
@@ -84,6 +102,7 @@ void main() {
 
     test('ilipro applique les quotas professionnels', () {
       final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.ilipro);
+
       expect(rights.maxLocalSavesPerMonth, kIliProJourneyLocalSaveQuotaPerMonth);
       expect(rights.maxPdfExportsPerMonth, kIliProJourneyPdfExportQuotaPerMonth);
       expect(rights.canExportPdf, isTrue);
@@ -96,6 +115,7 @@ void main() {
         SubscriptionPlan.free,
         freeAccessMode: false,
       );
+
       expect(rights.canSendDocuments, isFalse);
       expect(rights.maxPhotosPerConversation, 1);
       expect(rights.maxAudioPerConversation, 1);
