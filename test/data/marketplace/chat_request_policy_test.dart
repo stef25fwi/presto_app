@@ -1,3 +1,4 @@
+// Tests de contrat de la validation cliente avant appel des Cloud Functions.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/data/marketplace/chat_request_policy.dart';
 
