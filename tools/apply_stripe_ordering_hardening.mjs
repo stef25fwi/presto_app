@@ -8,6 +8,13 @@ let content = await fs.readFile(path, 'utf8');
 function replaceOnce(before, after, label) {
   if (content.includes(after)) return;
   const count = content.split(before).length - 1;
+  const webhookAlreadyHardened =
+    content.includes('export function shouldApplyStripeEvent(') &&
+    content.includes('last_stripe_event_created_at') &&
+    content.includes('normalizedInvoiceStatus(');
+  if (count === 0 && webhookAlreadyHardened) {
+    return;
+  }
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
   }
