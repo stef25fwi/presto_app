@@ -14,28 +14,22 @@ void main() {
       },
     ]);
 
-    expect(
-      keywords,
-      <String>[
-        'besoin',
-        'débroussaillage',
-        'intérieure',
-        'jardinage',
-        'maison',
-        'peinture',
-        'urgent',
-        'urgente',
-      ],
-    );
+    expect(keywords, <String>[
+      'besoin',
+      'débroussaillage',
+      'intérieure',
+      'jardinage',
+      'maison',
+      'peinture',
+      'urgent',
+      'urgente',
+    ]);
   });
 
   test('ignore les mots courts et les valeurs numériques', () {
     expect(
       buildHomeOfferKeywords(<Map<String, dynamic>>[
-        <String, dynamic>{
-          'title': 'DJ 2026',
-          'description': 'job 24h serveur',
-        },
+        <String, dynamic>{'title': 'DJ 2026', 'description': 'job 24h serveur'},
       ]),
       <String>['serveur'],
     );
@@ -43,23 +37,26 @@ void main() {
 
   test('borne le nombre de suggestions', () {
     expect(
-      buildHomeOfferKeywords(
-        <Map<String, dynamic>>[
-          <String, dynamic>{'title': 'alpha bravo charlie delta echo'},
-        ],
-        maximumKeywords: 3,
-      ),
+      buildHomeOfferKeywords(<Map<String, dynamic>>[
+        <String, dynamic>{'title': 'alpha bravo charlie delta echo'},
+      ], maximumKeywords: 3),
       <String>['alpha', 'bravo', 'charlie'],
     );
   });
 
   test('refuse des limites invalides', () {
     expect(
-      () => buildHomeOfferKeywords(const <Map<String, dynamic>>[], minimumLength: 0),
+      () => buildHomeOfferKeywords(
+        const <Map<String, dynamic>>[],
+        minimumLength: 0,
+      ),
       throwsArgumentError,
     );
     expect(
-      () => buildHomeOfferKeywords(const <Map<String, dynamic>>[], maximumKeywords: 0),
+      () => buildHomeOfferKeywords(
+        const <Map<String, dynamic>>[],
+        maximumKeywords: 0,
+      ),
       throwsArgumentError,
     );
   });
