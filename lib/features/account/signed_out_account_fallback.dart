@@ -278,7 +278,7 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
             final maxCardWidth = isFullBleed ? constraints.maxWidth : 560.0;
             final availableHeight =
                 (constraints.maxHeight - (verticalPadding * 2))
-                    .clamp(420.0, double.infinity) as double;
+                    .clamp(420.0, double.infinity);
 
             return Center(
               child: ConstrainedBox(

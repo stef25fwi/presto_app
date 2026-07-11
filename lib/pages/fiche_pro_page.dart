@@ -109,9 +109,9 @@ class _FicheProPageState extends State<FicheProPage> {
       ]);
 
       final proData =
-          (results[0] as DocumentSnapshot<Map<String, dynamic>>).data() ?? {};
+          results[0].data() ?? {};
       final userData =
-          (results[1] as DocumentSnapshot<Map<String, dynamic>>).data() ?? {};
+          results[1].data() ?? {};
 
       // Fallback to legacy pros/{uid} if pro_profiles empty
       Map<String, dynamic> src = proData;
