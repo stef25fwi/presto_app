@@ -17,6 +17,9 @@ class ExpiringMemoryCache<K, V> {
   final int maximumEntries;
   final DateTime Function() _clock;
   final Map<K, _CacheEntry<V>> _entries = <K, _CacheEntry<V>>{};
+  final Map<K, Future<V>> _inFlight = <K, Future<V>>{};
+  final Map<K, int> _versions = <K, int>{};
+  int _generation = 0;
 
   int get length {
     purgeExpired();
@@ -41,36 +44,51 @@ class ExpiringMemoryCache<K, V> {
   }
 
   void put(K key, V value, {Duration? ttl}) {
-    final effectiveTtl = ttl ?? defaultTtl;
-    if (effectiveTtl.isNegative) {
-      throw ArgumentError.value(ttl, 'ttl', 'La durée ne peut pas être négative');
-    }
-
-    purgeExpired();
-    _entries.remove(key);
-    _entries[key] = _CacheEntry<V>(
-      value: value,
-      expiresAt: _clock().add(effectiveTtl),
-    );
-    _evictOverflow();
+    _bumpVersion(key);
+    _inFlight.remove(key);
+    _putValue(key, value, ttl: ttl);
   }
 
   Future<V> getOrLoad(
     K key,
     Future<V> Function() loader, {
     Duration? ttl,
-  }) async {
+  }) {
     final cached = get(key);
-    if (cached != null) return cached;
+    if (cached != null) return Future<V>.value(cached);
 
-    final loaded = await loader();
-    put(key, loaded, ttl: ttl);
-    return loaded;
+    final existingLoad = _inFlight[key];
+    if (existingLoad != null) return existingLoad;
+
+    final version = _versions[key] ?? 0;
+    final generation = _generation;
+    late final Future<V> loadFuture;
+    loadFuture = Future<V>.sync(loader).then((loaded) {
+      if (_generation == generation && (_versions[key] ?? 0) == version) {
+        _putValue(key, loaded, ttl: ttl);
+      }
+      return loaded;
+    }).whenComplete(() {
+      if (identical(_inFlight[key], loadFuture)) {
+        _inFlight.remove(key);
+      }
+    });
+    _inFlight[key] = loadFuture;
+    return loadFuture;
   }
 
-  void invalidate(K key) => _entries.remove(key);
+  void invalidate(K key) {
+    _entries.remove(key);
+    _inFlight.remove(key);
+    _bumpVersion(key);
+  }
 
-  void clear() => _entries.clear();
+  void clear() {
+    _entries.clear();
+    _inFlight.clear();
+    _versions.clear();
+    _generation += 1;
+  }
 
   int purgeExpired() {
     final now = _clock();
@@ -82,6 +100,29 @@ class ExpiringMemoryCache<K, V> {
       _entries.remove(key);
     }
     return expiredKeys.length;
+  }
+
+  void _putValue(K key, V value, {Duration? ttl}) {
+    final effectiveTtl = ttl ?? defaultTtl;
+    if (effectiveTtl.isNegative) {
+      throw ArgumentError.value(
+        ttl,
+        'ttl',
+        'La durée ne peut pas être négative',
+      );
+    }
+
+    purgeExpired();
+    _entries.remove(key);
+    _entries[key] = _CacheEntry<V>(
+      value: value,
+      expiresAt: _clock().add(effectiveTtl),
+    );
+    _evictOverflow();
+  }
+
+  void _bumpVersion(K key) {
+    _versions[key] = (_versions[key] ?? 0) + 1;
   }
 
   void _evictOverflow() {
