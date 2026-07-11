@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui' show PlatformDispatcher;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 
 import 'firebase_functions_region.dart';
 
@@ -13,14 +11,20 @@ class AppMonitoringService {
 
   static final AppMonitoringService instance = AppMonitoringService._();
 
-  static const String appBuild =
-      String.fromEnvironment('APP_BUILD', defaultValue: 'dev');
+  static const String appBuild = String.fromEnvironment(
+    'APP_BUILD',
+    defaultValue: 'dev',
+  );
 
-  static const String gitCommit =
-      String.fromEnvironment('GIT_COMMIT', defaultValue: 'unknown');
+  static const String gitCommit = String.fromEnvironment(
+    'GIT_COMMIT',
+    defaultValue: 'unknown',
+  );
 
-  static const String buildTime =
-      String.fromEnvironment('BUILD_TIME', defaultValue: 'unknown');
+  static const String buildTime = String.fromEnvironment(
+    'BUILD_TIME',
+    defaultValue: 'unknown',
+  );
 
   bool _configured = false;
 
@@ -236,10 +240,7 @@ class AppMonitoringService {
     );
   }
 
-  Future<void> logAdminConnected({
-    String? adminUid,
-    String? email,
-  }) {
+  Future<void> logAdminConnected({String? adminUid, String? email}) {
     return logCritical(
       scope: 'admin',
       action: 'admin_connected',
