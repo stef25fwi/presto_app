@@ -1,0 +1,46 @@
+name: Temporary wire consult pagination policy v2
+
+on:
+  push:
+    branches:
+      - agent/phase-4-wire-consult-pagination-policy-v2
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/phase-4-wire-consult-pagination-policy-v2
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Apply targeted refactor
+        run: |
+          node tools/temporary_wire_consult_pagination_policy.mjs
+          dart format lib/pages/consult_offers_page.dart
+
+      - name: Commit targeted change
+        run: |
+          if git diff --quiet; then
+            echo 'No generated change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/pages/consult_offers_page.dart
+          git commit -m 'refactor: branche la policy de pagination dans la consultation'
+          git push origin HEAD:agent/phase-4-wire-consult-pagination-policy-v2
