@@ -23,7 +23,6 @@ import '../main.dart'
         PrestoMonitoring,
         prestoOverlayStyleFor,
         inferRegionFromPostalCode,
-        kMarketplaceOutlineWidth,
         buildOfferDetailsOffer;
 import 'home_page.dart' show UnreadInboxBell;
 import 'account_page.dart';
