@@ -15,6 +15,18 @@ test('accepte un callable protégé par la policy centrale', () => {
   `);
   assert.equal(result.callableCount, 1);
   assert.deepEqual(result.violations, []);
+  assert.deepEqual(result.exceptions, []);
+});
+
+test('accepte une activation App Check stricte codée à true', () => {
+  const result = auditAppCheckSource(`
+    export const secure = onCall(
+      { region: PROJECT_REGION, enforceAppCheck: true },
+      async () => ({ ok: true }),
+    );
+  `);
+  assert.deepEqual(result.violations, []);
+  assert.deepEqual(result.exceptions, []);
 });
 
 test('accepte des constantes d options sûres et leurs extensions', () => {
@@ -32,6 +44,50 @@ test('accepte des constantes d options sûres et leurs extensions', () => {
   `);
   assert.equal(result.callableCount, 2);
   assert.deepEqual(result.violations, []);
+  assert.deepEqual(result.exceptions, []);
+});
+
+test('borne l exception legacy de la messagerie à un seul fichier', () => {
+  const source = `
+    const MESSAGING_CALLABLE_OPTIONS = {
+      region: PROJECT_REGION,
+      enforceAppCheck: false,
+    } as const;
+    const HOT_MESSAGING_CALLABLE_OPTIONS = {
+      ...MESSAGING_CALLABLE_OPTIONS,
+      minInstances: 1,
+    } as const;
+    export const first = onCall(
+      MESSAGING_CALLABLE_OPTIONS,
+      async () => ({ ok: true }),
+    );
+    export const second = onCall(
+      HOT_MESSAGING_CALLABLE_OPTIONS,
+      async () => ({ ok: true }),
+    );
+  `;
+  const result = auditAppCheckSource(
+    source,
+    'functions/src/modules/messaging/callables.ts',
+  );
+  assert.equal(result.callableCount, 2);
+  assert.deepEqual(result.violations, []);
+  assert.equal(result.exceptions.length, 1);
+  assert.equal(
+    result.exceptions[0].id,
+    'messaging-app-check-web-availability',
+  );
+  assert.equal(result.exceptions[0].reviewBy, '2026-08-31');
+
+  const otherFile = auditAppCheckSource(
+    source,
+    'functions/src/modules/other/callables.ts',
+  );
+  assert.deepEqual(
+    otherFile.violations.map((violation) => violation.type).sort(),
+    ['explicit-disable', 'missing-enforcement', 'missing-enforcement'],
+  );
+  assert.deepEqual(otherFile.exceptions, []);
 });
 
 test('refuse un callable sans option App Check', () => {
@@ -55,17 +111,18 @@ test('refuse une constante d options qui ne propage pas la policy', () => {
   assert.equal(result.violations[0].type, 'missing-enforcement');
 });
 
-test('refuse une désactivation explicite', () => {
+test('refuse une désactivation explicite hors exception', () => {
   const result = auditAppCheckSource(`
     export const disabled = onCall(
       { enforceAppCheck: false },
       async () => ({ ok: true }),
     );
-  `);
+  `, 'functions/src/modules/other/callables.ts');
   assert.deepEqual(
     result.violations.map((violation) => violation.type).sort(),
     ['explicit-disable', 'missing-enforcement'],
   );
+  assert.deepEqual(result.exceptions, []);
 });
 
 test('ne traite pas onRequest comme un callable App Check', () => {
@@ -76,4 +133,5 @@ test('ne traite pas onRequest comme un callable App Check', () => {
   `);
   assert.equal(result.callableCount, 0);
   assert.deepEqual(result.violations, []);
+  assert.deepEqual(result.exceptions, []);
 });
