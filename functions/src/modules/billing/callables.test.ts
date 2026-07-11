@@ -5,6 +5,7 @@ import {
   checkoutIdempotencyBucket,
   checkoutSuccessUrl,
   isBlockingSubscriptionStatus,
+  isCheckoutIntentFresh,
   normalizePlan,
 } from "./callables";
 
@@ -20,6 +21,13 @@ test("utilise une fenêtre idempotente de dix minutes", () => {
   assert.equal(checkoutIdempotencyBucket(600_000), 1);
 });
 
+test("réutilise une session Checkout encore suffisamment valide", () => {
+  const now = 1_000_000;
+  assert.equal(isCheckoutIntentFresh(now + 61_000, now), true);
+  assert.equal(isCheckoutIntentFresh(now + 60_000, now), false);
+  assert.equal(isCheckoutIntentFresh(now - 1, now), false);
+});
+
 test("bloque la création d'un second abonnement actif ou impayé", () => {
   for (const status of [
     "active",
@@ -31,6 +39,7 @@ test("bloque la création d'un second abonnement actif ou impayé", () => {
   ]) {
     assert.equal(isBlockingSubscriptionStatus(status), true, status);
   }
+  assert.equal(isBlockingSubscriptionStatus("pastDue"), true);
   assert.equal(isBlockingSubscriptionStatus("canceled"), false);
   assert.equal(isBlockingSubscriptionStatus("incomplete_expired"), false);
 });
