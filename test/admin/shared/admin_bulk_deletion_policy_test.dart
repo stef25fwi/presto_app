@@ -5,10 +5,11 @@ void main() {
   const policy = AdminBulkDeletionPolicy(maxBatchSize: 2);
 
   test('normalise, déduplique et conserve l ordre des identifiants', () {
-    expect(
-      policy.normalizeIds(<String>[' a ', '', 'b', 'a', ' c ']),
-      <String>['a', 'b', 'c'],
-    );
+    expect(policy.normalizeIds(<String>[' a ', '', 'b', 'a', ' c ']), <String>[
+      'a',
+      'b',
+      'c',
+    ]);
   });
 
   test('découpe la sélection en lots bornés', () {
@@ -32,12 +33,10 @@ void main() {
       isFalse,
     );
     expect(
-      policy.isActiveForStatistics(
-        <String, Object?>{
-          'status': 'active',
-          'deletedAt': '2026-07-11T14:00:00Z',
-        },
-      ),
+      policy.isActiveForStatistics(<String, Object?>{
+        'status': 'active',
+        'deletedAt': '2026-07-11T14:00:00Z',
+      }),
       isFalse,
     );
   });

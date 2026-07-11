@@ -4,7 +4,7 @@
 /// produit un enregistrement d’audit indépendant de Firebase.
 class AdminBulkDeletionPolicy {
   const AdminBulkDeletionPolicy({this.maxBatchSize = 200})
-      : assert(maxBatchSize > 0);
+    : assert(maxBatchSize > 0);
 
   final int maxBatchSize;
 
