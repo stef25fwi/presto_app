@@ -58,10 +58,10 @@ class SubscriptionSection extends StatelessWidget {
             }
             return Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               decoration: BoxDecoration(
                 color: _background,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: _border),
                 boxShadow: [
                   BoxShadow(
@@ -79,14 +79,14 @@ class SubscriptionSection extends StatelessWidget {
                     subtitle:
                         'Gérez votre formule, vos avantages et vos options.',
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 10),
                   SubscriptionCurrentStatusCard(
                     userId: userId,
                     userState: userState,
                     config: config,
                     service: configService,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   const _FooterNote(),
                 ],
               ),
@@ -365,14 +365,14 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
     final plan = _planFor(userState.plan);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [plan.accent.withValues(alpha: 0.08), Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: plan.accent.withValues(alpha: 0.38),
           width: 1.4,
@@ -388,12 +388,12 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
               _Badge(label: '✓ Actif', color: _green),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _PlanIcon(icon: plan.icon, color: plan.accent, size: 62),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,10 +431,10 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           _BenefitList(items: plan.currentAdvantages, color: plan.accent),
           if (showDetailsButton) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -449,7 +449,7 @@ class SubscriptionCurrentStatusCard extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: _blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
