@@ -4766,7 +4766,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 _recompute();
                               },
                               validator: (_) => null,
-                                                   // PHOTOS
+                            ),
+                          if (_category != null) const SizedBox(height: 16),
+
+                          // PHOTOS
                           PublishOfferPhotosSection(
                             visibleTileCount: _visiblePhotoTileCount,
                             maximumPhotos: _publishPhotoHardLimit,
@@ -4775,9 +4778,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             onPhotoTap: _onPhotoTileTap,
                             onPhotoLongPress: _pickImage,
                             onPhotoRemove: _removePhotoAt,
-                          ),
-                          const SizedBox(height: 16),
-
                           ),
                           const SizedBox(height: 16),
 
