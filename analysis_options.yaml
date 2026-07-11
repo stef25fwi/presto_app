@@ -24,7 +24,6 @@ analyzer:
     dead_code: ignore
     curly_braces_in_flow_control_structures: ignore
     no_leading_underscores_for_local_identifiers: ignore
-    prefer_conditional_assignment: ignore
 
 linter:
   rules:
@@ -38,4 +37,3 @@ linter:
     unnecessary_this: false
     curly_braces_in_flow_control_structures: false
     no_leading_underscores_for_local_identifiers: false
-    prefer_conditional_assignment: false
