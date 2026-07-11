@@ -87,4 +87,6 @@ await normalizeWorkflow('.github/workflows/audit-branch-validation.yml', {
   requireCiAppCheck: true,
 });
 
+await import('./apply_account_compact_spacing.mjs');
+
 console.log('validation fixes: OK');
