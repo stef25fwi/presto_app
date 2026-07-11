@@ -30,7 +30,6 @@ class ListingRepository {
       'category_id': draft.categoryId,
       'city_id': draft.cityId,
     });
-
     final payload = <String, dynamic>{
       'draft': draft.toFirestore(),
     };
@@ -118,7 +117,9 @@ class ListingRepository {
   Stream<List<MarketplaceListing>> watchPublicListings({
     String? categoryId,
     String? cityId,
+    int limit = 100,
   }) {
+    final pageSize = limit < 1 ? 1 : (limit > 100 ? 100 : limit);
     Query<Map<String, dynamic>> query = _listings
         .where('status', isEqualTo: 'active')
         .where('visibility', isEqualTo: 'public');
@@ -131,6 +132,7 @@ class ListingRepository {
 
     return query
         .orderBy('createdAt', descending: true)
+        .limit(pageSize)
         .webSafeSnapshots(debugKey: 'home.latestOffers')
         .map(
           (snapshot) => snapshot.docs
@@ -144,6 +146,7 @@ class ListingRepository {
     String? cityId,
     int limit = 50,
   }) async {
+    final pageSize = limit < 1 ? 1 : (limit > 100 ? 100 : limit);
     Query<Map<String, dynamic>> query = _listings
         .where('status', isEqualTo: 'active')
         .where('visibility', isEqualTo: 'public');
@@ -154,8 +157,10 @@ class ListingRepository {
       query = query.where('cityId', isEqualTo: cityId.trim());
     }
 
-    final snapshot =
-        await query.orderBy('createdAt', descending: true).limit(limit).get();
+    final snapshot = await query
+        .orderBy('createdAt', descending: true)
+        .limit(pageSize)
+        .get();
     return snapshot.docs
         .map(MarketplaceListing.fromFirestore)
         .toList(growable: false);
