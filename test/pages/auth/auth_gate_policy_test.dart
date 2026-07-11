@@ -51,6 +51,17 @@ void main() {
     }
   });
 
+  test('un compte lié au mot de passe reste soumis à la vérification', () {
+    expect(
+      policy.resolve(
+        signedIn: true,
+        providerIds: const <String>['google.com', 'password'],
+        emailVerified: false,
+      ),
+      AuthGateDestination.verifyEmail,
+    );
+  });
+
   test('normalise les identifiants de fournisseurs', () {
     expect(
       policy.resolve(
