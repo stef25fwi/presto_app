@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/admin_access_state.dart';
 import '../../pages/admin_messaging_moderation_page.dart';
+import 'admin_messaging_access_policy.dart';
 import 'admin_attachments_page.dart';
 import 'admin_conversation_detail_page.dart';
 import 'admin_message_report_detail_page.dart';
@@ -122,16 +123,18 @@ class _AdminMessagingCenterPageState extends State<AdminMessagingCenterPage> {
     _section = widget.initialSection;
   }
 
+  static const AdminMessagingAccessPolicy _accessPolicy =
+      AdminMessagingAccessPolicy();
+
   bool get _canManageSettings {
     final state = widget.accessState;
     if (state == null) return false;
-    final roles = <String>{
-      ...state.tokenRoles.map((item) => item.trim().toLowerCase()),
-      ...state.profileRoles.map((item) => item.trim().toLowerCase()),
-      (state.tokenPrimaryRole ?? '').trim().toLowerCase(),
-      (state.profilePrimaryRole ?? '').trim().toLowerCase(),
-    }..removeWhere((item) => item.isEmpty);
-    return roles.contains('superadmin') || roles.contains('owner');
+    return _accessPolicy.canManageSettings(
+      tokenRoles: state.tokenRoles,
+      profileRoles: state.profileRoles,
+      tokenPrimaryRole: state.tokenPrimaryRole,
+      profilePrimaryRole: state.profilePrimaryRole,
+    );
   }
 
   @override
