@@ -1,7 +1,6 @@
 // ignore_for_file: unused_element, unused_field, unused_local_variable
 
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
@@ -15,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../app_core.dart';
 import '../constants.dart';
+import '../features/offers/presentation/consult_offers_pagination_policy.dart';
 import '../features/trust_score/trust_score_service.dart';
 import '../features/trust_score/trust_score_widgets.dart';
 import '../main.dart'
@@ -98,9 +98,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     logRuntimeAction(
       area: 'consult',
       action: 'search',
-      details: <String, Object?>{
-        'query': query,
-      },
+      details: <String, Object?>{'query': query},
     );
   }
 
@@ -110,10 +108,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     logRuntimeAction(
       area: 'consult',
       action: 'filter-usage',
-      details: <String, Object?>{
-        'type': filterType,
-        'value': normalizedValue,
-      },
+      details: <String, Object?>{'type': filterType, 'value': normalizedValue},
     );
   }
 
@@ -143,10 +138,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     logRuntimeAction(
       area: 'consult',
       action: 'open-offer',
-      details: <String, Object?>{
-        'offerId': offerId,
-        'title': title,
-      },
+      details: <String, Object?>{'offerId': offerId, 'title': title},
     );
   }
 
@@ -184,18 +176,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return resolveOfferCategoryId(s) ?? _slugId(s);
   }
 
-  String? _makeCityId({
-    required String cityName,
-    required String postalCode,
-  }) {
+  String? _makeCityId({required String cityName, required String postalCode}) {
     final city = cityName.trim();
     final cp = postalCode.trim();
     if (city.isEmpty || cp.length < 3) return null; // CP requis pour stabilité
     return '${cp}_${_slugId(city)}';
   }
 
-  String? _makeCityCategoryKey(
-      {required String? cityId, required String? categoryId}) {
+  String? _makeCityCategoryKey({
+    required String? cityId,
+    required String? categoryId,
+  }) {
     if (cityId == null || categoryId == null) return null;
     return '${cityId}_$categoryId';
   }
@@ -219,9 +210,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   Future<void> _copyToClipboard(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Copié")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Copié")));
   }
 
   Future<void> _openExternalUrl(String url) async {
@@ -245,15 +236,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   // Cache du stream pour éviter de le recréer à chaque setState non pertinent.
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
-      _cachedOffersStream;
+  _cachedOffersStream;
   String? _cachedOffersStreamKey;
   final Map<String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _offersWarmCache =
+  _offersWarmCache =
       <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
   final Set<String> _offersWarmLoadsInFlight = <String>{};
 
-  final _Debouncer _filterDebounce =
-      _Debouncer(delay: const Duration(milliseconds: 300));
+  final _Debouncer _filterDebounce = _Debouncer(
+    delay: const Duration(milliseconds: 300),
+  );
 
   String? _filterCategory;
   String? _filterRegionCode;
@@ -270,10 +262,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   bool _isLoadingNextPage = false;
   bool _hasMorePages = true;
 
-  static const int _initialLimit = 20;
-  static const int _pageSize = 20;
-  static const int _maxLimit = 100;
-  int _pageLimit = _initialLimit;
+  static const ConsultOffersPaginationPolicy _paginationPolicy =
+      ConsultOffersPaginationPolicy();
+  int _pageLimit = _paginationPolicy.initialLimit;
 
   /// Mot-clé actif appliqué aux résultats (initialisé depuis searchQuery, réinitialisable)
   String? _activeSearchQuery;
@@ -429,22 +420,23 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   bool get _hasActiveClientFilters {
     final selectedCategory =
         (_filterCategory != null && _filterCategory!.isNotEmpty)
-            ? _filterCategory
-            : ((_selectedCategory != null &&
-                    _selectedCategory != 'Toutes catégories')
-                ? _selectedCategory
-                : null);
+        ? _filterCategory
+        : ((_selectedCategory != null &&
+                  _selectedCategory != 'Toutes catégories')
+              ? _selectedCategory
+              : null);
     final hasCity = _filterCityName?.trim().isNotEmpty ?? false;
     final hasSearch = _activeSearchQuery?.trim().isNotEmpty ?? false;
     final hasSubcategory =
         _selectedSubCategory != null && _selectedSubCategory!.isNotEmpty;
     final hasDept =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-            (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
-            (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
+        (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
+        (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
-    final hasBudgetRange = _advancedFilters &&
+    final hasBudgetRange =
+        _advancedFilters &&
         (min != null || max != null) &&
         _budgetRangeWarning == null;
 
@@ -466,13 +458,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     final hasExplicitEntryFilter =
         widget.categoryFilter?.trim().isNotEmpty == true ||
-            widget.searchQuery?.trim().isNotEmpty == true;
+        widget.searchQuery?.trim().isNotEmpty == true;
 
     final hasManualLocationFilter =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-            (_filterCityName != null && _filterCityName!.isNotEmpty) ||
-            _filterPostalCodeController.text.trim().isNotEmpty ||
-            _postalCodeController.text.trim().isNotEmpty;
+        (_filterCityName != null && _filterCityName!.isNotEmpty) ||
+        _filterPostalCodeController.text.trim().isNotEmpty ||
+        _postalCodeController.text.trim().isNotEmpty;
 
     if (hasExplicitEntryFilter || hasManualLocationFilter) return;
 
@@ -495,7 +487,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         departmentLabel:
             data['department'] ?? data['departement'] ?? data['departmentName'],
         city: data['city'] ?? data['ville'],
-        postalCode: data['postalCode'] ??
+        postalCode:
+            data['postalCode'] ??
             data['postal_code'] ??
             data['zipCode'] ??
             data['zip'],
@@ -545,8 +538,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     _didShowProfileDepartmentInfoPopup = true;
 
-    final userRef =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
 
     try {
       final snapshot = await userRef.get();
@@ -558,8 +552,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     if (!mounted) return;
 
-    final departmentLabel =
-        ProfileDepartmentResolver.departmentDisplayName(departmentCode);
+    final departmentLabel = ProfileDepartmentResolver.departmentDisplayName(
+      departmentCode,
+    );
 
     await showDialog<void>(
       context: context,
@@ -598,13 +593,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     );
 
     try {
-      await userRef.set(
-        {
-          'consultProfileFilterInfoDismissed': true,
-          'consultProfileFilterInfoDismissedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await userRef.set({
+        'consultProfileFilterInfoDismissed': true,
+        'consultProfileFilterInfoDismissedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     } catch (error) {
       debugPrint('[ConsultOffers] Sauvegarde fermeture popup ignorée: $error');
     }
@@ -698,9 +690,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     }
   }
 
-  Future<void> _refreshPublishedOffersCount({
-    bool force = false,
-  }) async {
+  Future<void> _refreshPublishedOffersCount({bool force = false}) async {
     if (!force && _hasActiveClientFilters) {
       return;
     }
@@ -778,18 +768,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   void _maybeLoadMore() {
     if (!_scrollController.hasClients) return;
-    if (_hasActiveClientFilters || _isLoadingNextPage || !_hasMorePages) return;
-    if (_paginationDocs.length >= _maxLimit || _lastDoc == null) return;
 
     final position = _scrollController.position;
-    const thresholdPx = 500.0;
-    if (position.maxScrollExtent - position.pixels > thresholdPx) return;
-
     final now = DateTime.now();
-    final canRequest = _lastPaginationRequestAt == null ||
-        now.difference(_lastPaginationRequestAt!) >
-            const Duration(milliseconds: 450);
-    if (!canRequest) return;
+    final shouldRequest = _paginationPolicy.shouldRequestNextPage(
+      hasActiveClientFilters: _hasActiveClientFilters,
+      isLoading: _isLoadingNextPage,
+      hasMore: _hasMorePages,
+      hasCursor: _lastDoc != null,
+      loadedCount: _paginationDocs.length,
+      pixels: position.pixels,
+      maxScrollExtent: position.maxScrollExtent,
+      now: now,
+      lastRequestAt: _lastPaginationRequestAt,
+    );
+    if (!shouldRequest) return;
 
     _lastPaginationRequestAt = now;
     unawaited(_loadNextPage());
@@ -799,12 +792,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     if (_hasActiveClientFilters || _isLoadingNextPage || !_hasMorePages) return;
     final cursor = _lastDoc;
     final key = _paginationKey;
-    if (cursor == null || key == null || _paginationDocs.length >= _maxLimit) {
-      return;
-    }
+    if (cursor == null || key == null) return;
 
-    final requestedLimit =
-        math.min(_pageSize, _maxLimit - _paginationDocs.length);
+    final requestedLimit = _paginationPolicy.nextPageLimit(
+      _paginationDocs.length,
+    );
+    if (requestedLimit <= 0) return;
     setState(() => _isLoadingNextPage = true);
 
     try {
@@ -827,8 +820,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       setState(() {
         _paginationDocs = byId.values.toList(growable: false);
         if (nextDocs.isNotEmpty) _lastDoc = nextDocs.last;
-        _hasMorePages = nextDocs.length == requestedLimit &&
-            _paginationDocs.length < _maxLimit;
+        _hasMorePages = _paginationPolicy.hasMoreAfterPage(
+          receivedCount: nextDocs.length,
+          requestedLimit: requestedLimit,
+          totalLoadedCount: _paginationDocs.length,
+        );
         _lastSnapshotRawCount = _paginationDocs.length;
         _lastResultCount = _buildDisplayedOfferDocs(_paginationDocs).length;
         _offersWarmCache[key] = _paginationDocs;
@@ -855,7 +851,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     try {
       // Simplement accéder à la map pour la forcer en mémoire
       debugPrint(
-          '[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)');
+        '[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)',
+      );
     } catch (e) {
       debugPrint('[ConsultOffers] Erreur préchargement: $e');
     }
@@ -944,7 +941,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     }
 
     _offersWarmLoadsInFlight.add(key);
-    final limit = _hasActiveClientFilters ? _maxLimit : _initialLimit;
+    final limit = _hasActiveClientFilters
+        ? _paginationPolicy.maxLimit
+        : _paginationPolicy.initialLimit;
 
     try {
       final loads = <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
@@ -968,11 +967,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       final legacy = results.length > 1
           ? results[1]
           : listings.isEmpty
-              ? await loadLegacyPublicOffersOnDemand(
-                  limit: limit,
-                  source: 'consult_legacy_warm_fallback',
-                )
-              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+          ? await loadLegacyPublicOffersOnDemand(
+              limit: limit,
+              source: 'consult_legacy_warm_fallback',
+            )
+          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final merged = mergeOfferDocsById(listings, legacy);
       final displayedCount = _buildDisplayedOfferDocs(merged).length;
 
@@ -1026,11 +1025,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       // parallèle doublait les lectures Firestore pour le même écran.
       _cachedOffersStream = _watchCombinedOffers().map((docs) {
         if (!_hasActiveClientFilters && _paginationKey == key) {
-          _paginationDocs = List<QueryDocumentSnapshot<Map<String, dynamic>>>
-              .of(docs, growable: false);
+          _paginationDocs =
+              List<QueryDocumentSnapshot<Map<String, dynamic>>>.of(
+                docs,
+                growable: false,
+              );
           _lastDoc = docs.isEmpty ? null : docs.last;
           _hasMorePages =
-              docs.length >= _initialLimit && docs.length < _maxLimit;
+              docs.length >= _paginationPolicy.initialLimit &&
+              docs.length < _paginationPolicy.maxLimit;
         }
         final displayedCount = _buildDisplayedOfferDocs(docs).length;
         _offersWarmCache[key] = docs;
@@ -1050,14 +1053,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _watchCombinedOffers() {
+  _watchCombinedOffers() {
     // ✅ Fetch-once (get) au lieu d'un snapshots() permanent: la consultation
     // publique n'a pas besoin d'un live stream. La stream émet un unique
     // résultat fusionné, puis se termine. Un changement de filtre/pagination
     // change la clé (_buildOffersStreamKey), ce qui recrée un nouveau stream
     // et déclenche un nouveau fetch. Le refresh manuel reste assuré par le
     // bouton "Actualiser" qui invalide le cache du stream.
-    final limit = _hasActiveClientFilters ? _maxLimit : _initialLimit;
+    final limit = _hasActiveClientFilters
+        ? _paginationPolicy.maxLimit
+        : _paginationPolicy.initialLimit;
     final categoryId = _effectiveListingsCategoryId();
     final cityId = _effectiveListingsCityId();
 
@@ -1074,16 +1079,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       try {
         final loads =
             <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-          loadMergedPublicOfferQueryVariants(
-            queries: buildMarketplaceListingsBrowseQueries(
-              limit: limit,
-              latestFirst: true,
-              categoryId: categoryId,
-              cityId: cityId,
-            ),
-            source: 'consult_listings_fetch',
-          ),
-        ];
+              loadMergedPublicOfferQueryVariants(
+                queries: buildMarketplaceListingsBrowseQueries(
+                  limit: limit,
+                  latestFirst: true,
+                  categoryId: categoryId,
+                  cityId: cityId,
+                ),
+                source: 'consult_listings_fetch',
+              ),
+            ];
         if (kEnableLegacyPublicOffersBackfill) {
           loads.add(
             loadMergedPublicOfferQueryVariants(
@@ -1097,11 +1102,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         final legacy = results.length > 1
             ? results[1]
             : listings.isEmpty
-                ? await loadLegacyPublicOffersOnDemand(
-                    limit: limit,
-                    source: 'consult_legacy_fetch_fallback',
-                  )
-                : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+            ? await loadLegacyPublicOffersOnDemand(
+                limit: limit,
+                source: 'consult_legacy_fetch_fallback',
+              )
+            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
         final merged = mergeOfferDocsById(listings, legacy);
         _logConsultOffersFetch(
           'success',
@@ -1192,11 +1197,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   String? _effectiveListingsCategoryId() {
     final categoryLabel =
         (_filterCategory != null && _filterCategory!.isNotEmpty)
-            ? _filterCategory
-            : ((_selectedCategory != null &&
-                    _selectedCategory != 'Toutes catégories')
-                ? _selectedCategory
-                : null);
+        ? _filterCategory
+        : ((_selectedCategory != null &&
+                  _selectedCategory != 'Toutes catégories')
+              ? _selectedCategory
+              : null);
     return _makeCategoryId(categoryLabel);
   }
 
@@ -1205,9 +1210,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final cp = _postalCodeController.text.trim();
     final filterCity = _filterCityName?.trim();
 
-    final cityName =
-        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
-    final cpForCity = (filterCity != null &&
+    final cityName = (filterCity != null && filterCity.isNotEmpty)
+        ? filterCity
+        : loc;
+    final cpForCity =
+        (filterCity != null &&
             filterCity.isNotEmpty &&
             _filterPostalCodeController.text.trim().isNotEmpty)
         ? _filterPostalCodeController.text.trim()
@@ -1237,16 +1244,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _buildDisplayedOfferDocs(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> rawDocs,
   ) {
-    final docs = rawDocs
-        .where((d) => _matchesOfferFilters(d.data()))
-        .toList(growable: false)
-      ..sort((a, b) {
-        final aTs = a.data()['createdAt'];
-        final bTs = b.data()['createdAt'];
-        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-        return bMs.compareTo(aMs);
-      });
+    final docs =
+        rawDocs
+            .where((d) => _matchesOfferFilters(d.data()))
+            .toList(growable: false)
+          ..sort((a, b) {
+            final aTs = a.data()['createdAt'];
+            final bTs = b.data()['createdAt'];
+            final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+            final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+            return bMs.compareTo(aMs);
+          });
     return docs;
   }
 
@@ -1335,12 +1343,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       final data = doc.data();
       final offerId = doc.id;
       final title = (data['title'] ?? 'Sans titre').toString();
-      final city =
-          ((data['city'] ?? data['location']) ?? 'Lieu non précisé').toString();
-      final postalCode =
-          ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
-      final category =
-          (data['category'] ?? 'Catégorie non précisée').toString();
+      final city = ((data['city'] ?? data['location']) ?? 'Lieu non précisé')
+          .toString();
+      final postalCode = ((data['postalCode'] ?? data['cp']) ?? '')
+          .toString()
+          .trim();
+      final category = (data['category'] ?? 'Catégorie non précisée')
+          .toString();
       final budgetRaw = data['budget'] ?? data['price'];
       final budget = budgetRaw is num
           ? budgetRaw.round()
@@ -1430,8 +1439,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     final regionFilter =
         (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
-            ? _filterRegionCode
-            : _selectedRegionCode;
+        ? _filterRegionCode
+        : _selectedRegionCode;
     if (regionFilter != null && regionFilter.isNotEmpty) {
       if (_offerRegionCode(data) != regionFilter) {
         return false;
@@ -1487,26 +1496,32 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
     final bool eqCat =
         (_filterCategory != null && _filterCategory!.isNotEmpty) ||
-            ((_selectedCategory ?? '').isNotEmpty &&
-                _selectedCategory != 'Toutes catégories');
+        ((_selectedCategory ?? '').isNotEmpty &&
+            _selectedCategory != 'Toutes catégories');
     final bool eqDept =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-            ((_filterRegionCode ?? '').isNotEmpty) ||
-            ((_selectedRegionCode ?? '').isNotEmpty);
+        ((_filterRegionCode ?? '').isNotEmpty) ||
+        ((_selectedRegionCode ?? '').isNotEmpty);
     final bool eqLoc =
         (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
-            _locationController.text.trim().isNotEmpty;
+        _locationController.text.trim().isNotEmpty;
     final bool eqCp = _postalCodeController.text.trim().isNotEmpty;
     final bool eqSub =
         (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
 
-    final int eqCount =
-        <bool>[eqCat, eqDept, eqLoc, eqCp, eqSub].where((b) => b).length;
+    final int eqCount = <bool>[
+      eqCat,
+      eqDept,
+      eqLoc,
+      eqCp,
+      eqSub,
+    ].where((b) => b).length;
 
     // ✅ Règle: range budget uniquement en “avancé” + idéalement peu de filtres == (sinon index explosion)
     String? budgetWarning;
     if (_advancedFilters && (min != null || max != null) && eqCount > 1) {
-      budgetWarning = "Budget (avancé) désactivé : trop de filtres combinés. "
+      budgetWarning =
+          "Budget (avancé) désactivé : trop de filtres combinés. "
           "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
     }
 
@@ -1522,10 +1537,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     setState(() {
       _budgetRangeWarning = budgetWarning;
-      _activeSearchQuery =
-          _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
+      _activeSearchQuery = _keywordCtrl.text.trim().isEmpty
+          ? null
+          : _keywordCtrl.text.trim();
       _lastDoc = null; // Reset pagination
-      _pageLimit = _initialLimit;
+      _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
       _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
@@ -1534,10 +1550,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     _refreshPublishedOffersCountIfNeeded();
   }
 
-  void _trackManualFilterCriterion(
-    String key, {
-    required bool isActive,
-  }) {
+  void _trackManualFilterCriterion(String key, {required bool isActive}) {
     if (isActive) {
       _manualAutoApplyCriteria.add(key);
     } else {
@@ -1598,7 +1611,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _budgetRangeWarning = null;
       _manualAutoApplyCriteria.clear();
       _filterPanelKey++; // Force la reconstruction du panneau
-      _pageLimit = _initialLimit;
+      _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
       _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
@@ -1628,7 +1641,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       _pruneManualAutoApplyCriteria();
       _budgetRangeWarning = null;
       _lastDoc = null;
-      _pageLimit = _initialLimit;
+      _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
       _headerTitle = _resolveConsultOffersTitle();
     });
@@ -1643,10 +1656,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     return InputChip(
       label: Text(label),
       onDeleted: onDeleted,
-      deleteIcon: const Icon(
-        Icons.close_rounded,
-        size: 18,
-      ),
+      deleteIcon: const Icon(Icons.close_rounded, size: 18),
       labelStyle: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
@@ -1654,9 +1664,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       ),
       backgroundColor: const Color(0xFFF4F8FF),
       side: const BorderSide(color: Color(0xFFBED5F8)),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(999),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       visualDensity: VisualDensity.compact,
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
@@ -1668,9 +1676,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final effectiveCategory = (_filterCategory?.trim().isNotEmpty ?? false)
         ? _filterCategory!.trim()
         : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
-                _selectedCategory != 'Toutes catégories')
-            ? _selectedCategory!.trim()
-            : null);
+                  _selectedCategory != 'Toutes catégories')
+              ? _selectedCategory!.trim()
+              : null);
     if (effectiveCategory != null) {
       chips.add(
         _buildRemovableFilterChip(
@@ -1688,8 +1696,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final effectiveRegionCode = (_filterRegionCode?.trim().isNotEmpty ?? false)
         ? _filterRegionCode!.trim()
         : ((_selectedRegionCode?.trim().isNotEmpty ?? false)
-            ? _selectedRegionCode!.trim()
-            : null);
+              ? _selectedRegionCode!.trim()
+              : null);
     if (effectiveRegionCode != null) {
       final regionLabel = kRegions[effectiveRegionCode] ?? effectiveRegionCode;
       chips.add(
@@ -1779,8 +1787,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       final budgetLabel = minBudget != null && maxBudget != null
           ? 'Budget: $minLabel - $maxLabel €'
           : minBudget != null
-              ? 'Budget: dès $minLabel €'
-              : 'Budget: jusqu’à $maxLabel €';
+          ? 'Budget: dès $minLabel €'
+          : 'Budget: jusqu’à $maxLabel €';
       chips.add(
         _buildRemovableFilterChip(
           label: budgetLabel,
@@ -1801,9 +1809,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final activeCategory = (_filterCategory?.trim().isNotEmpty ?? false)
         ? _filterCategory!.trim()
         : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
-                _selectedCategory != 'Toutes catégories')
-            ? _selectedCategory!.trim()
-            : null);
+                  _selectedCategory != 'Toutes catégories')
+              ? _selectedCategory!.trim()
+              : null);
 
     if (activeCategory == null) {
       return 'Je consulte les offres';
@@ -1901,9 +1909,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                               : null,
                           color: _showFilters ? null : Colors.white,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: const Color(0xFFE4D8DA),
-                          ),
+                          border: Border.all(color: const Color(0xFFE4D8DA)),
                           boxShadow: null,
                         ),
                         child: Row(
@@ -2011,9 +2017,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
@@ -2058,10 +2062,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                             textAlign: TextAlign.center,
                             style: kPrestoAppBarTitleStyle.copyWith(
                               color: Colors.white,
-                              fontFamily: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.fontFamily,
+                              fontFamily: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.fontFamily,
                             ),
                           ),
                         ),
@@ -2074,8 +2077,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               _buildActiveFilterChips(),
               _buildFilterPanel(),
               Expanded(
-                child: StreamBuilder<
-                    List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                child: StreamBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
                   stream: _getOffersStream(),
                   initialData: initialOfferDocs,
                   builder: (context, snapshot) {
@@ -2084,8 +2086,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                         !snapshot.hasData) {
                       return const Center(
                         child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            kPrestoOrange,
+                          ),
                         ),
                       );
                     }
@@ -2096,8 +2099,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
                       final err = snapshot.error;
                       if (err != null) {
-                        PrestoMonitoring.I
-                            .trackError('consult_offers.fetch', err);
+                        PrestoMonitoring.I.trackError(
+                          'consult_offers.fetch',
+                          err,
+                        );
                       }
 
                       final friendly = err == null
@@ -2155,9 +2160,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       );
                     }
 
-                    final snapshotDocs = snapshot.data ?? const <
-                        QueryDocumentSnapshot<Map<String, dynamic>>>[];
-                    final rawDocs = !_hasActiveClientFilters &&
+                    final snapshotDocs =
+                        snapshot.data ??
+                        const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                    final rawDocs =
+                        !_hasActiveClientFilters &&
                             _paginationKey == currentOffersStreamKey &&
                             _paginationDocs.isNotEmpty
                         ? _paginationDocs
@@ -2204,9 +2211,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                             ),
                             SizedBox(
                               height: 420,
-                              child: _EmptyOffers(
-                                onRefresh: _refreshOffers,
-                              ),
+                              child: _EmptyOffers(onRefresh: _refreshOffers),
                             ),
                           ],
                         ),
@@ -2274,14 +2279,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                               _logOfferClicked(offerId, title);
                                               Navigator.of(context).push(
                                                 MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      OfferDetailsPage(
+                                                  builder: (_) => OfferDetailsPage(
                                                     offer:
                                                         buildOfferDetailsOffer(
-                                                      offerId: offerId,
-                                                      data: data,
-                                                    ),
-                                                    currentUserId: FirebaseAuth
+                                                          offerId: offerId,
+                                                          data: data,
+                                                        ),
+                                                    currentUserId:
+                                                        FirebaseAuth
                                                             .instance
                                                             .currentUser
                                                             ?.uid ??
@@ -2313,9 +2318,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   Widget _buildFilterPanel() {
     final panelFieldBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(
-        color: Colors.white.withValues(alpha: 0.72),
-      ),
+      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.72)),
     );
 
     return AnimatedCrossFade(
@@ -2324,8 +2327,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       secondCurve: Curves.easeInCubic,
       sizeCurve: Curves.easeInOutCubicEmphasized,
       alignment: Alignment.topCenter,
-      crossFadeState:
-          _showFilters ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      crossFadeState: _showFilters
+          ? CrossFadeState.showFirst
+          : CrossFadeState.showSecond,
       firstChild: Form(
         key: ValueKey(_filterPanelKey),
         child: Theme(
@@ -2338,9 +2342,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                 color: Color(0xFF345286),
                 fontWeight: FontWeight.w700,
               ),
-              hintStyle: const TextStyle(
-                color: Color(0xFF7183A6),
-              ),
+              hintStyle: const TextStyle(color: Color(0xFF7183A6)),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 12,
@@ -2368,9 +2370,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                 ],
               ),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: const Color(0x331A73E8),
-              ),
+              border: Border.all(color: const Color(0x331A73E8)),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0x1A1A73E8),
@@ -2400,9 +2400,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                         style: OutlinedButton.styleFrom(
                           foregroundColor: kPrestoBlue,
                           backgroundColor: Colors.white.withValues(alpha: 0.97),
-                          side: const BorderSide(
-                            color: Color(0xFFCDD9F0),
-                          ),
+                          side: const BorderSide(color: Color(0xFFCDD9F0)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.w800,
@@ -2453,19 +2451,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         isDense: true,
         dropdownColor: const Color(0xFFF4F8FF),
         borderRadius: BorderRadius.circular(16),
-        decoration: const InputDecoration(
-          labelText: "Région",
-          isDense: true,
-        ),
+        decoration: const InputDecoration(labelText: "Région", isDense: true),
         items: <DropdownMenuItem<String?>>[
           const DropdownMenuItem<String?>(
             value: null,
             child: Text("Toutes régions"),
           ),
-          ...kRegionsOrdered.map((r) => DropdownMenuItem<String?>(
-                value: r.code,
-                child: Text(r.name),
-              )),
+          ...kRegionsOrdered.map(
+            (r) =>
+                DropdownMenuItem<String?>(value: r.code, child: Text(r.name)),
+          ),
         ],
         onChanged: (code) {
           setState(() {
@@ -2502,7 +2497,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final deptCodes = [..._filteredDepartmentCodes]..sort();
 
     final allowedCodes = deptCodes.toSet();
-    final safeValue = (_filterDepartmentCode != null &&
+    final safeValue =
+        (_filterDepartmentCode != null &&
             allowedCodes.contains(_filterDepartmentCode))
         ? _filterDepartmentCode
         : null; // ✅ si la valeur n’existe pas, on repasse à "Tous"
@@ -2540,11 +2536,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         borderRadius: BorderRadius.circular(16),
         decoration: InputDecoration(
           labelText: 'Département',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         items: [
           const DropdownMenuItem<String?>(
@@ -2590,11 +2586,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   // Méthodes pour la gestion de l'autocomplétion de ville dans les filtres
   List<CityRecord> _searchCities(String q) {
     final allowed = _allowedDeptCodesForCity;
-    return CitySearch.instance.search(
-      q,
-      limit: 20,
-      allowedDeptCodes: allowed,
-    );
+    return CitySearch.instance.search(q, limit: 20, allowedDeptCodes: allowed);
   }
 
   Widget _buildFilterCityField() {
@@ -2621,14 +2613,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   shrinkWrap: true,
                   itemCount: options.length,
                   itemBuilder: (context, index) {
                     final option = options.elementAt(index);
-                    final highlightedIndex =
-                        AutocompleteHighlightedOption.of(context);
+                    final highlightedIndex = AutocompleteHighlightedOption.of(
+                      context,
+                    );
                     final isHighlighted = index == highlightedIndex;
 
                     return ListTile(
@@ -2739,21 +2734,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       isDense: true,
       dropdownColor: const Color(0xFFF4F8FF),
       borderRadius: BorderRadius.circular(16),
-      decoration: const InputDecoration(
-        labelText: 'Catégorie',
-        isDense: true,
-      ),
+      decoration: const InputDecoration(labelText: 'Catégorie', isDense: true),
       items: [
         const DropdownMenuItem(
           value: null,
           child: Text('Toutes les catégories'),
         ),
-        ...kCategories.map(
-          (c) => DropdownMenuItem(
-            value: c,
-            child: Text(c),
-          ),
-        ),
+        ...kCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))),
       ],
       onChanged: (value) {
         setState(() {
@@ -2809,10 +2796,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final safePostalCode = postalCode.trim();
 
     if (safeCity.isNotEmpty && safeCity != 'Lieu non précisé') {
-      final cityRegex = RegExp(
-        _escapeRegex(safeCity),
-        caseSensitive: false,
-      );
+      final cityRegex = RegExp(_escapeRegex(safeCity), caseSensitive: false);
       title = title.replaceAll(cityRegex, ' ');
     }
 
@@ -2905,12 +2889,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     String offerId,
     Map<String, dynamic> data,
   ) async {
-    final titleCtrl =
-        TextEditingController(text: (data['title'] ?? '').toString());
-    final cityCtrl =
-        TextEditingController(text: (data['city'] ?? '').toString());
-    final descCtrl =
-        TextEditingController(text: (data['description'] ?? '').toString());
+    final titleCtrl = TextEditingController(
+      text: (data['title'] ?? '').toString(),
+    );
+    final cityCtrl = TextEditingController(
+      text: (data['city'] ?? '').toString(),
+    );
+    final descCtrl = TextEditingController(
+      text: (data['description'] ?? '').toString(),
+    );
 
     final ok = await showDialog<bool>(
       context: context,
@@ -2924,12 +2911,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                  controller: titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Titre')),
+                controller: titleCtrl,
+                decoration: const InputDecoration(labelText: 'Titre'),
+              ),
               const SizedBox(height: 8),
               TextField(
-                  controller: cityCtrl,
-                  decoration: const InputDecoration(labelText: 'Ville')),
+                controller: cityCtrl,
+                decoration: const InputDecoration(labelText: 'Ville'),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: descCtrl,
@@ -2942,11 +2931,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Enregistrer')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Enregistrer'),
+          ),
         ],
       ),
     );
@@ -2982,8 +2973,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
       if (listingsSnap.exists) {
-        final shouldKeepVisibleWithJobDone =
-            isOfferJobDoneDeletionReason(reason);
+        final shouldKeepVisibleWithJobDone = isOfferJobDoneDeletionReason(
+          reason,
+        );
         if (shouldKeepVisibleWithJobDone) {
           await TrustScoreService().closeOfferWithReason(
             offerId: offerId,
@@ -2993,9 +2985,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         } else {
           final callable = prestoFirebaseFunctions.httpsCallable(
             'deleteListing',
-            options: HttpsCallableOptions(
-              timeout: const Duration(seconds: 30),
-            ),
+            options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
           );
           await callable.call<dynamic>({
             'listingId': offerId,
@@ -3028,11 +3018,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         final message = error.code == 'permission-denied'
             ? 'Suppression refusée. Cette annonce ne vous appartient pas ou plus.'
             : error.code == 'not-found'
-                ? 'Annonce introuvable.'
-                : 'Suppression temporairement indisponible. Réessayez dans un instant.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+            ? 'Annonce introuvable.'
+            : 'Suppression temporairement indisponible. Réessayez dans un instant.';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (context.mounted) {
@@ -3140,12 +3130,12 @@ class _ConsultOfferListItem {
     required Map<String, dynamic> data,
     required _OfferBrowseTileData tileData,
   }) : this._(
-          isAd: false,
-          offerId: offerId,
-          title: title,
-          data: data,
-          tileData: tileData,
-        );
+         isAd: false,
+         offerId: offerId,
+         title: title,
+         data: data,
+         tileData: tileData,
+       );
 }
 
 class _OfferBrowseTileData {
@@ -3178,11 +3168,7 @@ class _OfferBrowseTile extends StatelessWidget {
   final _OfferBrowseTileData data;
   final VoidCallback? onTap;
 
-  const _OfferBrowseTile({
-    super.key,
-    required this.data,
-    this.onTap,
-  });
+  const _OfferBrowseTile({super.key, required this.data, this.onTap});
 
   Widget _buildFallbackPhoto() {
     return Container(
@@ -3263,9 +3249,7 @@ class _OfferBrowseTile extends StatelessWidget {
                 height: cornerAccentSize,
                 decoration: const BoxDecoration(
                   color: kPrestoBlue,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                  ),
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(24)),
                 ),
               ),
             ),
@@ -3468,8 +3452,9 @@ String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
     for (final entry in media) {
       if (entry is! Map) continue;
       final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
-      final candidate =
-          ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '').toString().trim();
+      final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
+          .toString()
+          .trim();
       if (candidate.isNotEmpty) return candidate;
     }
   }
@@ -3480,14 +3465,13 @@ String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
 class _OfferMissionDelayChip extends StatelessWidget {
   final String label;
 
-  const _OfferMissionDelayChip({
-    required this.label,
-  });
+  const _OfferMissionDelayChip({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    final cleanLabel =
-        label.trim().isEmpty ? 'Délai non précisé' : label.trim();
+    final cleanLabel = label.trim().isEmpty
+        ? 'Délai non précisé'
+        : label.trim();
 
     return Container(
       constraints: const BoxConstraints(minHeight: 30),
@@ -3495,18 +3479,12 @@ class _OfferMissionDelayChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFF6600),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: const Color(0xFFFF6600),
-        ),
+        border: Border.all(color: const Color(0xFFFF6600)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.schedule_rounded,
-            size: 14,
-            color: Colors.white,
-          ),
+          const Icon(Icons.schedule_rounded, size: 14, color: Colors.white),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -3639,7 +3617,7 @@ class UserPublicProfilePage extends StatefulWidget {
 
 class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _activeOffersFuture;
+  _activeOffersFuture;
 
   @override
   void initState() {
@@ -3648,31 +3626,32 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _loadActiveOffers() async {
+  _loadActiveOffers() async {
     // Charger depuis la collection listings (marketplace) et offers (legacy)
-    final listingsCol =
-        FirebaseFirestore.instance.collection(kListingsCollection);
+    final listingsCol = FirebaseFirestore.instance.collection(
+      kListingsCollection,
+    );
 
     final results =
         await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
-      listingsCol
-          .where('ownerId', isEqualTo: widget.userId)
-          .where(publicListingsFilter())
-          .get()
-          .then((snap) => snap.docs),
-      loadLegacyPublicOffersByOwner(
-        ownerField: 'uid',
-        ownerId: widget.userId,
-        limit: 200,
-        source: 'consult_active_offers_legacy_uid',
-      ),
-      loadLegacyPublicOffersByOwner(
-        ownerField: 'userId',
-        ownerId: widget.userId,
-        limit: 200,
-        source: 'consult_active_offers_legacy_userId',
-      ),
-    ]);
+          listingsCol
+              .where('ownerId', isEqualTo: widget.userId)
+              .where(publicListingsFilter())
+              .get()
+              .then((snap) => snap.docs),
+          loadLegacyPublicOffersByOwner(
+            ownerField: 'uid',
+            ownerId: widget.userId,
+            limit: 200,
+            source: 'consult_active_offers_legacy_uid',
+          ),
+          loadLegacyPublicOffersByOwner(
+            ownerField: 'userId',
+            ownerId: widget.userId,
+            limit: 200,
+            source: 'consult_active_offers_legacy_userId',
+          ),
+        ]);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final docs in results) {
@@ -3687,9 +3666,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     final filtered = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
     for (final doc in docs) {
       final data = doc.data();
-      if (!isVisibleInPublicBrowse(
-        data,
-      )) {
+      if (!isVisibleInPublicBrowse(data)) {
         continue;
       }
       filtered.add(doc);
@@ -3718,11 +3695,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      navigator.push(
-        MaterialPageRoute(
-          builder: (_) => const AccountPage(),
-        ),
-      );
+      navigator.push(MaterialPageRoute(builder: (_) => const AccountPage()));
       return;
     }
 
@@ -3778,8 +3751,9 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 
     final anchorDoc = offers.first;
     final anchorData = anchorDoc.data();
-    final offerTitle =
-        (anchorData['title'] ?? anchorData['titre'] ?? '').toString().trim();
+    final offerTitle = (anchorData['title'] ?? anchorData['titre'] ?? '')
+        .toString()
+        .trim();
     final offerId = anchorDoc.id;
 
     final otherUserPseudo = _extractUserPseudo(anchorData);
@@ -3856,10 +3830,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         leading: const BackButton(),
-        title: const Text(
-          'Profil',
-          style: kPrestoAppBarTitleStyle,
-        ),
+        title: const Text('Profil', style: kPrestoAppBarTitleStyle),
         centerTitle: true,
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -3952,7 +3923,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                   ),
                   const SizedBox(height: 12),
                   FutureBuilder<
-                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>>
+                  >(
                     future: _activeOffersFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -3960,8 +3932,9 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                           child: Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             child: CircularProgressIndicator(
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                kPrestoOrange,
+                              ),
                             ),
                           ),
                         );
@@ -4044,10 +4017,7 @@ class _UserOfferMiniCard extends StatelessWidget {
                         .toList();
 
                 return OfferDetailsPage(
-                  offer: buildOfferDetailsOffer(
-                    offerId: offerId,
-                    data: data,
-                  ),
+                  offer: buildOfferDetailsOffer(offerId: offerId, data: data),
                   currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
                 );
               },
