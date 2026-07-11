@@ -85,11 +85,12 @@ class _AdminListingsManagementPageState
       if (!mounted) return;
       setState(() => _errorMessage = 'Chargement impossible : $error');
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _loading = false;
-        _loadingMore = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _loadingMore = false;
+        });
+      }
     }
   }
 
@@ -117,12 +118,13 @@ class _AdminListingsManagementPageState
   }
 
   Future<String?> _askDeletionReason() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+    var reason = '';
+    return showDialog<String>(
       context: context,
       barrierDismissible: !_deleting,
       builder: (dialogContext) {
         return AlertDialog(
+          scrollable: true,
           title: Text('Supprimer ${_selectedIds.length} annonce(s) ?'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -134,11 +136,11 @@ class _AdminListingsManagementPageState
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: controller,
                 autofocus: true,
                 maxLength: 500,
                 minLines: 2,
                 maxLines: 4,
+                onChanged: (value) => reason = value,
                 decoration: const InputDecoration(
                   labelText: 'Motif obligatoire',
                   border: OutlineInputBorder(),
@@ -152,8 +154,7 @@ class _AdminListingsManagementPageState
               child: const Text('Annuler'),
             ),
             FilledButton.icon(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(controller.text.trim()),
+              onPressed: () => Navigator.of(dialogContext).pop(reason.trim()),
               icon: const Icon(Icons.delete_outline),
               label: const Text('Confirmer'),
             ),
@@ -161,8 +162,6 @@ class _AdminListingsManagementPageState
         );
       },
     );
-    controller.dispose();
-    return result;
   }
 
   Future<void> _deleteSelected() async {
