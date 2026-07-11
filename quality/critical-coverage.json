@@ -12,7 +12,7 @@
         "lib/services/email_auth_error_mapper.dart",
         "lib/services/account_social_auth_actions.dart"
       ],
-      "minimum_percent": 2.0,
+      "minimum_percent": 3.0,
       "minimum_tracked_files_percent": 94.0,
       "target_percent": 85
     },
@@ -26,8 +26,8 @@
         "lib/services/**/*stripe*.dart",
         "lib/services/**/*payment*.dart"
       ],
-      "minimum_percent": 1.0,
-      "minimum_tracked_files_percent": 88.0,
+      "minimum_percent": 14.0,
+      "minimum_tracked_files_percent": 90.0,
       "target_percent": 90
     },
     {
@@ -41,7 +41,7 @@
         "lib/services/marketplace_publish_service.dart",
         "lib/widgets/ai_publish_control.dart"
       ],
-      "minimum_percent": 23.0,
+      "minimum_percent": 23.4,
       "minimum_tracked_files_percent": 81.0,
       "target_percent": 85
     },
@@ -53,8 +53,8 @@
         "lib/data/marketplace/chat_*.dart",
         "lib/services/**/*message*.dart"
       ],
-      "minimum_percent": 0.2,
-      "minimum_tracked_files_percent": 75.0,
+      "minimum_percent": 0.8,
+      "minimum_tracked_files_percent": 80.0,
       "target_percent": 85
     },
     {
@@ -66,7 +66,7 @@
         "lib/pages/admin_*.dart",
         "lib/services/admin_*.dart"
       ],
-      "minimum_percent": 0.5,
+      "minimum_percent": 0.6,
       "minimum_tracked_files_percent": 93.0,
       "target_percent": 85
     },
@@ -80,7 +80,7 @@
         "lib/services/**/*parcours*.dart",
         "lib/services/toolbox_cache_service.dart"
       ],
-      "minimum_percent": 48.0,
+      "minimum_percent": 48.3,
       "minimum_tracked_files_percent": 100.0,
       "target_percent": 85
     }
