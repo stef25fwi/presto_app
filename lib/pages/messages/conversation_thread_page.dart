@@ -85,9 +85,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   final ScrollController _scrollController = ScrollController();
   final List<_OptimisticMessage> _optimisticMessages = <_OptimisticMessage>[];
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-      _conversationSubscription;
+  _conversationSubscription;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-      _presenceSubscription;
+  _presenceSubscription;
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> _olderMessageDocs =
       <QueryDocumentSnapshot<Map<String, dynamic>>>[];
   Timer? _typingStopTimer;
@@ -179,8 +179,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return null;
     }
 
-    final userSnapshot =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
     final userState = AppUserSubscriptionState.fromMap(userSnapshot.data());
     final entitlements = getConversationAttachmentEntitlements(
       userState.plan,
@@ -344,7 +346,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     String? firestorePath,
   }) {
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'null';
-    final detail = 'currentUser.uid=$currentUid '
+    final detail =
+        'currentUser.uid=$currentUid '
         'widget.currentUserId=${widget.currentUserId} '
         'conversationId=${widget.conversationId} '
         'path=${firestorePath ?? 'conversations/${widget.conversationId}'} '
@@ -366,7 +369,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       AdminWebDebugStore.instance.recordEvent(
         area: 'messages-thread',
         message: reason,
-        level: reason.contains('retry') ||
+        level:
+            reason.contains('retry') ||
                 reason.contains('missing') ||
                 reason.contains('not-found')
             ? 'warn'
@@ -375,9 +379,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
     }
     if (!kDebugMode) return;
-    debugPrint(
-      '[ConversationThread][access] reason=$reason $detail',
-    );
+    debugPrint('[ConversationThread][access] reason=$reason $detail');
   }
 
   String _messagingErrorCode(Object? error) {
@@ -397,8 +399,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   String _messageStreamErrorMessage(Object? error) {
     final code = _messagingErrorCode(error);
-    final isCurrentUserParticipant =
-        _participants.contains(widget.currentUserId);
+    final isCurrentUserParticipant = _participants.contains(
+      widget.currentUserId,
+    );
     switch (code) {
       case 'permission-denied':
         if (isCurrentUserParticipant) {
@@ -819,8 +822,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     required String storedPath,
     required String currentPhotoValue,
   }) async {
-    final source =
-        storedPath.isNotEmpty ? storedPath : currentPhotoValue.trim();
+    final source = storedPath.isNotEmpty
+        ? storedPath
+        : currentPhotoValue.trim();
     if (source.isEmpty || source == _otherParticipantPhotoSource) {
       return;
     }
@@ -836,8 +840,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final ref = storedPath.isNotEmpty
           ? FirebaseStorage.instance.ref().child(storedPath)
           : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
-      final downloadUrl =
-          await ref.getDownloadURL().timeout(const Duration(seconds: 12));
+      final downloadUrl = await ref.getDownloadURL().timeout(
+        const Duration(seconds: 12),
+      );
       final normalizedUrl = downloadUrl.trim();
       if (!mounted ||
           normalizedUrl.isEmpty ||
@@ -867,44 +872,51 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return;
     }
     _presenceSubscription?.cancel();
-    final userDocument =
-        FirebaseFirestore.instance.collection('users').doc(participantId);
-    _presenceSubscription = userDocument.snapshots().listen((snapshot) {
-      final data = snapshot.data();
-      if (data == null) return;
-      final rawPhotoValue = _firstProfilePhotoValue(data);
-      final storedPath = _firstStoredProfilePhotoPath(data);
-      final needsStorageResolution =
-          (rawPhotoValue.isEmpty && storedPath.isNotEmpty) ||
-              _isResolvableStorageProfilePhoto(rawPhotoValue);
-      final networkPhotoUrl =
-          _isNetworkProfilePhoto(rawPhotoValue) ? rawPhotoValue.trim() : '';
-      if (!mounted) return;
-      setState(() {
-        _otherPresenceStatus =
-            (data['status'] ?? '').toString().trim().toLowerCase();
-        _otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
-        if (!needsStorageResolution) {
-          _otherParticipantPhotoSource = networkPhotoUrl;
-          _otherParticipantPhotoUrl = networkPhotoUrl;
+    final userDocument = FirebaseFirestore.instance
+        .collection('users')
+        .doc(participantId);
+    _presenceSubscription = userDocument.snapshots().listen(
+      (snapshot) {
+        final data = snapshot.data();
+        if (data == null) return;
+        final rawPhotoValue = _firstProfilePhotoValue(data);
+        final storedPath = _firstStoredProfilePhotoPath(data);
+        final needsStorageResolution =
+            (rawPhotoValue.isEmpty && storedPath.isNotEmpty) ||
+            _isResolvableStorageProfilePhoto(rawPhotoValue);
+        final networkPhotoUrl = _isNetworkProfilePhoto(rawPhotoValue)
+            ? rawPhotoValue.trim()
+            : '';
+        if (!mounted) return;
+        setState(() {
+          _otherPresenceStatus = (data['status'] ?? '')
+              .toString()
+              .trim()
+              .toLowerCase();
+          _otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
+          if (!needsStorageResolution) {
+            _otherParticipantPhotoSource = networkPhotoUrl;
+            _otherParticipantPhotoUrl = networkPhotoUrl;
+          }
+        });
+        if (needsStorageResolution) {
+          unawaited(
+            _resolveOtherParticipantPhoto(
+              participantId: participantId,
+              storedPath: storedPath,
+              currentPhotoValue: rawPhotoValue,
+            ),
+          );
         }
-      });
-      if (needsStorageResolution) {
-        unawaited(
-          _resolveOtherParticipantPhoto(
-            participantId: participantId,
-            storedPath: storedPath,
-            currentPhotoValue: rawPhotoValue,
-          ),
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        _debugMessagingAccess(
+          'presence-listen-error',
+          error: error,
+          firestorePath: 'users/$participantId',
         );
-      }
-    }, onError: (Object error, StackTrace stackTrace) {
-      _debugMessagingAccess(
-        'presence-listen-error',
-        error: error,
-        firestorePath: 'users/$participantId',
-      );
-    });
+      },
+    );
   }
 
   void _scheduleTypingUpdate(bool isTyping) {
@@ -922,9 +934,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           .collection('conversations')
           .doc(widget.conversationId)
           .update(<String, Object?>{
-        'typing.${widget.currentUserId}': isTyping,
-        'typingUpdatedAt.${widget.currentUserId}': FieldValue.serverTimestamp(),
-      });
+            'typing.${widget.currentUserId}': isTyping,
+            'typingUpdatedAt.${widget.currentUserId}':
+                FieldValue.serverTimestamp(),
+          });
     } catch (error) {
       debugPrint('[ConversationThread] typing update skipped: $error');
     }
@@ -967,22 +980,23 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   void _openLinkedOffer() {
     final normalizedOfferId = _offerId.trim();
     if (normalizedOfferId.isEmpty) return;
-    Navigator.of(context)
-        .pushNamed('/offers/${Uri.encodeComponent(normalizedOfferId)}');
+    Navigator.of(
+      context,
+    ).pushNamed('/offers/${Uri.encodeComponent(normalizedOfferId)}');
   }
 
   Future<void> _openOtherParticipantProfile() async {
     final uid = _otherParticipantId.trim();
     if (uid.isEmpty) return;
-    final doc =
-        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
     final accountType = (doc.data()?['accountType'] ?? '').toString();
     if (accountType != 'Entreprise') return;
     if (!mounted) return;
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => FicheProPage(uid: uid, isOwner: false),
-      ),
+      MaterialPageRoute(builder: (_) => FicheProPage(uid: uid, isOwner: false)),
     );
   }
 
@@ -1054,7 +1068,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       child: FutureBuilder<_OfferPreview?>(
         future: _offerPreviewFor(normalizedOfferId),
         builder: (context, snapshot) {
-          final preview = snapshot.data ??
+          final preview =
+              snapshot.data ??
               _OfferPreview(
                 id: normalizedOfferId,
                 title: _headerOfferTitle,
@@ -1195,135 +1210,145 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final conversationDocument = FirebaseFirestore.instance
         .collection('conversations')
         .doc(widget.conversationId);
-    _conversationSubscription =
-        conversationDocument.snapshots().listen((snapshot) {
-      if (!snapshot.exists) {
+    _conversationSubscription = conversationDocument.snapshots().listen(
+      (snapshot) {
+        if (!snapshot.exists) {
+          _debugMessagingAccess(
+            'conversation-document-not-found',
+            firestorePath: 'conversations/${widget.conversationId}',
+          );
+          _handleConversationRemoved(showMessage: true);
+          return;
+        }
+
+        final data = snapshot.data();
+        if (data == null) return;
+
+        final participants = readConversationParticipants(
+          data,
+          conversationId: widget.conversationId,
+        );
+        final isCurrentUserParticipant = participants.contains(
+          widget.currentUserId,
+        );
         _debugMessagingAccess(
-          'conversation-document-not-found',
+          isCurrentUserParticipant
+              ? 'conversation-document-loaded-participant-ok'
+              : 'conversation-document-loaded-current-user-missing',
+          participants: participants,
           firestorePath: 'conversations/${widget.conversationId}',
         );
-        _handleConversationRemoved(showMessage: true);
-        return;
-      }
+        final participantNames = _readStringMap(data, const [
+          'participantNames',
+          'participant_names',
+        ]);
+        final otherParticipantId = participants.firstWhere(
+          (participantId) => participantId != widget.currentUserId,
+          orElse: () => '',
+        );
+        final otherParticipantName =
+            (participantNames[otherParticipantId] ?? '').trim().isNotEmpty
+            ? participantNames[otherParticipantId]!.trim()
+            : _readText(data, const ['otherUserName', 'other_user_name']);
+        final offerId = _readText(data, const [
+          'listingId',
+          'offerId',
+          'offer_id',
+        ]);
+        final offerTitle = _readText(data, const [
+          'listingTitle',
+          'offerTitle',
+          'offer_title',
+        ]);
+        final typingMap = _conversationValue(data, const ['typing']);
+        final typingUpdatedAtMap = _conversationValue(data, const [
+          'typingUpdatedAt',
+        ]);
+        var isOtherTyping = false;
+        if (typingMap is Map) {
+          final rawTyping = typingMap[otherParticipantId] == true;
+          final updatedAt = typingUpdatedAtMap is Map
+              ? parseFirestoreDateTime(typingUpdatedAtMap[otherParticipantId])
+              : null;
+          isOtherTyping =
+              rawTyping &&
+              (updatedAt == null ||
+                  DateTime.now().difference(updatedAt.toLocal()) <
+                      const Duration(seconds: 8));
+        }
+        _bindPresenceListener(otherParticipantId);
+        final unreadMap = _conversationValue(data, const [
+          'unreadCount',
+          'unread_count',
+        ]);
+        final unreadCount = unreadMap is Map<String, dynamic>
+            ? ((unreadMap[widget.currentUserId] as int?) ?? 0)
+            : unreadMap is Map
+            ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
+            : 0;
+        final participantChanged = otherParticipantId != _otherParticipantId;
+        final isDeletedForCurrentUser = isConversationDeletedForUser(
+          data,
+          widget.currentUserId,
+        );
 
-      final data = snapshot.data();
-      if (data == null) return;
+        if (mounted) {
+          setState(() {
+            _participants = participants;
+            _participantNames = participantNames;
+            _otherParticipantId = otherParticipantId;
+            _otherParticipantName = otherParticipantName;
+            if (participantChanged) {
+              _otherParticipantPhotoSource = '';
+              _otherParticipantPhotoUrl = '';
+            }
+            _offerId = offerId;
+            _conversationOfferTitle = offerTitle;
+            _isOtherTyping = isOtherTyping;
+            final lastReadAt = _conversationValue(data, const [
+              'lastReadAt',
+              'last_read_at',
+            ]);
+            _lastReadAt = lastReadAt is Map<String, dynamic>
+                ? lastReadAt
+                : lastReadAt is Map
+                ? Map<String, dynamic>.from(lastReadAt)
+                : const {};
+            _metaLoaded = true;
+            _isBlocked = isConversationBlocked(data);
+            _isBlockedForCurrentUser = isConversationBlockedForUser(
+              data,
+              widget.currentUserId,
+            );
+            _isBlockedByAnotherParticipant = isConversationBlockedByOtherUser(
+              data,
+              widget.currentUserId,
+            );
+            _isArchivedForCurrentUser = isConversationArchivedForUser(
+              data,
+              widget.currentUserId,
+            );
+            _isDeletedForCurrentUser = isDeletedForCurrentUser;
+          });
+        }
 
-      final participants = readConversationParticipants(
-        data,
-        conversationId: widget.conversationId,
-      );
-      final isCurrentUserParticipant =
-          participants.contains(widget.currentUserId);
-      _debugMessagingAccess(
-        isCurrentUserParticipant
-            ? 'conversation-document-loaded-participant-ok'
-            : 'conversation-document-loaded-current-user-missing',
-        participants: participants,
-        firestorePath: 'conversations/${widget.conversationId}',
-      );
-      final participantNames = _readStringMap(
-        data,
-        const ['participantNames', 'participant_names'],
-      );
-      final otherParticipantId = participants.firstWhere(
-        (participantId) => participantId != widget.currentUserId,
-        orElse: () => '',
-      );
-      final otherParticipantName =
-          (participantNames[otherParticipantId] ?? '').trim().isNotEmpty
-              ? participantNames[otherParticipantId]!.trim()
-              : _readText(
-                  data,
-                  const ['otherUserName', 'other_user_name'],
-                );
-      final offerId = _readText(
-        data,
-        const ['listingId', 'offerId', 'offer_id'],
-      );
-      final offerTitle = _readText(
-        data,
-        const ['listingTitle', 'offerTitle', 'offer_title'],
-      );
-      final typingMap = _conversationValue(data, const ['typing']);
-      final typingUpdatedAtMap =
-          _conversationValue(data, const ['typingUpdatedAt']);
-      var isOtherTyping = false;
-      if (typingMap is Map) {
-        final rawTyping = typingMap[otherParticipantId] == true;
-        final updatedAt = typingUpdatedAtMap is Map
-            ? parseFirestoreDateTime(typingUpdatedAtMap[otherParticipantId])
-            : null;
-        isOtherTyping = rawTyping &&
-            (updatedAt == null ||
-                DateTime.now().difference(updatedAt.toLocal()) <
-                    const Duration(seconds: 8));
-      }
-      _bindPresenceListener(otherParticipantId);
-      final unreadMap = _conversationValue(
-        data,
-        const ['unreadCount', 'unread_count'],
-      );
-      final unreadCount = unreadMap is Map<String, dynamic>
-          ? ((unreadMap[widget.currentUserId] as int?) ?? 0)
-          : unreadMap is Map
-              ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
-              : 0;
-      final participantChanged = otherParticipantId != _otherParticipantId;
-      final isDeletedForCurrentUser = isConversationDeletedForUser(
-        data,
-        widget.currentUserId,
-      );
+        if (isDeletedForCurrentUser) {
+          _handleConversationRemoved(showMessage: false);
+          return;
+        }
 
-      if (mounted) {
-        setState(() {
-          _participants = participants;
-          _participantNames = participantNames;
-          _otherParticipantId = otherParticipantId;
-          _otherParticipantName = otherParticipantName;
-          if (participantChanged) {
-            _otherParticipantPhotoSource = '';
-            _otherParticipantPhotoUrl = '';
-          }
-          _offerId = offerId;
-          _conversationOfferTitle = offerTitle;
-          _isOtherTyping = isOtherTyping;
-          final lastReadAt = _conversationValue(
-            data,
-            const ['lastReadAt', 'last_read_at'],
-          );
-          _lastReadAt = lastReadAt is Map<String, dynamic>
-              ? lastReadAt
-              : lastReadAt is Map
-                  ? Map<String, dynamic>.from(lastReadAt)
-                  : const {};
-          _metaLoaded = true;
-          _isBlocked = isConversationBlocked(data);
-          _isBlockedForCurrentUser =
-              isConversationBlockedForUser(data, widget.currentUserId);
-          _isBlockedByAnotherParticipant =
-              isConversationBlockedByOtherUser(data, widget.currentUserId);
-          _isArchivedForCurrentUser =
-              isConversationArchivedForUser(data, widget.currentUserId);
-          _isDeletedForCurrentUser = isDeletedForCurrentUser;
-        });
-      }
-
-      if (isDeletedForCurrentUser) {
-        _handleConversationRemoved(showMessage: false);
-        return;
-      }
-
-      if (unreadCount > 0) {
-        _markAsRead();
-      }
-    }, onError: (error, stackTrace) {
-      _debugMessagingAccess(
-        'conversation-document-listen-error',
-        error: error,
-        firestorePath: 'conversations/${widget.conversationId}',
-      );
-    });
+        if (unreadCount > 0) {
+          _markAsRead();
+        }
+      },
+      onError: (error, stackTrace) {
+        _debugMessagingAccess(
+          'conversation-document-listen-error',
+          error: error,
+          firestorePath: 'conversations/${widget.conversationId}',
+        );
+      },
+    );
   }
 
   void _handleConversationRemoved({required bool showMessage}) {
@@ -1392,8 +1417,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final cursor = _olderMessageDocs.isNotEmpty
         ? _olderMessageDocs.last
         : liveDocs.isNotEmpty
-            ? liveDocs.last
-            : null;
+        ? liveDocs.last
+        : null;
     if (cursor == null) return;
 
     setState(() {
@@ -1572,10 +1597,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           selection: TextSelection.collapsed(offset: rawDraft.length),
         );
       }
-      showErrorSnackBar(
-        context,
-        _sendMessageErrorMessage(error),
-      );
+      showErrorSnackBar(context, _sendMessageErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() {
@@ -1640,8 +1662,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   void _markOptimisticMessageFailed(String id) {
     if (!mounted) return;
     setState(() {
-      final index =
-          _optimisticMessages.indexWhere((message) => message.id == id);
+      final index = _optimisticMessages.indexWhere(
+        (message) => message.id == id,
+      );
       if (index < 0) return;
       _optimisticMessages[index] = _optimisticMessages[index].copyWith(
         status: _OptimisticMessageStatus.failed,
@@ -1683,10 +1706,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       debugPrint('[ConversationThread] retry send error: $error');
       _markOptimisticMessageFailed(message.id);
       if (!mounted) return;
-      showErrorSnackBar(
-        context,
-        'Le message n’a pas pu être renvoyé.',
-      );
+      showErrorSnackBar(context, 'Le message n’a pas pu être renvoyé.');
     } finally {
       if (mounted) {
         setState(() {
@@ -1697,7 +1717,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _handleConversationAction(
-      _ConversationThreadAction action) async {
+    _ConversationThreadAction action,
+  ) async {
     try {
       final ready = await _ensureMessagingAccess(interactive: true);
       if (!mounted) return;
@@ -1705,31 +1726,36 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       switch (action) {
         case _ConversationThreadAction.archive:
           await ConversationService.archiveConversation(
-              conversationId: widget.conversationId);
+            conversationId: widget.conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation archivee.');
           return;
         case _ConversationThreadAction.unarchive:
           await ConversationService.unarchiveConversation(
-              conversationId: widget.conversationId);
+            conversationId: widget.conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation restauree.');
           return;
         case _ConversationThreadAction.block:
           await ConversationService.blockConversation(
-              conversationId: widget.conversationId);
+            conversationId: widget.conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation bloquee.');
           return;
         case _ConversationThreadAction.unblock:
           await ConversationService.unblockConversation(
-              conversationId: widget.conversationId);
+            conversationId: widget.conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
         case _ConversationThreadAction.adminUnblock:
           await ConversationService.adminUnblockConversation(
-              conversationId: widget.conversationId);
+            conversationId: widget.conversationId,
+          );
           if (!mounted) return;
           setState(() {
             _isBlocked = false;
@@ -1772,7 +1798,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           );
           if (confirmed != true || !mounted) return;
           await ConversationService.deleteConversation(
-              conversationId: widget.conversationId);
+            conversationId: widget.conversationId,
+          );
           if (!mounted) return;
           _hasHandledConversationRemoval = true;
           showSuccessSnackBar(
@@ -1804,10 +1831,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           message: _isBlockedForCurrentUser
               ? 'Vous avez bloque cette conversation. Debloquez-la pour reprendre les echanges.'
               : _isBlockedByAnotherParticipant
-                  ? _isAdminViewer
-                      ? 'Cette conversation a ete bloquee par un participant. Un admin peut la debloquer.'
-                      : 'Cette conversation a ete bloquee par l autre participant.'
-                  : 'Cette conversation est actuellement bloquee.',
+              ? _isAdminViewer
+                    ? 'Cette conversation a ete bloquee par un participant. Un admin peut la debloquer.'
+                    : 'Cette conversation a ete bloquee par l autre participant.'
+              : 'Cette conversation est actuellement bloquee.',
         ),
       );
     }
@@ -1931,8 +1958,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
 
     try {
-      final snapshot =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final rawUsage = snapshot.data()?['messageEmojiUsage'];
 
       final usage = <String, int>{};
@@ -1974,7 +2003,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       });
     } catch (error) {
       debugPrint(
-          '[ConversationThread] Chargement emojis fréquents ignoré: $error');
+        '[ConversationThread] Chargement emojis fréquents ignoré: $error',
+      );
       if (!mounted) return;
       setState(() => _quickEmojis = _defaultQuickEmojis);
     }
@@ -2001,10 +2031,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         _emojiUsageCounts = nextUsage;
         _quickEmojis = nextQuickEmojis.isEmpty
             ? _defaultQuickEmojis
-            : [
-                ...nextQuickEmojis,
-                ..._defaultQuickEmojis,
-              ].fold<List<String>>(
+            : [...nextQuickEmojis, ..._defaultQuickEmojis].fold<List<String>>(
                 <String>[],
                 (list, item) {
                   if (!list.contains(item) && list.length < 6) {
@@ -2020,18 +2047,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (uid == null || uid.isEmpty) return;
 
     try {
-      await FirebaseFirestore.instance.collection('users').doc(uid).set(
-        {
-          'messageEmojiUsage': {
-            cleanEmoji: FieldValue.increment(1),
-          },
-          'messageEmojiUsageUpdatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'messageEmojiUsage': {cleanEmoji: FieldValue.increment(1)},
+        'messageEmojiUsageUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     } catch (error) {
       debugPrint(
-          '[ConversationThread] Sauvegarde emoji fréquent ignorée: $error');
+        '[ConversationThread] Sauvegarde emoji fréquent ignorée: $error',
+      );
     }
   }
 
@@ -2069,10 +2092,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       horizontal: 7,
                       vertical: 4,
                     ),
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 19),
-                    ),
+                    child: Text(emoji, style: const TextStyle(fontSize: 19)),
                   ),
                 ),
             ],
@@ -2102,20 +2122,21 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               .doc(uid)
               .snapshots(),
           builder: (context, userSnapshot) {
-            final userState =
-                AppUserSubscriptionState.fromMap(userSnapshot.data?.data());
+            final userState = AppUserSubscriptionState.fromMap(
+              userSnapshot.data?.data(),
+            );
             final entitlements = getConversationAttachmentEntitlements(
               userState.plan,
               freeAccessMode: config.freeAccessMode,
             );
 
             final message = entitlements.canSendDocuments
-              ? 'ilipresto+ actif pour cette conversation: fichiers, photos et audio débloqués.'
-              : 'Gratuit: 1 photo + 1 audio par conversation. Les documents demandent ilipresto+.';
+                ? 'ilipresto+ actif pour cette conversation: fichiers, photos et audio débloqués.'
+                : 'Gratuit: 1 photo + 1 audio par conversation. Les documents demandent ilipresto+.';
 
             final accentColor = entitlements.canSendDocuments
-              ? kPrestoBlue
-              : kPrestoOrange;
+                ? kPrestoBlue
+                : kPrestoOrange;
 
             return Container(
               width: double.infinity,
@@ -2124,15 +2145,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: accentColor.withValues(alpha: 0.18),
-                ),
+                border: Border.all(color: accentColor.withValues(alpha: 0.18)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.workspace_premium_rounded,
-                      color: accentColor, size: 18),
+                  Icon(
+                    Icons.workspace_premium_rounded,
+                    color: accentColor,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -2345,7 +2367,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<ProcessedConversationPhoto> _processPhotoWithRetry(
-      String storagePath) async {
+    String storagePath,
+  ) async {
     try {
       return await ConversationService.processConversationPhoto(
         conversationId: widget.conversationId,
@@ -2393,7 +2416,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final ready = await _ensureMessagingAccess(interactive: true);
       if (!ready) return;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final path = 'messageAttachments/$uid/${widget.conversationId}/'
+      final path =
+          'messageAttachments/$uid/${widget.conversationId}/'
           '${timestamp}_${_safeAttachmentName(name, 'piece-jointe')}';
       final ref = FirebaseStorage.instance.ref().child(path);
       await ref.putData(bytes, SettableMetadata(contentType: mimeType));
@@ -2426,10 +2450,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     } catch (error) {
       debugPrint('[ConversationThread] attachment upload error: $error');
       if (!mounted) return;
-      showErrorSnackBar(
-        context,
-        _attachmentUploadErrorMessage(error),
-      );
+      showErrorSnackBar(context, _attachmentUploadErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() => _isUploadingAttachment = false);
@@ -2442,8 +2463,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (authUser == null) return;
 
     final draftText = _controller.text.trim();
-    final text =
-        draftText.isEmpty ? _attachmentMessageText(attachment) : draftText;
+    final text = draftText.isEmpty
+        ? _attachmentMessageText(attachment)
+        : draftText;
     final optimisticMessage = _OptimisticMessage(
       id: 'local-attachment-${DateTime.now().microsecondsSinceEpoch}',
       text: text,
@@ -2481,7 +2503,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _markOptimisticMessageFailed(optimisticMessage.id);
       if (!mounted) return;
       showErrorSnackBar(
-          context, 'La pièce jointe est prête mais l’envoi a échoué.');
+        context,
+        'La pièce jointe est prête mais l’envoi a échoué.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -2507,8 +2531,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 },
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.description_outlined, color: kPrestoBlue),
+                leading: const Icon(
+                  Icons.description_outlined,
+                  color: kPrestoBlue,
+                ),
                 title: const Text('Fichier'),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -2526,7 +2552,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
       showErrorSnackBar(
-          context, 'Connectez-vous pour envoyer une note vocale.');
+        context,
+        'Connectez-vous pour envoyer une note vocale.',
+      );
       return;
     }
     final allowed = await _ensureAttachmentAllowed(
@@ -2598,10 +2626,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
     String path;
     try {
-      path = await createTempAudioPath(
-        prefix: 'note_vocale',
-        extension: 'm4a',
-      );
+      path = await createTempAudioPath(prefix: 'note_vocale', extension: 'm4a');
       await recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.aacEld,
@@ -2812,7 +2837,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (authUser == null) {
       if (mounted) {
         showErrorSnackBar(
-            context, 'Connectez-vous pour envoyer une note vocale.');
+          context,
+          'Connectez-vous pour envoyer une note vocale.',
+        );
       }
       return;
     }
@@ -2828,7 +2855,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       } catch (_) {
         if (mounted) {
           showErrorSnackBar(
-              context, 'Erreur lors de la lecture de la note vocale.');
+            context,
+            'Erreur lors de la lecture de la note vocale.',
+          );
         }
         return;
       }
@@ -2836,8 +2865,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
     final secs = preview.duration.inSeconds;
     final safeSeconds = secs <= 0 ? 1 : secs;
-    final extension =
-        preview.extension.trim().isEmpty ? 'm4a' : preview.extension.trim();
+    final extension = preview.extension.trim().isEmpty
+        ? 'm4a'
+        : preview.extension.trim();
     final name = 'note_vocale_${safeSeconds}s.$extension';
     await _uploadAndSendAttachment(
       uid: authUser.uid,
@@ -2868,7 +2898,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _showAttachmentActionsSheet(
-      _MessageAttachment attachment) async {
+    _MessageAttachment attachment,
+  ) async {
     final overlayTheme = context.prestoOverlayTheme;
     await showModalBottomSheet<void>(
       context: context,
@@ -2984,15 +3015,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
     try {
       if (kIsWeb) {
-        await Share.share(
-          uri.toString(),
-          subject: attachment.name,
-        );
+        await Share.share(uri.toString(), subject: attachment.name);
         return;
       }
 
-      final localPath =
-          await _downloadAttachmentToTempFile(attachment, uri: uri);
+      final localPath = await _downloadAttachmentToTempFile(
+        attachment,
+        uri: uri,
+      );
       if (localPath == null) {
         return;
       }
@@ -3001,8 +3031,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         [
           XFile(
             localPath,
-            mimeType:
-                attachment.mimeType.trim().isEmpty ? null : attachment.mimeType,
+            mimeType: attachment.mimeType.trim().isEmpty
+                ? null
+                : attachment.mimeType,
             name: attachment.name,
           ),
         ],
@@ -3012,7 +3043,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     } catch (_) {
       if (mounted) {
         showErrorSnackBar(
-            context, 'Impossible de partager cette pièce jointe.');
+          context,
+          'Impossible de partager cette pièce jointe.',
+        );
       }
     }
   }
@@ -3111,143 +3144,148 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
 
     if (attachment.type == 'image') {
-      final fullUrl =
-          attachment.url.isNotEmpty ? attachment.url : attachment.thumbnailUrl;
-      return buildDeleteOverlay(GestureDetector(
-        onTap: () => showGeneralDialog<void>(
-          context: context,
-          barrierDismissible: true,
-          barrierLabel: 'Fermer',
-          barrierColor: Colors.black,
-          transitionDuration: Duration.zero,
-          pageBuilder: (ctx, _, __) => Material(
-            color: Colors.black,
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  Center(
-                    child: InteractiveViewer(
-                      minScale: 0.5,
-                      maxScale: 4.0,
-                      child: OfferNetworkImage(
-                        url: fullUrl,
-                        fit: BoxFit.contain,
-                        errorChild: const Icon(
-                          Icons.broken_image_outlined,
-                          color: Colors.white54,
-                          size: 64,
-                        ),
-                        loadingChild: const SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white70,
+      final fullUrl = attachment.url.isNotEmpty
+          ? attachment.url
+          : attachment.thumbnailUrl;
+      return buildDeleteOverlay(
+        GestureDetector(
+          onTap: () => showGeneralDialog<void>(
+            context: context,
+            barrierDismissible: true,
+            barrierLabel: 'Fermer',
+            barrierColor: Colors.black,
+            transitionDuration: Duration.zero,
+            pageBuilder: (ctx, _, __) => Material(
+              color: Colors.black,
+              child: SafeArea(
+                child: Stack(
+                  children: [
+                    Center(
+                      child: InteractiveViewer(
+                        minScale: 0.5,
+                        maxScale: 4.0,
+                        child: OfferNetworkImage(
+                          url: fullUrl,
+                          fit: BoxFit.contain,
+                          errorChild: const Icon(
+                            Icons.broken_image_outlined,
+                            color: Colors.white54,
+                            size: 64,
+                          ),
+                          loadingChild: const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white70,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    right: 18,
-                    bottom: 18,
-                    child: IgnorePointer(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.18),
+                    Positioned(
+                      right: 18,
+                      bottom: 18,
+                      child: IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
                           ),
-                        ),
-                        child: Text(
-                          'iliprestō',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.92),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.1,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: Text(
+                            'iliprestō',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.1,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.of(ctx).pop(),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: SizedBox(
-            width: 240,
-            height: 170,
-            child: OfferNetworkImage(
-              url: attachment.thumbnailUrl,
-              fit: BoxFit.cover,
-              loadingChild: Container(
-                color: const Color(0xFFF3F4F6),
-                alignment: Alignment.center,
-                child: const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  ],
                 ),
               ),
-              errorChild: Container(
-                color: const Color(0xFFF3F4F6),
-                alignment: Alignment.center,
-                child: const Icon(Icons.broken_image_outlined),
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: SizedBox(
+              width: 240,
+              height: 170,
+              child: OfferNetworkImage(
+                url: attachment.thumbnailUrl,
+                fit: BoxFit.cover,
+                loadingChild: Container(
+                  color: const Color(0xFFF3F4F6),
+                  alignment: Alignment.center,
+                  child: const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                errorChild: Container(
+                  color: const Color(0xFFF3F4F6),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.broken_image_outlined),
+                ),
               ),
             ),
           ),
         ),
-      ));
+      );
     }
 
     if (attachment.type == 'audio') {
       return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url));
     }
 
-    return buildDeleteOverlay(SizedBox(
-      width: 44,
-      height: 44,
-      child: Material(
-        color: const Color(0xFFE5E7EB),
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Material(
-            color: const Color(0xFFE5E7EB),
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => unawaited(_openAttachment(attachment)),
-              customBorder: const CircleBorder(),
-              child: Icon(
-                Icons.attach_file_rounded,
-                color: const Color(0xFF9CA3AF),
-                size: 22,
+    return buildDeleteOverlay(
+      SizedBox(
+        width: 44,
+        height: 44,
+        child: Material(
+          color: const Color(0xFFE5E7EB),
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Material(
+              color: const Color(0xFFE5E7EB),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => unawaited(_openAttachment(attachment)),
+                customBorder: const CircleBorder(),
+                child: Icon(
+                  Icons.attach_file_rounded,
+                  color: const Color(0xFF9CA3AF),
+                  size: 22,
+                ),
               ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildAttachmentPreviews(
@@ -3292,10 +3330,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       child: _otherParticipantPhotoUrl.isEmpty
           ? Text(
               _conversationInitial(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
             )
           : null,
     );
@@ -3326,7 +3361,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     ];
     final hideAttachmentText = _shouldHideAttachmentText(text, attachments);
 
-    final canDeleteAttachments = isMine &&
+    final canDeleteAttachments =
+        isMine &&
         messageDocId != null &&
         attachments.isNotEmpty &&
         sentAt != null &&
@@ -3346,21 +3382,25 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           color: failed
               ? const Color(0xFFFFE4E6)
               : isMine
-                  ? kThreadMineColor
-                  : kThreadOtherColor,
+              ? kThreadMineColor
+              : kThreadOtherColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(!isMine && groupedWithNewer ? 8 : 18),
             topRight: Radius.circular(isMine && groupedWithNewer ? 8 : 18),
-            bottomLeft: Radius.circular(!isMine && groupedWithOlder
-                ? 8
-                : isMine
-                    ? 18
-                    : 4),
-            bottomRight: Radius.circular(isMine && groupedWithOlder
-                ? 8
-                : isMine
-                    ? 4
-                    : 18),
+            bottomLeft: Radius.circular(
+              !isMine && groupedWithOlder
+                  ? 8
+                  : isMine
+                  ? 18
+                  : 4,
+            ),
+            bottomRight: Radius.circular(
+              isMine && groupedWithOlder
+                  ? 8
+                  : isMine
+                  ? 4
+                  : 18,
+            ),
           ),
           boxShadow: [
             BoxShadow(
@@ -3371,8 +3411,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ],
         ),
         child: Column(
-          crossAxisAlignment:
-              isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMine
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!isMine && senderName.isNotEmpty)
               Padding(
@@ -3567,8 +3608,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 value: _isArchivedForCurrentUser
                     ? _ConversationThreadAction.unarchive
                     : _ConversationThreadAction.archive,
-                child:
-                    Text(_isArchivedForCurrentUser ? 'Restaurer' : 'Archiver'),
+                child: Text(
+                  _isArchivedForCurrentUser ? 'Restaurer' : 'Archiver',
+                ),
               ),
               if (_isBlockedForCurrentUser)
                 const PopupMenuItem<_ConversationThreadAction>(
@@ -3592,10 +3634,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 ),
               const PopupMenuItem<_ConversationThreadAction>(
                 value: _ConversationThreadAction.delete,
-                child: Text(
-                  'Supprimer',
-                  style: TextStyle(color: Colors.red),
-                ),
+                child: Text('Supprimer', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -3621,7 +3660,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             return const Center(
                               child: CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    kPrestoOrange),
+                                  kPrestoOrange,
+                                ),
                               ),
                             );
                           }
@@ -3636,10 +3676,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             if (_messagingErrorCode(snapshot.error) ==
                                 'permission-denied') {
                               _retryMessageStreamAccessAfterDenied(
-                                  snapshot.error);
+                                snapshot.error,
+                              );
                             }
-                            final message =
-                                _messageStreamErrorMessage(snapshot.error);
+                            final message = _messageStreamErrorMessage(
+                              snapshot.error,
+                            );
                             return Center(
                               child: Padding(
                                 padding: const EdgeInsets.all(24),
@@ -3672,7 +3714,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                           final docs = _mergeMessageDocs(liveDocs);
                           final visibleItemCount =
                               docs.length + _optimisticMessages.length;
-                          final canLoadMore = docs.isNotEmpty &&
+                          final canLoadMore =
+                              docs.isNotEmpty &&
                               (_hasAttemptedOlderPagination
                                   ? _hasMoreMessages
                                   : liveDocs.length >= _messagePageSize);
@@ -3701,18 +3744,24 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       _isNearLatestMessage()) {
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
-                                      if (!mounted) return;
-                                      setState(
-                                          () => _showNewMessagesButton = false);
-                                    });
+                                          if (!mounted) return;
+                                          setState(
+                                            () =>
+                                                _showNewMessagesButton = false,
+                                          );
+                                        });
                                   }
                                   return false;
                                 },
                                 child: ListView.builder(
                                   controller: _scrollController,
                                   reverse: true,
-                                  padding:
-                                      const EdgeInsets.fromLTRB(6, 8, 6, 16),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    6,
+                                    8,
+                                    6,
+                                    16,
+                                  ),
                                   itemCount: visibleItemCount + 1,
                                   itemBuilder: (context, index) {
                                     if (index == visibleItemCount) {
@@ -3725,27 +3774,30 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                               onPressed: _isLoadingMoreMessages
                                                   ? null
                                                   : () => _loadMoreMessages(
-                                                      liveDocs),
+                                                      liveDocs,
+                                                    ),
                                               icon: _isLoadingMoreMessages
                                                   ? const SizedBox(
                                                       width: 16,
                                                       height: 16,
                                                       child:
                                                           CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                      ),
+                                                            strokeWidth: 2,
+                                                          ),
                                                     )
                                                   : const Icon(
                                                       Icons.history_rounded,
-                                                      size: 16),
+                                                      size: 16,
+                                                    ),
                                               label: Text(
                                                 _isLoadingMoreMessages
                                                     ? 'Chargement...'
                                                     : 'Charger les messages plus anciens',
                                               ),
                                               style: TextButton.styleFrom(
-                                                foregroundColor:
-                                                    const Color(0xFF6B7280),
+                                                foregroundColor: const Color(
+                                                  0xFF6B7280,
+                                                ),
                                                 textStyle: const TextStyle(
                                                   fontSize: 13,
                                                   fontWeight: FontWeight.w600,
@@ -3767,17 +3819,20 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                         sentAt: optimisticMessage.sentAt,
                                         attachments:
                                             optimisticMessage.attachments,
-                                        statusLabel: optimisticMessage.status ==
+                                        statusLabel:
+                                            optimisticMessage.status ==
                                                 _OptimisticMessageStatus.failed
                                             ? 'Non envoyé'
                                             : 'Envoi...',
-                                        failed: optimisticMessage.status ==
+                                        failed:
+                                            optimisticMessage.status ==
                                             _OptimisticMessageStatus.failed,
-                                        onRetry: optimisticMessage.status ==
+                                        onRetry:
+                                            optimisticMessage.status ==
                                                 _OptimisticMessageStatus.failed
                                             ? () => _retryOptimisticMessage(
-                                                  optimisticMessage,
-                                                )
+                                                optimisticMessage,
+                                              )
                                             : null,
                                       );
                                     }
@@ -3788,30 +3843,35 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     final text =
                                         ((data['text'] ?? data['body']) ?? '')
                                             .toString();
-                                    final senderId = ((data['senderId'] ??
-                                                data['sender_id']) ??
-                                            '')
-                                        .toString();
-                                    final senderName = ((data['senderName'] ??
-                                                data['sender_name']) ??
-                                            '')
-                                        .toString();
+                                    final senderId =
+                                        ((data['senderId'] ??
+                                                    data['sender_id']) ??
+                                                '')
+                                            .toString();
+                                    final senderName =
+                                        ((data['senderName'] ??
+                                                    data['sender_name']) ??
+                                                '')
+                                            .toString();
                                     final sentAt = parseFirestoreDateTime(
                                       (data['createdAt'] ?? data['created_at']),
                                     );
                                     final olderMessageDate =
                                         docIndex + 1 < docs.length
-                                            ? parseFirestoreDateTime(
-                                                (docs[docIndex + 1]
-                                                        .data()['createdAt'] ??
-                                                    docs[docIndex + 1]
-                                                        .data()['created_at']),
-                                              )
-                                            : null;
-                                    final showDateChip = sentAt != null &&
+                                        ? parseFirestoreDateTime(
+                                            (docs[docIndex + 1]
+                                                    .data()['createdAt'] ??
+                                                docs[docIndex + 1]
+                                                    .data()['created_at']),
+                                          )
+                                        : null;
+                                    final showDateChip =
+                                        sentAt != null &&
                                         (olderMessageDate == null ||
                                             !_isSameCalendarDay(
-                                                sentAt, olderMessageDate));
+                                              sentAt,
+                                              olderMessageDate,
+                                            ));
                                     final isMine =
                                         senderId == widget.currentUserId;
                                     final readReceipt = isMine
@@ -3820,47 +3880,48 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     final messageDocId = docs[docIndex].id;
                                     final attachments =
                                         _MessageAttachment.fromList(
-                                      data['attachments'],
-                                    );
+                                          data['attachments'],
+                                        );
                                     final moderation =
                                         _MessageModeration.fromMap(
-                                      data['moderation'],
-                                    );
+                                          data['moderation'],
+                                        );
                                     final isDeleted = data['deletedAt'] != null;
                                     final isDeletingMessage =
-                                        _deletingMessageIds
-                                            .contains(messageDocId);
+                                        _deletingMessageIds.contains(
+                                          messageDocId,
+                                        );
                                     final showAsDeleted =
                                         isDeleted || isDeletingMessage;
                                     final showAsModerated =
                                         moderation.shouldHideContent &&
-                                            !showAsDeleted;
+                                        !showAsDeleted;
 
                                     final newerSenderId = docIndex > 0
                                         ? ((docs[docIndex - 1]
-                                                        .data()['senderId'] ??
-                                                    docs[docIndex - 1]
-                                                        .data()['sender_id']) ??
-                                                '')
-                                            .toString()
+                                                          .data()['senderId'] ??
+                                                      docs[docIndex - 1]
+                                                          .data()['sender_id']) ??
+                                                  '')
+                                              .toString()
                                         : '';
-                                    final olderSenderId = docIndex + 1 <
-                                            docs.length
+                                    final olderSenderId =
+                                        docIndex + 1 < docs.length
                                         ? ((docs[docIndex + 1]
-                                                        .data()['senderId'] ??
-                                                    docs[docIndex + 1]
-                                                        .data()['sender_id']) ??
-                                                '')
-                                            .toString()
+                                                          .data()['senderId'] ??
+                                                      docs[docIndex + 1]
+                                                          .data()['sender_id']) ??
+                                                  '')
+                                              .toString()
                                         : '';
                                     final groupedWithNewer =
                                         newerSenderId == senderId &&
-                                            newerSenderId.isNotEmpty &&
-                                            !showDateChip;
+                                        newerSenderId.isNotEmpty &&
+                                        !showDateChip;
                                     final groupedWithOlder =
                                         olderSenderId == senderId &&
-                                            olderSenderId.isNotEmpty &&
-                                            !showDateChip;
+                                        olderSenderId.isNotEmpty &&
+                                        !showDateChip;
 
                                     final messageBubble = _buildMessageBubble(
                                       text: text,
@@ -3883,8 +3944,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                           ? () async {
                                               final scaffoldMessenger =
                                                   ScaffoldMessenger.of(context);
-                                              final confirmed =
-                                                  await showDialog<bool>(
+                                              final confirmed = await showDialog<bool>(
                                                 context: context,
                                                 builder: (ctx) {
                                                   final overlayTheme =
@@ -3905,29 +3965,34 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                     shape: overlayTheme
                                                         .dialogShape,
                                                     title: const Text(
-                                                        'Supprimer ce message'),
+                                                      'Supprimer ce message',
+                                                    ),
                                                     content: const Text(
                                                       'Le contenu sera remplacé par « Message supprimé ». La bulle reste visible avec la date et l\'heure.',
                                                     ),
                                                     actions: [
                                                       TextButton(
                                                         onPressed: () =>
-                                                            Navigator.of(ctx)
-                                                                .pop(false),
+                                                            Navigator.of(
+                                                              ctx,
+                                                            ).pop(false),
                                                         child: const Text(
-                                                            'Annuler'),
+                                                          'Annuler',
+                                                        ),
                                                       ),
                                                       TextButton(
                                                         onPressed: () =>
-                                                            Navigator.of(ctx)
-                                                                .pop(true),
-                                                        style: TextButton
-                                                            .styleFrom(
-                                                          foregroundColor:
-                                                              Colors.red,
-                                                        ),
+                                                            Navigator.of(
+                                                              ctx,
+                                                            ).pop(true),
+                                                        style:
+                                                            TextButton.styleFrom(
+                                                              foregroundColor:
+                                                                  Colors.red,
+                                                            ),
                                                         child: const Text(
-                                                            'Supprimer'),
+                                                          'Supprimer',
+                                                        ),
                                                       ),
                                                     ],
                                                   );
@@ -3937,11 +4002,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                   !mounted) {
                                                 return;
                                               }
-                                              setState(() => _deletingMessageIds
-                                                  .add(messageDocId));
+                                              setState(
+                                                () => _deletingMessageIds.add(
+                                                  messageDocId,
+                                                ),
+                                              );
                                               try {
-                                                await ConversationService
-                                                    .deleteMessage(
+                                                await ConversationService.deleteMessage(
                                                   conversationId:
                                                       widget.conversationId,
                                                   messageId: messageDocId,
@@ -3949,18 +4016,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                 if (!mounted) return;
                                                 scaffoldMessenger.showSnackBar(
                                                   const SnackBar(
-                                                      content: Text(
-                                                          'Message supprimé.')),
+                                                    content: Text(
+                                                      'Message supprimé.',
+                                                    ),
+                                                  ),
                                                 );
                                               } catch (error) {
                                                 if (!mounted) return;
-                                                setState(() =>
-                                                    _deletingMessageIds
-                                                        .remove(messageDocId));
+                                                setState(
+                                                  () => _deletingMessageIds
+                                                      .remove(messageDocId),
+                                                );
                                                 scaffoldMessenger.showSnackBar(
                                                   SnackBar(
                                                     content: Text(
-                                                        'Impossible de supprimer ce message : $error'),
+                                                      'Impossible de supprimer ce message : $error',
+                                                    ),
                                                   ),
                                                 );
                                               }
@@ -3998,7 +4069,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       ),
                                     ),
                                     icon: const Icon(
-                                        Icons.keyboard_arrow_down_rounded),
+                                      Icons.keyboard_arrow_down_rounded,
+                                    ),
                                     label: const Text('Nouveaux messages'),
                                   ),
                                 ),
@@ -4044,7 +4116,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               width: 44,
                               height: 44,
                               child: Material(
-                                color: (_isBlocked ||
+                                color:
+                                    (_isBlocked ||
                                         _isUploadingAttachment ||
                                         _isSending)
                                     ? const Color(0xFFF3F4F6)
@@ -4058,7 +4131,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 clipBehavior: Clip.antiAlias,
                                 child: InkWell(
                                   customBorder: const CircleBorder(),
-                                  onTap: (_isBlocked ||
+                                  onTap:
+                                      (_isBlocked ||
                                           _isUploadingAttachment ||
                                           _isSending)
                                       ? null
@@ -4066,7 +4140,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   child: Center(
                                     child: Icon(
                                       Icons.attach_file_rounded,
-                                      color: (_isBlocked ||
+                                      color:
+                                          (_isBlocked ||
                                               _isUploadingAttachment ||
                                               _isSending)
                                           ? const Color(0xFF94A3B8)
@@ -4111,9 +4186,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     onPressed: _isBlocked
                                         ? null
                                         : () => setState(
-                                              () => _showEmojiStrip =
-                                                  !_showEmojiStrip,
-                                            ),
+                                            () => _showEmojiStrip =
+                                                !_showEmojiStrip,
+                                          ),
                                     icon: Icon(
                                       _showEmojiStrip
                                           ? Icons.keyboard_rounded
@@ -4135,22 +4210,23 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             width: 44,
                             height: 44,
                             child: FilledButton(
-                              onPressed: (_isSending ||
+                              onPressed:
+                                  (_isSending ||
                                       _isUploadingAttachment ||
                                       _isBlocked)
                                   ? null
                                   : _hasDraftText
-                                      ? _sendMessage
-                                      : () => unawaited(
-                                            _showVoiceRecordingSheet(),
-                                          ),
+                                  ? _sendMessage
+                                  : () => unawaited(_showVoiceRecordingSheet()),
                               style: FilledButton.styleFrom(
                                 backgroundColor: kWhatsappGreen,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor:
-                                    const Color(0xFFE5E7EB),
-                                disabledForegroundColor:
-                                    const Color(0xFF9CA3AF),
+                                disabledBackgroundColor: const Color(
+                                  0xFFE5E7EB,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF9CA3AF,
+                                ),
                                 shape: const CircleBorder(),
                                 padding: EdgeInsets.zero,
                                 minimumSize: const Size(44, 44),
@@ -4207,9 +4283,7 @@ class _OptimisticMessage {
     required this.status,
   });
 
-  _OptimisticMessage copyWith({
-    _OptimisticMessageStatus? status,
-  }) {
+  _OptimisticMessage copyWith({_OptimisticMessageStatus? status}) {
     return _OptimisticMessage(
       id: id,
       text: text,
@@ -4225,22 +4299,18 @@ class _MessageModeration {
   final String status;
   final String visibility;
 
-  const _MessageModeration({
-    required this.status,
-    required this.visibility,
-  });
+  const _MessageModeration({required this.status, required this.visibility});
 
-  static const _none = _MessageModeration(
-    status: '',
-    visibility: 'visible',
-  );
+  static const _none = _MessageModeration(status: '', visibility: 'visible');
 
   static _MessageModeration fromMap(Object? value) {
     if (value is! Map) return _none;
     return _MessageModeration(
       status: (value['status'] ?? '').toString().trim().toLowerCase(),
-      visibility:
-          (value['visibility'] ?? 'visible').toString().trim().toLowerCase(),
+      visibility: (value['visibility'] ?? 'visible')
+          .toString()
+          .trim()
+          .toLowerCase(),
     );
   }
 
@@ -4312,10 +4382,10 @@ class _MessageAttachment {
       type: type,
       name: name.trim().isEmpty
           ? (type == 'image'
-              ? 'Photo'
-              : type == 'audio'
-                  ? 'Note vocale'
-                  : 'Document')
+                ? 'Photo'
+                : type == 'audio'
+                ? 'Note vocale'
+                : 'Document')
           : name,
       url: url,
       thumbnailUrl: thumbnailUrl.trim().isEmpty ? url : thumbnailUrl,
@@ -4396,10 +4466,7 @@ class _AttachmentActionTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFF9CA3AF),
-              ),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA3AF)),
             ],
           ),
         ),
@@ -4422,8 +4489,11 @@ class _OfferPreview {
   });
 
   factory _OfferPreview.fromMap(String id, Map<String, dynamic> data) {
-    final title =
-        _firstText(data, const ['title', 'listingTitle', 'offerTitle']);
+    final title = _firstText(data, const [
+      'title',
+      'listingTitle',
+      'offerTitle',
+    ]);
     final priceValue = _firstValue(data, const [
       'price',
       'budget',
@@ -4457,8 +4527,11 @@ class _OfferPreview {
   }
 
   static String _firstImageUrl(Map<String, dynamic> data) {
-    final direct =
-        _firstText(data, const ['thumbnailUrl', 'imageUrl', 'photoUrl']);
+    final direct = _firstText(data, const [
+      'thumbnailUrl',
+      'imageUrl',
+      'photoUrl',
+    ]);
     if (direct.isNotEmpty) return direct;
 
     final imageUrls = data['imageUrls'];
@@ -4473,8 +4546,9 @@ class _OfferPreview {
     if (media is Iterable) {
       for (final entry in media) {
         if (entry is! Map) continue;
-        final value =
-            (entry['url'] ?? entry['downloadUrl'] ?? '').toString().trim();
+        final value = (entry['url'] ?? entry['downloadUrl'] ?? '')
+            .toString()
+            .trim();
         if (value.isNotEmpty) return value;
       }
     }
@@ -4488,9 +4562,9 @@ class _OfferPreview {
       final rounded = value == value.roundToDouble()
           ? value.toInt().toString()
           : value
-              .toStringAsFixed(2)
-              .replaceAll(RegExp(r'0+$'), '')
-              .replaceAll(RegExp(r'\.$'), '');
+                .toStringAsFixed(2)
+                .replaceAll(RegExp(r'0+$'), '')
+                .replaceAll(RegExp(r'\.$'), '');
       return '$rounded €';
     }
     final text = value.toString().trim();
@@ -4661,24 +4735,6 @@ class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
 
   @override
   Widget build(BuildContext context) {
-    final compactOutlinedStyle = OutlinedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      minimumSize: const Size(0, 44),
-      textStyle: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-    final compactFilledStyle = FilledButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      minimumSize: const Size(0, 44),
-      textStyle: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
-      backgroundColor: kWhatsappGreen,
-    );
-
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -4810,18 +4866,12 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
     final compactOutlinedStyle = OutlinedButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       minimumSize: const Size(0, 44),
-      textStyle: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
     );
     final compactFilledStyle = FilledButton.styleFrom(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       minimumSize: const Size(0, 44),
-      textStyle: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-      ),
+      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       backgroundColor: kWhatsappGreen,
     );
 
@@ -4833,18 +4883,12 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
           children: [
             const Text(
               'Relire la note vocale',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
               'Durée ${_fmt(preview.duration)}',
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
             ),
             const SizedBox(height: 18),
             Container(
@@ -4866,11 +4910,7 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onCancel,
                     icon: const Icon(Icons.close_rounded, size: 18),
-                    label: const Text(
-                      'Annuler',
-                      maxLines: 1,
-                      softWrap: false,
-                    ),
+                    label: const Text('Annuler', maxLines: 1, softWrap: false),
                     style: compactOutlinedStyle,
                   ),
                 ),
@@ -4879,11 +4919,7 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onRerecord,
                     icon: const Icon(Icons.mic_rounded, size: 18),
-                    label: const Text(
-                      'Refaire',
-                      maxLines: 1,
-                      softWrap: false,
-                    ),
+                    label: const Text('Refaire', maxLines: 1, softWrap: false),
                     style: compactOutlinedStyle,
                   ),
                 ),
@@ -4892,11 +4928,7 @@ class _VoiceNotePreviewSheet extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: onSend,
                     icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text(
-                      'Envoyer',
-                      maxLines: 1,
-                      softWrap: false,
-                    ),
+                    label: const Text('Envoyer', maxLines: 1, softWrap: false),
                     style: compactFilledStyle,
                   ),
                 ),
@@ -4913,10 +4945,7 @@ class _VoiceNotePlayer extends StatefulWidget {
   final String source;
   final bool isLocalFile;
 
-  const _VoiceNotePlayer({
-    required this.source,
-    this.isLocalFile = false,
-  });
+  const _VoiceNotePlayer({required this.source, this.isLocalFile = false});
 
   @override
   State<_VoiceNotePlayer> createState() => _VoiceNotePlayerState();
