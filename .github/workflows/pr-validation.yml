@@ -97,6 +97,15 @@ jobs:
             --git-ref '${{ github.sha }}' \
             --enforce 2>&1 | tee pr_validation_logs/quality_gate.log
 
+      - name: Measure critical module coverage
+        id: critical_coverage
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python3 tools/quality/check_critical_coverage.py \
+            --output-dir quality_reports/pr/critical-coverage \
+            --enforce 2>&1 | tee pr_validation_logs/critical_coverage.log
+
       - name: Functions dependencies
         id: functions_deps
         continue-on-error: true
@@ -170,6 +179,7 @@ jobs:
           | Flutter analyze | `${{ steps.flutter_analyze.outcome }}` |
           | Tests Flutter + couverture | `${{ steps.flutter_test.outcome }}` |
           | Seuils qualité | `${{ steps.quality_gate.outcome }}` |
+          | Couverture modules critiques | `${{ steps.critical_coverage.outcome }}` |
           | Dépendances Functions | `${{ steps.functions_deps.outcome }}` |
           | Build Functions | `${{ steps.functions_build.outcome }}` |
           | Tests Functions | `${{ steps.functions_test.outcome }}` |
@@ -194,7 +204,7 @@ jobs:
       - name: Enforce validation result
         if: always()
         run: |
-          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
           if echo "$outcomes" | grep -Eq 'failure|cancelled'; then
             echo "Validation failed: $outcomes"
             exit 1
