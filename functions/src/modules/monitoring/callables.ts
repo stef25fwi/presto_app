@@ -1,7 +1,7 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { FieldValue } from "firebase-admin/firestore";
 
-import { PROJECT_REGION } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";
 
@@ -47,7 +47,7 @@ function sanitizeData(value: unknown): Record<string, string | number | boolean 
 export const reportClientMonitoringEvent = onCall(
   {
     region: PROJECT_REGION,
-    enforceAppCheck: true,
+    enforceAppCheck: ENFORCE_APP_CHECK,
     timeoutSeconds: 15,
     memory: "256MiB",
     maxInstances: 20,
