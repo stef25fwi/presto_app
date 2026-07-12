@@ -1008,16 +1008,20 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
         enabled,
         updatedBy: FirebaseAuth.instance.currentUser?.uid,
       );
-      if (mounted)
+      if (mounted) {
         showSuccessSnackBar(context, 'Visibilité des abonnements mise à jour.');
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         showErrorSnackBar(
           context,
           'Impossible de mettre à jour la configuration.',
         );
+      }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -1029,16 +1033,20 @@ class _AdminSubscriptionTileState extends State<AdminSubscriptionTile> {
         enabled,
         updatedBy: FirebaseAuth.instance.currentUser?.uid,
       );
-      if (mounted)
+      if (mounted) {
         showSuccessSnackBar(context, 'Mode d’accès abonnement mis à jour.');
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         showErrorSnackBar(
           context,
           'Impossible de mettre à jour freeAccessMode.',
         );
+      }
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 

@@ -315,10 +315,13 @@ class _FicheProPageState extends State<FicheProPage> {
             'realisations': FieldValue.arrayRemove([url]),
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
-      if (mounted) setState(() => _realisations.remove(url));
+      if (mounted) {
+        setState(() => _realisations.remove(url));
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         showErrorSnackBar(context, 'Impossible de supprimer la photo.');
+      }
     }
   }
 
