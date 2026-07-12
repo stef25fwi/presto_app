@@ -63,8 +63,10 @@ test("calcule les dates de coupure de manière déterministe", () => {
 
   const plan = buildRetentionPlan(now);
   assert.equal(plan.length, DATA_RETENTION_POLICIES.length);
-  assert.equal(plan[0].collection, "app_monitoring_events");
-  assert.equal(plan[0].cutoffIso, "2026-04-12T12:00:00.000Z");
+  const firstPolicy = plan[0];
+  assert.ok(firstPolicy);
+  assert.equal(firstPolicy.collection, "app_monitoring_events");
+  assert.equal(firstPolicy.cutoffIso, "2026-04-12T12:00:00.000Z");
 });
 
 test("détecte uniquement les dates valides strictement antérieures au cutoff", () => {
