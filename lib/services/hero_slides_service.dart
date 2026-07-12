@@ -14,9 +14,9 @@ class HeroSlidesService {
     FirebaseFirestore? firestore,
     FirebaseStorage? storage,
     FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _storage = storage ?? FirebaseStorage.instance,
+       _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
@@ -70,14 +70,13 @@ class HeroSlidesService {
   }
 
   Stream<List<HeroSlide>> watchActiveSlides() {
-    return _slidesCollection
-        .where('isActive', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) {
-      final slides = _mapSnapshot(snapshot);
-      _persistSlidesCache(slides); // fire-and-forget, non bloquant
-      return slides;
-    });
+    return _slidesCollection.where('isActive', isEqualTo: true).snapshots().map(
+      (snapshot) {
+        final slides = _mapSnapshot(snapshot);
+        _persistSlidesCache(slides); // fire-and-forget, non bloquant
+        return slides;
+      },
+    );
   }
 
   /// Renvoie les slides actifs filtrés par région.
@@ -89,8 +88,9 @@ class HeroSlidesService {
       return slides.where((slide) {
         if (slide.isGlobal) return true;
         if (slide.isRegional) {
-          if (normalizedRegion == null || normalizedRegion.isEmpty)
+          if (normalizedRegion == null || normalizedRegion.isEmpty) {
             return false;
+          }
           if (slide.targetRegions.isEmpty) return false;
           return slide.targetRegions.contains(normalizedRegion);
         }
@@ -227,8 +227,9 @@ class HeroSlidesService {
       nextMediaUrl = uploadResult.mediaUrl;
       nextStoragePath = uploadResult.storagePath;
       uploadedReplacementStoragePath = uploadResult.storagePath;
-      nextMediaType =
-          _normalizeMediaType(replacementMediaType ?? slide.mediaType);
+      nextMediaType = _normalizeMediaType(
+        replacementMediaType ?? slide.mediaType,
+      );
     }
 
     final nextIsActive = isActive ?? slide.isActive;
@@ -237,8 +238,9 @@ class HeroSlidesService {
     final batch = _firestore.batch();
 
     if (shouldBeFirst) {
-      for (final other
-          in slides.where((entry) => entry.id != slide.id && entry.isFirst)) {
+      for (final other in slides.where(
+        (entry) => entry.id != slide.id && entry.isFirst,
+      )) {
         batch.update(_slidesCollection.doc(other.id), <String, dynamic>{
           'isFirst': false,
           'updatedAt': FieldValue.serverTimestamp(),
@@ -251,8 +253,9 @@ class HeroSlidesService {
       title ?? slide.title,
       fileName: replacementFileName ?? slide.title,
     );
-    final nextScope =
-        (scope ?? slide.scope) == 'regional' ? 'regional' : 'global';
+    final nextScope = (scope ?? slide.scope) == 'regional'
+        ? 'regional'
+        : 'global';
     final nextTargetRegions = targetRegions ?? slide.targetRegions;
     batch.update(docRef, <String, dynamic>{
       'title': normalizedTitle,
@@ -373,8 +376,10 @@ class HeroSlidesService {
     final normalizedMediaType = _normalizeMediaType(mediaType);
     final extension = _fileExtension(normalizedFileName);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final safeName =
-        _safeFileName(normalizedFileName, fallback: 'slide.$extension');
+    final safeName = _safeFileName(
+      normalizedFileName,
+      fallback: 'slide.$extension',
+    );
     final storagePath = 'hero_slides/${timestamp}_$safeName';
     final ref = _storage.ref().child(storagePath);
 
@@ -382,9 +387,7 @@ class HeroSlidesService {
       fileBytes,
       SettableMetadata(
         contentType: contentType,
-        customMetadata: <String, String>{
-          'mediaType': normalizedMediaType,
-        },
+        customMetadata: <String, String>{'mediaType': normalizedMediaType},
       ),
     );
 
@@ -435,8 +438,9 @@ class HeroSlidesService {
   }
 
   List<HeroSlide> _mapSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    final slides =
-        snapshot.docs.map(HeroSlide.fromFirestore).toList(growable: false);
+    final slides = snapshot.docs
+        .map(HeroSlide.fromFirestore)
+        .toList(growable: false);
     slides.sort(HeroSlide.compareDisplayOrder);
     return slides;
   }
@@ -489,9 +493,9 @@ class HeroSlidesService {
     }
 
     final withoutExtension = fileName.trim().replaceFirst(
-          RegExp(r'\.[^.]+$'),
-          '',
-        );
+      RegExp(r'\.[^.]+$'),
+      '',
+    );
     final fallback = withoutExtension.isEmpty ? 'Slide Hero' : withoutExtension;
     return fallback.length > 80 ? fallback.substring(0, 80) : fallback;
   }
