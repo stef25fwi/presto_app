@@ -21,7 +21,6 @@ analyzer:
     strict_top_level_inference: ignore
     dead_code: ignore
     curly_braces_in_flow_control_structures: ignore
-    no_leading_underscores_for_local_identifiers: ignore
 
 linter:
   rules:
@@ -34,4 +33,3 @@ linter:
     unnecessary_const: false
     unnecessary_this: false
     curly_braces_in_flow_control_structures: false
-    no_leading_underscores_for_local_identifiers: false
