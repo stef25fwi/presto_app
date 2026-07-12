@@ -8,7 +8,7 @@ const SAFE_OPTION_PATTERN =
 const FORBIDDEN_FALSE_PATTERN = /enforceAppCheck\s*:\s*false\b/;
 const EXPLICIT_FALSE_OPTION_PATTERN = /enforceAppCheck\s*:\s*false\b/;
 const OPTION_CONST_PATTERN =
-  /const\s+([A-Z][A-Z0-9_]*)\s*=\s*\{([\s\S]*?)\}\s*as const\s*;/g;
+  /const\s+([A-Z][A-Z0-9_]*)\s*=\s*\{([\s\S]*?)\}\s*(?:as const\s*)?;/g;
 
 const LEGACY_EXCEPTIONS = new Map([
   [
@@ -66,6 +66,13 @@ function collectSafeOptionConstants(source, allowExplicitFalse) {
   return safe;
 }
 
+function hasSafeSpreadOption(objectSource, safeOptionConstants) {
+  const spreadDependencies = [
+    ...objectSource.matchAll(/\.\.\.([A-Z][A-Z0-9_]*)/g),
+  ].map((match) => match[1]);
+  return spreadDependencies.some((dependency) => safeOptionConstants.has(dependency));
+}
+
 function readFirstArgument(source, position) {
   const afterCall = source
     .slice(position)
@@ -114,6 +121,7 @@ export function auditAppCheckSource(source, filePath = '<memory>') {
     const isSafeObject =
       firstArgument.type === 'object' &&
       (SAFE_OPTION_PATTERN.test(firstArgument.value) ||
+        hasSafeSpreadOption(firstArgument.value, safeOptionConstants) ||
         (legacyException &&
           EXPLICIT_FALSE_OPTION_PATTERN.test(firstArgument.value)));
     const isSafeIdentifier =
