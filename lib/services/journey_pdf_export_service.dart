@@ -26,16 +26,13 @@ class JourneyPdfExportService {
 
   Future<XFile> generateJourneyPdf(Map<String, dynamic> journey) async {
     final bytes = await _buildPdfBytes(journey);
-    final safeActivity =
-        _sanitizeFilePart('${journey['selectedActivity'] ?? ''}');
+    final safeActivity = _sanitizeFilePart(
+      '${journey['selectedActivity'] ?? ''}',
+    );
     final suffix = safeActivity.isEmpty ? 'parcours' : safeActivity;
     final fileName = 'ilipresto_$suffix.pdf';
 
-    return XFile.fromData(
-      bytes,
-      name: fileName,
-      mimeType: 'application/pdf',
-    );
+    return XFile.fromData(bytes, name: fileName, mimeType: 'application/pdf');
   }
 
   Future<Uint8List> _buildPdfBytes(Map<String, dynamic> journey) async {
@@ -250,7 +247,9 @@ class JourneyPdfExportService {
   }
 
   pw.Widget _coverBlock(
-      pw.ImageProvider logoImage, Map<String, dynamic> journey) {
+    pw.ImageProvider logoImage,
+    Map<String, dynamic> journey,
+  ) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
       decoration: pw.BoxDecoration(
@@ -325,24 +324,24 @@ class JourneyPdfExportService {
   }
 
   pw.Widget _sectionTitle(String text) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 7),
-        child: pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: pw.BoxDecoration(
-            color: PdfColors.blue50,
-            borderRadius: pw.BorderRadius.circular(8),
-            border: pw.Border.all(color: PdfColors.blue100, width: 0.5),
-          ),
-          child: pw.Text(
-            text,
-            style: pw.TextStyle(
-              fontSize: 12,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blue900,
-            ),
-          ),
+    padding: const pw.EdgeInsets.only(bottom: 7),
+    child: pw.Container(
+      padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.blue50,
+        borderRadius: pw.BorderRadius.circular(8),
+        border: pw.Border.all(color: PdfColors.blue100, width: 0.5),
+      ),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 12,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.blue900,
         ),
-      );
+      ),
+    ),
+  );
 
   pw.Widget _highlightBox({required String title, required String text}) {
     return pw.Container(
@@ -388,8 +387,9 @@ class JourneyPdfExportService {
 
   pw.Widget _kv(String label, String value) {
     final cleaned = value.trim();
-    if (cleaned.isEmpty || cleaned == 'null')
+    if (cleaned.isEmpty || cleaned == 'null') {
       return pw.SizedBox(width: 0, height: 0);
+    }
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.RichText(
@@ -399,10 +399,7 @@ class JourneyPdfExportService {
               text: '$label : ',
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
             ),
-            pw.TextSpan(
-              text: cleaned,
-              style: const pw.TextStyle(fontSize: 10),
-            ),
+            pw.TextSpan(text: cleaned, style: const pw.TextStyle(fontSize: 10)),
           ],
         ),
       ),
