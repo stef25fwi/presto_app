@@ -41,8 +41,12 @@ test('accepte des constantes d options sûres et leurs extensions', () => {
     } as const;
     export const first = onCall(BASE_OPTIONS, async () => ({ ok: true }));
     export const second = onCall(HOT_OPTIONS, async () => ({ ok: true }));
+    export const third = onCall(
+      { ...HOT_OPTIONS, timeoutSeconds: 60 },
+      async () => ({ ok: true }),
+    );
   `);
-  assert.equal(result.callableCount, 2);
+  assert.equal(result.callableCount, 3);
   assert.deepEqual(result.violations, []);
   assert.deepEqual(result.exceptions, []);
 });
@@ -65,12 +69,16 @@ test('borne l exception legacy de la messagerie à un seul fichier', () => {
       HOT_MESSAGING_CALLABLE_OPTIONS,
       async () => ({ ok: true }),
     );
+    export const third = onCall(
+      { ...HOT_MESSAGING_CALLABLE_OPTIONS, timeoutSeconds: 60 },
+      async () => ({ ok: true }),
+    );
   `;
   const result = auditAppCheckSource(
     source,
     'functions/src/modules/messaging/callables.ts',
   );
-  assert.equal(result.callableCount, 2);
+  assert.equal(result.callableCount, 3);
   assert.deepEqual(result.violations, []);
   assert.equal(result.exceptions.length, 1);
   assert.equal(
@@ -85,7 +93,7 @@ test('borne l exception legacy de la messagerie à un seul fichier', () => {
   );
   assert.deepEqual(
     otherFile.violations.map((violation) => violation.type).sort(),
-    ['explicit-disable', 'missing-enforcement', 'missing-enforcement'],
+    ['explicit-disable', 'missing-enforcement', 'missing-enforcement', 'missing-enforcement'],
   );
   assert.deepEqual(otherFile.exceptions, []);
 });
