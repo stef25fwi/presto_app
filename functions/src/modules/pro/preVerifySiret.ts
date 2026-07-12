@@ -2,6 +2,8 @@ import * as admin from "firebase-admin";
 import * as https from "https";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
+import { ENFORCE_APP_CHECK } from "../../config/env";
+
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
@@ -199,7 +201,7 @@ export const preVerifySiret = onCall(
   {
     region: REGION,
     cors: true,
-    enforceAppCheck: true,
+    enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (request) => {
     const siret = cleanSiret(request.data?.siret);
