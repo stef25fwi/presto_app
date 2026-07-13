@@ -12,10 +12,23 @@ test('désactive la preview sans identifiant de projet', () => {
 });
 
 test('refuse explicitement le projet Firebase production', () => {
-  const result = evaluatePreviewProject(' presto-app-74abe ');
+  const result = evaluatePreviewProject(' PRESTO-APP-74ABE ');
   assert.equal(result.enabled, false);
   assert.equal(result.reason, 'production-project-forbidden');
   assert.match(result.message, /production project/);
+});
+
+test('refuse une URL ou un hostname à la place du project ID', () => {
+  const result = evaluatePreviewProject('https://presto-app-staging.web.app');
+  assert.equal(result.enabled, false);
+  assert.equal(result.reason, 'invalid-project-id');
+});
+
+test('refuse un projet non-production mais ambigu', () => {
+  const result = evaluatePreviewProject('presto-app-sandbox');
+  assert.equal(result.enabled, false);
+  assert.equal(result.reason, 'ambiguous-preview-project');
+  assert.match(result.message, /not explicitly identified/);
 });
 
 test('autorise un projet staging distinct', () => {
@@ -24,4 +37,21 @@ test('autorise un projet staging distinct', () => {
     reason: 'safe-preview-project',
     message: 'Firebase preview project accepted: presto-app-staging.',
   });
+});
+
+test('autorise les marqueurs preview, dev, test et qa', () => {
+  for (const projectId of [
+    'presto-app-preview',
+    'presto-app-dev',
+    'presto-app-test',
+    'presto-app-qa',
+  ]) {
+    assert.equal(evaluatePreviewProject(projectId).enabled, true, projectId);
+  }
+});
+
+test('n accepte pas un marqueur seulement inclus dans un autre segment', () => {
+  const result = evaluatePreviewProject('presto-app-contest');
+  assert.equal(result.enabled, false);
+  assert.equal(result.reason, 'ambiguous-preview-project');
 });
