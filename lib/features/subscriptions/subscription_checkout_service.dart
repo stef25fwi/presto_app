@@ -6,11 +6,7 @@ import '../../services/firebase_functions_region.dart';
 import 'subscription_models.dart';
 import 'subscription_return_history.dart';
 
-enum SubscriptionActionType {
-  checkout,
-  manage,
-  notify,
-}
+enum SubscriptionActionType { checkout, manage, notify }
 
 class SubscriptionActionRequest {
   final SubscriptionActionType action;
@@ -33,7 +29,7 @@ class SubscriptionCheckoutService {
   static final Map<String, _CachedStripeDestination> _checkoutCache =
       <String, _CachedStripeDestination>{};
   static final Map<String, Future<_CachedStripeDestination?>>
-      _checkoutPrefetches = <String, Future<_CachedStripeDestination?>>{};
+  _checkoutPrefetches = <String, Future<_CachedStripeDestination?>>{};
 
   Future<void> prefetchCheckout(
     SubscriptionPlan plan, {
@@ -65,10 +61,7 @@ class SubscriptionCheckoutService {
     SubscriptionActionRequest request,
   ) async {
     if (_openingStripe) {
-      return _showSnackBar(
-        context,
-        'Ouverture de Stripe déjà en cours…',
-      );
+      return _showSnackBar(context, 'Ouverture de Stripe déjà en cours…');
     }
 
     switch (request.action) {
@@ -96,9 +89,7 @@ class SubscriptionCheckoutService {
         return _openStripeUrl(
           context,
           callableName: 'createSubscriptionPortalSession',
-          payload: <String, dynamic>{
-            'source': request.source,
-          },
+          payload: <String, dynamic>{'source': request.source},
           unavailableMessage: request.stripeEnabled
               ? 'Impossible d’ouvrir la gestion Stripe pour le moment.'
               : 'La gestion Stripe n’est pas activée dans la configuration abonnement.',
@@ -241,9 +232,11 @@ class SubscriptionCheckoutService {
     final parsed = rawExpiresAt is num
         ? rawExpiresAt.toInt()
         : int.tryParse((rawExpiresAt ?? '').toString()) ?? 0;
-    final expiresAtMs =
-        parsed > 0 && parsed < 1000000000000 ? parsed * 1000 : parsed;
-    final fallbackMs = DateTime.now().millisecondsSinceEpoch +
+    final expiresAtMs = parsed > 0 && parsed < 1000000000000
+        ? parsed * 1000
+        : parsed;
+    final fallbackMs =
+        DateTime.now().millisecondsSinceEpoch +
         const Duration(minutes: 20).inMilliseconds;
     return _CachedStripeDestination(
       url: url,
