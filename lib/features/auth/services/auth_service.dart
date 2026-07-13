@@ -20,7 +20,7 @@ class EmailAuthService {
     EmailVerificationSyncAction? syncEmailVerification,
     AuthenticatedUserCheck? hasCurrentUser,
   }) : _auth = auth,
-       _profileService = profileService ?? AuthUserProfileService(),
+       _profileService = profileService,
        _backendPasswordReset = backendPasswordReset,
        _nativePasswordReset = nativePasswordReset,
        _requestEmailVerification = requestEmailVerification,
@@ -28,7 +28,7 @@ class EmailAuthService {
        _hasCurrentUser = hasCurrentUser;
 
   final FirebaseAuth? _auth;
-  final AuthUserProfileService _profileService;
+  final AuthUserProfileService? _profileService;
   final EmailPasswordResetAction? _backendPasswordReset;
   final EmailPasswordResetAction? _nativePasswordReset;
   final EmailVerificationAction? _requestEmailVerification;
@@ -36,6 +36,8 @@ class EmailAuthService {
   final AuthenticatedUserCheck? _hasCurrentUser;
 
   FirebaseAuth get _resolvedAuth => _auth ?? FirebaseAuth.instance;
+  AuthUserProfileService get _resolvedProfileService =>
+      _profileService ?? AuthUserProfileService();
 
   Future<User> signIn({
     required String email,
@@ -88,7 +90,7 @@ class EmailAuthService {
     }
 
     final refreshedUser = auth.currentUser ?? user;
-    await _profileService.ensureEmailUserProfile(
+    await _resolvedProfileService.ensureEmailUserProfile(
       user: refreshedUser,
       displayName: normalizedDisplayName,
       isBusinessAccount: createBusinessProfile,
