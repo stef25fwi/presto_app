@@ -27,12 +27,23 @@ Source de référence : `functions/src/index.ts`. Ce document regroupe les expor
 - cycle de vie : `deleteListing`, `closeOfferWithReason` ;
 - médias : `processOfferPhoto`, `classifyServicePhoto` ;
 - signalement : `reportListing` ;
-- avis : `getEligibleRespondersForReview`, `submitVerifiedReview`, `getUserTrustScore`, `reportReview`, `replyToReview` ;
+- avis V1 compatibles : `getEligibleRespondersForReview`, `submitVerifiedReview`, `getUserTrustScore`, `reportReview`, `replyToReview` ;
+- avis V2 réciproques : `submitMutualVerifiedReview`, `getUserTrustScoreV2`, `reportReviewV2`, `replyToReviewV2`, `publishMaturedReviewsV2` ;
 - favoris : `toggleFavorite` ;
 - chat marketplace : `createChatThreadFromListing`, `sendChatMessage` ;
 - administration : `applyUserRoleClaims`, `logAdminAction`, `reviewListingPhoto` ;
 - notifications : `notifyListingApproved`, `notifyListingRejected` ;
 - tâches : expiration, publication approuvée, nettoyage Storage et brouillons abandonnés.
+
+### Avis V2 et Score Confiance
+
+Le système V2 conserve la compatibilité avec les anciens champs `trustScore`, mais ajoute `trustScoreV2` sur `users/{uid}` :
+
+- `provider` : score quand l’utilisateur est noté comme prestataire/répondant ;
+- `requester` : score quand l’utilisateur est noté comme annonceur/client ;
+- `global` : score sur 100, moyenne fiable et statut de profil vérifié.
+
+Les avis V2 sont vérifiés par annonce + conversation et utilisent `reviewerRole` / `reviewedRole` (`requester` ou `provider`). La publication est réciproque : l’avis passe en `published` quand les deux côtés ont noté, ou automatiquement après la fenêtre de 14 jours via `publishMaturedReviewsV2`. Les signalements V2 masquent immédiatement l’avis en `disputed` le temps de la modération.
 
 ## Messagerie
 
