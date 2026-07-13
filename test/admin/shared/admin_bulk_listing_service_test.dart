@@ -84,7 +84,10 @@ void main() {
     expect(summary.failedCount, 1);
     expect(summary.failures.single.errorCode, isNull);
     expect(summary.failures.single.errorMessage, isNull);
-    expect(() => summary.results.add(summary.results.first), throwsUnsupportedError);
+    expect(
+      () => summary.results.add(summary.results.first),
+      throwsUnsupportedError,
+    );
   });
 
   test('normalise les clés et valeurs d un résultat individuel', () {
