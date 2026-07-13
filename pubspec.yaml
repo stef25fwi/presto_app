@@ -10,15 +10,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   crypto: ^3.0.6
   firebase_auth: ^6.1.0
   sign_in_with_apple: ^8.1.0
-  http: ^1.2.2 
-  
-
+  http: ^1.2.2
   cupertino_icons: ^1.0.8
-
-  # 🔥 Firebase / Firestore / URL launcher
   firebase_core: ^4.3.0
   firebase_analytics: ^12.0.1
   firebase_crashlytics: ^5.0.0
@@ -65,6 +64,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  generate: true
   fonts:
     - family: Inter
       fonts:
@@ -100,7 +100,6 @@ flutter:
         - asset: assets/fonts/Nunito-Black.ttf
           weight: 900
   uses-material-design: true
-
   assets:
     - assets/images/
     - assets/images/logowebp.webp
