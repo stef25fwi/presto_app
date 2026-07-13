@@ -109,6 +109,10 @@ class VerifiedReviewPreview {
     required this.offerTitle,
     required this.averageRating,
     required this.comment,
+    required this.replyText,
+    required this.reviewerRole,
+    required this.reviewedRole,
+    required this.roleLabel,
     required this.createdAt,
   });
 
@@ -116,9 +120,14 @@ class VerifiedReviewPreview {
   final String offerTitle;
   final double averageRating;
   final String? comment;
+  final String? replyText;
+  final String reviewerRole;
+  final String reviewedRole;
+  final String roleLabel;
   final DateTime? createdAt;
 
   factory VerifiedReviewPreview.fromMap(Map<String, dynamic> data) {
+    final reviewedRole = _stringValue(data['reviewedRole']);
     return VerifiedReviewPreview(
       reviewId:
           _stringValue(data['id'], fallback: _stringValue(data['reviewId'])),
@@ -126,6 +135,13 @@ class VerifiedReviewPreview {
           _stringValue(data['offerTitle'], fallback: 'Annonce iliprestō'),
       averageRating: _doubleValue(data['averageRating']),
       comment: _nullableString(data['comment']),
+      replyText: _nullableString(data['replyText']),
+      reviewerRole: _stringValue(data['reviewerRole']),
+      reviewedRole: reviewedRole,
+      roleLabel: _stringValue(
+        data['roleLabel'],
+        fallback: reviewedRole == 'requester' ? 'annonceur' : 'prestataire',
+      ),
       createdAt: _dateFromMillis(data['publishedAtMillis']) ??
           _dateFromMillis(data['createdAtMillis']),
     );
@@ -170,6 +186,8 @@ class SubmitReviewResult {
   final double averageRating;
 
   bool get isPublished => status == 'published';
+  bool get isPendingPeerReview => status == 'pending_peer_review';
+  bool get isPendingModeration => status == 'pending_moderation';
   bool get isRateLater => status == 'rate_later';
 
   factory SubmitReviewResult.fromMap(Map<String, dynamic> data) {
@@ -194,12 +212,18 @@ String trustScoreBadgeLabel(String badge) {
       return 'Premier avis reçu';
     case 'well_rated_profile':
       return 'Profil bien noté';
+    case 'top_provider':
+      return 'Top prestataire';
+    case 'reliable_requester':
+      return 'Client fiable';
     case 'top_communication':
       return 'Top communication';
     case 'punctual':
       return 'Ponctuel';
     case 'recommended_quality':
       return 'Qualité recommandée';
+    case 'clear_requester':
+      return 'Demande claire';
     case 'verified_reviews_ilipresto':
       return 'Avis vérifiés iliprestō';
     default:
@@ -238,14 +262,16 @@ int _intValue(dynamic value) {
 List<String> _stringList(dynamic value) {
   if (value is! List) return const <String>[];
   return value
-      .map((entry) => entry.toString().trim())
-      .where((entry) => entry.isNotEmpty)
+      .map((item) => item.toString().trim())
+      .where((item) => item.isNotEmpty)
       .toList(growable: false);
 }
 
 DateTime? _dateFromMillis(dynamic value) {
-  if (value is num && value > 0) {
-    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  if (value is String) {
+    final millis = int.tryParse(value);
+    if (millis != null) return DateTime.fromMillisecondsSinceEpoch(millis);
   }
   return null;
 }
