@@ -384,7 +384,14 @@ function buildProcessedConversationAttachmentPath({ uid, conversationId, storage
     const baseName = node_path_1.posix.basename(storagePath).replace(/\.[^/.]+$/, "");
     return `${expectedPrefix}processed_${baseName}.webp`;
 }
-exports.processConversationAttachmentPhoto = (0, https_1.onCall)(MESSAGING_CALLABLE_OPTIONS, async (request) => {
+exports.processConversationAttachmentPhoto = (0, https_1.onCall)({
+    ...MESSAGING_CALLABLE_OPTIONS,
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    cpu: 1,
+    concurrency: 4,
+    maxInstances: 20,
+}, async (request) => {
     const uid = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const storagePath = String(request.data?.storagePath || "").trim();
