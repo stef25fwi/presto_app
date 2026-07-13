@@ -56,6 +56,13 @@ export {
   reportReview,
   replyToReview,
 } from "./modules/marketplace/callables/reviews";
+export {
+  submitMutualVerifiedReview,
+  getUserTrustScoreV2,
+  reportReviewV2,
+  replyToReviewV2,
+  publishMaturedReviewsV2,
+} from "./modules/marketplace/callables/reviews_v2";
 export { toggleFavorite } from "./modules/marketplace/callables/favorites";
 export {
   createChatThreadFromListing,
