@@ -21,13 +21,13 @@ class ChatRepository {
     ChatRequestPolicy? requestPolicy,
     ChatRepositoryCaller? caller,
     ChatVerificationTokenProvider? verificationTokenProvider,
-  }) : _functions = functions ?? prestoFirebaseFunctions,
+  }) : _functions = functions,
        _verification = verification ?? const MarketplaceHumanVerification(),
        _requestPolicy = requestPolicy ?? const ChatRequestPolicy(),
        _caller = caller,
        _verificationTokenProvider = verificationTokenProvider;
 
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functions;
   final MarketplaceHumanVerification _verification;
   final ChatRequestPolicy _requestPolicy;
   final ChatRepositoryCaller? _caller;
@@ -97,7 +97,7 @@ class ChatRepository {
       return caller(name: name, timeout: timeout, parameters: parameters);
     }
     final response = await callPrestoFunction<dynamic>(
-      functions: _functions,
+      functions: _functions ?? prestoFirebaseFunctions,
       name: name,
       timeout: timeout,
       parameters: parameters,
