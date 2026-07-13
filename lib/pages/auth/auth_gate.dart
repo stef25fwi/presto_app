@@ -35,15 +35,15 @@ class AuthGate extends StatelessWidget {
     final override = identityChanges;
     if (override != null) return override;
     return FirebaseAuth.instance.userChanges().map(
-          (user) => user == null
-              ? null
-              : AuthGateIdentity(
-                  providerIds: user.providerData.map(
-                    (provider) => provider.providerId,
-                  ),
-                  emailVerified: user.emailVerified,
-                ),
-        );
+      (user) => user == null
+          ? null
+          : AuthGateIdentity(
+              providerIds: user.providerData.map(
+                (provider) => provider.providerId,
+              ),
+              emailVerified: user.emailVerified,
+            ),
+    );
   }
 
   @override

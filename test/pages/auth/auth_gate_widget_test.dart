@@ -20,8 +20,9 @@ void main() {
     );
   }
 
-  testWidgets('affiche le chargement avant la première identité',
-      (tester) async {
+  testWidgets('affiche le chargement avant la première identité', (
+    tester,
+  ) async {
     final controller = StreamController<AuthGateIdentity?>();
     addTearDown(controller.close);
 
