@@ -4,10 +4,7 @@ import 'package:presto_app/services/conversation_state.dart';
 void main() {
   test('detecte une conversation archivee pour un utilisateur', () {
     final data = <String, dynamic>{
-      'archivedBy': <String, dynamic>{
-        'alice': true,
-        'bob': false,
-      },
+      'archivedBy': <String, dynamic>{'alice': true, 'bob': false},
     };
 
     expect(isConversationArchivedForUser(data, 'alice'), isTrue);
@@ -16,10 +13,7 @@ void main() {
 
   test('detecte une conversation bloquee via blockedBy uniquement', () {
     final blocked = <String, dynamic>{
-      'blockedBy': <String, dynamic>{
-        'alice': false,
-        'bob': true,
-      },
+      'blockedBy': <String, dynamic>{'alice': false, 'bob': true},
     };
 
     expect(isConversationBlocked(blocked), isTrue);
@@ -71,52 +65,40 @@ void main() {
     );
   });
 
-  test(
-    'retourne false lorsque les champs de drapeau ne sont pas des maps',
-    () {
-      final data = <String, dynamic>{
-        'archivedBy': true,
-        'deletedBy': <String>['alice'],
-        'blockedBy': 'alice',
-      };
+  test('retourne false lorsque les champs de drapeau ne sont pas des maps', () {
+    final data = <String, dynamic>{
+      'archivedBy': true,
+      'deletedBy': <String>['alice'],
+      'blockedBy': 'alice',
+    };
 
-      expect(
-        readConversationFlagForUser(data, 'archivedBy', 'alice'),
-        isFalse,
-      );
-      expect(isConversationArchivedForUser(data, 'alice'), isFalse);
-      expect(isConversationDeletedForUser(data, 'alice'), isFalse);
-      expect(isConversationBlocked(data), isFalse);
-      expect(isConversationBlockedForUser(data, 'alice'), isFalse);
-      expect(isConversationBlockedByOtherUser(data, 'alice'), isFalse);
-    },
-  );
+    expect(readConversationFlagForUser(data, 'archivedBy', 'alice'), isFalse);
+    expect(isConversationArchivedForUser(data, 'alice'), isFalse);
+    expect(isConversationDeletedForUser(data, 'alice'), isFalse);
+    expect(isConversationBlocked(data), isFalse);
+    expect(isConversationBlockedForUser(data, 'alice'), isFalse);
+    expect(isConversationBlockedByOtherUser(data, 'alice'), isFalse);
+  });
 
-  test(
-    'distingue le blocage courant du blocage par un autre participant',
-    () {
-      final data = <String, dynamic>{
-        'blockedBy': <String, dynamic>{
-          'alice': true,
-          'bob': false,
-          'charlie': true,
-        },
-      };
+  test('distingue le blocage courant du blocage par un autre participant', () {
+    final data = <String, dynamic>{
+      'blockedBy': <String, dynamic>{
+        'alice': true,
+        'bob': false,
+        'charlie': true,
+      },
+    };
 
-      expect(isConversationBlockedForUser(data, 'alice'), isTrue);
-      expect(isConversationBlockedByOtherUser(data, 'alice'), isTrue);
-      expect(isConversationBlockedByOtherUser(data, 'charlie'), isTrue);
-      expect(
-        isConversationBlockedByOtherUser(
-          <String, dynamic>{
-            'blockedBy': <String, dynamic>{'alice': true, 'bob': false},
-          },
-          'alice',
-        ),
-        isFalse,
-      );
-    },
-  );
+    expect(isConversationBlockedForUser(data, 'alice'), isTrue);
+    expect(isConversationBlockedByOtherUser(data, 'alice'), isTrue);
+    expect(isConversationBlockedByOtherUser(data, 'charlie'), isTrue);
+    expect(
+      isConversationBlockedByOtherUser(<String, dynamic>{
+        'blockedBy': <String, dynamic>{'alice': true, 'bob': false},
+      }, 'alice'),
+      isFalse,
+    );
+  });
 
   test('masque toujours une conversation supprimee pour l utilisateur', () {
     final deleted = <String, dynamic>{
@@ -143,21 +125,18 @@ void main() {
     );
   });
 
-  test(
-    'exclut les conversations actives du filtre archives uniquement',
-    () {
-      final active = <String, dynamic>{
-        'archivedBy': <String, dynamic>{'alice': false},
-      };
+  test('exclut les conversations actives du filtre archives uniquement', () {
+    final active = <String, dynamic>{
+      'archivedBy': <String, dynamic>{'alice': false},
+    };
 
-      expect(
-        shouldShowConversation(
-          data: active,
-          userId: 'alice',
-          showArchivedOnly: true,
-        ),
-        isFalse,
-      );
-    },
-  );
+    expect(
+      shouldShowConversation(
+        data: active,
+        userId: 'alice',
+        showArchivedOnly: true,
+      ),
+      isFalse,
+    );
+  });
 }
