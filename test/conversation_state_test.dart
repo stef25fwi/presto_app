@@ -92,28 +92,31 @@ void main() {
     },
   );
 
-  test('distingue le blocage courant du blocage par un autre participant', () {
-    final data = <String, dynamic>{
-      'blockedBy': <String, dynamic>{
-        'alice': true,
-        'bob': false,
-        'charlie': true,
-      },
-    };
-
-    expect(isConversationBlockedForUser(data, 'alice'), isTrue);
-    expect(isConversationBlockedByOtherUser(data, 'alice'), isTrue);
-    expect(isConversationBlockedByOtherUser(data, 'charlie'), isTrue);
-    expect(
-      isConversationBlockedByOtherUser(
-        <String, dynamic>{
-          'blockedBy': <String, dynamic>{'alice': true, 'bob': false},
+  test(
+    'distingue le blocage courant du blocage par un autre participant',
+    () {
+      final data = <String, dynamic>{
+        'blockedBy': <String, dynamic>{
+          'alice': true,
+          'bob': false,
+          'charlie': true,
         },
-        'alice',
-      ),
-      isFalse,
-    );
-  });
+      };
+
+      expect(isConversationBlockedForUser(data, 'alice'), isTrue);
+      expect(isConversationBlockedByOtherUser(data, 'alice'), isTrue);
+      expect(isConversationBlockedByOtherUser(data, 'charlie'), isTrue);
+      expect(
+        isConversationBlockedByOtherUser(
+          <String, dynamic>{
+            'blockedBy': <String, dynamic>{'alice': true, 'bob': false},
+          },
+          'alice',
+        ),
+        isFalse,
+      );
+    },
+  );
 
   test('masque toujours une conversation supprimee pour l utilisateur', () {
     final deleted = <String, dynamic>{
@@ -140,18 +143,21 @@ void main() {
     );
   });
 
-  test('exclut les conversations actives du filtre archives uniquement', () {
-    final active = <String, dynamic>{
-      'archivedBy': <String, dynamic>{'alice': false},
-    };
+  test(
+    'exclut les conversations actives du filtre archives uniquement',
+    () {
+      final active = <String, dynamic>{
+        'archivedBy': <String, dynamic>{'alice': false},
+      };
 
-    expect(
-      shouldShowConversation(
-        data: active,
-        userId: 'alice',
-        showArchivedOnly: true,
-      ),
-      isFalse,
-    );
-  });
+      expect(
+        shouldShowConversation(
+          data: active,
+          userId: 'alice',
+          showArchivedOnly: true,
+        ),
+        isFalse,
+      );
+    },
+  );
 }
