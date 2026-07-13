@@ -29,6 +29,7 @@ Source de référence : `functions/src/index.ts`. Ce document regroupe les expor
 - signalement : `reportListing` ;
 - avis V1 compatibles : `getEligibleRespondersForReview`, `submitVerifiedReview`, `getUserTrustScore`, `reportReview`, `replyToReview` ;
 - avis V2 réciproques : `submitMutualVerifiedReview`, `getUserTrustScoreV2`, `reportReviewV2`, `replyToReviewV2`, `publishMaturedReviewsV2` ;
+- modération avis V2 : `adminModerateReviewV2` ;
 - favoris : `toggleFavorite` ;
 - chat marketplace : `createChatThreadFromListing`, `sendChatMessage` ;
 - administration : `applyUserRoleClaims`, `logAdminAction`, `reviewListingPhoto` ;
@@ -44,6 +45,8 @@ Le système V2 conserve la compatibilité avec les anciens champs `trustScore`, 
 - `global` : score sur 100, moyenne fiable et statut de profil vérifié.
 
 Les avis V2 sont vérifiés par annonce + conversation et utilisent `reviewerRole` / `reviewedRole` (`requester` ou `provider`). La publication est réciproque : l’avis passe en `published` quand les deux côtés ont noté, ou automatiquement après la fenêtre de 14 jours via `publishMaturedReviewsV2`. Les signalements V2 masquent immédiatement l’avis en `disputed` le temps de la modération.
+
+`adminModerateReviewV2` permet aux rôles `moderator`, `admin` et `superadmin` de décider explicitement : `publish`, `hide`, `reject` ou `request_correction`. Chaque décision est journalisée dans `review_moderation_actions` et notifiée aux utilisateurs concernés. Une mauvaise note seule ne déclenche aucun bannissement automatique ; la modération agit sur l’avis, pas sur le compte.
 
 ## Messagerie
 
