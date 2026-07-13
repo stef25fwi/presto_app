@@ -21,11 +21,15 @@ class AuthGate extends StatelessWidget {
     required this.verifiedChild,
     this.policy = const AuthGatePolicy(),
     this.identityChanges,
+    this.accountChild,
+    this.verifyEmailChild,
   });
 
   final Widget verifiedChild;
   final AuthGatePolicy policy;
   final Stream<AuthGateIdentity?>? identityChanges;
+  final Widget? accountChild;
+  final Widget? verifyEmailChild;
 
   Stream<AuthGateIdentity?> get _identityChanges {
     final override = identityChanges;
@@ -62,9 +66,9 @@ class AuthGate extends StatelessWidget {
 
         switch (destination) {
           case AuthGateDestination.account:
-            return const AccountPage();
+            return accountChild ?? const AccountPage();
           case AuthGateDestination.verifyEmail:
-            return const VerifyEmailPage();
+            return verifyEmailChild ?? const VerifyEmailPage();
           case AuthGateDestination.verified:
             return verifiedChild;
         }
