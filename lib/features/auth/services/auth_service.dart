@@ -5,25 +5,48 @@ import '../../../services/email_auth_error_mapper.dart';
 import '../../../services/user_profile_bootstrap_service.dart';
 import 'user_profile_service.dart';
 
+typedef EmailPasswordResetAction = Future<void> Function(String email);
+typedef EmailVerificationAction = Future<void> Function();
+typedef EmailVerificationSyncAction = Future<bool> Function();
+typedef AuthenticatedUserCheck = bool Function();
+
 class EmailAuthService {
   EmailAuthService({
     FirebaseAuth? auth,
     AuthUserProfileService? profileService,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _profileService = profileService ?? AuthUserProfileService();
+    EmailPasswordResetAction? backendPasswordReset,
+    EmailPasswordResetAction? nativePasswordReset,
+    EmailVerificationAction? requestEmailVerification,
+    EmailVerificationSyncAction? syncEmailVerification,
+    AuthenticatedUserCheck? hasCurrentUser,
+  }) : _auth = auth,
+       _profileService = profileService ?? AuthUserProfileService(),
+       _backendPasswordReset = backendPasswordReset,
+       _nativePasswordReset = nativePasswordReset,
+       _requestEmailVerification = requestEmailVerification,
+       _syncEmailVerification = syncEmailVerification,
+       _hasCurrentUser = hasCurrentUser;
 
-  final FirebaseAuth _auth;
+  final FirebaseAuth? _auth;
   final AuthUserProfileService _profileService;
+  final EmailPasswordResetAction? _backendPasswordReset;
+  final EmailPasswordResetAction? _nativePasswordReset;
+  final EmailVerificationAction? _requestEmailVerification;
+  final EmailVerificationSyncAction? _syncEmailVerification;
+  final AuthenticatedUserCheck? _hasCurrentUser;
+
+  FirebaseAuth get _resolvedAuth => _auth ?? FirebaseAuth.instance;
 
   Future<User> signIn({
     required String email,
     required String password,
   }) async {
-    final credential = await _auth.signInWithEmailAndPassword(
+    final auth = _resolvedAuth;
+    final credential = await auth.signInWithEmailAndPassword(
       email: email.trim().toLowerCase(),
       password: password,
     );
-    final user = credential.user ?? _auth.currentUser;
+    final user = credential.user ?? auth.currentUser;
     if (user == null) {
       throw FirebaseAuthException(
         code: 'user-token-expired',
@@ -44,11 +67,12 @@ class EmailAuthService {
     required String password,
     bool createBusinessProfile = false,
   }) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
+    final auth = _resolvedAuth;
+    final credential = await auth.createUserWithEmailAndPassword(
       email: email.trim().toLowerCase(),
       password: password,
     );
-    final user = credential.user ?? _auth.currentUser;
+    final user = credential.user ?? auth.currentUser;
     if (user == null) {
       throw FirebaseAuthException(
         code: 'user-token-expired',
@@ -63,13 +87,13 @@ class EmailAuthService {
       await user.reload();
     }
 
-    final refreshedUser = _auth.currentUser ?? user;
+    final refreshedUser = auth.currentUser ?? user;
     await _profileService.ensureEmailUserProfile(
       user: refreshedUser,
       displayName: normalizedDisplayName,
       isBusinessAccount: createBusinessProfile,
     );
-    await EmailActionService.requestEmailVerificationEmail();
+    await _runEmailVerificationRequest();
     return refreshedUser;
   }
 
@@ -85,26 +109,43 @@ class EmailAuthService {
     }
 
     try {
-      // Priorité au callable backend si disponible : meilleur contrôle sécurité/logs.
-      await EmailActionService.requestPasswordResetEmail(normalizedEmail);
+      final backendReset = _backendPasswordReset;
+      if (backendReset != null) {
+        await backendReset(normalizedEmail);
+      } else {
+        await EmailActionService.requestPasswordResetEmail(normalizedEmail);
+      }
     } catch (_) {
-      // Fallback Firebase Auth natif pour ne jamais bloquer la récupération.
-      await _auth.sendPasswordResetEmail(email: normalizedEmail);
+      final nativeReset = _nativePasswordReset;
+      if (nativeReset != null) {
+        await nativeReset(normalizedEmail);
+      } else {
+        await _resolvedAuth.sendPasswordResetEmail(email: normalizedEmail);
+      }
     }
   }
 
   Future<void> requestEmailVerificationEmail() async {
-    final user = _auth.currentUser;
-    if (user == null) {
+    final hasCurrentUser = _hasCurrentUser?.call() ??
+        _resolvedAuth.currentUser != null;
+    if (!hasCurrentUser) {
       throw FirebaseAuthException(
         code: 'user-token-expired',
         message: 'Reconnecte-toi pour recevoir un email de vérification.',
       );
     }
-    await EmailActionService.requestEmailVerificationEmail();
+    await _runEmailVerificationRequest();
   }
 
   Future<bool> syncCurrentUserEmailVerificationState() {
+    final sync = _syncEmailVerification;
+    if (sync != null) return sync();
     return EmailActionService.syncCurrentUserEmailVerificationState();
+  }
+
+  Future<void> _runEmailVerificationRequest() {
+    final request = _requestEmailVerification;
+    if (request != null) return request();
+    return EmailActionService.requestEmailVerificationEmail();
   }
 }
