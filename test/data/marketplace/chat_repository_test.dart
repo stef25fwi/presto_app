@@ -80,10 +80,7 @@ void main() {
       },
     );
 
-    await repository.sendMessage(
-      threadId: ' thread-3 ',
-      message: ' Réponse ',
-    );
+    await repository.sendMessage(threadId: ' thread-3 ', message: ' Réponse ');
 
     expect(calledName, 'sendChatMessage');
     expect(calledTimeout, const Duration(seconds: 20));

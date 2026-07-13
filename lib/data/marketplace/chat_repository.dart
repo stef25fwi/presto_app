@@ -4,15 +4,15 @@ import '../../services/firebase_functions_region.dart';
 import '../../services/marketplace_human_verification.dart';
 import 'chat_request_policy.dart';
 
-typedef ChatRepositoryCaller = Future<Object?> Function({
-  required String name,
-  required Duration timeout,
-  required Map<String, dynamic> parameters,
-});
+typedef ChatRepositoryCaller =
+    Future<Object?> Function({
+      required String name,
+      required Duration timeout,
+      required Map<String, dynamic> parameters,
+    });
 
-typedef ChatVerificationTokenProvider = Future<String> Function(
-  MarketplaceHumanVerificationAction action,
-);
+typedef ChatVerificationTokenProvider =
+    Future<String> Function(MarketplaceHumanVerificationAction action);
 
 class ChatRepository {
   ChatRepository({
