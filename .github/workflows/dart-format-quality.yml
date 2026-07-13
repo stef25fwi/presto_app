@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: dart-format-${{ github.event.pull_request.number }}
@@ -28,7 +28,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Apply exact Dart format and restore workflow
+      - name: Format Auth files exactly
         run: |
           dart format \
             lib/pages/auth/auth_gate.dart \
@@ -40,22 +40,19 @@ jobs:
             test/features/auth/domain/auth_validators_test.dart \
             test/features/auth/presentation/widgets/auth_widgets_test.dart \
             test/pages/auth/auth_gate_widget_test.dart
-          git checkout origin/main -- .github/workflows/dart-format-quality.yml
-          if git diff --quiet; then
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            lib/pages/auth/auth_gate.dart \
-            lib/pages/auth/auth_guard_policy.dart \
-            lib/services/auth_status_policy.dart \
-            test/pages/auth/auth_gate_policy_test.dart \
-            test/pages/auth/auth_guard_policy_test.dart \
-            test/services/auth_status_policy_test.dart \
-            test/features/auth/domain/auth_validators_test.dart \
-            test/features/auth/presentation/widgets/auth_widgets_test.dart \
-            test/pages/auth/auth_gate_widget_test.dart \
-            .github/workflows/dart-format-quality.yml
-          git commit -m 'test: applique le format Dart exact au lot Auth'
-          git push origin HEAD:${{ github.head_ref }}
+
+      - name: Upload formatted Auth files
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-formatted-files
+          path: |
+            lib/pages/auth/auth_gate.dart
+            lib/pages/auth/auth_guard_policy.dart
+            lib/services/auth_status_policy.dart
+            test/pages/auth/auth_gate_policy_test.dart
+            test/pages/auth/auth_guard_policy_test.dart
+            test/services/auth_status_policy_test.dart
+            test/features/auth/domain/auth_validators_test.dart
+            test/features/auth/presentation/widgets/auth_widgets_test.dart
+            test/pages/auth/auth_gate_widget_test.dart
+          retention-days: 2
