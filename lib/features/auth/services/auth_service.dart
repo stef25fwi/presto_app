@@ -126,8 +126,8 @@ class EmailAuthService {
   }
 
   Future<void> requestEmailVerificationEmail() async {
-    final hasCurrentUser = _hasCurrentUser?.call() ??
-        _resolvedAuth.currentUser != null;
+    final hasCurrentUser =
+        _hasCurrentUser?.call() ?? _resolvedAuth.currentUser != null;
     if (!hasCurrentUser) {
       throw FirebaseAuthException(
         code: 'user-token-expired',
