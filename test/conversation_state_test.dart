@@ -71,20 +71,26 @@ void main() {
     );
   });
 
-  test('retourne false lorsque les champs de drapeau ne sont pas des maps', () {
-    final data = <String, dynamic>{
-      'archivedBy': true,
-      'deletedBy': <String>['alice'],
-      'blockedBy': 'alice',
-    };
+  test(
+    'retourne false lorsque les champs de drapeau ne sont pas des maps',
+    () {
+      final data = <String, dynamic>{
+        'archivedBy': true,
+        'deletedBy': <String>['alice'],
+        'blockedBy': 'alice',
+      };
 
-    expect(readConversationFlagForUser(data, 'archivedBy', 'alice'), isFalse);
-    expect(isConversationArchivedForUser(data, 'alice'), isFalse);
-    expect(isConversationDeletedForUser(data, 'alice'), isFalse);
-    expect(isConversationBlocked(data), isFalse);
-    expect(isConversationBlockedForUser(data, 'alice'), isFalse);
-    expect(isConversationBlockedByOtherUser(data, 'alice'), isFalse);
-  });
+      expect(
+        readConversationFlagForUser(data, 'archivedBy', 'alice'),
+        isFalse,
+      );
+      expect(isConversationArchivedForUser(data, 'alice'), isFalse);
+      expect(isConversationDeletedForUser(data, 'alice'), isFalse);
+      expect(isConversationBlocked(data), isFalse);
+      expect(isConversationBlockedForUser(data, 'alice'), isFalse);
+      expect(isConversationBlockedByOtherUser(data, 'alice'), isFalse);
+    },
+  );
 
   test('distingue le blocage courant du blocage par un autre participant', () {
     final data = <String, dynamic>{
