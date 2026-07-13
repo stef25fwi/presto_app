@@ -98,7 +98,7 @@ void main() {
       ),
     );
 
-    final field = tester.widget<TextFormField>(find.byType(TextFormField));
+    final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.obscureText, isTrue);
     expect(field.keyboardType, TextInputType.visiblePassword);
     expect(field.textInputAction, TextInputAction.done);
@@ -130,8 +130,9 @@ void main() {
       ),
     );
 
-    final field = tester.widget<TextFormField>(find.byType(TextFormField));
-    expect(field.enabled, isFalse);
+    final formField = tester.widget<TextFormField>(find.byType(TextFormField));
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(formField.enabled, isFalse);
     expect(field.autofocus, isTrue);
   });
 }
