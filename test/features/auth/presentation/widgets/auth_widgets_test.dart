@@ -7,7 +7,9 @@ import 'package:presto_app/features/auth/presentation/widgets/auth_text_field.da
 void main() {
   testWidgets('AuthErrorBox se masque pour un message vide', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: AuthErrorBox(message: '   '))),
+      const MaterialApp(
+        home: Scaffold(body: AuthErrorBox(message: '   ')),
+      ),
     );
 
     expect(find.byType(Container), findsNothing);
@@ -108,6 +110,8 @@ void main() {
     expect(find.byIcon(Icons.lock), findsOneWidget);
     expect(find.byIcon(Icons.visibility), findsOneWidget);
 
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
     await tester.testTextInput.receiveAction(TextInputAction.done);
     expect(submitted, 'secret');
   });
