@@ -6,6 +6,13 @@ void main() {
   const policy = ChatRequestPolicy();
 
   group('ChatRequestPolicy', () {
+    test('expose le texte de ChatRequestException', () {
+      const exception = ChatRequestException('Erreur de conversation');
+
+      expect(exception.message, 'Erreur de conversation');
+      expect(exception.toString(), 'Erreur de conversation');
+    });
+
     test('normalise les identifiants', () {
       expect(
         policy.normalizeIdentifier('  listing-42  ', fieldName: 'listingId'),
