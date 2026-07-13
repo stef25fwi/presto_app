@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: dart-format-${{ github.event.pull_request.number }}
@@ -28,64 +28,5 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Apply Auth status extraction, format and restore workflow
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          path = Path('lib/services/auth_service.dart')
-          source = path.read_text()
-          source = source.replace(
-              "import 'firebase_functions_region.dart';\n",
-              "import 'auth_status_policy.dart';\nimport 'firebase_functions_region.dart';\n",
-              1,
-          )
-          source = source.replace(
-              "enum AuthStatus {\n  loading,\n  signedOut,\n  signedInUnverified,\n  signedInVerified,\n  disabled,\n  error,\n}\n\n",
-              "",
-              1,
-          )
-          old = """  Stream<AuthStatus> get authStatusChanges {
-    return _auth.userChanges().map((user) {
-      if (user == null) return AuthStatus.signedOut;
-      if (!user.emailVerified && _isPasswordUser(user)) {
-        return AuthStatus.signedInUnverified;
-      }
-      return AuthStatus.signedInVerified;
-    });
-  }
-"""
-          new = """  Stream<AuthStatus> get authStatusChanges {
-    const policy = AuthStatusPolicy();
-    return _auth.userChanges().map(
-      (user) => policy.resolve(
-        signedIn: user != null,
-        emailVerified: user?.emailVerified ?? false,
-        providerIds:
-            user?.providerData.map((provider) => provider.providerId) ??
-            const <String>[],
-      ),
-    );
-  }
-"""
-          if old not in source:
-              raise SystemExit('Bloc authStatusChanges introuvable')
-          path.write_text(source.replace(old, new, 1))
-          PY
-          dart format \
-            lib/services/auth_service.dart \
-            lib/services/auth_status_policy.dart \
-            test/services/auth_status_policy_test.dart
-          git checkout origin/main -- .github/workflows/dart-format-quality.yml
-          if git diff --quiet; then
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            lib/services/auth_service.dart \
-            lib/services/auth_status_policy.dart \
-            test/services/auth_status_policy_test.dart \
-            .github/workflows/dart-format-quality.yml
-          git commit -m 'refactor: branche la policy de statut Auth'
-          git push origin HEAD:${{ github.head_ref }}
+      - name: Verify changed Dart files are formatted
+        run: bash tools/quality/check_changed_dart_format.sh '${{ github.base_ref }}'
