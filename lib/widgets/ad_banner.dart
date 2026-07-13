@@ -71,16 +71,14 @@ class _AdBannerState extends State<AdBanner> {
         () async {
           // Afficher le formulaire de consentement si disponible et requis.
           if (await ConsentInformation.instance.isConsentFormAvailable()) {
-            ConsentForm.loadAndShowConsentFormIfRequired(
-              (formError) {
-                // Erreur formulaire : on initialise quand même pour les
-                // utilisateurs hors EEA ou si le consentement n'est pas requis.
-                if (kDebugMode && formError != null) {
-                  debugPrint('[AdMob] UMP form error: ${formError.message}');
-                }
-                consentCompleter.complete();
-              },
-            );
+            ConsentForm.loadAndShowConsentFormIfRequired((formError) {
+              // Erreur formulaire : on initialise quand même pour les
+              // utilisateurs hors EEA ou si le consentement n'est pas requis.
+              if (kDebugMode && formError != null) {
+                debugPrint('[AdMob] UMP form error: ${formError.message}');
+              }
+              consentCompleter.complete();
+            });
           } else {
             consentCompleter.complete();
           }
@@ -203,7 +201,6 @@ class _AdBannerState extends State<AdBanner> {
 
     // Fonction helper: placeholder image (ticker) tant que pub non active
     Widget placeholderBanner() {
-      final ph = widget.placeholderHeight ?? (kIsWeb ? 90.0 : 60.0);
       final folder = widget.placeholderFolderPrefix ?? 'assets/carousel_home/';
 
       if (widget.flat) {

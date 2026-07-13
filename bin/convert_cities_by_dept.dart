@@ -3,7 +3,7 @@ import 'dart:io';
 
 /// Script de conversion des données de communes
 /// Source : tools/communes_full.json
-/// Sortie : assets/data/cities/cities_<dept>.json
+/// Sortie : `assets/data/cities/cities_<dept>.json`
 ///
 /// Format de sortie attendu par CitySearch :
 /// [
@@ -62,12 +62,7 @@ Future<void> main() async {
     }
 
     byDept.putIfAbsent(dept, () => []);
-    byDept[dept]!.add({
-      'name': name,
-      'cp': cp,
-      'dept': dept,
-      'region': region,
-    });
+    byDept[dept]!.add({'name': name, 'cp': cp, 'dept': dept, 'region': region});
   }
 
   // Création du dossier de sortie

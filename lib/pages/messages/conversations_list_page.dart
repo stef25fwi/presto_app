@@ -112,8 +112,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       if (fragment.contains('msgdiag')) {
         final qIndex = fragment.indexOf('?');
         if (qIndex >= 0) {
-          final fragQuery =
-              Uri.splitQueryString(fragment.substring(qIndex + 1));
+          final fragQuery = Uri.splitQueryString(
+            fragment.substring(qIndex + 1),
+          );
           if (truthy(fragQuery['msgdiag'])) return true;
         }
       }
@@ -179,7 +180,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       _adminConversationLoadLogs.insert(0, line);
       if (_adminConversationLoadLogs.length > maxLines) {
         _adminConversationLoadLogs.removeRange(
-            maxLines, _adminConversationLoadLogs.length);
+          maxLines,
+          _adminConversationLoadLogs.length,
+        );
       }
     });
   }
@@ -243,7 +246,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       );
       if (kDebugMode) {
         debugPrint(
-            '[MessagesList] admin status check failed uid=${user.uid} error=$error');
+          '[MessagesList] admin status check failed uid=${user.uid} error=$error',
+        );
       }
       isAdmin = false;
     }
@@ -357,20 +361,21 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
     _unreadMessagesSub?.cancel();
     _lastKnownUnreadMessages = 0;
-    _unreadMessagesSub = streamInboxCount(
-      userId: userId,
-      type: InboxCountType.unreadMessages,
-    ).listen((unreadCount) {
-      if (unreadCount > _lastKnownUnreadMessages) {
-        // New unread message arrived — force an immediate re-poll of the list.
-        if (mounted) {
-          setState(() {
-            _conversationStateStream = null;
-          });
-        }
-      }
-      _lastKnownUnreadMessages = unreadCount;
-    });
+    _unreadMessagesSub =
+        streamInboxCount(
+          userId: userId,
+          type: InboxCountType.unreadMessages,
+        ).listen((unreadCount) {
+          if (unreadCount > _lastKnownUnreadMessages) {
+            // New unread message arrived — force an immediate re-poll of the list.
+            if (mounted) {
+              setState(() {
+                _conversationStateStream = null;
+              });
+            }
+          }
+          _lastKnownUnreadMessages = unreadCount;
+        });
   }
 
   bool _isPermissionDenied(Object? error) {
@@ -406,10 +411,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   String _conversationTitle(Map<String, dynamic> data, String userId) {
-    final participantNames = _conversationValue(
-      data,
-      const ['participantNames', 'participant_names'],
-    );
+    final participantNames = _conversationValue(data, const [
+      'participantNames',
+      'participant_names',
+    ]);
     if (participantNames is Map) {
       for (final entry in participantNames.entries) {
         if (entry.key.toString() == userId) continue;
@@ -421,14 +426,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final candidates = [
       _conversationValue(data, const ['otherUserName', 'other_user_name']),
       _conversationValue(data, const ['participantName', 'participant_name']),
-      _conversationValue(
-        data,
-        const ['participantDisplayName', 'participant_display_name'],
-      ),
-      _conversationValue(
-        data,
-        const ['listingTitle', 'offerTitle', 'offer_title'],
-      ),
+      _conversationValue(data, const [
+        'participantDisplayName',
+        'participant_display_name',
+      ]),
+      _conversationValue(data, const [
+        'listingTitle',
+        'offerTitle',
+        'offer_title',
+      ]),
     ];
     for (final candidate in candidates) {
       final value = (candidate ?? '').toString().trim();
@@ -438,18 +444,19 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   String _conversationPreview(Map<String, dynamic> data, String userId) {
-    final lastMessage = _conversationValue(
-      data,
-      const ['lastMessage', 'last_message'],
-    ).toString().trim();
-    final lastSenderId = _conversationValue(
-      data,
-      const ['lastSenderId', 'last_sender_id'],
-    ).toString().trim();
-    final offerTitle = _conversationValue(
-      data,
-      const ['listingTitle', 'offerTitle', 'offer_title'],
-    ).toString().trim();
+    final lastMessage = _conversationValue(data, const [
+      'lastMessage',
+      'last_message',
+    ]).toString().trim();
+    final lastSenderId = _conversationValue(data, const [
+      'lastSenderId',
+      'last_sender_id',
+    ]).toString().trim();
+    final offerTitle = _conversationValue(data, const [
+      'listingTitle',
+      'offerTitle',
+      'offer_title',
+    ]).toString().trim();
 
     if (lastMessage.isNotEmpty) {
       if (lastSenderId == userId) {
@@ -469,14 +476,19 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return [
       _conversationTitle(data, userId),
       _conversationPreview(data, userId),
-      _conversationValue(
-        data,
-        const ['listingTitle', 'offerTitle', 'offer_title'],
-      ).toString(),
-      _conversationValue(data, const ['lastMessage', 'last_message'])
-          .toString(),
-      _conversationValue(data, const ['lastSenderName', 'last_sender_name'])
-          .toString(),
+      _conversationValue(data, const [
+        'listingTitle',
+        'offerTitle',
+        'offer_title',
+      ]).toString(),
+      _conversationValue(data, const [
+        'lastMessage',
+        'last_message',
+      ]).toString(),
+      _conversationValue(data, const [
+        'lastSenderName',
+        'last_sender_name',
+      ]).toString(),
     ].join(' ').toLowerCase();
   }
 
@@ -493,17 +505,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   String? _notificationConversationId(Map<String, dynamic> data) {
-    final directValue = _conversationValue(
-      data,
-      const ['conversationId', 'conversation_id'],
-    );
+    final directValue = _conversationValue(data, const [
+      'conversationId',
+      'conversation_id',
+    ]);
     final normalizedDirectValue = (directValue ?? '').toString().trim();
     if (normalizedDirectValue.isNotEmpty) {
       return normalizedDirectValue;
     }
 
-    final routeName =
-        (data['routeName'] ?? data['route_name'] ?? '').toString().trim();
+    final routeName = (data['routeName'] ?? data['route_name'] ?? '')
+        .toString()
+        .trim();
     if (routeName.isEmpty) return null;
     if (!routeName.startsWith('/messages/')) return null;
 
@@ -532,7 +545,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     const maxPermissionDeniedRetries = 1;
     var permissionDeniedRetryCount = 0;
     var permissionDeniedRecoveryGeneration = 0;
-    var appCheckPrefixRetryCount = 0;
     var subscriptionGeneration = 0;
     var isRetryingPermissionDenied = false;
 
@@ -578,7 +590,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     Future<void> cancelSubscriptions() async {
       final activeSubscriptions =
           List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>.from(
-              subscriptions);
+            subscriptions,
+          );
       subscriptions.clear();
       for (final subscription in activeSubscriptions) {
         await subscription.cancel();
@@ -588,7 +601,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     Future<void> startSubscriptions({required bool forceRefreshTokens}) async {
       final myGeneration = ++subscriptionGeneration;
       _appendAdminConversationLog(
-          '1/6 startSubscriptions gen=$myGeneration forceRefresh=$forceRefreshTokens adminMode=$isAdminMode');
+        '1/6 startSubscriptions gen=$myGeneration forceRefresh=$forceRefreshTokens adminMode=$isAdminMode',
+      );
 
       // ⚠️ App Check n'est PAS requis par les règles de lecture des
       // conversations (`allow list` ne teste que isSignedIn() + participantIds).
@@ -600,7 +614,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       // Cloud Callables) sans gater l'affichage.
       if (!isAdminMode) {
         _appendAdminConversationLog(
-            '2/6 App Check préflight EN ARRIÈRE-PLAN (non bloquant)');
+          '2/6 App Check préflight EN ARRIÈRE-PLAN (non bloquant)',
+        );
         unawaited(
           UserProfileBootstrapService.prepareProfileFirestoreAccess(
             user: FirebaseAuth.instance.currentUser,
@@ -609,9 +624,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             requireAppCheckToken: false,
           ).then(
             (_) => _appendAdminConversationLog(
-                '2/6 App Check préflight (bg) terminé'),
+              '2/6 App Check préflight (bg) terminé',
+            ),
             onError: (Object e) => _appendAdminConversationLog(
-                '2/6 App Check préflight (bg) échec non bloquant: $e'),
+              '2/6 App Check préflight (bg) échec non bloquant: $e',
+            ),
           ),
         );
       }
@@ -627,17 +644,20 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             ?.getIdToken(forceRefreshTokens)
             .timeout(const Duration(seconds: 10));
         _appendAdminConversationLog(
-            '3/6 getIdToken OK (${DateTime.now().difference(swToken).inMilliseconds}ms)');
+          '3/6 getIdToken OK (${DateTime.now().difference(swToken).inMilliseconds}ms)',
+        );
       } catch (e) {
         _appendAdminConversationLog(
-            '3/6 getIdToken ÉCHEC (${DateTime.now().difference(swToken).inMilliseconds}ms) err=$e');
+          '3/6 getIdToken ÉCHEC (${DateTime.now().difference(swToken).inMilliseconds}ms) err=$e',
+        );
       }
 
       if (myGeneration != subscriptionGeneration ||
           isCancelled ||
           controller.isClosed) {
         _appendAdminConversationLog(
-            '3/6 abandon (génération obsolète/annulée)');
+          '3/6 abandon (génération obsolète/annulée)',
+        );
         return;
       }
 
@@ -645,12 +665,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
-        final docs = snapshot.docs.map((doc) {
-          return ConversationSummary.fromFirestore(
-            doc,
-            assumedParticipants: <String>[userId],
-          );
-        }).toList(growable: false);
+        final docs = snapshot.docs
+            .map((doc) {
+              return ConversationSummary.fromFirestore(
+                doc,
+                assumedParticipants: <String>[userId],
+              );
+            })
+            .toList(growable: false);
         snapshotsByField[field] = docs;
 
         // Toute réponse Firestore, même vide, prouve que la requête a réussi.
@@ -658,9 +680,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         permissionDeniedRetryCount = 0;
         permissionDeniedRecoveryGeneration += 1;
 
-        errorsByField.removeWhere(
-          (_, value) => _isPermissionDenied(value),
-        );
+        errorsByField.removeWhere((_, value) => _isPermissionDenied(value));
         errorsByField.remove(field);
         _appendAdminConversationLog(
           '5/6 ✅ SNAPSHOT field=$field docs=${docs.length} ids=${docs.take(5).map((d) => d.id).toList()}',
@@ -677,7 +697,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         debugPrint("[CONV] 🔴 field=$field uid=$userId error=$error");
         final isPd = _isPermissionDenied(error);
         _appendAdminConversationLog(
-            '5/6 🔴 ERREUR field=$field type=${isPd ? 'permission-denied' : error.runtimeType} err=$error');
+          '5/6 🔴 ERREUR field=$field type=${isPd ? 'permission-denied' : error.runtimeType} err=$error',
+        );
         if (kDebugMode) {
           debugPrint(
             '[MessagesList] mode=$mode field=$field error user=$userId error=$error',
@@ -687,16 +708,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         if (_isPermissionDenied(error)) {
           // Un permission-denied peut être transitoire pendant la restauration
           // du jeton Firebase Auth. Il ne doit pas devenir une erreur fatale.
-          errorsByField.removeWhere(
-            (_, value) => _isPermissionDenied(value),
-          );
+          errorsByField.removeWhere((_, value) => _isPermissionDenied(value));
 
           if (!isRetryingPermissionDenied &&
               permissionDeniedRetryCount < maxPermissionDeniedRetries) {
             isRetryingPermissionDenied = true;
             permissionDeniedRetryCount += 1;
             _appendAdminConversationLog(
-                '5/6 ↻ retry permission-denied #$permissionDeniedRetryCount (refus transitoire, non fatal)');
+              '5/6 ↻ retry permission-denied #$permissionDeniedRetryCount (refus transitoire, non fatal)',
+            );
 
             final retryGeneration = permissionDeniedRecoveryGeneration;
 
@@ -705,8 +725,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             emitState(isLoading: mergedDocs().isEmpty);
 
             unawaited(() async {
-              final delay =
-                  _permissionDeniedRetryDelay(permissionDeniedRetryCount);
+              final delay = _permissionDeniedRetryDelay(
+                permissionDeniedRetryCount,
+              );
 
               if (delay > Duration.zero) {
                 await Future<void>.delayed(delay);
@@ -748,26 +769,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
 
         _appendAdminConversationLog(
-            'mode=$mode field=$field stream-error=$error');
+          'mode=$mode field=$field stream-error=$error',
+        );
         errorsByField[field] = error;
         emitState();
       }
 
       if (isAdminMode) {
         _appendAdminConversationLog(
-            '4/6 requête GLOBALE admin orderBy=${queryShape['orderBy']} limit=${queryShape['limit']}');
+          '4/6 requête GLOBALE admin orderBy=${queryShape['orderBy']} limit=${queryShape['limit']}',
+        );
         final query = FirebaseFirestore.instance
             .collection(queryShape['collection']! as String)
-            .orderBy(queryShape['orderBy']! as String,
-                descending: queryShape['descending']! as bool)
+            .orderBy(
+              queryShape['orderBy']! as String,
+              descending: queryShape['descending']! as bool,
+            )
             .limit(queryShape['limit']! as int);
         subscriptions.add(
           query.snapshots().listen(
-                (snapshot) => handleSnapshot('admin_global', snapshot),
-                onError: (error, stackTrace) =>
-                    handleError('admin_global', error),
-                cancelOnError: true,
-              ),
+            (snapshot) => handleSnapshot('admin_global', snapshot),
+            onError: (error, stackTrace) => handleError('admin_global', error),
+            cancelOnError: true,
+          ),
         );
       } else {
         // Le listener Firestore ne doit pas être créé avant App Check.
@@ -777,21 +801,23 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
         for (final field in activeParticipantQueryFields) {
           _appendAdminConversationLog(
-              '4/6 requête where($field, arrayContains, $userId)');
+            '4/6 requête where($field, arrayContains, $userId)',
+          );
           final query = FirebaseFirestore.instance
               .collection(queryShape['collection']! as String)
               .where(field, arrayContains: userId);
           subscriptions.add(
             query.snapshots().listen(
-                  (snapshot) => handleSnapshot(field, snapshot),
-                  onError: (error, stackTrace) => handleError(field, error),
-                  cancelOnError: true,
-                ),
+              (snapshot) => handleSnapshot(field, snapshot),
+              onError: (error, stackTrace) => handleError(field, error),
+              cancelOnError: true,
+            ),
           );
         }
       }
       _appendAdminConversationLog(
-          '4/6 abonnement(s) actif(s)=${subscriptions.length}');
+        '4/6 abonnement(s) actif(s)=${subscriptions.length}',
+      );
     }
 
     unawaited(startSubscriptions(forceRefreshTokens: false));
@@ -827,11 +853,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             initiallyExpanded: _diagPanelExpanded,
             onExpansionChanged: (value) =>
                 setState(() => _diagPanelExpanded = value),
-            tilePadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 0,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            leading: const Icon(Icons.bug_report_outlined,
-                color: Color(0xFF2F6C38), size: 18),
+            leading: const Icon(
+              Icons.bug_report_outlined,
+              color: Color(0xFF2F6C38),
+              size: 18,
+            ),
             title: Text(
               _isAdminViewer
                   ? 'Log admin - chargement conversations'
@@ -855,8 +886,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               padding: EdgeInsets.zero,
               iconSize: 18,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.content_copy_rounded,
-                  color: Color(0xFF2F6C38)),
+              icon: const Icon(
+                Icons.content_copy_rounded,
+                color: Color(0xFF2F6C38),
+              ),
               onPressed: () {
                 final text = _adminConversationLoadLogs.isEmpty
                     ? 'Aucun log.'
@@ -935,10 +968,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     _cachedConversationStateUserId = userId;
     _cachedConversationStateAdminMode = adminMode;
 
-    final nextStream = _conversationStateForUser(
-      userId,
-      adminMode: adminMode,
-    );
+    final nextStream = _conversationStateForUser(userId, adminMode: adminMode);
 
     _cachedConversationStateStream = nextStream;
     return nextStream;
@@ -958,13 +988,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     _conversationStateUserId = userId;
     _conversationStateAdminMode = adminMode;
-    _conversationStateStream =
-        _buildConversationStateStream(userId, adminMode: adminMode);
+    _conversationStateStream = _buildConversationStateStream(
+      userId,
+      adminMode: adminMode,
+    );
     return _conversationStateStream!;
   }
 
   Future<void> _markConversationRead(
-      String conversationId, String currentUserId) async {
+    String conversationId,
+    String currentUserId,
+  ) async {
     try {
       await ConversationService.markAsRead(conversationId: conversationId);
     } catch (e) {
@@ -980,25 +1014,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       switch (action) {
         case _ConversationMenuAction.archive:
           await ConversationService.archiveConversation(
-              conversationId: conversationId);
+            conversationId: conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation archivee.');
           return;
         case _ConversationMenuAction.unarchive:
           await ConversationService.unarchiveConversation(
-              conversationId: conversationId);
+            conversationId: conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation restauree.');
           return;
         case _ConversationMenuAction.block:
           await ConversationService.blockConversation(
-              conversationId: conversationId);
+            conversationId: conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation bloquee.');
           return;
         case _ConversationMenuAction.unblock:
           await ConversationService.unblockConversation(
-              conversationId: conversationId);
+            conversationId: conversationId,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
@@ -1031,7 +1069,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
           if (confirmed != true || !mounted) return;
           await ConversationService.deleteConversation(
-              conversationId: conversationId);
+            conversationId: conversationId,
+          );
           if (!mounted) return;
           setState(() {
             _hiddenConversationIds.add(conversationId);
@@ -1220,7 +1259,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       Color(0xFF5D4037),
     ];
     final source = key.trim().isEmpty ? 'conversation' : key.trim();
-    final index = source.codeUnits.fold<int>(0, (acc, unit) => acc + unit) %
+    final index =
+        source.codeUnits.fold<int>(0, (acc, unit) => acc + unit) %
         colors.length;
     return colors[index];
   }
@@ -1326,10 +1366,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
       _didHandleInitialConversation = true;
       if (!context.mounted) return;
-      showErrorSnackBar(
-        context,
-        _conversationAccessErrorMessage(null),
-      );
+      showErrorSnackBar(context, _conversationAccessErrorMessage(null));
     } on FirebaseException catch (error) {
       if (kDebugMode) {
         debugPrint(
@@ -1404,7 +1441,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               count: unreadCount,
               selected: _activeFilter == _ConversationListFilter.unread,
               onTap: () => setState(
-                  () => _activeFilter = _ConversationListFilter.unread),
+                () => _activeFilter = _ConversationListFilter.unread,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -1414,7 +1452,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               count: archivedCount,
               selected: _activeFilter == _ConversationListFilter.archived,
               onTap: () => setState(
-                  () => _activeFilter = _ConversationListFilter.archived),
+                () => _activeFilter = _ConversationListFilter.archived,
+              ),
             ),
           ),
         ],
@@ -1444,8 +1483,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             child: unreadCount > 0
                 ? Container(
                     key: ValueKey<int>(unreadCount),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: kWhatsappGreen,
                       borderRadius: BorderRadius.circular(999),
@@ -1518,8 +1559,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 14,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide.none,
@@ -1739,17 +1782,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               systemOverlayStyle: kMessagesStatusBarStyle,
               backgroundColor: kPrestoOrange,
               foregroundColor: Colors.white,
-              title: Text(
-                widget.appBarTitle,
-                style: kPrestoAppBarTitleStyle,
-              ),
+              title: Text(widget.appBarTitle, style: kPrestoAppBarTitleStyle),
               centerTitle: true,
             ),
             body: Stack(
               children: [
                 _buildWatermark(),
                 _buildEmptyState(
-                    'Connexion / inscription pour accéder à la messagerie.'),
+                  'Connexion / inscription pour accéder à la messagerie.',
+                ),
               ],
             ),
           );
@@ -1792,12 +1833,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
                         if (state == null) {
                           _logRenderDiag(
-                              '➡️ LOADER affiché (conn=${snapshot.connectionState.name} '
-                              'state=${state == null ? 'null' : 'isLoading=${state.isLoading}'})');
+                            '➡️ LOADER affiché (conn=${snapshot.connectionState.name} '
+                            'state=${state == null ? 'null' : 'isLoading=${state.isLoading}'})',
+                          );
                           return const Center(
                             child: CircularProgressIndicator(
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                kPrestoOrange,
+                              ),
                             ),
                           );
                         }
@@ -1806,69 +1849,85 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         final errorsByField = state.errorsByField;
                         _maybeOpenInitialConversation(context, docs, userId);
 
-                        final query =
-                            _searchController.text.trim().toLowerCase();
+                        final query = _searchController.text
+                            .trim()
+                            .toLowerCase();
                         var orphanCount = 0;
                         final conversations = docs;
 
-                        final renderableConversations =
-                            conversations.where((conversation) {
-                          if (_hiddenConversationIds
-                              .contains(conversation.id)) {
-                            return false;
-                          }
+                        final renderableConversations = conversations
+                            .where((conversation) {
+                              if (_hiddenConversationIds.contains(
+                                conversation.id,
+                              )) {
+                                return false;
+                              }
 
-                          if (conversation.isDeletedForUser(userId)) {
-                            return false;
-                          }
+                              if (conversation.isDeletedForUser(userId)) {
+                                return false;
+                              }
 
-                          if (!conversation.includesUser(userId)) {
-                            orphanCount += 1;
-                            if (kDebugMode) {
-                              debugPrint(
-                                '[MessagesList] orphan conversation ignored id=${conversation.id} user=$userId participants=${conversation.participants}',
-                              );
-                            }
-                            return _isAdminViewer;
-                          }
+                              if (!conversation.includesUser(userId)) {
+                                orphanCount += 1;
+                                if (kDebugMode) {
+                                  debugPrint(
+                                    '[MessagesList] orphan conversation ignored id=${conversation.id} user=$userId participants=${conversation.participants}',
+                                  );
+                                }
+                                return _isAdminViewer;
+                              }
 
-                          if (!conversation.hasRenderableContent) {
-                            return false;
-                          }
+                              if (!conversation.hasRenderableContent) {
+                                return false;
+                              }
 
-                          return true;
-                        }).toList(growable: false);
+                              return true;
+                            })
+                            .toList(growable: false);
 
                         final allCount = renderableConversations
-                            .where((conversation) =>
-                                !conversation.isArchivedForUser(userId))
+                            .where(
+                              (conversation) =>
+                                  !conversation.isArchivedForUser(userId),
+                            )
                             .length;
                         final unreadTabCount = renderableConversations
-                            .where((conversation) =>
-                                !conversation.isArchivedForUser(userId) &&
-                                conversation.unreadForUser(userId) > 0)
+                            .where(
+                              (conversation) =>
+                                  !conversation.isArchivedForUser(userId) &&
+                                  conversation.unreadForUser(userId) > 0,
+                            )
                             .length;
                         final archivedTabCount = renderableConversations
-                            .where((conversation) =>
-                                conversation.isArchivedForUser(userId))
+                            .where(
+                              (conversation) =>
+                                  conversation.isArchivedForUser(userId),
+                            )
                             .length;
 
-                        final visibleConversations =
-                            renderableConversations.where((conversation) {
-                          switch (_activeFilter) {
-                            case _ConversationListFilter.archived:
-                              return conversation.isArchivedForUser(userId);
-                            case _ConversationListFilter.unread:
-                              return !conversation.isArchivedForUser(userId) &&
-                                  conversation.unreadForUser(userId) > 0;
-                            case _ConversationListFilter.all:
-                              return !conversation.isArchivedForUser(userId);
-                          }
-                        }).toList(growable: false);
+                        final visibleConversations = renderableConversations
+                            .where((conversation) {
+                              switch (_activeFilter) {
+                                case _ConversationListFilter.archived:
+                                  return conversation.isArchivedForUser(userId);
+                                case _ConversationListFilter.unread:
+                                  return !conversation.isArchivedForUser(
+                                        userId,
+                                      ) &&
+                                      conversation.unreadForUser(userId) > 0;
+                                case _ConversationListFilter.all:
+                                  return !conversation.isArchivedForUser(
+                                    userId,
+                                  );
+                              }
+                            })
+                            .toList(growable: false);
 
                         final filteredConversations = visibleConversations
-                            .where((conversation) =>
-                                conversation.matchesQuery(userId, query))
+                            .where(
+                              (conversation) =>
+                                  conversation.matchesQuery(userId, query),
+                            )
                             .toList(growable: false);
 
                         _logRenderDiag(
@@ -1878,19 +1937,19 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         );
 
                         if (filteredConversations.isEmpty) {
-                          final message = errorsByField.isNotEmpty &&
-                                  docs.isEmpty
+                          final message =
+                              errorsByField.isNotEmpty && docs.isEmpty
                               ? _conversationAccessErrorMessage(
                                   errorsByField.values.first,
                                 )
                               : query.isNotEmpty
-                                  ? 'Aucune conversation ne correspond a votre recherche.'
-                                  : _activeFilter ==
-                                          _ConversationListFilter.archived
-                                      ? 'Aucune conversation archivee.'
-                                      : orphanCount > 0
-                                          ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
-                                          : 'Aucune conversation pour le moment.';
+                              ? 'Aucune conversation ne correspond a votre recherche.'
+                              : _activeFilter ==
+                                    _ConversationListFilter.archived
+                              ? 'Aucune conversation archivee.'
+                              : orphanCount > 0
+                              ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
+                              : 'Aucune conversation pour le moment.';
 
                           return _buildResponsiveMessagesBody(
                             Column(
@@ -1931,27 +1990,34 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                               ),
                               Expanded(
                                 child: ListView.builder(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(6, 6, 6, 80),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    6,
+                                    6,
+                                    6,
+                                    80,
+                                  ),
                                   itemCount: filteredConversations.length,
                                   itemBuilder: (context, index) {
                                     final conversation =
                                         filteredConversations[index];
                                     final offerTitle = conversation.offerTitle;
                                     final title = conversation.titleFor(userId);
-                                    final preview =
-                                        conversation.previewFor(userId);
-                                    final unreadCount =
-                                        conversation.unreadForUser(userId);
-                                    final archived =
-                                        conversation.isArchivedForUser(userId);
+                                    final preview = conversation.previewFor(
+                                      userId,
+                                    );
+                                    final unreadCount = conversation
+                                        .unreadForUser(userId);
+                                    final archived = conversation
+                                        .isArchivedForUser(userId);
                                     final blocked = conversation.isBlocked;
-                                    final blockedForUser =
-                                        conversation.isBlockedForUser(userId);
+                                    final blockedForUser = conversation
+                                        .isBlockedForUser(userId);
                                     final lastDate = conversation.sortDate;
                                     final otherParticipantId =
                                         _otherParticipantId(
-                                            conversation, userId);
+                                          conversation,
+                                          userId,
+                                        );
 
                                     Future<void> openConversation() {
                                       return _openConversation(
@@ -1964,26 +2030,30 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 6),
+                                        horizontal: 6,
+                                      ),
                                       child: Slidable(
                                         enabled: !kIsWeb,
                                         key: ValueKey<String>(
-                                            'conversation-${conversation.id}'),
+                                          'conversation-${conversation.id}',
+                                        ),
                                         startActionPane: ActionPane(
                                           motion: const DrawerMotion(),
                                           children: [
                                             SlidableAction(
                                               onPressed: (_) =>
                                                   _handleConversationAction(
-                                                conversationId: conversation.id,
-                                                action: archived
-                                                    ? _ConversationMenuAction
-                                                        .unarchive
-                                                    : _ConversationMenuAction
-                                                        .archive,
+                                                    conversationId:
+                                                        conversation.id,
+                                                    action: archived
+                                                        ? _ConversationMenuAction
+                                                              .unarchive
+                                                        : _ConversationMenuAction
+                                                              .archive,
+                                                  ),
+                                              backgroundColor: const Color(
+                                                0xFF6B7280,
                                               ),
-                                              backgroundColor:
-                                                  const Color(0xFF6B7280),
                                               foregroundColor: Colors.white,
                                               icon: archived
                                                   ? Icons.unarchive_outlined
@@ -1995,15 +2065,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                             SlidableAction(
                                               onPressed: (_) =>
                                                   _handleConversationAction(
-                                                conversationId: conversation.id,
-                                                action: blockedForUser
-                                                    ? _ConversationMenuAction
-                                                        .unblock
-                                                    : _ConversationMenuAction
-                                                        .block,
+                                                    conversationId:
+                                                        conversation.id,
+                                                    action: blockedForUser
+                                                        ? _ConversationMenuAction
+                                                              .unblock
+                                                        : _ConversationMenuAction
+                                                              .block,
+                                                  ),
+                                              backgroundColor: const Color(
+                                                0xFFB91C1C,
                                               ),
-                                              backgroundColor:
-                                                  const Color(0xFFB91C1C),
                                               foregroundColor: Colors.white,
                                               icon: blockedForUser
                                                   ? Icons.lock_open_rounded
@@ -2020,10 +2092,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                             SlidableAction(
                                               onPressed: (_) =>
                                                   _handleConversationAction(
-                                                conversationId: conversation.id,
-                                                action: _ConversationMenuAction
-                                                    .delete,
-                                              ),
+                                                    conversationId:
+                                                        conversation.id,
+                                                    action:
+                                                        _ConversationMenuAction
+                                                            .delete,
+                                                  ),
                                               backgroundColor: Colors.red,
                                               foregroundColor: Colors.white,
                                               icon:
@@ -2033,29 +2107,39 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           ],
                                         ),
                                         child: Material(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.98),
-                                          borderRadius:
-                                              BorderRadius.circular(16),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.98,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           child: InkWell(
-                                            borderRadius:
-                                                BorderRadius.circular(16),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
                                             onTap: () =>
                                                 unawaited(openConversation()),
                                             child: AnimatedContainer(
                                               duration: const Duration(
-                                                  milliseconds: 220),
+                                                milliseconds: 220,
+                                              ),
                                               curve: Curves.easeOutCubic,
                                               margin:
                                                   const EdgeInsets.symmetric(
-                                                      vertical: 2),
+                                                    vertical: 2,
+                                                  ),
                                               padding:
                                                   const EdgeInsets.fromLTRB(
-                                                      8, 12, 8, 12),
+                                                    8,
+                                                    12,
+                                                    8,
+                                                    12,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: unreadCount > 0
                                                     ? kWhatsappGreen.withValues(
-                                                        alpha: 0.045)
+                                                        alpha: 0.045,
+                                                      )
                                                     : Colors.transparent,
                                                 borderRadius:
                                                     BorderRadius.circular(16),
@@ -2063,7 +2147,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                   bottom: BorderSide(
                                                     color: Colors.black
                                                         .withValues(
-                                                            alpha: 0.06),
+                                                          alpha: 0.06,
+                                                        ),
                                                   ),
                                                 ),
                                               ),
@@ -2073,7 +2158,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                 children: [
                                                   GestureDetector(
                                                     onTap: () => unawaited(
-                                                        openConversation()),
+                                                      openConversation(),
+                                                    ),
                                                     child: _ConversationAvatar(
                                                       title: title,
                                                       userId:
@@ -2082,11 +2168,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                           _isAdminViewer,
                                                       fallbackColor:
                                                           _avatarColorForKey(
-                                                        otherParticipantId
-                                                                .isNotEmpty
-                                                            ? otherParticipantId
-                                                            : conversation.id,
-                                                      ),
+                                                            otherParticipantId
+                                                                    .isNotEmpty
+                                                                ? otherParticipantId
+                                                                : conversation
+                                                                      .id,
+                                                          ),
                                                       unreadCount: unreadCount,
                                                     ),
                                                   ),
@@ -2111,39 +2198,42 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                                 overflow:
                                                                     TextOverflow
                                                                         .ellipsis,
-                                                                style:
-                                                                    kPrestoCardTitleStyle
-                                                                        .copyWith(
-                                                                  fontWeight: unreadCount >
+                                                                style: kPrestoCardTitleStyle.copyWith(
+                                                                  fontWeight:
+                                                                      unreadCount >
                                                                           0
                                                                       ? FontWeight
-                                                                          .w800
+                                                                            .w800
                                                                       : FontWeight
-                                                                          .w700,
+                                                                            .w700,
                                                                   color: const Color(
-                                                                      0xFF111827),
+                                                                    0xFF111827,
+                                                                  ),
                                                                 ),
                                                               ),
                                                             ),
                                                             const SizedBox(
-                                                                width: 8),
+                                                              width: 8,
+                                                            ),
                                                             Text(
                                                               _formatTimestamp(
-                                                                  lastDate),
-                                                              style:
-                                                                  kPrestoMetaTextStyle
-                                                                      .copyWith(
-                                                                color: unreadCount >
+                                                                lastDate,
+                                                              ),
+                                                              style: kPrestoMetaTextStyle.copyWith(
+                                                                color:
+                                                                    unreadCount >
                                                                         0
                                                                     ? kWhatsappGreen
                                                                     : const Color(
-                                                                        0xFF9CA3AF),
-                                                                fontWeight: unreadCount >
+                                                                        0xFF9CA3AF,
+                                                                      ),
+                                                                fontWeight:
+                                                                    unreadCount >
                                                                         0
                                                                     ? FontWeight
-                                                                        .w700
+                                                                          .w700
                                                                     : FontWeight
-                                                                        .w500,
+                                                                          .w500,
                                                               ),
                                                             ),
                                                           ],
@@ -2153,53 +2243,56 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             offerTitle !=
                                                                 title) ...[
                                                           const SizedBox(
-                                                              height: 2),
+                                                            height: 2,
+                                                          ),
                                                           Text(
                                                             offerTitle,
                                                             maxLines: 1,
                                                             overflow:
                                                                 TextOverflow
                                                                     .ellipsis,
-                                                            style:
-                                                                kPrestoMetaTextStyle
-                                                                    .copyWith(
-                                                              color: const Color(
-                                                                  0xFF6B7280),
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
+                                                            style: kPrestoMetaTextStyle
+                                                                .copyWith(
+                                                                  color: const Color(
+                                                                    0xFF6B7280,
+                                                                  ),
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
                                                           ),
                                                         ],
                                                         const SizedBox(
-                                                            height: 5),
+                                                          height: 5,
+                                                        ),
                                                         Text(
                                                           preview,
                                                           maxLines: 1,
                                                           overflow: TextOverflow
                                                               .ellipsis,
-                                                          style:
-                                                              kPrestoBodyTextStyle
-                                                                  .copyWith(
-                                                            color: unreadCount >
-                                                                    0
+                                                          style: kPrestoBodyTextStyle.copyWith(
+                                                            color:
+                                                                unreadCount > 0
                                                                 ? const Color(
-                                                                    0xFF111827)
+                                                                    0xFF111827,
+                                                                  )
                                                                 : const Color(
-                                                                    0xFF6B7280),
+                                                                    0xFF6B7280,
+                                                                  ),
                                                             fontWeight:
                                                                 unreadCount > 0
-                                                                    ? FontWeight
-                                                                        .w600
-                                                                    : FontWeight
-                                                                        .w500,
+                                                                ? FontWeight
+                                                                      .w600
+                                                                : FontWeight
+                                                                      .w500,
                                                             fontSize: 14,
                                                           ),
                                                         ),
                                                         if (archived ||
                                                             blocked) ...[
                                                           const SizedBox(
-                                                              height: 6),
+                                                            height: 6,
+                                                          ),
                                                           Wrap(
                                                             spacing: 6,
                                                             runSpacing: 6,
@@ -2209,15 +2302,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                                   label:
                                                                       'Archivee',
                                                                   color: const Color(
-                                                                      0xFF6B7280),
+                                                                    0xFF6B7280,
+                                                                  ),
                                                                 ),
                                                               if (blocked)
                                                                 _ConversationStateChip(
-                                                                  label: blockedForUser
+                                                                  label:
+                                                                      blockedForUser
                                                                       ? 'Bloquee par vous'
                                                                       : 'Bloquee',
                                                                   color: const Color(
-                                                                      0xFFB91C1C),
+                                                                    0xFFB91C1C,
+                                                                  ),
                                                                 ),
                                                             ],
                                                           ),
@@ -2234,24 +2330,26 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                         CrossAxisAlignment.end,
                                                     children: [
                                                       PopupMenuButton<
-                                                          _ConversationMenuAction>(
+                                                        _ConversationMenuAction
+                                                      >(
                                                         tooltip:
                                                             'Actions conversation',
                                                         onSelected: (action) =>
                                                             _handleConversationAction(
-                                                          conversationId:
-                                                              conversation.id,
-                                                          action: action,
-                                                        ),
-                                                        itemBuilder:
-                                                            (context) => [
+                                                              conversationId:
+                                                                  conversation
+                                                                      .id,
+                                                              action: action,
+                                                            ),
+                                                        itemBuilder: (context) => [
                                                           PopupMenuItem<
-                                                              _ConversationMenuAction>(
+                                                            _ConversationMenuAction
+                                                          >(
                                                             value: archived
                                                                 ? _ConversationMenuAction
-                                                                    .unarchive
+                                                                      .unarchive
                                                                 : _ConversationMenuAction
-                                                                    .archive,
+                                                                      .archive,
                                                             child: Text(
                                                               archived
                                                                   ? 'Restaurer'
@@ -2259,12 +2357,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             ),
                                                           ),
                                                           PopupMenuItem<
-                                                              _ConversationMenuAction>(
-                                                            value: blockedForUser
+                                                            _ConversationMenuAction
+                                                          >(
+                                                            value:
+                                                                blockedForUser
                                                                 ? _ConversationMenuAction
-                                                                    .unblock
+                                                                      .unblock
                                                                 : _ConversationMenuAction
-                                                                    .block,
+                                                                      .block,
                                                             child: Text(
                                                               blockedForUser
                                                                   ? 'Debloquer'
@@ -2272,15 +2372,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             ),
                                                           ),
                                                           const PopupMenuItem<
-                                                              _ConversationMenuAction>(
+                                                            _ConversationMenuAction
+                                                          >(
                                                             value:
                                                                 _ConversationMenuAction
                                                                     .delete,
                                                             child: Text(
                                                               'Supprimer',
                                                               style: TextStyle(
-                                                                  color: Colors
-                                                                      .red),
+                                                                color:
+                                                                    Colors.red,
+                                                              ),
                                                             ),
                                                           ),
                                                         ],
@@ -2291,40 +2393,40 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             Icons
                                                                 .more_horiz_rounded,
                                                             color: Color(
-                                                                0xFF9CA3AF),
+                                                              0xFF9CA3AF,
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
                                                       if (unreadCount > 0) ...[
                                                         const SizedBox(
-                                                            height: 10),
+                                                          height: 10,
+                                                        ),
                                                         Container(
                                                           padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 3,
-                                                          ),
-                                                          decoration:
-                                                              BoxDecoration(
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 3,
+                                                              ),
+                                                          decoration: BoxDecoration(
                                                             color:
                                                                 kWhatsappGreen,
                                                             borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        999),
+                                                                BorderRadius.circular(
+                                                                  999,
+                                                                ),
                                                           ),
                                                           child: Text(
                                                             '$unreadCount',
                                                             style:
                                                                 const TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                              fontSize: 12,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
                                                           ),
                                                         ),
                                                       ],
@@ -2437,13 +2539,14 @@ class _ConversationAvatar extends StatelessWidget {
         final lastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
         final photoUrl = _firstProfilePhotoUrl(data);
         final storedPath = _firstStoredProfilePhotoPath(data);
-        final isOnline = status == 'online' &&
+        final isOnline =
+            status == 'online' &&
             (lastSeenAt == null ||
                 DateTime.now().difference(lastSeenAt.toLocal()) <
                     const Duration(minutes: 4));
         final needsStorageResolution =
             (photoUrl.isEmpty && storedPath.isNotEmpty) ||
-                _isResolvableStorageProfilePhoto(photoUrl);
+            _isResolvableStorageProfilePhoto(photoUrl);
 
         if (!needsStorageResolution) {
           return _buildAvatar(isOnline: isOnline, photoUrl: photoUrl);
@@ -2456,10 +2559,7 @@ class _ConversationAvatar extends StatelessWidget {
           ),
           builder: (context, legacySnapshot) {
             final resolvedPhotoUrl = (legacySnapshot.data ?? '').trim();
-            return _buildAvatar(
-              isOnline: isOnline,
-              photoUrl: resolvedPhotoUrl,
-            );
+            return _buildAvatar(isOnline: isOnline, photoUrl: resolvedPhotoUrl);
           },
         );
       },
@@ -2504,8 +2604,9 @@ class _ConversationAvatar extends StatelessWidget {
       final ref = storedPath.isNotEmpty
           ? FirebaseStorage.instance.ref().child(storedPath)
           : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
-      return (await ref.getDownloadURL().timeout(const Duration(seconds: 12)))
-          .trim();
+      return (await ref.getDownloadURL().timeout(
+        const Duration(seconds: 12),
+      )).trim();
     } catch (error) {
       debugPrint(
         '[ConversationAvatar] legacy storage hydration failed '
@@ -2565,13 +2666,10 @@ class _ConversationAvatar extends StatelessWidget {
               color: isOnline
                   ? kWhatsappGreen
                   : unreadCount > 0
-                      ? kPrestoOrange
-                      : const Color(0xFFD1D5DB),
+                  ? kPrestoOrange
+                  : const Color(0xFFD1D5DB),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white,
-                width: 2,
-              ),
+              border: Border.all(color: Colors.white, width: 2),
             ),
           ),
         ),
@@ -2649,10 +2747,7 @@ class _ConversationStateChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _ConversationStateChip({
-    required this.label,
-    required this.color,
-  });
+  const _ConversationStateChip({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {

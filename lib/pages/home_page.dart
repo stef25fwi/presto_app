@@ -13,6 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app/presto_overlay_theme.dart';
 import '../app_core.dart';
 import '../constants.dart';
+import '../features/offers/home_offer_keywords.dart';
 import '../features/offers/public_offers_read_diagnostics.dart';
 import '../models/hero_slide.dart';
 import '../utils/friendly_snackbar.dart';
@@ -135,8 +136,8 @@ class _HomePageState extends State<HomePage>
   String? _consultSearchQuery;
   final PageController _carouselController = PageController();
   final HeroSlidesService _heroSlidesService = HeroSlidesService();
-  late final Stream<List<HeroSlide>> _heroSlidesStream =
-      _heroSlidesService.watchActiveSlides();
+  late final Stream<List<HeroSlide>> _heroSlidesStream = _heroSlidesService
+      .watchActiveSlides();
   List<HeroSlide> _cachedHeroSlides = const <HeroSlide>[];
   String? _userRegion;
   int _currentSlide = 0;
@@ -217,9 +218,6 @@ class _HomePageState extends State<HomePage>
   /// Mots-clés dynamiques basés sur les offres Firestore
   List<String> _dynamicKeywords = [];
 
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
-      _dynamicKeywordsSubscription;
-
   /// Suggestions “smart” par défaut
   final List<String> _trendingSuggestions = const [
     "Jardinage aujourd’hui",
@@ -276,9 +274,7 @@ class _HomePageState extends State<HomePage>
     logRuntimeAction(
       area: 'home',
       action: 'open-category',
-      details: <String, Object?>{
-        'category': normalizedCategory,
-      },
+      details: <String, Object?>{'category': normalizedCategory},
     );
 
     setState(() {
@@ -304,9 +300,7 @@ class _HomePageState extends State<HomePage>
       logRuntimeAction(
         area: 'nav',
         action: 'bottom-tab-repeat',
-        details: <String, Object?>{
-          'tab': index,
-        },
+        details: <String, Object?>{'tab': index},
       );
       return;
     }
@@ -314,10 +308,7 @@ class _HomePageState extends State<HomePage>
     logRuntimeAction(
       area: 'nav',
       action: 'bottom-tab-change',
-      details: <String, Object?>{
-        'from': _selectedIndex,
-        'to': index,
-      },
+      details: <String, Object?>{'from': _selectedIndex, 'to': index},
     );
 
     // ✅ Log le changement d'onglet
@@ -401,8 +392,6 @@ class _HomePageState extends State<HomePage>
       _categoryController.repeat();
     }
 
-    _listenDynamicKeywords();
-
     unawaited(_refreshLatestOffers());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -417,8 +406,10 @@ class _HomePageState extends State<HomePage>
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       final raw = doc.data()?['region']?.toString().trim() ?? '';
       if (raw.isNotEmpty && mounted) {
         setState(() {
@@ -459,10 +450,10 @@ class _HomePageState extends State<HomePage>
         data['lastSessionDuration'] = sessionDuration.inMinutes;
       }
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-            data,
-            SetOptions(merge: true),
-          );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(data, SetOptions(merge: true));
     } catch (_) {
       // best-effort
     }
@@ -496,54 +487,6 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  void _listenDynamicKeywords() {
-    _dynamicKeywordsSubscription?.cancel();
-
-    Future<void> loadKeywords() async {
-      try {
-        // 60 docs is enough to populate the keyword chips; 200 was wasteful and
-        // delayed the home render because it ran in parallel with the main
-        // offers query.
-        final snapshot = await _recentOffersQuery(limit: 60).get();
-        final words = <String>{};
-        for (final doc in snapshot.docs) {
-          final data = doc.data();
-          if (!isPublishedOfferData(data)) continue;
-          final title = (data['title'] ?? '').toString().toLowerCase();
-          final description =
-              (data['description'] ?? '').toString().toLowerCase();
-          final combined = '$title $description';
-          for (final word in combined.split(RegExp(r'\s+'))) {
-            if (word.length > 3 &&
-                !RegExp(r'[0-9]').hasMatch(word) &&
-                !word.startsWith('0')) {
-              words.add(word);
-            }
-          }
-        }
-
-        final next = words.toList()..sort();
-
-        if (!mounted) return;
-        if (listEquals(_dynamicKeywords, next)) return;
-
-        setState(() {
-          _dynamicKeywords = next;
-        });
-      } catch (e) {
-        debugPrint('Dynamic keywords load error: $e');
-      }
-    }
-
-    _dynamicKeywordsSubscription = null;
-    // Defer the keyword pre-fetch so the home offers query owns the network
-    // priority for the first frame.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(loadKeywords());
-    });
-  }
-
   Future<void> _maybePromptMessagingNotifications() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null || _isMessagingPermissionPromptVisible || !mounted) {
@@ -551,8 +494,8 @@ class _HomePageState extends State<HomePage>
     }
 
     final notificationService = NotificationService();
-    final shouldPrompt =
-        await notificationService.shouldPromptForMessagingPermission(user.uid);
+    final shouldPrompt = await notificationService
+        .shouldPromptForMessagingPermission(user.uid);
     if (!shouldPrompt || !mounted) return;
 
     _isMessagingPermissionPromptVisible = true;
@@ -586,8 +529,9 @@ class _HomePageState extends State<HomePage>
     if (!mounted) return;
 
     if (shouldEnable != true) {
-      await notificationService
-          .markMessagingPermissionPromptDismissed(user.uid);
+      await notificationService.markMessagingPermissionPromptDismissed(
+        user.uid,
+      );
       return;
     }
 
@@ -595,8 +539,9 @@ class _HomePageState extends State<HomePage>
     if (!mounted) return;
 
     if (granted) {
-      await notificationService
-          .clearMessagingPermissionPromptDismissed(user.uid);
+      await notificationService.clearMessagingPermissionPromptDismissed(
+        user.uid,
+      );
       if (!mounted) return;
       showSuccessSnackBar(
         context,
@@ -637,7 +582,6 @@ class _HomePageState extends State<HomePage>
     _categoryController.dispose();
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
-    _dynamicKeywordsSubscription?.cancel();
     super.dispose();
   }
 
@@ -672,7 +616,8 @@ class _HomePageState extends State<HomePage>
         .limit(limit);
   }
 
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _prioritizeOffersForUserRegion(
+  List<QueryDocumentSnapshot<Map<String, dynamic>>>
+  _prioritizeOffersForUserRegion(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> offers,
   ) {
     final region = _userRegion?.trim() ?? '';
@@ -695,11 +640,14 @@ class _HomePageState extends State<HomePage>
     if (userRegion.isEmpty) return false;
 
     final normalizedUserRegion = normalizeRegionKey(userRegion);
-    final userRegionItem = kRegionsOrdered.where((item) {
-      return item.code == userRegion ||
-          item.normalizedKey == normalizedUserRegion ||
-          normalizeRegionKey(item.label) == normalizedUserRegion;
-    }).cast<RegionItem?>().firstOrNull;
+    final userRegionItem = kRegionsOrdered
+        .where((item) {
+          return item.code == userRegion ||
+              item.normalizedKey == normalizedUserRegion ||
+              normalizeRegionKey(item.label) == normalizedUserRegion;
+        })
+        .cast<RegionItem?>()
+        .firstOrNull;
 
     final offerRegionValues = <String>{
       (data['region'] ?? '').toString().trim(),
@@ -723,18 +671,18 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _loadLatestOffers() async {
+  _loadLatestOffers() async {
     try {
       // Fetch a small over-pool (16) to absorb post-filter losses while keeping
       // the network payload tight. The query is already orderBy(createdAt desc),
       // so client-side sorting is unnecessary.
       final loaders =
           <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-        loadMergedPublicOfferQueryVariants(
-          queries: buildLatestPublicListingsQueryVariants(limit: 16),
-          source: 'home_latest_offers_listings',
-        ),
-      ];
+            loadMergedPublicOfferQueryVariants(
+              queries: buildLatestPublicListingsQueryVariants(limit: 16),
+              source: 'home_latest_offers_listings',
+            ),
+          ];
       if (kEnableLegacyPublicOffersBackfill) {
         loaders.add(
           loadMergedPublicOfferQueryVariants(
@@ -748,21 +696,17 @@ class _HomePageState extends State<HomePage>
       final legacy = results.length > 1
           ? results[1]
           : listings.isEmpty
-              ? await loadLegacyPublicOffersOnDemand(
-                  limit: 16,
-                  source: 'home_latest_offers_legacy_fallback',
-                )
-              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+          ? await loadLegacyPublicOffersOnDemand(
+              limit: 16,
+              source: 'home_latest_offers_legacy_fallback',
+            )
+          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final mergedAll = mergeOfferDocsById(listings, legacy).toList();
       final merged = _prioritizeOffersForUserRegion(
         mergedAll
-          .where(
-            (doc) => isVisibleInPublicBrowse(
-              doc.data(),
-            ),
-          )
-          .take(8)
-          .toList(growable: false),
+            .where((doc) => isVisibleInPublicBrowse(doc.data()))
+            .take(8)
+            .toList(growable: false),
       );
       return merged;
     } catch (error, stackTrace) {
@@ -783,16 +727,21 @@ class _HomePageState extends State<HomePage>
   Future<void> _loadLatestOffersOnOpen() async {
     try {
       final docs = await _loadLatestOffers();
+      final keywords = buildHomeOfferKeywords(docs.map((doc) => doc.data()));
       if (!mounted) return;
       setState(() {
         _latestOffers = docs;
+        _dynamicKeywords = keywords;
         _isLatestOffersLoading = false;
         _latestOffersError = null;
         _lastLatestOffersLoadedAt = DateTime.now();
       });
     } catch (error, stackTrace) {
       logPublicOffersReadErrorWithAppCheck(
-          'home_latest_offers', error, stackTrace);
+        'home_latest_offers',
+        error,
+        stackTrace,
+      );
       final diagnosedError = error is PublicOffersReadException
           ? error
           : PublicOffersReadException(
@@ -889,10 +838,7 @@ class _HomePageState extends State<HomePage>
             children: [
               const Text(
                 'Dernières offres',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
               ),
               const Spacer(),
               TextButton(
@@ -934,7 +880,8 @@ class _HomePageState extends State<HomePage>
                 children: [
                   Text(
                     friendlyPublicOffersReadErrorWithAppCheck(
-                        _latestOffersError!),
+                      _latestOffersError!,
+                    ),
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.black54,
@@ -1057,7 +1004,9 @@ class _HomePageState extends State<HomePage>
 
       if (mounted) {
         showSuccessSnackBar(
-            context, "Offres de test réinitialisées et injectées ✅");
+          context,
+          "Offres de test réinitialisées et injectées ✅",
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1078,8 +1027,9 @@ class _HomePageState extends State<HomePage>
       if (trimmed.isEmpty) return;
 
       searchController?.text = trimmed;
-      searchController?.selection =
-          TextSelection.collapsed(offset: trimmed.length);
+      searchController?.selection = TextSelection.collapsed(
+        offset: trimmed.length,
+      );
 
       setState(() => _showSearchSuggestions = false);
       searchFocusNode?.unfocus();
@@ -1097,69 +1047,71 @@ class _HomePageState extends State<HomePage>
       onSelected: selectSuggestion,
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-        searchController = textEditingController;
-        searchFocusNode = focusNode;
+            searchController = textEditingController;
+            searchFocusNode = focusNode;
 
-        return GestureDetector(
-          onTap: () {
-            if (focusNode.hasFocus) {
-              // Si déjà focusé, basculer l'affichage des suggestions
-              setState(() {
-                _showSearchSuggestions = !_showSearchSuggestions;
-              });
-            } else {
-              // Sinon, montrer les suggestions
-              setState(() {
-                _showSearchSuggestions = true;
-              });
-            }
+            return GestureDetector(
+              onTap: () {
+                if (focusNode.hasFocus) {
+                  // Si déjà focusé, basculer l'affichage des suggestions
+                  setState(() {
+                    _showSearchSuggestions = !_showSearchSuggestions;
+                  });
+                } else {
+                  // Sinon, montrer les suggestions
+                  setState(() {
+                    _showSearchSuggestions = true;
+                  });
+                }
+              },
+              child: TextField(
+                controller: textEditingController,
+                focusNode: focusNode,
+                onSubmitted: selectSuggestion,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
+                  hintStyle: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: kPrestoBlue,
+                    size: 22,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: kPrestoBlue,
+                      width: searchBarBorderWidth,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: kPrestoBlue,
+                      width: searchBarBorderWidth,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: kPrestoBlue,
+                      width: searchBarBorderWidth,
+                    ),
+                  ),
+                ),
+              ),
+            );
           },
-          child: TextField(
-            controller: textEditingController,
-            focusNode: focusNode,
-            onSubmitted: selectSuggestion,
-            textInputAction: TextInputAction.search,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Colors.white,
-              hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: Colors.black45,
-                fontWeight: FontWeight.w500,
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: kPrestoBlue,
-                size: 22,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(
-                  color: kPrestoBlue,
-                  width: searchBarBorderWidth,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(
-                  color: kPrestoBlue,
-                  width: searchBarBorderWidth,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(
-                  color: kPrestoBlue,
-                  width: searchBarBorderWidth,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
       optionsViewBuilder: (context, onSelected, options) {
         final surface = Theme.of(context).colorScheme.surface;
         return Align(
@@ -1177,8 +1129,9 @@ class _HomePageState extends State<HomePage>
                 itemCount: options.length,
                 itemBuilder: (context, index) {
                   final option = options.elementAt(index);
-                  final highlightedIndex =
-                      AutocompleteHighlightedOption.of(context);
+                  final highlightedIndex = AutocompleteHighlightedOption.of(
+                    context,
+                  );
                   final isHighlighted = index == highlightedIndex;
                   return ListTile(
                     dense: true,
@@ -1188,7 +1141,9 @@ class _HomePageState extends State<HomePage>
                     title: Text(
                       option,
                       style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w500),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     tileColor: isHighlighted
                         ? kPrestoBlue.withValues(alpha: 0.08)
@@ -1244,12 +1199,11 @@ class _HomePageState extends State<HomePage>
     logRuntimeAction(
       area: 'notifications',
       action: 'open-dialog',
-      details: <String, Object?>{
-        'userId': userId,
-      },
+      details: <String, Object?>{'userId': userId},
     );
     final now = DateTime.now();
-    final cacheValid = _notificationsLastFetchAt != null &&
+    final cacheValid =
+        _notificationsLastFetchAt != null &&
         now.difference(_notificationsLastFetchAt!).inSeconds < 60 &&
         _notificationsCachedUserId == userId;
     if (!cacheValid) {
@@ -1312,8 +1266,8 @@ class _HomePageState extends State<HomePage>
                   final title = data['title'] as String? ?? '';
                   final message = data['message'] as String? ?? '';
                   final isRead = data['read'] as bool? ?? false;
-                  final notificationType =
-                      (data['type'] as String? ?? '').trim();
+                  final notificationType = (data['type'] as String? ?? '')
+                      .trim();
                   final offerId = data['offerId'] as String?;
                   final conversationId = data['conversationId'] as String?;
                   final routeName = (data['routeName'] as String? ?? '').trim();
@@ -1352,13 +1306,13 @@ class _HomePageState extends State<HomePage>
                       if (!context.mounted) return;
                       Navigator.of(context).pop();
 
-                      final normalizedConversationId =
-                          (conversationId ?? '').trim();
+                      final normalizedConversationId = (conversationId ?? '')
+                          .trim();
                       final shouldOpenMessages =
                           normalizedConversationId.isNotEmpty &&
-                              (notificationType == 'new_message' ||
-                                  routeName.isEmpty ||
-                                  routeName.startsWith('/messages/'));
+                          (notificationType == 'new_message' ||
+                              routeName.isEmpty ||
+                              routeName.startsWith('/messages/'));
 
                       if (shouldOpenMessages) {
                         final targetRoute = buildMessagesRoute(
@@ -1373,9 +1327,7 @@ class _HomePageState extends State<HomePage>
                             'conversationId': normalizedConversationId,
                           },
                         );
-                        Navigator.of(context).pushNamed(
-                          targetRoute,
-                        );
+                        Navigator.of(context).pushNamed(targetRoute);
                         return;
                       }
 
@@ -1404,9 +1356,7 @@ class _HomePageState extends State<HomePage>
                             'conversationId': normalizedConversationId,
                           },
                         );
-                        Navigator.of(context).pushNamed(
-                          targetRoute,
-                        );
+                        Navigator.of(context).pushNamed(targetRoute);
                         return;
                       }
 
@@ -1427,9 +1377,7 @@ class _HomePageState extends State<HomePage>
                       logRuntimeAction(
                         area: 'notifications',
                         action: 'fallback-home',
-                        details: <String, Object?>{
-                          'targetIndex': 1,
-                        },
+                        details: <String, Object?>{'targetIndex': 1},
                       );
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -1490,10 +1438,12 @@ class _HomePageState extends State<HomePage>
     VoidCallback? onTap,
   }) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final illustrationSize =
-        screenWidth < 360 ? 46.0 : (screenWidth < 430 ? 56.0 : 72.0);
-    final iconSize =
-        screenWidth < 360 ? 24.0 : (screenWidth < 430 ? 28.0 : 32.0);
+    final illustrationSize = screenWidth < 360
+        ? 46.0
+        : (screenWidth < 430 ? 56.0 : 72.0);
+    final iconSize = screenWidth < 360
+        ? 24.0
+        : (screenWidth < 430 ? 28.0 : 32.0);
 
     // Le slide 3 (infos) reprend le style d'icône bleue animée de la boîte à outils.
     if (index == _slides.length - 1) {
@@ -1569,9 +1519,7 @@ class _HomePageState extends State<HomePage>
 
                 return Container(
                   height: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: kPrestoOrange,
-                  ),
+                  decoration: const BoxDecoration(color: kPrestoOrange),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
@@ -1633,20 +1581,18 @@ class _HomePageState extends State<HomePage>
               // 🔁 Slides texte restants : layout texte + icône / image
               final VoidCallback? onSlideTap =
                   slideIndex == (_slides.length - 1)
-                      ? () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const LegalInfoPage(),
-                            ),
-                          );
-                        }
-                      : null;
+                  ? () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LegalInfoPage(),
+                        ),
+                      );
+                    }
+                  : null;
 
               final slideBody = Container(
                 height: double.infinity,
-                decoration: const BoxDecoration(
-                  color: kPrestoOrange,
-                ),
+                decoration: const BoxDecoration(color: kPrestoOrange),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -1675,7 +1621,9 @@ class _HomePageState extends State<HomePage>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: _responsiveHomeSlideTitleFontSize(context),
+                                fontSize: _responsiveHomeSlideTitleFontSize(
+                                  context,
+                                ),
                                 fontWeight: FontWeight.w900,
                                 height: 1.25,
                                 shadows: [
@@ -1694,7 +1642,9 @@ class _HomePageState extends State<HomePage>
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: Colors.white70,
-                                fontSize: _responsiveHomeSlideSubtitleFontSize(context),
+                                fontSize: _responsiveHomeSlideSubtitleFontSize(
+                                  context,
+                                ),
                                 fontWeight: FontWeight.w500,
                                 shadows: [
                                   Shadow(
@@ -1771,10 +1721,11 @@ class _HomePageState extends State<HomePage>
     final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
     final statusBarColor = _selectedIndex == 0
-        ? Colors.white // home tab: scaffold blanc → icônes sombres
+        ? Colors
+              .white // home tab: scaffold blanc → icônes sombres
         : (_selectedIndex == 4 || (!kIsWeb && _selectedIndex == 1))
-            ? kPrestoOrange // compte + consult (mobile) → orange
-            : kPrestoBlue;
+        ? kPrestoOrange // compte + consult (mobile) → orange
+        : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(statusBarColor),
       child: GestureDetector(
@@ -1825,13 +1776,11 @@ class _HomePageState extends State<HomePage>
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF1A73E8),
-                        Color(0xFF0D47A1),
-                      ],
+                      colors: [Color(0xFF1A73E8), Color(0xFF0D47A1)],
                     ),
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                   ),
                   padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
                   child: SafeArea(
@@ -1884,12 +1833,12 @@ class _HomePageState extends State<HomePage>
                                   // messages + notifications.
                                   builder: (context, badgeCount) =>
                                       HomeBottomNavItem(
-                                    icon: Icons.chat_bubble_outline,
-                                    label: "Messages",
-                                    badgeCount: badgeCount,
-                                    selected: _selectedIndex == 3,
-                                    onTap: () => _onBottomTap(3),
-                                  ),
+                                        icon: Icons.chat_bubble_outline,
+                                        label: "Messages",
+                                        badgeCount: badgeCount,
+                                        selected: _selectedIndex == 3,
+                                        onTap: () => _onBottomTap(3),
+                                      ),
                                 ),
                         ),
                         Expanded(
@@ -1939,9 +1888,7 @@ class _HomePageState extends State<HomePage>
                     ],
                   ),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0x331A73E8),
-                  ),
+                  border: Border.all(color: const Color(0x331A73E8)),
                 ),
                 child: Column(
                   children: [
@@ -2130,9 +2077,10 @@ class _PulsingDotState extends State<_PulsingDot>
       vsync: this,
     );
 
-    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.3,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
@@ -2167,10 +2115,7 @@ class _PulseWaveLayer extends StatefulWidget {
   final double width;
   final int delay;
 
-  const _PulseWaveLayer({
-    required this.width,
-    required this.delay,
-  });
+  const _PulseWaveLayer({required this.width, required this.delay});
 
   @override
   State<_PulseWaveLayer> createState() => _PulseWaveLayerState();
@@ -2189,12 +2134,14 @@ class _PulseWaveLayerState extends State<_PulseWaveLayer>
       duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
-    _scale = Tween<double>(begin: 0.92, end: 1.12).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-    _opacity = Tween<double>(begin: 0.22, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _scale = Tween<double>(
+      begin: 0.92,
+      end: 1.12,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _opacity = Tween<double>(
+      begin: 0.22,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     Future<void>.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
@@ -2345,8 +2292,10 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                     color: kPrestoBlue.withValues(alpha: 0.12),
                   ),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -2418,8 +2367,10 @@ class OfferDeepLinkPage extends StatelessWidget {
       required bool isMarketplace,
     }) async {
       try {
-        final snapshot =
-            await firestore.collection(collectionName).doc(offerId).get();
+        final snapshot = await firestore
+            .collection(collectionName)
+            .doc(offerId)
+            .get();
         final data = snapshot.data();
         if (data == null) {
           return null;
@@ -2459,9 +2410,7 @@ class OfferDeepLinkPage extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -2483,10 +2432,7 @@ class OfferDeepLinkPage extends StatelessWidget {
         return OfferDetailsPage(
           offer: isMarketplace
               ? data
-              : buildOfferDetailsOffer(
-                  offerId: offerId,
-                  data: data,
-                ),
+              : buildOfferDetailsOffer(offerId: offerId, data: data),
           currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
         );
       },
@@ -2501,10 +2447,7 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
   final void Function(QueryDocumentSnapshot<Map<String, dynamic>>)? onOfferTap;
 
-  const _AutoScrollingOffersCarousel({
-    required this.offers,
-    this.onOfferTap,
-  });
+  const _AutoScrollingOffersCarousel({required this.offers, this.onOfferTap});
 
   @override
   State<_AutoScrollingOffersCarousel> createState() =>
@@ -2639,15 +2582,9 @@ class _AutoScrollingOffersCarouselState
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: kPrestoBlue,
-            width: 1.8,
-          ),
+          border: Border.all(color: kPrestoBlue, width: 1.8),
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2765,10 +2702,7 @@ class _AutoScrollingOffersCarouselState
           separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (_, index) => RepaintBoundary(
             child: duplicatedItems[index].isToolbox
-                ? const SizedBox(
-                    width: 280,
-                    child: EntrepreneurToolboxSlide(),
-                  )
+                ? const SizedBox(width: 280, child: EntrepreneurToolboxSlide())
                 : _buildOfferCard(duplicatedItems[index].cardData!),
           ),
         ),
@@ -2777,7 +2711,8 @@ class _AutoScrollingOffersCarouselState
   }
 
   String _offersSignature(
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> offers) {
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> offers,
+  ) {
     if (offers.isEmpty) return '';
     final buffer = StringBuffer();
     for (final doc in offers.take(8)) {
@@ -2806,8 +2741,9 @@ class _AutoScrollingOffersCarouselState
   ) {
     final items = <_CarouselRenderItem>[];
     final visibleOffers = offers.take(8).toList(growable: false);
-    final toolboxInsertIndex =
-        visibleOffers.length >= 4 ? 4 : visibleOffers.length;
+    final toolboxInsertIndex = visibleOffers.length >= 4
+        ? 4
+        : visibleOffers.length;
 
     for (var index = 0; index < visibleOffers.length; index += 1) {
       final doc = visibleOffers[index];
@@ -2859,7 +2795,7 @@ class _CarouselRenderItem {
   const _CarouselRenderItem._({this.cardData, required this.isToolbox});
 
   const _CarouselRenderItem.offer(_CarouselOfferCardData cardData)
-      : this._(cardData: cardData, isToolbox: false);
+    : this._(cardData: cardData, isToolbox: false);
 
   const _CarouselRenderItem.toolbox() : this._(isToolbox: true);
 }

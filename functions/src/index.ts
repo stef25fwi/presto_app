@@ -45,6 +45,7 @@ export {
   deleteListing,
   closeOfferWithReason,
 } from "./modules/marketplace/callables/listings";
+export { adminBulkDeleteListings } from "./modules/marketplace/callables/admin_bulk_listings";
 export { processOfferPhoto } from "./modules/marketplace/callables/media";
 export { classifyServicePhoto } from "./modules/marketplace/callables/classify_service_photo";
 export { reportListing } from "./modules/marketplace/callables/reports";

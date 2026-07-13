@@ -1,7 +1,7 @@
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
-import { PROJECT_REGION, STRIPE_SECRET_KEY } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION, STRIPE_SECRET_KEY } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { archiveUserListings } from "./account_deletion_cleanup";
@@ -182,7 +182,7 @@ async function deleteUserStorage(uid: string): Promise<void> {
 export const requestAccountDeletion = onCall(
   {
     region: PROJECT_REGION,
-    enforceAppCheck: true,
+    enforceAppCheck: ENFORCE_APP_CHECK,
     secrets: [STRIPE_SECRET_KEY],
     timeoutSeconds: 120,
     memory: "512MiB",

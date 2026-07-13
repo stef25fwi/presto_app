@@ -4,7 +4,7 @@ import { posix as pathPosix } from "node:path";
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import sharp from "sharp";
-import { PROJECT_REGION } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { logger } from "../../core/logger";
 import { canProceedRateLimited } from "../../core/rate_limit";
@@ -43,7 +43,7 @@ const CONVERSATION_IMAGE_MAX_EDGE = 960;
 // broken/rotating web reCAPTCHA domain from taking the whole inbox offline.
 const MESSAGING_CALLABLE_OPTIONS = {
   region: PROJECT_REGION,
-  enforceAppCheck: false,
+  enforceAppCheck: ENFORCE_APP_CHECK,
 } as const;
 
 // Chemin chaud de la messagerie : on garde 1 instance au chaud pour éliminer

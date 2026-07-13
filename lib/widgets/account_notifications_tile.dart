@@ -161,6 +161,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
     final badge = _statusBadge;
 
     return Card(
+      margin: EdgeInsets.zero,
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
@@ -168,14 +169,14 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
         borderRadius: BorderRadius.circular(18),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 const Icon(Icons.notifications_active_rounded, color: _kOrange),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'Notifications',
@@ -199,6 +200,8 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
             const SizedBox(height: 4),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
+              dense: true,
+              visualDensity: VisualDensity.compact,
               activeThumbColor: _kOrange,
               title: const Text(
                 'Recevoir les notifications',
@@ -251,7 +254,7 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),

@@ -25,5 +25,8 @@ jobs:
           node tools/apply_prod_hardening_patches.mjs
           git diff --exit-code
 
+      - name: Test Firebase preview isolation
+        run: node --test tools/quality/check_firebase_preview_project.test.mjs
+
       - name: Check production guardrails
         run: node tools/check_production_guardrails.mjs
