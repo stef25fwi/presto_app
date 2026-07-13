@@ -59,7 +59,7 @@ Future<void> main() async {
     return;
   }
 
-  final map = decoded as Map<String, dynamic>;
+  final map = decoded;
   print('Root keys: ${map.keys.join(', ')}');
 
   final dynamic data = map['data'];
@@ -119,7 +119,8 @@ Future<void> main() async {
     final outFile = File('${outDir.path}/cities_$dept.json');
     await outFile.writeAsString(encoder.convert(sortedMap));
     print(
-        'Written dept $dept -> ${sortedMap.length} cities -> ${outFile.path}');
+      'Written dept $dept -> ${sortedMap.length} cities -> ${outFile.path}',
+    );
   }
 
   print('DONE.');

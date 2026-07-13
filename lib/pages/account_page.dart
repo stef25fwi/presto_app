@@ -1814,7 +1814,7 @@ class _AccountPageState extends State<AccountPage> {
     final percent = (completeness * 100).round();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -2571,15 +2571,15 @@ class _AccountPageState extends State<AccountPage> {
     final header = Row(
       children: [
         Container(
-          width: 38,
-          height: 38,
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
             color: kPrestoBlue.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: kPrestoBlue, size: 20),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2615,7 +2615,7 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(20),
@@ -2636,11 +2636,11 @@ class _AccountPageState extends State<AccountPage> {
           else
             header,
           if (alwaysVisibleChild != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             alwaysVisibleChild,
           ],
           if (!isCollapsible || isExpanded) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             child,
           ],
         ],
@@ -2695,7 +2695,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: Colors.white,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: SingleChildScrollView(
@@ -2707,7 +2707,7 @@ class _AccountPageState extends State<AccountPage> {
                   children: [
                     // Logo brand centré
                     Padding(
-                      padding: const EdgeInsets.only(top: 16, bottom: 20),
+                      padding: const EdgeInsets.only(top: 10, bottom: 12),
                       child: Center(
                         child: Image.asset(
                           'assets/images/logowebp.webp',
@@ -2765,7 +2765,7 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.person_rounded,
                       title: 'Mon profil',
@@ -2815,9 +2815,9 @@ class _AccountPageState extends State<AccountPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     const AccountNotificationsTile(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.tune_rounded,
                       title: 'Mes alertes "Nouvelle annonce"',
@@ -2830,8 +2830,8 @@ class _AccountPageState extends State<AccountPage> {
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
+                                horizontal: 10,
+                                vertical: 9,
                               ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE8F0FE),
@@ -2847,7 +2847,7 @@ class _AccountPageState extends State<AccountPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             AccountFavoriteCategoriesSection(
                               categoriesCount: draftCategoryLabels.length,
                               subcategoriesCount: draftSubcategoryLabels.length,
@@ -2893,7 +2893,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.campaign_outlined,
                       title: 'Gérer mes annonces',
@@ -2913,7 +2913,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     _buildAccountSectionCard(
                       icon: Icons.favorite_border_rounded,
                       title: 'Mes annonces favorites',
@@ -2934,9 +2934,9 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                     ),
                     RepaintBoundary(child: const SizedBox.shrink()),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     SubscriptionSection(userId: user.uid),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -2954,7 +2954,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _buildAdminSpaceEntry(user),
                     SizedBox(
                       width: double.infinity,
@@ -3143,8 +3143,8 @@ class _AccountPageState extends State<AccountPage> {
             final configError = cfgSnapshot.hasError;
 
             final adminCard = Container(
-              margin: const EdgeInsets.only(bottom: 18),
-              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -3751,7 +3751,7 @@ class _AccountPageState extends State<AccountPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 28, 16, 100),
+              padding: const EdgeInsets.fromLTRB(4, 12, 4, 80),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -3761,9 +3761,9 @@ class _AccountPageState extends State<AccountPage> {
                     visiblePhotoUrl,
                     locationText,
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 10),
                   _buildEspaceConfianceCard(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
                   _buildEnterpriseMenuSection(user),
                 ],
               ),
@@ -3920,7 +3920,7 @@ class _AccountPageState extends State<AccountPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+              padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
               child: Row(
                 children: const [
                   Icon(Icons.shield_rounded, color: kPrestoOrange, size: 30),
@@ -4014,7 +4014,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
           children: [
             Container(
@@ -4032,7 +4032,7 @@ class _AccountPageState extends State<AccountPage> {
                 size: 22,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Row(
                 children: [
@@ -4120,7 +4120,7 @@ class _AccountPageState extends State<AccountPage> {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
         child: Row(
           children: [
             Container(
@@ -4132,7 +4132,7 @@ class _AccountPageState extends State<AccountPage> {
               ),
               child: Icon(icon, color: Colors.white, size: 22),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,

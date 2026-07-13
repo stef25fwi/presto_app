@@ -4,6 +4,8 @@ import {getApps, initializeApp} from "firebase-admin/app";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import * as https from "https";
 
+import {ENFORCE_APP_CHECK} from "../../config/env";
+
 if (!getApps().length) {
   initializeApp();
 }
@@ -16,7 +18,7 @@ type AnyMap = Record<string, any>;
 export const verifySiret = onCall(
   {
     region: REGION,
-    enforceAppCheck: true,
+    enforceAppCheck: ENFORCE_APP_CHECK,
     cors: true,
   },
   async (request) => {

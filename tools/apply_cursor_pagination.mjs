@@ -47,6 +47,15 @@ async function patchConsultPage() {
   const path = 'lib/pages/consult_offers_page.dart';
   let content = await fs.readFile(path, 'utf8');
 
+  const usesPaginationPolicy =
+      content.includes('ConsultOffersPaginationPolicy _paginationPolicy') &&
+      content.includes('_paginationPolicy.shouldRequestNextPage(') &&
+      content.includes('_paginationPolicy.nextPageLimit(') &&
+      content.includes('_paginationPolicy.hasMoreAfterPage(');
+  if (usesPaginationPolicy) {
+    return;
+  }
+
   content = replaceOnce(
     content,
     "  // Pagination / loading state\n  DocumentSnapshot<Map<String, dynamic>>? _lastDoc;\n\n  // + Pagination progressive (moins brutale: 10 par page au lieu de 20)\n  static const int _initialLimit = 10;\n  static const int _pageSize = 10;\n  static const int _maxLimit = 100;\n  int _pageLimit = _initialLimit;",

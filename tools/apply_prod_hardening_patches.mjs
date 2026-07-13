@@ -104,28 +104,43 @@ async function patchAdminFetchOnce() {
   const path = 'lib/pages/admin_space_page.dart';
   let content = await read(path);
 
-  const exactCollections = [
-    "_usersStream = FirebaseFirestore.instance\n        .collection('users')\n        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)\n        .snapshots();",
-    "_activeUsersStream = FirebaseFirestore.instance\n        .collection('users')\n        .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)\n        .snapshots();",
-    "_listingsStream = FirebaseFirestore.instance\n        .collection('listings')\n        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)\n        .snapshots();",
-    "_subscriptionsStream = FirebaseFirestore.instance\n        .collection('subscriptions')\n        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)\n        .snapshots();",
-    "_billingInvoicesStream = FirebaseFirestore.instance\n        .collection('billing_invoices')\n        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)\n        .snapshots();",
-    "_analyticsStream = FirebaseFirestore.instance\n        .collection('analyticsSnapshots')\n        .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))\n        .snapshots();",
+  const targets = [
+    '_usersStream',
+    '_activeUsersStream',
+    '_listingsStream',
+    '_subscriptionsStream',
+    '_billingInvoicesStream',
+    '_analyticsStream',
   ];
 
-  for (const block of exactCollections) {
-    const replacement = block.replace('.snapshots();', '.get().asStream();');
-    content = replaceOnce(content, block, replacement, `admin fetch once: ${block.split("collection('")[1]?.split("'")[0]}`);
+  for (const target of targets) {
+    const fetchOncePattern = new RegExp(
+      target + '\\s*=\\s*FirebaseFirestore\\.instance[\\s\\S]{0,500}?\\.get\\(\\)\\s*\\.asStream\\(\\);',
+    );
+    if (fetchOncePattern.test(content)) continue;
+
+    const realtimePattern = new RegExp(
+      '(' + target + '\\s*=\\s*FirebaseFirestore\\.instance[\\s\\S]{0,500}?)\\.snapshots\\(\\);',
+    );
+    const matches = [...content.matchAll(new RegExp(realtimePattern.source, 'g'))];
+    if (matches.length !== 1) {
+      throw new Error(
+        'admin fetch once ' +
+          target +
+          ': expected one snapshots query or an existing get().asStream(), found ' +
+          matches.length,
+      );
+    }
+    content = content.replace(realtimePattern, '$1.get().asStream();');
   }
 
   content = content
-    .replace(/(final logsStream =[\s\S]*?\.limit\(1000\)\n\s*)\.snapshots\(\);/, '$1.get().asStream();')
-    .replace(/(final jobsStream =[\s\S]*?\.limit\(60\)\n\s*)\.snapshots\(\);/, '$1.get().asStream();')
-    .replace(/(final ticketsStream =[\s\S]*?\.limit\(60\)\n\s*)\.snapshots\(\);/, '$1.get().asStream();');
+    .replace(/(final logsStream =[\s\S]*?\.limit\(1000\)\s*)\.snapshots\(\);/, '$1.get().asStream();')
+    .replace(/(final jobsStream =[\s\S]*?\.limit\(60\)\s*)\.snapshots\(\);/, '$1.get().asStream();')
+    .replace(/(final ticketsStream =[\s\S]*?\.limit\(60\)\s*)\.snapshots\(\);/, '$1.get().asStream();');
 
   await write(path, content);
 }
-
 async function patchLayoutTest() {
   const path = 'test/toolbox_je_me_lance_etudiant_journey_test.dart';
   let content = await read(path);
@@ -154,9 +169,17 @@ async function patchMonitoringClient() {
   content = replaceOnce(
     content,
     "import 'package:flutter/widgets.dart';\n",
-    "import 'package:flutter/widgets.dart';\n\nimport 'firebase_functions_region.dart';\n",
-    'monitoring callable import',
+    '',
+    'monitoring unnecessary widgets import',
   );
+  if (!content.includes("import 'firebase_functions_region.dart';")) {
+    content = replaceOnce(
+      content,
+      "import 'package:flutter/foundation.dart';\n",
+      "import 'package:flutter/foundation.dart';\n\nimport 'firebase_functions_region.dart';\n",
+      'monitoring callable import',
+    );
+  }
   content = replaceOnce(
     content,
     "  static const String collectionName = 'app_monitoring_events';\n\n",

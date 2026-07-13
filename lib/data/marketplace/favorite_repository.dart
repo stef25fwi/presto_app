@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../services/firebase_functions_region.dart';
+import '../../services/product_analytics_events.dart';
 import '../../services/product_analytics_service.dart';
 
 class FavoriteOfferRef {
@@ -332,9 +333,11 @@ class FavoriteRepository {
           const <String, dynamic>{},
     );
     final active = data['active'] == true;
-    await _analytics.logEvent(
-      active ? 'listing_favorite_added' : 'listing_favorite_removed',
-      parameters: <String, Object?>{'listing_id': normalizedListingId},
+    await _analytics.logProductEvent(
+      ProductAnalyticsEvent.engagementFavoriteChanged(
+        listingId: normalizedListingId,
+        added: active,
+      ),
     );
     return active;
   }

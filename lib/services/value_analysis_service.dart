@@ -145,7 +145,6 @@ class ValueAnalysisService {
     // Define weights for each component
     // Adjust based on item age and market conditions
     final userBaseWeight = 0.30;
-    final reproductionWeight = 0.35;
     final resaleWeight = 0.35;
 
     // Young items favor user base value, older items favor resale value
@@ -298,27 +297,37 @@ class ValueAnalysisService {
     int score = 50; // Base score
 
     // More views = higher confidence
-    if (params.viewCount > 100)
+    if (params.viewCount > 100) {
       score += 15;
-    else if (params.viewCount > 50)
+    } else if (params.viewCount > 50) {
       score += 10;
-    else if (params.viewCount > 10) score += 5;
+    } else if (params.viewCount > 10) {
+      score += 5;
+    }
 
     // More favorites = higher confidence
-    if (params.favoriteCount > 20)
+    if (params.favoriteCount > 20) {
       score += 15;
-    else if (params.favoriteCount > 10)
+    } else if (params.favoriteCount > 10) {
       score += 10;
-    else if (params.favoriteCount > 5) score += 5;
+    } else if (params.favoriteCount > 5) {
+      score += 5;
+    }
 
     // Known category = higher confidence
-    if (_categoryResaleRetention.containsKey(params.category)) score += 10;
+    if (_categoryResaleRetention.containsKey(params.category)) {
+      score += 10;
+    }
 
     // Recent listing = higher confidence
-    if (params.itemAgeDays < 14) score += 10;
+    if (params.itemAgeDays < 14) {
+      score += 10;
+    }
 
     // Premium listing = higher confidence in pricing
-    if (params.isPremium) score += 5;
+    if (params.isPremium) {
+      score += 5;
+    }
 
     return score.clamp(0, 100);
   }

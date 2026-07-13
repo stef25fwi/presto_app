@@ -15,9 +15,11 @@ concurrency:
 
 jobs:
   validate-and-deploy:
+    # Les secrets de production sont actuellement stockés dans cet environnement.
+    # Renommer l'environnement seulement après migration explicite des secrets.
     environment: recaptcha
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +37,16 @@ jobs:
           node tools/apply_auth_client_hardening.mjs
           node tools/apply_account_cleanup_patch.mjs
           node tools/normalize_cursor_patch_script.mjs
+          node tools/fix_cursor_query_signature_patch.mjs
           node tools/apply_cursor_pagination.mjs
           node tools/apply_validation_fixes.mjs
+          node tools/apply_identity_authority_hardening.mjs
+          node tools/apply_dependency_security_upgrades.mjs
+          node tools/apply_stripe_ordering_hardening.mjs
+          node tools/apply_function_resource_limits.mjs
+          node tools/apply_release_validation_fixes.mjs
+          node tools/apply_validation_round2_fixes.mjs
+          npm --prefix functions install --package-lock-only --ignore-scripts
           git diff --exit-code
           node tools/check_production_guardrails.mjs
 
@@ -81,8 +91,15 @@ jobs:
       - name: Analyze Flutter
         run: flutter analyze --fatal-infos
 
-      - name: Test Flutter
-        run: flutter test --reporter expanded
+      - name: Test Flutter with coverage
+        run: flutter test --coverage --reporter expanded
+
+      - name: Enforce repository quality gates
+        run: |
+          python3 tools/quality/audit_repository.py \
+            --output-dir quality_reports/production \
+            --git-ref '${{ github.sha }}' \
+            --enforce
 
       - name: Install Functions dependencies
         run: npm --prefix functions ci
@@ -108,6 +125,22 @@ jobs:
       - name: Enforce Web bundle budgets
         run: node tools/check_web_bundle_size.mjs
 
+      - name: Archive validated release before deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-release-${{ github.sha }}
+          path: |
+            build/web
+            functions/lib
+            firebase.json
+            firestore.indexes.json
+            firestore.rules
+            storage.rules
+            quality_reports/production
+            coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Deploy Firebase Hosting, Functions, Firestore and Storage
         run: |
           firebase deploy --project presto-app-74abe \
@@ -124,3 +157,25 @@ jobs:
             fi
             exit 1
           }
+
+      - name: Production smoke tests
+        run: |
+          curl --fail --silent --show-error \
+            --retry 6 --retry-delay 5 --retry-all-errors \
+            https://ilipresto.web.app/ >/dev/null
+          curl --fail --silent --show-error \
+            --retry 6 --retry-delay 5 --retry-all-errors \
+            https://ilipresto.web.app/manifest.json >/dev/null
+
+      - name: Publish deployment summary
+        if: always()
+        run: |
+          {
+            echo '## Déploiement iliprestō'
+            echo
+            echo "- Commit : \`${{ github.sha }}\`"
+            echo "- Workflow : \`${{ github.run_id }}\`"
+            echo '- Cible : `presto-app-74abe`'
+            echo '- URL contrôlée : `https://ilipresto.web.app`'
+            echo '- Artefact de restauration : `production-release-${{ github.sha }}`'
+          } >> "$GITHUB_STEP_SUMMARY"
