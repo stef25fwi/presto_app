@@ -54,9 +54,9 @@
     "firebase-admin": "^13.10.0",
     "firebase-functions": "^7.2.5",
     "google-auth-library": "^9.15.1",
-    "nodemailer": "^9.0.1",
+    "nodemailer": "^9.0.3",
     "openai": "^4.104.0",
-    "resend": "^3.2.0",
+    "resend": "^6.17.2",
     "sharp": "^0.33.5"
   },
   "devDependencies": {
