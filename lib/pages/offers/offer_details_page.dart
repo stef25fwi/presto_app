@@ -373,8 +373,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
 
   void _initMarketplaceFuture() {
     final listingId = _extractMarketplaceListingId(widget.offer);
-    _marketplaceFuture =
-        (listingId.isNotEmpty &&
+    _marketplaceFuture = (listingId.isNotEmpty &&
             _shouldHydrateMarketplaceOffer(widget.offer, listingId))
         ? _fetchMarketplaceOffer(listingId)
         : null;
@@ -461,8 +460,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       final message = error.code == 'permission-denied'
           ? 'Suppression admin refusée.'
           : error.code == 'not-found'
-          ? 'Annonce introuvable.'
-          : 'Erreur lors de la suppression admin.';
+              ? 'Annonce introuvable.'
+              : 'Erreur lors de la suppression admin.';
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
@@ -482,15 +481,14 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
 
   String _extractMarketplaceListingId(Object? source) {
     final dynamic dynamicSource = source;
-    final rawId =
-        ((source is Map
-                    ? source['listingId'] ?? source['offerId'] ?? source['id']
-                    : _OfferUiData._read(() => dynamicSource?.listingId) ??
-                          _OfferUiData._read(() => dynamicSource?.offerId) ??
-                          _OfferUiData._read(() => dynamicSource?.id)) ??
-                '')
-            .toString()
-            .trim();
+    final rawId = ((source is Map
+                ? source['listingId'] ?? source['offerId'] ?? source['id']
+                : _OfferUiData._read(() => dynamicSource?.listingId) ??
+                    _OfferUiData._read(() => dynamicSource?.offerId) ??
+                    _OfferUiData._read(() => dynamicSource?.id)) ??
+            '')
+        .toString()
+        .trim();
     if (rawId.isEmpty) {
       return '';
     }
@@ -746,9 +744,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final resolvedUser = await _resolveSignedInUser();
     logRuntimeAction(
       area: area,
-      action: resolvedUser == null
-          ? 'auth-handoff-failed'
-          : 'auth-handoff-success',
+      action:
+          resolvedUser == null ? 'auth-handoff-failed' : 'auth-handoff-success',
       details: <String, Object?>{
         'offerId': offerId,
         'userId': resolvedUser?.uid,
@@ -764,9 +761,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     User? authUser = FirebaseAuth.instance.currentUser;
-    var me = authUser?.uid.isNotEmpty == true
-        ? authUser!.uid
-        : widget.currentUserId;
+    var me =
+        authUser?.uid.isNotEmpty == true ? authUser!.uid : widget.currentUserId;
 
     logRuntimeAction(
       area: 'messaging',
@@ -1193,7 +1189,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                         Navigator.of(sheetContext).pop();
                         // Connexion requise avant de composer, cohérent avec la
                         // révélation du numéro par l'œil.
-                        final signedInUser = await _ensureSignedInForOfferAction(
+                        final signedInUser =
+                            await _ensureSignedInForOfferAction(
                           context,
                           area: 'offer_call',
                           offerId: data.offerId,
@@ -1208,9 +1205,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
                               .collection('listings')
                               .doc(data.offerId)
                               .update({
-                                'phoneViewCount': FieldValue.increment(1),
-                              })
-                              .ignore();
+                            'phoneViewCount': FieldValue.increment(1),
+                          }).ignore();
                         }
                         final phone = await _resolveCallablePhoneForOffer(data);
                         if (!context.mounted) return;
@@ -1318,8 +1314,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         },
       );
       if (!context.mounted) return;
-      final isLegacyUnavailable =
-          !data.isMarketplace &&
+      final isLegacyUnavailable = !data.isMarketplace &&
           (e.code == 'not-found' || e.code == 'failed-precondition');
       messenger?.showSnackBar(
         SnackBar(
@@ -1514,9 +1509,8 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
         ListingReportDraft(
           listingId: data.offerId,
           reasonCode: reason,
-          reasonText: (reasonText ?? '').trim().isEmpty
-              ? null
-              : reasonText!.trim(),
+          reasonText:
+              (reasonText ?? '').trim().isEmpty ? null : reasonText!.trim(),
         ),
         recaptchaToken: recaptchaToken,
       );
@@ -1572,14 +1566,13 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
 
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
     final dynamic rawOffer = widget.offer;
-    final imageUrls =
-        ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
-                        _OfferUiData._read(() => rawOffer.imageUrls))
-                    as List<dynamic>? ??
-                const [])
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList(growable: false);
+    final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
+                    _OfferUiData._read(() => rawOffer.imageUrls))
+                as List<dynamic>? ??
+            const [])
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
     final createdAt = _OfferUiData._read(() => rawOffer.createdAt);
 
     return {
@@ -1635,8 +1628,7 @@ class _PrestoOfferDetailsPageState extends State<PrestoOfferDetailsPage> {
       stream: _favoriteRepository.watchFavoriteListingIds(uid),
       builder: (context, snapshot) {
         final favoriteIds = snapshot.data ?? const <String>{};
-        final isFavorite =
-            data.offerId.trim().isNotEmpty &&
+        final isFavorite = data.offerId.trim().isNotEmpty &&
             favoriteIds.contains(data.offerId.trim());
 
         return IconButton(
@@ -1980,17 +1972,17 @@ class _OfferUiData {
     final isMarketplace = marketplaceFlag is bool
         ? marketplaceFlag
         : _asString(
-                readValue('categoryId', () => o.categoryId),
-                fallback: '',
-              ).isNotEmpty ||
-              _asString(
-                readValue('cityId', () => o.cityId),
-                fallback: '',
-              ).isNotEmpty ||
-              _asString(
-                readValue('visibility', () => o.visibility),
-                fallback: '',
-              ).isNotEmpty;
+              readValue('categoryId', () => o.categoryId),
+              fallback: '',
+            ).isNotEmpty ||
+            _asString(
+              readValue('cityId', () => o.cityId),
+              fallback: '',
+            ).isNotEmpty ||
+            _asString(
+              readValue('visibility', () => o.visibility),
+              fallback: '',
+            ).isNotEmpty;
     final listingStatus = _asString(
       readValue('status', () => o.status),
       fallback: '',
@@ -2004,12 +1996,11 @@ class _OfferUiData {
     final mediaCount = rawMedia is List
         ? rawMedia.length
         : rawImageUrls is List
-        ? rawImageUrls.length
-        : 0;
+            ? rawImageUrls.length
+            : 0;
     final mediaProcessingStatus = _asString(
       readValue('mediaProcessingStatus'),
-      fallback:
-          (!listingStatus.trim().toLowerCase().contains('active') &&
+      fallback: (!listingStatus.trim().toLowerCase().contains('active') &&
               !listingStatus.trim().toLowerCase().contains('published') &&
               mediaCount > 0)
           ? 'processing'
@@ -2756,9 +2747,9 @@ class _PendingPhotoNotice extends StatelessWidget {
     final message = isProcessing
         ? 'Photos en traitement. Publication automatique une fois les photos prêtes.'
         : normalizedModeration == 'manual_review' ||
-              normalizedModeration == 'pending'
-        ? 'Annonce en cours de vérification avant publication.'
-        : 'Cette annonce reste temporairement hors ligne avant publication.';
+                normalizedModeration == 'pending'
+            ? 'Annonce en cours de vérification avant publication.'
+            : 'Cette annonce reste temporairement hors ligne avant publication.';
 
     return Container(
       width: double.infinity,
@@ -3123,9 +3114,8 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
   final future = () async {
     try {
       if (trimmed.startsWith('gs://')) {
-        final resolved = await FirebaseStorage.instance
-            .refFromURL(trimmed)
-            .getDownloadURL();
+        final resolved =
+            await FirebaseStorage.instance.refFromURL(trimmed).getDownloadURL();
         if (resolved.trim().isEmpty) {
           _offerImageUrlCache.remove(trimmed);
           return null;
@@ -3133,9 +3123,8 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
         return resolved;
       }
 
-      final normalizedPath = trimmed.startsWith('/')
-          ? trimmed.substring(1)
-          : trimmed;
+      final normalizedPath =
+          trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
       if (normalizedPath.isEmpty) {
         _offerImageUrlCache.remove(trimmed);
         return null;
@@ -3427,10 +3416,8 @@ class _AdvertiserContactCard extends StatelessWidget {
   Future<void> _openProfile(BuildContext context) async {
     final uid = data.advertiserId.trim();
     if (uid.isEmpty) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final accountType = (doc.data()?['accountType'] ?? '').toString();
     if (accountType != 'Entreprise') return;
     if (!context.mounted) return;
@@ -4138,8 +4125,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
       FirebaseFirestore.instance
           .collection('listings')
           .doc(widget.offerId)
-          .update({'phoneViewCount': FieldValue.increment(1)})
-          .ignore();
+          .update({'phoneViewCount': FieldValue.increment(1)}).ignore();
     }
   }
 
@@ -4244,17 +4230,15 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     const line = Color(0xFFE6E3E6);
 
     final effectivePhone = _effectivePhone();
-    final canRequestReveal =
-        !widget.hidePhone &&
+    final canRequestReveal = !widget.hidePhone &&
         (effectivePhone.isNotEmpty || widget.offerId.trim().isNotEmpty);
 
     final String displayedValue;
     if (widget.hidePhone) {
       displayedValue = _indicatifOnly(effectivePhone);
     } else {
-      displayedValue = _isPhoneVisible
-          ? effectivePhone
-          : _maskedLabel(effectivePhone);
+      displayedValue =
+          _isPhoneVisible ? effectivePhone : _maskedLabel(effectivePhone);
     }
 
     return Column(
@@ -4314,9 +4298,8 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
                 SizedBox(width: widget.compact ? 4 : 6),
                 IconButton(
                   onPressed: canRequestReveal ? _handlePhoneVisibility : null,
-                  tooltip: _isPhoneVisible
-                      ? 'Masquer le numéro'
-                      : 'Voir le numéro',
+                  tooltip:
+                      _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
                   visualDensity: VisualDensity.compact,
                   splashRadius: widget.compact ? 18 : 20,
                   icon: Icon(

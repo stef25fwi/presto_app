@@ -41,9 +41,8 @@ class AdminModerationService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
     await _auditService.logAction(
-      action: watchlisted
-          ? 'watchlist_conversation'
-          : 'unwatchlist_conversation',
+      action:
+          watchlisted ? 'watchlist_conversation' : 'unwatchlist_conversation',
       targetType: 'conversation',
       targetId: conversationId,
       reason: reason,

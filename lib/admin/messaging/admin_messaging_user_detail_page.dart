@@ -83,8 +83,10 @@ class _AdminMessagingUserDetailPageState
                 Text('Messages reçus: ${user.messagesReceived}'),
                 Text('Signalements reçus: ${user.reportsReceived}'),
                 Text('Signalements envoyés: ${user.reportsSent}'),
-                Text('Taux de réponse: ${user.responseRate.toStringAsFixed(0)} %'),
-                Text('Délai moyen: ${user.averageResponseHours.toStringAsFixed(1)} h'),
+                Text(
+                    'Taux de réponse: ${user.responseRate.toStringAsFixed(0)} %'),
+                Text(
+                    'Délai moyen: ${user.averageResponseHours.toStringAsFixed(1)} h'),
               ],
             ),
           ),

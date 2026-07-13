@@ -29,8 +29,7 @@ class MonEntrepriseParcoursPage extends StatefulWidget {
       _MonEntrepriseParcoursPageState();
 }
 
-class _MonEntrepriseParcoursPageState
-    extends State<MonEntrepriseParcoursPage> {
+class _MonEntrepriseParcoursPageState extends State<MonEntrepriseParcoursPage> {
   static const _localStorageService = JourneyLocalStorageService();
   static const _pdfExportService = JourneyPdfExportService();
   final _entitlementsService = JourneyEntitlementsService();
@@ -113,7 +112,8 @@ class _MonEntrepriseParcoursPageState
                             snapshot: _historySnapshot!,
                             dateLabel: 'Généré le',
                             isExportingPdf: _exportingPdf,
-                            onResume: () => _openSavedJourney(_historySnapshot!),
+                            onResume: () =>
+                                _openSavedJourney(_historySnapshot!),
                             onExportPdf: () => _exportPdf(_historySnapshot!),
                           )
                         : const _EmptyInlineNote(

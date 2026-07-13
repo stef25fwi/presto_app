@@ -45,15 +45,14 @@ class ListingRepository {
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
     ExpiringMemoryCache<String, PublicListingsPage>? publicListingsCache,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _functions = functions ?? prestoFirebaseFunctions,
-       _analytics = analytics ?? ProductAnalyticsService(),
-       _publicListingsCache =
-           publicListingsCache ??
-           ExpiringMemoryCache<String, PublicListingsPage>(
-             defaultTtl: const Duration(seconds: 30),
-             maximumEntries: 30,
-           );
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _functions = functions ?? prestoFirebaseFunctions,
+        _analytics = analytics ?? ProductAnalyticsService(),
+        _publicListingsCache = publicListingsCache ??
+            ExpiringMemoryCache<String, PublicListingsPage>(
+              defaultTtl: const Duration(seconds: 30),
+              maximumEntries: 30,
+            );
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;

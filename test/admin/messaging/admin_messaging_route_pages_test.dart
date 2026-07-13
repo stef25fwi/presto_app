@@ -22,26 +22,27 @@ class _AdminMessagingRouteProbe extends StatelessWidget {
 }
 
 void main() {
-  final cases =
-      <
-        ({String label, StatelessWidget wrapper, AdminMessagingSection section})
-      >[
-        (
-          label: 'conversations',
-          wrapper: const AdminConversationsPage(),
-          section: AdminMessagingSection.conversations,
-        ),
-        (
-          label: 'signalements',
-          wrapper: const AdminMessageReportsPage(),
-          section: AdminMessagingSection.reports,
-        ),
-        (
-          label: 'utilisateurs',
-          wrapper: const AdminMessagingUsersPage(),
-          section: AdminMessagingSection.users,
-        ),
-      ];
+  final cases = <({
+    String label,
+    StatelessWidget wrapper,
+    AdminMessagingSection section
+  })>[
+    (
+      label: 'conversations',
+      wrapper: const AdminConversationsPage(),
+      section: AdminMessagingSection.conversations,
+    ),
+    (
+      label: 'signalements',
+      wrapper: const AdminMessageReportsPage(),
+      section: AdminMessagingSection.reports,
+    ),
+    (
+      label: 'utilisateurs',
+      wrapper: const AdminMessagingUsersPage(),
+      section: AdminMessagingSection.users,
+    ),
+  ];
 
   for (final testCase in cases) {
     testWidgets('la route ${testCase.label} transmet la bonne section', (

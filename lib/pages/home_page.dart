@@ -136,8 +136,8 @@ class _HomePageState extends State<HomePage>
   String? _consultSearchQuery;
   final PageController _carouselController = PageController();
   final HeroSlidesService _heroSlidesService = HeroSlidesService();
-  late final Stream<List<HeroSlide>> _heroSlidesStream = _heroSlidesService
-      .watchActiveSlides();
+  late final Stream<List<HeroSlide>> _heroSlidesStream =
+      _heroSlidesService.watchActiveSlides();
   List<HeroSlide> _cachedHeroSlides = const <HeroSlide>[];
   String? _userRegion;
   int _currentSlide = 0;
@@ -406,10 +406,8 @@ class _HomePageState extends State<HomePage>
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final raw = doc.data()?['region']?.toString().trim() ?? '';
       if (raw.isNotEmpty && mounted) {
         setState(() {
@@ -494,8 +492,8 @@ class _HomePageState extends State<HomePage>
     }
 
     final notificationService = NotificationService();
-    final shouldPrompt = await notificationService
-        .shouldPromptForMessagingPermission(user.uid);
+    final shouldPrompt =
+        await notificationService.shouldPromptForMessagingPermission(user.uid);
     if (!shouldPrompt || !mounted) return;
 
     _isMessagingPermissionPromptVisible = true;
@@ -617,7 +615,7 @@ class _HomePageState extends State<HomePage>
   }
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>>
-  _prioritizeOffersForUserRegion(
+      _prioritizeOffersForUserRegion(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> offers,
   ) {
     final region = _userRegion?.trim() ?? '';
@@ -671,18 +669,18 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _loadLatestOffers() async {
+      _loadLatestOffers() async {
     try {
       // Fetch a small over-pool (16) to absorb post-filter losses while keeping
       // the network payload tight. The query is already orderBy(createdAt desc),
       // so client-side sorting is unnecessary.
       final loaders =
           <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-            loadMergedPublicOfferQueryVariants(
-              queries: buildLatestPublicListingsQueryVariants(limit: 16),
-              source: 'home_latest_offers_listings',
-            ),
-          ];
+        loadMergedPublicOfferQueryVariants(
+          queries: buildLatestPublicListingsQueryVariants(limit: 16),
+          source: 'home_latest_offers_listings',
+        ),
+      ];
       if (kEnableLegacyPublicOffersBackfill) {
         loaders.add(
           loadMergedPublicOfferQueryVariants(
@@ -696,11 +694,11 @@ class _HomePageState extends State<HomePage>
       final legacy = results.length > 1
           ? results[1]
           : listings.isEmpty
-          ? await loadLegacyPublicOffersOnDemand(
-              limit: 16,
-              source: 'home_latest_offers_legacy_fallback',
-            )
-          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+              ? await loadLegacyPublicOffersOnDemand(
+                  limit: 16,
+                  source: 'home_latest_offers_legacy_fallback',
+                )
+              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final mergedAll = mergeOfferDocsById(listings, legacy).toList();
       final merged = _prioritizeOffersForUserRegion(
         mergedAll
@@ -1047,71 +1045,71 @@ class _HomePageState extends State<HomePage>
       onSelected: selectSuggestion,
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-            searchController = textEditingController;
-            searchFocusNode = focusNode;
+        searchController = textEditingController;
+        searchFocusNode = focusNode;
 
-            return GestureDetector(
-              onTap: () {
-                if (focusNode.hasFocus) {
-                  // Si déjà focusé, basculer l'affichage des suggestions
-                  setState(() {
-                    _showSearchSuggestions = !_showSearchSuggestions;
-                  });
-                } else {
-                  // Sinon, montrer les suggestions
-                  setState(() {
-                    _showSearchSuggestions = true;
-                  });
-                }
-              },
-              child: TextField(
-                controller: textEditingController,
-                focusNode: focusNode,
-                onSubmitted: selectSuggestion,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black45,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: kPrestoBlue,
-                    size: 22,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: kPrestoBlue,
-                      width: searchBarBorderWidth,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: kPrestoBlue,
-                      width: searchBarBorderWidth,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: const BorderSide(
-                      color: kPrestoBlue,
-                      width: searchBarBorderWidth,
-                    ),
-                  ),
+        return GestureDetector(
+          onTap: () {
+            if (focusNode.hasFocus) {
+              // Si déjà focusé, basculer l'affichage des suggestions
+              setState(() {
+                _showSearchSuggestions = !_showSearchSuggestions;
+              });
+            } else {
+              // Sinon, montrer les suggestions
+              setState(() {
+                _showSearchSuggestions = true;
+              });
+            }
+          },
+          child: TextField(
+            controller: textEditingController,
+            focusNode: focusNode,
+            onSubmitted: selectSuggestion,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: Colors.black45,
+                fontWeight: FontWeight.w500,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: kPrestoBlue,
+                size: 22,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(
+                  color: kPrestoBlue,
+                  width: searchBarBorderWidth,
                 ),
               ),
-            );
-          },
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(
+                  color: kPrestoBlue,
+                  width: searchBarBorderWidth,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(
+                  color: kPrestoBlue,
+                  width: searchBarBorderWidth,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
       optionsViewBuilder: (context, onSelected, options) {
         final surface = Theme.of(context).colorScheme.surface;
         return Align(
@@ -1202,8 +1200,7 @@ class _HomePageState extends State<HomePage>
       details: <String, Object?>{'userId': userId},
     );
     final now = DateTime.now();
-    final cacheValid =
-        _notificationsLastFetchAt != null &&
+    final cacheValid = _notificationsLastFetchAt != null &&
         now.difference(_notificationsLastFetchAt!).inSeconds < 60 &&
         _notificationsCachedUserId == userId;
     if (!cacheValid) {
@@ -1266,8 +1263,8 @@ class _HomePageState extends State<HomePage>
                   final title = data['title'] as String? ?? '';
                   final message = data['message'] as String? ?? '';
                   final isRead = data['read'] as bool? ?? false;
-                  final notificationType = (data['type'] as String? ?? '')
-                      .trim();
+                  final notificationType =
+                      (data['type'] as String? ?? '').trim();
                   final offerId = data['offerId'] as String?;
                   final conversationId = data['conversationId'] as String?;
                   final routeName = (data['routeName'] as String? ?? '').trim();
@@ -1306,13 +1303,13 @@ class _HomePageState extends State<HomePage>
                       if (!context.mounted) return;
                       Navigator.of(context).pop();
 
-                      final normalizedConversationId = (conversationId ?? '')
-                          .trim();
+                      final normalizedConversationId =
+                          (conversationId ?? '').trim();
                       final shouldOpenMessages =
                           normalizedConversationId.isNotEmpty &&
-                          (notificationType == 'new_message' ||
-                              routeName.isEmpty ||
-                              routeName.startsWith('/messages/'));
+                              (notificationType == 'new_message' ||
+                                  routeName.isEmpty ||
+                                  routeName.startsWith('/messages/'));
 
                       if (shouldOpenMessages) {
                         final targetRoute = buildMessagesRoute(
@@ -1438,12 +1435,10 @@ class _HomePageState extends State<HomePage>
     VoidCallback? onTap,
   }) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final illustrationSize = screenWidth < 360
-        ? 46.0
-        : (screenWidth < 430 ? 56.0 : 72.0);
-    final iconSize = screenWidth < 360
-        ? 24.0
-        : (screenWidth < 430 ? 28.0 : 32.0);
+    final illustrationSize =
+        screenWidth < 360 ? 46.0 : (screenWidth < 430 ? 56.0 : 72.0);
+    final iconSize =
+        screenWidth < 360 ? 24.0 : (screenWidth < 430 ? 28.0 : 32.0);
 
     // Le slide 3 (infos) reprend le style d'icône bleue animée de la boîte à outils.
     if (index == _slides.length - 1) {
@@ -1581,14 +1576,14 @@ class _HomePageState extends State<HomePage>
               // 🔁 Slides texte restants : layout texte + icône / image
               final VoidCallback? onSlideTap =
                   slideIndex == (_slides.length - 1)
-                  ? () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const LegalInfoPage(),
-                        ),
-                      );
-                    }
-                  : null;
+                      ? () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LegalInfoPage(),
+                            ),
+                          );
+                        }
+                      : null;
 
               final slideBody = Container(
                 height: double.infinity,
@@ -1721,11 +1716,10 @@ class _HomePageState extends State<HomePage>
     final isKeyboardOpen = mq.viewInsets.bottom > 0;
 
     final statusBarColor = _selectedIndex == 0
-        ? Colors
-              .white // home tab: scaffold blanc → icônes sombres
+        ? Colors.white // home tab: scaffold blanc → icônes sombres
         : (_selectedIndex == 4 || (!kIsWeb && _selectedIndex == 1))
-        ? kPrestoOrange // compte + consult (mobile) → orange
-        : kPrestoBlue;
+            ? kPrestoOrange // compte + consult (mobile) → orange
+            : kPrestoBlue;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(statusBarColor),
       child: GestureDetector(
@@ -1833,12 +1827,12 @@ class _HomePageState extends State<HomePage>
                                   // messages + notifications.
                                   builder: (context, badgeCount) =>
                                       HomeBottomNavItem(
-                                        icon: Icons.chat_bubble_outline,
-                                        label: "Messages",
-                                        badgeCount: badgeCount,
-                                        selected: _selectedIndex == 3,
-                                        onTap: () => _onBottomTap(3),
-                                      ),
+                                    icon: Icons.chat_bubble_outline,
+                                    label: "Messages",
+                                    badgeCount: badgeCount,
+                                    selected: _selectedIndex == 3,
+                                    onTap: () => _onBottomTap(3),
+                                  ),
                                 ),
                         ),
                         Expanded(
@@ -2367,10 +2361,8 @@ class OfferDeepLinkPage extends StatelessWidget {
       required bool isMarketplace,
     }) async {
       try {
-        final snapshot = await firestore
-            .collection(collectionName)
-            .doc(offerId)
-            .get();
+        final snapshot =
+            await firestore.collection(collectionName).doc(offerId).get();
         final data = snapshot.data();
         if (data == null) {
           return null;
@@ -2741,9 +2733,8 @@ class _AutoScrollingOffersCarouselState
   ) {
     final items = <_CarouselRenderItem>[];
     final visibleOffers = offers.take(8).toList(growable: false);
-    final toolboxInsertIndex = visibleOffers.length >= 4
-        ? 4
-        : visibleOffers.length;
+    final toolboxInsertIndex =
+        visibleOffers.length >= 4 ? 4 : visibleOffers.length;
 
     for (var index = 0; index < visibleOffers.length; index += 1) {
       final doc = visibleOffers[index];
@@ -2795,7 +2786,7 @@ class _CarouselRenderItem {
   const _CarouselRenderItem._({this.cardData, required this.isToolbox});
 
   const _CarouselRenderItem.offer(_CarouselOfferCardData cardData)
-    : this._(cardData: cardData, isToolbox: false);
+      : this._(cardData: cardData, isToolbox: false);
 
   const _CarouselRenderItem.toolbox() : this._(isToolbox: true);
 }
