@@ -39,9 +39,8 @@ class ChatRequestPolicy {
     final data = responseData is Map
         ? Map<String, dynamic>.from(responseData.cast<String, dynamic>())
         : const <String, dynamic>{};
-    final threadId = (data['threadId'] ?? data['conversationId'] ?? '')
-        .toString()
-        .trim();
+    final threadId =
+        (data['threadId'] ?? data['conversationId'] ?? '').toString().trim();
     if (threadId.isEmpty) {
       throw const ChatRequestException(
         'La conversation n’a pas pu être créée.',

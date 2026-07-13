@@ -257,17 +257,15 @@ class _AdminMessagingTopSelector extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Wrap(
           spacing: 8,
-          children: AdminMessagingSection.values
-              .map((section) {
-                final selectedChip = section == selected;
-                return ChoiceChip(
-                  selected: selectedChip,
-                  label: Text(section.label),
-                  avatar: Icon(section.icon, size: 18),
-                  onSelected: (_) => onSelect(section),
-                );
-              })
-              .toList(growable: false),
+          children: AdminMessagingSection.values.map((section) {
+            final selectedChip = section == selected;
+            return ChoiceChip(
+              selected: selectedChip,
+              label: Text(section.label),
+              avatar: Icon(section.icon, size: 18),
+              onSelected: (_) => onSelect(section),
+            );
+          }).toList(growable: false),
         ),
       ),
     );
@@ -292,7 +290,7 @@ class _AdminMessagingDataset {
 
 class _AdminMessagingDatasetBuilder extends StatelessWidget {
   final Widget Function(BuildContext context, _AdminMessagingDataset dataset)
-  builder;
+      builder;
 
   const _AdminMessagingDatasetBuilder({required this.builder});
 
@@ -389,14 +387,14 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return _AdminMessagingDatasetBuilder(
       builder: (context, dataset) {
-        final derivedAnalytics = const AdminMessagingAnalyticsService()
-            .buildSnapshot(
-              conversations: dataset.conversations,
-              attachments: dataset.attachments,
-              users: dataset.users,
-              reports: dataset.reports,
-              notifications: dataset.notifications,
-            );
+        final derivedAnalytics =
+            const AdminMessagingAnalyticsService().buildSnapshot(
+          conversations: dataset.conversations,
+          attachments: dataset.attachments,
+          users: dataset.users,
+          reports: dataset.reports,
+          notifications: dataset.notifications,
+        );
         return StreamBuilder<AdminMessagingAnalyticsSnapshot?>(
           stream: AdminMessagingMetricsService().watchCurrentMetrics(),
           builder: (context, metricsSnapshot) {
@@ -554,30 +552,26 @@ class _AdminMessagingDashboardSection extends StatelessWidget {
                   _AdminDashboardSectionCard(
                     title: 'Derniers signalements',
                     child: Column(
-                      children: dataset.reports
-                          .take(4)
-                          .map((report) {
-                            return ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: const Icon(Icons.flag_rounded),
-                              title: Text(report.reason),
-                              subtitle: Text(
-                                'Conversation ${report.conversationId.isEmpty ? 'inconnue' : report.conversationId} • ${report.status}',
+                      children: dataset.reports.take(4).map((report) {
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.flag_rounded),
+                          title: Text(report.reason),
+                          subtitle: Text(
+                            'Conversation ${report.conversationId.isEmpty ? 'inconnue' : report.conversationId} • ${report.status}',
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => AdminMessageReportDetailPage(
+                                  report: report,
+                                ),
                               ),
-                              trailing: const Icon(Icons.chevron_right_rounded),
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) =>
-                                        AdminMessageReportDetailPage(
-                                          report: report,
-                                        ),
-                                  ),
-                                );
-                              },
                             );
-                          })
-                          .toList(growable: false),
+                          },
+                        );
+                      }).toList(growable: false),
                     ),
                   ),
                 ],
@@ -677,17 +671,15 @@ class _AdminConversationsSectionState
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items
-        .where((conversation) {
-          return _matchesQuery(_query, [
-            conversation.id,
-            conversation.contextTitle,
-            conversation.participantSummary,
-            conversation.status,
-            conversation.region,
-          ]);
-        })
-        .toList(growable: false);
+    final filtered = _items.where((conversation) {
+      return _matchesQuery(_query, [
+        conversation.id,
+        conversation.contextTitle,
+        conversation.participantSummary,
+        conversation.status,
+        conversation.region,
+      ]);
+    }).toList(growable: false);
 
     return _AdminMessagingSectionContainer(
       title: 'Conversations récentes',
@@ -951,18 +943,16 @@ class _AdminReportsSectionState extends State<_AdminReportsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items
-        .where((report) {
-          return _matchesQuery(_query, [
-            report.conversationId,
-            report.reason,
-            report.status,
-            report.priority,
-            report.reportedUserId,
-            report.reportedBy,
-          ]);
-        })
-        .toList(growable: false);
+    final filtered = _items.where((report) {
+      return _matchesQuery(_query, [
+        report.conversationId,
+        report.reason,
+        report.status,
+        report.priority,
+        report.reportedUserId,
+        report.reportedBy,
+      ]);
+    }).toList(growable: false);
 
     return _AdminMessagingSectionContainer(
       title: 'Signalements messagerie',
@@ -1216,18 +1206,16 @@ class _AdminMessagingUsersSectionState
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _items
-        .where((user) {
-          return _matchesQuery(_query, [
-            user.uid,
-            user.name,
-            user.email,
-            user.role,
-            user.region,
-            user.messagingStatus,
-          ]);
-        })
-        .toList(growable: false);
+    final filtered = _items.where((user) {
+      return _matchesQuery(_query, [
+        user.uid,
+        user.name,
+        user.email,
+        user.role,
+        user.region,
+        user.messagingStatus,
+      ]);
+    }).toList(growable: false);
 
     return _AdminMessagingSectionContainer(
       title: 'Utilisateurs messagerie',
@@ -1463,8 +1451,8 @@ class _AdminDashboardStatGrid extends StatelessWidget {
         final columns = constraints.maxWidth >= 1200
             ? 4
             : constraints.maxWidth >= 700
-            ? 2
-            : 1;
+                ? 2
+                : 1;
         return GridView.builder(
           itemCount: cards.length,
           shrinkWrap: true,

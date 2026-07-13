@@ -14,9 +14,9 @@ class HeroSlidesService {
     FirebaseFirestore? firestore,
     FirebaseStorage? storage,
     FirebaseAuth? auth,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance,
-       _auth = auth ?? FirebaseAuth.instance;
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _storage = storage ?? FirebaseStorage.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
@@ -253,9 +253,8 @@ class HeroSlidesService {
       title ?? slide.title,
       fileName: replacementFileName ?? slide.title,
     );
-    final nextScope = (scope ?? slide.scope) == 'regional'
-        ? 'regional'
-        : 'global';
+    final nextScope =
+        (scope ?? slide.scope) == 'regional' ? 'regional' : 'global';
     final nextTargetRegions = targetRegions ?? slide.targetRegions;
     batch.update(docRef, <String, dynamic>{
       'title': normalizedTitle,
@@ -438,9 +437,8 @@ class HeroSlidesService {
   }
 
   List<HeroSlide> _mapSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    final slides = snapshot.docs
-        .map(HeroSlide.fromFirestore)
-        .toList(growable: false);
+    final slides =
+        snapshot.docs.map(HeroSlide.fromFirestore).toList(growable: false);
     slides.sort(HeroSlide.compareDisplayOrder);
     return slides;
   }
@@ -493,9 +491,9 @@ class HeroSlidesService {
     }
 
     final withoutExtension = fileName.trim().replaceFirst(
-      RegExp(r'\.[^.]+$'),
-      '',
-    );
+          RegExp(r'\.[^.]+$'),
+          '',
+        );
     final fallback = withoutExtension.isEmpty ? 'Slide Hero' : withoutExtension;
     return fallback.length > 80 ? fallback.substring(0, 80) : fallback;
   }

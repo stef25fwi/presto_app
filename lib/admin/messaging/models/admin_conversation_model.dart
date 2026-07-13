@@ -87,8 +87,9 @@ class AdminConversationModel {
     return AdminConversationModel(
       id: doc.id,
       shortId: doc.id.length <= 8 ? doc.id : doc.id.substring(0, 8),
-      contextId: (data['contextId'] ?? data['listingId'] ?? data['offerId'] ?? '')
-          .toString(),
+      contextId:
+          (data['contextId'] ?? data['listingId'] ?? data['offerId'] ?? '')
+              .toString(),
       contextTitle: (data['contextTitle'] ??
               data['listingTitle'] ??
               data['offerTitle'] ??

@@ -361,21 +361,20 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
     _unreadMessagesSub?.cancel();
     _lastKnownUnreadMessages = 0;
-    _unreadMessagesSub =
-        streamInboxCount(
-          userId: userId,
-          type: InboxCountType.unreadMessages,
-        ).listen((unreadCount) {
-          if (unreadCount > _lastKnownUnreadMessages) {
-            // New unread message arrived — force an immediate re-poll of the list.
-            if (mounted) {
-              setState(() {
-                _conversationStateStream = null;
-              });
-            }
-          }
-          _lastKnownUnreadMessages = unreadCount;
-        });
+    _unreadMessagesSub = streamInboxCount(
+      userId: userId,
+      type: InboxCountType.unreadMessages,
+    ).listen((unreadCount) {
+      if (unreadCount > _lastKnownUnreadMessages) {
+        // New unread message arrived — force an immediate re-poll of the list.
+        if (mounted) {
+          setState(() {
+            _conversationStateStream = null;
+          });
+        }
+      }
+      _lastKnownUnreadMessages = unreadCount;
+    });
   }
 
   bool _isPermissionDenied(Object? error) {
@@ -514,9 +513,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return normalizedDirectValue;
     }
 
-    final routeName = (data['routeName'] ?? data['route_name'] ?? '')
-        .toString()
-        .trim();
+    final routeName =
+        (data['routeName'] ?? data['route_name'] ?? '').toString().trim();
     if (routeName.isEmpty) return null;
     if (!routeName.startsWith('/messages/')) return null;
 
@@ -590,8 +588,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     Future<void> cancelSubscriptions() async {
       final activeSubscriptions =
           List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>.from(
-            subscriptions,
-          );
+        subscriptions,
+      );
       subscriptions.clear();
       for (final subscription in activeSubscriptions) {
         await subscription.cancel();
@@ -665,14 +663,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         String field,
         QuerySnapshot<Map<String, dynamic>> snapshot,
       ) {
-        final docs = snapshot.docs
-            .map((doc) {
-              return ConversationSummary.fromFirestore(
-                doc,
-                assumedParticipants: <String>[userId],
-              );
-            })
-            .toList(growable: false);
+        final docs = snapshot.docs.map((doc) {
+          return ConversationSummary.fromFirestore(
+            doc,
+            assumedParticipants: <String>[userId],
+          );
+        }).toList(growable: false);
         snapshotsByField[field] = docs;
 
         // Toute réponse Firestore, même vide, prouve que la requête a réussi.
@@ -788,10 +784,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             .limit(queryShape['limit']! as int);
         subscriptions.add(
           query.snapshots().listen(
-            (snapshot) => handleSnapshot('admin_global', snapshot),
-            onError: (error, stackTrace) => handleError('admin_global', error),
-            cancelOnError: true,
-          ),
+                (snapshot) => handleSnapshot('admin_global', snapshot),
+                onError: (error, stackTrace) =>
+                    handleError('admin_global', error),
+                cancelOnError: true,
+              ),
         );
       } else {
         // Le listener Firestore ne doit pas être créé avant App Check.
@@ -808,10 +805,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               .where(field, arrayContains: userId);
           subscriptions.add(
             query.snapshots().listen(
-              (snapshot) => handleSnapshot(field, snapshot),
-              onError: (error, stackTrace) => handleError(field, error),
-              cancelOnError: true,
-            ),
+                  (snapshot) => handleSnapshot(field, snapshot),
+                  onError: (error, stackTrace) => handleError(field, error),
+                  cancelOnError: true,
+                ),
           );
         }
       }
@@ -1259,8 +1256,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       Color(0xFF5D4037),
     ];
     final source = key.trim().isEmpty ? 'conversation' : key.trim();
-    final index =
-        source.codeUnits.fold<int>(0, (acc, unit) => acc + unit) %
+    final index = source.codeUnits.fold<int>(0, (acc, unit) => acc + unit) %
         colors.length;
     return colors[index];
   }
@@ -1849,41 +1845,39 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         final errorsByField = state.errorsByField;
                         _maybeOpenInitialConversation(context, docs, userId);
 
-                        final query = _searchController.text
-                            .trim()
-                            .toLowerCase();
+                        final query =
+                            _searchController.text.trim().toLowerCase();
                         var orphanCount = 0;
                         final conversations = docs;
 
-                        final renderableConversations = conversations
-                            .where((conversation) {
-                              if (_hiddenConversationIds.contains(
-                                conversation.id,
-                              )) {
-                                return false;
-                              }
+                        final renderableConversations =
+                            conversations.where((conversation) {
+                          if (_hiddenConversationIds.contains(
+                            conversation.id,
+                          )) {
+                            return false;
+                          }
 
-                              if (conversation.isDeletedForUser(userId)) {
-                                return false;
-                              }
+                          if (conversation.isDeletedForUser(userId)) {
+                            return false;
+                          }
 
-                              if (!conversation.includesUser(userId)) {
-                                orphanCount += 1;
-                                if (kDebugMode) {
-                                  debugPrint(
-                                    '[MessagesList] orphan conversation ignored id=${conversation.id} user=$userId participants=${conversation.participants}',
-                                  );
-                                }
-                                return _isAdminViewer;
-                              }
+                          if (!conversation.includesUser(userId)) {
+                            orphanCount += 1;
+                            if (kDebugMode) {
+                              debugPrint(
+                                '[MessagesList] orphan conversation ignored id=${conversation.id} user=$userId participants=${conversation.participants}',
+                              );
+                            }
+                            return _isAdminViewer;
+                          }
 
-                              if (!conversation.hasRenderableContent) {
-                                return false;
-                              }
+                          if (!conversation.hasRenderableContent) {
+                            return false;
+                          }
 
-                              return true;
-                            })
-                            .toList(growable: false);
+                          return true;
+                        }).toList(growable: false);
 
                         final allCount = renderableConversations
                             .where(
@@ -1905,23 +1899,22 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             )
                             .length;
 
-                        final visibleConversations = renderableConversations
-                            .where((conversation) {
-                              switch (_activeFilter) {
-                                case _ConversationListFilter.archived:
-                                  return conversation.isArchivedForUser(userId);
-                                case _ConversationListFilter.unread:
-                                  return !conversation.isArchivedForUser(
-                                        userId,
-                                      ) &&
-                                      conversation.unreadForUser(userId) > 0;
-                                case _ConversationListFilter.all:
-                                  return !conversation.isArchivedForUser(
+                        final visibleConversations =
+                            renderableConversations.where((conversation) {
+                          switch (_activeFilter) {
+                            case _ConversationListFilter.archived:
+                              return conversation.isArchivedForUser(userId);
+                            case _ConversationListFilter.unread:
+                              return !conversation.isArchivedForUser(
                                     userId,
-                                  );
-                              }
-                            })
-                            .toList(growable: false);
+                                  ) &&
+                                  conversation.unreadForUser(userId) > 0;
+                            case _ConversationListFilter.all:
+                              return !conversation.isArchivedForUser(
+                                userId,
+                              );
+                          }
+                        }).toList(growable: false);
 
                         final filteredConversations = visibleConversations
                             .where(
@@ -1937,19 +1930,19 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         );
 
                         if (filteredConversations.isEmpty) {
-                          final message =
-                              errorsByField.isNotEmpty && docs.isEmpty
+                          final message = errorsByField.isNotEmpty &&
+                                  docs.isEmpty
                               ? _conversationAccessErrorMessage(
                                   errorsByField.values.first,
                                 )
                               : query.isNotEmpty
-                              ? 'Aucune conversation ne correspond a votre recherche.'
-                              : _activeFilter ==
-                                    _ConversationListFilter.archived
-                              ? 'Aucune conversation archivee.'
-                              : orphanCount > 0
-                              ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
-                              : 'Aucune conversation pour le moment.';
+                                  ? 'Aucune conversation ne correspond a votre recherche.'
+                                  : _activeFilter ==
+                                          _ConversationListFilter.archived
+                                      ? 'Aucune conversation archivee.'
+                                      : orphanCount > 0
+                                          ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
+                                          : 'Aucune conversation pour le moment.';
 
                           return _buildResponsiveMessagesBody(
                             Column(
@@ -2005,19 +1998,19 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                     final preview = conversation.previewFor(
                                       userId,
                                     );
-                                    final unreadCount = conversation
-                                        .unreadForUser(userId);
-                                    final archived = conversation
-                                        .isArchivedForUser(userId);
+                                    final unreadCount =
+                                        conversation.unreadForUser(userId);
+                                    final archived =
+                                        conversation.isArchivedForUser(userId);
                                     final blocked = conversation.isBlocked;
-                                    final blockedForUser = conversation
-                                        .isBlockedForUser(userId);
+                                    final blockedForUser =
+                                        conversation.isBlockedForUser(userId);
                                     final lastDate = conversation.sortDate;
                                     final otherParticipantId =
                                         _otherParticipantId(
-                                          conversation,
-                                          userId,
-                                        );
+                                      conversation,
+                                      userId,
+                                    );
 
                                     Future<void> openConversation() {
                                       return _openConversation(
@@ -2043,14 +2036,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                             SlidableAction(
                                               onPressed: (_) =>
                                                   _handleConversationAction(
-                                                    conversationId:
-                                                        conversation.id,
-                                                    action: archived
-                                                        ? _ConversationMenuAction
-                                                              .unarchive
-                                                        : _ConversationMenuAction
-                                                              .archive,
-                                                  ),
+                                                conversationId: conversation.id,
+                                                action: archived
+                                                    ? _ConversationMenuAction
+                                                        .unarchive
+                                                    : _ConversationMenuAction
+                                                        .archive,
+                                              ),
                                               backgroundColor: const Color(
                                                 0xFF6B7280,
                                               ),
@@ -2065,14 +2057,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                             SlidableAction(
                                               onPressed: (_) =>
                                                   _handleConversationAction(
-                                                    conversationId:
-                                                        conversation.id,
-                                                    action: blockedForUser
-                                                        ? _ConversationMenuAction
-                                                              .unblock
-                                                        : _ConversationMenuAction
-                                                              .block,
-                                                  ),
+                                                conversationId: conversation.id,
+                                                action: blockedForUser
+                                                    ? _ConversationMenuAction
+                                                        .unblock
+                                                    : _ConversationMenuAction
+                                                        .block,
+                                              ),
                                               backgroundColor: const Color(
                                                 0xFFB91C1C,
                                               ),
@@ -2092,12 +2083,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                             SlidableAction(
                                               onPressed: (_) =>
                                                   _handleConversationAction(
-                                                    conversationId:
-                                                        conversation.id,
-                                                    action:
-                                                        _ConversationMenuAction
-                                                            .delete,
-                                                  ),
+                                                conversationId: conversation.id,
+                                                action: _ConversationMenuAction
+                                                    .delete,
+                                              ),
                                               backgroundColor: Colors.red,
                                               foregroundColor: Colors.white,
                                               icon:
@@ -2126,15 +2115,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                               curve: Curves.easeOutCubic,
                                               margin:
                                                   const EdgeInsets.symmetric(
-                                                    vertical: 2,
-                                                  ),
+                                                vertical: 2,
+                                              ),
                                               padding:
                                                   const EdgeInsets.fromLTRB(
-                                                    8,
-                                                    12,
-                                                    8,
-                                                    12,
-                                                  ),
+                                                8,
+                                                12,
+                                                8,
+                                                12,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color: unreadCount > 0
                                                     ? kWhatsappGreen.withValues(
@@ -2145,10 +2134,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                     BorderRadius.circular(16),
                                                 border: Border(
                                                   bottom: BorderSide(
-                                                    color: Colors.black
-                                                        .withValues(
-                                                          alpha: 0.06,
-                                                        ),
+                                                    color:
+                                                        Colors.black.withValues(
+                                                      alpha: 0.06,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -2168,12 +2157,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                           _isAdminViewer,
                                                       fallbackColor:
                                                           _avatarColorForKey(
-                                                            otherParticipantId
-                                                                    .isNotEmpty
-                                                                ? otherParticipantId
-                                                                : conversation
-                                                                      .id,
-                                                          ),
+                                                        otherParticipantId
+                                                                .isNotEmpty
+                                                            ? otherParticipantId
+                                                            : conversation.id,
+                                                      ),
                                                       unreadCount: unreadCount,
                                                     ),
                                                   ),
@@ -2198,15 +2186,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                                 overflow:
                                                                     TextOverflow
                                                                         .ellipsis,
-                                                                style: kPrestoCardTitleStyle.copyWith(
-                                                                  fontWeight:
-                                                                      unreadCount >
+                                                                style:
+                                                                    kPrestoCardTitleStyle
+                                                                        .copyWith(
+                                                                  fontWeight: unreadCount >
                                                                           0
                                                                       ? FontWeight
-                                                                            .w800
+                                                                          .w800
                                                                       : FontWeight
-                                                                            .w700,
-                                                                  color: const Color(
+                                                                          .w700,
+                                                                  color:
+                                                                      const Color(
                                                                     0xFF111827,
                                                                   ),
                                                                 ),
@@ -2219,21 +2209,21 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                               _formatTimestamp(
                                                                 lastDate,
                                                               ),
-                                                              style: kPrestoMetaTextStyle.copyWith(
-                                                                color:
-                                                                    unreadCount >
+                                                              style:
+                                                                  kPrestoMetaTextStyle
+                                                                      .copyWith(
+                                                                color: unreadCount >
                                                                         0
                                                                     ? kWhatsappGreen
                                                                     : const Color(
                                                                         0xFF9CA3AF,
                                                                       ),
-                                                                fontWeight:
-                                                                    unreadCount >
+                                                                fontWeight: unreadCount >
                                                                         0
                                                                     ? FontWeight
-                                                                          .w700
+                                                                        .w700
                                                                     : FontWeight
-                                                                          .w500,
+                                                                        .w500,
                                                               ),
                                                             ),
                                                           ],
@@ -2251,15 +2241,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             overflow:
                                                                 TextOverflow
                                                                     .ellipsis,
-                                                            style: kPrestoMetaTextStyle
-                                                                .copyWith(
-                                                                  color: const Color(
-                                                                    0xFF6B7280,
-                                                                  ),
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                ),
+                                                            style:
+                                                                kPrestoMetaTextStyle
+                                                                    .copyWith(
+                                                              color:
+                                                                  const Color(
+                                                                0xFF6B7280,
+                                                              ),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
                                                           ),
                                                         ],
                                                         const SizedBox(
@@ -2270,9 +2262,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                           maxLines: 1,
                                                           overflow: TextOverflow
                                                               .ellipsis,
-                                                          style: kPrestoBodyTextStyle.copyWith(
-                                                            color:
-                                                                unreadCount > 0
+                                                          style:
+                                                              kPrestoBodyTextStyle
+                                                                  .copyWith(
+                                                            color: unreadCount >
+                                                                    0
                                                                 ? const Color(
                                                                     0xFF111827,
                                                                   )
@@ -2281,10 +2275,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                                   ),
                                                             fontWeight:
                                                                 unreadCount > 0
-                                                                ? FontWeight
-                                                                      .w600
-                                                                : FontWeight
-                                                                      .w500,
+                                                                    ? FontWeight
+                                                                        .w600
+                                                                    : FontWeight
+                                                                        .w500,
                                                             fontSize: 14,
                                                           ),
                                                         ),
@@ -2301,17 +2295,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                                 _ConversationStateChip(
                                                                   label:
                                                                       'Archivee',
-                                                                  color: const Color(
+                                                                  color:
+                                                                      const Color(
                                                                     0xFF6B7280,
                                                                   ),
                                                                 ),
                                                               if (blocked)
                                                                 _ConversationStateChip(
-                                                                  label:
-                                                                      blockedForUser
+                                                                  label: blockedForUser
                                                                       ? 'Bloquee par vous'
                                                                       : 'Bloquee',
-                                                                  color: const Color(
+                                                                  color:
+                                                                      const Color(
                                                                     0xFFB91C1C,
                                                                   ),
                                                                 ),
@@ -2330,26 +2325,24 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                         CrossAxisAlignment.end,
                                                     children: [
                                                       PopupMenuButton<
-                                                        _ConversationMenuAction
-                                                      >(
+                                                          _ConversationMenuAction>(
                                                         tooltip:
                                                             'Actions conversation',
                                                         onSelected: (action) =>
                                                             _handleConversationAction(
-                                                              conversationId:
-                                                                  conversation
-                                                                      .id,
-                                                              action: action,
-                                                            ),
-                                                        itemBuilder: (context) => [
+                                                          conversationId:
+                                                              conversation.id,
+                                                          action: action,
+                                                        ),
+                                                        itemBuilder:
+                                                            (context) => [
                                                           PopupMenuItem<
-                                                            _ConversationMenuAction
-                                                          >(
+                                                              _ConversationMenuAction>(
                                                             value: archived
                                                                 ? _ConversationMenuAction
-                                                                      .unarchive
+                                                                    .unarchive
                                                                 : _ConversationMenuAction
-                                                                      .archive,
+                                                                    .archive,
                                                             child: Text(
                                                               archived
                                                                   ? 'Restaurer'
@@ -2357,14 +2350,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             ),
                                                           ),
                                                           PopupMenuItem<
-                                                            _ConversationMenuAction
-                                                          >(
-                                                            value:
-                                                                blockedForUser
+                                                              _ConversationMenuAction>(
+                                                            value: blockedForUser
                                                                 ? _ConversationMenuAction
-                                                                      .unblock
+                                                                    .unblock
                                                                 : _ConversationMenuAction
-                                                                      .block,
+                                                                    .block,
                                                             child: Text(
                                                               blockedForUser
                                                                   ? 'Debloquer'
@@ -2372,8 +2363,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             ),
                                                           ),
                                                           const PopupMenuItem<
-                                                            _ConversationMenuAction
-                                                          >(
+                                                              _ConversationMenuAction>(
                                                             value:
                                                                 _ConversationMenuAction
                                                                     .delete,
@@ -2404,29 +2394,32 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                         ),
                                                         Container(
                                                           padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 8,
-                                                                vertical: 3,
-                                                              ),
-                                                          decoration: BoxDecoration(
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 3,
+                                                          ),
+                                                          decoration:
+                                                              BoxDecoration(
                                                             color:
                                                                 kWhatsappGreen,
                                                             borderRadius:
-                                                                BorderRadius.circular(
-                                                                  999,
-                                                                ),
+                                                                BorderRadius
+                                                                    .circular(
+                                                              999,
+                                                            ),
                                                           ),
                                                           child: Text(
                                                             '$unreadCount',
                                                             style:
                                                                 const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 12,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                ),
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
                                                           ),
                                                         ),
                                                       ],
@@ -2539,14 +2532,13 @@ class _ConversationAvatar extends StatelessWidget {
         final lastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
         final photoUrl = _firstProfilePhotoUrl(data);
         final storedPath = _firstStoredProfilePhotoPath(data);
-        final isOnline =
-            status == 'online' &&
+        final isOnline = status == 'online' &&
             (lastSeenAt == null ||
                 DateTime.now().difference(lastSeenAt.toLocal()) <
                     const Duration(minutes: 4));
         final needsStorageResolution =
             (photoUrl.isEmpty && storedPath.isNotEmpty) ||
-            _isResolvableStorageProfilePhoto(photoUrl);
+                _isResolvableStorageProfilePhoto(photoUrl);
 
         if (!needsStorageResolution) {
           return _buildAvatar(isOnline: isOnline, photoUrl: photoUrl);
@@ -2605,8 +2597,9 @@ class _ConversationAvatar extends StatelessWidget {
           ? FirebaseStorage.instance.ref().child(storedPath)
           : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
       return (await ref.getDownloadURL().timeout(
-        const Duration(seconds: 12),
-      )).trim();
+                const Duration(seconds: 12),
+              ))
+          .trim();
     } catch (error) {
       debugPrint(
         '[ConversationAvatar] legacy storage hydration failed '
@@ -2666,8 +2659,8 @@ class _ConversationAvatar extends StatelessWidget {
               color: isOnline
                   ? kWhatsappGreen
                   : unreadCount > 0
-                  ? kPrestoOrange
-                  : const Color(0xFFD1D5DB),
+                      ? kPrestoOrange
+                      : const Color(0xFFD1D5DB),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
             ),

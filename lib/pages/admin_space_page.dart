@@ -237,7 +237,7 @@ extension on _MessagingModerationMode {
 
 class _MessagingModerationConfigService {
   _MessagingModerationConfigService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -262,8 +262,7 @@ class _MessagingModerationConfigService {
     final snapshot = await _configRef.get();
     final data = snapshot.data();
     final moderation = data?['moderation'];
-    final hasMode =
-        moderation is Map &&
+    final hasMode = moderation is Map &&
         (moderation['messagingMode'] ?? '').toString().trim().isNotEmpty;
     if (hasMode) {
       return;
@@ -430,9 +429,8 @@ class _AdminMessagingModerationTileState
                   ),
                 ],
                 selected: {mode},
-                onSelectionChanged: _saving
-                    ? null
-                    : (selection) => _setMode(selection.first),
+                onSelectionChanged:
+                    _saving ? null : (selection) => _setMode(selection.first),
               ),
               const SizedBox(height: 14),
               Wrap(
@@ -686,14 +684,12 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final fallback = data['fallbackEnabled'] == true;
       final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
       final lang = (data['languageCode'] ?? 'fr-FR').toString().trim();
-      final audioQualityStr =
-          (data['audioQuality'] ??
-                  data['audio_quality'] ??
-                  data['microia_audio_quality'] ??
-                  'MEDIUM')
-              .toString();
-      final ultraFast =
-          (data['ultraFastEnabled'] ??
+      final audioQualityStr = (data['audioQuality'] ??
+              data['audio_quality'] ??
+              data['microia_audio_quality'] ??
+              'MEDIUM')
+          .toString();
+      final ultraFast = (data['ultraFastEnabled'] ??
               data['microia_ultra_fast_enabled'] ??
               data['microia_ultrafast_enabled'] ??
               data['microia_ultra_fast'] ??
@@ -780,14 +776,12 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final threshold =
           (data['qualityThreshold'] as num?)?.toDouble() ?? _quality;
       final languageCode = (data['languageCode'] ?? lang).toString();
-      final audioQualityStr =
-          (data['audioQuality'] ??
-                  data['audio_quality'] ??
-                  data['microia_audio_quality'] ??
-                  microIaAudioQualityToRcValue(_audioQuality))
-              .toString();
-      final ultraFast =
-          (data['ultraFastEnabled'] ??
+      final audioQualityStr = (data['audioQuality'] ??
+              data['audio_quality'] ??
+              data['microia_audio_quality'] ??
+              microIaAudioQualityToRcValue(_audioQuality))
+          .toString();
+      final ultraFast = (data['ultraFastEnabled'] ??
               data['microia_ultra_fast_enabled'] ??
               data['microia_ultrafast_enabled'] ??
               data['microia_ultra_fast'] ??
@@ -1282,9 +1276,8 @@ class _AdminDashboardComputed {
     }
 
     final activeUsers = activeUserDocs.length;
-    final dormantUsers = totalAccounts > activeUsers
-        ? totalAccounts - activeUsers
-        : 0;
+    final dormantUsers =
+        totalAccounts > activeUsers ? totalAccounts - activeUsers : 0;
 
     var activeListings = 0;
     var expiredListings = 0;
@@ -1303,16 +1296,13 @@ class _AdminDashboardComputed {
     for (final doc in listingDocs) {
       final data = doc.data();
       final status = (data['status'] ?? '').toString().trim().toLowerCase();
-      final moderation = (data['moderationStatus'] ?? '')
-          .toString()
-          .trim()
-          .toLowerCase();
+      final moderation =
+          (data['moderationStatus'] ?? '').toString().trim().toLowerCase();
       final expiresAt = _asDateTime(data['expiresAt']);
       final createdAt = _asDateTime(data['createdAt']);
       final publishedAt = _asDateTime(data['publishedAt']) ?? createdAt;
-      final ownerId = (data['ownerId'] ?? data['userId'] ?? '')
-          .toString()
-          .trim();
+      final ownerId =
+          (data['ownerId'] ?? data['userId'] ?? '').toString().trim();
       final categoryLabel =
           (data['category'] ?? data['categoryId'] ?? 'Sans catégorie')
               .toString()
@@ -1367,15 +1357,13 @@ class _AdminDashboardComputed {
       }
     }
 
-    final avgLifespanDays = lifespanCount == 0
-        ? 0.0
-        : lifespanDaysSum / lifespanCount;
+    final avgLifespanDays =
+        lifespanCount == 0 ? 0.0 : lifespanDaysSum / lifespanCount;
     final avgRisk = listingDocs.isEmpty ? 0.0 : totalRisk / listingDocs.length;
     final conversionRatio = totalViews == 0 ? 0.0 : totalContacts / totalViews;
     final topCategory = _topEntryLabel(categoryCounts, fallback: '—');
-    final advertiserRatio = activeUsers == 0
-        ? 0.0
-        : owners.length / activeUsers;
+    final advertiserRatio =
+        activeUsers == 0 ? 0.0 : owners.length / activeUsers;
 
     final analyticsTotals = <String, int>{};
     var analyticsCoverageDays = 0;
@@ -1487,10 +1475,8 @@ class _AdminDashboardComputed {
 
     var activeSubscriptions = 0;
     for (final doc in subscriptionDocs) {
-      final status = (doc.data()['status'] ?? '')
-          .toString()
-          .trim()
-          .toLowerCase();
+      final status =
+          (doc.data()['status'] ?? '').toString().trim().toLowerCase();
       if (status == 'active' || status == 'trialing' || status == 'paid') {
         activeSubscriptions += 1;
       }
@@ -1528,9 +1514,8 @@ class _AdminDashboardComputed {
     }
 
     final arpu = activeUsers == 0 ? 0.0 : totalRevenue / activeUsers;
-    final paidConversion = activeUsers == 0
-        ? 0.0
-        : activeSubscriptions / activeUsers;
+    final paidConversion =
+        activeUsers == 0 ? 0.0 : activeSubscriptions / activeUsers;
 
     final topPlatform = _topSourceLabel(userStats?['loginsByPlatform']);
     final topMethod = _topSourceLabel(userStats?['loginsByMethod']);
@@ -1714,9 +1699,8 @@ class _AdminDashboardComputed {
           ),
           _AdminDashboardStat(
             label: 'Dernière maj',
-            value: latestAnalyticsDay == null
-                ? '—'
-                : _dateKey(latestAnalyticsDay),
+            value:
+                latestAnalyticsDay == null ? '—' : _dateKey(latestAnalyticsDay),
           ),
           _AdminDashboardStat(
             label: 'Crash+erreurs',
@@ -1734,9 +1718,8 @@ class _AdminDashboardComputed {
           ),
           _AdminDashboardStat(
             label: 'Chargement moyen',
-            value: avgLoadMs <= 0
-                ? 'n/d'
-                : '${avgLoadMs.toStringAsFixed(0)} ms',
+            value:
+                avgLoadMs <= 0 ? 'n/d' : '${avgLoadMs.toStringAsFixed(0)} ms',
           ),
         ],
         series: instrumentationSeries,
@@ -1949,9 +1932,8 @@ class _EmailDashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final threshold = DateTime.now()
-        .subtract(window.duration)
-        .millisecondsSinceEpoch;
+    final threshold =
+        DateTime.now().subtract(window.duration).millisecondsSinceEpoch;
     final logsStream = FirebaseFirestore.instance
         .collection('email_logs')
         .where('created_at', isGreaterThanOrEqualTo: threshold)
@@ -2039,8 +2021,7 @@ class _EmailDashboardContent extends StatelessWidget {
                           (doc.data()['status'] ?? 'open').toString() == 'open',
                     )
                     .length;
-                final hasAlert =
-                    deadLetters.isNotEmpty ||
+                final hasAlert = deadLetters.isNotEmpty ||
                     stats.failed > 0 ||
                     stats.bounceRate >= 0.05 ||
                     stats.complaintRate >= 0.01;
@@ -2273,9 +2254,7 @@ class _EmailDashboardContent extends StatelessWidget {
                           message: 'Aucun template remonté sur cette fenêtre.',
                         )
                       else
-                        ...templateEntries
-                            .take(8)
-                            .map(
+                        ...templateEntries.take(8).map(
                               (entry) => Padding(
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: _BreakdownCard(
@@ -2317,8 +2296,8 @@ void _showDeadLettersSheet(
                     (doc) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _AdminListTile(
-                        title: (doc.data()['template_code'] ?? doc.id)
-                            .toString(),
+                        title:
+                            (doc.data()['template_code'] ?? doc.id).toString(),
                         subtitle:
                             'Raison: ${(doc.data()['dead_letter_reason'] ?? 'indisponible').toString()}\nMaj: ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
                         trailing: _StatusBadge(
@@ -2355,17 +2334,15 @@ void _showSupportTicketsSheet(
                     (doc) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _AdminListTile(
-                        title:
-                            (doc.data()['ticket_number'] ??
-                                    doc.data()['subject'] ??
-                                    doc.id)
-                                .toString(),
+                        title: (doc.data()['ticket_number'] ??
+                                doc.data()['subject'] ??
+                                doc.id)
+                            .toString(),
                         subtitle:
                             '${(doc.data()['subject'] ?? 'Sans sujet').toString()}\n${(doc.data()['category'] ?? 'general_support').toString()} • ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
                         trailing: _StatusBadge(
                           label: (doc.data()['status'] ?? 'open').toString(),
-                          color:
-                              (doc.data()['status'] ?? 'open').toString() ==
+                          color: (doc.data()['status'] ?? 'open').toString() ==
                                   'open'
                               ? const Color(0xFFFF6600)
                               : const Color(0xFF1A73E8),
@@ -2455,17 +2432,17 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     try {
       final accessState = await _adminAccessResolver
           .resolveAdminAccess(
-            forceRefresh: true,
-            returnOnLocalAdminEvidence: true,
-          )
+        forceRefresh: true,
+        returnOnLocalAdminEvidence: true,
+      )
           .timeout(
-            const Duration(seconds: 6),
-            onTimeout: () {
-              throw TimeoutException(
-                'admin verification timed out after 6 seconds',
-              );
-            },
+        const Duration(seconds: 6),
+        onTimeout: () {
+          throw TimeoutException(
+            'admin verification timed out after 6 seconds',
           );
+        },
+      );
       if (!mounted) return;
       setState(() {
         _adminAccessState = accessState;
@@ -3128,8 +3105,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     final usersSubtitle = _userStatsLoading
         ? 'Chargement…'
         : (totalAccounts == null || onlineUsers == null || proLogins == null)
-        ? '—'
-        : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
+            ? '—'
+            : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -3158,17 +3135,17 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               Text(
                 'Gestion & configuration',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
               ),
               const SizedBox(height: 6),
               Text(
                 "Paramètres système, modération et outils d’administration.",
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 14),
               _ProfileCard(
@@ -3234,8 +3211,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     subtitle: _kpiSnapshot == null
                         ? 'Chargement…'
                         : _kpiSnapshot!.messagesStarted == 0
-                        ? 'Aucun message\nenregistré'
-                        : '${_formatCompactNumber(_kpiSnapshot!.messagesStarted)}\ndémarrés',
+                            ? 'Aucun message\nenregistré'
+                            : '${_formatCompactNumber(_kpiSnapshot!.messagesStarted)}\ndémarrés',
                     badge: null,
                     iconColor: prestoBlue,
                   ),
@@ -3245,9 +3222,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     subtitle: _kpiSnapshot == null
                         ? 'Chargement…'
                         : (_kpiSnapshot!.reportedListings == 0 &&
-                              _kpiSnapshot!.blockedListings == 0)
-                        ? 'Aucune alerte\nen cours'
-                        : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
+                                _kpiSnapshot!.blockedListings == 0)
+                            ? 'Aucune alerte\nen cours'
+                            : 'Signalées: ${_formatCompactNumber(_kpiSnapshot!.reportedListings)}\nBloquées: ${_formatCompactNumber(_kpiSnapshot!.blockedListings)}\nEn revue: ${_formatCompactNumber(_kpiSnapshot!.manualReviewListings)}',
                     badge: null,
                     iconColor: prestoBlue,
                   ),
@@ -3703,11 +3680,11 @@ class _BroadcastNotificationAdminPageState
                         child: Text(
                           _target == _NotifTestTarget.me
                               ? 'Envoie une notification test sur TES appareils '
-                                    'uniquement, pour vérifier la réception (écran '
-                                    'verrouillé compris).'
+                                  'uniquement, pour vérifier la réception (écran '
+                                  'verrouillé compris).'
                               : 'Envoie immédiatement la notification à TOUS les '
-                                    'utilisateurs ayant un appareil enregistré. '
-                                    'À utiliser avec précaution.',
+                                  'utilisateurs ayant un appareil enregistré. '
+                                  'À utiliser avec précaution.',
                           style: const TextStyle(
                             color: Colors.black87,
                             fontWeight: FontWeight.w600,
@@ -3762,8 +3739,8 @@ class _BroadcastNotificationAdminPageState
                   _sending
                       ? 'Envoi en cours...'
                       : _target == _NotifTestTarget.me
-                      ? 'Envoyer sur mes appareils'
-                      : 'Envoyer à tous les utilisateurs',
+                          ? 'Envoyer sur mes appareils'
+                          : 'Envoyer à tous les utilisateurs',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -3989,9 +3966,9 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
               child: Text(
                 'Dashboard admin: métriques clés',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
-                ),
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
               ),
             ),
             _StatusBadge(
@@ -4004,9 +3981,9 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
         Text(
           'Première vague branchée sur Firestore, Functions et analyticsSnapshots, avec filtre période et tendances miniatures.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.black54,
-            fontWeight: FontWeight.w600,
-          ),
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
         ),
         const SizedBox(height: 14),
         Wrap(
@@ -4038,17 +4015,14 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                       stream: _subscriptionsStream,
                       builder: (context, subscriptionsSnapshot) {
                         return StreamBuilder<
-                          QuerySnapshot<Map<String, dynamic>>
-                        >(
+                            QuerySnapshot<Map<String, dynamic>>>(
                           stream: _billingInvoicesStream,
                           builder: (context, billingInvoicesSnapshot) {
                             return StreamBuilder<
-                              QuerySnapshot<Map<String, dynamic>>
-                            >(
+                                QuerySnapshot<Map<String, dynamic>>>(
                               stream: _analyticsStream,
                               builder: (context, analyticsSnapshot) {
-                                final hasError =
-                                    usersSnapshot.hasError ||
+                                final hasError = usersSnapshot.hasError ||
                                     activeUsersSnapshot.hasError ||
                                     listingsSnapshot.hasError ||
                                     subscriptionsSnapshot.hasError ||
@@ -4061,8 +4035,7 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                   );
                                 }
 
-                                final waiting =
-                                    usersSnapshot.connectionState ==
+                                final waiting = usersSnapshot.connectionState ==
                                         ConnectionState.waiting ||
                                     activeUsersSnapshot.connectionState ==
                                         ConnectionState.waiting ||
@@ -4083,10 +4056,10 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
                                     listingsSnapshot.data?.docs ?? const [];
                                 final subscriptionDocs =
                                     subscriptionsSnapshot.data?.docs ??
-                                    const [];
+                                        const [];
                                 final billingDocs =
                                     billingInvoicesSnapshot.data?.docs ??
-                                    const [];
+                                        const [];
                                 final analyticsDocs =
                                     analyticsSnapshot.data?.docs ?? const [];
 
@@ -4108,16 +4081,16 @@ class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
 
                                 final computed =
                                     _AdminDashboardComputed.fromSources(
-                                      userDocs: userDocs,
-                                      activeUserDocs: activeUserDocs,
-                                      listingDocs: listingDocs,
-                                      analyticsDocs: analyticsDocs,
-                                      subscriptionDocs: subscriptionDocs,
-                                      billingDocs: billingDocs,
-                                      userStats: widget.userStats,
-                                      window: _window,
-                                      domains: widget.domains,
-                                    );
+                                  userDocs: userDocs,
+                                  activeUserDocs: activeUserDocs,
+                                  listingDocs: listingDocs,
+                                  analyticsDocs: analyticsDocs,
+                                  subscriptionDocs: subscriptionDocs,
+                                  billingDocs: billingDocs,
+                                  userStats: widget.userStats,
+                                  window: _window,
+                                  domains: widget.domains,
+                                );
 
                                 if (widget.onComputed != null) {
                                   WidgetsBinding.instance.addPostFrameCallback((
@@ -4432,9 +4405,8 @@ class _AdminSparklinePainter extends CustomPainter {
 
     final span = (maxValue - minValue).abs();
     final effectiveSpan = span <= 0 ? 1.0 : span;
-    final xStep = points.length <= 1
-        ? size.width
-        : size.width / (points.length - 1);
+    final xStep =
+        points.length <= 1 ? size.width : size.width / (points.length - 1);
 
     final path = Path();
     final fillPath = Path();
@@ -5052,8 +5024,8 @@ class _EmailSummaryTile extends StatelessWidget {
         final subtitle = snapshot.hasError
             ? 'Accès snapshot\nà vérifier'
             : data == null
-            ? 'Aucun snapshot\ndisponible'
-            : '${hours > 0 ? hours : 1} h\nEnvoyés: $sent\nÉchecs: $failed\nDL: $deadLetters';
+                ? 'Aucun snapshot\ndisponible'
+                : '${hours > 0 ? hours : 1} h\nEnvoyés: $sent\nÉchecs: $failed\nDL: $deadLetters';
 
         return _KpiTile(
           icon: Icons.mark_email_unread_rounded,

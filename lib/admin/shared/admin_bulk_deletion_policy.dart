@@ -4,7 +4,7 @@
 /// produit un enregistrement d’audit indépendant de Firebase.
 class AdminBulkDeletionPolicy {
   const AdminBulkDeletionPolicy({this.maxBatchSize = 200})
-    : assert(maxBatchSize > 0);
+      : assert(maxBatchSize > 0);
 
   final int maxBatchSize;
 
@@ -23,9 +23,8 @@ class AdminBulkDeletionPolicy {
     final ids = normalizeIds(entityIds);
     final batches = <List<String>>[];
     for (var index = 0; index < ids.length; index += maxBatchSize) {
-      final end = index + maxBatchSize < ids.length
-          ? index + maxBatchSize
-          : ids.length;
+      final end =
+          index + maxBatchSize < ids.length ? index + maxBatchSize : ids.length;
       batches.add(List<String>.unmodifiable(ids.sublist(index, end)));
     }
     return List<List<String>>.unmodifiable(batches);

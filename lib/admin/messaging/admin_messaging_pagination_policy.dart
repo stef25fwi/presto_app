@@ -2,8 +2,8 @@ class AdminMessagingPaginationPolicy {
   const AdminMessagingPaginationPolicy({
     this.defaultPageSize = 40,
     this.maximumPageSize = 100,
-  }) : assert(defaultPageSize > 0),
-       assert(maximumPageSize >= defaultPageSize);
+  })  : assert(defaultPageSize > 0),
+        assert(maximumPageSize >= defaultPageSize);
 
   final int defaultPageSize;
   final int maximumPageSize;

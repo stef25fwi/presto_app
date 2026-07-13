@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../constants.dart';
 
-class AdminMessagingAppBar extends StatelessWidget implements PreferredSizeWidget {
+class AdminMessagingAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
   final bool automaticallyImplyLeading;

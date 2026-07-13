@@ -62,6 +62,64 @@ void main() {
     expect(summary.failedCount, 0);
   });
 
+  test('convertit les compteurs numériques ou textuels', () {
+    final summary = AdminBulkListingDeleteSummary.fromData(<String, Object?>{
+      'ok': true,
+      'requestedCount': '2',
+      'succeededCount': 1.8,
+      'failedCount': '1',
+      'results': <Object?>[
+        <String, Object?>{'listingId': 'a', 'ok': true},
+        <String, Object?>{
+          'listingId': 'b',
+          'ok': false,
+          'errorCode': ' ',
+          'errorMessage': '',
+        },
+      ],
+    });
+
+    expect(summary.requestedCount, 2);
+    expect(summary.succeededCount, 1);
+    expect(summary.failedCount, 1);
+    expect(summary.failures.single.errorCode, isNull);
+    expect(summary.failures.single.errorMessage, isNull);
+    expect(
+      () => summary.results.add(summary.results.first),
+      throwsUnsupportedError,
+    );
+  });
+
+  test('normalise les clés et valeurs d un résultat individuel', () {
+    final result = AdminBulkListingDeleteItemResult.fromData(<Object?, Object?>{
+      42: 'ignoré',
+      'listingId': ' listing-1 ',
+      'ok': false,
+      'errorCode': ' denied ',
+      'errorMessage': ' accès refusé ',
+    });
+
+    expect(result.listingId, 'listing-1');
+    expect(result.ok, isFalse);
+    expect(result.errorCode, 'denied');
+    expect(result.errorMessage, 'accès refusé');
+  });
+
+  test('refuse un résultat individuel invalide ou incomplet', () {
+    for (final value in <Object?>[
+      null,
+      'invalide',
+      <String, Object?>{'listingId': '', 'ok': true},
+      <String, Object?>{'listingId': 'a', 'ok': 'true'},
+    ]) {
+      expect(
+        () => AdminBulkListingDeleteItemResult.fromData(value),
+        throwsFormatException,
+        reason: '$value',
+      );
+    }
+  });
+
   test('refuse une sélection vide, trop grande ou sans motif', () async {
     final service = AdminBulkListingService(
       caller: (_) async => throw StateError('ne doit pas être appelé'),
@@ -84,6 +142,21 @@ void main() {
     );
   });
 
+  test('refuse une réponse backend absente ou sans liste de résultats', () {
+    for (final value in <Object?>[
+      null,
+      'invalide',
+      <String, Object?>{'ok': true},
+      <String, Object?>{'ok': true, 'results': 'invalide'},
+    ]) {
+      expect(
+        () => AdminBulkListingDeleteSummary.fromData(value),
+        throwsFormatException,
+        reason: '$value',
+      );
+    }
+  });
+
   test('refuse une réponse backend incohérente', () {
     expect(
       () => AdminBulkListingDeleteSummary.fromData(<String, Object?>{
@@ -91,6 +164,18 @@ void main() {
         'requestedCount': 2,
         'succeededCount': 2,
         'failedCount': 0,
+        'results': <Object?>[
+          <String, Object?>{'listingId': 'a', 'ok': true},
+        ],
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => AdminBulkListingDeleteSummary.fromData(<String, Object?>{
+        'ok': true,
+        'requestedCount': 1,
+        'succeededCount': 1,
+        'failedCount': 1,
         'results': <Object?>[
           <String, Object?>{'listingId': 'a', 'ok': true},
         ],

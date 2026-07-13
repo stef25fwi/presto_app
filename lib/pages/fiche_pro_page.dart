@@ -34,7 +34,7 @@ class _FicheProPageState extends State<FicheProPage> {
   bool _isSaving = false;
 
   late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _offersFuture;
+      _offersFuture;
 
   String _companyName = '';
   String _city = '';
@@ -61,28 +61,28 @@ class _FicheProPageState extends State<FicheProPage> {
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _loadOffers() async {
+      _loadOffers() async {
     final results =
         await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
-          FirebaseFirestore.instance
-              .collection(kListingsCollection)
-              .where('ownerId', isEqualTo: widget.uid)
-              .where(publicListingsFilter())
-              .get()
-              .then((s) => s.docs),
-          loadLegacyPublicOffersByOwner(
-            ownerField: 'uid',
-            ownerId: widget.uid,
-            limit: 50,
-            source: 'fiche_pro_offers_uid',
-          ),
-          loadLegacyPublicOffersByOwner(
-            ownerField: 'userId',
-            ownerId: widget.uid,
-            limit: 50,
-            source: 'fiche_pro_offers_userId',
-          ),
-        ]);
+      FirebaseFirestore.instance
+          .collection(kListingsCollection)
+          .where('ownerId', isEqualTo: widget.uid)
+          .where(publicListingsFilter())
+          .get()
+          .then((s) => s.docs),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'uid',
+        ownerId: widget.uid,
+        limit: 50,
+        source: 'fiche_pro_offers_uid',
+      ),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'userId',
+        ownerId: widget.uid,
+        limit: 50,
+        source: 'fiche_pro_offers_userId',
+      ),
+    ]);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final docs in results) {
@@ -146,15 +146,13 @@ class _FicheProPageState extends State<FicheProPage> {
 
       String photoUrl = '';
       if (widget.isOwner) {
-        photoUrl =
-            customProfilePhotoUrl(
+        photoUrl = customProfilePhotoUrl(
               FirebaseAuth.instance.currentUser?.photoURL,
             ) ??
             '';
       }
       if (photoUrl.isEmpty) {
-        photoUrl =
-            customProfilePhotoUrl(
+        photoUrl = customProfilePhotoUrl(
               userData['profilePhotoUrl']?.toString() ??
                   userData['photoURL']?.toString(),
             ) ??
@@ -163,8 +161,7 @@ class _FicheProPageState extends State<FicheProPage> {
 
       if (mounted) {
         setState(() {
-          _companyName =
-              src['companyName']?.toString() ??
+          _companyName = src['companyName']?.toString() ??
               userData['displayName']?.toString() ??
               '';
           _city = src['city']?.toString() ?? '';
@@ -214,13 +211,13 @@ class _FicheProPageState extends State<FicheProPage> {
           .collection('pro_profiles')
           .doc(widget.uid)
           .set({
-            'description': _description,
-            'serviceCategories': _categories,
-            'interventionZones': _zones,
-            'experience': _experience,
-            'disponibilites': _disponibilites,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        'description': _description,
+        'serviceCategories': _categories,
+        'interventionZones': _zones,
+        'experience': _experience,
+        'disponibilites': _disponibilites,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (mounted) {
         setState(() => _hasChanges = false);
@@ -274,9 +271,9 @@ class _FicheProPageState extends State<FicheProPage> {
           .collection('pro_profiles')
           .doc(widget.uid)
           .set({
-            'realisations': FieldValue.arrayUnion(newUrls),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        'realisations': FieldValue.arrayUnion(newUrls),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (mounted) {
         setState(() => _realisations = [..._realisations, ...newUrls]);
@@ -312,9 +309,9 @@ class _FicheProPageState extends State<FicheProPage> {
           .collection('pro_profiles')
           .doc(widget.uid)
           .set({
-            'realisations': FieldValue.arrayRemove([url]),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        'realisations': FieldValue.arrayRemove([url]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
       if (mounted) {
         setState(() => _realisations.remove(url));
       }
@@ -574,8 +571,7 @@ class _FicheProPageState extends State<FicheProPage> {
     required Widget Function(
       BuildContext ctx,
       void Function(void Function()) setModal,
-    )
-    builder,
+    ) builder,
     bool scrollable = false,
   }) {
     return showModalBottomSheet<T>(
@@ -620,10 +616,11 @@ class _FicheProPageState extends State<FicheProPage> {
   }
 
   InputDecoration _inputDec(String hint) => InputDecoration(
-    hintText: hint,
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-  );
+        hintText: hint,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      );
 
   Widget _confirmButton(BuildContext ctx, VoidCallback onPressed) =>
       FilledButton(
@@ -709,13 +706,13 @@ class _FicheProPageState extends State<FicheProPage> {
   }
 
   Widget _emptyHint(String text) => Text(
-    text,
-    style: const TextStyle(
-      fontSize: 13,
-      color: Color(0xFF9CA3AF),
-      fontStyle: FontStyle.italic,
-    ),
-  );
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          color: Color(0xFF9CA3AF),
+          fontStyle: FontStyle.italic,
+        ),
+      );
 
   Widget _chipRow(List<String> items) {
     if (items.isEmpty) return _emptyHint('Appuyez pour ajouter');
@@ -788,9 +785,8 @@ class _FicheProPageState extends State<FicheProPage> {
       _department,
     ].where((s) => s.isNotEmpty).toList();
     final location = locationParts.join(' • ');
-    final initial = _companyName.isNotEmpty
-        ? _companyName[0].toUpperCase()
-        : '?';
+    final initial =
+        _companyName.isNotEmpty ? _companyName[0].toUpperCase() : '?';
 
     return Card(
       margin: EdgeInsets.zero,
@@ -810,12 +806,10 @@ class _FicheProPageState extends State<FicheProPage> {
                 CircleAvatar(
                   radius: 45,
                   backgroundColor: const Color(0xFFF3F4F6),
-                  foregroundImage: _photoUrl.isNotEmpty
-                      ? NetworkImage(_photoUrl)
-                      : null,
-                  onForegroundImageError: _photoUrl.isNotEmpty
-                      ? (_, __) {}
-                      : null,
+                  foregroundImage:
+                      _photoUrl.isNotEmpty ? NetworkImage(_photoUrl) : null,
+                  onForegroundImageError:
+                      _photoUrl.isNotEmpty ? (_, __) {} : null,
                   child: Text(
                     initial,
                     style: const TextStyle(
@@ -1128,8 +1122,8 @@ class _FicheProPageState extends State<FicheProPage> {
           widget.isOwner
               ? 'Ma fiche Pro'
               : _companyName.isNotEmpty
-              ? _companyName
-              : 'Fiche Pro',
+                  ? _companyName
+                  : 'Fiche Pro',
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
         centerTitle: true,
@@ -1219,37 +1213,38 @@ class _FicheProPageState extends State<FicheProPage> {
                             child: Center(child: CircularProgressIndicator()),
                           )
                         : _realisations.isEmpty
-                        ? _emptyHint(
-                            widget.isOwner
-                                ? 'Appuyez pour ajouter des photos'
-                                : 'Photos de réalisations à venir',
-                          )
-                        : SizedBox(
-                            height: 90,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _realisations.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 8),
-                              itemBuilder: (ctx, i) {
-                                final url = _realisations[i];
-                                return GestureDetector(
-                                  onLongPress: widget.isOwner
-                                      ? () => _deleteRealisation(url)
-                                      : null,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image(
-                                      image: CachedNetworkImageProvider(url),
-                                      width: 90,
-                                      height: 90,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                            ? _emptyHint(
+                                widget.isOwner
+                                    ? 'Appuyez pour ajouter des photos'
+                                    : 'Photos de réalisations à venir',
+                              )
+                            : SizedBox(
+                                height: 90,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _realisations.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (ctx, i) {
+                                    final url = _realisations[i];
+                                    return GestureDetector(
+                                      onLongPress: widget.isOwner
+                                          ? () => _deleteRealisation(url)
+                                          : null,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image(
+                                          image:
+                                              CachedNetworkImageProvider(url),
+                                          width: 90,
+                                          height: 90,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                   ),
                 _buildOffersSection(),
               ],

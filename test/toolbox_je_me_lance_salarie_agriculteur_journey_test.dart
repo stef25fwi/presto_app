@@ -112,7 +112,8 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.runAsync(() async {
-        await tester.pumpWidget(const MaterialApp(home: ToolboxJeMeLancePage()));
+        await tester
+            .pumpWidget(const MaterialApp(home: ToolboxJeMeLancePage()));
         // Attente réelle (pas horloge fake) : laisse le chargement des assets
         // fiches (rootBundle) se terminer.
         await Future<void>.delayed(const Duration(seconds: 2));

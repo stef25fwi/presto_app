@@ -9,9 +9,9 @@ class ExpiringMemoryCache<K, V> {
     required this.defaultTtl,
     this.maximumEntries = 100,
     DateTime Function()? clock,
-  }) : assert(!defaultTtl.isNegative),
-       assert(maximumEntries > 0),
-       _clock = clock ?? DateTime.now;
+  })  : assert(!defaultTtl.isNegative),
+        assert(maximumEntries > 0),
+        _clock = clock ?? DateTime.now;
 
   final Duration defaultTtl;
   final int maximumEntries;
@@ -59,18 +59,16 @@ class ExpiringMemoryCache<K, V> {
     final version = _versions[key] ?? 0;
     final generation = _generation;
     late final Future<V> loadFuture;
-    loadFuture = Future<V>.sync(loader)
-        .then((loaded) {
-          if (_generation == generation && (_versions[key] ?? 0) == version) {
-            _putValue(key, loaded, ttl: ttl);
-          }
-          return loaded;
-        })
-        .whenComplete(() {
-          if (identical(_inFlight[key], loadFuture)) {
-            _inFlight.remove(key);
-          }
-        });
+    loadFuture = Future<V>.sync(loader).then((loaded) {
+      if (_generation == generation && (_versions[key] ?? 0) == version) {
+        _putValue(key, loaded, ttl: ttl);
+      }
+      return loaded;
+    }).whenComplete(() {
+      if (identical(_inFlight[key], loadFuture)) {
+        _inFlight.remove(key);
+      }
+    });
     _inFlight[key] = loadFuture;
     return loadFuture;
   }
