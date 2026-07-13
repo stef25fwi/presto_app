@@ -511,6 +511,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _isLocalOnlyMode = false;
         _isFromCache = false;
 
+        // Un parcours déjà sauvegardé peut dater d'avant l'existence (ou
+        // d'une mise à jour) de la fiche officielle correspondant à ce
+        // statut/activité : le contenu importé ci-dessus reflèterait alors
+        // encore l'ancien contenu générique. On force un recalcul (et sa
+        // sauvegarde) dès qu'une fiche s'applique, pour que rouvrir un
+        // parcours existant affiche toujours la fiche à jour plutôt qu'un
+        // contenu périmé.
+        if (_hasMatchedParcoursFiche) {
+          await _saveDraft();
+        }
+
         await _prefillRegionFromProfile(user.uid);
 
         // Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
