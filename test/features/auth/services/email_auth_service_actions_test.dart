@@ -18,7 +18,8 @@ void main() {
   test('utilise le fallback natif si le backend échoue', () async {
     String? fallbackEmail;
     final service = EmailAuthService(
-      backendPasswordReset: (_) async => throw StateError('backend indisponible'),
+      backendPasswordReset: (_) async =>
+          throw StateError('backend indisponible'),
       nativePasswordReset: (email) async => fallbackEmail = email,
     );
 
@@ -47,17 +48,20 @@ void main() {
     expect(calls, 0);
   });
 
-  test('demande l email de vérification pour un utilisateur connecté', () async {
-    var calls = 0;
-    final service = EmailAuthService(
-      hasCurrentUser: () => true,
-      requestEmailVerification: () async => calls += 1,
-    );
+  test(
+    'demande l email de vérification pour un utilisateur connecté',
+    () async {
+      var calls = 0;
+      final service = EmailAuthService(
+        hasCurrentUser: () => true,
+        requestEmailVerification: () async => calls += 1,
+      );
 
-    await service.requestEmailVerificationEmail();
+      await service.requestEmailVerificationEmail();
 
-    expect(calls, 1);
-  });
+      expect(calls, 1);
+    },
+  );
 
   test('refuse la vérification sans utilisateur connecté', () async {
     var calls = 0;
@@ -87,7 +91,10 @@ void main() {
       syncEmailVerification: () async => false,
     );
 
-    expect(await verifiedService.syncCurrentUserEmailVerificationState(), isTrue);
+    expect(
+      await verifiedService.syncCurrentUserEmailVerificationState(),
+      isTrue,
+    );
     expect(
       await unverifiedService.syncCurrentUserEmailVerificationState(),
       isFalse,
