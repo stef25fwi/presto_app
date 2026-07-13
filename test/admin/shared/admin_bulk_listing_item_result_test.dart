@@ -12,6 +12,8 @@ void main() {
       },
     );
 
+    expect(result.listingId, 'listing-1');
+    expect(result.ok, isFalse);
     expect(result.errorCode, 'permission-denied');
     expect(result.errorMessage, 'Suppression refusée');
   });
