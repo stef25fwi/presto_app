@@ -67,6 +67,28 @@ void main() {
     expect(calledParameters?['recaptchaToken'], 'token-généré');
   });
 
+  test('propage une erreur du fournisseur de jeton avant le callable', () async {
+    var calls = 0;
+    final repository = ChatRepository(
+      caller: ({required name, required timeout, required parameters}) async {
+        calls += 1;
+        return <String, dynamic>{'threadId': 'thread'};
+      },
+      verificationTokenProvider: (action) async {
+        throw StateError('jeton indisponible');
+      },
+    );
+
+    await expectLater(
+      repository.createThreadFromListing(
+        listingId: 'listing-2',
+        firstMessage: 'Premier message',
+      ),
+      throwsStateError,
+    );
+    expect(calls, 0);
+  });
+
   test(
     'refuse une réponse de création sans identifiant de conversation',
     () async {
