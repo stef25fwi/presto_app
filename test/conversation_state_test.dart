@@ -91,6 +91,7 @@ void main() {
 
     expect(isConversationBlockedForUser(data, 'alice'), isTrue);
     expect(isConversationBlockedByOtherUser(data, 'alice'), isTrue);
+    expect(isConversationBlockedByOtherUser(data, 'bob'), isTrue);
     expect(isConversationBlockedByOtherUser(data, 'charlie'), isTrue);
     expect(
       isConversationBlockedByOtherUser(<String, dynamic>{
