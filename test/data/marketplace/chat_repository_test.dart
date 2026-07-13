@@ -67,6 +67,23 @@ void main() {
     expect(calledParameters?['recaptchaToken'], 'token-généré');
   });
 
+  test('refuse une réponse de création sans identifiant de conversation', () async {
+    final repository = ChatRepository(
+      caller: ({required name, required timeout, required parameters}) async {
+        return <String, dynamic>{'ok': true};
+      },
+    );
+
+    await expectLater(
+      repository.createThreadFromListing(
+        listingId: 'listing-2',
+        firstMessage: 'Premier message',
+        recaptchaToken: 'token',
+      ),
+      throwsA(isA<ChatRequestException>()),
+    );
+  });
+
   test('envoie un message avec un payload normalisé', () async {
     String? calledName;
     Duration? calledTimeout;
