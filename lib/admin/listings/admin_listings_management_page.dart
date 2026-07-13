@@ -213,8 +213,7 @@ class _AdminListingsManagementPageState
 
   @override
   Widget build(BuildContext context) {
-    final allVisibleSelected =
-        _items.isNotEmpty &&
+    final allVisibleSelected = _items.isNotEmpty &&
         _items.every((item) => _selectedIds.contains(item.id));
 
     return Scaffold(

@@ -17,9 +17,9 @@ class AdminAccessResolver {
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
-  }) : _injectedAuth = auth,
-       _injectedFirestore = firestore,
-       _injectedFunctions = functions;
+  })  : _injectedAuth = auth,
+        _injectedFirestore = firestore,
+        _injectedFunctions = functions;
 
   final FirebaseAuth? _injectedAuth;
   final FirebaseFirestore? _injectedFirestore;
@@ -330,9 +330,8 @@ class AdminAccessResolver {
     // trusts those claims. Attempting a client write here would silently fail
     // with PERMISSION_DENIED, so we only record the in-memory evidence so the
     // resolver finalize can prefer the token-only path.
-    final normalizedRoles = tokenRoles.isEmpty
-        ? const <String>['user']
-        : tokenRoles;
+    final normalizedRoles =
+        tokenRoles.isEmpty ? const <String>['user'] : tokenRoles;
     final normalizedPrimaryRole = tokenPrimaryRole ?? normalizedRoles.first;
     debugPrint(
       '[AdminResolver] sync: token claims indicate admin for uid=${user.uid}; '
@@ -599,8 +598,7 @@ class AdminAccessResolver {
       final errBody = body['error'] is Map
           ? Map<String, dynamic>.from(body['error'] as Map)
           : <String, dynamic>{};
-      final errCode =
-          _normalizedText(errBody['status'])?.toLowerCase() ??
+      final errCode = _normalizedText(errBody['status'])?.toLowerCase() ??
           'http-${response.statusCode}';
       final errMsg =
           _normalizedText(errBody['message']) ?? 'HTTP ${response.statusCode}';
@@ -769,22 +767,18 @@ class AdminAccessResolver {
     final effectiveIsAdmin = sourceOfTruth != 'none';
     final reason = switch (sourceOfTruth) {
       'server' => 'server-confirmed-admin',
-      'token' =>
-        state.serverCheckSucceeded && state.serverIsAdmin == false
-            ? 'token-fallback-after-server-denied'
-            : 'token-claims-confirmed-admin',
-      'profile' =>
-        state.serverCheckSucceeded && state.serverIsAdmin == false
-            ? 'profile-fallback-after-server-denied'
-            : 'profile-confirmed-admin',
-      'adminDoc' =>
-        state.serverCheckSucceeded && state.serverIsAdmin == false
-            ? 'admin-doc-fallback-after-server-denied'
-            : 'admin-doc-confirmed-admin',
-      _ =>
-        state.serverCheckSucceeded
-            ? 'no-admin-source-after-server-check'
-            : 'no-admin-source',
+      'token' => state.serverCheckSucceeded && state.serverIsAdmin == false
+          ? 'token-fallback-after-server-denied'
+          : 'token-claims-confirmed-admin',
+      'profile' => state.serverCheckSucceeded && state.serverIsAdmin == false
+          ? 'profile-fallback-after-server-denied'
+          : 'profile-confirmed-admin',
+      'adminDoc' => state.serverCheckSucceeded && state.serverIsAdmin == false
+          ? 'admin-doc-fallback-after-server-denied'
+          : 'admin-doc-confirmed-admin',
+      _ => state.serverCheckSucceeded
+          ? 'no-admin-source-after-server-check'
+          : 'no-admin-source',
     };
 
     final finalized = _step(
@@ -894,11 +888,12 @@ class AdminAccessResolver {
     Map<String, dynamic>? data, {
     required List<String> roles,
     required String? primaryRole,
-  }) => _accessPolicy.hasAdminAccess(
-    data,
-    roles: roles,
-    primaryRole: primaryRole,
-  );
+  }) =>
+      _accessPolicy.hasAdminAccess(
+        data,
+        roles: roles,
+        primaryRole: primaryRole,
+      );
 
   String? _firstNormalizedText(Map<String, dynamic>? data, List<String> keys) =>
       _accessPolicy.firstNormalizedText(data, keys);

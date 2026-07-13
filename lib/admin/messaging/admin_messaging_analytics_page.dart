@@ -28,39 +28,45 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                 stream: AdminMessagingService().watchUsers(limit: 200),
                 builder: (context, usersSnapshot) {
                   return StreamBuilder<List<AdminAttachmentModel>>(
-                    stream: AdminMessagingService().watchAttachments(limit: 200),
+                    stream:
+                        AdminMessagingService().watchAttachments(limit: 200),
                     builder: (context, attachmentsSnapshot) {
                       return StreamBuilder<List<AdminNotificationLogModel>>(
                         stream: AdminNotificationMonitorService()
                             .watchMessagingNotifications(limit: 200),
                         builder: (context, notificationsSnapshot) {
-                          final conversations =
-                              conversationsSnapshot.data ?? const <AdminConversationModel>[];
-                          final reports =
-                              reportsSnapshot.data ?? const <AdminMessageReportModel>[];
-                          final users =
-                              usersSnapshot.data ?? const <AdminMessagingUserModel>[];
-                          final attachments =
-                              attachmentsSnapshot.data ?? const <AdminAttachmentModel>[];
+                          final conversations = conversationsSnapshot.data ??
+                              const <AdminConversationModel>[];
+                          final reports = reportsSnapshot.data ??
+                              const <AdminMessageReportModel>[];
+                          final users = usersSnapshot.data ??
+                              const <AdminMessagingUserModel>[];
+                          final attachments = attachmentsSnapshot.data ??
+                              const <AdminAttachmentModel>[];
                           final notifications = notificationsSnapshot.data ??
                               const <AdminNotificationLogModel>[];
                           if (conversationsSnapshot.connectionState ==
                                   ConnectionState.waiting &&
                               conversations.isEmpty) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           }
                           final derivedAnalytics =
-                              const AdminMessagingAnalyticsService().buildSnapshot(
+                              const AdminMessagingAnalyticsService()
+                                  .buildSnapshot(
                             conversations: conversations,
                             attachments: attachments,
                             users: users,
                             reports: reports,
                             notifications: notifications,
                           );
-                          return StreamBuilder<AdminMessagingAnalyticsSnapshot?>(
-                            stream: AdminMessagingMetricsService().watchCurrentMetrics(),
+                          return StreamBuilder<
+                              AdminMessagingAnalyticsSnapshot?>(
+                            stream: AdminMessagingMetricsService()
+                                .watchCurrentMetrics(),
                             builder: (context, metricsSnapshot) {
-                              final analytics = metricsSnapshot.data ?? derivedAnalytics;
+                              final analytics =
+                                  metricsSnapshot.data ?? derivedAnalytics;
                               return ListView(
                                 padding: const EdgeInsets.all(16),
                                 children: [
@@ -69,7 +75,8 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                                      border: Border.all(
+                                          color: const Color(0xFFE5E7EB)),
                                     ),
                                     child: Text(
                                       analytics.source == 'scheduled'
@@ -93,7 +100,8 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                                         child: AdminMessagingStatCard(
                                           title: 'Messages cumulés',
                                           value: '${analytics.totalMessages}',
-                                          subtitle: 'sur les conversations agrégées',
+                                          subtitle:
+                                              'sur les conversations agrégées',
                                           icon: Icons.chat_bubble_rounded,
                                           color: const Color(0xFF1D4ED8),
                                         ),
@@ -102,8 +110,10 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                                         width: 280,
                                         child: AdminMessagingStatCard(
                                           title: 'Délai moyen',
-                                          value: '${analytics.averageResponseHours.toStringAsFixed(1)} h',
-                                          subtitle: 'réponse observée côté utilisateurs actifs',
+                                          value:
+                                              '${analytics.averageResponseHours.toStringAsFixed(1)} h',
+                                          subtitle:
+                                              'réponse observée côté utilisateurs actifs',
                                           icon: Icons.timer_outlined,
                                           color: const Color(0xFFD97706),
                                         ),
@@ -112,8 +122,10 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                                         width: 280,
                                         child: AdminMessagingStatCard(
                                           title: 'Taux de réponse prestataires',
-                                          value: '${analytics.providerResponseRate.toStringAsFixed(0)} %',
-                                          subtitle: 'moyenne des rôles prestataire/pro quand disponibles',
+                                          value:
+                                              '${analytics.providerResponseRate.toStringAsFixed(0)} %',
+                                          subtitle:
+                                              'moyenne des rôles prestataire/pro quand disponibles',
                                           icon: Icons.support_agent_rounded,
                                           color: const Color(0xFF0F766E),
                                         ),
@@ -123,8 +135,10 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                                         child: AdminMessagingStatCard(
                                           title: 'Push en échec',
                                           value: '${analytics.pushFailedCount}',
-                                          subtitle: '${analytics.pushSentCount} envoyés • ${analytics.pushDeliveredCount} délivrés',
-                                          icon: Icons.notification_important_rounded,
+                                          subtitle:
+                                              '${analytics.pushSentCount} envoyés • ${analytics.pushDeliveredCount} délivrés',
+                                          icon: Icons
+                                              .notification_important_rounded,
                                           color: const Color(0xFFB42318),
                                         ),
                                       ),
@@ -136,10 +150,12 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                                      border: Border.all(
+                                          color: const Color(0xFFE5E7EB)),
                                     ),
                                     child: const Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Notes de lecture',

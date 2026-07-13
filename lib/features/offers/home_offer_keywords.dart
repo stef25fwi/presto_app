@@ -30,9 +30,8 @@ List<String> buildHomeOfferKeywords(
     final combined = '$title $description';
 
     for (final rawWord in combined.split(separatorPattern)) {
-      final word = rawWord
-          .replaceAll(RegExp(r'^[^a-zà-ÿ]+|[^a-zà-ÿ]+$'), '')
-          .trim();
+      final word =
+          rawWord.replaceAll(RegExp(r'^[^a-zà-ÿ]+|[^a-zà-ÿ]+$'), '').trim();
       if (word.length < minimumLength || numericPattern.hasMatch(word)) {
         continue;
       }

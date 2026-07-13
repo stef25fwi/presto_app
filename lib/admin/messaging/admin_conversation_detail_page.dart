@@ -41,8 +41,7 @@ class _AdminConversationDetailPageState
   }
 
   Future<void> _toggleWatchlist() async {
-    final confirm =
-        await showDialog<bool>(
+    final confirm = await showDialog<bool>(
           context: context,
           builder: (_) => AdminConfirmSensitiveActionDialog(
             title: widget.conversation.adminWatchlisted
@@ -50,9 +49,8 @@ class _AdminConversationDetailPageState
                 : 'Ajouter à la watchlist',
             message:
                 'Cette action sera journalisée dans l\'audit administrateur.',
-            confirmLabel: widget.conversation.adminWatchlisted
-                ? 'Retirer'
-                : 'Ajouter',
+            confirmLabel:
+                widget.conversation.adminWatchlisted ? 'Retirer' : 'Ajouter',
           ),
         ) ??
         false;

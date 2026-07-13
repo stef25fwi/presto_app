@@ -236,10 +236,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
   // Cache du stream pour éviter de le recréer à chaque setState non pertinent.
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>?
-  _cachedOffersStream;
+      _cachedOffersStream;
   String? _cachedOffersStreamKey;
   final Map<String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _offersWarmCache =
+      _offersWarmCache =
       <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
   final Set<String> _offersWarmLoadsInFlight = <String>{};
 
@@ -420,23 +420,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   bool get _hasActiveClientFilters {
     final selectedCategory =
         (_filterCategory != null && _filterCategory!.isNotEmpty)
-        ? _filterCategory
-        : ((_selectedCategory != null &&
-                  _selectedCategory != 'Toutes catégories')
-              ? _selectedCategory
-              : null);
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
     final hasCity = _filterCityName?.trim().isNotEmpty ?? false;
     final hasSearch = _activeSearchQuery?.trim().isNotEmpty ?? false;
     final hasSubcategory =
         _selectedSubCategory != null && _selectedSubCategory!.isNotEmpty;
     final hasDept =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-        (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
-        (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
+            (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
+            (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
-    final hasBudgetRange =
-        _advancedFilters &&
+    final hasBudgetRange = _advancedFilters &&
         (min != null || max != null) &&
         _budgetRangeWarning == null;
 
@@ -458,13 +457,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     final hasExplicitEntryFilter =
         widget.categoryFilter?.trim().isNotEmpty == true ||
-        widget.searchQuery?.trim().isNotEmpty == true;
+            widget.searchQuery?.trim().isNotEmpty == true;
 
     final hasManualLocationFilter =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-        (_filterCityName != null && _filterCityName!.isNotEmpty) ||
-        _filterPostalCodeController.text.trim().isNotEmpty ||
-        _postalCodeController.text.trim().isNotEmpty;
+            (_filterCityName != null && _filterCityName!.isNotEmpty) ||
+            _filterPostalCodeController.text.trim().isNotEmpty ||
+            _postalCodeController.text.trim().isNotEmpty;
 
     if (hasExplicitEntryFilter || hasManualLocationFilter) return;
 
@@ -487,8 +486,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         departmentLabel:
             data['department'] ?? data['departement'] ?? data['departmentName'],
         city: data['city'] ?? data['ville'],
-        postalCode:
-            data['postalCode'] ??
+        postalCode: data['postalCode'] ??
             data['postal_code'] ??
             data['zipCode'] ??
             data['zip'],
@@ -538,9 +536,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     _didShowProfileDepartmentInfoPopup = true;
 
-    final userRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
 
     try {
       final snapshot = await userRef.get();
@@ -967,11 +964,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       final legacy = results.length > 1
           ? results[1]
           : listings.isEmpty
-          ? await loadLegacyPublicOffersOnDemand(
-              limit: limit,
-              source: 'consult_legacy_warm_fallback',
-            )
-          : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+              ? await loadLegacyPublicOffersOnDemand(
+                  limit: limit,
+                  source: 'consult_legacy_warm_fallback',
+                )
+              : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       final merged = mergeOfferDocsById(listings, legacy);
       final displayedCount = _buildDisplayedOfferDocs(merged).length;
 
@@ -1027,12 +1024,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         if (!_hasActiveClientFilters && _paginationKey == key) {
           _paginationDocs =
               List<QueryDocumentSnapshot<Map<String, dynamic>>>.of(
-                docs,
-                growable: false,
-              );
+            docs,
+            growable: false,
+          );
           _lastDoc = docs.isEmpty ? null : docs.last;
-          _hasMorePages =
-              docs.length >= _paginationPolicy.initialLimit &&
+          _hasMorePages = docs.length >= _paginationPolicy.initialLimit &&
               docs.length < _paginationPolicy.maxLimit;
         }
         final displayedCount = _buildDisplayedOfferDocs(docs).length;
@@ -1053,7 +1049,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   }
 
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _watchCombinedOffers() {
+      _watchCombinedOffers() {
     // ✅ Fetch-once (get) au lieu d'un snapshots() permanent: la consultation
     // publique n'a pas besoin d'un live stream. La stream émet un unique
     // résultat fusionné, puis se termine. Un changement de filtre/pagination
@@ -1079,16 +1075,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       try {
         final loads =
             <Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>>[
-              loadMergedPublicOfferQueryVariants(
-                queries: buildMarketplaceListingsBrowseQueries(
-                  limit: limit,
-                  latestFirst: true,
-                  categoryId: categoryId,
-                  cityId: cityId,
-                ),
-                source: 'consult_listings_fetch',
-              ),
-            ];
+          loadMergedPublicOfferQueryVariants(
+            queries: buildMarketplaceListingsBrowseQueries(
+              limit: limit,
+              latestFirst: true,
+              categoryId: categoryId,
+              cityId: cityId,
+            ),
+            source: 'consult_listings_fetch',
+          ),
+        ];
         if (kEnableLegacyPublicOffersBackfill) {
           loads.add(
             loadMergedPublicOfferQueryVariants(
@@ -1102,11 +1098,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         final legacy = results.length > 1
             ? results[1]
             : listings.isEmpty
-            ? await loadLegacyPublicOffersOnDemand(
-                limit: limit,
-                source: 'consult_legacy_fetch_fallback',
-              )
-            : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                ? await loadLegacyPublicOffersOnDemand(
+                    limit: limit,
+                    source: 'consult_legacy_fetch_fallback',
+                  )
+                : const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
         final merged = mergeOfferDocsById(listings, legacy);
         _logConsultOffersFetch(
           'success',
@@ -1197,11 +1193,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   String? _effectiveListingsCategoryId() {
     final categoryLabel =
         (_filterCategory != null && _filterCategory!.isNotEmpty)
-        ? _filterCategory
-        : ((_selectedCategory != null &&
-                  _selectedCategory != 'Toutes catégories')
-              ? _selectedCategory
-              : null);
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
     return _makeCategoryId(categoryLabel);
   }
 
@@ -1210,11 +1206,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final cp = _postalCodeController.text.trim();
     final filterCity = _filterCityName?.trim();
 
-    final cityName = (filterCity != null && filterCity.isNotEmpty)
-        ? filterCity
-        : loc;
-    final cpForCity =
-        (filterCity != null &&
+    final cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
+    final cpForCity = (filterCity != null &&
             filterCity.isNotEmpty &&
             _filterPostalCodeController.text.trim().isNotEmpty)
         ? _filterPostalCodeController.text.trim()
@@ -1244,17 +1238,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _buildDisplayedOfferDocs(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> rawDocs,
   ) {
-    final docs =
-        rawDocs
-            .where((d) => _matchesOfferFilters(d.data()))
-            .toList(growable: false)
-          ..sort((a, b) {
-            final aTs = a.data()['createdAt'];
-            final bTs = b.data()['createdAt'];
-            final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-            final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-            return bMs.compareTo(aMs);
-          });
+    final docs = rawDocs
+        .where((d) => _matchesOfferFilters(d.data()))
+        .toList(growable: false)
+      ..sort((a, b) {
+        final aTs = a.data()['createdAt'];
+        final bTs = b.data()['createdAt'];
+        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+        return bMs.compareTo(aMs);
+      });
     return docs;
   }
 
@@ -1343,13 +1336,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       final data = doc.data();
       final offerId = doc.id;
       final title = (data['title'] ?? 'Sans titre').toString();
-      final city = ((data['city'] ?? data['location']) ?? 'Lieu non précisé')
-          .toString();
-      final postalCode = ((data['postalCode'] ?? data['cp']) ?? '')
-          .toString()
-          .trim();
-      final category = (data['category'] ?? 'Catégorie non précisée')
-          .toString();
+      final city =
+          ((data['city'] ?? data['location']) ?? 'Lieu non précisé').toString();
+      final postalCode =
+          ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+      final category =
+          (data['category'] ?? 'Catégorie non précisée').toString();
       final budgetRaw = data['budget'] ?? data['price'];
       final budget = budgetRaw is num
           ? budgetRaw.round()
@@ -1439,8 +1431,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     final regionFilter =
         (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
-        ? _filterRegionCode
-        : _selectedRegionCode;
+            ? _filterRegionCode
+            : _selectedRegionCode;
     if (regionFilter != null && regionFilter.isNotEmpty) {
       if (_offerRegionCode(data) != regionFilter) {
         return false;
@@ -1496,15 +1488,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
     final bool eqCat =
         (_filterCategory != null && _filterCategory!.isNotEmpty) ||
-        ((_selectedCategory ?? '').isNotEmpty &&
-            _selectedCategory != 'Toutes catégories');
+            ((_selectedCategory ?? '').isNotEmpty &&
+                _selectedCategory != 'Toutes catégories');
     final bool eqDept =
         (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-        ((_filterRegionCode ?? '').isNotEmpty) ||
-        ((_selectedRegionCode ?? '').isNotEmpty);
+            ((_filterRegionCode ?? '').isNotEmpty) ||
+            ((_selectedRegionCode ?? '').isNotEmpty);
     final bool eqLoc =
         (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
-        _locationController.text.trim().isNotEmpty;
+            _locationController.text.trim().isNotEmpty;
     final bool eqCp = _postalCodeController.text.trim().isNotEmpty;
     final bool eqSub =
         (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
@@ -1520,8 +1512,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     // ✅ Règle: range budget uniquement en “avancé” + idéalement peu de filtres == (sinon index explosion)
     String? budgetWarning;
     if (_advancedFilters && (min != null || max != null) && eqCount > 1) {
-      budgetWarning =
-          "Budget (avancé) désactivé : trop de filtres combinés. "
+      budgetWarning = "Budget (avancé) désactivé : trop de filtres combinés. "
           "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
     }
 
@@ -1537,9 +1528,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
 
     setState(() {
       _budgetRangeWarning = budgetWarning;
-      _activeSearchQuery = _keywordCtrl.text.trim().isEmpty
-          ? null
-          : _keywordCtrl.text.trim();
+      _activeSearchQuery =
+          _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _lastDoc = null; // Reset pagination
       _pageLimit = _paginationPolicy.initialLimit;
       _lastPaginationRequestAt = null;
@@ -1676,9 +1666,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final effectiveCategory = (_filterCategory?.trim().isNotEmpty ?? false)
         ? _filterCategory!.trim()
         : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
-                  _selectedCategory != 'Toutes catégories')
-              ? _selectedCategory!.trim()
-              : null);
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory!.trim()
+            : null);
     if (effectiveCategory != null) {
       chips.add(
         _buildRemovableFilterChip(
@@ -1696,8 +1686,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final effectiveRegionCode = (_filterRegionCode?.trim().isNotEmpty ?? false)
         ? _filterRegionCode!.trim()
         : ((_selectedRegionCode?.trim().isNotEmpty ?? false)
-              ? _selectedRegionCode!.trim()
-              : null);
+            ? _selectedRegionCode!.trim()
+            : null);
     if (effectiveRegionCode != null) {
       final regionLabel = kRegions[effectiveRegionCode] ?? effectiveRegionCode;
       chips.add(
@@ -1787,8 +1777,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       final budgetLabel = minBudget != null && maxBudget != null
           ? 'Budget: $minLabel - $maxLabel €'
           : minBudget != null
-          ? 'Budget: dès $minLabel €'
-          : 'Budget: jusqu’à $maxLabel €';
+              ? 'Budget: dès $minLabel €'
+              : 'Budget: jusqu’à $maxLabel €';
       chips.add(
         _buildRemovableFilterChip(
           label: budgetLabel,
@@ -1809,9 +1799,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final activeCategory = (_filterCategory?.trim().isNotEmpty ?? false)
         ? _filterCategory!.trim()
         : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
-                  _selectedCategory != 'Toutes catégories')
-              ? _selectedCategory!.trim()
-              : null);
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory!.trim()
+            : null);
 
     if (activeCategory == null) {
       return 'Je consulte les offres';
@@ -2077,7 +2067,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
               _buildActiveFilterChips(),
               _buildFilterPanel(),
               Expanded(
-                child: StreamBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                child: StreamBuilder<
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
                   stream: _getOffersStream(),
                   initialData: initialOfferDocs,
                   builder: (context, snapshot) {
@@ -2160,11 +2151,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                       );
                     }
 
-                    final snapshotDocs =
-                        snapshot.data ??
+                    final snapshotDocs = snapshot.data ??
                         const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-                    final rawDocs =
-                        !_hasActiveClientFilters &&
+                    final rawDocs = !_hasActiveClientFilters &&
                             _paginationKey == currentOffersStreamKey &&
                             _paginationDocs.isNotEmpty
                         ? _paginationDocs
@@ -2279,14 +2268,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
                                               _logOfferClicked(offerId, title);
                                               Navigator.of(context).push(
                                                 MaterialPageRoute(
-                                                  builder: (_) => OfferDetailsPage(
+                                                  builder: (_) =>
+                                                      OfferDetailsPage(
                                                     offer:
                                                         buildOfferDetailsOffer(
-                                                          offerId: offerId,
-                                                          data: data,
-                                                        ),
-                                                    currentUserId:
-                                                        FirebaseAuth
+                                                      offerId: offerId,
+                                                      data: data,
+                                                    ),
+                                                    currentUserId: FirebaseAuth
                                                             .instance
                                                             .currentUser
                                                             ?.uid ??
@@ -2327,9 +2316,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
       secondCurve: Curves.easeInCubic,
       sizeCurve: Curves.easeInOutCubicEmphasized,
       alignment: Alignment.topCenter,
-      crossFadeState: _showFilters
-          ? CrossFadeState.showFirst
-          : CrossFadeState.showSecond,
+      crossFadeState:
+          _showFilters ? CrossFadeState.showFirst : CrossFadeState.showSecond,
       firstChild: Form(
         key: ValueKey(_filterPanelKey),
         child: Theme(
@@ -2497,8 +2485,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
     final deptCodes = [..._filteredDepartmentCodes]..sort();
 
     final allowedCodes = deptCodes.toSet();
-    final safeValue =
-        (_filterDepartmentCode != null &&
+    final safeValue = (_filterDepartmentCode != null &&
             allowedCodes.contains(_filterDepartmentCode))
         ? _filterDepartmentCode
         : null; // ✅ si la valeur n’existe pas, on repasse à "Tous"
@@ -3018,8 +3005,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage>
         final message = error.code == 'permission-denied'
             ? 'Suppression refusée. Cette annonce ne vous appartient pas ou plus.'
             : error.code == 'not-found'
-            ? 'Annonce introuvable.'
-            : 'Suppression temporairement indisponible. Réessayez dans un instant.';
+                ? 'Annonce introuvable.'
+                : 'Suppression temporairement indisponible. Réessayez dans un instant.';
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(message)));
@@ -3130,12 +3117,12 @@ class _ConsultOfferListItem {
     required Map<String, dynamic> data,
     required _OfferBrowseTileData tileData,
   }) : this._(
-         isAd: false,
-         offerId: offerId,
-         title: title,
-         data: data,
-         tileData: tileData,
-       );
+          isAd: false,
+          offerId: offerId,
+          title: title,
+          data: data,
+          tileData: tileData,
+        );
 }
 
 class _OfferBrowseTileData {
@@ -3452,9 +3439,8 @@ String _primaryBrowseOfferImageUrl(Map<String, dynamic> data) {
     for (final entry in media) {
       if (entry is! Map) continue;
       final map = Map<String, dynamic>.from(entry.cast<dynamic, dynamic>());
-      final candidate = ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '')
-          .toString()
-          .trim();
+      final candidate =
+          ((map['thumbnailUrl'] ?? map['downloadUrl']) ?? '').toString().trim();
       if (candidate.isNotEmpty) return candidate;
     }
   }
@@ -3469,9 +3455,8 @@ class _OfferMissionDelayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cleanLabel = label.trim().isEmpty
-        ? 'Délai non précisé'
-        : label.trim();
+    final cleanLabel =
+        label.trim().isEmpty ? 'Délai non précisé' : label.trim();
 
     return Container(
       constraints: const BoxConstraints(minHeight: 30),
@@ -3617,7 +3602,7 @@ class UserPublicProfilePage extends StatefulWidget {
 
 class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _activeOffersFuture;
+      _activeOffersFuture;
 
   @override
   void initState() {
@@ -3626,7 +3611,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-  _loadActiveOffers() async {
+      _loadActiveOffers() async {
     // Charger depuis la collection listings (marketplace) et offers (legacy)
     final listingsCol = FirebaseFirestore.instance.collection(
       kListingsCollection,
@@ -3634,24 +3619,24 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 
     final results =
         await Future.wait<List<QueryDocumentSnapshot<Map<String, dynamic>>>>([
-          listingsCol
-              .where('ownerId', isEqualTo: widget.userId)
-              .where(publicListingsFilter())
-              .get()
-              .then((snap) => snap.docs),
-          loadLegacyPublicOffersByOwner(
-            ownerField: 'uid',
-            ownerId: widget.userId,
-            limit: 200,
-            source: 'consult_active_offers_legacy_uid',
-          ),
-          loadLegacyPublicOffersByOwner(
-            ownerField: 'userId',
-            ownerId: widget.userId,
-            limit: 200,
-            source: 'consult_active_offers_legacy_userId',
-          ),
-        ]);
+      listingsCol
+          .where('ownerId', isEqualTo: widget.userId)
+          .where(publicListingsFilter())
+          .get()
+          .then((snap) => snap.docs),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'uid',
+        ownerId: widget.userId,
+        limit: 200,
+        source: 'consult_active_offers_legacy_uid',
+      ),
+      loadLegacyPublicOffersByOwner(
+        ownerField: 'userId',
+        ownerId: widget.userId,
+        limit: 200,
+        source: 'consult_active_offers_legacy_userId',
+      ),
+    ]);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final docs in results) {
@@ -3751,9 +3736,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 
     final anchorDoc = offers.first;
     final anchorData = anchorDoc.data();
-    final offerTitle = (anchorData['title'] ?? anchorData['titre'] ?? '')
-        .toString()
-        .trim();
+    final offerTitle =
+        (anchorData['title'] ?? anchorData['titre'] ?? '').toString().trim();
     final offerId = anchorDoc.id;
 
     final otherUserPseudo = _extractUserPseudo(anchorData);
@@ -3923,8 +3907,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                   ),
                   const SizedBox(height: 12),
                   FutureBuilder<
-                    List<QueryDocumentSnapshot<Map<String, dynamic>>>
-                  >(
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
                     future: _activeOffersFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
