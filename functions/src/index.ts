@@ -63,6 +63,7 @@ export {
   replyToReviewV2,
   publishMaturedReviewsV2,
 } from "./modules/marketplace/callables/reviews_v2";
+export { adminModerateReviewV2 } from "./modules/marketplace/callables/reviews_admin_v2";
 export { toggleFavorite } from "./modules/marketplace/callables/favorites";
 export {
   createChatThreadFromListing,
