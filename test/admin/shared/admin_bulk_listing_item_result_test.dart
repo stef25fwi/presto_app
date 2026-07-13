@@ -15,4 +15,15 @@ void main() {
     expect(result.errorCode, 'permission-denied');
     expect(result.errorMessage, 'Suppression refusée');
   });
+
+  test('laisse les détails d erreur absents pour un succès', () {
+    final result = AdminBulkListingDeleteItemResult.fromData(<String, Object?>{
+      'listingId': 'listing-2',
+      'ok': true,
+    });
+
+    expect(result.ok, isTrue);
+    expect(result.errorCode, isNull);
+    expect(result.errorMessage, isNull);
+  });
 }
