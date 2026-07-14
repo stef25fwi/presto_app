@@ -5,20 +5,51 @@ import '../account_page.dart';
 import 'auth_gate_policy.dart';
 import 'verify_email_page.dart';
 
+class AuthGateIdentity {
+  const AuthGateIdentity({
+    required this.providerIds,
+    required this.emailVerified,
+  });
+
+  final Iterable<String> providerIds;
+  final bool emailVerified;
+}
+
 class AuthGate extends StatelessWidget {
   const AuthGate({
     super.key,
     required this.verifiedChild,
     this.policy = const AuthGatePolicy(),
+    this.identityChanges,
+    this.accountChild,
+    this.verifyEmailChild,
   });
 
   final Widget verifiedChild;
   final AuthGatePolicy policy;
+  final Stream<AuthGateIdentity?>? identityChanges;
+  final Widget? accountChild;
+  final Widget? verifyEmailChild;
+
+  Stream<AuthGateIdentity?> get _identityChanges {
+    final override = identityChanges;
+    if (override != null) return override;
+    return FirebaseAuth.instance.userChanges().map(
+          (user) => user == null
+              ? null
+              : AuthGateIdentity(
+                  providerIds: user.providerData.map(
+                    (provider) => provider.providerId,
+                  ),
+                  emailVerified: user.emailVerified,
+                ),
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.userChanges(),
+    return StreamBuilder<AuthGateIdentity?>(
+      stream: _identityChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -26,20 +57,18 @@ class AuthGate extends StatelessWidget {
           );
         }
 
-        final user = snapshot.data;
+        final identity = snapshot.data;
         final destination = policy.resolve(
-          signedIn: user != null,
-          providerIds:
-              user?.providerData.map((provider) => provider.providerId) ??
-                  const <String>[],
-          emailVerified: user?.emailVerified ?? false,
+          signedIn: identity != null,
+          providerIds: identity?.providerIds ?? const <String>[],
+          emailVerified: identity?.emailVerified ?? false,
         );
 
         switch (destination) {
           case AuthGateDestination.account:
-            return const AccountPage();
+            return accountChild ?? const AccountPage();
           case AuthGateDestination.verifyEmail:
-            return const VerifyEmailPage();
+            return verifyEmailChild ?? const VerifyEmailPage();
           case AuthGateDestination.verified:
             return verifiedChild;
         }
