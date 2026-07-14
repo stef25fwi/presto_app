@@ -91,7 +91,7 @@ void main() {
         context: context,
         auth: auth,
         googleAuthService: GoogleAuthService(),
-        trackLogin: ({authMethod, required isNewUser}) async {},
+        trackLogin: ({authMethod, isNewUser = false}) async {},
       ),
     );
 
@@ -102,7 +102,7 @@ void main() {
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
-    authPlatform.error = const PlatformException(
+    authPlatform.error = PlatformException(
       code: 'network_error',
       message: 'offline',
     );
@@ -113,7 +113,7 @@ void main() {
         context: context,
         auth: auth,
         googleAuthService: GoogleAuthService(),
-        trackLogin: ({authMethod, required isNewUser}) async {},
+        trackLogin: ({authMethod, isNewUser = false}) async {},
       ),
     );
 
@@ -132,7 +132,7 @@ void main() {
         context: context,
         auth: auth,
         googleAuthService: GoogleAuthService(),
-        trackLogin: ({authMethod, required isNewUser}) async {},
+        trackLogin: ({authMethod, isNewUser = false}) async {},
       ),
     );
 
@@ -153,7 +153,7 @@ void main() {
       (context) => AccountSocialAuthActions.signInWithFacebook(
         context: context,
         auth: auth,
-        trackLogin: ({authMethod, required isNewUser}) async {},
+        trackLogin: ({authMethod, isNewUser = false}) async {},
       ),
     );
 
@@ -171,7 +171,7 @@ void main() {
       (context) => AccountSocialAuthActions.signInWithFacebook(
         context: context,
         auth: auth,
-        trackLogin: ({authMethod, required isNewUser}) async {},
+        trackLogin: ({authMethod, isNewUser = false}) async {},
       ),
     );
 
@@ -189,7 +189,7 @@ void main() {
       (context) => AccountSocialAuthActions.signInWithApple(
         context: context,
         auth: auth,
-        trackLogin: ({authMethod, required isNewUser}) async {},
+        trackLogin: ({authMethod, isNewUser = false}) async {},
       ),
     );
 
@@ -218,7 +218,7 @@ void main() {
     await AccountSocialAuthActions.signInWithApple(
       context: staleContext,
       auth: auth,
-      trackLogin: ({authMethod, required isNewUser}) async {},
+      trackLogin: ({authMethod, isNewUser = false}) async {},
     );
 
     expect(find.byType(SnackBar), findsNothing);
