@@ -30,6 +30,7 @@ class WebAudioRecorder {
 
   web.EventListener? _onData;
   web.EventListener? _onStop;
+  web.EventListener? _onError;
 
   Future<void> start() async {
     final pendingStop = _pendingStop;
@@ -45,7 +46,6 @@ class WebAudioRecorder {
     _recordedMimeType = null;
 
     final mediaDevices = web.window.navigator.mediaDevices;
-
     final constraints = web.MediaStreamConstraints(audio: true.toJS);
     _stream = await mediaDevices.getUserMedia(constraints).toDart;
 
@@ -57,17 +57,11 @@ class WebAudioRecorder {
               _stream!,
               web.MediaRecorderOptions(mimeType: preferredMimeType),
             );
-    } catch (e) {
-      // Cleanup stream if MediaRecorder constructor fails
-      final tracks = _stream?.getTracks();
-      if (tracks != null) {
-        for (int i = 0; i < tracks.length; i++) {
-          tracks[i].stop();
-        }
-      }
-      _stream = null;
+    } catch (_) {
+      _stopTracks();
       rethrow;
     }
+
     _recordedMimeType = _normalizeMicroIaContentType(_rec!.mimeType);
 
     _onData = ((web.Event e) {
@@ -79,8 +73,21 @@ class WebAudioRecorder {
       }
     }).toJS;
 
+    _onError = ((web.Event _) {
+      final pending = _pendingStop;
+      if (pending != null && !pending.isCompleted) {
+        pending.completeError(
+          StateError('Erreur MediaRecorder pendant l’enregistrement audio.'),
+        );
+      }
+      _resetRecorderState();
+    }).toJS;
+
     _rec!.addEventListener('dataavailable', _onData!);
-    _rec!.start();
+    _rec!.addEventListener('error', _onError!);
+
+    // Un timeslice court force la production régulière de chunks sur Safari/iOS.
+    _rec!.start(250);
   }
 
   Future<web.Blob> stopToBlob() async {
@@ -91,39 +98,67 @@ class WebAudioRecorder {
 
     final rec = _rec;
     if (rec == null) {
-      return web.Blob([Uint8List(0).toJS].toJS);
+      throw StateError('Aucun enregistrement audio actif.');
     }
 
     final completer = Completer<web.Blob>();
     _pendingStop = completer;
 
     _onStop = ((web.Event _) {
-      if (_onData != null) rec.removeEventListener('dataavailable', _onData!);
-      if (_onStop != null) rec.removeEventListener('stop', _onStop!);
+      try {
+        final normalizedType = _recordedMimeType ??
+            _normalizeMicroIaContentType(rec.mimeType) ??
+            (_chunks.isNotEmpty
+                ? _normalizeMicroIaContentType(_chunks.first.type)
+                : null);
+        final blob = normalizedType == null
+            ? web.Blob(_chunks.toJS)
+            : web.Blob(
+                _chunks.toJS,
+                web.BlobPropertyBag(type: normalizedType),
+              );
 
-      final normalizedType = _recordedMimeType ??
-          _normalizeMicroIaContentType(rec.mimeType) ??
-          (_chunks.isNotEmpty
-              ? _normalizeMicroIaContentType(_chunks.first.type)
-              : null);
-      final blob = normalizedType == null
-          ? web.Blob(_chunks.toJS)
-          : web.Blob(
-              _chunks.toJS,
-              web.BlobPropertyBag(type: normalizedType),
-            );
-      if (!completer.isCompleted) {
-        completer.complete(blob);
+        if (blob.size <= 0) {
+          throw StateError(
+            'Enregistrement audio vide. Maintenez le micro au moins une seconde.',
+          );
+        }
+
+        if (!completer.isCompleted) {
+          completer.complete(blob);
+        }
+      } catch (error, stackTrace) {
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
+        }
+      } finally {
+        _resetRecorderState();
       }
-      _pendingStop = null;
-      _recordedMimeType = null;
     }).toJS;
 
     rec.addEventListener('stop', _onStop!);
-    rec.requestData();
-    rec.stop();
 
-    // stop tracks
+    try {
+      // requestData peut lever une exception sur Safari lorsque l’arrêt arrive vite.
+      try {
+        rec.requestData();
+      } catch (_) {
+        // Les chunks périodiques obtenus grâce au timeslice restent exploitables.
+      }
+      rec.stop();
+    } catch (error, stackTrace) {
+      if (!completer.isCompleted) {
+        completer.completeError(error, stackTrace);
+      }
+      _resetRecorderState();
+    } finally {
+      _stopTracks();
+    }
+
+    return completer.future;
+  }
+
+  void _stopTracks() {
     final tracks = _stream?.getTracks();
     if (tracks != null) {
       for (int i = 0; i < tracks.length; i++) {
@@ -131,18 +166,49 @@ class WebAudioRecorder {
       }
     }
     _stream = null;
-    _rec = null;
+  }
 
-    return completer.future;
+  void _resetRecorderState() {
+    final rec = _rec;
+    if (rec != null) {
+      if (_onData != null) {
+        rec.removeEventListener('dataavailable', _onData!);
+      }
+      if (_onStop != null) {
+        rec.removeEventListener('stop', _onStop!);
+      }
+      if (_onError != null) {
+        rec.removeEventListener('error', _onError!);
+      }
+    }
+    _stopTracks();
+    _rec = null;
+    _pendingStop = null;
+    _recordedMimeType = null;
+    _onData = null;
+    _onStop = null;
+    _onError = null;
   }
 }
 
 String? _pickSupportedMimeType() {
-  const candidates = <String>[
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/mp4',
-  ];
+  final userAgent = web.window.navigator.userAgent.toLowerCase();
+  final isAppleWebKit = userAgent.contains('iphone') ||
+      userAgent.contains('ipad') ||
+      userAgent.contains('ipod') ||
+      (userAgent.contains('macintosh') && userAgent.contains('safari'));
+
+  final candidates = isAppleWebKit
+      ? const <String>[
+          'audio/mp4',
+          'audio/webm;codecs=opus',
+          'audio/webm',
+        ]
+      : const <String>[
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+        ];
 
   for (final candidate in candidates) {
     if (web.MediaRecorder.isTypeSupported(candidate)) {
@@ -153,11 +219,17 @@ String? _pickSupportedMimeType() {
   return null;
 }
 
-/// Convert recorded blob -> bytes (Uint8List)
 Future<Uint8List> webBlobToBytes(web.Blob blob) async {
+  if (blob.size <= 0) {
+    throw StateError('Enregistrement audio vide.');
+  }
   final jsArrayBuffer = await blob.arrayBuffer().toDart;
   final byteBuffer = jsArrayBuffer.toDart;
-  return byteBuffer.asUint8List();
+  final bytes = byteBuffer.asUint8List();
+  if (bytes.isEmpty) {
+    throw StateError('Enregistrement audio vide.');
+  }
+  return bytes;
 }
 
 Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(
@@ -171,7 +243,7 @@ Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(
     final rawContentType =
         fallbackContentType ?? _inferMicroIaContentTypeFromBytes(rawBytes);
     if (rawContentType == null) {
-      throw StateError('Unknown content type');
+      throw StateError('Format audio non pris en charge par ce navigateur.');
     }
 
     return WebMicroIaAudioUpload(
@@ -184,7 +256,6 @@ Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(
 
   try {
     final wavBytes = await webBlobToWav16kMono(blob);
-    // > 44 : header WAV seul (44 bytes) = audio vide, on ignore
     if (wavBytes.length > 44) {
       return WebMicroIaAudioUpload(
         bytes: wavBytes,
@@ -211,7 +282,7 @@ Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(
   }
 
   if (fallbackContentType == null) {
-    throw StateError('Unable to decode audio data');
+    throw StateError('Format audio non pris en charge par ce navigateur.');
   }
 
   final rawBytes = await webBlobToBytes(blob);
@@ -261,17 +332,12 @@ String? _inferMicroIaContentTypeFromBytes(Uint8List bytes) {
   return null;
 }
 
-/// Convert any recorded blob (webm/opus) -> WAV PCM16 16k mono (Uint8List)
 Future<Uint8List> webBlobToWav16kMono(web.Blob blob) async {
-  // Blob -> ArrayBuffer
   final jsArrayBuffer = await blob.arrayBuffer().toDart;
-
-  // Decode via WebAudio
   final audioCtx = web.AudioContext();
   try {
     final decoded = await audioCtx.decodeAudioData(jsArrayBuffer).toDart;
 
-    // Mixdown to mono
     final numCh = decoded.numberOfChannels;
     final length = decoded.length;
     final mono = Float32List(length);
@@ -282,7 +348,6 @@ Future<Uint8List> webBlobToWav16kMono(web.Blob blob) async {
       }
     }
 
-    // Resample to 16k
     final srcRate = decoded.sampleRate.toDouble();
     const dstRate = 16000.0;
     final ratio = srcRate / dstRate;
@@ -296,15 +361,11 @@ Future<Uint8List> webBlobToWav16kMono(web.Blob blob) async {
       resampled[i] = mono[i0] * (1 - frac) + mono[i1] * frac;
     }
 
-    // Encode WAV PCM16
     return _encodeWavPcm16(resampled, sampleRate: 16000, numChannels: 1);
   } finally {
-    // Best-effort: libère les ressources WebAudio
     try {
       await audioCtx.close().toDart;
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
   }
 }
 
@@ -350,20 +411,22 @@ String _extensionForMicroIaContentType(String contentType) {
   }
 }
 
-Uint8List _encodeWavPcm16(Float32List samples,
-    {required int sampleRate, required int numChannels}) {
-  // PCM16 little-endian
+Uint8List _encodeWavPcm16(
+  Float32List samples, {
+  required int sampleRate,
+  required int numChannels,
+}) {
   final bytesPerSample = 2;
   final blockAlign = numChannels * bytesPerSample;
   final byteRate = sampleRate * blockAlign;
   final dataSize = samples.length * bytesPerSample;
 
-  final headerSize = 44;
+  const headerSize = 44;
   final out = ByteData(headerSize + dataSize);
 
-  void writeString(int offset, String s) {
-    for (int i = 0; i < s.length; i++) {
-      out.setUint8(offset + i, s.codeUnitAt(i));
+  void writeString(int offset, String value) {
+    for (int i = 0; i < value.length; i++) {
+      out.setUint8(offset + i, value.codeUnitAt(i));
     }
   }
 
@@ -372,22 +435,22 @@ Uint8List _encodeWavPcm16(Float32List samples,
   writeString(8, 'WAVE');
 
   writeString(12, 'fmt ');
-  out.setUint32(16, 16, Endian.little); // PCM
-  out.setUint16(20, 1, Endian.little); // format=1 PCM
+  out.setUint32(16, 16, Endian.little);
+  out.setUint16(20, 1, Endian.little);
   out.setUint16(22, numChannels, Endian.little);
   out.setUint32(24, sampleRate, Endian.little);
   out.setUint32(28, byteRate, Endian.little);
   out.setUint16(32, blockAlign, Endian.little);
-  out.setUint16(34, 16, Endian.little); // bits
+  out.setUint16(34, 16, Endian.little);
 
   writeString(36, 'data');
   out.setUint32(40, dataSize, Endian.little);
 
-  int o = 44;
+  int offset = 44;
   for (int i = 0; i < samples.length; i++) {
-    final v = (samples[i].clamp(-1.0, 1.0) * 32767.0).round();
-    out.setInt16(o, v, Endian.little);
-    o += 2;
+    final value = (samples[i].clamp(-1.0, 1.0) * 32767.0).round();
+    out.setInt16(offset, value, Endian.little);
+    offset += 2;
   }
   return out.buffer.asUint8List();
 }
