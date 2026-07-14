@@ -245,7 +245,7 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
         sharePositionOrigin: shareOrigin,
       );
       if (mounted) {
-        showInfoSnackBar(
+        showPrestoSnackBar(
           context,
           'Le fichier n’a pas pu être joint : le lien vidéo a été partagé.',
         );
