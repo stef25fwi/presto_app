@@ -1157,7 +1157,6 @@ class _SplashScreenState extends State<SplashScreen>
     if (webPath == '/account') {
       pendingPostAuthRoute = null;
       return const HomePage(initialIndex: 4);
-      return const HomePage();
     }
     if (webPath == '/publish') {
       return const PublishOfferPage();
