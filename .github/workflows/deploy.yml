@@ -141,11 +141,45 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Deploy Firebase Hosting, Functions, Firestore and Storage
+      - name: Deploy Hosting, Firestore indexes and Storage
         run: |
           firebase deploy --project presto-app-74abe \
-            --only hosting,functions,firestore:indexes,storage \
+            --only hosting,firestore:indexes,storage \
             --force
+
+      - name: Deploy Functions with exit 130 retry
+        shell: bash
+        run: |
+          set -uo pipefail
+          max_attempts=3
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "🚀 Déploiement Functions — tentative $attempt/$max_attempts"
+            set +e
+            firebase deploy --project presto-app-74abe \
+              --only functions \
+              --force
+            status=$?
+            set -e
+
+            if [ "$status" -eq 0 ]; then
+              echo "✅ Functions déployées"
+              exit 0
+            fi
+
+            if [ "$status" -ne 130 ]; then
+              echo "❌ Firebase a échoué avec le code $status. Aucun retry automatique."
+              exit "$status"
+            fi
+
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              echo "⚠️ Firebase a été interrompu avec le code 130. Nouvelle tentative dans 30 secondes."
+              sleep 30
+            fi
+          done
+
+          echo "❌ Firebase a renvoyé le code 130 après $max_attempts tentatives."
+          exit 130
 
       - name: Deploy Firestore rules (ignore 409 if rules unchanged)
         run: |
