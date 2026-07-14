@@ -160,7 +160,7 @@ void main() {
     final identity = AuthGuardIdentity(
       providerIds: const ['password'],
       emailVerified: false,
-      reload: reloadCompleter.future,
+      reload: () => reloadCompleter.future,
     );
 
     await tester.pumpWidget(
