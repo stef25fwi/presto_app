@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,6 +25,7 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
   final _apiKeyController = TextEditingController();
   final _promptController = TextEditingController();
   final _imagePicker = ImagePicker();
+  final Set<String> _sharingVideoIds = <String>{};
 
   List<GeneratedVideo> _videos = const [];
   Uint8List? _imageBytes;
@@ -208,14 +210,49 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
       );
       return;
     }
+    if (!_sharingVideoIds.add(video.id)) return;
+
     final box = context.findRenderObject() as RenderBox?;
-    await Share.share(
-      'Vidéo iliprestō créée avec VEO\n$url',
-      subject: 'Vidéo iliprestō',
-      sharePositionOrigin: box == null
-          ? null
-          : box.localToGlobal(Offset.zero) & box.size,
-    );
+    final shareOrigin = box == null
+        ? null
+        : box.localToGlobal(Offset.zero) & box.size;
+    try {
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(minutes: 2));
+      if (response.statusCode < 200 ||
+          response.statusCode >= 300 ||
+          response.bodyBytes.isEmpty) {
+        throw StateError('Téléchargement vidéo impossible.');
+      }
+
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            response.bodyBytes,
+            mimeType: 'video/mp4',
+            name: 'veo-${video.id}.mp4',
+          ),
+        ],
+        text: 'Vidéo iliprestō créée avec VEO',
+        subject: 'Vidéo iliprestō',
+        sharePositionOrigin: shareOrigin,
+      );
+    } catch (_) {
+      await Share.share(
+        'Vidéo iliprestō créée avec VEO\n$url',
+        subject: 'Vidéo iliprestō',
+        sharePositionOrigin: shareOrigin,
+      );
+      if (mounted) {
+        showInfoSnackBar(
+          context,
+          'Le fichier n’a pas pu être joint : le lien vidéo a été partagé.',
+        );
+      }
+    } finally {
+      _sharingVideoIds.remove(video.id);
+    }
   }
 
   @override
