@@ -9,6 +9,16 @@ typedef EmailPasswordResetAction = Future<void> Function(String email);
 typedef EmailVerificationAction = Future<void> Function();
 typedef EmailVerificationSyncAction = Future<bool> Function();
 typedef AuthenticatedUserCheck = bool Function();
+typedef EnsureSignedInUserProfileAction = Future<void> Function({
+  required User user,
+  required String authMethod,
+  required bool isNewUserHint,
+});
+typedef EnsureEmailUserProfileAction = Future<void> Function({
+  required User user,
+  required String displayName,
+  required bool isBusinessAccount,
+});
 
 class EmailAuthService {
   EmailAuthService({
@@ -19,13 +29,17 @@ class EmailAuthService {
     EmailVerificationAction? requestEmailVerification,
     EmailVerificationSyncAction? syncEmailVerification,
     AuthenticatedUserCheck? hasCurrentUser,
+    EnsureSignedInUserProfileAction? ensureSignedInUserProfile,
+    EnsureEmailUserProfileAction? ensureEmailUserProfile,
   })  : _auth = auth,
         _profileService = profileService,
         _backendPasswordReset = backendPasswordReset,
         _nativePasswordReset = nativePasswordReset,
         _requestEmailVerification = requestEmailVerification,
         _syncEmailVerification = syncEmailVerification,
-        _hasCurrentUser = hasCurrentUser;
+        _hasCurrentUser = hasCurrentUser,
+        _ensureSignedInUserProfile = ensureSignedInUserProfile,
+        _ensureEmailUserProfile = ensureEmailUserProfile;
 
   final FirebaseAuth? _auth;
   final AuthUserProfileService? _profileService;
@@ -34,6 +48,8 @@ class EmailAuthService {
   final EmailVerificationAction? _requestEmailVerification;
   final EmailVerificationSyncAction? _syncEmailVerification;
   final AuthenticatedUserCheck? _hasCurrentUser;
+  final EnsureSignedInUserProfileAction? _ensureSignedInUserProfile;
+  final EnsureEmailUserProfileAction? _ensureEmailUserProfile;
 
   FirebaseAuth get _resolvedAuth => _auth ?? FirebaseAuth.instance;
   AuthUserProfileService get _resolvedProfileService =>
@@ -55,11 +71,21 @@ class EmailAuthService {
         message: 'Session Firebase introuvable après connexion.',
       );
     }
-    await UserProfileBootstrapService.ensureUserDocument(
-      user: user,
-      authMethod: 'email',
-      isNewUserHint: false,
-    );
+
+    final ensureProfile = _ensureSignedInUserProfile;
+    if (ensureProfile != null) {
+      await ensureProfile(
+        user: user,
+        authMethod: 'email',
+        isNewUserHint: false,
+      );
+    } else {
+      await UserProfileBootstrapService.ensureUserDocument(
+        user: user,
+        authMethod: 'email',
+        isNewUserHint: false,
+      );
+    }
     return user;
   }
 
@@ -90,11 +116,20 @@ class EmailAuthService {
     }
 
     final refreshedUser = auth.currentUser ?? user;
-    await _resolvedProfileService.ensureEmailUserProfile(
-      user: refreshedUser,
-      displayName: normalizedDisplayName,
-      isBusinessAccount: createBusinessProfile,
-    );
+    final ensureProfile = _ensureEmailUserProfile;
+    if (ensureProfile != null) {
+      await ensureProfile(
+        user: refreshedUser,
+        displayName: normalizedDisplayName,
+        isBusinessAccount: createBusinessProfile,
+      );
+    } else {
+      await _resolvedProfileService.ensureEmailUserProfile(
+        user: refreshedUser,
+        displayName: normalizedDisplayName,
+        isBusinessAccount: createBusinessProfile,
+      );
+    }
     await _runEmailVerificationRequest();
     return refreshedUser;
   }
