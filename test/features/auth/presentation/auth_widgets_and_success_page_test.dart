@@ -110,13 +110,14 @@ void main() {
       );
 
       final field = tester.widget<TextFormField>(find.byType(TextFormField));
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
       expect(field.controller, same(controller));
-      expect(field.keyboardType, TextInputType.emailAddress);
-      expect(field.textInputAction, TextInputAction.done);
-      expect(field.autofillHints, contains(AutofillHints.email));
-      expect(field.obscureText, isTrue);
+      expect(editable.keyboardType, TextInputType.emailAddress);
+      expect(editable.textInputAction, TextInputAction.done);
+      expect(editable.autofillHints, contains(AutofillHints.email));
+      expect(editable.obscureText, isTrue);
       expect(field.enabled, isTrue);
-      expect(field.autofocus, isTrue);
+      expect(editable.autofocus, isTrue);
       expect(field.validator?.call('ko'), 'Erreur');
       expect(field.validator?.call('ok'), isNull);
       expect(find.text('E-mail'), findsOneWidget);
@@ -124,7 +125,7 @@ void main() {
       expect(find.byIcon(Icons.email), findsOneWidget);
       expect(find.byIcon(Icons.visibility), findsOneWidget);
 
-      field.onFieldSubmitted?.call('envoyé');
+      editable.onSubmitted?.call('envoyé');
       expect(submitted, 'envoyé');
     });
 
@@ -143,11 +144,12 @@ void main() {
       );
 
       final field = tester.widget<TextFormField>(find.byType(TextFormField));
-      expect(field.obscureText, isFalse);
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editable.obscureText, isFalse);
       expect(field.enabled, isTrue);
-      expect(field.autofocus, isFalse);
+      expect(editable.autofocus, isFalse);
       expect(field.validator, isNull);
-      expect(field.onFieldSubmitted, isNull);
+      expect(editable.onSubmitted, isNull);
     });
   });
 
