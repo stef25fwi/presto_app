@@ -144,11 +144,11 @@ void main() {
         isFalse,
       );
       expect(
-        service.shouldRetry(const PlatformException(code: 'network_error')),
+        service.shouldRetry(PlatformException(code: 'network_error')),
         isTrue,
       );
       expect(
-        service.shouldRetry(const PlatformException(code: 'sign_in_failed')),
+        service.shouldRetry(PlatformException(code: 'sign_in_failed')),
         isFalse,
       );
       expect(service.shouldRetry(StateError('boom')), isFalse);
@@ -287,7 +287,7 @@ void main() {
       );
       service.logError(
         'popup',
-        const PlatformException(code: 'network_error', message: 'detail'),
+        PlatformException(code: 'network_error', message: 'detail'),
       );
     });
   });
