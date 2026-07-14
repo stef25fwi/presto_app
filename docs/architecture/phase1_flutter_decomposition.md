@@ -22,14 +22,22 @@ Cibles de référence :
 
 Ces dépassements sont acceptés uniquement comme dette existante. Le contrôle CI échoue si :
 
-1. un nouveau fichier Flutter dépasse sa limite ;
+1. un fichier Flutter modifié dépasse sa limite sans être dans la baseline ;
 2. un fichier de la baseline grossit au-delà de son nombre de lignes actuel ;
 3. une extraction est faite puis régressée ensuite.
 
-## Commande locale
+## Commandes locales
+
+Audit global sans échec :
 
 ```bash
-python3 tools/quality/check_flutter_architecture_size.py --enforce
+python3 tools/quality/check_flutter_architecture_size.py
+```
+
+Mode CI sur fichiers modifiés :
+
+```bash
+python3 tools/quality/check_flutter_architecture_size.py --changed-only --base-ref main --enforce
 ```
 
 ## Chaîne de découpage recommandée
