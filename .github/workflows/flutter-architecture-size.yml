@@ -1,0 +1,21 @@
+name: Flutter architecture size
+
+on:
+  pull_request:
+    paths:
+      - 'lib/**/*.dart'
+      - 'quality/flutter_architecture_size_budget.json'
+      - 'tools/quality/check_flutter_architecture_size.py'
+      - '.github/workflows/flutter-architecture-size.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter-architecture-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check Flutter screen and widget size budgets
+        run: python3 tools/quality/check_flutter_architecture_size.py --enforce
