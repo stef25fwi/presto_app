@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
@@ -35,9 +34,9 @@ class _AuthServicePlatform extends FirebaseAuthPlatform {
 
   @override
   Future<void> sendPasswordResetEmail(
-    String email,
+    String email, [
     ActionCodeSettings? actionCodeSettings,
-  ) async {
+  ]) async {
     resetEmail = email;
     resetSettings = actionCodeSettings;
     final error = resetError;
