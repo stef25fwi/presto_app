@@ -6,6 +6,32 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'subscription_config_service.dart';
 import 'subscription_models.dart';
 
+/// Résout les droits du parcours à partir du plan réel et du mode d'accès
+/// global piloté depuis l'administration.
+///
+/// Le mode `freeAccessMode` correspond à « Accès gratuit complet » : toutes
+/// les fonctions du parcours, y compris la génération PDF, doivent alors être
+/// disponibles sans quota quel que soit le plan stocké sur le profil.
+JourneyEntitlements resolveJourneyEntitlementsForAccess(
+  SubscriptionPlan plan, {
+  required bool freeAccessMode,
+}) {
+  if (freeAccessMode) {
+    return const JourneyEntitlements(
+      maxLocalSavesPerMonth: kUnlimitedJourneyQuota,
+      canExportPdf: true,
+      maxPdfExportsPerMonth: kUnlimitedJourneyQuota,
+      pdfRequiresLogo: true,
+      pdfRequiresWatermark: true,
+    );
+  }
+
+  return getJourneyEntitlementsForPlan(
+    plan,
+    freeAccessMode: false,
+  );
+}
+
 /// Résout les droits (entitlements) de l'utilisateur courant pour "Mon
 /// parcours personnalisé" et suit ses quotas mensuels de sauvegarde locale
 /// et d'export PDF.
@@ -38,10 +64,11 @@ class JourneyEntitlementsService {
   }
 
   /// Détermine les droits applicables au parcours personnalisé pour
-  /// l'utilisateur courant (plan d'abonnement + mode d'accès libre global).
+  /// l'utilisateur courant.
   ///
-  /// Même lorsque le mode d'accès gratuit complet est actif, on lit le vrai
-  /// plan utilisateur afin que les quotas du parcours restent cohérents :
+  /// Lorsque « Accès gratuit complet » est actif, le parcours est entièrement
+  /// ouvert : sauvegardes et exports PDF sont disponibles sans quota. Lorsque
+  /// ce mode est désactivé, les quotas du plan réel s'appliquent :
   /// - Gratuit : 2 sauvegardes/mois, 0 PDF ;
   /// - ilipresto+ : 5 sauvegardes/mois, 5 PDF/mois ;
   /// - ilipro : 10 sauvegardes/mois, 10 PDF/mois.
@@ -50,7 +77,7 @@ class JourneyEntitlementsService {
       final config = await _configService.getConfig();
       final uid = _auth.currentUser?.uid;
       if (uid == null) {
-        return getJourneyEntitlementsForPlan(
+        return resolveJourneyEntitlementsForAccess(
           SubscriptionPlan.free,
           freeAccessMode: config.freeAccessMode,
         );
@@ -58,7 +85,7 @@ class JourneyEntitlementsService {
 
       final snap = await _db.collection('users').doc(uid).get();
       final state = AppUserSubscriptionState.fromMap(snap.data());
-      return getJourneyEntitlementsForPlan(
+      return resolveJourneyEntitlementsForAccess(
         state.plan,
         freeAccessMode: config.freeAccessMode,
       );
@@ -66,7 +93,7 @@ class JourneyEntitlementsService {
       debugPrint(
         '[JourneyEntitlements] resolve failed, defaulting to plan Gratuit: $e',
       );
-      return getJourneyEntitlementsForPlan(
+      return resolveJourneyEntitlementsForAccess(
         SubscriptionPlan.free,
         freeAccessMode: false,
       );
