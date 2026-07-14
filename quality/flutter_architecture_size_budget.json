@@ -1,0 +1,37 @@
+{
+  "budgets": {
+    "screen_max_lines": 500,
+    "widget_max_lines": 250
+  },
+  "baseline_exceptions": {
+    "lib/pages/publish_offer_page.dart": {
+      "current_lines": 5131,
+      "target_lines": 500,
+      "module": "publication",
+      "next_split": "extraire orchestration IA, sections de formulaire, policies transcript et accès données"
+    },
+    "lib/pages/consult_offers_page.dart": {
+      "current_lines": 4139,
+      "target_lines": 500,
+      "module": "consultation",
+      "next_split": "extraire filtres, pagination, mapping offres et widgets de liste"
+    },
+    "lib/pages/offers/offer_details_page.dart": {
+      "current_lines": 4616,
+      "target_lines": 500,
+      "module": "detail_offre",
+      "next_split": "extraire modèles UI, actions annonceur, rendu médias et bloc contact"
+    },
+    "lib/pages/publish_offer_widgets.dart": {
+      "current_lines": 287,
+      "target_lines": 250,
+      "module": "publication_widgets",
+      "next_split": "séparer diagnostic IA et bannière validation"
+    }
+  },
+  "ignored_paths": [
+    ".backups/",
+    "build/",
+    ".dart_tool/"
+  ]
+}
