@@ -92,12 +92,31 @@ replaceOnce(
 await fs.writeFile(path, content, 'utf8');
 console.log('stripe ordering hardening: OK');
 
+const widgetsPath = 'lib/features/subscriptions/subscription_widgets.dart';
+const widgetsBasePath =
+  'lib/features/subscriptions/subscription_widgets_base.dart';
+let widgetsWrapper = null;
 try {
-  await import('./apply_stripe_checkout_latency_optimization.mjs');
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  if (!message.startsWith('audit export:')) throw error;
-  console.log('stripe checkout latency core applied; finalizing current index shape');
+  try {
+    widgetsWrapper = await fs.readFile(widgetsPath, 'utf8');
+    const widgetsBase = await fs.readFile(widgetsBasePath, 'utf8');
+    await fs.writeFile(widgetsPath, widgetsBase, 'utf8');
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+    widgetsWrapper = null;
+  }
+
+  try {
+    await import('./apply_stripe_checkout_latency_optimization.mjs');
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!message.startsWith('audit export:')) throw error;
+    console.log('stripe checkout latency core applied; finalizing current index shape');
+  }
+} finally {
+  if (widgetsWrapper != null) {
+    await fs.writeFile(widgetsPath, widgetsWrapper, 'utf8');
+  }
 }
 
 await import('./finalize_stripe_checkout_latency_optimization.mjs');
