@@ -131,7 +131,7 @@ jobs:
 
       - name: Upload Gradle logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gradle-logs-failure
           path: |
@@ -148,7 +148,7 @@ jobs:
           echo "✅ APK : dist/${APK_NAME}.apk"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APK_NAME }}
           path: dist/${{ env.APK_NAME }}.apk
