@@ -64,5 +64,10 @@ void main() {
         throwsA(isA<ChatRequestException>()),
       );
     });
+
+    test('expose le message métier via toString', () {
+      const exception = ChatRequestException('threadId est requis.');
+      expect(exception.toString(), 'threadId est requis.');
+    });
   });
 }
