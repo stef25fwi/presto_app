@@ -18,7 +18,8 @@ class AdminMessagingSettingsPage extends StatefulWidget {
 
 class _AdminMessagingSettingsPageState
     extends State<AdminMessagingSettingsPage> {
-  final AdminMessagingSettingsService _service = AdminMessagingSettingsService();
+  final AdminMessagingSettingsService _service =
+      AdminMessagingSettingsService();
   bool _initialized = false;
 
   @override
@@ -68,8 +69,7 @@ class _AdminMessagingSettingsPageState
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (!widget.canEdit)
-                const _SettingsReadOnlyBanner(),
+              if (!widget.canEdit) const _SettingsReadOnlyBanner(),
               if (!widget.canEdit) const SizedBox(height: 16),
               _SettingsSwitchTile(
                 title: 'Messagerie activée',
@@ -144,7 +144,8 @@ class _SettingsReadOnlyBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1D4ED8).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF1D4ED8).withValues(alpha: 0.18)),
+        border:
+            Border.all(color: const Color(0xFF1D4ED8).withValues(alpha: 0.18)),
       ),
       child: const Row(
         children: [

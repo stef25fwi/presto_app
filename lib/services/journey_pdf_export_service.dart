@@ -324,24 +324,24 @@ class JourneyPdfExportService {
   }
 
   pw.Widget _sectionTitle(String text) => pw.Padding(
-    padding: const pw.EdgeInsets.only(bottom: 7),
-    child: pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.blue50,
-        borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: PdfColors.blue100, width: 0.5),
-      ),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 12,
-          fontWeight: pw.FontWeight.bold,
-          color: PdfColors.blue900,
+        padding: const pw.EdgeInsets.only(bottom: 7),
+        child: pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: pw.BoxDecoration(
+            color: PdfColors.blue50,
+            borderRadius: pw.BorderRadius.circular(8),
+            border: pw.Border.all(color: PdfColors.blue100, width: 0.5),
+          ),
+          child: pw.Text(
+            text,
+            style: pw.TextStyle(
+              fontSize: 12,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blue900,
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   pw.Widget _highlightBox({required String title, required String text}) {
     return pw.Container(

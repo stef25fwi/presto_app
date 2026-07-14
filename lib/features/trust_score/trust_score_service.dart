@@ -10,6 +10,7 @@ class TrustScoreService {
   final FirebaseFunctions _functions;
 
   static const bool ratingsPaidShowcaseEnabled = false;
+  static const bool ratingsV2Enabled = true;
 
   Future<void> closeOfferWithReason({
     required String offerId,
@@ -56,17 +57,47 @@ class TrustScoreService {
     required String comment,
     required bool confirmationChecked,
   }) async {
+    return submitMutualVerifiedReview(
+      offerId: offerId,
+      reviewedUserId: reviewedUserId,
+      reviewerRole: 'requester',
+      reviewedRole: 'provider',
+      criteria: <String, int>{
+        'communication': communicationRating,
+        'punctuality': punctualityRating,
+        'quality': qualityRating,
+      },
+      comment: comment,
+      confirmationChecked: confirmationChecked,
+    );
+  }
+
+  Future<SubmitReviewResult> submitMutualVerifiedReview({
+    required String offerId,
+    required String reviewedUserId,
+    required String reviewerRole,
+    required String reviewedRole,
+    required Map<String, int> criteria,
+    required String comment,
+    required bool confirmationChecked,
+    bool? wouldRecommend,
+    String privateFeedback = '',
+  }) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'submitVerifiedReview',
+      name: 'submitMutualVerifiedReview',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
         'offerId': offerId,
         'reviewedUserId': reviewedUserId,
-        'communicationRating': communicationRating,
-        'punctualityRating': punctualityRating,
-        'qualityRating': qualityRating,
+        'reviewerRole': reviewerRole,
+        'reviewedRole': reviewedRole,
+        'criteria': criteria,
         'comment': comment.trim().isEmpty ? null : comment.trim(),
+        'privateFeedback': privateFeedback.trim().isEmpty
+            ? null
+            : privateFeedback.trim(),
+        if (wouldRecommend != null) 'wouldRecommend': wouldRecommend,
         'confirmationChecked': confirmationChecked,
       },
     );
@@ -76,11 +107,23 @@ class TrustScoreService {
   Future<TrustScoreProfile> getUserTrustScore({required String userId}) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'getUserTrustScore',
+      name: 'getUserTrustScoreV2',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{'userId': userId},
     );
     return TrustScoreProfile.fromMap(trustScoreStringMap(result.data));
+  }
+
+  Future<Map<String, dynamic>> getUserTrustScoreV2({
+    required String userId,
+  }) async {
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'getUserTrustScoreV2',
+      timeout: const Duration(seconds: 20),
+      parameters: <String, dynamic>{'userId': userId},
+    );
+    return trustScoreStringMap(result.data);
   }
 
   Future<void> reportReview({
@@ -90,7 +133,7 @@ class TrustScoreService {
   }) async {
     await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'reportReview',
+      name: 'reportReviewV2',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
         'reviewId': reviewId,
@@ -106,7 +149,7 @@ class TrustScoreService {
   }) async {
     final result = await callPrestoFunction<dynamic>(
       functions: _functions,
-      name: 'replyToReview',
+      name: 'replyToReviewV2',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
         'reviewId': reviewId,

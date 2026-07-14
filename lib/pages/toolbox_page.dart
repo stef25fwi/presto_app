@@ -72,7 +72,8 @@ class _ToolboxView extends StatelessWidget {
                     final isShort = constraints.maxHeight < 760;
                     final isVeryShort = constraints.maxHeight < 710;
                     final isUltraShort = constraints.maxHeight < 650;
-                    final cardSpacing = isUltraShort ? 10.0 : (isVeryShort ? 12.0 : 16.0);
+                    final cardSpacing =
+                        isUltraShort ? 10.0 : (isVeryShort ? 12.0 : 16.0);
 
                     Widget buildCards({double? forcedHeight}) {
                       final card1 = _ToolboxCard(
@@ -85,7 +86,7 @@ class _ToolboxView extends StatelessWidget {
                         title: 'JE CRÉE MON\nACTIVITÉ',
                         subtitle: 'Un parcours simple pour me lancer.',
                         description:
-                          'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
+                            'Comprends la réglementation, les démarches et les aides utiles selon ta région, ton statut et ton activité.',
                         benefits: const [
                           'Statut juridique\nconseillé',
                           'Coûts & démarches\nexactes',
@@ -234,11 +235,12 @@ class _ToolboxCard extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 370;
     final useCompact = isCompact || compact || tight || ultraTight;
-    final horizontalPadding = ultraTight
-      ? 12.0
-      : (tight ? 14.0 : (useCompact ? 16.0 : 20.0));
-    final topGap = ultraTight ? 8.0 : (tight ? 10.0 : (useCompact ? 16.0 : 24.0));
-    final bottomGap = ultraTight ? 8.0 : (tight ? 10.0 : (useCompact ? 14.0 : 22.0));
+    final horizontalPadding =
+        ultraTight ? 12.0 : (tight ? 14.0 : (useCompact ? 16.0 : 20.0));
+    final topGap =
+        ultraTight ? 8.0 : (tight ? 10.0 : (useCompact ? 16.0 : 24.0));
+    final bottomGap =
+        ultraTight ? 8.0 : (tight ? 10.0 : (useCompact ? 14.0 : 22.0));
 
     return Container(
       width: double.infinity,
@@ -325,10 +327,14 @@ class _CardTopBlock extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 370;
     final useCompact = isCompact || compact || tight || ultraTight;
-    final titleSize = ultraTight ? 18.0 : (tight ? 22.0 : (useCompact ? 26.0 : 32.0));
-    final subtitleSize = ultraTight ? 11.0 : (tight ? 13.0 : (useCompact ? 15.0 : 18.0));
-    final descriptionSize = ultraTight ? 10.0 : (tight ? 11.5 : (useCompact ? 12.5 : 15.0));
-    final titleGap = ultraTight ? 3.0 : (tight ? 4.0 : (useCompact ? 6.0 : 10.0));
+    final titleSize =
+        ultraTight ? 18.0 : (tight ? 22.0 : (useCompact ? 26.0 : 32.0));
+    final subtitleSize =
+        ultraTight ? 11.0 : (tight ? 13.0 : (useCompact ? 15.0 : 18.0));
+    final descriptionSize =
+        ultraTight ? 10.0 : (tight ? 11.5 : (useCompact ? 12.5 : 15.0));
+    final titleGap =
+        ultraTight ? 3.0 : (tight ? 4.0 : (useCompact ? 6.0 : 10.0));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,8 +482,8 @@ class _BenefitItem extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 370;
     final fontSize = ultraTight
-      ? 9.8
-      : (tight ? 11.5 : ((isCompact || compact) ? 12.5 : 15.0));
+        ? 9.8
+        : (tight ? 11.5 : ((isCompact || compact) ? 12.5 : 15.0));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,7 +564,8 @@ class _GradientActionButton extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white,
-                  fontSize: ultraTight ? 12.5 : (tight ? 15 : (compact ? 17 : 20)),
+                fontSize:
+                    ultraTight ? 12.5 : (tight ? 15 : (compact ? 17 : 20)),
                 fontWeight: FontWeight.w800,
                 height: 1,
                 letterSpacing: -0.25,

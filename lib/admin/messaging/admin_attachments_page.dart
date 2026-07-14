@@ -91,7 +91,8 @@ class _AdminAttachmentsPageState extends State<AdminAttachmentsPage> {
     }
   }
 
-  Future<void> _setStatus(AdminAttachmentModel attachment, String status) async {
+  Future<void> _setStatus(
+      AdminAttachmentModel attachment, String status) async {
     final confirm = await showDialog<bool>(
           context: context,
           builder: (_) => AdminConfirmSensitiveActionDialog(
@@ -133,166 +134,171 @@ class _AdminAttachmentsPageState extends State<AdminAttachmentsPage> {
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: 'Recherche par chemin, conversation, mime type…',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
+          padding: const EdgeInsets.all(16),
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: 'Recherche par chemin, conversation, mime type…',
+                prefixIcon: const Icon(Icons.search_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                 ),
-                onSubmitted: (value) => setState(() => _query = value),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('Tous'),
-                    selected: _statusFilter == null && _fileTypeFilter == null,
+              onSubmitted: (value) => setState(() => _query = value),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('Tous'),
+                  selected: _statusFilter == null && _fileTypeFilter == null,
+                  onSelected: (_) {
+                    setState(() {
+                      _statusFilter = null;
+                      _fileTypeFilter = null;
+                    });
+                    _refresh();
+                  },
+                ),
+                ...const ['approved', 'manual_review', 'deleted'].map(
+                  (status) => FilterChip(
+                    label: Text(status),
+                    selected: _statusFilter == status,
                     onSelected: (_) {
                       setState(() {
-                        _statusFilter = null;
+                        _statusFilter = status;
                         _fileTypeFilter = null;
                       });
                       _refresh();
                     },
                   ),
-                  ...const ['approved', 'manual_review', 'deleted'].map(
-                    (status) => FilterChip(
-                      label: Text(status),
-                      selected: _statusFilter == status,
-                      onSelected: (_) {
-                        setState(() {
-                          _statusFilter = status;
-                          _fileTypeFilter = null;
-                        });
-                        _refresh();
-                      },
-                    ),
-                  ),
-                  ...const ['image', 'voice', 'document', 'other'].map(
-                    (fileType) => FilterChip(
-                      label: Text(fileType),
-                      selected: _fileTypeFilter == fileType,
-                      onSelected: (_) {
-                        setState(() {
-                          _fileTypeFilter = fileType;
-                          _statusFilter = null;
-                        });
-                        _refresh();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (_loadingInitial && _items.isEmpty)
-                const Center(child: CircularProgressIndicator())
-              else if (_error != null)
-                _AttachmentErrorState(onRetry: _refresh)
-              else if (attachments.isEmpty)
-                const _AttachmentEmptyState()
-              else
-                ...attachments.map((attachment) {
-                  final busy = _busyIds.contains(attachment.id);
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          attachment.storagePath.isEmpty
-                              ? attachment.id
-                              : attachment.storagePath,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${attachment.fileType} • ${attachment.mimeType} • ${_formatBytes(attachment.fileSize)}',
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            _AttachmentTag(label: attachment.moderationStatus),
-                            _AttachmentTag(label: '${attachment.reportCount} signalements'),
-                            _AttachmentTag(label: 'Conv. ${attachment.conversationId}'),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            OutlinedButton(
-                              onPressed: busy
-                                  ? null
-                                  : () => _setStatus(attachment, 'approved'),
-                              child: const Text('Approuver'),
-                            ),
-                            OutlinedButton(
-                              onPressed: busy
-                                  ? null
-                                  : () => _setStatus(attachment, 'manual_review'),
-                              child: const Text('Mettre en revue'),
-                            ),
-                            FilledButton(
-                              onPressed:
-                                  busy ? null : () => _setStatus(attachment, 'deleted'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFB42318),
-                              ),
-                              child: const Text('Supprimer'),
-                            ),
-                          ],
-                        ),
-                        if (busy) ...[
-                          const SizedBox(height: 12),
-                          const LinearProgressIndicator(),
-                        ],
-                      ],
-                    ),
-                  );
-                }),
-              if (_hasMore)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Center(
-                    child: OutlinedButton.icon(
-                      onPressed: _loadingMore ? null : _loadMore,
-                      icon: _loadingMore
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.expand_more_rounded),
-                      label: Text(_loadingMore ? 'Chargement…' : 'Charger la page suivante'),
-                    ),
+                ),
+                ...const ['image', 'voice', 'document', 'other'].map(
+                  (fileType) => FilterChip(
+                    label: Text(fileType),
+                    selected: _fileTypeFilter == fileType,
+                    onSelected: (_) {
+                      setState(() {
+                        _fileTypeFilter = fileType;
+                        _statusFilter = null;
+                      });
+                      _refresh();
+                    },
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_loadingInitial && _items.isEmpty)
+              const Center(child: CircularProgressIndicator())
+            else if (_error != null)
+              _AttachmentErrorState(onRetry: _refresh)
+            else if (attachments.isEmpty)
+              const _AttachmentEmptyState()
+            else
+              ...attachments.map((attachment) {
+                final busy = _busyIds.contains(attachment.id);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        attachment.storagePath.isEmpty
+                            ? attachment.id
+                            : attachment.storagePath,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${attachment.fileType} • ${attachment.mimeType} • ${_formatBytes(attachment.fileSize)}',
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _AttachmentTag(label: attachment.moderationStatus),
+                          _AttachmentTag(
+                              label: '${attachment.reportCount} signalements'),
+                          _AttachmentTag(
+                              label: 'Conv. ${attachment.conversationId}'),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          OutlinedButton(
+                            onPressed: busy
+                                ? null
+                                : () => _setStatus(attachment, 'approved'),
+                            child: const Text('Approuver'),
+                          ),
+                          OutlinedButton(
+                            onPressed: busy
+                                ? null
+                                : () => _setStatus(attachment, 'manual_review'),
+                            child: const Text('Mettre en revue'),
+                          ),
+                          FilledButton(
+                            onPressed: busy
+                                ? null
+                                : () => _setStatus(attachment, 'deleted'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFB42318),
+                            ),
+                            child: const Text('Supprimer'),
+                          ),
+                        ],
+                      ),
+                      if (busy) ...[
+                        const SizedBox(height: 12),
+                        const LinearProgressIndicator(),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+            if (_hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Center(
+                  child: OutlinedButton.icon(
+                    onPressed: _loadingMore ? null : _loadMore,
+                    icon: _loadingMore
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.expand_more_rounded),
+                    label: Text(_loadingMore
+                        ? 'Chargement…'
+                        : 'Charger la page suivante'),
+                  ),
+                ),
+              ),
+          ],
         ),
+      ),
     );
   }
 }

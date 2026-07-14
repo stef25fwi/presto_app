@@ -68,8 +68,9 @@ class SavedJourneySummaryPage extends StatelessWidget {
     final recommendation = _map('recommendation');
     final recommendedStatus =
         '${recommendation['statut'] ?? recommendation['recommended'] ?? '—'}';
-    final why = '${recommendation['why'] ?? recommendation['justification'] ?? ''}'
-        .trim();
+    final why =
+        '${recommendation['why'] ?? recommendation['justification'] ?? ''}'
+            .trim();
     final planB = '${recommendation['planB'] ?? ''}'.trim();
 
     final costs = _map('costs');
@@ -84,7 +85,9 @@ class SavedJourneySummaryPage extends StatelessWidget {
 
     final title = selectedActivity != 'Activité non renseignée'
         ? selectedActivity
-        : (projectLabel.isNotEmpty ? projectLabel : 'Mon parcours personnalisé');
+        : (projectLabel.isNotEmpty
+            ? projectLabel
+            : 'Mon parcours personnalisé');
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -320,7 +323,8 @@ class _HeroCard extends StatelessWidget {
             children: [
               _FilledChip(icon: Icons.place_outlined, label: region),
               _FilledChip(icon: Icons.badge_outlined, label: currentStatus),
-              _FilledChip(icon: Icons.work_outline_rounded, label: selectedActivity),
+              _FilledChip(
+                  icon: Icons.work_outline_rounded, label: selectedActivity),
             ],
           ),
         ],
@@ -428,9 +432,11 @@ class _TimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = '${item['title'] ?? item['label'] ?? item['name'] ?? 'Étape'}';
+    final title =
+        '${item['title'] ?? item['label'] ?? item['name'] ?? 'Étape'}';
     final description =
-        '${item['description'] ?? item['text'] ?? item['summary'] ?? ''}'.trim();
+        '${item['description'] ?? item['text'] ?? item['summary'] ?? ''}'
+            .trim();
     final todos = item['todos'];
     final checks = item['checks'];
 

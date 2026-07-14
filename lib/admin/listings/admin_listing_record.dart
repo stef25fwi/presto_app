@@ -34,7 +34,8 @@ class AdminListingRecord {
       ]),
       status: _firstNonEmpty(<Object?>[
         data['status'],
-      ], fallback: 'unknown').toLowerCase(),
+      ], fallback: 'unknown')
+          .toLowerCase(),
       city: _firstNonEmpty(<Object?>[
         data['city'],
         data['location'],

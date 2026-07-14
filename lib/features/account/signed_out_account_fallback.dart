@@ -129,8 +129,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
         context,
         _isSignup
             ? _isBusinessSignup
-                  ? 'Compte entreprise créé. Complétez votre profil.'
-                  : 'Compte créé. Vérifiez votre e-mail.'
+                ? 'Compte entreprise créé. Complétez votre profil.'
+                : 'Compte créé. Vérifiez votre e-mail.'
             : 'Connexion réussie.',
       );
       if (_isSignup && _isBusinessSignup) {
@@ -273,9 +273,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
             final maxCardWidth = isFullBleed ? constraints.maxWidth : 560.0;
             final availableHeight =
                 (constraints.maxHeight - (verticalPadding * 2)).clamp(
-                  420.0,
-                  double.infinity,
-                );
+              420.0,
+              double.infinity,
+            );
 
             return Center(
               child: ConstrainedBox(
@@ -363,8 +363,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                   Text(
                                     _isSignup
                                         ? _isBusinessSignup
-                                              ? 'Votre espace entreprise crée un profil complet utilisable pour la vérification, les annonces, les avis et les demandes.'
-                                              : 'Créez votre profil utilisateur avec email, pseudo et vérification de compte.'
+                                            ? 'Votre espace entreprise crée un profil complet utilisable pour la vérification, les annonces, les avis et les demandes.'
+                                            : 'Créez votre profil utilisateur avec email, pseudo et vérification de compte.'
                                         : 'Retrouvez vos annonces, messages, avis et prestations depuis votre profil sécurisé.',
                                     style: const TextStyle(
                                       color: textMuted,
@@ -384,9 +384,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                             onTap: _isLoading
                                                 ? null
                                                 : () => setState(
-                                                    () => _isBusinessSignup =
-                                                        false,
-                                                  ),
+                                                      () => _isBusinessSignup =
+                                                          false,
+                                                    ),
                                           ),
                                         ),
                                         const SizedBox(width: 10),
@@ -399,9 +399,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                             onTap: _isLoading
                                                 ? null
                                                 : () => setState(
-                                                    () => _isBusinessSignup =
-                                                        true,
-                                                  ),
+                                                      () => _isBusinessSignup =
+                                                          true,
+                                                    ),
                                           ),
                                         ),
                                       ],
@@ -523,9 +523,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                       onPressed: _isLoading
                                           ? null
                                           : () => setState(
-                                              () => _obscurePassword =
-                                                  !_obscurePassword,
-                                            ),
+                                                () => _obscurePassword =
+                                                    !_obscurePassword,
+                                              ),
                                       icon: Icon(
                                         _obscurePassword
                                             ? Icons.visibility_outlined
@@ -540,9 +540,8 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                     Align(
                                       alignment: Alignment.centerRight,
                                       child: TextButton(
-                                        onPressed: _isLoading
-                                            ? null
-                                            : _resetPassword,
+                                        onPressed:
+                                            _isLoading ? null : _resetPassword,
                                         child: const Text(
                                           'Mot de passe oublié ?',
                                         ),
@@ -562,9 +561,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                       ],
                                       validator: (value) =>
                                           AuthValidators.passwordConfirmation(
-                                            value,
-                                            _passwordController.text,
-                                          ),
+                                        value,
+                                        _passwordController.text,
+                                      ),
                                       enabled: !_isLoading,
                                       suffixIcon: IconButton(
                                         tooltip: _obscurePasswordConfirm
@@ -573,9 +572,9 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                         onPressed: _isLoading
                                             ? null
                                             : () => setState(
-                                                () => _obscurePasswordConfirm =
-                                                    !_obscurePasswordConfirm,
-                                              ),
+                                                  () => _obscurePasswordConfirm =
+                                                      !_obscurePasswordConfirm,
+                                                ),
                                         icon: Icon(
                                           _obscurePasswordConfirm
                                               ? Icons.visibility_outlined
@@ -600,15 +599,14 @@ class _SignedOutAccountFallbackState extends State<SignedOutAccountFallback> {
                                         : Icons.login_rounded,
                                     label: _isSignup
                                         ? _isBusinessSignup
-                                              ? 'Créer le compte entreprise'
-                                              : 'Créer le compte'
+                                            ? 'Créer le compte entreprise'
+                                            : 'Créer le compte'
                                         : 'Se connecter',
                                   ),
                                   const SizedBox(height: 12),
                                   OutlinedButton.icon(
-                                    onPressed: _isLoading
-                                        ? null
-                                        : _signInWithGoogle,
+                                    onPressed:
+                                        _isLoading ? null : _signInWithGoogle,
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: statusBlue,
                                       side: const BorderSide(
@@ -739,8 +737,7 @@ class _GoogleLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final strokeWidth = size.width * 0.16;
-    final rect =
-        Offset(strokeWidth / 2, strokeWidth / 2) &
+    final rect = Offset(strokeWidth / 2, strokeWidth / 2) &
         Size(size.width - strokeWidth, size.height - strokeWidth);
 
     Paint arcPaint(Color color) => Paint()

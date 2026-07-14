@@ -189,8 +189,7 @@ class _FonctionnaireParcoursFiche {
         ? legalReviewStatus
         : 'La fiche fournit un socle métier. Une validation finale par l’administration employeur ou l’organisme compétent reste recommandée.';
 
-    final recommendedLegalStatus =
-        _buildMarkdownRecommendedLegalStatus(
+    final recommendedLegalStatus = _buildMarkdownRecommendedLegalStatus(
           fallbackLegalStatus: fallbackLegalStatus,
           fallbackRecommendation: fallbackRecommendation,
           fallbackPlanB: planB,
@@ -270,9 +269,8 @@ class _FonctionnaireParcoursFiche {
       'regulationTutorial': regulationTutorial.isNotEmpty
           ? regulationTutorial
           : generatedRegulationTutorial,
-      'statusWarnings': statusWarnings.isNotEmpty
-          ? statusWarnings
-          : generatedStatusWarnings,
+      'statusWarnings':
+          statusWarnings.isNotEmpty ? statusWarnings : generatedStatusWarnings,
       'recommendedLegalStatus': recommendedLegalStatus,
       'steps': markdownTutorialSteps.isNotEmpty
           ? markdownTutorialSteps

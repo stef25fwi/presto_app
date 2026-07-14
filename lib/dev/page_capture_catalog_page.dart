@@ -415,12 +415,10 @@ class PageCaptureCatalogPage extends StatelessWidget {
       (grouped[e.group] ??= []).add(e);
     }
 
-    final activeCount = entries
-        .where((e) => e.status == PageStatus.active)
-        .length;
-    final deprecatedCount = entries
-        .where((e) => e.status == PageStatus.deprecated)
-        .length;
+    final activeCount =
+        entries.where((e) => e.status == PageStatus.active).length;
+    final deprecatedCount =
+        entries.where((e) => e.status == PageStatus.deprecated).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),

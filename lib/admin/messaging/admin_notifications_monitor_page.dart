@@ -202,7 +202,9 @@ class _AdminNotificationsMonitorPageState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.title.isEmpty ? 'Notification sans titre' : item.title,
+                        item.title.isEmpty
+                            ? 'Notification sans titre'
+                            : item.title,
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 8),
@@ -214,7 +216,8 @@ class _AdminNotificationsMonitorPageState
                         children: [
                           _NotificationTag(label: item.deliveryStatus),
                           if (item.conversationId.isNotEmpty)
-                            _NotificationTag(label: 'Conv. ${item.conversationId}'),
+                            _NotificationTag(
+                                label: 'Conv. ${item.conversationId}'),
                           if (item.routeName.isNotEmpty)
                             _NotificationTag(label: item.routeName),
                         ],
