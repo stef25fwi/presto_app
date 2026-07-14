@@ -4,13 +4,16 @@
 The goal is to make Phase 1 decomposition measurable:
 - new screens should stay under 500 lines;
 - reusable widgets should stay under 250 lines;
-- known legacy files may remain above budget only while they do not grow.
+- known legacy files may remain above budget only while they do not grow;
+- CI can be scoped to changed files so old debt is not confused with regression.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -61,12 +64,38 @@ def _classify(path: str, content: str) -> tuple[str, int] | None:
     return None
 
 
-def scan(root: Path, config: dict) -> list[Finding]:
+def _changed_files(root: Path, base_ref: str | None) -> set[str]:
+    if not base_ref:
+        base_ref = os.environ.get("GITHUB_BASE_REF")
+    if not base_ref:
+        return set()
+
+    candidates = [
+        f"origin/{base_ref}...HEAD",
+        f"{base_ref}...HEAD",
+        "HEAD~1...HEAD",
+    ]
+    for refspec in candidates:
+        try:
+            out = subprocess.check_output(
+                ["git", "diff", "--name-only", refspec],
+                cwd=root,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        return {line.strip().replace("\\", "/") for line in out.splitlines() if line.strip()}
+    return set()
+
+
+def scan(root: Path, config: dict, *, changed_only: bool = False, base_ref: str | None = None) -> list[Finding]:
     budgets = config.get("budgets", {})
     screen_limit = int(budgets.get("screen_max_lines", 500))
     widget_limit = int(budgets.get("widget_max_lines", 250))
     baseline = config.get("baseline_exceptions", {})
     ignored = tuple(config.get("ignored_paths", []))
+    changed = _changed_files(root, base_ref) if changed_only else set()
 
     findings: list[Finding] = []
     lib_dir = root / "lib"
@@ -76,6 +105,8 @@ def scan(root: Path, config: dict) -> list[Finding]:
     for dart_file in sorted(lib_dir.rglob("*.dart")):
         rel = dart_file.relative_to(root).as_posix()
         if _is_ignored(rel, ignored):
+            continue
+        if changed_only and rel not in changed and rel not in baseline:
             continue
 
         content = dart_file.read_text(encoding="utf-8", errors="ignore")
@@ -143,6 +174,16 @@ def main() -> int:
         help="Architecture budget configuration",
     )
     parser.add_argument(
+        "--changed-only",
+        action="store_true",
+        help="Only enforce changed Flutter files plus baseline growth",
+    )
+    parser.add_argument(
+        "--base-ref",
+        default=None,
+        help="Base branch/ref used with --changed-only",
+    )
+    parser.add_argument(
         "--enforce",
         action="store_true",
         help="Exit non-zero when the budget is violated",
@@ -151,7 +192,12 @@ def main() -> int:
 
     root = Path(args.root).resolve()
     config_path = (root / args.config).resolve()
-    findings = scan(root, _read_config(config_path))
+    findings = scan(
+        root,
+        _read_config(config_path),
+        changed_only=args.changed_only,
+        base_ref=args.base_ref,
+    )
     _print_report(findings)
     return 1 if args.enforce and findings else 0
 
