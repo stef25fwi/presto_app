@@ -225,7 +225,7 @@ function readReviewForScore(doc: admin.firestore.QueryDocumentSnapshot): ReviewF
     };
   const criteria = Object.fromEntries(
     Object.entries(criteriaSource)
-      .map(([key, value]) => [key, Number(value || 0)])
+      .map(([key, value]) => [key, Number(value || 0)] as [string, number])
       .filter((entry): entry is [string, number] => Number.isFinite(entry[1]) && entry[1] > 0),
   );
   const averageRating = Number(data.averageRating || data.overallRating || averageCriteria(criteria));
