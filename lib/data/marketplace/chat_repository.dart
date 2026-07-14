@@ -4,18 +4,33 @@ import '../../services/firebase_functions_region.dart';
 import '../../services/marketplace_human_verification.dart';
 import 'chat_request_policy.dart';
 
+typedef ChatRepositoryCaller = Future<Object?> Function({
+  required String name,
+  required Duration timeout,
+  required Map<String, dynamic> parameters,
+});
+
+typedef ChatVerificationTokenProvider = Future<String> Function(
+    MarketplaceHumanVerificationAction action);
+
 class ChatRepository {
   ChatRepository({
     FirebaseFunctions? functions,
     MarketplaceHumanVerification? verification,
     ChatRequestPolicy? requestPolicy,
-  })  : _functions = functions ?? prestoFirebaseFunctions,
+    ChatRepositoryCaller? caller,
+    ChatVerificationTokenProvider? verificationTokenProvider,
+  })  : _functions = functions,
         _verification = verification ?? const MarketplaceHumanVerification(),
-        _requestPolicy = requestPolicy ?? const ChatRequestPolicy();
+        _requestPolicy = requestPolicy ?? const ChatRequestPolicy(),
+        _caller = caller,
+        _verificationTokenProvider = verificationTokenProvider;
 
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functions;
   final MarketplaceHumanVerification _verification;
   final ChatRequestPolicy _requestPolicy;
+  final ChatRepositoryCaller? _caller;
+  final ChatVerificationTokenProvider? _verificationTokenProvider;
 
   Future<String> createThreadFromListing({
     required String listingId,
@@ -29,11 +44,10 @@ class ChatRepository {
     final normalizedMessage = _requestPolicy.normalizeMessage(firstMessage);
     final token = (recaptchaToken ?? '').trim().isNotEmpty
         ? recaptchaToken!.trim()
-        : await _verification.obtainToken(
+        : await _obtainVerificationToken(
             MarketplaceHumanVerificationAction.chatFirstMessage,
           );
-    final response = await callPrestoFunction<dynamic>(
-      functions: _functions,
+    final data = await _call(
       name: 'createChatThreadFromListing',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
@@ -42,7 +56,7 @@ class ChatRepository {
         'recaptchaToken': token,
       },
     );
-    return _requestPolicy.extractThreadId(response.data);
+    return _requestPolicy.extractThreadId(data);
   }
 
   Future<void> sendMessage({
@@ -54,8 +68,7 @@ class ChatRepository {
       fieldName: 'threadId',
     );
     final normalizedMessage = _requestPolicy.normalizeMessage(message);
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _call(
       name: 'sendChatMessage',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
@@ -63,5 +76,31 @@ class ChatRepository {
         'message': normalizedMessage,
       },
     );
+  }
+
+  Future<String> _obtainVerificationToken(
+    MarketplaceHumanVerificationAction action,
+  ) {
+    final provider = _verificationTokenProvider;
+    if (provider != null) return provider(action);
+    return _verification.obtainToken(action);
+  }
+
+  Future<Object?> _call({
+    required String name,
+    required Duration timeout,
+    required Map<String, dynamic> parameters,
+  }) async {
+    final caller = _caller;
+    if (caller != null) {
+      return caller(name: name, timeout: timeout, parameters: parameters);
+    }
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions ?? prestoFirebaseFunctions,
+      name: name,
+      timeout: timeout,
+      parameters: parameters,
+    );
+    return response.data;
   }
 }
