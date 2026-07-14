@@ -59,10 +59,7 @@ const _requiredListFields = <String>[
 ];
 
 /// Champs map obligatoires (au moins une clé) sur toute fiche.
-const _requiredMapFields = <String>[
-  'fiscalite',
-  'parcours',
-];
+const _requiredMapFields = <String>['fiscalite', 'parcours'];
 
 /// Sous-clés obligatoires (non vides) du bloc `parcours`, qui alimentent
 /// directement les sections numérotées du parcours affiché.
@@ -91,8 +88,11 @@ void main() {
       final file = File(packPath);
 
       test('le pack existe et contient des fiches', () {
-        expect(file.existsSync(), isTrue,
-            reason: 'Pack introuvable : $packPath');
+        expect(
+          file.existsSync(),
+          isTrue,
+          reason: 'Pack introuvable : $packPath',
+        );
         final list = jsonDecode(file.readAsStringSync()) as List<dynamic>;
         expect(list, isNotEmpty);
       });
@@ -123,8 +123,9 @@ void main() {
           }
           // activite_reglementee : booléen, doit être présent (true ou false).
           if (fiche['activite_reglementee'] is! bool) {
-            problems
-                .add('$label : "activite_reglementee" absent ou non booléen');
+            problems.add(
+              '$label : "activite_reglementee" absent ou non booléen',
+            );
           }
 
           final parcours = fiche['parcours'];
