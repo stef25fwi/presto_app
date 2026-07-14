@@ -89,9 +89,10 @@ class ListingAiResult {
   }
 
   Map<String, dynamic> toDraftPayload() {
-    final normalizedCurrency = (currency ?? 'EUR').trim().isEmpty
+    final rawCurrency = currency?.trim();
+    final normalizedCurrency = rawCurrency == null || rawCurrency.isEmpty
         ? 'EUR'
-        : currency!.trim().toUpperCase();
+        : rawCurrency.toUpperCase();
 
     return <String, dynamic>{
       'title': title,
