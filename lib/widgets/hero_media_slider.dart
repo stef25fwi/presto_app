@@ -35,7 +35,7 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
   final PageController _pageController = PageController();
   Timer? _slideTimer;
   int _currentIndex = 0;
-  bool _isMuted = false; // sound on by default
+  bool _isMuted = false;
 
   @override
   void initState() {
@@ -78,7 +78,7 @@ class _HeroMediaSliderState extends State<HeroMediaSlider> {
 
   Future<void> _loadMutePreference() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return; // non-logged-in: always start unmuted
+    if (user == null) return;
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getBool(_muteKey(user.uid));
     if (saved != null && mounted) {
@@ -337,43 +337,17 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
   @override
   Widget build(BuildContext context) {
     if (!widget.slide.isVideo) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final imageProvider = CachedNetworkImageProvider(widget.slide.mediaUrl);
-          final previewWidth = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : MediaQuery.sizeOf(context).width;
-          final previewHeight =
-              constraints.maxHeight.isFinite ? constraints.maxHeight : 260.0;
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Container(color: const Color(0xFFF4F8FF)),
-              Image(
-                image: imageProvider,
-                fit: BoxFit.cover,
-                color: Colors.black.withValues(alpha: 0.08),
-                colorBlendMode: BlendMode.darken,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-              Center(
-                child: Image(
-                  image: imageProvider,
-                  fit: BoxFit.contain,
-                  width: previewWidth,
-                  height: previewHeight,
-                  errorBuilder: (_, __, ___) =>
-                      const _HeroMediaErrorFallback(),
-                  frameBuilder:
-                      (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded || frame != null) return child;
-                    return const _HeroMediaLoadingFallback();
-                  },
-                ),
-              ),
-            ],
-          );
+      return Image(
+        image: CachedNetworkImageProvider(widget.slide.mediaUrl),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        alignment: Alignment.center,
+        filterQuality: FilterQuality.high,
+        errorBuilder: (_, __, ___) => const _HeroMediaErrorFallback(),
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) return child;
+          return const _HeroMediaLoadingFallback();
         },
       );
     }
@@ -386,11 +360,11 @@ class _HeroMediaSlideViewState extends State<_HeroMediaSlideView> {
       return const _HeroMediaLoadingFallback();
     }
 
-    return Container(
-      color: Colors.black,
-      alignment: Alignment.center,
+    return SizedBox.expand(
       child: FittedBox(
-        fit: BoxFit.contain,
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        clipBehavior: Clip.hardEdge,
         child: SizedBox(
           width: controller.value.size.width,
           height: controller.value.size.height,

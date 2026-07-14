@@ -29,9 +29,9 @@ class AuthGate extends StatelessWidget {
         final user = snapshot.data;
         final destination = policy.resolve(
           signedIn: user != null,
-          providerIds: user?.providerData
-                  .map((provider) => provider.providerId) ??
-              const <String>[],
+          providerIds:
+              user?.providerData.map((provider) => provider.providerId) ??
+                  const <String>[],
           emailVerified: user?.emailVerified ?? false,
         );
 

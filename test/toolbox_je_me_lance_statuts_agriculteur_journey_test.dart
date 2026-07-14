@@ -130,8 +130,7 @@ Future<void> _runAgriculteurJourney(
     await _settle(tester);
     final activitySearch = find.byWidgetPredicate(
       (w) =>
-          w is TextField &&
-          w.decoration?.hintText == 'Rechercher une activité',
+          w is TextField && w.decoration?.hintText == 'Rechercher une activité',
     );
     await _enterTextIfPresent(tester, activitySearch, 'Agriculteur');
     await tester.tap(find.text('Agriculteur').last);

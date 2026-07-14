@@ -483,15 +483,13 @@ class SubscriptionPlanTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plans = _plans
-        .where((plan) {
-          final audienceMatches = audience == OfferAudience.particuliers
-              ? plan.plan != SubscriptionPlan.ilipro
-              : plan.plan == SubscriptionPlan.ilipro;
-          return audienceMatches &&
-              (showCurrentPlan || plan.plan != userState.plan);
-        })
-        .toList(growable: false);
+    final plans = _plans.where((plan) {
+      final audienceMatches = audience == OfferAudience.particuliers
+          ? plan.plan != SubscriptionPlan.ilipro
+          : plan.plan == SubscriptionPlan.ilipro;
+      return audienceMatches &&
+          (showCurrentPlan || plan.plan != userState.plan);
+    }).toList(growable: false);
 
     return Column(
       children: [

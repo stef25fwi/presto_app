@@ -23,7 +23,7 @@ abstract interface class AdminListingsRepository {
 
 class FirestoreAdminListingsRepository implements AdminListingsRepository {
   FirestoreAdminListingsRepository({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 

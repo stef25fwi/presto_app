@@ -409,7 +409,8 @@ const optimizedServiceClass = `class SubscriptionCheckoutService {
   }) async {
     if (plan == SubscriptionPlan.free) return;
     final key = subscriptionPlanKey(plan);
-    if (_readCachedCheckout(key) != null || _checkoutPrefetches.containsKey(key)) {
+    if (_readCachedCheckout(key) != null ||
+        _checkoutPrefetches.containsKey(key)) {
       return;
     }
 
@@ -608,9 +609,8 @@ const optimizedServiceClass = `class SubscriptionCheckoutService {
     final parsed = rawExpiresAt is num
         ? rawExpiresAt.toInt()
         : int.tryParse((rawExpiresAt ?? '').toString()) ?? 0;
-    final expiresAtMs = parsed > 0 && parsed < 1000000000000
-        ? parsed * 1000
-        : parsed;
+    final expiresAtMs =
+        parsed > 0 && parsed < 1000000000000 ? parsed * 1000 : parsed;
     final fallbackMs = DateTime.now().millisecondsSinceEpoch +
         const Duration(minutes: 20).inMilliseconds;
     return _CachedStripeDestination(
@@ -623,7 +623,8 @@ const optimizedServiceClass = `class SubscriptionCheckoutService {
     final cached = _checkoutCache[key];
     if (cached == null) return null;
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (cached.expiresAtMs <= now + const Duration(seconds: 20).inMilliseconds) {
+    if (cached.expiresAtMs <=
+        now + const Duration(seconds: 20).inMilliseconds) {
       _checkoutCache.remove(key);
       return null;
     }

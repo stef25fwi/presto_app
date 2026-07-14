@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../features/trust_score/trust_score_widgets.dart';
+import '../../features/trust_score/trust_score_v2_card.dart';
 import '../../app_core.dart' show kPrestoOrange;
 import '../../main.dart' show prestoOverlayStyleFor;
 
@@ -33,7 +33,7 @@ class MesAvisPage extends StatelessWidget {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                TrustScoreCard(userId: uid),
+                TrustScoreV2Card(userId: uid),
               ],
             ),
     );
