@@ -5,9 +5,12 @@ void main() {
   group('normalisation des plans et statuts', () {
     test('normalise les alias de plan existants', () {
       expect(subscriptionPlanFromKey('free'), SubscriptionPlan.free);
-      expect(subscriptionPlanFromKey('ilipresto_plus'), SubscriptionPlan.iliprestoPlus);
-      expect(subscriptionPlanFromKey('iliprestoplus'), SubscriptionPlan.iliprestoPlus);
-      expect(subscriptionPlanFromKey('ilipresto+'), SubscriptionPlan.iliprestoPlus);
+      expect(subscriptionPlanFromKey('ilipresto_plus'),
+          SubscriptionPlan.iliprestoPlus);
+      expect(subscriptionPlanFromKey('iliprestoplus'),
+          SubscriptionPlan.iliprestoPlus);
+      expect(subscriptionPlanFromKey('ilipresto+'),
+          SubscriptionPlan.iliprestoPlus);
       expect(subscriptionPlanFromKey('ilipro'), SubscriptionPlan.ilipro);
       expect(subscriptionPlanFromKey('inconnu'), SubscriptionPlan.free);
     });
@@ -16,13 +19,15 @@ void main() {
       expect(subscriptionStatusFromKey('active'), SubscriptionStatus.active);
       expect(subscriptionStatusFromKey('past_due'), SubscriptionStatus.pastDue);
       expect(subscriptionStatusFromKey('pastdue'), SubscriptionStatus.pastDue);
-      expect(subscriptionStatusFromKey('cancelled'), SubscriptionStatus.canceled);
+      expect(
+          subscriptionStatusFromKey('cancelled'), SubscriptionStatus.canceled);
       expect(subscriptionStatusFromKey(null), SubscriptionStatus.inactive);
     });
 
     test('sérialise les clés stables', () {
       expect(subscriptionPlanKey(SubscriptionPlan.free), 'free');
-      expect(subscriptionPlanKey(SubscriptionPlan.iliprestoPlus), 'ilipresto_plus');
+      expect(subscriptionPlanKey(SubscriptionPlan.iliprestoPlus),
+          'ilipresto_plus');
       expect(subscriptionPlanKey(SubscriptionPlan.ilipro), 'ilipro');
       expect(subscriptionStatusKey(SubscriptionStatus.pastDue), 'past_due');
     });
@@ -103,8 +108,10 @@ void main() {
     test('ilipro applique les quotas professionnels', () {
       final rights = getJourneyEntitlementsForPlan(SubscriptionPlan.ilipro);
 
-      expect(rights.maxLocalSavesPerMonth, kIliProJourneyLocalSaveQuotaPerMonth);
-      expect(rights.maxPdfExportsPerMonth, kIliProJourneyPdfExportQuotaPerMonth);
+      expect(
+          rights.maxLocalSavesPerMonth, kIliProJourneyLocalSaveQuotaPerMonth);
+      expect(
+          rights.maxPdfExportsPerMonth, kIliProJourneyPdfExportQuotaPerMonth);
       expect(rights.canExportPdf, isTrue);
     });
   });

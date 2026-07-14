@@ -156,6 +156,10 @@ async function processOfferPhotoStoragePath({ uid, draftId, listingId, storagePa
 exports.processOfferPhoto = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
     timeoutSeconds: 60,
+    memory: "1GiB",
+    cpu: 1,
+    concurrency: 4,
+    maxInstances: 20,
     enforceAppCheck: env_1.ENFORCE_APP_CHECK,
 }, async (request) => {
     const uid = requireAuthUid(request);

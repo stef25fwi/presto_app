@@ -105,135 +105,138 @@ class _AdminMessagingAuditLogsPageState
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: 'Recherche par action, cible, admin, motif…',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
+          padding: const EdgeInsets.all(16),
+          children: [
+            TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: 'Recherche par action, cible, admin, motif…',
+                prefixIcon: const Icon(Icons.search_rounded),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                 ),
-                onSubmitted: (value) => setState(() => _query = value),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('Tous'),
-                    selected: _riskFilter == null && _actionFilter == null,
+              onSubmitted: (value) => setState(() => _query = value),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('Tous'),
+                  selected: _riskFilter == null && _actionFilter == null,
+                  onSelected: (_) {
+                    setState(() {
+                      _riskFilter = null;
+                      _actionFilter = null;
+                    });
+                    _refresh();
+                  },
+                ),
+                ...const ['high', 'medium', 'normal'].map(
+                  (risk) => FilterChip(
+                    label: Text(risk),
+                    selected: _riskFilter == risk,
                     onSelected: (_) {
                       setState(() {
-                        _riskFilter = null;
+                        _riskFilter = risk;
                         _actionFilter = null;
                       });
                       _refresh();
                     },
                   ),
-                  ...const ['high', 'medium', 'normal'].map(
-                    (risk) => FilterChip(
-                      label: Text(risk),
-                      selected: _riskFilter == risk,
-                      onSelected: (_) {
-                        setState(() {
-                          _riskFilter = risk;
-                          _actionFilter = null;
-                        });
-                        _refresh();
-                      },
-                    ),
-                  ),
-                  ...const [
-                    'update_conversation_status',
-                    'update_message_report_status',
-                    'update_user_messaging_status',
-                  ].map(
-                    (action) => FilterChip(
-                      label: Text(action),
-                      selected: _actionFilter == action,
-                      onSelected: (_) {
-                        setState(() {
-                          _actionFilter = action;
-                          _riskFilter = null;
-                        });
-                        _refresh();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (_loadingInitial && _items.isEmpty)
-                const Center(child: CircularProgressIndicator())
-              else if (_error != null)
-                _AuditErrorState(onRetry: _refresh)
-              else if (logs.isEmpty)
-                const Center(
-                  child: Text(
-                    'Aucun log d\'audit messagerie récent.',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                )
-              else
-                ...logs.map((log) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          log.action,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Cible: ${log.targetType} • ${log.targetId}'),
-                        Text('Admin: ${log.adminEmail.isEmpty ? log.adminId : log.adminEmail}'),
-                        Text('Risque: ${log.riskLevel}'),
-                        if (log.reason.isNotEmpty) Text('Motif: ${log.reason}'),
-                      ],
-                    ),
-                  );
-                }),
-              if (_hasMore)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Center(
-                    child: OutlinedButton.icon(
-                      onPressed: _loadingMore ? null : _loadMore,
-                      icon: _loadingMore
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.expand_more_rounded),
-                      label: Text(_loadingMore ? 'Chargement…' : 'Charger la page suivante'),
-                    ),
+                ),
+                ...const [
+                  'update_conversation_status',
+                  'update_message_report_status',
+                  'update_user_messaging_status',
+                ].map(
+                  (action) => FilterChip(
+                    label: Text(action),
+                    selected: _actionFilter == action,
+                    onSelected: (_) {
+                      setState(() {
+                        _actionFilter = action;
+                        _riskFilter = null;
+                      });
+                      _refresh();
+                    },
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_loadingInitial && _items.isEmpty)
+              const Center(child: CircularProgressIndicator())
+            else if (_error != null)
+              _AuditErrorState(onRetry: _refresh)
+            else if (logs.isEmpty)
+              const Center(
+                child: Text(
+                  'Aucun log d\'audit messagerie récent.',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            else
+              ...logs.map((log) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        log.action,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Cible: ${log.targetType} • ${log.targetId}'),
+                      Text(
+                          'Admin: ${log.adminEmail.isEmpty ? log.adminId : log.adminEmail}'),
+                      Text('Risque: ${log.riskLevel}'),
+                      if (log.reason.isNotEmpty) Text('Motif: ${log.reason}'),
+                    ],
+                  ),
+                );
+              }),
+            if (_hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Center(
+                  child: OutlinedButton.icon(
+                    onPressed: _loadingMore ? null : _loadMore,
+                    icon: _loadingMore
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.expand_more_rounded),
+                    label: Text(_loadingMore
+                        ? 'Chargement…'
+                        : 'Charger la page suivante'),
+                  ),
+                ),
+              ),
+          ],
         ),
+      ),
     );
   }
 }

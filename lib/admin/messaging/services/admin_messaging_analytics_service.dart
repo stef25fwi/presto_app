@@ -156,17 +156,17 @@ class AdminMessagingAnalyticsService {
     );
     final unanswered = conversations.where((item) => item.hasUnread).length;
     final blockedUsers = users
-        .where((item) => item.messagingStatus == 'bloqué' || item.messagingStatus == 'suspendu')
+        .where((item) =>
+            item.messagingStatus == 'bloqué' ||
+            item.messagingStatus == 'suspendu')
         .length;
     final activeUsers = users
         .where((item) => item.messagesSent > 0 || item.openConversations > 0)
         .length;
-    final watchlistedConversations = conversations
-        .where((item) => item.adminWatchlisted)
-        .length;
-    final criticalRiskConversations = conversations
-        .where((item) => item.riskScore >= 80)
-        .length;
+    final watchlistedConversations =
+        conversations.where((item) => item.adminWatchlisted).length;
+    final criticalRiskConversations =
+        conversations.where((item) => item.riskScore >= 80).length;
     final pendingReports = reports.where((item) {
       final status = item.status.trim().toLowerCase();
       return status.isEmpty ||
@@ -185,16 +185,14 @@ class AdminMessagingAnalyticsService {
                 .map((item) => item.averageResponseHours)
                 .reduce((left, right) => left + right) /
             usersWithResponseDelay.length;
-    final providerUsers = users
-        .where((item) {
-          final role = item.role.trim().toLowerCase();
-          return role.contains('provider') ||
-              role.contains('prestataire') ||
-              role.contains('seller') ||
-              role.contains('vendeur') ||
-              role.contains('pro');
-        })
-        .toList(growable: false);
+    final providerUsers = users.where((item) {
+      final role = item.role.trim().toLowerCase();
+      return role.contains('provider') ||
+          role.contains('prestataire') ||
+          role.contains('seller') ||
+          role.contains('vendeur') ||
+          role.contains('pro');
+    }).toList(growable: false);
     final usersForResponseRate = providerUsers.isNotEmpty
         ? providerUsers
         : users.where((item) => item.messagesSent > 0).toList(growable: false);

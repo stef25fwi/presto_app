@@ -25,7 +25,8 @@ class GoogleAuthService {
 
   bool _isLikelyUserAbortedGoogleFlow(String? message) {
     final msg = (message ?? '').toLowerCase();
-    return msg.contains('there was an error while trying to get your package certificate hash') ||
+    return msg.contains(
+            'there was an error while trying to get your package certificate hash') ||
         msg.contains('package certificate hash');
   }
 

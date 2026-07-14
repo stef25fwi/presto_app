@@ -111,13 +111,16 @@ void main() {
       );
       expect(
         '${statusWarnings[1]['checks']}',
-        contains('fonction publique concernée : État, territoriale, hospitalière ;'),
+        contains(
+            'fonction publique concernée : État, territoriale, hospitalière ;'),
       );
       expect(
         '${recommendedLegalStatus['justification']}',
-        contains('Statut conseillé : **micro-entrepreneur / entreprise individuelle**'),
+        contains(
+            'Statut conseillé : **micro-entrepreneur / entreprise individuelle**'),
       );
-      expect('${steps[0]['title']}', 'Étape 1 — Décrire précisément l’activité');
+      expect(
+          '${steps[0]['title']}', 'Étape 1 — Décrire précisément l’activité');
       expect(
         '${steps[1]['todos']}',
         contains('rédiger la demande de cumul ;'),
@@ -292,9 +295,11 @@ const Map<String, dynamic> _aideAdministrativeComptable = <String, dynamic>{
       'socle officiel intégré ; contrôle final recommandé par CMA/administration/organisme compétent selon activité avant mise en production',
 };
 
-const Map<String, dynamic> _informatiqueDepannageWithMarkdown = <String, dynamic>{
+const Map<String, dynamic> _informatiqueDepannageWithMarkdown =
+    <String, dynamic>{
   ..._informatiqueDepannage,
-  'markdown_content': '''# FICHE MÉTIER — Informatique / dépannage — fonctionnaire
+  'markdown_content':
+      '''# FICHE MÉTIER — Informatique / dépannage — fonctionnaire
 
 ## 1. Comprendre les règles de votre activité
 

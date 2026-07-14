@@ -107,7 +107,8 @@ void main() {
               '${fiche['id_fiche'] ?? fiche['id'] ?? '??'} (${fiche['statut_utilisateur']} × ${fiche['activite']})';
 
           for (final f in _requiredStringFields) {
-            if (_isEmptyValue(fiche[f])) problems.add('$label : champ "$f" manquant/vide');
+            if (_isEmptyValue(fiche[f]))
+              problems.add('$label : champ "$f" manquant/vide');
           }
           for (final f in _requiredListFields) {
             if (fiche[f] is! List || _isEmptyValue(fiche[f])) {
@@ -121,7 +122,8 @@ void main() {
           }
           // activite_reglementee : booléen, doit être présent (true ou false).
           if (fiche['activite_reglementee'] is! bool) {
-            problems.add('$label : "activite_reglementee" absent ou non booléen');
+            problems
+                .add('$label : "activite_reglementee" absent ou non booléen');
           }
 
           final parcours = fiche['parcours'];
@@ -147,8 +149,8 @@ void main() {
         final dups = <String>[];
         for (final raw in list) {
           final fiche = (raw as Map).cast<String, dynamic>();
-          final key =
-              '${fiche['statut_utilisateur']}|${fiche['activite']}'.toLowerCase();
+          final key = '${fiche['statut_utilisateur']}|${fiche['activite']}'
+              .toLowerCase();
           if (!seen.add(key)) dups.add(key);
         }
         expect(dups, isEmpty, reason: 'Doublons statut|activité : $dups');

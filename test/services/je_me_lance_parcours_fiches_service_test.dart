@@ -65,7 +65,8 @@ void main() {
       expect(fiche['regles_independant'], isA<Map>());
     });
 
-    test("trouve une fiche demandeur d'emploi pour une activité du catalogue", () {
+    test("trouve une fiche demandeur d'emploi pour une activité du catalogue",
+        () {
       final fiche = service.find(
         statutUtilisateur: "demandeur d'emploi",
         activite: 'Service en salle',
@@ -87,7 +88,8 @@ void main() {
       expect(fiche['regles_sans_activite'], isA<Map>());
     });
 
-    test('les sept packs renvoient des fiches distinctes pour la même activité', () {
+    test('les sept packs renvoient des fiches distinctes pour la même activité',
+        () {
       const statuts = [
         'fonctionnaire',
         'retraité',

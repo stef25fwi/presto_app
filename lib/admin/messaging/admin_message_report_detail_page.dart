@@ -84,8 +84,10 @@ class _AdminMessageReportDetailPageState
                 Text('Message: ${widget.report.messageId}'),
                 Text('Signalé par: ${widget.report.reportedBy}'),
                 Text('Utilisateur visé: ${widget.report.reportedUserId}'),
-                Text('Assigné à: ${widget.report.assignedTo.isEmpty ? 'non assigné' : widget.report.assignedTo}'),
-                Text('Décision admin: ${widget.report.adminDecision.isEmpty ? 'aucune' : widget.report.adminDecision}'),
+                Text(
+                    'Assigné à: ${widget.report.assignedTo.isEmpty ? 'non assigné' : widget.report.assignedTo}'),
+                Text(
+                    'Décision admin: ${widget.report.adminDecision.isEmpty ? 'aucune' : widget.report.adminDecision}'),
               ],
             ),
           ),
@@ -106,7 +108,8 @@ class _AdminMessageReportDetailPageState
                 FilledButton.icon(
                   onPressed: _saving
                       ? null
-                      : () => _setStatus('résolu', decision: 'resolved_no_action'),
+                      : () =>
+                          _setStatus('résolu', decision: 'resolved_no_action'),
                   icon: const Icon(Icons.task_alt_rounded),
                   label: const Text('Clore sans action'),
                 ),

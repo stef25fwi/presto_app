@@ -20,17 +20,18 @@ class AdminMessagingRiskPage extends StatelessWidget {
           return StreamBuilder<List<AdminMessagingUserModel>>(
             stream: AdminMessagingService().watchUsers(limit: 200),
             builder: (context, usersSnapshot) {
-              final highRiskConversations =
-                  (conversationsSnapshot.data ?? const <AdminConversationModel>[])
-                      .where((item) => item.riskScore >= 70 || item.adminWatchlisted)
-                      .toList(growable: false);
-              final highRiskUsers =
-                  (usersSnapshot.data ?? const <AdminMessagingUserModel>[])
-                      .where((item) =>
-                          item.riskScore >= 70 ||
-                          item.messagingStatus.toLowerCase().contains('blo') ||
-                          item.messagingStatus.toLowerCase().contains('suspend'))
-                      .toList(growable: false);
+              final highRiskConversations = (conversationsSnapshot.data ??
+                      const <AdminConversationModel>[])
+                  .where(
+                      (item) => item.riskScore >= 70 || item.adminWatchlisted)
+                  .toList(growable: false);
+              final highRiskUsers = (usersSnapshot.data ??
+                      const <AdminMessagingUserModel>[])
+                  .where((item) =>
+                      item.riskScore >= 70 ||
+                      item.messagingStatus.toLowerCase().contains('blo') ||
+                      item.messagingStatus.toLowerCase().contains('suspend'))
+                  .toList(growable: false);
               return ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -40,7 +41,8 @@ class AdminMessagingRiskPage extends StatelessWidget {
                     title: 'Conversations sensibles',
                     child: highRiskConversations.isEmpty
                         ? const _RiskEmptyState(
-                            message: 'Aucune conversation à risque élevé dans le flux récent.',
+                            message:
+                                'Aucune conversation à risque élevé dans le flux récent.',
                           )
                         : Column(
                             children: highRiskConversations.map((conversation) {
@@ -77,7 +79,8 @@ class AdminMessagingRiskPage extends StatelessWidget {
                     title: 'Utilisateurs sensibles',
                     child: highRiskUsers.isEmpty
                         ? const _RiskEmptyState(
-                            message: 'Aucun utilisateur sensible dans le flux récent.',
+                            message:
+                                'Aucun utilisateur sensible dans le flux récent.',
                           )
                         : Column(
                             children: highRiskUsers.map((user) {
@@ -94,7 +97,8 @@ class AdminMessagingRiskPage extends StatelessWidget {
                                     spacing: 8,
                                     runSpacing: 8,
                                     children: [
-                                      AdminRiskScoreBadge(score: user.riskScore),
+                                      AdminRiskScoreBadge(
+                                          score: user.riskScore),
                                       AdminUserMessagingStatusBadge(
                                         status: user.messagingStatus,
                                       ),

@@ -25,7 +25,7 @@ class AdminMessagingService {
       AdminMessagingPaginationPolicy();
 
   AdminMessagingService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<List<AdminConversationModel>> watchConversations({
     int limit = 120,
@@ -85,9 +85,9 @@ class AdminMessagingService {
         .get();
     final visibleDocs = _paginationPolicy
         .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
-          snapshot.docs,
-          requestedPageSize: normalizedPageSize,
-        );
+      snapshot.docs,
+      requestedPageSize: normalizedPageSize,
+    );
     return AdminPagedResult<AdminConversationModel>(
       items: visibleDocs
           .map(AdminConversationModel.fromDocument)
@@ -154,9 +154,9 @@ class AdminMessagingService {
         .get();
     final visibleDocs = _paginationPolicy
         .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
-          snapshot.docs,
-          requestedPageSize: normalizedPageSize,
-        );
+      snapshot.docs,
+      requestedPageSize: normalizedPageSize,
+    );
     return AdminPagedResult<AdminMessageReportModel>(
       items: visibleDocs
           .map(AdminMessageReportModel.fromDocument)
@@ -219,9 +219,9 @@ class AdminMessagingService {
         .get();
     final visibleDocs = _paginationPolicy
         .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
-          snapshot.docs,
-          requestedPageSize: normalizedPageSize,
-        );
+      snapshot.docs,
+      requestedPageSize: normalizedPageSize,
+    );
     return AdminPagedResult<AdminMessagingUserModel>(
       items: visibleDocs
           .map(AdminMessagingUserModel.fromDocument)
@@ -274,9 +274,9 @@ class AdminMessagingService {
         .get();
     final visibleDocs = _paginationPolicy
         .visibleItems<QueryDocumentSnapshot<Map<String, dynamic>>>(
-          snapshot.docs,
-          requestedPageSize: normalizedPageSize,
-        );
+      snapshot.docs,
+      requestedPageSize: normalizedPageSize,
+    );
     return AdminPagedResult<AdminAttachmentModel>(
       items: visibleDocs
           .map(AdminAttachmentModel.fromDocument)

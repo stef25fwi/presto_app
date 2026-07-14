@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -24,6 +24,9 @@ jobs:
         run: |
           node tools/apply_prod_hardening_patches.mjs
           git diff --exit-code
+
+      - name: Test Firebase preview isolation
+        run: node --test tools/quality/check_firebase_preview_project.test.mjs
 
       - name: Check production guardrails
         run: node tools/check_production_guardrails.mjs

@@ -283,7 +283,8 @@ class _ToolCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: buttonHeight <= 52 ? 14.5 : (compact ? 15 : 16),
+                        fontSize:
+                            buttonHeight <= 52 ? 14.5 : (compact ? 15 : 16),
                         height: 1.08,
                         fontWeight: FontWeight.w800,
                       ),
