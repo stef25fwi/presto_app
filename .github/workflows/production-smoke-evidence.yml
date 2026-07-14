@@ -1,0 +1,62 @@
+name: Production smoke evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: URL de production à tester
+        required: true
+        default: https://ilipresto.web.app
+      release_ref:
+        description: Tag ou SHA de la release candidate
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run production smoke tests
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          RELEASE_REF: ${{ inputs.release_ref }}
+        run: |
+          set -euo pipefail
+          mkdir -p quality_reports/phase16
+          report="quality_reports/phase16/smoke-${GITHUB_RUN_ID}.txt"
+          {
+            echo "release_ref=${RELEASE_REF}"
+            echo "base_url=${BASE_URL}"
+            echo "run_id=${GITHUB_RUN_ID}"
+            echo "commit=${GITHUB_SHA}"
+            echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            BASE_URL="$BASE_URL" bash tools/production/run_smoke_tests.sh
+            echo "status=success"
+            echo "finished_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } 2>&1 | tee "$report"
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: phase16-smoke-evidence-${{ github.run_id }}
+          path: quality_reports/phase16
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish summary
+        if: always()
+        run: |
+          {
+            echo '## Phase 16 — smoke tests production'
+            echo
+            echo "- Release : \`${{ inputs.release_ref }}\`"
+            echo "- URL : \`${{ inputs.base_url }}\`"
+            echo "- Workflow : \`${{ github.run_id }}\`"
+            echo '- Preuve : artefact `phase16-smoke-evidence-*`'
+          } >> "$GITHUB_STEP_SUMMARY"
