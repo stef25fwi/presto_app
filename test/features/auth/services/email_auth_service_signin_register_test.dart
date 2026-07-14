@@ -127,6 +127,7 @@ class _Credential implements UserCredential {
 class _User implements User {
   _User(this.id, {this.email, this.name});
   final String id;
+  @override
   final String? email;
   String? name;
   String? updatedName;
