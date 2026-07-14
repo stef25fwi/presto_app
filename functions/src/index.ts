@@ -116,6 +116,7 @@ export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/suppor
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
 export { moderateNewOffer } from "./modules/moderation/moderate_new_offer";
 export { generatePaymentInfoAudio } from "./modules/admin/callables";
+export { adminGenerateVideo, adminListGeneratedVideos } from "./modules/admin/videomaker";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 export {
   createSubscriptionCheckoutSession,

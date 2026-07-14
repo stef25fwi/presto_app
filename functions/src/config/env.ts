@@ -3,6 +3,7 @@ import { defineSecret } from "firebase-functions/params";
 import { resolveAppCheckEnforcement } from "./app_check_policy";
 
 export const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
+export const VEO_API_KEY = defineSecret("VEO_API_KEY");
 export const EMAIL_PROVIDER_API_KEY = defineSecret("EMAIL_PROVIDER_API_KEY");
 export const EMAIL_PROVIDER_WEBHOOK_SECRET = defineSecret("EMAIL_PROVIDER_WEBHOOK_SECRET");
 export const BREVO_API_KEY = defineSecret("BREVO_API_KEY");
