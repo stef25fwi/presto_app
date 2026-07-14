@@ -5,6 +5,15 @@ import 'package:presto_app/data/marketplace/chat_request_policy.dart';
 void main() {
   const policy = ChatRequestPolicy();
 
+  group('ChatRequestException', () {
+    test('expose son message et sa représentation texte', () {
+      const exception = ChatRequestException('Erreur de conversation');
+
+      expect(exception.message, 'Erreur de conversation');
+      expect(exception.toString(), 'Erreur de conversation');
+    });
+  });
+
   group('ChatRequestPolicy', () {
     test('normalise les identifiants', () {
       expect(
