@@ -6,10 +6,32 @@ import 'package:flutter/material.dart';
 import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 
+typedef VerifyEmailChecker = Future<bool> Function();
+typedef VerificationEmailResender = Future<void> Function();
+typedef VerifyEmailSignOut = Future<void> Function();
+typedef VerifyEmailErrorMessageMapper = String Function(Object error);
+
 class VerifyEmailPage extends StatefulWidget {
-  const VerifyEmailPage({super.key});
+  const VerifyEmailPage({
+    super.key,
+    this.email,
+    this.checkEmailVerified,
+    this.resendVerificationEmail,
+    this.signOut,
+    this.errorMessageMapper,
+    this.initialCooldownSeconds = 30,
+    this.cooldownTick = const Duration(seconds: 1),
+  });
 
   static const routeName = '/verify-email';
+
+  final String? email;
+  final VerifyEmailChecker? checkEmailVerified;
+  final VerificationEmailResender? resendVerificationEmail;
+  final VerifyEmailSignOut? signOut;
+  final VerifyEmailErrorMessageMapper? errorMessageMapper;
+  final int initialCooldownSeconds;
+  final Duration cooldownTick;
 
   @override
   State<VerifyEmailPage> createState() => _VerifyEmailPageState();
@@ -22,10 +44,18 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
 
   User? get _user => FirebaseAuth.instance.currentUser;
 
+  String get _email {
+    final explicitEmail = widget.email?.trim();
+    if (explicitEmail != null && explicitEmail.isNotEmpty) {
+      return explicitEmail;
+    }
+    return _user?.email ?? 'ton adresse email';
+  }
+
   @override
   void initState() {
     super.initState();
-    _startCooldown();
+    _startCooldown(notify: false);
   }
 
   @override
@@ -34,11 +64,21 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     super.dispose();
   }
 
-  void _startCooldown() {
+  void _startCooldown({bool notify = true}) {
     _timer?.cancel();
-    setState(() => _secondsBeforeResend = 30);
 
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    void updateSeconds(int value) {
+      if (notify && mounted) {
+        setState(() => _secondsBeforeResend = value);
+      } else {
+        _secondsBeforeResend = value;
+      }
+    }
+
+    updateSeconds(widget.initialCooldownSeconds);
+    if (_secondsBeforeResend <= 0) return;
+
+    _timer = Timer.periodic(widget.cooldownTick, (timer) {
       if (_secondsBeforeResend <= 1) {
         timer.cancel();
         if (mounted) setState(() => _secondsBeforeResend = 0);
@@ -52,7 +92,9 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     setState(() => _loading = true);
 
     try {
-      final verified = await AuthService.instance.checkEmailVerified();
+      final checkEmailVerified =
+          widget.checkEmailVerified ?? AuthService.instance.checkEmailVerified;
+      final verified = await checkEmailVerified();
 
       if (!mounted) return;
 
@@ -69,8 +111,9 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       }
     } catch (e) {
       if (!mounted) return;
+      final messageMapper = widget.errorMessageMapper ?? AuthErrorMapper.message;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AuthErrorMapper.message(e))),
+        SnackBar(content: Text(messageMapper(e))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -81,7 +124,9 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     setState(() => _loading = true);
 
     try {
-      await AuthService.instance.resendVerificationEmail();
+      final resendVerificationEmail = widget.resendVerificationEmail ??
+          AuthService.instance.resendVerificationEmail;
+      await resendVerificationEmail();
 
       if (!mounted) return;
 
@@ -92,8 +137,9 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       _startCooldown();
     } catch (e) {
       if (!mounted) return;
+      final messageMapper = widget.errorMessageMapper ?? AuthErrorMapper.message;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AuthErrorMapper.message(e))),
+        SnackBar(content: Text(messageMapper(e))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -101,13 +147,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   }
 
   Future<void> _logout() async {
-    await AuthService.instance.signOut();
+    final signOut = widget.signOut ?? AuthService.instance.signOut;
+    await signOut();
   }
 
   @override
   Widget build(BuildContext context) {
     const orange = Color(0xFFFF6600);
-    final email = _user?.email ?? 'ton adresse email';
+    final email = _email;
 
     return Scaffold(
       appBar: AppBar(
