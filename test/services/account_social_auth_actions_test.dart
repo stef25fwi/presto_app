@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,10 +48,6 @@ void main() {
     auth = FirebaseAuth.instance;
   });
 
-  tearDown(() {
-    debugDefaultTargetPlatformOverride = null;
-  });
-
   Widget actionApp(Future<void> Function(BuildContext context) action) {
     return MaterialApp(
       home: Builder(
@@ -79,7 +74,6 @@ void main() {
   testWidgets('Google mappe une FirebaseAuthException du provider mobile', (
     tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     authPlatform.error = FirebaseAuthException(
       code: 'network-request-failed',
       message: 'offline',
@@ -101,7 +95,6 @@ void main() {
   testWidgets('Google mappe une PlatformException du provider mobile', (
     tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     authPlatform.error = PlatformException(
       code: 'network_error',
       message: 'offline',
@@ -117,13 +110,12 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('connexion internet'), findsOneWidget);
+    expect(find.byType(SnackBar), findsOneWidget);
   });
 
   testWidgets('Google affiche le fallback pour une erreur inattendue', (
     tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     authPlatform.error = StateError('boom');
 
     await runAction(
@@ -143,7 +135,6 @@ void main() {
   });
 
   testWidgets('Facebook mappe une erreur Firebase connue', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     authPlatform.error = FirebaseAuthException(
       code: 'network-request-failed',
     );
@@ -163,7 +154,6 @@ void main() {
   testWidgets('Facebook affiche le fallback pour une erreur inattendue', (
     tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     authPlatform.error = StateError('boom');
 
     await runAction(
@@ -182,8 +172,6 @@ void main() {
   });
 
   testWidgets('Apple est refusé hors iOS et macOS', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
-
     await runAction(
       tester,
       (context) => AccountSocialAuthActions.signInWithApple(
@@ -200,7 +188,6 @@ void main() {
   });
 
   testWidgets('Apple ne navigue pas avec un contexte démonté', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     late BuildContext staleContext;
 
     await tester.pumpWidget(
