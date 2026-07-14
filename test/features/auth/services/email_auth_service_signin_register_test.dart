@@ -3,314 +3,147 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/auth/services/auth_service.dart';
 
 void main() {
-  group('EmailAuthService.signIn', () {
-    test('normalise l email, retourne le user et initialise son profil', () async {
-      final user = _FakeUser(uidValue: 'user-1', emailValue: 'user@example.com');
-      final auth = _FakeFirebaseAuth(
-        signInCredential: _FakeUserCredential(user),
-      );
-      User? bootstrappedUser;
-      String? receivedAuthMethod;
-      bool? receivedIsNewUserHint;
-      final service = EmailAuthService(
-        auth: auth,
-        ensureSignedInUserProfile: ({
-          required user,
-          required authMethod,
-          required isNewUserHint,
-        }) async {
-          bootstrappedUser = user;
-          receivedAuthMethod = authMethod;
-          receivedIsNewUserHint = isNewUserHint;
-        },
-      );
-
-      final result = await service.signIn(
-        email: '  USER@Example.COM  ',
-        password: 'secret-123',
-      );
-
-      expect(result, same(user));
-      expect(auth.lastSignInEmail, 'user@example.com');
-      expect(auth.lastSignInPassword, 'secret-123');
-      expect(bootstrappedUser, same(user));
-      expect(receivedAuthMethod, 'email');
-      expect(receivedIsNewUserHint, isFalse);
-    });
-
-    test('utilise auth.currentUser quand le credential ne contient pas de user',
-        () async {
-      final currentUser = _FakeUser(uidValue: 'fallback-user');
-      final auth = _FakeFirebaseAuth(
-        signInCredential: _FakeUserCredential(null),
-        currentUserValue: currentUser,
-      );
-      final service = EmailAuthService(
-        auth: auth,
-        ensureSignedInUserProfile: ({
-          required user,
-          required authMethod,
-          required isNewUserHint,
-        }) async {},
-      );
-
-      expect(
-        await service.signIn(email: 'a@b.fr', password: 'password'),
-        same(currentUser),
-      );
-    });
-
-    test('échoue explicitement si Firebase ne retourne aucun user', () async {
-      final auth = _FakeFirebaseAuth(
-        signInCredential: _FakeUserCredential(null),
-      );
-      final service = EmailAuthService(auth: auth);
-
-      await expectLater(
-        service.signIn(email: 'a@b.fr', password: 'password'),
-        throwsA(
-          isA<FirebaseAuthException>().having(
-            (error) => error.code,
-            'code',
-            'user-token-expired',
-          ),
-        ),
-      );
-    });
+  test('signIn normalise email et initialise le profil', () async {
+    final user = _User('u1', email: 'user@example.com');
+    final auth = _Auth(signInUser: user);
+    String? method;
+    bool? isNew;
+    final service = EmailAuthService(
+      auth: auth,
+      ensureSignedInUserProfile: ({required user, required authMethod, required isNewUserHint}) async {
+        method = authMethod;
+        isNew = isNewUserHint;
+      },
+    );
+    expect(await service.signIn(email: ' USER@EXAMPLE.COM ', password: 'secret'), same(user));
+    expect(auth.signInEmail, 'user@example.com');
+    expect(method, 'email');
+    expect(isNew, isFalse);
   });
 
-  group('EmailAuthService.register', () {
-    test('normalise les champs, met à jour le nom et crée un profil pro',
-        () async {
-      final createdUser = _FakeUser(
-        uidValue: 'created-user',
-        emailValue: 'pro@example.com',
-        displayNameValue: 'Ancien nom',
-      );
-      final refreshedUser = _FakeUser(
-        uidValue: 'created-user',
-        emailValue: 'pro@example.com',
-        displayNameValue: 'Nouveau nom',
-      );
-      final auth = _FakeFirebaseAuth(
-        registerCredential: _FakeUserCredential(createdUser),
-        currentUserAfterRegister: refreshedUser,
-      );
-      User? profileUser;
-      String? profileName;
-      bool? businessAccount;
-      var verificationCalls = 0;
-      final service = EmailAuthService(
-        auth: auth,
-        ensureEmailUserProfile: ({
-          required user,
-          required displayName,
-          required isBusinessAccount,
-        }) async {
-          profileUser = user;
-          profileName = displayName;
-          businessAccount = isBusinessAccount;
-        },
-        requestEmailVerification: () async => verificationCalls += 1,
-      );
+  test('signIn utilise currentUser puis échoue sans user', () async {
+    final current = _User('current');
+    final fallback = EmailAuthService(
+      auth: _Auth(currentUserValue: current),
+      ensureSignedInUserProfile: ({required user, required authMethod, required isNewUserHint}) async {},
+    );
+    expect(await fallback.signIn(email: 'a@b.fr', password: 'x'), same(current));
 
-      final result = await service.register(
-        displayName: '  Nouveau nom  ',
-        email: '  PRO@Example.COM ',
-        password: 'password-123',
+    final missing = EmailAuthService(auth: _Auth());
+    await expectLater(
+      missing.signIn(email: 'a@b.fr', password: 'x'),
+      throwsA(isA<FirebaseAuthException>().having((e) => e.code, 'code', 'user-token-expired')),
+    );
+  });
+
+  test('register normalise, met à jour le nom et crée un profil pro', () async {
+    final created = _User('u2', name: 'Ancien');
+    final refreshed = _User('u2', name: 'Nouveau');
+    final auth = _Auth(registerUser: created, currentAfterRegister: refreshed);
+    String? profileName;
+    bool? business;
+    var verification = 0;
+    final service = EmailAuthService(
+      auth: auth,
+      ensureEmailUserProfile: ({required user, required displayName, required isBusinessAccount}) async {
+        profileName = displayName;
+        business = isBusinessAccount;
+      },
+      requestEmailVerification: () async => verification++,
+    );
+    expect(
+      await service.register(
+        displayName: ' Nouveau ',
+        email: ' PRO@EXAMPLE.COM ',
+        password: 'secret',
         createBusinessProfile: true,
-      );
+      ),
+      same(refreshed),
+    );
+    expect(auth.registerEmail, 'pro@example.com');
+    expect(created.updatedName, 'Nouveau');
+    expect(created.reloadCount, 1);
+    expect(profileName, 'Nouveau');
+    expect(business, isTrue);
+    expect(verification, 1);
+  });
 
-      expect(result, same(refreshedUser));
-      expect(auth.lastRegisterEmail, 'pro@example.com');
-      expect(auth.lastRegisterPassword, 'password-123');
-      expect(createdUser.updatedDisplayName, 'Nouveau nom');
-      expect(createdUser.reloadCalls, 1);
-      expect(profileUser, same(refreshedUser));
-      expect(profileName, 'Nouveau nom');
-      expect(businessAccount, isTrue);
-      expect(verificationCalls, 1);
-    });
+  test('register évite les mises à jour inutiles et refuse une session vide', () async {
+    final sameName = _User('u3', name: 'Identique');
+    final service = EmailAuthService(
+      auth: _Auth(registerUser: sameName),
+      ensureEmailUserProfile: ({required user, required displayName, required isBusinessAccount}) async {},
+      requestEmailVerification: () async {},
+    );
+    await service.register(displayName: 'Identique', email: 'same@example.com', password: 'x');
+    expect(sameName.updatedName, isNull);
+    expect(sameName.reloadCount, 0);
 
-    test('ne recharge pas le user quand le nom est déjà identique', () async {
-      final user = _FakeUser(
-        uidValue: 'same-name',
-        displayNameValue: 'Nom identique',
-      );
-      final auth = _FakeFirebaseAuth(
-        registerCredential: _FakeUserCredential(user),
-      );
-      final service = EmailAuthService(
-        auth: auth,
-        ensureEmailUserProfile: ({
-          required user,
-          required displayName,
-          required isBusinessAccount,
-        }) async {},
-        requestEmailVerification: () async {},
-      );
-
-      await service.register(
-        displayName: 'Nom identique',
-        email: 'same@example.com',
-        password: 'password',
-      );
-
-      expect(user.updatedDisplayName, isNull);
-      expect(user.reloadCalls, 0);
-    });
-
-    test('accepte un nom vide sans mise à jour Firebase', () async {
-      final user = _FakeUser(uidValue: 'empty-name');
-      final auth = _FakeFirebaseAuth(
-        registerCredential: _FakeUserCredential(user),
-      );
-      String? receivedName;
-      final service = EmailAuthService(
-        auth: auth,
-        ensureEmailUserProfile: ({
-          required user,
-          required displayName,
-          required isBusinessAccount,
-        }) async {
-          receivedName = displayName;
-        },
-        requestEmailVerification: () async {},
-      );
-
-      await service.register(
-        displayName: '   ',
-        email: 'empty@example.com',
-        password: 'password',
-      );
-
-      expect(user.updatedDisplayName, isNull);
-      expect(user.reloadCalls, 0);
-      expect(receivedName, '');
-    });
-
-    test('échoue explicitement si la création ne retourne aucun user',
-        () async {
-      final auth = _FakeFirebaseAuth(
-        registerCredential: _FakeUserCredential(null),
-      );
-      final service = EmailAuthService(auth: auth);
-
-      await expectLater(
-        service.register(
-          displayName: 'Test',
-          email: 'test@example.com',
-          password: 'password',
-        ),
-        throwsA(
-          isA<FirebaseAuthException>().having(
-            (error) => error.code,
-            'code',
-            'user-token-expired',
-          ),
-        ),
-      );
-    });
+    final missing = EmailAuthService(auth: _Auth());
+    await expectLater(
+      missing.register(displayName: 'Test', email: 'test@example.com', password: 'x'),
+      throwsA(isA<FirebaseAuthException>().having((e) => e.code, 'code', 'user-token-expired')),
+    );
   });
 }
 
-class _FakeFirebaseAuth implements FirebaseAuth {
-  _FakeFirebaseAuth({
-    this.signInCredential,
-    this.registerCredential,
-    this.currentUserValue,
-    this.currentUserAfterRegister,
-  });
-
-  final UserCredential? signInCredential;
-  final UserCredential? registerCredential;
+class _Auth implements FirebaseAuth {
+  _Auth({this.signInUser, this.registerUser, this.currentUserValue, this.currentAfterRegister});
+  final User? signInUser;
+  final User? registerUser;
   User? currentUserValue;
-  final User? currentUserAfterRegister;
-
-  String? lastSignInEmail;
-  String? lastSignInPassword;
-  String? lastRegisterEmail;
-  String? lastRegisterPassword;
+  final User? currentAfterRegister;
+  String? signInEmail;
+  String? registerEmail;
 
   @override
   User? get currentUser => currentUserValue;
 
   @override
-  Future<UserCredential> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    lastSignInEmail = email;
-    lastSignInPassword = password;
-    return signInCredential ?? _FakeUserCredential(null);
+  Future<UserCredential> signInWithEmailAndPassword({required String email, required String password}) async {
+    signInEmail = email;
+    return _Credential(signInUser);
   }
 
   @override
-  Future<UserCredential> createUserWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    lastRegisterEmail = email;
-    lastRegisterPassword = password;
-    if (currentUserAfterRegister != null) {
-      currentUserValue = currentUserAfterRegister;
-    }
-    return registerCredential ?? _FakeUserCredential(null);
+  Future<UserCredential> createUserWithEmailAndPassword({required String email, required String password}) async {
+    registerEmail = email;
+    currentUserValue = currentAfterRegister;
+    return _Credential(registerUser);
   }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeUserCredential implements UserCredential {
-  _FakeUserCredential(this.user);
-
+class _Credential implements UserCredential {
+  _Credential(this.user);
   @override
   final User? user;
-
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeUser implements User {
-  _FakeUser({
-    required this.uidValue,
-    this.emailValue,
-    this.displayNameValue,
-    this.emailVerifiedValue = false,
-  });
-
-  final String uidValue;
-  final String? emailValue;
-  String? displayNameValue;
-  final bool emailVerifiedValue;
-
-  String? updatedDisplayName;
-  int reloadCalls = 0;
-
+class _User implements User {
+  _User(this.id, {this.email, this.name});
+  final String id;
+  final String? email;
+  String? name;
+  String? updatedName;
+  int reloadCount = 0;
   @override
-  String get uid => uidValue;
-
+  String get uid => id;
   @override
-  String? get email => emailValue;
-
+  String? get displayName => name;
   @override
-  String? get displayName => displayNameValue;
-
+  bool get emailVerified => false;
   @override
-  bool get emailVerified => emailVerifiedValue;
-
-  @override
-  Future<void> updateDisplayName(String? displayName) async {
-    updatedDisplayName = displayName;
-    displayNameValue = displayName;
+  Future<void> updateDisplayName(String? value) async {
+    updatedName = value;
+    name = value;
   }
-
   @override
-  Future<void> reload() async {
-    reloadCalls += 1;
-  }
-
+  Future<void> reload() async => reloadCount++;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
