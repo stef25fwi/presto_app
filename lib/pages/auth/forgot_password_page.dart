@@ -4,10 +4,25 @@ import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 import 'reset_password_success_page.dart';
 
+typedef ForgotPasswordResetSender = Future<void> Function({
+  required String email,
+});
+typedef ForgotPasswordErrorMessageMapper = String Function(Object error);
+typedef ForgotPasswordSuccessPageBuilder = Widget Function(String email);
+
 class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+  const ForgotPasswordPage({
+    super.key,
+    this.sendPasswordReset,
+    this.errorMessageMapper,
+    this.successPageBuilder,
+  });
 
   static const routeName = '/forgot-password';
+
+  final ForgotPasswordResetSender? sendPasswordReset;
+  final ForgotPasswordErrorMessageMapper? errorMessageMapper;
+  final ForgotPasswordSuccessPageBuilder? successPageBuilder;
 
   @override
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
@@ -31,20 +46,25 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _loading = true);
 
     try {
-      await AuthService.instance.sendPasswordReset(email: _emailCtrl.text);
+      final email = _emailCtrl.text.trim();
+      final sendPasswordReset = widget.sendPasswordReset ??
+          ({required String email}) =>
+              AuthService.instance.sendPasswordReset(email: email);
+      await sendPasswordReset(email: email);
 
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              ResetPasswordSuccessPage(email: _emailCtrl.text.trim()),
+          builder: (_) => widget.successPageBuilder?.call(email) ??
+              ResetPasswordSuccessPage(email: email),
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      final messageMapper = widget.errorMessageMapper ?? AuthErrorMapper.message;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AuthErrorMapper.message(e))),
+        SnackBar(content: Text(messageMapper(e))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
