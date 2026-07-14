@@ -50,30 +50,23 @@ void main() {
 
   group('SubmitReviewResult V2', () {
     test('expose chaque statut métier', () {
-      expect(
-        SubmitReviewResult.fromMap(<String, dynamic>{
-          'status': 'published',
-        }).isPublished,
-        isTrue,
-      );
-      expect(
-        SubmitReviewResult.fromMap(<String, dynamic>{
-          'status': 'pending_peer_review',
-        }).isPendingPeerReview,
-        isTrue,
-      );
-      expect(
-        SubmitReviewResult.fromMap(<String, dynamic>{
-          'status': 'pending_moderation',
-        }).isPendingModeration,
-        isTrue,
-      );
-      expect(
-        SubmitReviewResult.fromMap(<String, dynamic>{
-          'status': 'rate_later',
-        }).isRateLater,
-        isTrue,
-      );
+      final published = SubmitReviewResult.fromMap(<String, dynamic>{
+        'status': 'published',
+      });
+      final pendingPeerReview = SubmitReviewResult.fromMap(<String, dynamic>{
+        'status': 'pending_peer_review',
+      });
+      final pendingModeration = SubmitReviewResult.fromMap(<String, dynamic>{
+        'status': 'pending_moderation',
+      });
+      final rateLater = SubmitReviewResult.fromMap(<String, dynamic>{
+        'status': 'rate_later',
+      });
+
+      expect(published.isPublished, isTrue);
+      expect(pendingPeerReview.isPendingPeerReview, isTrue);
+      expect(pendingModeration.isPendingModeration, isTrue);
+      expect(rateLater.isRateLater, isTrue);
     });
 
     test('retombe en pending_moderation sur réponse incomplète', () {
@@ -112,7 +105,10 @@ void main() {
       expect(profile.summary.reviewsCount, 8);
       expect(profile.summary.publishedReviewsCount, 7);
       expect(profile.summary.pendingReviewsCount, 1);
-      expect(profile.summary.badges, <String>['top_provider', 'punctual']);
+      expect(
+        profile.summary.badges,
+        <String>['top_provider', 'punctual'],
+      );
       expect(profile.latestReviews, hasLength(1));
       expect(profile.ratingsPaidShowcaseEnabled, isFalse);
 
