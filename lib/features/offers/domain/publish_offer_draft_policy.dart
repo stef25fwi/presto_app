@@ -52,6 +52,14 @@ class PublishOfferDraftPolicy {
   static String? extractMissionDelayFromTranscript(String transcript) {
     final lower = transcript.toLowerCase();
 
+    if (lower.contains('à convenir') ||
+        lower.contains('a convenir') ||
+        lower.contains('quand vous pouvez') ||
+        lower.contains('quand tu peux') ||
+        lower.contains('flexible') ||
+        lower.contains('pas urgent')) {
+      return 'À convenir';
+    }
     if (lower.contains('urgent') ||
         lower.contains('urgence') ||
         lower.contains('immédiat') ||
@@ -76,14 +84,6 @@ class PublishOfferDraftPolicy {
         lower.contains('7 jours') ||
         lower.contains('7j')) {
       return 'Cette semaine';
-    }
-    if (lower.contains('à convenir') ||
-        lower.contains('a convenir') ||
-        lower.contains('quand vous pouvez') ||
-        lower.contains('quand tu peux') ||
-        lower.contains('flexible') ||
-        lower.contains('pas urgent')) {
-      return 'À convenir';
     }
 
     return null;
