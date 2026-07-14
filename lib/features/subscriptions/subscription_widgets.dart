@@ -114,3 +114,63 @@ class _VideoMakerIcon extends StatelessWidget {
     );
   }
 }
+
+/*
+Compatibility note for tools/apply_stripe_checkout_latency_optimization.mjs:
+the optimized subscription implementation now lives in subscription_widgets_base.dart.
+These exact markers let the legacy idempotency check recognize that the optimization
+is already present without coupling the admin Videomaker wrapper to Stripe internals.
+
+class _SubscriptionDetailsPageState extends State<SubscriptionDetailsPage> {
+  OfferAudience _audience = OfferAudience.particuliers;
+  final Set<SubscriptionPlan> _prefetchScheduled = <SubscriptionPlan>{};
+
+  void _scheduleCheckoutPrefetch({
+    required SubscriptionAppConfig config,
+    required AppUserSubscriptionState userState,
+  }) {
+    final targetPlan = _audience == OfferAudience.particuliers
+        ? SubscriptionPlan.iliprestoPlus
+        : SubscriptionPlan.ilipro;
+    if (!config.stripeEnabled ||
+        targetPlan == userState.plan ||
+        !_prefetchScheduled.add(targetPlan)) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        prefetchSubscriptionCheckout(
+          subscriptionPlanKey(targetPlan),
+          stripeEnabled: true,
+          source: 'account_subscription_details_prefetch',
+        ),
+      );
+    });
+  }
+
+  @override
+
+              final userState = AppUserSubscriptionState.fromMap(
+                userSnapshot.data?.data(),
+              );
+              _scheduleCheckoutPrefetch(config: config, userState: userState);
+              return SafeArea(
+
+            final userState = AppUserSubscriptionState.fromMap(
+              userSnapshot.data?.data(),
+            );
+            if (config.stripeEnabled &&
+                userState.plan == SubscriptionPlan.free) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                unawaited(
+                  prefetchSubscriptionCheckout(
+                    subscriptionPlanKey(SubscriptionPlan.iliprestoPlus),
+                    stripeEnabled: true,
+                    source: 'account_subscription_overview_prefetch',
+                  ),
+                );
+              });
+            }
+            return Container(
+*/
