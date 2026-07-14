@@ -19,13 +19,13 @@ class EmailAuthService {
     EmailVerificationAction? requestEmailVerification,
     EmailVerificationSyncAction? syncEmailVerification,
     AuthenticatedUserCheck? hasCurrentUser,
-  }) : _auth = auth,
-       _profileService = profileService,
-       _backendPasswordReset = backendPasswordReset,
-       _nativePasswordReset = nativePasswordReset,
-       _requestEmailVerification = requestEmailVerification,
-       _syncEmailVerification = syncEmailVerification,
-       _hasCurrentUser = hasCurrentUser;
+  })  : _auth = auth,
+        _profileService = profileService,
+        _backendPasswordReset = backendPasswordReset,
+        _nativePasswordReset = nativePasswordReset,
+        _requestEmailVerification = requestEmailVerification,
+        _syncEmailVerification = syncEmailVerification,
+        _hasCurrentUser = hasCurrentUser;
 
   final FirebaseAuth? _auth;
   final AuthUserProfileService? _profileService;

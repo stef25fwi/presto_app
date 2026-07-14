@@ -107,8 +107,9 @@ void main() {
               '${fiche['id_fiche'] ?? fiche['id'] ?? '??'} (${fiche['statut_utilisateur']} × ${fiche['activite']})';
 
           for (final f in _requiredStringFields) {
-            if (_isEmptyValue(fiche[f]))
+            if (_isEmptyValue(fiche[f])) {
               problems.add('$label : champ "$f" manquant/vide');
+            }
           }
           for (final f in _requiredListFields) {
             if (fiche[f] is! List || _isEmptyValue(fiche[f])) {
