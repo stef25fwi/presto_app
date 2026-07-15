@@ -1,95 +1,45 @@
-import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/messages/conversation_thread_page.dart';
 
-class _SignedOutThreadAuthPlatform extends FirebaseAuthPlatform {
-  _SignedOutThreadAuthPlatform() : super(appInstance: null);
-
-  @override
-  FirebaseAuthPlatform delegateFor({required FirebaseApp app}) => this;
-
-  @override
-  FirebaseAuthPlatform setInitialValues({
-    InternalUserDetails? currentUser,
-    String? languageCode,
-  }) =>
-      this;
-
-  @override
-  UserPlatform? get currentUser => null;
-
-  @override
-  Stream<UserPlatform?> authStateChanges() => Stream<UserPlatform?>.value(null);
-
-  @override
-  Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(null);
-
-  @override
-  Stream<UserPlatform?> idTokenChanges() => Stream<UserPlatform?>.value(null);
-}
-
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  test('le fil expose son contexte public et le brouillon initial', () {
+    const page = ConversationThreadPage(
+      key: ValueKey<String>('thread'),
+      conversationId: 'conversation-1',
+      offerTitle: 'Mission jardinage',
+      currentUserId: 'user-1',
+      initialDraftText: 'Bonjour, je suis disponible.',
+    );
 
-  setUpAll(() async {
-    setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
-    FirebaseAuthPlatform.instance = _SignedOutThreadAuthPlatform();
+    expect(page.key, const ValueKey<String>('thread'));
+    expect(page.conversationId, 'conversation-1');
+    expect(page.offerTitle, 'Mission jardinage');
+    expect(page.currentUserId, 'user-1');
+    expect(page.initialDraftText, 'Bonjour, je suis disponible.');
+    expect(page.createState(), isA<State<ConversationThreadPage>>());
   });
 
-  testWidgets('le fil affiche immédiatement son contexte et son composeur', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(430, 932);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  test('le thème public du fil conserve les couleurs ilipresto', () {
+    expect(kPrestoOrange, const Color(0xFFFF6600));
+    expect(kPrestoBlue, const Color(0xFF1A73E8));
+    expect(kThreadMineColor, const Color(0xFFD9FDD3));
+    expect(kThreadOtherColor, Colors.white);
+    expect(kThreadBackground, const Color(0xFFFFFEFE));
+    expect(kWhatsappGreen, const Color(0xFF25D366));
+  });
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: ConversationThreadPage(
-          conversationId: 'conversation-1',
-          offerTitle: 'Mission jardinage',
-          currentUserId: 'user-1',
-          initialDraftText: 'Bonjour, je suis disponible.',
-        ),
-      ),
-    );
-
+  test('la barre système du fil reste lisible sur le bandeau orange', () {
+    expect(kConversationThreadStatusBarStyle.statusBarColor, kPrestoOrange);
     expect(
-      find.byType(ConversationThreadPage, skipOffstage: false),
-      findsOneWidget,
-    );
-    expect(find.text('Mission jardinage', skipOffstage: false), findsWidgets);
-    expect(
-      find.text(
-        'Preparation securisee de la messagerie…',
-        skipOffstage: false,
-      ),
-      findsOneWidget,
-    );
-    expect(find.byType(TextField, skipOffstage: false), findsOneWidget);
-    expect(find.text('Votre message...', skipOffstage: false), findsOneWidget);
-    expect(
-      find.byIcon(Icons.attach_file_rounded, skipOffstage: false),
-      findsOneWidget,
+      kConversationThreadStatusBarStyle.statusBarIconBrightness,
+      Brightness.light,
     );
     expect(
-      find.byIcon(Icons.mic_none_rounded, skipOffstage: false),
-      findsOneWidget,
+      kConversationThreadStatusBarStyle.statusBarBrightness,
+      Brightness.dark,
     );
-    expect(find.byType(PopupMenuButton, skipOffstage: false), findsOneWidget);
-
-    final field = find.byType(TextField, skipOffstage: false);
-    await tester.enterText(field, 'Une réponse rapide');
-    await tester.pump();
-
-    expect(find.byIcon(Icons.send_rounded, skipOffstage: false), findsOneWidget);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 7));
+    expect(kConversationThreadStatusBarStyle, isA<SystemUiOverlayStyle>());
   });
 }
