@@ -34,8 +34,8 @@ void main() {
     expect(model.mimeType, 'application/pdf');
     expect(model.moderationStatus, 'approved');
     expect(model.reportCount, 3);
-    expect(model.createdAt, DateTime.utc(2026, 7, 1, 10));
-    expect(model.deletedAt, DateTime.utc(2026, 7, 2, 11));
+    expect(model.createdAt?.toUtc(), DateTime.utc(2026, 7, 1, 10));
+    expect(model.deletedAt?.toUtc(), DateTime.utc(2026, 7, 2, 11));
   });
 
   test('fromData parses numeric file size strings', () {
