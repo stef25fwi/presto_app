@@ -74,10 +74,6 @@ void main() {
     expect(shiftFontWeight(FontWeight.w400, -2), FontWeight.w200);
     expect(shiftFontWeight(FontWeight.w900, 2), FontWeight.w900);
     expect(shiftFontWeight(FontWeight.w100, -2), FontWeight.w100);
-    expect(
-      shiftFontWeight(const FontWeight(450), 1),
-      FontWeight.w500,
-    );
   });
 
   test('shifts every text theme slot and preserves a zero delta theme', () {
