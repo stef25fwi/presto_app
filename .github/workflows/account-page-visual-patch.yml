@@ -1,0 +1,73 @@
+name: Apply account page visual separation
+
+on:
+  push:
+    branches:
+      - agent/account-page-visual-separation
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/account-page-visual-separation
+          fetch-depth: 0
+
+      - name: Apply targeted UI changes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          account = Path('lib/pages/account_page.dart')
+          text = account.read_text()
+
+          old_border = "border: Border.all(color: kPrestoBlue.withValues(alpha: 0.10)),"
+          new_border = """border: Border.all(
+                  color: const Color(0xFFB8BEC7),
+                  width: 2,
+                ),"""
+          if old_border not in text:
+              raise SystemExit('Account section border pattern not found')
+          text = text.replace(old_border, new_border, 1)
+
+          logo_block = """                    // Logo brand centré
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10, bottom: 12),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/logowebp.webp',
+                          height: 52,
+                        ),
+                      ),
+                    ),
+"""
+          if logo_block not in text:
+              raise SystemExit('Account page logo block not found')
+          text = text.replace(logo_block, '', 1)
+          account.write_text(text)
+
+          notifications = Path('lib/widgets/account_notifications_tile.dart')
+          text = notifications.read_text()
+          old_side = "side: BorderSide(color: Colors.grey.shade300),"
+          new_side = """side: const BorderSide(
+          color: Color(0xFFB8BEC7),
+          width: 2,
+        ),"""
+          if old_side not in text:
+              raise SystemExit('Notifications tile border pattern not found')
+          notifications.write_text(text.replace(old_side, new_side, 1))
+          PY
+
+      - name: Remove one-time workflow and commit
+        run: |
+          rm .github/workflows/account-page-visual-patch.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart lib/widgets/account_notifications_tile.dart .github/workflows/account-page-visual-patch.yml
+          git commit -m "feat(account): renforcer la séparation visuelle des sections"
+          git push origin HEAD:agent/account-page-visual-separation
