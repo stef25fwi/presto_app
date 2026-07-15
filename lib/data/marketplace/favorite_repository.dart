@@ -6,6 +6,12 @@ import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_events.dart';
 import '../../services/product_analytics_service.dart';
 
+typedef FavoriteToggleCaller = Future<bool> Function(String listingId);
+typedef FavoriteChangeLogger = Future<void> Function({
+  required String listingId,
+  required bool added,
+});
+
 class FavoriteOfferRef {
   const FavoriteOfferRef({
     required this.offerId,
@@ -31,13 +37,22 @@ class FavoriteRepository {
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
+    FavoriteToggleCaller? toggleCaller,
+    FavoriteChangeLogger? favoriteChangeLogger,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? prestoFirebaseFunctions,
-        _analytics = analytics ?? ProductAnalyticsService();
+        _functionsOverride = functions,
+        _analytics = analytics,
+        _toggleCaller = toggleCaller,
+        _favoriteChangeLogger = favoriteChangeLogger;
 
   final FirebaseFirestore _firestore;
-  final FirebaseFunctions _functions;
-  final ProductAnalyticsService _analytics;
+  final FirebaseFunctions? _functionsOverride;
+  ProductAnalyticsService? _analytics;
+  final FavoriteToggleCaller? _toggleCaller;
+  final FavoriteChangeLogger? _favoriteChangeLogger;
+
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? prestoFirebaseFunctions;
 
   void _debugLog(String message) {
     if (kDebugMode) {
@@ -310,6 +325,45 @@ class FavoriteRepository {
     return !(await toggleFavorite(normalizedOfferId));
   }
 
+  Future<bool> _callToggleFavorite(String listingId) async {
+    final override = _toggleCaller;
+    if (override != null) {
+      return override(listingId);
+    }
+
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'toggleFavorite',
+      timeout: const Duration(seconds: 15),
+      parameters: <String, dynamic>{
+        'listingId': listingId,
+      },
+    );
+    final data = Map<String, dynamic>.from(
+      (response.data as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{},
+    );
+    return data['active'] == true;
+  }
+
+  Future<void> _logFavoriteChange({
+    required String listingId,
+    required bool added,
+  }) async {
+    final override = _favoriteChangeLogger;
+    if (override != null) {
+      await override(listingId: listingId, added: added);
+      return;
+    }
+
+    await (_analytics ??= ProductAnalyticsService()).logProductEvent(
+      ProductAnalyticsEvent.engagementFavoriteChanged(
+        listingId: listingId,
+        added: added,
+      ),
+    );
+  }
+
   Future<bool> toggleFavorite(String listingId) async {
     final normalizedListingId = listingId.trim();
     if (normalizedListingId.isEmpty) {
@@ -320,24 +374,10 @@ class FavoriteRepository {
       );
     }
 
-    final response = await callPrestoFunction<dynamic>(
-      functions: _functions,
-      name: 'toggleFavorite',
-      timeout: const Duration(seconds: 15),
-      parameters: <String, dynamic>{
-        'listingId': normalizedListingId,
-      },
-    );
-    final data = Map<String, dynamic>.from(
-      (response.data as Map?)?.cast<String, dynamic>() ??
-          const <String, dynamic>{},
-    );
-    final active = data['active'] == true;
-    await _analytics.logProductEvent(
-      ProductAnalyticsEvent.engagementFavoriteChanged(
-        listingId: normalizedListingId,
-        added: active,
-      ),
+    final active = await _callToggleFavorite(normalizedListingId);
+    await _logFavoriteChange(
+      listingId: normalizedListingId,
+      added: active,
     );
     return active;
   }
