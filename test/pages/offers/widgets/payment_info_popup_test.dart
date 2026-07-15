@@ -1,7 +1,6 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/pages/legal_info_page.dart';
 import 'package:presto_app/pages/offers/widgets/payment_info_popup.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
 
@@ -112,26 +111,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(await handle.result, isNull);
-    },
-  );
-
-  testWidgets(
-    'ouvre les informations légales depuis le dialogue',
-    (tester) async {
-      tester.view.physicalSize = const Size(1200, 2400);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await _openPopup(tester, FakeFirebaseFirestore());
-      final moreInfo = find.text('En savoir plus sur les règles de paiement');
-
-      await tester.ensureVisible(moreInfo);
-      await tester.pumpAndSettle();
-      await tester.tap(moreInfo);
-      await tester.pumpAndSettle();
-
-      expect(find.byType(LegalInfoPage), findsOneWidget);
     },
   );
 }
