@@ -21,13 +21,18 @@ function hasPreviewEnvironmentMarker(projectId) {
   );
 }
 
-export function evaluatePreviewProject(projectId) {
+export function evaluatePreviewProject(projectId, productionProjectId) {
   const normalized = normalizeProjectId(projectId);
+  const normalizedProduction = normalizeProjectId(productionProjectId);
+  const forbiddenProjects = new Set(productionProjectIds);
+  if (normalizedProduction) forbiddenProjects.add(normalizedProduction);
+
   if (!normalized) {
     return {
       enabled: false,
       reason: 'missing-project-id',
-      message: 'Firebase preview skipped: FIREBASE_PROJECT_ID is missing.',
+      message:
+        'Firebase preview skipped: FIREBASE_STAGING_PROJECT_ID is missing.',
     };
   }
 
@@ -36,11 +41,11 @@ export function evaluatePreviewProject(projectId) {
       enabled: false,
       reason: 'invalid-project-id',
       message:
-        'Firebase preview refused: FIREBASE_PROJECT_ID must be a valid Firebase project ID, not a URL, hostname or alias.',
+        'Firebase preview refused: FIREBASE_STAGING_PROJECT_ID must be a valid Firebase project ID, not a URL, hostname or alias.',
     };
   }
 
-  if (productionProjectIds.has(normalized)) {
+  if (forbiddenProjects.has(normalized)) {
     return {
       enabled: false,
       reason: 'production-project-forbidden',
@@ -68,7 +73,10 @@ export function evaluatePreviewProject(projectId) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const result = evaluatePreviewProject(process.env.FIREBASE_PROJECT_ID);
+  const result = evaluatePreviewProject(
+    process.env.FIREBASE_STAGING_PROJECT_ID,
+    process.env.FIREBASE_PRODUCTION_PROJECT_ID,
+  );
   process.stdout.write(`${JSON.stringify(result)}\n`);
   if (!result.enabled && result.reason !== 'missing-project-id') {
     process.exitCode = 2;
