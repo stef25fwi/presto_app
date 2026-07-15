@@ -42,9 +42,15 @@ class AdminMessagingUserModel {
   factory AdminMessagingUserModel.fromDocument(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data();
+    return AdminMessagingUserModel.fromData(uid: doc.id, data: doc.data());
+  }
+
+  factory AdminMessagingUserModel.fromData({
+    required String uid,
+    required Map<String, dynamic> data,
+  }) {
     return AdminMessagingUserModel(
-      uid: doc.id,
+      uid: uid,
       name:
           '${data['displayName'] ?? data['name'] ?? data['pseudo'] ?? 'Utilisateur'}',
       email: '${data['email'] ?? ''}',
