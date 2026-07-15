@@ -82,7 +82,7 @@ void main() {
   group('friendlyVideoMakerFunctionError', () {
     String messageFor(String code, {String? message}) {
       return friendlyVideoMakerFunctionError(
-        FirebaseFunctionsException(code: code, message: message),
+        FirebaseFunctionsException(code: code, message: message ?? ''),
       );
     }
 
