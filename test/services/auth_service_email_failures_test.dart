@@ -38,7 +38,7 @@ class _EmailFailureAuthPlatform extends FirebaseAuthPlatform {
   }
 
   @override
-  Future<dynamic> createUserWithEmailAndPassword(
+  Future<UserCredentialPlatform> createUserWithEmailAndPassword(
     String email,
     String password,
   ) async {
@@ -48,7 +48,7 @@ class _EmailFailureAuthPlatform extends FirebaseAuthPlatform {
   }
 
   @override
-  Future<dynamic> signInWithEmailAndPassword(
+  Future<UserCredentialPlatform> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
