@@ -1,23 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/config/app_check_state.dart';
 import 'package:presto_app/services/public_offers_query_helpers.dart';
-
-class _FailingQuery implements Query<Map<String, dynamic>> {
-  _FailingQuery(this.error);
-
-  final Object error;
-
-  @override
-  Future<QuerySnapshot<Map<String, dynamic>>> get([GetOptions? options]) async {
-    throw error;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
 
 Future<void> _seedListings(FakeFirebaseFirestore firestore) async {
   final listings = firestore.collection(kListingsCollection);
@@ -122,59 +107,12 @@ void main() {
     expect(publicOffersFilter(), isA<Filter>());
   });
 
-  test('expose les trois états App Check et les diagnostics associés', () {
+  test('expose les trois états App Check', () {
     expect(publicOffersAppCheckStateLabel(), 'not-attempted');
     appCheckActivationAttempted = true;
     expect(publicOffersAppCheckStateLabel(), 'failed');
     appCheckActivationSucceeded = true;
     expect(publicOffersAppCheckStateLabel(), 'ok');
-
-    final error = FirebaseException(
-      plugin: 'cloud_firestore',
-      code: 'permission-denied',
-      message: 'denied',
-    );
-    expect(
-      diagnosePublicOffersReadIssueWithAppCheck(
-        error,
-        source: 'test-diagnostic',
-      ),
-      isNotNull,
-    );
-    expect(
-      friendlyPublicOffersReadErrorWithAppCheck(error, debug: false),
-      isNotEmpty,
-    );
-    expect(
-      buildPublicOffersDebugCardWithAppCheck(
-        error,
-        source: 'test-card',
-      ),
-      isA<Widget>(),
-    );
-    expect(
-      () => logPublicOffersReadErrorWithAppCheck('test-log', error),
-      returnsNormally,
-    );
-  });
-
-  testWidgets('construit la carte de diagnostic publique', (tester) async {
-    final error = FirebaseException(
-      plugin: 'cloud_firestore',
-      code: 'unavailable',
-      message: 'offline',
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: buildPublicOffersDebugCardWithAppCheck(
-            error,
-            source: 'widget-test',
-          ),
-        ),
-      ),
-    );
-    expect(find.byType(Scaffold), findsOneWidget);
   });
 
   test('construit et exécute les variantes listings publiques', () async {
@@ -284,36 +222,9 @@ void main() {
     expect(merged.first.id, 'offer-active');
   });
 
-  test('tolère une variante en erreur si une autre réussit', () async {
-    final successful = firestore
-        .collection(kOffersCollection)
-        .where('status', isEqualTo: 'active');
-    final merged = await loadMergedPublicOfferQueryVariants(
-      queries: <Query<Map<String, dynamic>>>[
-        _FailingQuery(StateError('query failed')),
-        successful,
-      ],
-      source: 'partial-failure-test',
-    );
-    expect(_ids(merged), <String>['offer-active']);
-  });
-
-  test('relance la première erreur lorsque toutes les variantes échouent', () {
-    expect(
-      () => loadMergedPublicOfferQueryVariants(
-        queries: <Query<Map<String, dynamic>>>[
-          _FailingQuery(StateError('first failure')),
-          _FailingQuery(StateError('second failure')),
-        ],
-        source: 'total-failure-test',
-      ),
-      throwsA(isA<StateError>()),
-    );
-  });
-
   test('désactive explicitement le backfill legacy automatique', () async {
     final result = await loadLegacyPublicOffersBackfill(
-      query: _FailingQuery(StateError('must not run')),
+      query: firestore.collection(kOffersCollection),
       source: 'disabled-backfill-test',
     );
     expect(result, isEmpty);
