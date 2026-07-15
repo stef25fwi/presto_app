@@ -87,6 +87,18 @@ jobs:
           set -o pipefail
           flutter test --coverage --reporter expanded 2>&1 | tee pr_validation_logs/flutter_test.log
 
+      - name: Enforce global coverage target
+        id: global_coverage
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python3 tools/coverage/coverage_agent.py \
+            --lcov coverage/lcov.info \
+            --json-output quality_reports/pr/coverage-agent/target.json \
+            --markdown-output quality_reports/pr/coverage-agent/issue.md \
+            --global-target 80 \
+            --enforce-global-target 2>&1 | tee pr_validation_logs/global_coverage.log
+
       - name: Enforce repository quality gates
         id: quality_gate
         continue-on-error: true
@@ -178,6 +190,7 @@ jobs:
           | Dépendances Flutter | `${{ steps.flutter_deps.outcome }}` |
           | Flutter analyze | `${{ steps.flutter_analyze.outcome }}` |
           | Tests Flutter + couverture | `${{ steps.flutter_test.outcome }}` |
+          | Couverture globale 80% | `${{ steps.global_coverage.outcome }}` |
           | Seuils qualité | `${{ steps.quality_gate.outcome }}` |
           | Couverture modules critiques | `${{ steps.critical_coverage.outcome }}` |
           | Dépendances Functions | `${{ steps.functions_deps.outcome }}` |
@@ -204,7 +217,7 @@ jobs:
       - name: Enforce validation result
         if: always()
         run: |
-          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
+          outcomes='${{ steps.generated_check.outcome }} ${{ steps.flutter_deps.outcome }} ${{ steps.flutter_analyze.outcome }} ${{ steps.flutter_test.outcome }} ${{ steps.global_coverage.outcome }} ${{ steps.quality_gate.outcome }} ${{ steps.critical_coverage.outcome }} ${{ steps.functions_deps.outcome }} ${{ steps.functions_build.outcome }} ${{ steps.functions_test.outcome }} ${{ steps.firebase_cli.outcome }} ${{ steps.firestore_rules.outcome }} ${{ steps.web_build.outcome }} ${{ steps.bundle_budget.outcome }}'
           if echo "$outcomes" | grep -Eq 'failure|cancelled'; then
             echo "Validation failed: $outcomes"
             exit 1

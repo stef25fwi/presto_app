@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -63,6 +64,79 @@ end_of_record
 
     def test_compacts_uncovered_ranges(self) -> None:
         self.assertEqual("1-3, 7, 9-10", coverage_agent.compact_ranges([1, 2, 3, 7, 9, 10]))
+
+    def test_enforce_global_target_fails_below_threshold(self) -> None:
+        fixture = """TN:
+SF:/repo/lib/services/payment_service.dart
+DA:10,1
+DA:11,0
+end_of_record
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "lcov.info"
+            json_output = root / "target.json"
+            markdown_output = root / "issue.md"
+            report.write_text(fixture, encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(MODULE_PATH),
+                    "--lcov",
+                    str(report),
+                    "--json-output",
+                    str(json_output),
+                    "--markdown-output",
+                    str(markdown_output),
+                    "--global-target",
+                    "80",
+                    "--enforce-global-target",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(1, result.returncode)
+
+    def test_enforce_global_target_passes_at_threshold(self) -> None:
+        fixture = """TN:
+SF:/repo/lib/services/payment_service.dart
+DA:10,1
+DA:11,1
+DA:12,1
+DA:13,1
+DA:14,0
+end_of_record
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "lcov.info"
+            json_output = root / "target.json"
+            markdown_output = root / "issue.md"
+            report.write_text(fixture, encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(MODULE_PATH),
+                    "--lcov",
+                    str(report),
+                    "--json-output",
+                    str(json_output),
+                    "--markdown-output",
+                    str(markdown_output),
+                    "--global-target",
+                    "80",
+                    "--enforce-global-target",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(0, result.returncode)
 
 
 if __name__ == "__main__":

@@ -140,6 +140,11 @@ def main() -> None:
     parser.add_argument("--json-output", type=Path, required=True)
     parser.add_argument("--markdown-output", type=Path, required=True)
     parser.add_argument("--global-target", type=float, default=80.0)
+    parser.add_argument(
+        "--enforce-global-target",
+        action="store_true",
+        help="Exit with status 1 when the global LCOV percentage is below --global-target.",
+    )
     args = parser.parse_args()
 
     records = parse_lcov(args.lcov)
@@ -202,6 +207,8 @@ La PR doit augmenter la couverture LCOV réelle et conserver tous les contrôles
 """
     args.markdown_output.write_text(body, encoding="utf-8")
     print(json.dumps(payload))
+    if args.enforce_global_target and global_percent < args.global_target:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
