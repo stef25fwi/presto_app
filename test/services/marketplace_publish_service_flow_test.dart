@@ -115,8 +115,8 @@ void main() {
     String description =
         'Je recherche une personne disponible pour entretenir mon jardin cette semaine.',
     String category = 'Jardinage',
-    String city = 'Baie-Mahault',
-    String postalCode = '97122',
+    String city = 'Sainte-Anne',
+    String postalCode = '97180',
     bool hidePhone = false,
   }) {
     return target.publish(
@@ -146,7 +146,7 @@ void main() {
         'description': 'Description publique',
         'price': 45,
         'categoryId': 'jardinage',
-        'cityId': 'baie-mahault-97122',
+        'cityId': 'sainte-anne-97180',
         'status': 'active',
         'visibility': 'public',
         'moderationStatus': 'approved',
@@ -168,8 +168,8 @@ void main() {
     final draft = repository.drafts.single;
     expect(draft.ownerId, 'owner-1');
     expect(draft.title, 'Recherche aide jardinage');
-    expect(draft.city, 'Baie-Mahault');
-    expect(draft.postalCode, '97122');
+    expect(draft.city, 'Sainte-Anne');
+    expect(draft.postalCode, '97180');
     expect(draft.locationSource, 'local_city_data');
     expect(draft.price, 45);
     expect(draft.isUrgent, isTrue);
@@ -326,7 +326,7 @@ void main() {
       String title = 'Recherche aide jardinage',
       String description =
           'Je recherche une personne disponible pour entretenir mon jardin cette semaine.',
-      String city = 'Baie-Mahault',
+      String city = 'Sainte-Anne',
     }) async {
       final repository = _FakeListingRepository();
       await expectLater(
@@ -373,7 +373,7 @@ void main() {
         extension: 'webp',
         timestampMs: 1234,
       ),
-      'listingDrafts/owner-1/draft-1/raw/1234_2.webp',
+      'listingDrafts/owner-1/draft-1/1234_2.webp',
     );
   });
 
