@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:presto_app/data/marketplace/listing_read_repository.dart';
 import 'package:presto_app/data/marketplace/listing_repository.dart';
 import 'package:presto_app/models/marketplace_enums.dart';
@@ -131,7 +132,7 @@ void main() {
       isUrgent: true,
       price: 45,
       budgetType: 'forfait',
-      photos: const [],
+      photos: const <XFile>[],
       hidePhone: hidePhone,
     );
   }
