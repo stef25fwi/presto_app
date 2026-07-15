@@ -112,10 +112,11 @@ void main() {
   });
 
   testWidgets('réagit aux transitions successives de session', (tester) async {
-    final controller = StreamController<AuthGateIdentity?>();
+    final controller = StreamController<AuthGateIdentity?>(sync: true);
     addTearDown(controller.close);
 
     await tester.pumpWidget(appWith(controller.stream));
+
     controller.add(null);
     await tester.pump();
     expect(find.text('ACCOUNT_DESTINATION'), findsOneWidget);
@@ -135,6 +136,7 @@ void main() {
         emailVerified: true,
       ),
     );
+    await tester.pump();
     await tester.pump();
     expect(find.text('VERIFIED_DESTINATION'), findsOneWidget);
   });
