@@ -1,0 +1,1 @@
+Constraints: preserve all coverage thresholds, preserve the full LCOV file set, and rely only on measured CI artifacts.
