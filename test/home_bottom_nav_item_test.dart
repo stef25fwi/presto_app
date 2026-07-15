@@ -87,6 +87,10 @@ void main() {
   testWidgets('animates when selection becomes active and disposes cleanly',
       (tester) async {
     const key = ValueKey<String>('animated-nav-item');
+    final transitionFinder = find.descendant(
+      of: find.byKey(key),
+      matching: find.byType(ScaleTransition),
+    );
 
     await tester.pumpWidget(
       _host(
@@ -99,8 +103,9 @@ void main() {
       ),
     );
 
+    expect(transitionFinder, findsOneWidget);
     ScaleTransition transition =
-        tester.widget<ScaleTransition>(find.byType(ScaleTransition));
+        tester.widget<ScaleTransition>(transitionFinder);
     expect(transition.scale.value, 1.0);
 
     await tester.pumpWidget(
@@ -116,11 +121,11 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 100));
 
-    transition = tester.widget<ScaleTransition>(find.byType(ScaleTransition));
+    transition = tester.widget<ScaleTransition>(transitionFinder);
     expect(transition.scale.value, greaterThan(1.0));
 
     await tester.pump(const Duration(milliseconds: 300));
-    transition = tester.widget<ScaleTransition>(find.byType(ScaleTransition));
+    transition = tester.widget<ScaleTransition>(transitionFinder);
     expect(transition.scale.value, closeTo(1.0, 0.001));
 
     await tester.pumpWidget(_host(const SizedBox.shrink()));
