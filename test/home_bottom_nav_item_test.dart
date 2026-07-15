@@ -124,7 +124,7 @@ void main() {
     transition = tester.widget<ScaleTransition>(transitionFinder);
     expect(transition.scale.value, greaterThan(1.0));
 
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     transition = tester.widget<ScaleTransition>(transitionFinder);
     expect(transition.scale.value, closeTo(1.0, 0.001));
 
