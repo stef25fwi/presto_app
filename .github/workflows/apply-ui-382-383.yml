@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/ui-382-383
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
