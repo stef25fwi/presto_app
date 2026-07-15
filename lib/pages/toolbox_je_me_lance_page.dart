@@ -2310,7 +2310,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             icon: Icons.badge_outlined,
             title: 'Statut actuel',
             text: _situation.isNotEmpty ? _situation : 'Aucun statut renseigné',
-            tone: const Color(0xFF7C3AED),
+            tone: kBlue,
           ),
           const SizedBox(height: 10),
           _ResultCallout(
@@ -2319,7 +2319,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             text: _selectedActivity.isNotEmpty
                 ? _selectedActivity
                 : 'Aucune activité renseignée',
-            tone: const Color(0xFF26A65B),
+            tone: kBlue,
           ),
         ],
       ),

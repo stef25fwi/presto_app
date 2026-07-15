@@ -2604,7 +2604,7 @@ class _AccountPageState extends State<AccountPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.10)),
+        border: Border.all(color: const Color(0xFFB8BEC7), width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2691,16 +2691,6 @@ class _AccountPageState extends State<AccountPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Logo brand centré
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 12),
-                      child: Center(
-                        child: Image.asset(
-                          'assets/images/logowebp.webp',
-                          height: 52,
-                        ),
-                      ),
-                    ),
                     // En-tête : avatar + nom/localisation/badge
                     _buildDefaultHeader(user, displayName, visiblePhotoUrl),
                     if (_profileSyncInProgress)
