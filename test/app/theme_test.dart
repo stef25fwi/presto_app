@@ -11,7 +11,7 @@ void main() {
 
     expect(identical(first, second), isTrue);
     expect(first.useMaterial3, isTrue);
-    expect(first.fontFamily, 'Inter');
+    expect(first.textTheme.bodyMedium?.fontFamily, 'Inter');
     expect(first.colorScheme.primary, const Color(0xFF1A73E8));
     expect(first.scaffoldBackgroundColor, const Color(0xFFFDF4EC));
     expect(first.canvasColor, Colors.white);
