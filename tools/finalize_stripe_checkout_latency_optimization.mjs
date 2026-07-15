@@ -133,12 +133,8 @@ await replaceOnce(
         mode: LaunchMode.externalApplication,
         webOnlyWindowName: '_self',
       );`,
-  `      final returnHistoryPreparer = _returnHistoryPreparerOverride;
-      if (returnHistoryPreparer != null) {
-        returnHistoryPreparer();
-      } else {
-        prepareSubscriptionReturnHistory();
-      }
+  `      (_returnHistoryPreparerOverride ?? prepareSubscriptionReturnHistory)
+          .call();
 
       final launcher = _externalLauncherOverride;
       final opened = launcher != null
@@ -207,7 +203,7 @@ for (const [label, ok] of [
   ],
   [
     'Flutter return history guardrail',
-    service.includes('prepareSubscriptionReturnHistory();'),
+    service.includes('prepareSubscriptionReturnHistory'),
   ],
   ['subscription page prefetch', widgets.includes('_scheduleCheckoutPrefetch')],
 ]) {
