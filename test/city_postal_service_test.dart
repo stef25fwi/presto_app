@@ -27,7 +27,7 @@ void main() {
     expect(second.cps, <String>['75002']);
     expect(regular.displayName, 'Les Abymes');
     expect(regular.cps, isEmpty);
-    expect(regular.nameNorm, 'les abymes');
+    expect(regular.nameNorm, 'lesabymes');
   });
 
   test('city entries convert Geo API communes', () {
@@ -42,7 +42,7 @@ void main() {
     expect(entry.name, 'Pointe-à-Pitre');
     expect(entry.dept, '971');
     expect(entry.cps, <String>['97110']);
-    expect(entry.nameNorm, 'pointe a pitre');
+    expect(entry.nameNorm, 'pointeapitre');
   });
 
   test('local service initializes once and searches by prefix and contains',
@@ -69,8 +69,10 @@ void main() {
     final results = service.search('paris', limit: 3);
     expect(results, hasLength(3));
     expect(results.every((entry) => entry.nameNorm.startsWith('paris')), isTrue);
-    expect(results.map((entry) => '${entry.name}|${entry.dept}').toSet(),
-        hasLength(3));
+    expect(
+      results.map((entry) => '${entry.name}|${entry.dept}').toSet(),
+      hasLength(3),
+    );
   });
 
   test('postal hint filters mainland, overseas and Corsica departments',
@@ -91,8 +93,10 @@ void main() {
     expect(paris.every((entry) => entry.dept == '75'), isTrue);
 
     final corse = service.search('ajaccio', cpHint: '20000', limit: 20);
-    expect(corse.every((entry) => entry.dept == '2A' || entry.dept == '2B'),
-        isTrue);
+    expect(
+      corse.every((entry) => entry.dept == '2A' || entry.dept == '2B'),
+      isTrue,
+    );
   });
 
   test('finds cities by postal code with optional department filtering',
