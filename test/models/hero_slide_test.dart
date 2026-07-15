@@ -57,8 +57,8 @@ void main() {
     expect(slide.order, 12);
     expect(slide.isActive, isFalse);
     expect(slide.isFirst, isTrue);
-    expect(slide.createdAt, createdAt);
-    expect(slide.updatedAt, updatedAt);
+    expect(slide.createdAt?.millisecondsSinceEpoch, createdAt.millisecondsSinceEpoch);
+    expect(slide.updatedAt?.millisecondsSinceEpoch, updatedAt.millisecondsSinceEpoch);
     expect(slide.createdBy, 'admin-2');
     expect(slide.isRegional, isTrue);
     expect(slide.isGlobal, isFalse);
@@ -98,8 +98,14 @@ void main() {
     final map = slide.toMap();
     expect(map['id'], 'slide-b');
     expect(map['createdAt'], isA<Timestamp>());
-    expect((map['createdAt'] as Timestamp).toDate(), createdAt);
-    expect((map['updatedAt'] as Timestamp).toDate(), updatedAt);
+    expect(
+      (map['createdAt'] as Timestamp).toDate().millisecondsSinceEpoch,
+      createdAt.millisecondsSinceEpoch,
+    );
+    expect(
+      (map['updatedAt'] as Timestamp).toDate().millisecondsSinceEpoch,
+      updatedAt.millisecondsSinceEpoch,
+    );
     expect(map['targetRegions'], <String>['GP', 'MQ']);
 
     final json = slide.toJson();
