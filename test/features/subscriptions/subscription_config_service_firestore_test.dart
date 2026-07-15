@@ -14,7 +14,7 @@ void main() {
 
   test('getConfig retourne les valeurs par défaut sans document', () async {
     final config = await service.getConfig();
-    expect(config.subscriptionSectionEnabled, isTrue);
+    expect(config.subscriptionSectionEnabled, isFalse);
     expect(config.subscriptionsPrepared, isTrue);
     expect(config.stripeEnabled, isFalse);
     expect(config.freeAccessMode, isTrue);
@@ -49,7 +49,7 @@ void main() {
     final config = await stream.firstWhere(
       (value) => value.subscriptionsPrepared,
     );
-    expect(config.subscriptionSectionEnabled, isTrue);
+    expect(config.subscriptionSectionEnabled, isFalse);
 
     await Future<void>.delayed(Duration.zero);
     final snapshot =
@@ -91,7 +91,7 @@ void main() {
     await service.updateStripeEnabled(true, updatedBy: 'stripe-admin');
 
     final config = await service.getConfig();
-    expect(config.subscriptionSectionEnabled, isTrue);
+    expect(config.subscriptionSectionEnabled, isFalse);
     expect(config.stripeEnabled, isTrue);
     expect(config.freeAccessMode, isTrue);
     expect(config.updatedBy, 'stripe-admin');
@@ -102,7 +102,7 @@ void main() {
     await service.updateFreeAccessMode(false, updatedBy: 'access-admin');
 
     final config = await service.getConfig();
-    expect(config.subscriptionSectionEnabled, isTrue);
+    expect(config.subscriptionSectionEnabled, isFalse);
     expect(config.stripeEnabled, isFalse);
     expect(config.freeAccessMode, isFalse);
     expect(config.updatedBy, 'access-admin');
