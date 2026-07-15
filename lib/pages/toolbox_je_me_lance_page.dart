@@ -31,7 +31,6 @@ import 'package:presto_app/services/journey_pdf_export_service.dart';
 import 'package:presto_app/services/parcours_fiches_service.dart';
 import 'package:presto_app/services/screen_capture_protection_service.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../app_core.dart';
 import '../data/city_postal_data.dart';
@@ -5690,7 +5689,7 @@ class _JourneySummaryPage extends StatelessWidget {
 
   /// Sauvegarde le parcours (véritable sauvegarde, distincte de
   /// l'historique auto-écrasé) et, pour les abonnements IliPresto+/ilipro,
-  /// génère aussi un export PDF sur l'appareil et ouvre le menu de partage.
+  /// génère aussi un export PDF et ouvre le téléchargement/enregistrement.
   /// Les utilisateurs Gratuit ne sauvegardent qu'en local.
   Future<void> _handleSave(BuildContext context) async {
     final saveDecision = await _entitlementsService.evaluateLocalSave();
@@ -5732,17 +5731,25 @@ class _JourneySummaryPage extends StatelessWidget {
     );
 
     try {
-      // Le service renvoie un XFile prêt à partager (fichier temporaire sur
-      // mobile, données en mémoire sur web), et un PDF avec police Unicode.
-      final pdfFile = await _pdfExportService.generateJourneyPdf(
+      final downloaded = await _pdfExportService.downloadJourneyPdf(
         _buildLocalSnapshot(),
       );
-      await _entitlementsService.recordPdfExport();
-
       if (!context.mounted) return;
-      await Share.shareXFiles([
-        pdfFile,
-      ], text: 'Mon parcours personnalisé — iliPresto+');
+
+      if (!downloaded) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Téléchargement PDF annulé.')),
+        );
+        return;
+      }
+
+      await _entitlementsService.recordPdfExport();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Parcours sauvegardé et PDF téléchargé.'),
+        ),
+      );
     } catch (e) {
       debugPrint('[Toolbox] pdf export failed: $e');
       if (!context.mounted) return;

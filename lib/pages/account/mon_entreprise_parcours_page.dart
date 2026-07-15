@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../features/subscriptions/journey_entitlements_service.dart';
 import '../../features/subscriptions/subscription_models.dart';
@@ -206,33 +205,22 @@ class _MonEntrepriseParcoursPageState extends State<MonEntrepriseParcoursPage> {
         return;
       }
 
-      final pdfFile = await _pdfExportService.generateJourneyPdf(snapshot);
+      final downloaded = await _pdfExportService.downloadJourneyPdf(snapshot);
       if (!mounted) return;
       closeLoadingDialog();
 
-      final box = context.findRenderObject() as RenderBox?;
-      final result = await Share.shareXFiles(
-        [pdfFile],
-        subject: 'Mon parcours personnalisé iliprestō',
-        text: 'Voici mon parcours personnalisé généré par iliprestō.',
-        sharePositionOrigin:
-            box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-      );
-
-      if (result.status == ShareResultStatus.success) {
+      if (downloaded) {
         await _entitlementsService.recordPdfExport();
         await _load();
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'PDF généré : la fenêtre de sauvegarde/partage a été ouverte.',
-            ),
+            content: Text('PDF généré et téléchargé avec succès.'),
           ),
         );
-      } else if (mounted) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export PDF annulé.')),
+          const SnackBar(content: Text('Téléchargement PDF annulé.')),
         );
       }
     } catch (e) {
