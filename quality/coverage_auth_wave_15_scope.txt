@@ -1,1 +1,0 @@
-Auth coverage wave 15: no threshold lowered, no file excluded, and no percentage declared before a complete LCOV artifact is produced by pull-request validation.
