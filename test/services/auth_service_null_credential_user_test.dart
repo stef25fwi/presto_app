@@ -4,6 +4,11 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/auth_service.dart';
 
+class _NullUserCredentialPlatform extends UserCredentialPlatform {
+  _NullUserCredentialPlatform({required FirebaseAuthPlatform auth})
+      : super(auth: auth, user: null);
+}
+
 class _NullCredentialUserAuthPlatform extends FirebaseAuthPlatform {
   _NullCredentialUserAuthPlatform() : super(appInstance: null);
 
@@ -41,7 +46,7 @@ class _NullCredentialUserAuthPlatform extends FirebaseAuthPlatform {
   ) async {
     registeredEmail = email;
     registeredPassword = password;
-    return UserCredentialPlatform(auth: this, user: null);
+    return _NullUserCredentialPlatform(auth: this);
   }
 
   @override
@@ -51,7 +56,7 @@ class _NullCredentialUserAuthPlatform extends FirebaseAuthPlatform {
   ) async {
     signedInEmail = email;
     signedInPassword = password;
-    return UserCredentialPlatform(auth: this, user: null);
+    return _NullUserCredentialPlatform(auth: this);
   }
 }
 
