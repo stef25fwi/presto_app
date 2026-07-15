@@ -32,18 +32,30 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          def replace_once(path: str, old: str, new: str) -> None:
+          def replace_in_section(
+              path: str,
+              start_marker: str,
+              end_marker: str,
+              old: str,
+              new: str,
+          ) -> None:
               file_path = Path(path)
               text = file_path.read_text(encoding="utf-8")
-              count = text.count(old)
+              start = text.index(start_marker)
+              end = text.index(end_marker, start)
+              section = text[start:end]
+              count = section.count(old)
               if count != 1:
                   raise SystemExit(
-                      f"Expected exactly one occurrence in {path}, found {count}: {old!r}"
+                      f"Expected one scoped occurrence in {path}, found {count}: {old!r}"
                   )
-              file_path.write_text(text.replace(old, new, 1), encoding="utf-8")
+              section = section.replace(old, new, 1)
+              file_path.write_text(text[:start] + section + text[end:], encoding="utf-8")
 
-          replace_once(
+          replace_in_section(
               "lib/pages/account_page.dart",
+              "  Widget _buildAccountSectionCard({",
+              "\n  Widget _buildProfile(User user) {",
               "        border: Border.all(color: kPrestoBlue.withValues(alpha: 0.10)),",
               "        border: Border.all(\n"
               "          color: const Color(0xFFB8BEC7),\n"
@@ -51,38 +63,54 @@ jobs:
               "        ),",
           )
 
-          replace_once(
-              "lib/pages/account_page.dart",
-              "                    // Logo brand centré\n"
-              "                    Padding(\n"
-              "                      padding: const EdgeInsets.only(top: 10, bottom: 12),\n"
-              "                      child: Center(\n"
-              "                        child: Image.asset(\n"
-              "                          'assets/images/logowebp.webp',\n"
-              "                          height: 52,\n"
-              "                        ),\n"
-              "                      ),\n"
-              "                    ),\n",
-              "",
+          account_path = Path("lib/pages/account_page.dart")
+          account_text = account_path.read_text(encoding="utf-8")
+          logo_start_marker = "                    // Logo brand centré\n"
+          logo_end_marker = (
+              "                    // En-tête : avatar + nom/localisation/badge\n"
+          )
+          logo_start = account_text.index(logo_start_marker)
+          logo_end = account_text.index(logo_end_marker, logo_start)
+          account_path.write_text(
+              account_text[:logo_start] + account_text[logo_end:],
+              encoding="utf-8",
           )
 
-          replace_once(
-              "lib/widgets/account_notifications_tile.dart",
-              "        side: BorderSide(color: Colors.grey.shade300),",
-              "        side: const BorderSide(\n"
-              "          color: Color(0xFFB8BEC7),\n"
-              "          width: 2,\n"
-              "        ),",
+          notifications_path = Path(
+              "lib/widgets/account_notifications_tile.dart"
+          )
+          notifications_text = notifications_path.read_text(encoding="utf-8")
+          notification_old = (
+              "        side: BorderSide(color: Colors.grey.shade300),"
+          )
+          if notifications_text.count(notification_old) != 1:
+              raise SystemExit(
+                  "Unexpected notification border occurrence count: "
+                  f"{notifications_text.count(notification_old)}"
+              )
+          notifications_path.write_text(
+              notifications_text.replace(
+                  notification_old,
+                  "        side: const BorderSide(\n"
+                  "          color: Color(0xFFB8BEC7),\n"
+                  "          width: 2,\n"
+                  "        ),",
+                  1,
+              ),
+              encoding="utf-8",
           )
 
-          replace_once(
+          replace_in_section(
               "lib/pages/toolbox_je_me_lance_page.dart",
+              "  Widget _buildReviewStep() {",
+              "\n  Widget _buildTopHeader() {",
               "            tone: const Color(0xFF7C3AED),",
               "            tone: kBlue,",
           )
-
-          replace_once(
+          replace_in_section(
               "lib/pages/toolbox_je_me_lance_page.dart",
+              "  Widget _buildReviewStep() {",
+              "\n  Widget _buildTopHeader() {",
               "            tone: const Color(0xFF26A65B),",
               "            tone: kBlue,",
           )
