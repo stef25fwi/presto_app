@@ -116,11 +116,13 @@ class PaymentInfoAudioService {
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+        _functions = functions;
 
   final FirebaseFirestore _firestore;
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functions;
+
+  FirebaseFunctions get _firebaseFunctions =>
+      _functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   DocumentReference<Map<String, dynamic>> get _configRef =>
       _firestore.collection('public_config').doc('payment_info_audio');
@@ -167,7 +169,8 @@ class PaymentInfoAudioService {
     String voice = 'alloy',
     String locale = 'fr-FR',
   }) async {
-    final callable = _functions.httpsCallable('generatePaymentInfoAudio');
+    final callable =
+        _firebaseFunctions.httpsCallable('generatePaymentInfoAudio');
 
     await callable.call(<String, dynamic>{
       if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
@@ -191,7 +194,8 @@ class PaymentInfoAudioService {
       throw ArgumentError('Le texte audio ne peut pas être vide.');
     }
 
-    final callable = _functions.httpsCallable('generatePaymentInfoAudioDraft');
+    final callable =
+        _firebaseFunctions.httpsCallable('generatePaymentInfoAudioDraft');
 
     await callable.call(<String, dynamic>{
       'text': cleanText,
@@ -205,7 +209,8 @@ class PaymentInfoAudioService {
 
   /// Publie le dernier brouillon validé dans public_config/payment_info_audio.
   Future<PaymentInfoAudioConfig?> publishPaymentInfoAudioDraft() async {
-    final callable = _functions.httpsCallable('publishPaymentInfoAudioDraft');
+    final callable =
+        _firebaseFunctions.httpsCallable('publishPaymentInfoAudioDraft');
     await callable.call(<String, dynamic>{});
     return getConfig();
   }
