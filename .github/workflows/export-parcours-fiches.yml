@@ -7,32 +7,36 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   export:
+    if: github.event.head_commit.message != 'chore: publish generated parcours archive'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: chore/export-735-parcours-fiches
 
       - name: Build archive and inventory
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p export/parcours_fiches
-          cp assets/data/parcours_fiches_*.json export/parcours_fiches/
+          rm -rf generated/parcours_export
+          mkdir -p generated/parcours_export/parcours_fiches
+          cp assets/data/parcours_fiches_*.json generated/parcours_export/parcours_fiches/
           python3 - <<'PY'
           import glob, json, os
           rows = []
           total = 0
-          for path in sorted(glob.glob('export/parcours_fiches/parcours_fiches_*.json')):
+          for path in sorted(glob.glob('generated/parcours_export/parcours_fiches/parcours_fiches_*.json')):
               with open(path, encoding='utf-8') as f:
                   data = json.load(f)
               count = len(data)
               total += count
               rows.append((os.path.basename(path), count))
-          with open('export/INVENTAIRE.md', 'w', encoding='utf-8') as f:
+          with open('generated/parcours_export/INVENTAIRE.md', 'w', encoding='utf-8') as f:
               f.write('# Inventaire des fiches parcours personnalisé\n\n')
               f.write('| Pack | Nombre de fiches |\n|---|---:|\n')
               for name, count in rows:
@@ -40,13 +44,14 @@ jobs:
               f.write(f'| **Total** | **{total}** |\n')
           print(f'Total fiches: {total}')
           PY
-          cd export
+          cd generated/parcours_export
           zip -r ../parcours_personnalise_735_fiches.zip parcours_fiches INVENTAIRE.md
 
-      - name: Upload ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: parcours-personnalise-735-fiches
-          path: parcours_personnalise_735_fiches.zip
-          if-no-files-found: error
-          retention-days: 30
+      - name: Commit generated ZIP
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add generated/parcours_personnalise_735_fiches.zip generated/parcours_export/INVENTAIRE.md
+          git commit -m 'chore: publish generated parcours archive'
+          git push origin chore/export-735-parcours-fiches
