@@ -1,344 +1,243 @@
 import 'dart:typed_data';
 
 import 'package:cross_file/cross_file.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-/// Génère le PDF export du "parcours personnalisé", réservé aux abonnements
-/// IliPresto+ / ilipro (voir `JourneyEntitlements.canExportPdf`).
-///
-/// Le document embarque systématiquement :
-/// - le logo iliprestō en couverture et dans l'en-tête de chaque page ;
-/// - un filigrane/watermark discret iliprestō sur chaque page ;
-/// - une présentation structurée en sections lisibles.
+import 'journey_pdf_download.dart';
+
+/// Génère et télécharge le PDF du parcours personnalisé.
 class JourneyPdfExportService {
   const JourneyPdfExportService();
 
   static const _logoAssetPath = 'assets/images/logo_ilipresto.png';
-  // Police TTF Unicode obligatoire : les polices Type1 par défaut du package
-  // `pdf` (Helvetica) ne couvrent pas toute la typographie française présente
-  // dans les fiches (apostrophes courbes « ’ », tirets cadratins « — »,
-  // guillemets « « » », « € », etc.), ce qui faisait échouer `document.save()`
-  // dès qu'un glyphe manquait.
   static const _fontRegularPath = 'assets/fonts/Inter-Regular.ttf';
   static const _fontBoldPath = 'assets/fonts/Inter-Bold.ttf';
 
   Future<XFile> generateJourneyPdf(Map<String, dynamic> journey) async {
     final bytes = await _buildPdfBytes(journey);
-    final fileName = _fileNameForJourney(journey);
-
-    return XFile.fromData(bytes, name: fileName, mimeType: 'application/pdf');
+    return XFile.fromData(
+      bytes,
+      name: _fileNameForJourney(journey),
+      mimeType: 'application/pdf',
+    );
   }
 
-  /// Génère puis enregistre réellement le PDF sur la plateforme courante.
-  ///
-  /// Le partage système n'est pas un téléchargement fiable sur tous les
-  /// navigateurs et appareils. `saveFile` reçoit donc directement les octets :
-  /// téléchargement navigateur sur le web et sélecteur d'enregistrement sur
-  /// les plateformes natives.
-  ///
-  /// Retourne `false` uniquement lorsque l'utilisateur annule le sélecteur
-  /// natif. Sur le web, `saveFile` retourne `null` après avoir déclenché le
-  /// téléchargement ; l'absence d'exception constitue donc le succès.
   Future<bool> downloadJourneyPdf(Map<String, dynamic> journey) async {
     final bytes = await _buildPdfBytes(journey);
     if (bytes.isEmpty) {
       throw StateError('Le document PDF généré est vide.');
     }
 
-    final savedPath = await FilePicker.saveFile(
-      dialogTitle: 'Télécharger mon parcours personnalisé',
-      fileName: _fileNameForJourney(journey),
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
+    return saveJourneyPdfBytes(
       bytes: bytes,
+      fileName: _fileNameForJourney(journey),
     );
-
-    return kIsWeb || savedPath != null;
   }
 
   static String _fileNameForJourney(Map<String, dynamic> journey) {
     final safeActivity = _sanitizeFilePart(
       '${journey['selectedActivity'] ?? ''}',
     );
-    final suffix = safeActivity.isEmpty ? 'parcours' : safeActivity;
-    return 'ilipresto_$suffix.pdf';
+    return 'ilipresto_${safeActivity.isEmpty ? 'parcours' : safeActivity}.pdf';
   }
 
   Future<Uint8List> _buildPdfBytes(Map<String, dynamic> journey) async {
-    final baseFont = pw.Font.ttf(await rootBundle.load(_fontRegularPath));
-    final boldFont = pw.Font.ttf(await rootBundle.load(_fontBoldPath));
-    final logoBytes = await rootBundle.load(_logoAssetPath);
-    final logoImage = pw.MemoryImage(logoBytes.buffer.asUint8List());
+    final regular = pw.Font.ttf(await rootBundle.load(_fontRegularPath));
+    final bold = pw.Font.ttf(await rootBundle.load(_fontBoldPath));
+    final logoData = await rootBundle.load(_logoAssetPath);
+    final logo = pw.MemoryImage(logoData.buffer.asUint8List());
 
     final document = pw.Document(
-      theme: pw.ThemeData.withFont(base: baseFont, bold: boldFont),
+      theme: pw.ThemeData.withFont(base: regular, bold: bold),
     );
 
+    final widgets = <pw.Widget>[
+      _cover(logo, journey),
+      _section('Résumé de ma situation'),
+      _kv('Projet', journey['projectLabel']),
+      _kv('Région', journey['region']),
+      _kv('Statut actuel', journey['currentStatus']),
+      _kv('Activité', journey['selectedActivity']),
+    ];
+
     final recommendation = _map(journey['recommendation']);
-    final costs = _map(journey['costs']);
-    final summary = _map(journey['summary']);
-    final recommendedLegalStatus = _map(journey['recommendedLegalStatus']);
-    final blockingAlerts = _stringList(journey['blockingAlerts']);
-    final plan30 = _mapList(journey['plan30']);
-    final aides = _mapList(journey['aides']);
-    final regulationTutorial = _mapList(journey['regulationTutorial']);
-    final statusWarnings = _mapList(journey['statusWarnings']);
-    final steps = _mapList(journey['steps']);
+    if (recommendation.isNotEmpty) {
+      widgets.addAll([
+        _section('Recommandation'),
+        _highlight(
+          'Statut conseillé',
+          recommendation['statut'] ?? recommendation['recommended'] ?? '—',
+        ),
+        if (_text(recommendation['why'] ?? recommendation['justification']).isNotEmpty)
+          _paragraph(recommendation['why'] ?? recommendation['justification']),
+        _kv('Alternative possible', recommendation['planB']),
+      ]);
+    }
+
+    _appendStringList(widgets, 'Alertes importantes', journey['blockingAlerts']);
+    _appendMap(widgets, 'Résumé du parcours', journey['summary']);
+    _appendMap(widgets, 'Coûts et points financiers', journey['costs']);
+    _appendTimeline(widgets, 'Réglementation et démarches', journey['regulationTutorial']);
+    _appendTimeline(widgets, 'Points de vigilance liés au statut', journey['statusWarnings']);
+    _appendTimeline(widgets, 'Aides possibles', journey['aides']);
+    _appendTimeline(widgets, 'Plan d’action 30 jours', journey['plan30']);
+    _appendTimeline(widgets, 'Étapes détaillées', journey['steps']);
 
     document.addPage(
       pw.MultiPage(
         pageTheme: pw.PageTheme(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.fromLTRB(30, 56, 30, 48),
-          buildBackground: (context) => _watermark(),
+          buildBackground: (_) => _watermark(),
         ),
-        header: (context) => _header(logoImage),
-        footer: (context) => _footer(context, logoImage),
-        build: (context) => [
-          _coverBlock(logoImage, journey),
-          _sectionTitle('Résumé de ma situation'),
-          _kv('Projet', '${journey['projectLabel'] ?? ''}'),
-          _kv('Région', '${journey['region'] ?? ''}'),
-          _kv('Statut actuel', '${journey['currentStatus'] ?? ''}'),
-          _kv('Activité', '${journey['selectedActivity'] ?? ''}'),
-          pw.SizedBox(height: 14),
-          _sectionTitle('Recommandation'),
-          _highlightBox(
-            title: 'Statut conseillé',
-            text:
-                '${recommendation['statut'] ?? recommendation['recommended'] ?? '—'}',
-          ),
-          if ('${recommendation['why'] ?? recommendation['justification'] ?? ''}'
-              .trim()
-              .isNotEmpty)
-            _paragraph(
-              '${recommendation['why'] ?? recommendation['justification']}',
-            ),
-          if ('${recommendation['planB'] ?? ''}'.trim().isNotEmpty)
-            _kv('Alternative possible', '${recommendation['planB']}'),
-          if (recommendedLegalStatus.isNotEmpty) ...[
-            pw.SizedBox(height: 8),
-            _kv(
-              'Statut juridique recommandé',
-              '${recommendedLegalStatus['recommended'] ?? recommendedLegalStatus['statut'] ?? '—'}',
-            ),
-            if ('${recommendedLegalStatus['justification'] ?? ''}'
-                .trim()
-                .isNotEmpty)
-              _paragraph('${recommendedLegalStatus['justification']}'),
-          ],
-          if (blockingAlerts.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Alertes importantes'),
-            ...blockingAlerts.map((alert) => _bullet(alert)),
-          ],
-          if (summary.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Résumé du parcours'),
-            ...summary.entries.map(
-              (entry) =>
-                  _kv(_prettyLabel(entry.key), _formatValue(entry.value)),
-            ),
-          ],
-          if (costs.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Coûts et points financiers'),
-            ...costs.entries.map(
-              (entry) =>
-                  _kv(_prettyLabel(entry.key), _formatValue(entry.value)),
-            ),
-          ],
-          if (regulationTutorial.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Réglementation et démarches'),
-            ...regulationTutorial.map(_timelineItem),
-          ],
-          if (statusWarnings.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Points de vigilance liés au statut'),
-            ...statusWarnings.map(_timelineItem),
-          ],
-          if (aides.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Aides possibles'),
-            ...aides.map(_timelineItem),
-          ],
-          if (plan30.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Plan d’action 30 jours'),
-            ...plan30.map(_timelineItem),
-          ],
-          if (steps.isNotEmpty) ...[
-            pw.SizedBox(height: 14),
-            _sectionTitle('Étapes détaillées'),
-            ...steps.map(_timelineItem),
-          ],
-        ],
+        header: (_) => _header(logo),
+        footer: (context) => _footer(context, logo),
+        build: (_) => widgets,
       ),
     );
 
     return document.save();
   }
 
-  pw.Widget _header(pw.ImageProvider logoImage) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.only(bottom: 8),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(
-          bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.6),
-        ),
-      ),
-      child: pw.Row(
-        children: [
-          pw.Image(logoImage, width: 22, height: 22),
-          pw.SizedBox(width: 8),
-          _brandWordmark(fontSize: 13),
-          pw.Spacer(),
-          pw.Text(
-            'Parcours personnalisé',
-            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _footer(pw.Context context, pw.ImageProvider logoImage) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.only(top: 8),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(
-          top: pw.BorderSide(color: PdfColors.grey300, width: 0.6),
-        ),
-      ),
-      child: pw.Row(
-        children: [
-          pw.Image(logoImage, width: 16, height: 16),
-          pw.SizedBox(width: 6),
-          pw.Text(
-            'Document généré par iliprestō — usage personnel',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
-          ),
-          pw.Spacer(),
-          pw.Text(
-            'Page ${context.pageNumber} / ${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _watermark() {
-    return pw.FullPage(
-      ignoreMargins: true,
-      child: pw.Stack(
-        children: [
-          pw.Positioned(
-            left: 44,
-            top: 190,
-            child: pw.Transform.rotate(
-              angle: -0.55,
-              child: pw.Opacity(
-                opacity: 0.055,
-                child: pw.Text(
-                  'ILIPRESTŌ',
-                  style: pw.TextStyle(
-                    fontSize: 92,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.orange600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          pw.Positioned(
-            right: 26,
-            bottom: 170,
-            child: pw.Transform.rotate(
-              angle: -0.55,
-              child: pw.Opacity(
-                opacity: 0.035,
-                child: pw.Text(
-                  'ILIPRESTŌ',
-                  style: pw.TextStyle(
-                    fontSize: 58,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.blue600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _coverBlock(
-    pw.ImageProvider logoImage,
-    Map<String, dynamic> journey,
+  static void _appendStringList(
+    List<pw.Widget> target,
+    String title,
+    dynamic value,
   ) {
+    final values = _stringList(value);
+    if (values.isEmpty) return;
+    target.add(_section(title));
+    target.addAll(values.map(_bullet));
+  }
+
+  static void _appendMap(
+    List<pw.Widget> target,
+    String title,
+    dynamic value,
+  ) {
+    final map = _map(value);
+    if (map.isEmpty) return;
+    target.add(_section(title));
+    target.addAll(
+      map.entries.map((entry) => _kv(_prettyLabel(entry.key), _formatValue(entry.value))),
+    );
+  }
+
+  static void _appendTimeline(
+    List<pw.Widget> target,
+    String title,
+    dynamic value,
+  ) {
+    final items = _mapList(value);
+    if (items.isEmpty) return;
+    target.add(_section(title));
+    for (final item in items) {
+      final itemTitle = _text(
+        item['title'] ?? item['label'] ?? item['name'] ?? item['week'] ?? 'Étape',
+      );
+      final description = _text(
+        item['description'] ??
+            item['text'] ??
+            item['summary'] ??
+            item['desc'] ??
+            item['objective'],
+      );
+      target.add(_timelineTitle(itemTitle));
+      if (description.isNotEmpty) target.add(_paragraph(description));
+      target.addAll(_stringList(item['todos']).map(_bullet));
+      target.addAll(_stringList(item['checks']).map(_bullet));
+      target.add(pw.SizedBox(height: 8));
+    }
+  }
+
+  static pw.Widget _cover(pw.ImageProvider logo, Map<String, dynamic> journey) {
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
+      margin: const pw.EdgeInsets.only(bottom: 16),
       decoration: pw.BoxDecoration(
         color: PdfColors.orange50,
         borderRadius: pw.BorderRadius.circular(14),
-        border: pw.Border.all(color: PdfColors.orange200, width: 0.8),
+        border: pw.Border.all(color: PdfColors.orange200),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              pw.Image(logoImage, width: 44, height: 44),
-              pw.SizedBox(width: 12),
-              pw.Expanded(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _brandWordmark(fontSize: 20),
-                    pw.SizedBox(height: 3),
-                    pw.Text(
-                      'Mon parcours personnalisé',
-                      style: pw.TextStyle(
-                        fontSize: 17,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.blue900,
-                      ),
+          pw.Row(children: [
+            pw.Image(logo, width: 44, height: 44),
+            pw.SizedBox(width: 12),
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  _brand(20),
+                  pw.Text(
+                    'Mon parcours personnalisé',
+                    style: pw.TextStyle(
+                      fontSize: 17,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blue900,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ]),
           pw.SizedBox(height: 12),
-          pw.Text(
-            'Fiche sauvegardée et exportée avec logo + filigrane iliprestō.',
-            style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
-          ),
-          pw.SizedBox(height: 10),
-          _kv('Activité', '${journey['selectedActivity'] ?? ''}'),
-          _kv('Région', '${journey['region'] ?? ''}'),
-          _kv('Statut actuel', '${journey['currentStatus'] ?? ''}'),
+          _kv('Activité', journey['selectedActivity']),
+          _kv('Région', journey['region']),
+          _kv('Statut actuel', journey['currentStatus']),
         ],
       ),
     );
   }
 
-  pw.Widget _brandWordmark({required double fontSize}) {
-    return pw.RichText(
-      text: pw.TextSpan(
+  static pw.Widget _header(pw.ImageProvider logo) => pw.Row(children: [
+        pw.Image(logo, width: 22, height: 22),
+        pw.SizedBox(width: 8),
+        _brand(13),
+        pw.Spacer(),
+        pw.Text('Parcours personnalisé', style: const pw.TextStyle(fontSize: 9)),
+      ]);
+
+  static pw.Widget _footer(pw.Context context, pw.ImageProvider logo) => pw.Row(
         children: [
+          pw.Image(logo, width: 15, height: 15),
+          pw.SizedBox(width: 6),
+          pw.Text('Document généré par iliprestō', style: const pw.TextStyle(fontSize: 8)),
+          pw.Spacer(),
+          pw.Text('Page ${context.pageNumber} / ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 8)),
+        ],
+      );
+
+  static pw.Widget _watermark() => pw.FullPage(
+        ignoreMargins: true,
+        child: pw.Center(
+          child: pw.Transform.rotate(
+            angle: -0.55,
+            child: pw.Opacity(
+              opacity: 0.05,
+              child: pw.Text(
+                'ILIPRESTŌ',
+                style: pw.TextStyle(
+                  fontSize: 90,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.orange600,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+  static pw.Widget _brand(double size) => pw.RichText(
+        text: pw.TextSpan(children: [
           pw.TextSpan(
             text: 'ili',
             style: pw.TextStyle(
-              fontSize: fontSize,
+              fontSize: size,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.orange600,
             ),
@@ -346,201 +245,119 @@ class JourneyPdfExportService {
           pw.TextSpan(
             text: 'prestō',
             style: pw.TextStyle(
-              fontSize: fontSize,
+              fontSize: size,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.blue700,
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ]),
+      );
 
-  pw.Widget _sectionTitle(String text) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 7),
-        child: pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: pw.BoxDecoration(
-            color: PdfColors.blue50,
-            borderRadius: pw.BorderRadius.circular(8),
-            border: pw.Border.all(color: PdfColors.blue100, width: 0.5),
-          ),
-          child: pw.Text(
-            text,
-            style: pw.TextStyle(
-              fontSize: 12,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blue900,
-            ),
-          ),
+  static pw.Widget _section(String text) => pw.Container(
+        margin: const pw.EdgeInsets.only(top: 12, bottom: 7),
+        padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: pw.BoxDecoration(
+          color: PdfColors.blue50,
+          borderRadius: pw.BorderRadius.circular(8),
+        ),
+        child: pw.Text(
+          text,
+          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
         ),
       );
 
-  pw.Widget _highlightBox({required String title, required String text}) {
-    return pw.Container(
-      width: double.infinity,
-      margin: const pw.EdgeInsets.only(bottom: 8),
-      padding: const pw.EdgeInsets.all(10),
-      decoration: pw.BoxDecoration(
+  static pw.Widget _highlight(String title, dynamic value) => pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.all(10),
+        margin: const pw.EdgeInsets.only(bottom: 8),
         color: PdfColors.blue50,
-        borderRadius: pw.BorderRadius.circular(10),
-        border: pw.Border.all(color: PdfColors.blue100, width: 0.6),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            title,
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blue700,
-            ),
-          ),
-          pw.SizedBox(height: 3),
-          pw.Text(
-            text,
-            style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(title, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 3),
+            pw.Text(_text(value), style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold)),
+          ],
+        ),
+      );
 
-  pw.Widget _paragraph(String text) {
-    if (text.trim().isEmpty) return pw.SizedBox();
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 6),
-      child: pw.Text(
-        text,
-        style: const pw.TextStyle(fontSize: 10, lineSpacing: 2),
-      ),
-    );
-  }
+  static pw.Widget _timelineTitle(String title) => pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.all(9),
+        color: PdfColors.grey100,
+        child: pw.Text(title, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+      );
 
-  pw.Widget _kv(String label, String value) {
-    final cleaned = value.trim();
-    if (cleaned.isEmpty || cleaned == 'null') {
-      return pw.SizedBox(width: 0, height: 0);
-    }
+  static pw.Widget _paragraph(dynamic value) => pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 6),
+        child: pw.Text(_text(value), style: const pw.TextStyle(fontSize: 10, lineSpacing: 2)),
+      );
+
+  static pw.Widget _kv(String label, dynamic value) {
+    final text = _text(value);
+    if (text.isEmpty || text == 'null') return pw.SizedBox();
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.RichText(
-        text: pw.TextSpan(
+        text: pw.TextSpan(children: [
+          pw.TextSpan(
+            text: '$label : ',
+            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.TextSpan(text: text, style: const pw.TextStyle(fontSize: 10)),
+        ]),
+      ),
+    );
+  }
+
+  static pw.Widget _bullet(String value) => pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 5),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.TextSpan(
-              text: '$label : ',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10),
-            ),
-            pw.TextSpan(text: cleaned, style: const pw.TextStyle(fontSize: 10)),
+            pw.Text('• '),
+            pw.Expanded(child: pw.Text(value, style: const pw.TextStyle(fontSize: 10))),
           ],
         ),
-      ),
-    );
-  }
+      );
 
-  pw.Widget _bullet(String text) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 5),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text('• ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-          pw.Expanded(child: _paragraph(text)),
-        ],
-      ),
-    );
-  }
+  static Map<String, dynamic> _map(dynamic value) =>
+      value is Map ? value.cast<String, dynamic>() : const <String, dynamic>{};
 
-  pw.Widget _timelineItem(Map<String, dynamic> item) {
-    final title =
-        '${item['title'] ?? item['label'] ?? item['name'] ?? 'Étape'}';
-    final description =
-        '${item['description'] ?? item['text'] ?? item['summary'] ?? item['desc'] ?? item['objective'] ?? ''}'
-            .trim();
-    final todos = _stringList(item['todos']);
-    final checks = _stringList(item['checks']);
-
-    // Le bloc détaillé doit pouvoir se répartir sur plusieurs pages.
-    // Un Container unique rendait l'étape entière insécable et pouvait faire
-    // échouer document.save() lorsque la checklist dépassait une page A4.
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Container(
-          width: double.infinity,
-          padding: const pw.EdgeInsets.all(9),
-          decoration: pw.BoxDecoration(
-            color: PdfColors.grey50,
-            borderRadius: pw.BorderRadius.circular(9),
-            border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
-          ),
-          child: pw.Text(
-            title,
-            style: pw.TextStyle(
-              fontSize: 10.5,
-              fontWeight: pw.FontWeight.bold,
-            ),
-          ),
-        ),
-        if (description.isNotEmpty) ...[
-          pw.SizedBox(height: 4),
-          _paragraph(description),
-        ],
-        ...todos.map(_bullet),
-        ...checks.map(_bullet),
-        pw.SizedBox(height: 8),
-      ],
-    );
-  }
-
-  static Map<String, dynamic> _map(dynamic value) {
-    if (value is Map) return value.cast<String, dynamic>();
-    return const <String, dynamic>{};
-  }
-
-  static List<Map<String, dynamic>> _mapList(dynamic value) {
-    if (value is List) {
-      return value
-          .whereType<Map>()
-          .map((item) => item.cast<String, dynamic>())
-          .toList();
-    }
-    return const <Map<String, dynamic>>[];
-  }
+  static List<Map<String, dynamic>> _mapList(dynamic value) => value is List
+      ? value.whereType<Map>().map((item) => item.cast<String, dynamic>()).toList()
+      : const <Map<String, dynamic>>[];
 
   static List<String> _stringList(dynamic value) {
-    if (value is List) return value.map((item) => '$item').toList();
-    if (value is String && value.trim().isNotEmpty) return [value.trim()];
-    return const <String>[];
+    if (value is List) return value.map(_text).where((item) => item.isNotEmpty).toList();
+    final text = _text(value);
+    return text.isEmpty ? const <String>[] : <String>[text];
   }
+
+  static String _text(dynamic value) => value == null ? '' : '$value'.trim();
 
   static String _prettyLabel(String raw) {
     final spaced = raw
         .replaceAll('_', ' ')
-        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (m) => '${m[1]} ${m[2]}')
+        .replaceAllMapped(RegExp(r'([a-z])([A-Z])'), (match) => '${match[1]} ${match[2]}')
         .trim();
-    if (spaced.isEmpty) return 'Information';
-    return spaced[0].toUpperCase() + spaced.substring(1);
+    return spaced.isEmpty ? 'Information' : '${spaced[0].toUpperCase()}${spaced.substring(1)}';
   }
 
   static String _formatValue(dynamic value) {
     if (value is Map) {
       return value.entries
-          .map((entry) => '${_prettyLabel(entry.key)} : ${entry.value}')
+          .map((entry) => '${_prettyLabel('${entry.key}')} : ${entry.value}')
           .join(' · ');
     }
-    if (value is List) return value.map((item) => '$item').join(' · ');
-    return '$value';
+    if (value is List) return value.map(_text).join(' · ');
+    return _text(value);
   }
 
-  static String _sanitizeFilePart(String raw) {
-    final cleaned = raw
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_$'), '');
-    return cleaned.isEmpty ? '' : cleaned;
-  }
+  static String _sanitizeFilePart(String raw) => raw
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
 }
