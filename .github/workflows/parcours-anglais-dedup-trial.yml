@@ -1,0 +1,93 @@
+name: Parcours anglais dedup trial
+
+on:
+  push:
+    branches:
+      - agent/parcours-anglais-dedup-trial
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "!contains(github.event.head_commit.message, 'fix: deduplicate fonctionnaire anglais fiche')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/parcours-anglais-dedup-trial
+
+      - name: Apply controlled correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          fiche_path = Path('docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/json/fonctionnaire_anglais.json')
+          pack_path = Path('assets/data/parcours_fiches_fonctionnaire.json')
+          target_id = 'fonctionnaire_anglais'
+
+          def correct(fiche):
+              assert fiche.get('id_fiche') == target_id
+
+              duplicate = 'RC pro : 100 à 300 €/an'
+              costs = list(fiche.get('couts_indicatifs', []))
+              if duplicate in costs:
+                  costs.remove(duplicate)
+              fiche['couts_indicatifs'] = costs
+
+              parcours = dict(fiche.get('parcours', {}))
+              parcours['1_regles'] = 'Source unique : qualification_regles.'
+              parcours['6_couts'] = ['Source unique : couts_indicatifs.']
+              fiche['parcours'] = parcours
+              fiche['version'] = '2026-07-15'
+              return fiche
+
+          fiche = json.loads(fiche_path.read_text(encoding='utf-8'))
+          fiche_path.write_text(
+              json.dumps(correct(fiche), ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+
+          pack = json.loads(pack_path.read_text(encoding='utf-8'))
+          matches = [i for i, item in enumerate(pack) if item.get('id_fiche') == target_id]
+          if len(matches) != 1:
+              raise SystemExit(f'Attendu une fiche {target_id}, trouvé {len(matches)}')
+          pack[matches[0]] = correct(pack[matches[0]])
+          pack_path.write_text(
+              json.dumps(pack, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+
+          # Contrôles ciblés de non-régression.
+          for current in (fiche, pack[matches[0]]):
+              assert 'RC pro indicative : 100 à 400 €/an selon activité' in current['couts_indicatifs']
+              assert 'RC pro : 100 à 300 €/an' not in current['couts_indicatifs']
+              assert current['parcours']['1_regles'] == 'Source unique : qualification_regles.'
+              assert current['parcours']['6_couts'] == ['Source unique : couts_indicatifs.']
+          PY
+
+      - name: Validate JSON and fiche completeness
+        shell: bash
+        run: |
+          python3 -m json.tool docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/json/fonctionnaire_anglais.json >/dev/null
+          python3 -m json.tool assets/data/parcours_fiches_fonctionnaire.json >/dev/null
+
+      - name: Commit correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/json/fonctionnaire_anglais.json \
+            assets/data/parcours_fiches_fonctionnaire.json
+          if git diff --cached --quiet; then
+            echo 'No data change required.'
+            exit 0
+          fi
+          git commit -m 'fix: deduplicate fonctionnaire anglais fiche'
+          git push origin HEAD:agent/parcours-anglais-dedup-trial
