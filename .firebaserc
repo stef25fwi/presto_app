@@ -15,6 +15,13 @@
           "ilipresto-fr-redirect-74abe"
         ]
       }
+    },
+    "presto-app-staging": {
+      "hosting": {
+        "production": [
+          "presto-app-staging"
+        ]
+      }
     }
   },
   "etags": {}
