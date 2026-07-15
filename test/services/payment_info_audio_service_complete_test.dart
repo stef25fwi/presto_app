@@ -182,10 +182,8 @@ void main() {
       'locale': 'fr-FR',
       'format': 'mp3',
     });
-    expect(calls[3], (
-      name: 'publishPaymentInfoAudioDraft',
-      parameters: <String, dynamic>{},
-    ));
+    expect(calls[3].name, 'publishPaymentInfoAudioDraft');
+    expect(calls[3].parameters, isEmpty);
   });
 
   test('refuse un texte de brouillon vide avant tout appel distant', () async {
