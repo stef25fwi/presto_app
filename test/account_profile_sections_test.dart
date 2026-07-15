@@ -35,6 +35,7 @@ class _Controllers {
 }
 
 AccountProfileFormSection _profile({
+  Key? key,
   required _Controllers controllers,
   required bool isEditing,
   required bool isSaving,
@@ -47,6 +48,7 @@ AccountProfileFormSection _profile({
   required ValueChanged<String> onPhoneCountryCodeChanged,
 }) {
   return AccountProfileFormSection(
+    key: key,
     firstName: firstName,
     lastName: lastName,
     departmentController: controllers.department,
