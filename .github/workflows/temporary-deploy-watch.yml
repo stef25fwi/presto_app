@@ -1,0 +1,205 @@
+name: Temporary deploy watch a2ed2894
+
+on:
+  pull_request:
+    branches:
+      - automation/deploy-watch-base-a2ed2894
+    paths:
+      - .github/deploy-watch-trigger.txt
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  watch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 1
+
+      - name: Wait for exact production deployment and run smoke tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_SHA: a2ed289473648893e5deb4149fd23232c062aae9
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          token = os.environ['GH_TOKEN']
+          repository = os.environ['REPOSITORY']
+          target_sha = os.environ['TARGET_SHA']
+          api_root = 'https://api.github.com'
+          report_path = Path('.github/deploy-watch-report.json')
+
+          def request_json(url):
+              request = urllib.request.Request(
+                  url,
+                  headers={
+                      'Authorization': f'Bearer {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                      'User-Agent': 'ilipresto-deploy-watch',
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          report = {
+              'target_sha': target_sha,
+              'checked_at': datetime.now(timezone.utc).isoformat(),
+              'workflow': None,
+              'jobs': [],
+              'smoke_tests': [],
+              'success': False,
+          }
+
+          deadline = time.time() + 60 * 60
+          matched_run = None
+          while time.time() < deadline:
+              payload = request_json(
+                  f'{api_root}/repos/{repository}/actions/workflows/deploy.yml/runs'
+                  '?branch=main&event=push&per_page=100'
+              )
+              matches = [
+                  run for run in payload.get('workflow_runs', [])
+                  if run.get('head_sha') == target_sha
+              ]
+              if matches:
+                  matched_run = max(matches, key=lambda run: run.get('run_attempt', 1))
+                  print(
+                      f"Deployment run {matched_run['id']} status="
+                      f"{matched_run['status']} conclusion={matched_run.get('conclusion')}"
+                  )
+                  if matched_run.get('status') == 'completed':
+                      break
+              else:
+                  print(f'No deployment run found yet for {target_sha}.')
+              time.sleep(20)
+
+          if matched_run is None:
+              report['workflow'] = {'status': 'not_found', 'conclusion': 'timeout'}
+          elif matched_run.get('status') != 'completed':
+              report['workflow'] = {
+                  'id': matched_run.get('id'),
+                  'html_url': matched_run.get('html_url'),
+                  'status': matched_run.get('status'),
+                  'conclusion': 'timeout',
+                  'created_at': matched_run.get('created_at'),
+                  'updated_at': matched_run.get('updated_at'),
+              }
+          else:
+              report['workflow'] = {
+                  'id': matched_run.get('id'),
+                  'name': matched_run.get('name'),
+                  'html_url': matched_run.get('html_url'),
+                  'status': matched_run.get('status'),
+                  'conclusion': matched_run.get('conclusion'),
+                  'event': matched_run.get('event'),
+                  'head_branch': matched_run.get('head_branch'),
+                  'head_sha': matched_run.get('head_sha'),
+                  'run_number': matched_run.get('run_number'),
+                  'run_attempt': matched_run.get('run_attempt'),
+                  'created_at': matched_run.get('created_at'),
+                  'updated_at': matched_run.get('updated_at'),
+              }
+
+              jobs_payload = request_json(
+                  f"{api_root}/repos/{repository}/actions/runs/{matched_run['id']}/jobs?per_page=100"
+              )
+              for job in jobs_payload.get('jobs', []):
+                  report['jobs'].append({
+                      'id': job.get('id'),
+                      'name': job.get('name'),
+                      'status': job.get('status'),
+                      'conclusion': job.get('conclusion'),
+                      'started_at': job.get('started_at'),
+                      'completed_at': job.get('completed_at'),
+                      'html_url': job.get('html_url'),
+                      'steps': [
+                          {
+                              'name': step.get('name'),
+                              'status': step.get('status'),
+                              'conclusion': step.get('conclusion'),
+                              'number': step.get('number'),
+                          }
+                          for step in job.get('steps', [])
+                      ],
+                  })
+
+              if matched_run.get('conclusion') == 'success':
+                  for url in (
+                      'https://ilipresto.web.app/',
+                      'https://ilipresto.web.app/manifest.json',
+                  ):
+                      smoke = {'url': url, 'success': False}
+                      try:
+                          request = urllib.request.Request(
+                              url,
+                              headers={'User-Agent': 'ilipresto-production-smoke'},
+                          )
+                          with urllib.request.urlopen(request, timeout=30) as response:
+                              body = response.read(4096)
+                              smoke.update({
+                                  'status': response.status,
+                                  'content_type': response.headers.get('content-type'),
+                                  'sample_bytes': len(body),
+                                  'success': 200 <= response.status < 400,
+                              })
+                      except urllib.error.HTTPError as error:
+                          smoke.update({'status': error.code, 'error': str(error)})
+                      except Exception as error:
+                          smoke.update({'status': None, 'error': repr(error)})
+                      report['smoke_tests'].append(smoke)
+
+          workflow_ok = (
+              report.get('workflow', {}).get('head_sha') == target_sha
+              and report.get('workflow', {}).get('conclusion') == 'success'
+          )
+          jobs_ok = bool(report['jobs']) and all(
+              job.get('conclusion') == 'success' for job in report['jobs']
+          )
+          smokes_ok = len(report['smoke_tests']) == 2 and all(
+              smoke.get('success') for smoke in report['smoke_tests']
+          )
+          report['success'] = workflow_ok and jobs_ok and smokes_ok
+          report['checked_at'] = datetime.now(timezone.utc).isoformat()
+          report_path.write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Commit deployment evidence
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -f .github/deploy-watch-report.json
+          git commit -m "test: conserve la preuve du déploiement a2ed2894"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+      - name: Enforce exact deployment success
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path('.github/deploy-watch-report.json').read_text(encoding='utf-8')
+          )
+          if not report.get('success'):
+              raise SystemExit('Exact production deployment or smoke tests failed.')
+          print('Exact production deployment and smoke tests succeeded.')
+          PY
