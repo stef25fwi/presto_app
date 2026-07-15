@@ -80,7 +80,9 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       if (!mounted) return;
       if (activated) {
         showSuccessSnackBar(
-            context, 'Notifications activées sur cet appareil.');
+          context,
+          'Notifications activées sur cet appareil.',
+        );
       } else {
         showErrorSnackBar(context, _service.pushActivationFailureMessage());
       }
@@ -96,7 +98,8 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
     if (kIsWeb) {
       await _showInfoDialog(
         title: 'Réglages des notifications',
-        message: 'Sur le web, gère les notifications dans les réglages de ton '
+        message:
+            'Sur le web, gère les notifications dans les réglages de ton '
             'navigateur (icône cadenas ou ⚙️ à gauche de la barre d’adresse) '
             '→ Notifications.',
       );
@@ -165,7 +168,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade300),
+        side: const BorderSide(color: Color(0xFFB8BEC7), width: 2),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Padding(
@@ -180,10 +183,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
                 const Expanded(
                   child: Text(
                     'Notifications',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                   ),
                 ),
                 if (_loading)
@@ -194,7 +194,10 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
                   )
                 else
                   _StatusChip(
-                      label: badge.label, color: badge.color, icon: badge.icon),
+                    label: badge.label,
+                    color: badge.color,
+                    icon: badge.icon,
+                  ),
               ],
             ),
             const SizedBox(height: 4),
@@ -211,8 +214,8 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
                 _isAuthorized
                     ? 'Nouveaux messages, réponses à tes annonces et alertes.'
                     : _isBlocked
-                        ? 'Bloquées dans les réglages système.'
-                        : 'Active-les pour ne rien manquer.',
+                    ? 'Bloquées dans les réglages système.'
+                    : 'Active-les pour ne rien manquer.',
               ),
               value: _isAuthorized,
               onChanged: (_loading || _busy) ? null : _onToggle,
