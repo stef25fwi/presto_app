@@ -1,0 +1,63 @@
+name: Apply journey PDF fix
+
+on:
+  pull_request:
+    branches:
+      - automation/pdf-fix-runner
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply targeted PDF patch
+        run: python3 tools/apply_journey_pdf_fix.py
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format modified Dart files
+        run: |
+          dart format \
+            lib/services/journey_pdf_export_service.dart \
+            lib/pages/account/mon_entreprise_parcours_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            test/services/journey_pdf_export_service_test.dart
+
+      - name: Test PDF generation
+        run: flutter test test/services/journey_pdf_export_service_test.dart --reporter expanded
+
+      - name: Analyze modified flow
+        run: flutter analyze --fatal-infos
+
+      - name: Commit validated fix
+        run: |
+          if git diff --quiet; then
+            echo "PDF fix already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/services/journey_pdf_export_service.dart \
+            lib/pages/account/mon_entreprise_parcours_page.dart \
+            lib/pages/toolbox_je_me_lance_page.dart \
+            test/services/journey_pdf_export_service_test.dart
+          git commit -m "fix: restore journey PDF generation and download"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
