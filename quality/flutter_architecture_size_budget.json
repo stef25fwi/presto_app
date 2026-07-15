@@ -28,6 +28,12 @@
       "module": "publication_widgets",
       "next_split": "séparer diagnostic IA et bannière validation"
     },
+    "lib/pages/account/mon_entreprise_parcours_page.dart": {
+      "current_lines": 501,
+      "target_lines": 500,
+      "module": "parcours_sauvegardes",
+      "next_split": "extraire la carte parcours, les actions PDF et les états d’abonnement"
+    },
     "lib/pages/toolbox_je_me_lance_page.dart": {
       "current_lines": 7217,
       "target_lines": 500,
