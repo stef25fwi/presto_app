@@ -1,0 +1,94 @@
+name: Apply UI fixes 382 383
+
+on:
+  push:
+    branches:
+      - fix/ui-382-383
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ui-382-383
+          fetch-depth: 0
+
+      - name: Apply exact UI changes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          account = Path('lib/pages/account_page.dart')
+          text = account.read_text()
+          old_border = "border: Border.all(color: kPrestoBlue.withValues(alpha: 0.10)),"
+          new_border = """border: Border.all(
+                  color: const Color(0xFFB8BEC7),
+                  width: 2,
+                ),"""
+          if text.count(old_border) != 1:
+              raise SystemExit(f'account border occurrence count: {text.count(old_border)}')
+          text = text.replace(old_border, new_border)
+
+          logo = """                    // Logo brand centré
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10, bottom: 12),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/logowebp.webp',
+                          height: 52,
+                        ),
+                      ),
+                    ),
+"""
+          if text.count(logo) != 1:
+              raise SystemExit(f'account logo occurrence count: {text.count(logo)}')
+          text = text.replace(logo, '')
+          account.write_text(text)
+
+          notifications = Path('lib/widgets/account_notifications_tile.dart')
+          text = notifications.read_text()
+          old = "side: BorderSide(color: Colors.grey.shade300),"
+          new = """side: const BorderSide(
+          color: Color(0xFFB8BEC7),
+          width: 2,
+        ),"""
+          if text.count(old) != 1:
+              raise SystemExit(f'notification border occurrence count: {text.count(old)}')
+          notifications.write_text(text.replace(old, new))
+
+          journey = Path('lib/pages/toolbox_je_me_lance_page.dart')
+          text = journey.read_text()
+          purple = 'tone: const Color(0xFF7C3AED),'
+          green = 'tone: const Color(0xFF26A65B),'
+          if text.count(purple) != 1:
+              raise SystemExit(f'purple tone occurrence count: {text.count(purple)}')
+          if text.count(green) != 1:
+              raise SystemExit(f'green tone occurrence count: {text.count(green)}')
+          text = text.replace(purple, 'tone: kBlue,')
+          text = text.replace(green, 'tone: kBlue,')
+          journey.write_text(text)
+
+          Path('.github/workflows/apply-ui-382-383.yml').unlink()
+          PY
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.4'
+          channel: stable
+          cache: true
+
+      - name: Format changed Dart files
+        run: dart format lib/pages/account_page.dart lib/widgets/account_notifications_tile.dart lib/pages/toolbox_je_me_lance_page.dart
+
+      - name: Commit generated changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart lib/widgets/account_notifications_tile.dart lib/pages/toolbox_je_me_lance_page.dart .github/workflows/apply-ui-382-383.yml
+          git commit -m "fix(ui): appliquer les améliorations compte et étape 4"
+          git push origin HEAD:fix/ui-382-383
