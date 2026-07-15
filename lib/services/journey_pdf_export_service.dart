@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:cross_file/cross_file.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -26,13 +28,44 @@ class JourneyPdfExportService {
 
   Future<XFile> generateJourneyPdf(Map<String, dynamic> journey) async {
     final bytes = await _buildPdfBytes(journey);
+    final fileName = _fileNameForJourney(journey);
+
+    return XFile.fromData(bytes, name: fileName, mimeType: 'application/pdf');
+  }
+
+  /// Génère puis enregistre réellement le PDF sur la plateforme courante.
+  ///
+  /// Le partage système n'est pas un téléchargement fiable sur tous les
+  /// navigateurs et appareils. `saveFile` reçoit donc directement les octets :
+  /// téléchargement navigateur sur le web et sélecteur d'enregistrement sur
+  /// les plateformes natives.
+  ///
+  /// Retourne `false` uniquement lorsque l'utilisateur annule le sélecteur
+  /// natif. Sur le web, `saveFile` retourne `null` après avoir déclenché le
+  /// téléchargement ; l'absence d'exception constitue donc le succès.
+  Future<bool> downloadJourneyPdf(Map<String, dynamic> journey) async {
+    final bytes = await _buildPdfBytes(journey);
+    if (bytes.isEmpty) {
+      throw StateError('Le document PDF généré est vide.');
+    }
+
+    final savedPath = await FilePicker.saveFile(
+      dialogTitle: 'Télécharger mon parcours personnalisé',
+      fileName: _fileNameForJourney(journey),
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+      bytes: bytes,
+    );
+
+    return kIsWeb || savedPath != null;
+  }
+
+  static String _fileNameForJourney(Map<String, dynamic> journey) {
     final safeActivity = _sanitizeFilePart(
       '${journey['selectedActivity'] ?? ''}',
     );
     final suffix = safeActivity.isEmpty ? 'parcours' : safeActivity;
-    final fileName = 'ilipresto_$suffix.pdf';
-
-    return XFile.fromData(bytes, name: fileName, mimeType: 'application/pdf');
+    return 'ilipresto_$suffix.pdf';
   }
 
   Future<Uint8List> _buildPdfBytes(Map<String, dynamic> journey) async {
@@ -428,29 +461,36 @@ class JourneyPdfExportService {
     final todos = _stringList(item['todos']);
     final checks = _stringList(item['checks']);
 
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 8),
-      padding: const pw.EdgeInsets.all(9),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey50,
-        borderRadius: pw.BorderRadius.circular(9),
-        border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            title,
-            style: pw.TextStyle(fontSize: 10.5, fontWeight: pw.FontWeight.bold),
+    // Le bloc détaillé doit pouvoir se répartir sur plusieurs pages.
+    // Un Container unique rendait l'étape entière insécable et pouvait faire
+    // échouer document.save() lorsque la checklist dépassait une page A4.
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          width: double.infinity,
+          padding: const pw.EdgeInsets.all(9),
+          decoration: pw.BoxDecoration(
+            color: PdfColors.grey50,
+            borderRadius: pw.BorderRadius.circular(9),
+            border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
           ),
-          if (description.isNotEmpty) ...[
-            pw.SizedBox(height: 4),
-            _paragraph(description),
-          ],
-          ...todos.map(_bullet),
-          ...checks.map(_bullet),
+          child: pw.Text(
+            title,
+            style: pw.TextStyle(
+              fontSize: 10.5,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ),
+        if (description.isNotEmpty) ...[
+          pw.SizedBox(height: 4),
+          _paragraph(description),
         ],
-      ),
+        ...todos.map(_bullet),
+        ...checks.map(_bullet),
+        pw.SizedBox(height: 8),
+      ],
     );
   }
 
