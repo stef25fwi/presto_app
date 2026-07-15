@@ -74,7 +74,15 @@ await replaceOnce(
   const SubscriptionCheckoutService();
 
   static bool _openingStripe = false;`,
-  `class SubscriptionCheckoutService {
+  `typedef SubscriptionStripeDataFetcher = Future<Map<String, dynamic>> Function(
+  String callableName,
+  Map<String, dynamic> payload,
+);
+typedef SubscriptionExternalLauncher = Future<bool> Function(Uri uri);
+typedef SubscriptionClock = DateTime Function();
+typedef SubscriptionReturnHistoryPreparer = void Function();
+
+class SubscriptionCheckoutService {
   const SubscriptionCheckoutService({
     SubscriptionStripeDataFetcher? stripeDataFetcher,
     SubscriptionExternalLauncher? externalLauncher,
@@ -91,7 +99,7 @@ await replaceOnce(
   final SubscriptionReturnHistoryPreparer? _returnHistoryPreparerOverride;
 
   static bool _openingStripe = false;`,
-  'injectable Flutter checkout constructor',
+  'injectable Flutter checkout API',
 );
 
 await replaceOnce(
@@ -125,8 +133,12 @@ await replaceOnce(
         mode: LaunchMode.externalApplication,
         webOnlyWindowName: '_self',
       );`,
-  `      (_returnHistoryPreparerOverride ?? prepareSubscriptionReturnHistory)
-          .call();
+  `      final returnHistoryPreparer = _returnHistoryPreparerOverride;
+      if (returnHistoryPreparer != null) {
+        returnHistoryPreparer();
+      } else {
+        prepareSubscriptionReturnHistory();
+      }
 
       final launcher = _externalLauncherOverride;
       final opened = launcher != null
@@ -191,7 +203,11 @@ for (const [label, ok] of [
   ['Flutter checkout prefetch', service.includes('Future<void> prefetchCheckout(')],
   [
     'Flutter checkout dependency injection',
-    service.includes('SubscriptionStripeDataFetcher? stripeDataFetcher'),
+    service.includes('typedef SubscriptionStripeDataFetcher'),
+  ],
+  [
+    'Flutter return history guardrail',
+    service.includes('prepareSubscriptionReturnHistory();'),
   ],
   ['subscription page prefetch', widgets.includes('_scheduleCheckoutPrefetch')],
 ]) {
