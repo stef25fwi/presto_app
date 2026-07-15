@@ -33,7 +33,13 @@ class _SocialUserPlatform extends UserPlatform {
         );
 
   @override
-  Future<String?> getIdToken(bool forceRefresh) async => 'test-token';
+  Future<String?> getIdToken(bool forceRefresh) async {
+    throw FirebaseException(
+      plugin: 'firebase_auth',
+      code: 'permission-denied',
+      message: 'profile bootstrap intentionally unavailable in unit tests',
+    );
+  }
 }
 
 class _SocialCredentialPlatform extends UserCredentialPlatform {
