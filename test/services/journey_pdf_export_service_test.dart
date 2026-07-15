@@ -43,7 +43,8 @@ void main() {
       'statusWarnings': [
         {
           'title': 'Cumul avec un emploi salarié',
-          'description': 'Relire le contrat de travail et la clause de loyauté.',
+          'description':
+              'Relire le contrat de travail et la clause de loyauté.',
           'checks': ['Absence de clause d’exclusivité incompatible'],
         },
       ],
@@ -75,6 +76,33 @@ void main() {
 
     // Le nom d'un XFile.fromData n'est pas exposé de façon uniforme par
     // cross_file sur tous les runners. Le contenu est le contrat portable.
+    expect(bytes.length, greaterThan(1000));
+    expect(ascii.decode(bytes.take(4).toList()), '%PDF');
+  });
+
+  test('génère un PDF lorsque le contenu détaillé dépasse une page', () async {
+    const service = JourneyPdfExportService();
+    final file = await service.generateJourneyPdf({
+      'projectLabel': 'Projet avec parcours détaillé',
+      'region': 'Guadeloupe',
+      'currentStatus': 'Fonctionnaire',
+      'selectedActivity': 'Formation',
+      'recommendation': {'statut': 'Micro-entreprise'},
+      'steps': [
+        {
+          'title': 'Checklist complète',
+          'description':
+              'Cette étape longue vérifie la répartition sur plusieurs pages.',
+          'todos': List<String>.generate(
+            90,
+            (index) =>
+                'Action détaillée ${index + 1} : vérifier les documents, les règles et les justificatifs nécessaires.',
+          ),
+        },
+      ],
+    });
+
+    final bytes = await file.readAsBytes();
     expect(bytes.length, greaterThan(1000));
     expect(ascii.decode(bytes.take(4).toList()), '%PDF');
   });
