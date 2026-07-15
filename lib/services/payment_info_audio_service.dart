@@ -4,6 +4,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+typedef PaymentInfoAudioCallable = Future<void> Function(
+  String name,
+  Map<String, dynamic> parameters,
+);
+
+typedef PaymentInfoAudioUploader = Future<String> Function({
+  required Uint8List bytes,
+  required String path,
+  required String contentType,
+});
+
 class PaymentInfoAudioConfig {
   const PaymentInfoAudioConfig({
     required this.enabled,
@@ -115,11 +126,17 @@ class PaymentInfoAudioService {
   PaymentInfoAudioService({
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
+    PaymentInfoAudioCallable? callable,
+    PaymentInfoAudioUploader? uploader,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions;
+        _functions = functions,
+        _callableOverride = callable,
+        _uploaderOverride = uploader;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions? _functions;
+  final PaymentInfoAudioCallable? _callableOverride;
+  final PaymentInfoAudioUploader? _uploaderOverride;
 
   FirebaseFunctions get _callableFunctions =>
       _functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
@@ -129,6 +146,34 @@ class PaymentInfoAudioService {
 
   DocumentReference<Map<String, dynamic>> get _settingsRef =>
       _firestore.collection('admin_settings').doc('payment_info_audio');
+
+  Future<void> _callFunction(
+    String name,
+    Map<String, dynamic> parameters,
+  ) async {
+    final override = _callableOverride;
+    if (override != null) {
+      await override(name, parameters);
+      return;
+    }
+
+    await _callableFunctions.httpsCallable(name).call(parameters);
+  }
+
+  Future<String> _uploadAudioBytes({
+    required Uint8List bytes,
+    required String path,
+    required String contentType,
+  }) async {
+    final override = _uploaderOverride;
+    if (override != null) {
+      return override(bytes: bytes, path: path, contentType: contentType);
+    }
+
+    final ref = FirebaseStorage.instance.ref(path);
+    await ref.putData(bytes, SettableMetadata(contentType: contentType));
+    return ref.getDownloadURL();
+  }
 
   Stream<PaymentInfoAudioConfig?> watchConfig() {
     return _configRef.snapshots().map((snapshot) {
@@ -169,9 +214,7 @@ class PaymentInfoAudioService {
     String voice = 'alloy',
     String locale = 'fr-FR',
   }) async {
-    final callable = _callableFunctions.httpsCallable('generatePaymentInfoAudio');
-
-    await callable.call(<String, dynamic>{
+    await _callFunction('generatePaymentInfoAudio', <String, dynamic>{
       if (text != null && text.trim().isNotEmpty) 'text': text.trim(),
       'voice': voice,
       'locale': locale,
@@ -193,9 +236,7 @@ class PaymentInfoAudioService {
       throw ArgumentError('Le texte audio ne peut pas être vide.');
     }
 
-    final callable = _callableFunctions.httpsCallable('generatePaymentInfoAudioDraft');
-
-    await callable.call(<String, dynamic>{
+    await _callFunction('generatePaymentInfoAudioDraft', <String, dynamic>{
       'text': cleanText,
       'voice': voice,
       'locale': locale,
@@ -207,8 +248,10 @@ class PaymentInfoAudioService {
 
   /// Publie le dernier brouillon validé dans public_config/payment_info_audio.
   Future<PaymentInfoAudioConfig?> publishPaymentInfoAudioDraft() async {
-    final callable = _callableFunctions.httpsCallable('publishPaymentInfoAudioDraft');
-    await callable.call(<String, dynamic>{});
+    await _callFunction(
+      'publishPaymentInfoAudioDraft',
+      <String, dynamic>{},
+    );
     return getConfig();
   }
 }
@@ -223,9 +266,11 @@ extension PaymentInfoAudioServiceLegacyCompat on PaymentInfoAudioService {
   Future<void> uploadAudio(Uint8List bytes, String filename) async {
     final path =
         'payment_info_audio/${DateTime.now().millisecondsSinceEpoch}_$filename';
-    final ref = FirebaseStorage.instance.ref(path);
-    await ref.putData(bytes, SettableMetadata(contentType: 'audio/mpeg'));
-    final downloadUrl = await ref.getDownloadURL();
+    final downloadUrl = await _uploadAudioBytes(
+      bytes: bytes,
+      path: path,
+      contentType: 'audio/mpeg',
+    );
 
     await _configRef.set({
       'enabled': true,
