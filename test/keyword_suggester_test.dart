@@ -131,7 +131,7 @@ void main() {
     expect(results.single.label, 'Patisserie artisanale');
   });
 
-  test('empty query returns popular items with a limit', () {
+  test('empty query returns the default popularity fallback with a limit', () {
     final results = KeywordSuggester.compute(
       query: '',
       items: _items,
@@ -140,12 +140,12 @@ void main() {
 
     expect(results, hasLength(3));
     expect(
-      results.map((item) => item.label),
-      containsAll(<String>[
-        'Patisserie artisanale',
+      results.map((item) => item.label).toList(),
+      <String>[
         'Nettoyage a domicile',
-        'Livraison de colis',
-      ]),
+        'Creation de site vitrine',
+        'Cours de coiffure',
+      ],
     );
   });
 
