@@ -72,6 +72,7 @@ jobs:
           firebase hosting:channel:deploy "$channel" \
             --expires 7d \
             --project "$FIREBASE_STAGING_PROJECT_ID" \
+            --only hosting:production \
             --token "$FIREBASE_STAGING_TOKEN" \
             --non-interactive 2>&1 | tee preview-deploy.log
           preview_url=$(grep -Eo 'https://[^ ]+\.web\.app' preview-deploy.log | tail -1)
