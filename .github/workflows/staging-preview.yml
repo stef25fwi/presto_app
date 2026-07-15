@@ -1,0 +1,88 @@
+name: Firebase staging preview
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-preview-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate isolated Firebase staging project
+        env:
+          FIREBASE_STAGING_PROJECT_ID: ${{ secrets.FIREBASE_STAGING_PROJECT_ID }}
+          FIREBASE_PRODUCTION_PROJECT_ID: presto-app-74abe
+        run: node tools/quality/check_firebase_preview_project.mjs
+
+      - name: Require staging credentials
+        env:
+          FIREBASE_STAGING_TOKEN: ${{ secrets.FIREBASE_STAGING_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$FIREBASE_STAGING_TOKEN" || {
+            echo 'Missing FIREBASE_STAGING_TOKEN in the staging environment.'
+            exit 1
+          }
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Build staging web bundle
+        env:
+          APPCHECK_RECAPTCHA_SITE_KEY: ${{ secrets.STAGING_APPCHECK_RECAPTCHA_SITE_KEY }}
+        run: |
+          flutter config --enable-web
+          flutter pub get
+          bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run \
+            --dart-define=APP_ENV=staging \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_STAGING_PROJECT_ID }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@13
+
+      - name: Deploy isolated preview channel
+        id: deploy
+        env:
+          FIREBASE_STAGING_PROJECT_ID: ${{ secrets.FIREBASE_STAGING_PROJECT_ID }}
+          FIREBASE_STAGING_TOKEN: ${{ secrets.FIREBASE_STAGING_TOKEN }}
+        run: |
+          set -euo pipefail
+          channel="pr-${{ github.event.pull_request.number || github.run_number }}"
+          firebase hosting:channel:deploy "$channel" \
+            --expires 7d \
+            --project "$FIREBASE_STAGING_PROJECT_ID" \
+            --token "$FIREBASE_STAGING_TOKEN" \
+            --non-interactive 2>&1 | tee preview-deploy.log
+          preview_url=$(grep -Eo 'https://[^ ]+\.web\.app' preview-deploy.log | tail -1)
+          test -n "$preview_url"
+          echo "url=$preview_url" >> "$GITHUB_OUTPUT"
+          curl --fail --silent --show-error --retry 4 --retry-delay 4 "$preview_url" >/dev/null
+          echo "Preview staging: $preview_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload preview evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: staging-preview-${{ github.sha }}
+          path: preview-deploy.log
+          retention-days: 14
