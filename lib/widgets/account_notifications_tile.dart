@@ -165,7 +165,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade300),
+        side: const BorderSide(color: Color(0xFFB8BEC7), width: 2),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Padding(
