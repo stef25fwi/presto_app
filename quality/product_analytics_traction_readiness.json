@@ -1,0 +1,76 @@
+{
+  "phase": 7,
+  "name": "Analytics produit et traction commerciale",
+  "updated_at": "2026-07-14",
+  "progress_percent": 35,
+  "definition_of_done": "Les décisions produit reposent sur des métriques réelles, avec MRR et rétention suivis mensuellement.",
+  "controls": [
+    {
+      "id": "analytics_taxonomy_no_pii",
+      "status": "done",
+      "evidence": [
+        "docs/product/analytics-taxonomy.md",
+        "lib/services/product_analytics_events.dart",
+        "tools/quality/audit_analytics_events.py"
+      ]
+    },
+    {
+      "id": "business_metrics_defined",
+      "status": "done",
+      "metrics": ["mau", "activation", "conversion", "churn", "mrr", "cac", "ltv", "retention"]
+    },
+    {
+      "id": "guadeloupe_12_month_commercial_plan",
+      "status": "done"
+    },
+    {
+      "id": "real_funnel_instrumented",
+      "status": "pending",
+      "required_events": [
+        "acquisition_landing_viewed",
+        "registration_completed",
+        "activation_first_value",
+        "engagement_listing_contacted",
+        "conversion_plan_selected",
+        "conversion_checkout_completed",
+        "retention_returned",
+        "revenue_subscription_renewed"
+      ],
+      "requirements": [
+        "Chaque événement est appelé dans le parcours réel.",
+        "Chaque événement possède un test de non-régression.",
+        "Les événements de paiement et renouvellement proviennent du backend confirmé.",
+        "Une règle de déduplication empêche les doubles comptages."
+      ]
+    },
+    {
+      "id": "funnel_dashboard",
+      "status": "pending",
+      "stages": ["acquisition", "activation", "contact", "subscription"],
+      "requirements": [
+        "Filtres par période, territoire, plateforme, source et plan.",
+        "Volumes et taux de conversion entre chaque étape.",
+        "Données issues des événements réels, sans valeurs simulées."
+      ]
+    },
+    {
+      "id": "cohorts_and_recurring_revenue",
+      "status": "pending",
+      "requirements": [
+        "Cohortes hebdomadaires et mensuelles.",
+        "Rétention D1, D7, D30 et M1, M3, M6.",
+        "MRR nouveau, expansion, contraction, churn et réactivation.",
+        "Réconciliation mensuelle avec Stripe."
+      ]
+    },
+    {
+      "id": "guadeloupe_traction_validation",
+      "status": "pending",
+      "requirements": [
+        "Seuils go/no-go documentés.",
+        "Trois mois consécutifs de données fiables.",
+        "Décision d'extension DOM enregistrée avec preuves."
+      ]
+    }
+  ]
+}
