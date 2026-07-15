@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:presto_app/features/admin_videomaker/video_maker_models.dart';
@@ -76,5 +77,35 @@ void main() {
     expect(formatVideoMakerBytes(2 * 1024 * 1024), '2.0 Mo');
     expect(maxVideoMakerImageBytes, 5 * 1024 * 1024);
     expect(supportedVideoMakerImageMimeTypes, contains('image/webp'));
+  });
+
+  group('friendlyVideoMakerFunctionError', () {
+    String messageFor(String code, {String? message}) {
+      return friendlyVideoMakerFunctionError(
+        FirebaseFunctionsException(code: code, message: message ?? ''),
+      );
+    }
+
+    test('traduit les erreurs attendues', () {
+      expect(messageFor('unauthenticated'), contains('Reconnectez-vous'));
+      expect(messageFor('permission-denied'), contains('administrateurs'));
+      expect(
+        messageFor('invalid-argument', message: '  Prompt invalide  '),
+        'Prompt invalide',
+      );
+      expect(messageFor('invalid-argument'), contains('prompt ou l’image'));
+      expect(
+        messageFor('failed-precondition', message: 'Clé absente'),
+        'Clé absente',
+      );
+      expect(messageFor('failed-precondition'), contains('clé API Gemini'));
+      expect(messageFor('deadline-exceeded'), contains('plus de temps'));
+      expect(messageFor('resource-exhausted'), contains('Quota VEO'));
+    });
+
+    test('utilise le message distant ou le repli générique', () {
+      expect(messageFor('unknown', message: '  Erreur distante  '), 'Erreur distante');
+      expect(messageFor('unknown'), 'La génération VEO a échoué.');
+    });
   });
 }
