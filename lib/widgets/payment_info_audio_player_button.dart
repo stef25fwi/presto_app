@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 abstract class PaymentInfoAudioController {
   Stream<PlayerState> get onPlayerStateChanged;
   Stream<void> get onPlayerComplete;
-
   Future<void> setSource(String url);
   Future<void> stop();
   Future<void> pause();
@@ -22,7 +21,6 @@ class AudioplayersPaymentInfoAudioController
       : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
-
   @override
   Stream<PlayerState> get onPlayerStateChanged => _player.onPlayerStateChanged;
 
@@ -66,7 +64,6 @@ class PaymentInfoAudioPlayerButton extends StatefulWidget {
   final bool compact;
   final VoidCallback? onPlayed;
   final PaymentInfoAudioController? audioController;
-
   @override
   State<PaymentInfoAudioPlayerButton> createState() =>
       _PaymentInfoAudioPlayerButtonState();
@@ -76,21 +73,18 @@ class _PaymentInfoAudioPlayerButtonState
     extends State<PaymentInfoAudioPlayerButton> {
   late final PaymentInfoAudioController _player;
   late final bool _ownsPlayer;
-
   StreamSubscription<void>? _completeSubscription;
   StreamSubscription<PlayerState>? _stateSubscription;
 
   PlayerState _playerState = PlayerState.stopped;
   bool _isLoading = false;
   bool _sourceLoaded = false;
-
   bool get _isPlaying => _playerState == PlayerState.playing;
   bool get _isPaused => _playerState == PlayerState.paused;
 
   @override
   void initState() {
     super.initState();
-
     _ownsPlayer = widget.audioController == null;
     _player = widget.audioController ?? AudioplayersPaymentInfoAudioController();
 
