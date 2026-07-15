@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/services.dart';
@@ -12,8 +11,6 @@ import 'package:presto_app/services/marketplace_human_verification.dart';
 import 'package:presto_app/services/marketplace_publish_service.dart';
 
 class _FakeListingRepository extends ListingRepository {
-  _FakeListingRepository();
-
   final List<MarketplaceListingDraft> drafts = <MarketplaceListingDraft>[];
   final List<ListingMediaInput> updatedMedia = <ListingMediaInput>[];
   final List<String> recaptchaTokens = <String>[];
@@ -61,8 +58,6 @@ class _FakeListingRepository extends ListingRepository {
 }
 
 class _FakeListingReadRepository extends ListingReadRepository {
-  _FakeListingReadRepository();
-
   Map<String, dynamic>? data;
   Object? error;
   String? requestedId;
@@ -101,20 +96,20 @@ void main() {
     await Firebase.initializeApp();
   });
 
-  MarketplacePublishService buildService({
+  MarketplacePublishService service({
     required _FakeListingRepository repository,
-    _FakeListingReadRepository? readRepository,
+    _FakeListingReadRepository? reader,
     _FakeVerification? verification,
   }) {
     return MarketplacePublishService(
       listingRepository: repository,
-      listingReadRepository: readRepository ?? _FakeListingReadRepository(),
+      listingReadRepository: reader ?? _FakeListingReadRepository(),
       verification: verification ?? _FakeVerification(),
     );
   }
 
   Future<MarketplacePublishResult> publish(
-    MarketplacePublishService service, {
+    MarketplacePublishService target, {
     String title = 'Recherche aide jardinage',
     String description =
         'Je recherche une personne disponible pour entretenir mon jardin cette semaine.',
@@ -123,7 +118,7 @@ void main() {
     String postalCode = '97122',
     bool hidePhone = false,
   }) {
-    return service.publish(
+    return target.publish(
       ownerId: 'owner-1',
       title: title,
       description: description,
@@ -136,14 +131,14 @@ void main() {
       isUrgent: true,
       price: 45,
       budgetType: 'forfait',
-      photos: const [],
+      photos: const <ListingMediaInput>[],
       hidePhone: hidePhone,
     );
   }
 
-  test('publie un brouillon canonique et relit l annonce publique', () async {
+  test('publie un brouillon canonique puis relit l annonce publique', () async {
     final repository = _FakeListingRepository();
-    final readRepository = _FakeListingReadRepository()
+    final reader = _FakeListingReadRepository()
       ..data = <String, dynamic>{
         'ownerId': 'owner-1',
         'title': 'Recherche aide jardinage',
@@ -157,17 +152,18 @@ void main() {
         'media': const <dynamic>[],
       };
     final verification = _FakeVerification(<Object>[' token-submit ']);
-    final service = buildService(
-      repository: repository,
-      readRepository: readRepository,
-      verification: verification,
-    );
 
-    final result = await publish(service, hidePhone: true);
+    final result = await publish(
+      service(
+        repository: repository,
+        reader: reader,
+        verification: verification,
+      ),
+      hidePhone: true,
+    );
 
     expect(repository.createCalls, 1);
     expect(repository.submitCalls, 1);
-    expect(repository.drafts, hasLength(1));
     final draft = repository.drafts.single;
     expect(draft.ownerId, 'owner-1');
     expect(draft.title, 'Recherche aide jardinage');
@@ -185,62 +181,55 @@ void main() {
         MarketplaceHumanVerificationAction.listingSubmit,
       ],
     );
-    expect(readRepository.requestedId, 'listing-1');
+    expect(reader.requestedId, 'listing-1');
     expect(result.listingId, 'listing-1');
     expect(result.isPubliclyVisible, isTrue);
     expect(result.detailData, isNotEmpty);
   });
 
-  test('une relecture absente laisse la publication réussie non visible', () async {
+  test('une relecture absente garde la publication réussie non visible', () async {
     final repository = _FakeListingRepository();
-    final readRepository = _FakeListingReadRepository()..data = null;
-    final result = await publish(
-      buildService(repository: repository, readRepository: readRepository),
-    );
+    final reader = _FakeListingReadRepository()..data = null;
+
+    final result = await publish(service(repository: repository, reader: reader));
 
     expect(result.listingId, 'listing-1');
     expect(result.detailData, isEmpty);
     expect(result.isPubliclyVisible, isFalse);
   });
 
-  test('une relecture non publique ou en erreur reste non bloquante', () async {
+  test('une relecture privée ou en erreur reste non bloquante', () async {
     final hiddenRepository = _FakeListingRepository();
-    final hiddenRead = _FakeListingReadRepository()
+    final hiddenReader = _FakeListingReadRepository()
       ..data = <String, dynamic>{
         'status': 'draft',
         'visibility': 'private',
       };
     final hidden = await publish(
-      buildService(
-        repository: hiddenRepository,
-        readRepository: hiddenRead,
-      ),
+      service(repository: hiddenRepository, reader: hiddenReader),
     );
     expect(hidden.isPubliclyVisible, isFalse);
 
     final errorRepository = _FakeListingRepository();
-    final errorRead = _FakeListingReadRepository()
+    final errorReader = _FakeListingReadRepository()
       ..error = StateError('lecture indisponible');
     final errorResult = await publish(
-      buildService(
-        repository: errorRepository,
-        readRepository: errorRead,
-      ),
+      service(repository: errorRepository, reader: errorReader),
     );
     expect(errorResult.listingId, 'listing-1');
     expect(errorResult.detailData, isEmpty);
   });
 
-  test('réessaie une erreur channel lors de la création du brouillon', () async {
+  test('réessaie une erreur channel pendant la création du brouillon', () async {
     final repository = _FakeListingRepository()
       ..createErrors.add(
-        const PlatformException(
+        PlatformException(
           code: 'channel-error',
           message: 'Unable to establish connection on channel.',
         ),
       );
 
-    final result = await publish(buildService(repository: repository));
+    final result = await publish(service(repository: repository));
 
     expect(result.listingId, 'listing-1');
     expect(repository.createCalls, 2);
@@ -255,56 +244,56 @@ void main() {
         ),
       );
 
-    final result = await publish(buildService(repository: repository));
+    final result = await publish(service(repository: repository));
 
     expect(result.listingId, 'listing-1');
     expect(repository.createCalls, 2);
   });
 
-  test('propage une erreur non liée au channel', () async {
+  test('propage une erreur de création non récupérable', () async {
     final repository = _FakeListingRepository()
       ..createErrors.add(StateError('écriture impossible'));
 
     await expectLater(
-      publish(buildService(repository: repository)),
+      publish(service(repository: repository)),
       throwsA(isA<StateError>()),
     );
     expect(repository.createCalls, 1);
     expect(repository.submitCalls, 0);
   });
 
-  test('réessaie le token vide puis transmet le second token', () async {
+  test('réessaie un token vide puis transmet le second token', () async {
     final repository = _FakeListingRepository();
     final verification = _FakeVerification(<Object>['', 'second-token']);
 
     await publish(
-      buildService(repository: repository, verification: verification),
+      service(repository: repository, verification: verification),
     );
 
     expect(verification.actions, hasLength(2));
     expect(repository.recaptchaTokens, <String>['second-token']);
   });
 
-  test('publie sans token lorsque la vérification reste indisponible', () async {
+  test('publie sans token si la vérification reste indisponible', () async {
     final repository = _FakeListingRepository();
     final verification = _FakeVerification(<Object>['', '']);
 
     await publish(
-      buildService(repository: repository, verification: verification),
+      service(repository: repository, verification: verification),
     );
 
     expect(verification.actions, hasLength(2));
     expect(repository.recaptchaTokens, <String>['']);
   });
 
-  test('une erreur channel de vérification produit un token vide', () async {
+  test('une erreur channel de vérification finit avec un token vide', () async {
     final repository = _FakeListingRepository();
     final verification = _FakeVerification(<Object>[
-      const PlatformException(
+      PlatformException(
         code: 'channel-error',
         message: 'Unable to establish connection',
       ),
-      const PlatformException(
+      PlatformException(
         code: 'channel-error',
         message: 'Unable to establish connection',
       ),
@@ -313,7 +302,7 @@ void main() {
     ]);
 
     await publish(
-      buildService(repository: repository, verification: verification),
+      service(repository: repository, verification: verification),
     );
 
     expect(repository.recaptchaTokens, <String>['']);
@@ -324,7 +313,7 @@ void main() {
       ..submitErrors.add(StateError('soumission impossible'));
 
     await expectLater(
-      publish(buildService(repository: repository)),
+      publish(service(repository: repository)),
       throwsA(isA<StateError>()),
     );
     expect(repository.createCalls, 1);
@@ -332,52 +321,45 @@ void main() {
   });
 
   group('validation du brouillon', () {
-    test('refuse un titre trop court', () async {
+    Future<void> expectRejected({
+      String title = 'Recherche aide jardinage',
+      String description =
+          'Je recherche une personne disponible pour entretenir mon jardin cette semaine.',
+      String city = 'Baie-Mahault',
+    }) async {
       final repository = _FakeListingRepository();
       await expectLater(
-        publish(buildService(repository: repository), title: 'abc'),
+        publish(
+          service(repository: repository),
+          title: title,
+          description: description,
+          city: city,
+        ),
         throwsA(isA<StateError>()),
       );
       expect(repository.createCalls, 0);
+    }
+
+    test('refuse un titre trop court', () async {
+      await expectRejected(title: 'abc');
     });
 
     test('refuse un titre trop long', () async {
-      final repository = _FakeListingRepository();
-      await expectLater(
-        publish(
-          buildService(repository: repository),
-          title: List<String>.filled(200, 'a').join(),
-        ),
-        throwsA(isA<StateError>()),
-      );
-      expect(repository.createCalls, 0);
+      await expectRejected(title: List<String>.filled(200, 'a').join());
     });
 
     test('refuse une description trop courte', () async {
-      final repository = _FakeListingRepository();
-      await expectLater(
-        publish(buildService(repository: repository), description: 'courte'),
-        throwsA(isA<StateError>()),
-      );
+      await expectRejected(description: 'courte');
     });
 
     test('refuse une description trop longue', () async {
-      final repository = _FakeListingRepository();
-      await expectLater(
-        publish(
-          buildService(repository: repository),
-          description: List<String>.filled(5000, 'd').join(),
-        ),
-        throwsA(isA<StateError>()),
+      await expectRejected(
+        description: List<String>.filled(5000, 'd').join(),
       );
     });
 
     test('refuse une ville vide', () async {
-      final repository = _FakeListingRepository();
-      await expectLater(
-        publish(buildService(repository: repository), city: '   '),
-        throwsA(isA<StateError>()),
-      );
+      await expectRejected(city: '   ');
     });
   });
 
