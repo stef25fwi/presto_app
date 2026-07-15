@@ -16,7 +16,7 @@
 
 Le workflow `.github/workflows/coverage-agent.yml` s'exécute :
 
-- toutes les heures, à la minute 17 ;
+- toutes les 15 minutes ;
 - après une modification de `main` touchant le code ou les tests ;
 - manuellement depuis GitHub Actions.
 

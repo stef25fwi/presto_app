@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ MODULE_PATH = Path(__file__).with_name("coverage_agent.py")
 SPEC = importlib.util.spec_from_file_location("coverage_agent", MODULE_PATH)
 assert SPEC and SPEC.loader
 coverage_agent = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = coverage_agent
 SPEC.loader.exec_module(coverage_agent)
 
 
