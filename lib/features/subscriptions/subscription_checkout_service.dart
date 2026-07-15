@@ -26,44 +26,14 @@ class SubscriptionActionRequest {
   });
 }
 
-typedef SubscriptionStripeDataFetcher = Future<Map<String, dynamic>> Function(
-  String callableName,
-  Map<String, dynamic> payload,
-);
-typedef SubscriptionExternalLauncher = Future<bool> Function(Uri uri);
-typedef SubscriptionClock = DateTime Function();
-typedef SubscriptionReturnHistoryPreparer = void Function();
-
 class SubscriptionCheckoutService {
-  const SubscriptionCheckoutService({
-    SubscriptionStripeDataFetcher? stripeDataFetcher,
-    SubscriptionExternalLauncher? externalLauncher,
-    SubscriptionClock? clock,
-    SubscriptionReturnHistoryPreparer? returnHistoryPreparer,
-  })  : _stripeDataFetcherOverride = stripeDataFetcher,
-        _externalLauncherOverride = externalLauncher,
-        _clockOverride = clock,
-        _returnHistoryPreparerOverride = returnHistoryPreparer;
-
-  final SubscriptionStripeDataFetcher? _stripeDataFetcherOverride;
-  final SubscriptionExternalLauncher? _externalLauncherOverride;
-  final SubscriptionClock? _clockOverride;
-  final SubscriptionReturnHistoryPreparer? _returnHistoryPreparerOverride;
+  const SubscriptionCheckoutService();
 
   static bool _openingStripe = false;
   static final Map<String, _CachedStripeDestination> _checkoutCache =
       <String, _CachedStripeDestination>{};
   static final Map<String, Future<_CachedStripeDestination?>>
       _checkoutPrefetches = <String, Future<_CachedStripeDestination?>>{};
-
-  @visibleForTesting
-  static void resetForTesting() {
-    _openingStripe = false;
-    _checkoutCache.clear();
-    _checkoutPrefetches.clear();
-  }
-
-  DateTime get _now => (_clockOverride ?? DateTime.now).call();
 
   Future<void> prefetchCheckout(
     SubscriptionPlan plan, {
@@ -202,16 +172,13 @@ class SubscriptionCheckoutService {
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
-      (_returnHistoryPreparerOverride ?? prepareSubscriptionReturnHistory).call();
+      prepareSubscriptionReturnHistory();
 
-      final launcher = _externalLauncherOverride;
-      final opened = launcher != null
-          ? await launcher(uri)
-          : await launchUrl(
-              uri,
-              mode: LaunchMode.externalApplication,
-              webOnlyWindowName: '_self',
-            );
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
+      );
       if (!opened) {
         throw const SubscriptionCheckoutException(
           'Impossible d’ouvrir la page Stripe.',
@@ -276,7 +243,7 @@ class SubscriptionCheckoutService {
         : int.tryParse((rawExpiresAt ?? '').toString()) ?? 0;
     final expiresAtMs =
         parsed > 0 && parsed < 1000000000000 ? parsed * 1000 : parsed;
-    final fallbackMs = _now.millisecondsSinceEpoch +
+    final fallbackMs = DateTime.now().millisecondsSinceEpoch +
         const Duration(minutes: 20).inMilliseconds;
     return _CachedStripeDestination(
       url: url,
@@ -287,7 +254,7 @@ class SubscriptionCheckoutService {
   _CachedStripeDestination? _readCachedCheckout(String key) {
     final cached = _checkoutCache[key];
     if (cached == null) return null;
-    final now = _now.millisecondsSinceEpoch;
+    final now = DateTime.now().millisecondsSinceEpoch;
     if (cached.expiresAtMs <=
         now + const Duration(seconds: 20).inMilliseconds) {
       _checkoutCache.remove(key);
@@ -306,10 +273,6 @@ class SubscriptionCheckoutService {
     String callableName,
     Map<String, dynamic> payload,
   ) async {
-    final override = _stripeDataFetcherOverride;
-    if (override != null) {
-      return override(callableName, payload);
-    }
     final callable = prestoFirebaseFunctions.httpsCallable(
       callableName,
       options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
