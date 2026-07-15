@@ -3,8 +3,8 @@ import 'package:presto_app/utils/keyword_suggester.dart';
 
 const _items = <SuggestionItem>[
   SuggestionItem(
-    label: 'Pâtisserie artisanale',
-    keywords: <String>['gâteau', 'pâtisserie', 'dessert'],
+    label: 'Patisserie artisanale',
+    keywords: <String>['gateau', 'patisserie', 'dessert'],
     tags: <String>['food', 'artisanat'],
     regions: <String>['Guadeloupe'],
     situations: <String>['Sans emploi'],
@@ -19,12 +19,12 @@ const _items = <SuggestionItem>[
     popularity: 70,
   ),
   SuggestionItem(
-    label: 'Nettoyage à domicile',
-    keywords: <String>['ménage', 'nettoyage', 'entretien'],
+    label: 'Nettoyage a domicile',
+    keywords: <String>['menage', 'nettoyage', 'entretien'],
     popularity: 80,
   ),
   SuggestionItem(
-    label: 'Création de site vitrine',
+    label: 'Creation de site vitrine',
     keywords: <String>['site', 'web', 'vitrine'],
     tags: <String>['internet'],
     popularity: 60,
@@ -37,18 +37,18 @@ const _items = <SuggestionItem>[
 ];
 
 void main() {
-  test('normalizes accents punctuation apostrophes and whitespace', () {
+  test('normalizes punctuation apostrophes hyphens and whitespace', () {
     expect(
-      KeywordSuggester.normalize("  Création-d’un GÂTEAU !!!  "),
+      KeywordSuggester.normalize("  Creation-d'un GATEAU !!!  "),
       'creation d un gateau',
     );
-    expect(KeywordSuggester.normalize('Àççêñt ÿ'), 'accent y');
+    expect(KeywordSuggester.normalize('A_B-C'), 'a b c');
     expect(KeywordSuggester.normalize(''), '');
   });
 
   test('tokenizes while removing stopwords and applying light stemming', () {
     expect(
-      KeywordSuggester.tokenize('Je veux créer des livraisons rapides'),
+      KeywordSuggester.tokenize('Je veux creer des livraisons rapides'),
       containsAll(<String>['veux', 'livraison', 'rapide']),
     );
     expect(KeywordSuggester.tokenize('le la des projet entreprise'), isEmpty);
@@ -66,9 +66,9 @@ void main() {
 
   test('suggestion item exposes normalized projections', () {
     const item = SuggestionItem(
-      label: 'Ménage-Pro',
-      keywords: <String>['Nettoyage', 'Propreté'],
-      tags: <String>['Service à domicile'],
+      label: 'Menage-Pro',
+      keywords: <String>['Nettoyage', 'Proprete'],
+      tags: <String>['Service a domicile'],
     );
     expect(item.normLabel, 'menage pro');
     expect(item.normKeywords, <String>['nettoyage', 'proprete']);
@@ -85,7 +85,7 @@ void main() {
     );
 
     expect(results, isNotEmpty);
-    expect(results.first.label, 'Pâtisserie artisanale');
+    expect(results.first.label, 'Patisserie artisanale');
     expect(results.length, lessThanOrEqualTo(3));
   });
 
@@ -96,13 +96,13 @@ void main() {
       region: 'Guadeloupe',
       situation: 'Sans emploi',
     );
-    expect(typo.first.label, 'Pâtisserie artisanale');
+    expect(typo.first.label, 'Patisserie artisanale');
 
     final contains = KeywordSuggester.compute(
       query: 'domicile',
       items: _items,
     );
-    expect(contains.first.label, 'Nettoyage à domicile');
+    expect(contains.first.label, 'Nettoyage a domicile');
   });
 
   test('applies incompatible region and situation penalties', () {
@@ -113,7 +113,10 @@ void main() {
       situation: 'Sans emploi',
     );
 
-    expect(results.map((item) => item.label), isNot(contains('Livraison de colis')));
+    expect(
+      results.map((item) => item.label),
+      isNot(contains('Livraison de colis')),
+    );
   });
 
   test('returns popularity fallback compatible with filters', () {
@@ -126,8 +129,11 @@ void main() {
     );
 
     expect(results, hasLength(2));
-    expect(results.first.label, 'Pâtisserie artisanale');
-    expect(results.map((item) => item.label), isNot(contains('Livraison de colis')));
+    expect(results.first.label, 'Patisserie artisanale');
+    expect(
+      results.map((item) => item.label),
+      isNot(contains('Livraison de colis')),
+    );
   });
 
   test('empty query returns weighted and popular items with a limit', () {
@@ -138,12 +144,12 @@ void main() {
     );
 
     expect(results, hasLength(3));
-    expect(results.first.label, 'Pâtisserie artisanale');
+    expect(results.first.label, 'Patisserie artisanale');
   });
 
   test('uses shorter labels after equal score and popularity', () {
     const tied = <SuggestionItem>[
-      SuggestionItem(label: 'Une étiquette très longue', keywords: <String>[]),
+      SuggestionItem(label: 'Une etiquette tres longue', keywords: <String>[]),
       SuggestionItem(label: 'Court', keywords: <String>[]),
     ];
     final results = KeywordSuggester.compute(query: '', items: tied);
