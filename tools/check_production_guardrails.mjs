@@ -75,8 +75,9 @@ const checks = [
   },
   {
     file: 'lib/features/subscriptions/subscription_checkout_service.dart',
-    required: 'prepareSubscriptionReturnHistory();',
-    message: 'web checkout must preserve the subscriptions page in browser history',
+    required: 'prepareSubscriptionReturnHistory',
+    message:
+      'web checkout must keep the subscriptions-page history preparer wired',
   },
 ];
 
