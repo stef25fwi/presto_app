@@ -6,6 +6,15 @@ async function replaceOnce(path, before, after, label) {
   let content = await fs.readFile(path, 'utf8');
   if (content.includes(after)) return;
   const count = content.split(before).length - 1;
+  if (
+    count === 0 &&
+    label === 'injectable Stripe return history and launcher' &&
+    content.includes('final returnHistoryPreparer = _returnHistoryPreparerOverride;') &&
+    content.includes('prepareSubscriptionReturnHistory();') &&
+    content.includes('final launcher = _externalLauncherOverride;')
+  ) {
+    return;
+  }
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
   }
