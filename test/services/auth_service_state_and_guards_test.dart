@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
@@ -40,6 +39,8 @@ class _GuardUserPlatform extends UserPlatform {
                 'displayName': 'Utilisateur test',
                 'phoneNumber': null,
                 'photoURL': null,
+                'isAnonymous': false,
+                'isEmailVerified': emailVerified,
               },
             ],
           ),
@@ -74,7 +75,7 @@ class _GuardAuthPlatform extends FirebaseAuthPlatform {
   _GuardAuthPlatform() : super(appInstance: null);
 
   UserPlatform? user;
-  String? languageCode;
+  String? languageCodeValue;
   var providerCalls = 0;
   String? providerId;
 
@@ -96,7 +97,7 @@ class _GuardAuthPlatform extends FirebaseAuthPlatform {
 
   @override
   Future<void> setLanguageCode(String? value) async {
-    languageCode = value;
+    languageCodeValue = value;
   }
 
   @override
@@ -126,7 +127,7 @@ void main() {
   setUp(() {
     platform
       ..user = null
-      ..languageCode = null
+      ..languageCodeValue = null
       ..providerCalls = 0
       ..providerId = null;
   });
@@ -176,7 +177,7 @@ void main() {
     await service.sendEmailVerificationLink();
     await service.resendVerificationEmail();
 
-    expect(platform.languageCode, 'fr');
+    expect(platform.languageCodeValue, 'fr');
     expect(current.reloadCalls, 2);
     expect(current.verificationCalls, 2);
     expect(
@@ -277,7 +278,7 @@ void main() {
   test('signInWithApple retourne un credential sans utilisateur', () async {
     final credential = await service.signInWithApple();
 
-    expect(platform.languageCode, 'fr');
+    expect(platform.languageCodeValue, 'fr');
     expect(platform.providerCalls, 1);
     expect(platform.providerId, 'apple.com');
     expect(credential.user, isNull);
