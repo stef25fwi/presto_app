@@ -6,15 +6,6 @@ async function replaceOnce(path, before, after, label) {
   let content = await fs.readFile(path, 'utf8');
   if (content.includes(after)) return;
   const count = content.split(before).length - 1;
-  if (
-    count === 0 &&
-    label === 'injectable Stripe return history and launcher' &&
-    content.includes('final returnHistoryPreparer = _returnHistoryPreparerOverride;') &&
-    content.includes('prepareSubscriptionReturnHistory();') &&
-    content.includes('final launcher = _externalLauncherOverride;')
-  ) {
-    return;
-  }
   if (count !== 1) {
     throw new Error(`${label}: expected exactly one occurrence, found ${count}`);
   }
@@ -77,13 +68,7 @@ await replaceOnce(
 const servicePath =
   'lib/features/subscriptions/subscription_checkout_service.dart';
 
-await replaceOnce(
-  servicePath,
-  `class SubscriptionCheckoutService {
-  const SubscriptionCheckoutService();
-
-  static bool _openingStripe = false;`,
-  `typedef SubscriptionStripeDataFetcher = Future<Map<String, dynamic>> Function(
+const typedefBlock = `typedef SubscriptionStripeDataFetcher = Future<Map<String, dynamic>> Function(
   String callableName,
   Map<String, dynamic> payload,
 );
@@ -91,7 +76,28 @@ typedef SubscriptionExternalLauncher = Future<bool> Function(Uri uri);
 typedef SubscriptionClock = DateTime Function();
 typedef SubscriptionReturnHistoryPreparer = void Function();
 
-class SubscriptionCheckoutService {
+`;
+
+let serviceSource = await fs.readFile(servicePath, 'utf8');
+if (!serviceSource.includes('typedef SubscriptionStripeDataFetcher')) {
+  const marker = 'enum SubscriptionActionType {';
+  const count = serviceSource.split(marker).length - 1;
+  if (count !== 1) {
+    throw new Error(
+      `Flutter checkout typedefs: expected exactly one enum marker, found ${count}`,
+    );
+  }
+  serviceSource = serviceSource.replace(marker, `${typedefBlock}${marker}`);
+  await fs.writeFile(servicePath, serviceSource, 'utf8');
+}
+
+await replaceOnce(
+  servicePath,
+  `class SubscriptionCheckoutService {
+  const SubscriptionCheckoutService();
+
+  static bool _openingStripe = false;`,
+  `class SubscriptionCheckoutService {
   const SubscriptionCheckoutService({
     SubscriptionStripeDataFetcher? stripeDataFetcher,
     SubscriptionExternalLauncher? externalLauncher,
@@ -142,8 +148,12 @@ await replaceOnce(
         mode: LaunchMode.externalApplication,
         webOnlyWindowName: '_self',
       );`,
-  `      (_returnHistoryPreparerOverride ?? prepareSubscriptionReturnHistory)
-          .call();
+  `      final returnHistoryPreparer = _returnHistoryPreparerOverride;
+      if (returnHistoryPreparer != null) {
+        returnHistoryPreparer();
+      } else {
+        prepareSubscriptionReturnHistory();
+      }
 
       final launcher = _externalLauncherOverride;
       final opened = launcher != null
@@ -212,7 +222,7 @@ for (const [label, ok] of [
   ],
   [
     'Flutter return history guardrail',
-    service.includes('prepareSubscriptionReturnHistory'),
+    service.includes('prepareSubscriptionReturnHistory();'),
   ],
   ['subscription page prefetch', widgets.includes('_scheduleCheckoutPrefetch')],
 ]) {
