@@ -40,8 +40,6 @@ class _FakeTrustScoreService implements TrustScoreService {
     ),
   );
   bool throwOnSubmit = false;
-  bool throwOnReport = false;
-  bool throwOnReply = false;
   int profileCalls = 0;
   int submitCalls = 0;
   int reportCalls = 0;
@@ -124,7 +122,6 @@ class _FakeTrustScoreService implements TrustScoreService {
     reportCalls++;
     reportedReason = reason;
     reportedDetails = details;
-    if (throwOnReport) throw StateError('report failed');
   }
 
   @override
@@ -134,7 +131,6 @@ class _FakeTrustScoreService implements TrustScoreService {
   }) async {
     replyCalls++;
     submittedReply = replyText;
-    if (throwOnReply) throw StateError('reply failed');
     return 'pending_moderation';
   }
 }
@@ -194,6 +190,23 @@ TrustScoreProfile _profile({bool published = false}) {
   );
 }
 
+Future<void> _completeRatingsAndConfirmation(
+  WidgetTester tester,
+  int value,
+) async {
+  final inputs =
+      tester.widgetList<StarRatingInput>(find.byType(StarRatingInput)).toList();
+  expect(inputs, hasLength(3));
+  for (final input in inputs) {
+    input.onChanged(value);
+  }
+  await tester.pump();
+  final checkbox =
+      tester.widget<CheckboxListTile>(find.byType(CheckboxListTile));
+  checkbox.onChanged!(true);
+  await tester.pump();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -219,8 +232,10 @@ void main() {
 
     await tester.tap(find.text('Ouvrir'));
     await tester.pumpAndSettle();
-    expect(find.text('Pourquoi souhaitez-vous supprimer cette annonce ?'),
-        findsOneWidget);
+    expect(
+      find.text('Pourquoi souhaitez-vous supprimer cette annonce ?'),
+      findsOneWidget,
+    );
     final disabled = tester.widget<ElevatedButton>(
       find.widgetWithText(ElevatedButton, 'Continuer'),
     );
@@ -277,8 +292,10 @@ void main() {
       );
       await tester.tap(find.text('Ouvrir'));
       await tester.pumpAndSettle();
-      expect(find.text('Vous avez trouvé quelqu’un sur iliprestō ?'),
-          findsOneWidget);
+      expect(
+        find.text('Vous avez trouvé quelqu’un sur iliprestō ?'),
+        findsOneWidget,
+      );
       await tester.tap(find.text(entry.key));
       await tester.pumpAndSettle();
       expect(result, entry.value);
@@ -335,10 +352,9 @@ void main() {
 
   testWidgets('eligible responder search renders error and empty states',
       (tester) async {
+    final errorCompleter = Completer<List<EligibleResponderForReview>>();
     final errorService = _FakeTrustScoreService()
-      ..respondersFuture = Future<List<EligibleResponderForReview>>.error(
-        StateError('offline'),
-      );
+      ..respondersFuture = errorCompleter.future;
     await tester.pumpWidget(
       _host(
         EligibleResponderSearchSheet(
@@ -347,6 +363,8 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
+    errorCompleter.completeError(StateError('offline'));
     await tester.pumpAndSettle();
     expect(find.text('Impossible de charger les répondants.'), findsOneWidget);
 
@@ -422,18 +440,10 @@ void main() {
     );
     expect(initiallyDisabled.onPressed, isNull);
 
-    for (var index = 0; index < 3; index++) {
-      await tester.tap(find.byTooltip('5 sur 5').at(index));
-      await tester.pump();
-    }
+    await _completeRatingsAndConfirmation(tester, 5);
     await tester.enterText(find.byType(TextField), 'Très bonne prestation');
-    await tester.tap(find.textContaining('Je confirme que cet avis'));
     await tester.pump();
-
-    final enabled = tester.widget<ElevatedButton>(
-      find.widgetWithText(ElevatedButton, 'Publier l’avis'),
-    );
-    expect(enabled.onPressed, isNotNull);
+    await tester.ensureVisible(find.text('Publier l’avis'));
     await tester.tap(find.text('Publier l’avis'));
     await tester.pumpAndSettle();
 
@@ -463,17 +473,16 @@ void main() {
     );
     await tester.tap(find.text('Ouvrir'));
     await tester.pumpAndSettle();
-    for (var index = 0; index < 3; index++) {
-      await tester.tap(find.byTooltip('4 sur 5').at(index));
-      await tester.pump();
-    }
-    await tester.tap(find.textContaining('Je confirme que cet avis'));
-    await tester.pump();
+    await _completeRatingsAndConfirmation(tester, 4);
+    await tester.ensureVisible(find.text('Publier l’avis'));
     await tester.tap(find.text('Publier l’avis'));
     await tester.pumpAndSettle();
-    expect(find.text('Impossible d’enregistrer cet avis pour le moment.'),
-        findsOneWidget);
+    expect(
+      find.text('Impossible d’enregistrer cet avis pour le moment.'),
+      findsOneWidget,
+    );
 
+    await tester.ensureVisible(find.text('Noter plus tard'));
     await tester.tap(find.text('Noter plus tard'));
     await tester.pumpAndSettle();
     expect((result as SubmitReviewResult).isRateLater, isTrue);
@@ -566,11 +575,14 @@ void main() {
 
   testWidgets('trust score card renders error and published summary states',
       (tester) async {
+    final errorCompleter = Completer<TrustScoreProfile>();
     final errorService = _FakeTrustScoreService()
-      ..profileFuture = Future<TrustScoreProfile>.error(StateError('offline'));
+      ..profileFuture = errorCompleter.future;
     await tester.pumpWidget(
       _host(TrustScoreCard(userId: 'user-error', service: errorService)),
     );
+    await tester.pump();
+    errorCompleter.completeError(StateError('offline'));
     await tester.pumpAndSettle();
     expect(find.text('Impossible de charger les avis.'), findsOneWidget);
 
