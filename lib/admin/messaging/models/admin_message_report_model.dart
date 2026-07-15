@@ -33,12 +33,12 @@ class AdminMessageReportModel {
     required this.resolvedAt,
   });
 
-  factory AdminMessageReportModel.fromDocument(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data();
+  factory AdminMessageReportModel.fromData({
+    required String id,
+    required Map<String, dynamic> data,
+  }) {
     return AdminMessageReportModel(
-      id: doc.id,
+      id: id,
       conversationId: '${data['conversationId'] ?? ''}',
       messageId: '${data['messageId'] ?? ''}',
       reportedBy: '${data['reportedBy'] ?? ''}',
@@ -52,5 +52,11 @@ class AdminMessageReportModel {
       createdAt: parseFirestoreDateTime(data['createdAt']),
       resolvedAt: parseFirestoreDateTime(data['resolvedAt']),
     );
+  }
+
+  factory AdminMessageReportModel.fromDocument(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return AdminMessageReportModel.fromData(id: doc.id, data: doc.data());
   }
 }
