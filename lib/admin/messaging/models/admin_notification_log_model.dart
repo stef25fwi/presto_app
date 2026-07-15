@@ -31,9 +31,15 @@ class AdminNotificationLogModel {
   factory AdminNotificationLogModel.fromDocument(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data();
+    return AdminNotificationLogModel.fromData(id: doc.id, data: doc.data());
+  }
+
+  factory AdminNotificationLogModel.fromData({
+    required String id,
+    required Map<String, dynamic> data,
+  }) {
     return AdminNotificationLogModel(
-      id: doc.id,
+      id: id,
       userId: '${data['userId'] ?? ''}',
       title: '${data['title'] ?? ''}',
       body: '${data['message'] ?? data['body'] ?? ''}',
