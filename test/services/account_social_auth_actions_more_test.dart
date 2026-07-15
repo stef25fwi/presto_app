@@ -156,7 +156,7 @@ void main() {
     'cancelled-popup-request',
     'cancelled',
   ]) {
-    testWidgets('Facebook reste silencieux après $code', (tester) async {
+    testWidgets('Facebook reste neutre après $code', (tester) async {
       platform.error = FirebaseAuthException(code: code);
 
       await run(
@@ -169,7 +169,7 @@ void main() {
       );
 
       expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.text(''), findsWidgets);
+      expect(find.text('Erreur de connexion Facebook.'), findsNothing);
     });
   }
 
