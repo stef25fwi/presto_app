@@ -131,7 +131,7 @@ void main() {
       isUrgent: true,
       price: 45,
       budgetType: 'forfait',
-      photos: const <ListingMediaInput>[],
+      photos: const [],
       hidePhone: hidePhone,
     );
   }
