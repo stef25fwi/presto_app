@@ -1,0 +1,52 @@
+name: Export parcours fiches
+
+on:
+  push:
+    branches:
+      - chore/export-735-parcours-fiches
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build archive and inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p export/parcours_fiches
+          cp assets/data/parcours_fiches_*.json export/parcours_fiches/
+          python3 - <<'PY'
+          import glob, json, os
+          rows = []
+          total = 0
+          for path in sorted(glob.glob('export/parcours_fiches/parcours_fiches_*.json')):
+              with open(path, encoding='utf-8') as f:
+                  data = json.load(f)
+              count = len(data)
+              total += count
+              rows.append((os.path.basename(path), count))
+          with open('export/INVENTAIRE.md', 'w', encoding='utf-8') as f:
+              f.write('# Inventaire des fiches parcours personnalisé\n\n')
+              f.write('| Pack | Nombre de fiches |\n|---|---:|\n')
+              for name, count in rows:
+                  f.write(f'| `{name}` | {count} |\n')
+              f.write(f'| **Total** | **{total}** |\n')
+          print(f'Total fiches: {total}')
+          PY
+          cd export
+          zip -r ../parcours_personnalise_735_fiches.zip parcours_fiches INVENTAIRE.md
+
+      - name: Upload ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-personnalise-735-fiches
+          path: parcours_personnalise_735_fiches.zip
+          if-no-files-found: error
+          retention-days: 30
