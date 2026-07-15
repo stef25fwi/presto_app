@@ -60,7 +60,13 @@ class AdminConversationModel {
   factory AdminConversationModel.fromDocument(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data();
+    return AdminConversationModel.fromData(doc.id, doc.data());
+  }
+
+  factory AdminConversationModel.fromData(
+    String id,
+    Map<String, dynamic> data,
+  ) {
     final participantIds =
         ((data['participantIds'] as List?) ?? const <dynamic>[])
             .map((value) => value.toString().trim())
@@ -85,8 +91,8 @@ class AdminConversationModel {
         });
     final attachments = data['attachmentIds'];
     return AdminConversationModel(
-      id: doc.id,
-      shortId: doc.id.length <= 8 ? doc.id : doc.id.substring(0, 8),
+      id: id,
+      shortId: id.length <= 8 ? id : id.substring(0, 8),
       contextId:
           (data['contextId'] ?? data['listingId'] ?? data['offerId'] ?? '')
               .toString(),
