@@ -3,6 +3,54 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
+abstract class PaymentInfoAudioController {
+  Stream<PlayerState> get onPlayerStateChanged;
+  Stream<void> get onPlayerComplete;
+
+  Future<void> setSource(String url);
+  Future<void> stop();
+  Future<void> pause();
+  Future<void> resume();
+  Future<void> seek(Duration position);
+  Future<void> play(String url);
+  Future<void> dispose();
+}
+
+class AudioplayersPaymentInfoAudioController
+    implements PaymentInfoAudioController {
+  AudioplayersPaymentInfoAudioController({AudioPlayer? player})
+      : _player = player ?? AudioPlayer();
+
+  final AudioPlayer _player;
+
+  @override
+  Stream<PlayerState> get onPlayerStateChanged => _player.onPlayerStateChanged;
+
+  @override
+  Stream<void> get onPlayerComplete => _player.onPlayerComplete;
+
+  @override
+  Future<void> setSource(String url) => _player.setSource(UrlSource(url));
+
+  @override
+  Future<void> stop() => _player.stop();
+
+  @override
+  Future<void> pause() => _player.pause();
+
+  @override
+  Future<void> resume() => _player.resume();
+
+  @override
+  Future<void> seek(Duration position) => _player.seek(position);
+
+  @override
+  Future<void> play(String url) => _player.play(UrlSource(url));
+
+  @override
+  Future<void> dispose() => _player.dispose();
+}
+
 class PaymentInfoAudioPlayerButton extends StatefulWidget {
   const PaymentInfoAudioPlayerButton({
     super.key,
@@ -10,12 +58,14 @@ class PaymentInfoAudioPlayerButton extends StatefulWidget {
     this.label = 'Écouter l’explication paiement',
     this.compact = false,
     this.onPlayed,
+    this.audioController,
   });
 
   final String audioUrl;
   final String label;
   final bool compact;
   final VoidCallback? onPlayed;
+  final PaymentInfoAudioController? audioController;
 
   @override
   State<PaymentInfoAudioPlayerButton> createState() =>
@@ -24,7 +74,8 @@ class PaymentInfoAudioPlayerButton extends StatefulWidget {
 
 class _PaymentInfoAudioPlayerButtonState
     extends State<PaymentInfoAudioPlayerButton> {
-  late final AudioPlayer _player;
+  late final PaymentInfoAudioController _player;
+  late final bool _ownsPlayer;
 
   StreamSubscription<void>? _completeSubscription;
   StreamSubscription<PlayerState>? _stateSubscription;
@@ -40,7 +91,8 @@ class _PaymentInfoAudioPlayerButtonState
   void initState() {
     super.initState();
 
-    _player = AudioPlayer();
+    _ownsPlayer = widget.audioController == null;
+    _player = widget.audioController ?? AudioplayersPaymentInfoAudioController();
 
     _stateSubscription = _player.onPlayerStateChanged.listen((state) {
       if (!mounted) return;
@@ -59,7 +111,6 @@ class _PaymentInfoAudioPlayerButtonState
       });
     });
 
-    // Précharge le source dès l'affichage pour supprimer le délai au premier tap.
     _preloadSource();
   }
 
@@ -67,7 +118,7 @@ class _PaymentInfoAudioPlayerButtonState
     final url = widget.audioUrl.trim();
     if (url.isEmpty) return;
     try {
-      await _player.setSource(UrlSource(url));
+      await _player.setSource(url);
       if (mounted) setState(() => _sourceLoaded = true);
     } catch (_) {
       // Échec silencieux : la lecture tentera un play() classique.
@@ -103,7 +154,9 @@ class _PaymentInfoAudioPlayerButtonState
   void dispose() {
     _stateSubscription?.cancel();
     _completeSubscription?.cancel();
-    _player.dispose();
+    if (_ownsPlayer) {
+      _player.dispose();
+    }
     super.dispose();
   }
 
@@ -127,14 +180,13 @@ class _PaymentInfoAudioPlayerButtonState
       }
 
       if (_sourceLoaded) {
-        // Source préchargée : lecture immédiate sans réseau.
         await _player.seek(Duration.zero);
         widget.onPlayed?.call();
         await _player.resume();
       } else {
         _sourceLoaded = true;
         widget.onPlayed?.call();
-        await _player.play(UrlSource(audioUrl));
+        await _player.play(audioUrl);
       }
     } catch (error) {
       if (!mounted) return;
