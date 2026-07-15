@@ -61,6 +61,7 @@ dev_dependencies:
     sdk: flutter
   firebase_core_platform_interface: ^7.1.0
   firebase_auth_platform_interface: ^9.0.0
+  fake_cloud_firestore: ^4.1.1
   flutter_lints: ^6.0.0
 
 flutter:
