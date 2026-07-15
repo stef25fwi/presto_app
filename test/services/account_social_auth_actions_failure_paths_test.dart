@@ -146,7 +146,7 @@ void main() {
   });
 
   testWidgets('Google traduit une erreur plateforme', (tester) async {
-    platform.providerError = const PlatformException(
+    platform.providerError = PlatformException(
       code: 'sign_in_failed',
       message: 'provider unavailable',
     );
