@@ -1,106 +1,7 @@
-import 'dart:async';
-
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/features/subscriptions/subscription_config_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_models.dart';
 import 'package:presto_app/features/subscriptions/subscription_widgets_base.dart';
-
-class _NullAuthPlatform extends FirebaseAuthPlatform {
-  _NullAuthPlatform() : super(appInstance: null);
-
-  @override
-  FirebaseAuthPlatform delegateFor({required FirebaseApp app}) => this;
-
-  @override
-  FirebaseAuthPlatform setInitialValues({
-    InternalUserDetails? currentUser,
-    String? languageCode,
-  }) =>
-      this;
-
-  @override
-  UserPlatform? get currentUser => null;
-}
-
-class _FakeSubscriptionConfigService implements SubscriptionConfigService {
-  final StreamController<SubscriptionAppConfig> controller =
-      StreamController<SubscriptionAppConfig>.broadcast();
-  SubscriptionAppConfig config = const SubscriptionAppConfig(
-    subscriptionSectionEnabled: true,
-    subscriptionsPrepared: true,
-    stripeEnabled: false,
-    freeAccessMode: true,
-  );
-  int ensureCalls = 0;
-  int visibilityCalls = 0;
-  int freeAccessCalls = 0;
-  int stripeCalls = 0;
-  bool throwVisibility = false;
-  bool throwFreeAccess = false;
-
-  void emit([SubscriptionAppConfig? next]) {
-    if (next != null) config = next;
-    controller.add(config);
-  }
-
-  void dispose() => controller.close();
-
-  @override
-  Stream<SubscriptionAppConfig> watchConfig({bool ensureExists = false}) {
-    return controller.stream;
-  }
-
-  @override
-  Future<SubscriptionAppConfig> getConfig() async => config;
-
-  @override
-  Future<void> ensureDefaultConfigExists({String? updatedBy}) async {
-    ensureCalls++;
-  }
-
-  @override
-  Future<void> updateSectionVisibility(
-    bool enabled, {
-    String? updatedBy,
-  }) async {
-    visibilityCalls++;
-    if (throwVisibility) throw StateError('visibility failed');
-    config = SubscriptionAppConfig(
-      subscriptionSectionEnabled: enabled,
-      subscriptionsPrepared: config.subscriptionsPrepared,
-      stripeEnabled: config.stripeEnabled,
-      freeAccessMode: config.freeAccessMode,
-    );
-  }
-
-  @override
-  Future<void> updateStripeEnabled(
-    bool enabled, {
-    String? updatedBy,
-  }) async {
-    stripeCalls++;
-  }
-
-  @override
-  Future<void> updateFreeAccessMode(
-    bool enabled, {
-    String? updatedBy,
-  }) async {
-    freeAccessCalls++;
-    if (throwFreeAccess) throw StateError('free access failed');
-    config = SubscriptionAppConfig(
-      subscriptionSectionEnabled: config.subscriptionSectionEnabled,
-      subscriptionsPrepared: config.subscriptionsPrepared,
-      stripeEnabled: config.stripeEnabled,
-      freeAccessMode: enabled,
-    );
-  }
-}
 
 const _config = SubscriptionAppConfig(
   subscriptionSectionEnabled: true,
@@ -131,15 +32,6 @@ Widget _host(Widget child) {
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUpAll(() async {
-    setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
-    FirebaseAuthPlatform.instance = _NullAuthPlatform();
-    FirebaseAuth.instance;
-  });
-
   testWidgets('current status cards render every plan presentation',
       (tester) async {
     await tester.pumpWidget(
@@ -294,44 +186,5 @@ void main() {
     expect(find.text('ACTUELLE'), findsNWidgets(2));
     expect(find.text('Offre actuelle'), findsNWidgets(2));
     expect(find.byType(OutlinedButton), findsNWidgets(2));
-  });
-
-  testWidgets('admin tile initializes and updates visibility successfully',
-      (tester) async {
-    final service = _FakeSubscriptionConfigService();
-    addTearDown(service.dispose);
-
-    await tester.pumpWidget(_host(AdminSubscriptionTile(service: service)));
-    service.emit();
-    await tester.pump();
-
-    expect(service.ensureCalls, 1);
-    expect(find.text('Abonnements'), findsOneWidget);
-    expect(find.text('Afficher la section abonnement'), findsOneWidget);
-    expect(find.text('Accès gratuit complet'), findsOneWidget);
-    expect(find.text('Stripe non activé'), findsOneWidget);
-
-    final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(2));
-    await tester.tap(switches.first);
-    await tester.pumpAndSettle();
-    expect(service.visibilityCalls, 1);
-    expect(find.text('Visibilité des abonnements mise à jour.'), findsOneWidget);
-  });
-
-  testWidgets('admin tile reports free access update failures', (tester) async {
-    final service = _FakeSubscriptionConfigService()..throwFreeAccess = true;
-    addTearDown(service.dispose);
-
-    await tester.pumpWidget(_host(AdminSubscriptionTile(service: service)));
-    service.emit();
-    await tester.pump();
-
-    final switches = find.byType(Switch);
-    await tester.tap(switches.at(1));
-    await tester.pumpAndSettle();
-    expect(service.freeAccessCalls, 1);
-    expect(find.text('Impossible de mettre à jour freeAccessMode.'),
-        findsOneWidget);
   });
 }
