@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -36,11 +38,10 @@ class _SocialUserPlatform extends UserPlatform {
 
 class _SocialCredentialPlatform extends UserCredentialPlatform {
   _SocialCredentialPlatform({
-    required FirebaseAuthPlatform auth,
+    required super.auth,
     required UserPlatform user,
     required bool isNewUser,
   }) : super(
-          auth: auth,
           user: user,
           additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
         );
@@ -110,27 +111,35 @@ void main() {
       ..providerId = null;
   });
 
-  Widget app(Future<void> Function(BuildContext context) action) {
-    return MaterialApp(
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: ElevatedButton(
-            onPressed: () => action(context),
-            child: const Text('Connexion'),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> run(
     WidgetTester tester,
     Future<void> Function(BuildContext context) action,
   ) async {
-    await tester.pumpWidget(app(action));
+    final completed = Completer<void>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () async {
+                try {
+                  await action(context);
+                  completed.complete();
+                } catch (error, stackTrace) {
+                  completed.completeError(error, stackTrace);
+                }
+              },
+              child: const Text('Connexion'),
+            ),
+          ),
+        ),
+      ),
+    );
+
     await tester.tap(find.text('Connexion'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await completed.future.timeout(const Duration(seconds: 10));
+    await tester.pump();
   }
 
   testWidgets('Google finalise une connexion provider et suit le login',
