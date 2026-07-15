@@ -5,8 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/auth_service.dart';
 
 class _NullUserCredentialPlatform extends UserCredentialPlatform {
-  _NullUserCredentialPlatform({required FirebaseAuthPlatform auth})
-      : super(auth: auth, user: null);
+  _NullUserCredentialPlatform({required super.auth}) : super(user: null);
 }
 
 class _NullCredentialUserAuthPlatform extends FirebaseAuthPlatform {
