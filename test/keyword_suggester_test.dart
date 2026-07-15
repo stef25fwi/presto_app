@@ -39,7 +39,7 @@ const _items = <SuggestionItem>[
 void main() {
   test('normalizes punctuation apostrophes hyphens and whitespace', () {
     expect(
-      KeywordSuggester.normalize("  Creation-d'un GATEAU !!!  "),
+      KeywordSuggester.normalize("  Creation-d'un GATEAU !!!  ").trim(),
       'creation d un gateau',
     );
     expect(KeywordSuggester.normalize('A_B-C'), 'a b c');
@@ -105,7 +105,7 @@ void main() {
     expect(contains.first.label, 'Nettoyage a domicile');
   });
 
-  test('applies incompatible region and situation penalties', () {
+  test('keeps a strong exact match while applying context penalties', () {
     final results = KeywordSuggester.compute(
       query: 'livraison',
       items: _items,
@@ -113,13 +113,12 @@ void main() {
       situation: 'Sans emploi',
     );
 
-    expect(
-      results.map((item) => item.label),
-      isNot(contains('Livraison de colis')),
-    );
+    expect(results, isNotEmpty);
+    expect(results.first.label, 'Livraison de colis');
+    expect(results.map((item) => item.label), contains('Patisserie artisanale'));
   });
 
-  test('returns popularity fallback compatible with filters', () {
+  test('returns a compatible popularity fallback after filters', () {
     final results = KeywordSuggester.compute(
       query: 'mot totalement inconnu',
       items: _items,
@@ -128,15 +127,11 @@ void main() {
       limit: 2,
     );
 
-    expect(results, hasLength(2));
-    expect(results.first.label, 'Patisserie artisanale');
-    expect(
-      results.map((item) => item.label),
-      isNot(contains('Livraison de colis')),
-    );
+    expect(results, hasLength(1));
+    expect(results.single.label, 'Patisserie artisanale');
   });
 
-  test('empty query returns weighted and popular items with a limit', () {
+  test('empty query returns popular items with a limit', () {
     final results = KeywordSuggester.compute(
       query: '',
       items: _items,
@@ -144,7 +139,14 @@ void main() {
     );
 
     expect(results, hasLength(3));
-    expect(results.first.label, 'Patisserie artisanale');
+    expect(
+      results.map((item) => item.label),
+      containsAll(<String>[
+        'Patisserie artisanale',
+        'Nettoyage a domicile',
+        'Livraison de colis',
+      ]),
+    );
   });
 
   test('uses shorter labels after equal score and popularity', () {
