@@ -1,6 +1,13 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 
 import 'firebase_functions_region.dart';
+
+typedef ConversationFunctionCaller = Future<Map<String, dynamic>> Function({
+  required String name,
+  required Duration timeout,
+  required Map<String, dynamic> parameters,
+});
 
 class ConversationAttachmentInput {
   final String type;
@@ -62,6 +69,28 @@ class ProcessedConversationPhoto {
 
 class ConversationService {
   static final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  static ConversationFunctionCaller _caller = _callFirebaseFunction;
+
+  static Future<Map<String, dynamic>> _callFirebaseFunction({
+    required String name,
+    required Duration timeout,
+    required Map<String, dynamic> parameters,
+  }) async {
+    final response = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: name,
+      timeout: timeout,
+      parameters: parameters,
+    );
+    return Map<String, dynamic>.from(
+      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
+    );
+  }
+
+  @visibleForTesting
+  static void setFunctionCallerForTesting(ConversationFunctionCaller? caller) {
+    _caller = caller ?? _callFirebaseFunction;
+  }
 
   static Future<String> ensureConversation({
     required String offerId,
@@ -71,8 +100,7 @@ class ConversationService {
     String? currentUserName,
     String? otherUserName,
   }) async {
-    final response = await callPrestoFunction<dynamic>(
-      functions: _functions,
+    final data = await _caller(
       name: 'ensureOfferConversation',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
@@ -85,9 +113,6 @@ class ConversationService {
       },
     );
 
-    final data = Map<String, dynamic>.from(
-      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
-    );
     final conversationId = (data['conversationId'] ?? '').toString().trim();
     if (conversationId.isEmpty) {
       throw StateError('Conversation introuvable');
@@ -100,8 +125,7 @@ class ConversationService {
     String text = '',
     List<ConversationAttachmentInput> attachments = const [],
   }) async {
-    final response = await callPrestoFunction<dynamic>(
-      functions: _functions,
+    final data = await _caller(
       name: 'sendConversationMessage',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
@@ -110,9 +134,6 @@ class ConversationService {
         if (attachments.isNotEmpty)
           'attachments': attachments.map((entry) => entry.toJson()).toList(),
       },
-    );
-    final data = Map<String, dynamic>.from(
-      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
     );
     final resolvedConversationId =
         (data['conversationId'] ?? conversationId).toString().trim();
@@ -125,17 +146,13 @@ class ConversationService {
     required String conversationId,
     required String storagePath,
   }) async {
-    final response = await callPrestoFunction<dynamic>(
-      functions: _functions,
+    final data = await _caller(
       name: 'processConversationAttachmentPhoto',
       timeout: const Duration(seconds: 60),
       parameters: <String, dynamic>{
         'conversationId': conversationId,
         'storagePath': storagePath,
       },
-    );
-    final data = Map<String, dynamic>.from(
-      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
     );
     final processed = ProcessedConversationPhoto.fromMap(data);
     if (processed.storagePath.trim().isEmpty ||
@@ -148,8 +165,7 @@ class ConversationService {
   static Future<void> markAsRead({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'markConversationRead',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
@@ -161,8 +177,7 @@ class ConversationService {
   static Future<void> archiveConversation({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'archiveConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
@@ -174,8 +189,7 @@ class ConversationService {
   static Future<void> unarchiveConversation({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'unarchiveConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
@@ -187,8 +201,7 @@ class ConversationService {
   static Future<void> blockConversation({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'blockConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
@@ -200,8 +213,7 @@ class ConversationService {
   static Future<void> unblockConversation({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'unblockConversation',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
@@ -213,8 +225,7 @@ class ConversationService {
   static Future<void> adminUnblockConversation({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'adminUnblockConversation',
       timeout: const Duration(seconds: 20),
       parameters: <String, dynamic>{
@@ -226,8 +237,7 @@ class ConversationService {
   static Future<void> deleteConversation({
     required String conversationId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'deleteConversation',
       timeout: const Duration(seconds: 30),
       parameters: <String, dynamic>{
@@ -240,8 +250,7 @@ class ConversationService {
     required String conversationId,
     required String messageId,
   }) async {
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _caller(
       name: 'deleteConversationMessage',
       timeout: const Duration(seconds: 15),
       parameters: <String, dynamic>{
