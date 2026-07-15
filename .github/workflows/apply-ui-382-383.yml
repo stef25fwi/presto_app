@@ -1,4 +1,5 @@
 name: Apply UI issues 382 and 383
+# Trigger execution after bootstrap merge.
 
 on:
   push:
