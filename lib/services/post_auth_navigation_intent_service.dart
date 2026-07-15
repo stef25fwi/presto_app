@@ -14,23 +14,32 @@ class PostAuthNavigationIntentService {
     await rememberRoute(accountRoute);
   }
 
-  static Future<void> rememberRoute(String route) async {
-    if (!kIsWeb) return;
+  static Future<void> rememberRoute(
+    String route, {
+    bool? webOverride,
+    SharedPreferences? preferences,
+    DateTime Function()? now,
+  }) async {
+    if (!(webOverride ?? kIsWeb)) return;
     final normalizedRoute = route.trim();
     if (normalizedRoute.isEmpty) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = preferences ?? await SharedPreferences.getInstance();
     await prefs.setString(_routeKey, normalizedRoute);
     await prefs.setInt(
       _timestampKey,
-      DateTime.now().millisecondsSinceEpoch,
+      (now?.call() ?? DateTime.now()).millisecondsSinceEpoch,
     );
   }
 
-  static Future<String?> takePendingRoute() async {
-    if (!kIsWeb) return null;
+  static Future<String?> takePendingRoute({
+    bool? webOverride,
+    SharedPreferences? preferences,
+    DateTime Function()? now,
+  }) async {
+    if (!(webOverride ?? kIsWeb)) return null;
 
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = preferences ?? await SharedPreferences.getInstance();
     final route = prefs.getString(_routeKey)?.trim();
     final timestamp = prefs.getInt(_timestampKey);
 
@@ -45,7 +54,8 @@ class PostAuthNavigationIntentService {
       return route;
     }
 
-    final ageMs = DateTime.now().millisecondsSinceEpoch - timestamp;
+    final ageMs = (now?.call() ?? DateTime.now()).millisecondsSinceEpoch -
+        timestamp;
     if (ageMs < 0 || ageMs > _maxAge.inMilliseconds) {
       return null;
     }
