@@ -67,12 +67,11 @@
     "Outils, petits matériels et communication : 50 à 500 €",
     "CFE à surveiller après création, avec exonération la première année et exonération possible si CA <= 5 000 €",
     "Supports pédagogiques : 20 à 300 €",
-    "Plateforme/visio : 0 à 200 €/an",
-    "RC pro : 100 à 300 €/an"
+    "Plateforme/visio : 0 à 200 €/an"
   ],
   "parcours": {
     "0_identite": "Activité Anglais, statut fonctionnaire, catégorie Cours & soutien, code APE indicatif 85.59B, 85.52Z, 85.51Z ou 62.02A selon activité — à confirmer.",
-    "1_regles": "Vérifier cumul fonction publique puis règles métier. L'enseignement/formation fait partie des activités accessoires pouvant être autorisées pour un agent public. Pour le coaching sportif rémunéré, vérifier diplôme, carte professionnelle d'éducateur sportif et obligations d'affichage/assurance. Pour soutien scolaire à domicile, vérifier SAP/Nova si avantage fiscal client recherché.",
+    "1_regles": "Source unique : qualification_regles.",
     "2_situation_personnelle": "Vérifier fonction publique, temps de travail, poste, conflit d'intérêts, autorisation hiérarchique, devoir de neutralité et justificatifs.",
     "3_cadre": "Micro-entreprise conseillée pour activité accessoire simple, sous réserve d'autorisation et de seuils ; basculer vers EI réel/société si projet lourd.",
     "4_demarches": [
@@ -92,13 +91,7 @@
       "AGEFIPH si handicap"
     ],
     "6_couts": [
-      "Formalités micro-entreprise généralement gratuites",
-      "RC pro indicative : 100 à 400 €/an selon activité",
-      "Outils, petits matériels et communication : 50 à 500 €",
-      "CFE à surveiller après création, avec exonération la première année et exonération possible si CA <= 5 000 €",
-      "Supports pédagogiques : 20 à 300 €",
-      "Plateforme/visio : 0 à 200 €/an",
-      "RC pro : 100 à 300 €/an"
+      "Source unique : couts_indicatifs."
     ],
     "7_plan_30_jours": [
       "semaine 1 : droit d'exercer et offre",
@@ -127,6 +120,6 @@
     "cumul",
     "parcours"
   ],
-  "version": "2026-07-07",
+  "version": "2026-07-15",
   "legal_review_status": "socle officiel intégré ; contrôle final recommandé par CMA/administration/organisme compétent selon activité avant mise en production"
 }
