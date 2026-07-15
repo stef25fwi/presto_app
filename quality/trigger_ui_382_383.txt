@@ -1,0 +1,2 @@
+Déclenchement temporaire du workflow d’application des issues #382 et #383.
+Ce fichier ne doit pas être fusionné dans main.
