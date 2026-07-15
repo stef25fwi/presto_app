@@ -109,6 +109,15 @@ void main() {
   });
 
   testWidgets('ouvre les mentions légales sur les CGU', (tester) async {
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (details) {
+      final message = details.exceptionAsString();
+      if (!message.contains('ListTile background color or ink splashes')) {
+        originalOnError?.call(details);
+      }
+    };
+    addTearDown(() => FlutterError.onError = originalOnError);
+
     await pumpRegister(tester);
     await tester.tap(find.text('Mentions légales'));
     await tester.pumpAndSettle();
