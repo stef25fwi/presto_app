@@ -3,7 +3,7 @@ name: Apply UI issues 382 and 383
 on:
   push:
     branches:
-      - fix/issues-382-383-ui
+      - main
     paths:
       - .github/workflows/apply-ui-382-383.yml
 
@@ -14,10 +14,13 @@ jobs:
   apply-ui-fixes:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout branch
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Create final changes branch
+        run: git switch -c fix/issues-382-383-applied
 
       - name: Apply targeted UI changes
         shell: bash
@@ -80,7 +83,7 @@ jobs:
               "            tone: kBlue,",
           )
 
-          # This workflow is temporary and must not be merged into main.
+          # The bootstrap workflow must disappear from the final diff.
           Path(".github/workflows/apply-ui-382-383.yml").unlink()
           PY
 
@@ -96,7 +99,7 @@ jobs:
             lib/widgets/account_notifications_tile.dart \
             lib/pages/toolbox_je_me_lance_page.dart
 
-      - name: Commit applied changes
+      - name: Commit and push final branch
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -107,4 +110,4 @@ jobs:
             lib/pages/toolbox_je_me_lance_page.dart \
             .github/workflows/apply-ui-382-383.yml
           git commit -m "fix(ui): appliquer les issues #382 et #383"
-          git push origin HEAD:fix/issues-382-383-ui
+          git push --force-with-lease origin HEAD:fix/issues-382-383-applied
