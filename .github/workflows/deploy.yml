@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -141,6 +143,36 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+      - name: Detect Functions changes
+        id: functions_changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Déploiement manuel : Functions forcées." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [ -z "${BEFORE_SHA:-}" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Référence précédente indisponible : Functions déployées par sécurité." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if git diff --quiet "$BEFORE_SHA" "$CURRENT_SHA" -- functions firebase.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Functions inchangées : déploiement Functions ignoré." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Changements Functions détectés : déploiement requis." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Deploy Hosting, Firestore indexes and Storage
         run: |
           firebase deploy --project presto-app-74abe \
@@ -148,6 +180,7 @@ jobs:
             --force
 
       - name: Deploy Functions with exit 130 retry
+        if: steps.functions_changes.outputs.changed == 'true'
         shell: bash
         run: |
           set -uo pipefail
@@ -211,5 +244,6 @@ jobs:
             echo "- Workflow : \`${{ github.run_id }}\`"
             echo '- Cible : `presto-app-74abe`'
             echo '- URL contrôlée : `https://ilipresto.web.app`'
+            echo "- Functions modifiées : \`${{ steps.functions_changes.outputs.changed || 'unknown' }}\`"
             echo '- Artefact de restauration : `production-release-${{ github.sha }}`'
           } >> "$GITHUB_STEP_SUMMARY"
