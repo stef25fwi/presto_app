@@ -28,11 +28,12 @@ void main() {
 
     await tester.pumpWidget(
       app(
-        const Wrap(
-          children: <Widget>[
-            for (final status in statuses)
-              AdminConversationStatusBadge(status: status),
-          ],
+        Wrap(
+          children: statuses
+              .map(
+                (status) => AdminConversationStatusBadge(status: status),
+              )
+              .toList(growable: false),
         ),
       ),
     );
