@@ -13,10 +13,13 @@ void main() {
     await tester.pump();
   }
 
-  Finder field(String label) => find.byWidgetPredicate(
-        (widget) =>
-            widget is TextFormField && widget.decoration?.labelText == label,
-      );
+  Finder field(String label) {
+    final decorator = find.byWidgetPredicate(
+      (widget) =>
+          widget is InputDecorator && widget.decoration.labelText == label,
+    );
+    return find.descendant(of: decorator, matching: find.byType(EditableText));
+  }
 
   Future<void> fillBase(WidgetTester tester) async {
     await tester.enterText(field('Nom *'), 'Durand');
@@ -95,8 +98,8 @@ void main() {
   testWidgets('bascule la visibilité du mot de passe', (tester) async {
     await pumpRegister(tester);
 
-    TextFormField passwordField() =>
-        tester.widget<TextFormField>(field('Mot de passe'));
+    EditableText passwordField() =>
+        tester.widget<EditableText>(field('Mot de passe'));
 
     expect(passwordField().obscureText, isTrue);
     await tester.tap(find.byIcon(Icons.visibility));
