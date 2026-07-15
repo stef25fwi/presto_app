@@ -1,8 +1,0 @@
-# ── Release signing config ────────────────────────────────────
-# Copier ce fichier en key.properties et remplir les valeurs.
-# NE PAS committer key.properties (déjà dans .gitignore).
-
-storePassword=<mot_de_passe_keystore>
-keyPassword=<mot_de_passe_cle>
-keyAlias=upload
-storeFile=<chemin_vers_upload-keystore.jks>
