@@ -83,7 +83,8 @@ String formatVideoMakerBytes(int bytes) {
 }
 
 String friendlyVideoMakerFunctionError(FirebaseFunctionsException error) {
-  final message = error.message?.trim();
+  final rawMessage = error.message?.trim();
+  final message = rawMessage == null || rawMessage.isEmpty ? null : rawMessage;
   switch (error.code) {
     case 'unauthenticated':
       return 'Reconnectez-vous avant d’utiliser Videomaker.';
