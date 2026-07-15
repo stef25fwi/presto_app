@@ -71,10 +71,10 @@ void main() {
       );
     });
 
-    test('formate les noms connus et conserve les codes inconnus', () {
+    test('formate les noms connus et conserve les codes inconnus normalisés', () {
       expect(ProfileDepartmentResolver.departmentDisplayName('971'), '971 - Guadeloupe');
       expect(ProfileDepartmentResolver.departmentDisplayName('1'), '01 - Ain');
-      expect(ProfileDepartmentResolver.departmentDisplayName('999'), '999');
+      expect(ProfileDepartmentResolver.departmentDisplayName('999'), '99');
     });
   });
 }
