@@ -1,1 +1,1 @@
-Trigger isolated journey PDF fix.
+Trigger isolated journey PDF fix — diagnostic run 2.
