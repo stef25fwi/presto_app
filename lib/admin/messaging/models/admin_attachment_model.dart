@@ -34,9 +34,15 @@ class AdminAttachmentModel {
   factory AdminAttachmentModel.fromDocument(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
   ) {
-    final data = doc.data();
+    return AdminAttachmentModel.fromData(id: doc.id, data: doc.data());
+  }
+
+  factory AdminAttachmentModel.fromData({
+    required String id,
+    required Map<String, dynamic> data,
+  }) {
     return AdminAttachmentModel(
-      id: doc.id,
+      id: id,
       conversationId: '${data['conversationId'] ?? ''}',
       messageId: '${data['messageId'] ?? ''}',
       senderId: '${data['senderId'] ?? ''}',
