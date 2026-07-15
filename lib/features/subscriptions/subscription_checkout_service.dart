@@ -202,8 +202,12 @@ class SubscriptionCheckoutService {
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
       }
-      (_returnHistoryPreparerOverride ?? prepareSubscriptionReturnHistory)
-          .call();
+      final returnHistoryPreparer = _returnHistoryPreparerOverride;
+      if (returnHistoryPreparer != null) {
+        returnHistoryPreparer();
+      } else {
+        prepareSubscriptionReturnHistory();
+      }
 
       final launcher = _externalLauncherOverride;
       final opened = launcher != null
