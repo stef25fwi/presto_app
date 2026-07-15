@@ -1,8 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 typedef PaymentInfoAudioCallable = Future<void> Function(
   String name,
@@ -128,10 +127,20 @@ class PaymentInfoAudioService {
     FirebaseFunctions? functions,
     PaymentInfoAudioCallable? callable,
     PaymentInfoAudioUploader? uploader,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions,
-        _callableOverride = callable,
-        _uploaderOverride = uploader;
+  }) : _firestore =
+           firestore ??
+           _firestoreOverrideForTesting ??
+           FirebaseFirestore.instance,
+       _functions = functions,
+       _callableOverride = callable,
+       _uploaderOverride = uploader;
+
+  static FirebaseFirestore? _firestoreOverrideForTesting;
+
+  @visibleForTesting
+  static void setFirestoreForTesting(FirebaseFirestore? firestore) {
+    _firestoreOverrideForTesting = firestore;
+  }
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions? _functions;
