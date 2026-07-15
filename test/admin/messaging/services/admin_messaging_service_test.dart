@@ -148,11 +148,18 @@ void main() {
   });
 
   test('fetchConversationsPage vide conserve le curseur fourni', () async {
-    final seed = await service.fetchConversationsPage(pageSize: 1);
+    final seed = await service.fetchConversationsPage(
+      pageSize: 2,
+      status: 'active',
+      region: 'GP',
+      watchlisted: true,
+    );
     final empty = await service.fetchConversationsPage(
       pageSize: 1,
       startAfter: seed.lastDocument,
-      status: 'inexistant',
+      status: 'active',
+      region: 'GP',
+      watchlisted: true,
     );
     expect(empty.items, isEmpty);
     expect(empty.lastDocument, same(seed.lastDocument));
