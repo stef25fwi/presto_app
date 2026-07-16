@@ -16,7 +16,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       buildPage(
-        ({required currentPassword, required newPassword}) async {},
+        ({
+          required String currentPassword,
+          required String newPassword,
+        }) async {},
       ),
     );
 
@@ -42,7 +45,10 @@ void main() {
     var calls = 0;
     await tester.pumpWidget(
       buildPage(
-        ({required currentPassword, required newPassword}) async {
+        ({
+          required String currentPassword,
+          required String newPassword,
+        }) async {
           calls += 1;
         },
       ),
@@ -84,8 +90,8 @@ void main() {
                   MaterialPageRoute<void>(
                     builder: (_) => ChangePasswordPage(
                       onChangePassword: ({
-                        required currentPassword,
-                        required newPassword,
+                        required String currentPassword,
+                        required String newPassword,
                       }) {
                         receivedCurrent = currentPassword;
                         receivedNew = newPassword;
@@ -127,7 +133,10 @@ void main() {
   testWidgets('affiche l’erreur Firebase sans fermer la page', (tester) async {
     await tester.pumpWidget(
       buildPage(
-        ({required currentPassword, required newPassword}) async {
+        ({
+          required String currentPassword,
+          required String newPassword,
+        }) async {
           throw FirebaseAuthException(code: 'wrong-password');
         },
       ),
