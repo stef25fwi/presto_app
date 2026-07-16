@@ -174,4 +174,4 @@ await patchUserAuthorityTest();
 await patchJourneyLayouts();
 
 console.log('release validation fixes: OK');
-// Controlled trigger for the PR451 repair workflow.
+// Controlled trigger for the PR459 repair workflow.
