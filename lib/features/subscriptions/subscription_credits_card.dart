@@ -59,8 +59,16 @@ class _SubscriptionCreditsCardState extends State<SubscriptionCreditsCard> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _CreditsShell(
             child: SizedBox(
-              height: 86,
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
+              height: 54,
+              child: Center(
+                child: Text(
+                  'Chargement de vos crédits…',
+                  style: TextStyle(
+                    color: _muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           );
         }
