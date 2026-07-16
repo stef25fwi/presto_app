@@ -90,7 +90,7 @@ void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
   while ((exception = tester.takeException()) != null) {
     final message = exception.toString();
     final isExpectedCircleAvatarAssertion =
-        message.contains('CircleAvatar') &&
+        message.contains('circle_avatar.dart') &&
         message.contains(
           'foregroundImage != null || onForegroundImageError == null',
         );
