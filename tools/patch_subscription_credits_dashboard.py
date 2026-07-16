@@ -68,4 +68,23 @@ changed |= replace_once(
         _MethodTabRow(""",
 )
 
+ai_offer = Path("lib/features/publish_offer/ai_offer_service.dart")
+changed |= replace_once(
+    ai_offer,
+    """  }) async {
+    final res = await retry(""",
+    """  }) async {
+    final clientRequestId =
+        'text_${DateTime.now().microsecondsSinceEpoch}_${hint.hashCode}';
+    final res = await retry(""",
+)
+changed |= replace_once(
+    ai_offer,
+    """          'category': currentCategory,
+          'lang': 'fr',""",
+    """          'category': currentCategory,
+          'lang': 'fr',
+          'clientRequestId': clientRequestId,""",
+)
+
 print("subscription credits dashboard patch", "applied" if changed else "already applied")
