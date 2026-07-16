@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -23,13 +25,19 @@ jobs:
           fetch-depth: 0
 
       - name: Apply exact messaging repair
+        id: repair_step
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
-          git fetch origin main repair/pr451-complete
-          git reset --hard origin/repair/pr451-complete
+          set -o pipefail
+          {
+            set -euo pipefail
+            git fetch origin \
+              +refs/heads/repair/pr451-complete:refs/remotes/origin/repair/pr451-complete \
+              +refs/heads/main:refs/remotes/origin/main
+            git switch -C repair/pr451-complete refs/remotes/origin/repair/pr451-complete
 
-          python3 - <<'PY'
+            python3 - <<'PY'
           from pathlib import Path
 
           source = Path('lib/pages/messages/conversation_thread_page.dart')
@@ -42,7 +50,7 @@ jobs:
                 'error=$error',
               );
             },
-"""
+          """
           header_new = """            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
                 ? (error, stackTrace) {
                     debugPrint(
@@ -52,7 +60,7 @@ jobs:
                     );
                   }
                 : null,
-"""
+          """
           if header_old in text:
               text = text.replace(header_old, header_new, 1)
           elif header_new not in text:
@@ -65,7 +73,7 @@ jobs:
           'error=$error',
         );
       },
-"""
+          """
           bubble_new = """      onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
           ? (error, stackTrace) {
               debugPrint(
@@ -75,7 +83,7 @@ jobs:
               );
             }
           : null,
-"""
+          """
           if bubble_old in text:
               text = text.replace(bubble_old, bubble_new, 1)
           elif bubble_new not in text:
@@ -99,7 +107,7 @@ jobs:
   }
 }
 
-"""
+          """
           test_text = test_text.replace(drain, '')
           test_text = test_text.replace(
               '  _drainExpectedConversationThreadExceptions(tester);\n',
@@ -108,23 +116,42 @@ jobs:
           test.write_text(test_text)
           PY
 
-          git checkout c7e2c49a996e046c861f5597322723e55d909de6 -- \
-            .github/workflows/dart-format-quality.yml \
-            .github/workflows/pr-validation.yml
-          git diff --check
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            lib/pages/messages/conversation_thread_page.dart \
-            test/pages/messages/conversation_thread_page_shell_test.dart \
-            .github/workflows/dart-format-quality.yml \
-            .github/workflows/pr-validation.yml
-          if git diff --cached --quiet; then
-            echo 'Repair already present.'
-            exit 0
-          fi
-          git commit -m "fix(messages): guard empty conversation avatars"
-          git push origin HEAD:repair/pr451-complete
+            git checkout ae64f4c081b4ee4b84a029c7d4c7a9dee9d98a4a -- \
+              .github/workflows/dart-format-quality.yml \
+              .github/workflows/pr-validation.yml
+            rm -f \
+              .github/pr459-repair.trigger \
+              .github/repair-pr459-main.trigger
+            git diff --check
+
+            if git diff --quiet; then
+              echo 'Repair already present.'
+              exit 0
+            fi
+
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add -A
+            git commit -m 'fix(messages): guard empty conversation avatars'
+            git push origin HEAD:repair/pr451-complete
+          } 2>&1 | tee /tmp/pr459-native-repair.log
+
+      - name: Report repair result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPAIR_OUTCOME: ${{ steps.repair_step.outcome }}
+        run: |
+          tail -n 80 /tmp/pr459-native-repair.log > /tmp/pr459-native-repair-tail.log || true
+          {
+            echo "### Native PR459 repair: ${REPAIR_OUTCOME}"
+            echo
+            echo '```text'
+            cat /tmp/pr459-native-repair-tail.log
+            echo '```'
+          } > /tmp/pr459-native-repair-comment.md
+          gh pr comment 459 --body-file /tmp/pr459-native-repair-comment.md
+          test "$REPAIR_OUTCOME" = success
 
   guardrails:
     runs-on: ubuntu-latest
