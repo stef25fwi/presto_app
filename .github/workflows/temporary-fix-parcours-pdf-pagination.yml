@@ -1,9 +1,7 @@
 name: Temporary fix parcours PDF pagination
 
 on:
-  push:
-    branches:
-      - 'agent/guide-parcours-pas-a-pas'
+  pull_request:
     paths:
       - '.github/workflows/temporary-fix-parcours-pdf-pagination.yml'
 
@@ -16,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/guide-parcours-pas-a-pas
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
       - name: Split oversized step cards
         shell: python
