@@ -40,12 +40,12 @@ import '../main.dart'
         adminAudioRuntimeStore,
         pendingRedirectAuthResult,
         pendingRedirectAuthError;
-import 'account/account_offers_credits_section.dart';
+import 'user_offers_section.dart';
 import 'fiche_pro_page.dart';
 import 'package:presto_app/pages/account/account_security_page.dart';
 import 'package:presto_app/pages/account/mes_avis_page.dart';
 import 'package:presto_app/pages/account/mes_projets_fiche_page.dart';
-import 'package:presto_app/pages/account/mon_entreprise_parcours_library_page.dart';
+import 'package:presto_app/pages/account/mon_entreprise_parcours_page.dart';
 import 'package:presto_app/pages/account/verifier_siret_page.dart';
 import 'package:presto_app/pages/legal_info_page.dart';
 import 'package:presto_app/pages/toolbox_page.dart';
@@ -2852,8 +2852,11 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    AccountOffersCreditsSection(
-                      userId: user.uid,
+                    _buildAccountSectionCard(
+                      icon: Icons.campaign_outlined,
+                      title: 'Gérer mes annonces',
+                      description:
+                          'Retrouve tes annonces par statut, modifie-les ou supprime-les avec confirmation.',
                       isExpanded: _isPublishedOffersExpanded,
                       onToggle: () {
                         setState(() {
@@ -2861,6 +2864,12 @@ class _AccountPageState extends State<AccountPage> {
                               !_isPublishedOffersExpanded;
                         });
                       },
+                      child: RepaintBoundary(
+                        child: UserOffersSection(
+                          userId: user.uid,
+                          showTitle: false,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _buildAccountSectionCard(
@@ -3983,7 +3992,7 @@ class _AccountPageState extends State<AccountPage> {
               label: 'Je crée mon entreprise',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => const MonEntrepriseParcoursLibraryPage(),
+                  builder: (_) => const MonEntrepriseParcoursPage(),
                 ),
               ),
             ),
