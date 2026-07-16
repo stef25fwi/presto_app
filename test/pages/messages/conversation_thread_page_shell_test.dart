@@ -11,6 +11,20 @@ class _ThreadMultiFactorPlatform extends MultiFactorPlatform {
   _ThreadMultiFactorPlatform(super.auth);
 }
 
+class _ThreadTokenResult extends IdTokenResult {
+  _ThreadTokenResult()
+      : super(
+          InternalIdTokenResult(
+            token: 'thread-test-token',
+            claims: const <String?, Object?>{'admin': true},
+            authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+            issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+            expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
+            signInProvider: 'password',
+          ),
+        );
+}
+
 class _ThreadUserPlatform extends UserPlatform {
   _ThreadUserPlatform(
     FirebaseAuthPlatform auth, {
@@ -55,6 +69,11 @@ class _ThreadUserPlatform extends UserPlatform {
 
   @override
   Future<String?> getIdToken(bool forceRefresh) => tokenCompleter.future;
+
+  @override
+  Future<IdTokenResult> getIdTokenResult(bool forceRefresh) async {
+    return _ThreadTokenResult();
+  }
 }
 
 class _ThreadAuthPlatform extends FirebaseAuthPlatform {
