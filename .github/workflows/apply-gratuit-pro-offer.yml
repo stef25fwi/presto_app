@@ -1,23 +1,21 @@
-name: Apply Gratuit Pro offer
+name: Build Gratuit Pro fix branch
 
 on:
   push:
     branches:
-      - agent/gratuit-pro-offer
-    paths:
-      - .github/gratuit-pro-offer.trigger
+      - automation/gratuit-pro-runner
 
 permissions:
   contents: write
 
 jobs:
-  patch:
+  build-fix-branch:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: agent/gratuit-pro-offer
+          ref: automation/gratuit-pro-runner
           fetch-depth: 0
 
       - name: Apply product and regression-test changes
@@ -27,113 +25,109 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              return text.replace(old, new)
+
           source = Path('lib/features/subscriptions/subscription_widgets_base.dart')
           text = source.read_text()
 
-          replacements = [
-              (
-                  """      final audienceMatches = audience == OfferAudience.particuliers
-                    ? plan.plan != SubscriptionPlan.ilipro
-                    : plan.plan == SubscriptionPlan.ilipro;
-          """,
-                  """      final audienceMatches = audience == OfferAudience.particuliers
-                    ? plan.plan != SubscriptionPlan.ilipro
-                    : plan.plan == SubscriptionPlan.free ||
-                        plan.plan == SubscriptionPlan.ilipro;
-          """,
-              ),
-              (
-                  """          _PlanCard(
-                    presentation: plans[i],
-                    currentPlan: userState.plan,
-                    config: config,
-                  ),
-          """,
-                  """          _PlanCard(
-                    presentation: plans[i],
-                    currentPlan: userState.plan,
-                    config: config,
-                    audience: audience,
-                  ),
-          """,
-              ),
-              (
-                  """  final SubscriptionPlan currentPlan;
-            final SubscriptionAppConfig config;
+          text = replace_once(
+              text,
+              "          : plan.plan == SubscriptionPlan.ilipro;",
+              "          : plan.plan == SubscriptionPlan.free ||\n"
+              "              plan.plan == SubscriptionPlan.ilipro;",
+              'Pro audience filter',
+          )
+          text = replace_once(
+              text,
+              """          _PlanCard(
+            presentation: plans[i],
+            currentPlan: userState.plan,
+            config: config,
+          ),""",
+              """          _PlanCard(
+            presentation: plans[i],
+            currentPlan: userState.plan,
+            config: config,
+            audience: audience,
+          ),""",
+              'PlanCard audience argument',
+          )
+          text = replace_once(
+              text,
+              """class _PlanCard extends StatelessWidget {
+  final _PlanPresentation presentation;
+  final SubscriptionPlan currentPlan;
+  final SubscriptionAppConfig config;
 
-            const _PlanCard({
-              required this.presentation,
-              required this.currentPlan,
-              required this.config,
-            });
-          """,
-                  """  final SubscriptionPlan currentPlan;
-            final SubscriptionAppConfig config;
-            final OfferAudience audience;
+  const _PlanCard({
+    required this.presentation,
+    required this.currentPlan,
+    required this.config,
+  });""",
+              """class _PlanCard extends StatelessWidget {
+  final _PlanPresentation presentation;
+  final SubscriptionPlan currentPlan;
+  final SubscriptionAppConfig config;
+  final OfferAudience audience;
 
-            const _PlanCard({
-              required this.presentation,
-              required this.currentPlan,
-              required this.config,
-              required this.audience,
-            });
-          """,
-              ),
-              (
-                  """    final isCurrent = presentation.plan == currentPlan;
-              final isFree = presentation.plan == SubscriptionPlan.free;
-          """,
-                  """    final isCurrent = presentation.plan == currentPlan;
-              final isFree = presentation.plan == SubscriptionPlan.free;
-              final isProFree = isFree && audience == OfferAudience.pro;
-          """,
-              ),
-              (
-                  """                          presentation.title,
-          """,
-                  """                          isProFree ? 'Gratuit Pro' : presentation.title,
-          """,
-              ),
-              (
-                  """                      presentation.summary,
-          """,
-                  """                      isProFree
-                                ? 'L’essentiel pour commencer une activité professionnelle sur iliprestō.'
-                                : presentation.summary,
-          """,
-              ),
-              (
-                  """                      _buttonLabel(presentation.plan),
-          """,
-                  """                      isProFree
-                                ? 'Choisir Gratuit Pro'
-                                : _buttonLabel(presentation.plan),
-          """,
-              ),
-          ]
-
-          for old, new in replacements:
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'Expected one source match, found {count}: {old[:80]!r}')
-              text = text.replace(old, new)
-
+  const _PlanCard({
+    required this.presentation,
+    required this.currentPlan,
+    required this.config,
+    required this.audience,
+  });""",
+              'PlanCard fields',
+          )
+          text = replace_once(
+              text,
+              """    final isCurrent = presentation.plan == currentPlan;
+    final isFree = presentation.plan == SubscriptionPlan.free;""",
+              """    final isCurrent = presentation.plan == currentPlan;
+    final isFree = presentation.plan == SubscriptionPlan.free;
+    final isProFree = isFree && audience == OfferAudience.pro;""",
+              'Gratuit Pro state',
+          )
+          text = replace_once(
+              text,
+              "                          presentation.title,",
+              "                          isProFree ? 'Gratuit Pro' : presentation.title,",
+              'Gratuit Pro title',
+          )
+          text = replace_once(
+              text,
+              "                      presentation.summary,",
+              """                      isProFree
+                          ? 'L’essentiel pour commencer une activité professionnelle sur iliprestō.'
+                          : presentation.summary,""",
+              'Gratuit Pro summary',
+          )
+          text = replace_once(
+              text,
+              "                      _buttonLabel(presentation.plan),",
+              """                      isProFree
+                          ? 'Choisir Gratuit Pro'
+                          : _buttonLabel(presentation.plan),""",
+              'Gratuit Pro button',
+          )
           source.write_text(text)
 
           test = Path('test/features/subscriptions/subscription_widgets_base_journey_test.dart')
           test_text = test.read_text()
-          old_test = """    expect(find.text('Choisir ilipro'), findsOneWidget);
-              expect(find.text('Choisir iliprestō+'), findsNothing);
-          """
-          new_test = """    expect(find.text('Gratuit Pro'), findsOneWidget);
-              expect(find.text('ilipro'), findsOneWidget);
-              expect(find.text('Choisir ilipro'), findsOneWidget);
-              expect(find.text('Choisir iliprestō+'), findsNothing);
-          """
-          count = test_text.count(old_test)
-          if count != 1:
-              raise SystemExit(f'Expected one test assertion block, found {count}')
-          test.write_text(test_text.replace(old_test, new_test))
+          test_text = replace_once(
+              test_text,
+              """    expect(find.text('Choisir ilipro'), findsOneWidget);
+    expect(find.text('Choisir iliprestō+'), findsNothing);""",
+              """    expect(find.text('Gratuit Pro'), findsOneWidget);
+    expect(find.text('ilipro'), findsOneWidget);
+    expect(find.text('Choisir ilipro'), findsOneWidget);
+    expect(find.text('Choisir iliprestō+'), findsNothing);""",
+              'Pro offer assertions',
+          )
+          test.write_text(test_text)
 
           Path('.github/gratuit-pro-offer.trigger').unlink(missing_ok=True)
           Path('.github/workflows/apply-gratuit-pro-offer.yml').unlink(missing_ok=True)
@@ -141,11 +135,13 @@ jobs:
 
           git diff --check
 
-      - name: Commit correction
+      - name: Publish final fix branch
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git switch -c fix/gratuit-pro-final-479
           git add -A
           git commit -m "fix(subscriptions): afficher l’offre Gratuit Pro"
-          git push origin HEAD:agent/gratuit-pro-offer
+          git push -u origin fix/gratuit-pro-final-479
