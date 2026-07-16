@@ -1,0 +1,160 @@
+name: Apply Gratuit Pro fix
+
+on:
+  push:
+    branches:
+      - fix/subscription-gratuit-pro
+    paths:
+      - .github/workflows/apply-gratuit-pro-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/subscription-gratuit-pro
+          fetch-depth: 0
+
+      - name: Apply product and regression-test changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('lib/features/subscriptions/subscription_widgets_base.dart')
+          text = source.read_text()
+
+          old_filter = """      final audienceMatches = audience == OfferAudience.particuliers
+          ? plan.plan != SubscriptionPlan.ilipro
+          : plan.plan == SubscriptionPlan.ilipro;
+"""
+          new_filter = """      final audienceMatches = audience == OfferAudience.particuliers
+          ? plan.plan != SubscriptionPlan.ilipro
+          : plan.plan == SubscriptionPlan.free ||
+              plan.plan == SubscriptionPlan.ilipro;
+"""
+          if text.count(old_filter) != 1:
+              raise SystemExit(f'Expected one audience filter, found {text.count(old_filter)}')
+          text = text.replace(old_filter, new_filter)
+
+          old_card_call = """          _PlanCard(
+            presentation: plans[i],
+            currentPlan: userState.plan,
+            config: config,
+          ),
+"""
+          new_card_call = """          _PlanCard(
+            presentation: plans[i],
+            currentPlan: userState.plan,
+            config: config,
+            audience: audience,
+          ),
+"""
+          if text.count(old_card_call) != 1:
+              raise SystemExit(f'Expected one plan card call, found {text.count(old_card_call)}')
+          text = text.replace(old_card_call, new_card_call)
+
+          old_fields = """  final SubscriptionPlan currentPlan;
+  final SubscriptionAppConfig config;
+
+  const _PlanCard({
+    required this.presentation,
+    required this.currentPlan,
+    required this.config,
+  });
+"""
+          new_fields = """  final SubscriptionPlan currentPlan;
+  final SubscriptionAppConfig config;
+  final OfferAudience audience;
+
+  const _PlanCard({
+    required this.presentation,
+    required this.currentPlan,
+    required this.config,
+    required this.audience,
+  });
+"""
+          if text.count(old_fields) != 1:
+              raise SystemExit(f'Expected one PlanCard field block, found {text.count(old_fields)}')
+          text = text.replace(old_fields, new_fields)
+
+          old_locals = """    final isCurrent = presentation.plan == currentPlan;
+    final isFree = presentation.plan == SubscriptionPlan.free;
+"""
+          new_locals = """    final isCurrent = presentation.plan == currentPlan;
+    final isFree = presentation.plan == SubscriptionPlan.free;
+    final isProFree = isFree && audience == OfferAudience.pro;
+"""
+          if text.count(old_locals) != 1:
+              raise SystemExit(f'Expected one PlanCard local block, found {text.count(old_locals)}')
+          text = text.replace(old_locals, new_locals)
+
+          old_title = """                          presentation.title,
+"""
+          new_title = """                          isProFree ? 'Gratuit Pro' : presentation.title,
+"""
+          if text.count(old_title) != 1:
+              raise SystemExit(f'Expected one presentation title, found {text.count(old_title)}')
+          text = text.replace(old_title, new_title)
+
+          old_summary = """                      presentation.summary,
+"""
+          new_summary = """                      isProFree
+                          ? 'L’essentiel pour commencer une activité professionnelle sur iliprestō.'
+                          : presentation.summary,
+"""
+          if text.count(old_summary) != 1:
+              raise SystemExit(f'Expected one presentation summary, found {text.count(old_summary)}')
+          text = text.replace(old_summary, new_summary)
+
+          old_button = """                      _buttonLabel(presentation.plan),
+"""
+          new_button = """                      isProFree
+                          ? 'Choisir Gratuit Pro'
+                          : _buttonLabel(presentation.plan),
+"""
+          if text.count(old_button) != 1:
+              raise SystemExit(f'Expected one plan button label, found {text.count(old_button)}')
+          text = text.replace(old_button, new_button)
+          source.write_text(text)
+
+          test = Path('test/features/subscriptions/subscription_widgets_base_journey_test.dart')
+          test_text = test.read_text()
+          old_assertions = """    expect(find.text('Choisir ilipro'), findsOneWidget);
+    expect(find.text('Choisir iliprestō+'), findsNothing);
+"""
+          new_assertions = """    expect(find.text('Gratuit Pro'), findsOneWidget);
+    expect(find.text('ilipro'), findsOneWidget);
+    expect(find.text('Choisir ilipro'), findsOneWidget);
+    expect(find.text('Choisir iliprestō+'), findsNothing);
+"""
+          if test_text.count(old_assertions) != 1:
+              raise SystemExit(
+                  f'Expected one Pro assertions block, found {test_text.count(old_assertions)}'
+              )
+          test.write_text(test_text.replace(old_assertions, new_assertions))
+
+          workflow = Path('.github/workflows/apply-gratuit-pro-fix.yml')
+          workflow.unlink()
+          PY
+
+          dart format \
+            lib/features/subscriptions/subscription_widgets_base.dart \
+            test/features/subscriptions/subscription_widgets_base_journey_test.dart
+          git diff --check
+
+      - name: Commit correction
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "fix(subscriptions): afficher l'offre Gratuit Pro"
+          git push origin HEAD:fix/subscription-gratuit-pro
