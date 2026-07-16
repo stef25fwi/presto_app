@@ -1000,13 +1000,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
                 ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
                 : null,
-            onForegroundImageError: (error, stackTrace) {
-              debugPrint(
-                '[ConversationThread] header avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                'error=$error',
-              );
-            },
+            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
+                ? (error, stackTrace) {
+                    debugPrint(
+                      '[ConversationThread] header avatar load failed '
+                      'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+                      'error=$error',
+                    );
+                  }
+                : null,
             child: _otherParticipantPhotoUrl.isEmpty
                 ? Text(
                     _conversationInitial(),
@@ -3298,13 +3300,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
           ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
           : null,
-      onForegroundImageError: (error, stackTrace) {
-        debugPrint(
-          '[ConversationThread] bubble avatar load failed '
-          'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-          'error=$error',
-        );
-      },
+      onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
+          ? (error, stackTrace) {
+              debugPrint(
+                '[ConversationThread] bubble avatar load failed '
+                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+                'error=$error',
+              );
+            }
+          : null,
       child: _otherParticipantPhotoUrl.isEmpty
           ? Text(
               _conversationInitial(),

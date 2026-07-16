@@ -104,21 +104,6 @@ class _ThreadAuthPlatform extends FirebaseAuthPlatform {
   Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(user);
 }
 
-void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
-  Object? exception;
-  while ((exception = tester.takeException()) != null) {
-    final message = exception.toString();
-    final isExpectedCircleAvatarAssertion =
-        message.contains('circle_avatar.dart') &&
-        message.contains(
-          'foregroundImage != null || onForegroundImageError == null',
-        );
-    if (!isExpectedCircleAvatarAssertion) {
-      throw exception!;
-    }
-  }
-}
-
 Future<void> _pumpThreadFrame(
   WidgetTester tester, [
   Duration? duration,
@@ -128,7 +113,6 @@ Future<void> _pumpThreadFrame(
   } else {
     await tester.pump(duration);
   }
-  _drainExpectedConversationThreadExceptions(tester);
 }
 
 Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
@@ -175,8 +159,7 @@ void main() {
         ),
       ),
     );
-    _drainExpectedConversationThreadExceptions(tester);
-    await _pumpUntilThreadShellIsReady(tester);
+      await _pumpUntilThreadShellIsReady(tester);
   }
 
   tearDown(() {
