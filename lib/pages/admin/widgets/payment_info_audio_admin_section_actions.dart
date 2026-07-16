@@ -40,7 +40,7 @@ extension _PaymentInfoAudioAdminSectionActions
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _didHydrateText) return;
       _textController.text = savedText;
-      setState(() => _didHydrateText = true);
+      _update(() => _didHydrateText = true);
     });
   }
 
@@ -52,7 +52,7 @@ extension _PaymentInfoAudioAdminSectionActions
       _showSnack('Le texte audio ne peut pas être vide.', isError: true);
       return;
     }
-    setState(() => _isSavingText = true);
+    _update(() => _isSavingText = true);
     try {
       await _saveAdminText(text);
       if (!mounted) return;
@@ -64,7 +64,7 @@ extension _PaymentInfoAudioAdminSectionActions
         isError: true,
       );
     } finally {
-      if (mounted) setState(() => _isSavingText = false);
+      if (mounted) _update(() => _isSavingText = false);
     }
   }
 
@@ -74,7 +74,7 @@ extension _PaymentInfoAudioAdminSectionActions
       _showSnack('Le texte audio ne peut pas être vide.', isError: true);
       return;
     }
-    setState(() {
+    _update(() {
       _isGeneratingDraft = true;
       _hasPreviewedDraft = false;
       _lastPreviewedDraftUrl = null;
@@ -83,7 +83,7 @@ extension _PaymentInfoAudioAdminSectionActions
       await _saveAdminText(text);
       final settings = await _generateAudioDraft(text);
       if (!mounted) return;
-      setState(() {
+      _update(() {
         _lastPreviewedDraftUrl = settings.draftAudioUrl;
         _hasPreviewedDraft = false;
       });
@@ -92,7 +92,7 @@ extension _PaymentInfoAudioAdminSectionActions
       if (!mounted) return;
       _showSnack('Génération MP3 impossible : $error', isError: true);
     } finally {
-      if (mounted) setState(() => _isGeneratingDraft = false);
+      if (mounted) _update(() => _isGeneratingDraft = false);
     }
   }
 
@@ -104,7 +104,7 @@ extension _PaymentInfoAudioAdminSectionActions
       );
       return;
     }
-    setState(() => _isPublishingDraft = true);
+    _update(() => _isPublishingDraft = true);
     try {
       await _publishAudioDraft();
       if (!mounted) return;
@@ -113,12 +113,12 @@ extension _PaymentInfoAudioAdminSectionActions
       if (!mounted) return;
       _showSnack('Publication impossible : $error', isError: true);
     } finally {
-      if (mounted) setState(() => _isPublishingDraft = false);
+      if (mounted) _update(() => _isPublishingDraft = false);
     }
   }
 
   void _markDraftPreviewed(String audioUrl) {
-    setState(() {
+    _update(() {
       _hasPreviewedDraft = true;
       _lastPreviewedDraftUrl = audioUrl;
     });
