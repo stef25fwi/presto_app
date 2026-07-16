@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+// Contrat de non-régression de l’assertion Flutter CircleAvatar.
 void main() {
   test('les erreurs image restent conditionnées à une vraie image', () {
     final source = File(
@@ -13,7 +14,9 @@ void main() {
 
     expect(guardedCallback.allMatches(source), hasLength(2));
     expect(
-      RegExp(r'onForegroundImageError:\s*\(error, stackTrace\)').hasMatch(source),
+      RegExp(
+        r'onForegroundImageError:\s*\(error, stackTrace\)',
+      ).hasMatch(source),
       isFalse,
     );
   });
@@ -29,7 +32,11 @@ void main() {
     );
     expect(
       testSource,
-      isNot(contains('foregroundImage != null || onForegroundImageError == null')),
+      isNot(
+        contains(
+          'foregroundImage != null || onForegroundImageError == null',
+        ),
+      ),
     );
   });
 }
