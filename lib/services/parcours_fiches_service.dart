@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 class ParcoursFichesService {
   ParcoursFichesService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -123,16 +123,16 @@ class _FonctionnaireParcoursFiche {
   }) {
     final fallbackRecommendation =
         (fallback['recommendation'] as Map?)?.cast<String, dynamic>() ??
-            <String, dynamic>{};
+        <String, dynamic>{};
     final fallbackCosts =
         (fallback['costs'] as Map?)?.cast<String, dynamic>() ??
-            <String, dynamic>{};
+        <String, dynamic>{};
     final fallbackSummary =
         (fallback['summary'] as Map?)?.cast<String, dynamic>() ??
-            <String, dynamic>{};
+        <String, dynamic>{};
     final fallbackLegalStatus =
         (fallback['recommendedLegalStatus'] as Map?)?.cast<String, dynamic>() ??
-            <String, dynamic>{};
+        <String, dynamic>{};
 
     final generatedRegulationTutorial = <Map<String, dynamic>>[
       {
@@ -140,8 +140,8 @@ class _FonctionnaireParcoursFiche {
         'description': isRegulated
             ? 'Cette activité est à considérer comme réglementée pour un agent public. $qualificationRules'
             : (qualificationRules.isNotEmpty
-                ? qualificationRules
-                : 'Aucune contrainte réglementaire forte n’est remontée, mais une vérification reste recommandée.'),
+                  ? qualificationRules
+                  : 'Aucune contrainte réglementaire forte n’est remontée, mais une vérification reste recommandée.'),
       },
       {
         'title': 'Cumul et obligations d’agent public',
@@ -158,12 +158,24 @@ class _FonctionnaireParcoursFiche {
       if (officialSources.isNotEmpty)
         {
           'title': 'Sources officielles à vérifier',
-          'description': 'Des références officielles sont disponibles pour '
+          'description':
+              'Des références officielles sont disponibles pour '
               'sécuriser cette activité avant lancement '
               '(${officialSources.length} source(s) recensée(s)).',
         },
     ];
-    final regulationTutorial = _buildMarkdownRegulationTutorial();
+    final markdownRegulationTutorial = _buildMarkdownRegulationTutorial();
+    final regulationTutorial = <Map<String, dynamic>>[
+      ...(markdownRegulationTutorial.isNotEmpty
+          ? markdownRegulationTutorial
+          : generatedRegulationTutorial),
+      if (markdownRegulationTutorial.isNotEmpty)
+        for (final source in officialSources)
+          <String, dynamic>{
+            'title': 'Source officielle',
+            'description': source,
+          },
+    ];
 
     final generatedStatusWarnings = <Map<String, dynamic>>[
       {
@@ -189,7 +201,8 @@ class _FonctionnaireParcoursFiche {
         ? legalReviewStatus
         : 'La fiche fournit un socle métier. Une validation finale par l’administration employeur ou l’organisme compétent reste recommandée.';
 
-    final recommendedLegalStatus = _buildMarkdownRecommendedLegalStatus(
+    final recommendedLegalStatus =
+        _buildMarkdownRecommendedLegalStatus(
           fallbackLegalStatus: fallbackLegalStatus,
           fallbackRecommendation: fallbackRecommendation,
           fallbackPlanB: planB,
@@ -199,13 +212,13 @@ class _FonctionnaireParcoursFiche {
           'recommended': recommendedStatus.isNotEmpty
               ? recommendedStatus
               : (fallbackLegalStatus['recommended'] ??
-                  fallbackRecommendation['statut'] ??
-                  ''),
+                    fallbackRecommendation['statut'] ??
+                    ''),
           'justification': currentFrame.isNotEmpty
               ? currentFrame
               : (fallbackLegalStatus['justification'] ??
-                  fallbackRecommendation['why'] ??
-                  ''),
+                    fallbackRecommendation['why'] ??
+                    ''),
           'planB': planB,
           'disclaimer': legalDisclaimer,
         };
@@ -226,15 +239,19 @@ class _FonctionnaireParcoursFiche {
     final costs = <String, dynamic>{
       ...fallbackCosts,
       'formalitesEstimees': _estimateFormalites(recommendedStatus),
+      'ficheCoutsIndicatifs': _dedupePreserveOrder([
+        ...indicativeCosts,
+        ..._buildFiscalityLines(),
+      ]),
       'note': _buildCostNote(),
     };
 
     final plan30 = actionPlan.isNotEmpty
         ? _buildPlan30(actionPlan)
         : (fallback['plan30'] as List?)
-                ?.map((e) => (e as Map).cast<String, dynamic>())
-                .toList() ??
-            <Map<String, dynamic>>[];
+                  ?.map((e) => (e as Map).cast<String, dynamic>())
+                  .toList() ??
+              <Map<String, dynamic>>[];
 
     final blockingAlerts = _dedupePreserveOrder([
       ...((fallback['blockingAlerts'] as List?)?.map((e) => '$e').toList() ??
@@ -250,8 +267,9 @@ class _FonctionnaireParcoursFiche {
       'currentStatus': currentStatus,
       'activity': activity,
       'vigilanceLevel': _normalizeVigilance(vigilance),
-      'recommendedPath':
-          category.isNotEmpty ? 'Parcours $category' : 'Création progressive',
+      'recommendedPath': category.isNotEmpty
+          ? 'Parcours $category'
+          : 'Création progressive',
       'recommendedLegalStatus': recommendedLegalStatus['recommended'],
     };
 
@@ -266,11 +284,10 @@ class _FonctionnaireParcoursFiche {
       'plan30': plan30,
       'aides': markdownAids.isNotEmpty ? markdownAids : _buildAids(),
       'summary': summary,
-      'regulationTutorial': regulationTutorial.isNotEmpty
-          ? regulationTutorial
-          : generatedRegulationTutorial,
-      'statusWarnings':
-          statusWarnings.isNotEmpty ? statusWarnings : generatedStatusWarnings,
+      'regulationTutorial': regulationTutorial,
+      'statusWarnings': statusWarnings.isNotEmpty
+          ? statusWarnings
+          : generatedStatusWarnings,
       'recommendedLegalStatus': recommendedLegalStatus,
       'steps': markdownTutorialSteps.isNotEmpty
           ? markdownTutorialSteps
@@ -327,14 +344,22 @@ class _FonctionnaireParcoursFiche {
       return null;
     }
 
-    final recommendationSection =
-        _markdownOutline.findSubsection('3.', 'Recommandation principale');
-    final whySection =
-        _markdownOutline.findSubsection('3.', 'Pourquoi ce statut est adapté');
-    final limitsSection =
-        _markdownOutline.findSubsection('3.', 'Limites du statut');
-    final fiscalSection =
-        _markdownOutline.findSubsection('3.', 'Fiscalité, cotisations et TVA');
+    final recommendationSection = _markdownOutline.findSubsection(
+      '3.',
+      'Recommandation principale',
+    );
+    final whySection = _markdownOutline.findSubsection(
+      '3.',
+      'Pourquoi ce statut est adapté',
+    );
+    final limitsSection = _markdownOutline.findSubsection(
+      '3.',
+      'Limites du statut',
+    );
+    final fiscalSection = _markdownOutline.findSubsection(
+      '3.',
+      'Fiscalité, cotisations et TVA',
+    );
 
     if (recommendationSection == null &&
         whySection == null &&
@@ -362,15 +387,15 @@ class _FonctionnaireParcoursFiche {
       'recommended': extractedRecommended.isNotEmpty
           ? extractedRecommended
           : (recommendedStatus.isNotEmpty
-              ? recommendedStatus
-              : (fallbackLegalStatus['recommended'] ??
-                  fallbackRecommendation['statut'] ??
-                  '')),
+                ? recommendedStatus
+                : (fallbackLegalStatus['recommended'] ??
+                      fallbackRecommendation['statut'] ??
+                      '')),
       'justification': justification.isNotEmpty
           ? justification
           : (fallbackLegalStatus['justification'] ??
-              fallbackRecommendation['why'] ??
-              ''),
+                fallbackRecommendation['why'] ??
+                ''),
       'planB': planB,
       'disclaimer': disclaimer.isNotEmpty ? disclaimer : fallbackDisclaimer,
     };
@@ -392,7 +417,7 @@ class _FonctionnaireParcoursFiche {
     return [
       for (var index = 0; index < subsections.length; index += 1)
         _tutorialStep(
-          id: 'markdown_${index + 1}',
+          id: _canonicalMarkdownStepId(subsections[index].title, index),
           order: index + 1,
           title: subsections[index].title,
           objective: subsections[index].prose.isNotEmpty
@@ -401,6 +426,64 @@ class _FonctionnaireParcoursFiche {
           todos: subsections[index].bullets,
         ),
     ];
+  }
+
+  String _canonicalMarkdownStepId(String title, int index) {
+    final normalized = title.toLowerCase();
+    if (normalized.contains('cumul') ||
+        normalized.contains('situation personnelle')) {
+      return 'situation';
+    }
+    if (normalized.contains('offre') ||
+        normalized.contains('budget') ||
+        normalized.contains('prix')) {
+      return 'offres';
+    }
+    if (normalized.contains('aide')) {
+      return 'aides';
+    }
+    if (normalized.contains('statut') || normalized.contains('cadre')) {
+      return 'statut_lancement';
+    }
+    if (normalized.contains('dossier')) {
+      return 'preparation';
+    }
+    if (normalized.contains('déclar') || normalized.contains('formalité')) {
+      return 'declaration';
+    }
+    if (normalized.contains('protection') || normalized.contains('assurance')) {
+      return 'protections';
+    }
+    if (normalized.contains('gestion') ||
+        normalized.contains('obligation récurrente')) {
+      return 'gestion';
+    }
+    if (normalized.contains('lancer') ||
+        normalized.contains('première offre') ||
+        normalized.contains('premières offres')) {
+      return 'lancement';
+    }
+    if (normalized.contains('activité') ||
+        normalized.contains('règle') ||
+        normalized.contains("droit d'exercer")) {
+      return 'reglementation';
+    }
+
+    const fallbackIds = <String>[
+      'reglementation',
+      'situation',
+      'offres',
+      'aides',
+      'statut_lancement',
+      'preparation',
+      'declaration',
+      'protections',
+      'gestion',
+      'lancement',
+    ];
+    return index < fallbackIds.length
+        ? fallbackIds[index]
+        : 'markdown_${index + 1}';
   }
 
   List<Map<String, dynamic>> _buildMarkdownAids() {
@@ -478,16 +561,13 @@ class _FonctionnaireParcoursFiche {
       final entry = rawPlan[index];
       final parts = entry.split(':');
       final firstPart = parts.first.trim();
-      final label =
-          parts.length > 1 ? parts.sublist(1).join(':').trim() : entry.trim();
+      final label = parts.length > 1
+          ? parts.sublist(1).join(':').trim()
+          : entry.trim();
       final week = firstPart.toLowerCase().startsWith('semaine')
           ? _capitalize(firstPart)
           : 'Semaine ${index + 1}';
-      items.add({
-        'week': week,
-        'label': label,
-        'done': false,
-      });
+      items.add({'week': week, 'label': label, 'done': false});
     }
     return items;
   }
@@ -574,6 +654,30 @@ class _FonctionnaireParcoursFiche {
     ];
   }
 
+  List<String> _buildFiscalityLines() {
+    const labels = <String, String>{
+      'seuil_micro_service_2026':
+          'Seuil micro-fiscal prestations de services 2026',
+      'cotisations_micro_bic_service_2026':
+          'Cotisations micro-sociales BIC services 2026',
+      'tva_franchise_service_base_2026': 'Franchise en base de TVA - seuil',
+      'tva_franchise_service_majore_2026':
+          'Franchise en base de TVA - seuil majoré',
+      'tva_franchise_service_base': 'Franchise en base de TVA - seuil',
+      'tva_franchise_service_majore': 'Franchise en base de TVA - seuil majoré',
+      'compte_dedie': 'Compte bancaire dédié',
+      'cfe': 'Cotisation foncière des entreprises',
+    };
+    final lines = <String>[];
+    for (final entry in fiscality.entries) {
+      final value = '${entry.value}'.trim();
+      if (value.isEmpty) continue;
+      final label = labels[entry.key] ?? entry.key.replaceAll('_', ' ');
+      lines.add('$label : $value');
+    }
+    return _dedupePreserveOrder(lines);
+  }
+
   String _buildCostNote() {
     final parts = <String>[];
     if (indicativeCosts.isNotEmpty) {
@@ -581,13 +685,13 @@ class _FonctionnaireParcoursFiche {
     }
     if (fiscality.isNotEmpty) {
       final thresholds = <String>[];
-      final serviceThreshold =
-          '${fiscality['seuil_micro_service_2026'] ?? ''}'.trim();
+      final serviceThreshold = '${fiscality['seuil_micro_service_2026'] ?? ''}'
+          .trim();
       if (serviceThreshold.isNotEmpty) {
         thresholds.add('Seuil micro service 2026 : $serviceThreshold');
       }
-      final vatThreshold =
-          '${fiscality['tva_franchise_service_base'] ?? ''}'.trim();
+      final vatThreshold = '${fiscality['tva_franchise_service_base'] ?? ''}'
+          .trim();
       if (vatThreshold.isNotEmpty) {
         thresholds.add('Franchise TVA base : $vatThreshold');
       }
@@ -821,7 +925,7 @@ class _MarkdownSection {
 
 class _MarkdownSubsection {
   _MarkdownSubsection({required this.title, required List<String> rawLines})
-      : _rawLines = rawLines;
+    : _rawLines = rawLines;
 
   final String title;
   final List<String> _rawLines;

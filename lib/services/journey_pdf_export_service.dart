@@ -35,6 +35,7 @@ class JourneyPdfExportService {
     'declaration',
     'protections',
     'gestion',
+    'lancement',
   ];
 
   static const _stepTitles = <String, String>{
@@ -47,6 +48,7 @@ class JourneyPdfExportService {
     'declaration': 'Déclarer officiellement l’activité',
     'protections': 'Mettre en place les protections obligatoires ou utiles',
     'gestion': 'Organiser la gestion et les obligations récurrentes',
+    'lancement': 'Lancer une première prestation maîtrisée',
   };
 
   static const _stepOutcomes = <String, String>{
@@ -68,6 +70,8 @@ class JourneyPdfExportService {
         'Vous pouvez intervenir chez vos premiers clients avec les documents et assurances adaptés.',
     'gestion':
         'Vous savez quoi suivre chaque mois ou trimestre et quelles échéances anticiper.',
+    'lancement':
+        'La première mission reste limitée au périmètre autorisé, assuré et documenté.',
   };
 
   static const _labelOverrides = <String, String>{
@@ -982,10 +986,7 @@ Cordialement,
     padding: const pw.EdgeInsets.only(top: 8),
     child: pw.Text(
       'Ce guide fournit une orientation personnalisée à partir des informations renseignées. Il ne remplace pas la vérification des textes officiels ni, lorsque nécessaire, l’avis d’un professionnel du droit, du chiffre, de l’assurance ou de l’organisme compétent.',
-      style: pw.TextStyle(
-        fontSize: 8,
-        color: PdfColors.grey700,
-      ),
+      style: pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
     ),
   );
 

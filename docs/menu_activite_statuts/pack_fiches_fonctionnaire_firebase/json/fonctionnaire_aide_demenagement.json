@@ -25,7 +25,7 @@
     "Guichet unique INPI",
     "Urssaf",
     "Assureur professionnel",
-    "Organisme compétent en transport si la prestation inclut le transport routier pour compte d'autrui"
+    "Service territorial de l'État compétent en transport (DEAL/DREAL) si la prestation inclut le transport routier pour compte d'autrui"
   ],
   "modes_exercice": [
     "aide au chargement et au déchargement",
@@ -34,7 +34,7 @@
     "montage ou démontage simple de mobilier non technique",
     "déménagement avec transport uniquement après vérification des obligations applicables"
   ],
-  "qualification_regles": "L'aide au déménagement est hors du périmètre des services à la personne. La manutention seule ne nécessite pas, par principe, de déclaration propre à ce secteur. Si la prestation comprend l'organisation d'un déménagement avec transport routier de biens pour le compte d'autrui, vérifier avant le lancement les obligations propres au transport et au déménagement, ainsi que la couverture des biens confiés.",
+  "qualification_regles": "L'aide au déménagement est hors du périmètre des services à la personne. La manutention seule ne nécessite pas, par principe, de déclaration propre à ce secteur. Si la prestation comprend un déménagement avec transport routier de biens pour le compte d'autrui, vérifier avant le lancement l'autorisation d'exercer, les exigences d'établissement, d'honorabilité, de capacité professionnelle et financière, l'inscription au registre électronique national des entreprises de transport par route et la licence adaptée. La couverture des biens confiés reste indispensable.",
   "assurances": [
     "RC professionnelle couvrant explicitement la manutention et le déménagement",
     "Assurance automobile à usage professionnel si un véhicule est utilisé",
@@ -48,17 +48,18 @@
     "pièce d'identité",
     "justificatif de domicile",
     "devis d'assurance correspondant au périmètre réel",
+    "justificatifs de capacité professionnelle et financière et licence lorsque le transport pour compte d'autrui est inclus",
     "inventaire du matériel de manutention",
     "modèle de devis et conditions d'intervention"
   ],
   "alertes": [
     "Ne pas présenter cette activité comme un service à la personne et ne pas promettre de crédit d'impôt SAP",
-    "Ne pas transporter les biens d'un client sans avoir vérifié les obligations applicables et la couverture d'assurance",
+    "Ne pas transporter les biens d'un client pour compte d'autrui avant d'avoir vérifié l'autorisation d'exercer, l'inscription au registre, la licence, les capacités requises et la couverture d'assurance",
     "Évaluer les risques de port de charges, de casse et de dommages aux locaux avant chaque mission",
     "Ne pas réaliser de branchement électrique, de plomberie ou de travaux techniques sans qualification et assurance adaptées"
   ],
   "fiscalite": {
-    "seuil_micro_service_2026": "77 700 € de chiffre d'affaires annuel pour les prestations de services, sous réserve des règles de dépassement",
+    "seuil_micro_service_2026": "83 600 € de chiffre d'affaires annuel pour les prestations de services, sous réserve des règles de dépassement",
     "cotisations_micro_bic_service_2026": "21,2 % du chiffre d'affaires encaissé hors contributions ou situations particulières",
     "tva_franchise_service_base_2026": "37 500 €",
     "tva_franchise_service_majore_2026": "41 250 €",
@@ -113,8 +114,10 @@
     "https://www.insee.fr/fr/metadonnees/nafr2/sousClasse/49.42Z",
     "https://www.servicesalapersonne.gouv.fr/tout-savoir-sur-les-services-la-personne/les-26-activites-de-services-la-personne",
     "https://entreprendre.service-public.fr/vosdroits/R61572",
-    "https://entreprendre.service-public.fr/vosdroits/F23267",
-    "https://www.impots.gouv.fr/professionnel/tva"
+    "https://www.impots.gouv.fr/professionnel/questions/en-tant-que-micro-entrepreneur-sous-quelles-conditions-puis-je-opter-pour-l",
+    "https://www.impots.gouv.fr/professionnel/tva",
+    "https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000023086525/LEGISCTA000033449959/",
+    "https://www.legifrance.gouv.fr/codes/id/LEGISCTA000033450785"
   ],
   "search_keys": [
     "main_d_oeuvre",

@@ -23,9 +23,9 @@ Avant de créer l’activité, vous devez sécuriser votre cumul dans la fonctio
 
 ### Activité libre ou réglementée
 
-L’aide manuelle au chargement, au déchargement, à l’emballage ou au déplacement de mobilier sur un même site ne relève pas des services à la personne. Lorsque la prestation comprend un déménagement avec transport routier pour le compte du client, faites vérifier les obligations applicables avant toute publicité ou mission.
+L’aide manuelle au chargement, au déchargement, à l’emballage ou au déplacement de mobilier sur un même site ne relève pas des services à la personne. Lorsque la prestation comprend un déménagement avec transport routier de biens pour le compte d’autrui, vérifiez avant toute publicité ou mission l’autorisation d’exercer, les exigences d’établissement, d’honorabilité, de capacité professionnelle et financière, l’inscription au registre électronique national des entreprises de transport par route et la licence adaptée.
 
-Le code APE 49.42Z correspond aux services de déménagement, mais le code définitif dépend de l’activité principale réellement déclarée et attribuée par l’Insee.
+Le code APE 49.42Z correspond aux services de déménagement, mais le code définitif dépend de l’activité principale réellement déclarée et attribuée par l’Insee. L’assurance doit couvrir la manutention, les dommages aux locaux et les biens confiés ou transportés.
 
 ### Règles spécifiques au fonctionnaire / agent public
 
@@ -88,6 +88,7 @@ Avant toute création, vérifiez votre type de fonction publique, votre temps de
 * description des prestations avec ou sans transport ;
 * pièce d’identité et justificatif de domicile ;
 * devis d’assurance ;
+* justificatifs de capacité professionnelle et financière et licence si le transport pour compte d’autrui est inclus ;
 * estimation des revenus et de la périodicité ;
 * inventaire du matériel ;
 * projet de devis et de conditions d’intervention.
@@ -110,11 +111,11 @@ La micro-entreprise peut convenir à une activité accessoire limitée, sans sal
 
 * Les frais réels de véhicule, de matériel et d’assurance ne sont pas déduits dans le régime micro.
 * Une structure au réel doit être étudiée si les investissements et charges deviennent importants.
-* Le transport de biens peut imposer des vérifications supplémentaires.
+* Le transport de biens pour compte d’autrui peut imposer une autorisation d’exercer, des capacités professionnelle et financière, une inscription au registre et une licence.
 
 ### Fiscalité, cotisations et TVA
 
-Pour 2026, le seuil micro-fiscal des prestations de services est indiqué à 77 700 €. Le taux micro-social BIC de services est indiqué à 21,2 %, hors situations particulières. Les seuils de franchise de TVA des services sont de 37 500 € et 41 250 €. Vérifiez ces valeurs sur les sources officielles au moment de la démarche.
+Pour 2026, le seuil micro-fiscal des prestations de services est indiqué à 83 600 €. Le taux micro-social BIC de services est indiqué à 21,2 %, hors situations particulières. Les seuils de franchise de TVA des services sont de 37 500 € et 41 250 €. Vérifiez ces valeurs sur les sources officielles au moment de la démarche.
 
 ---
 
@@ -122,7 +123,7 @@ Pour 2026, le seuil micro-fiscal des prestations de services est indiqué à 77 
 
 ### Étape 1 — Définir précisément l’activité
 
-Distinguez la manutention, l’emballage, le montage simple et le transport de biens. Définissez les exclusions et les objets que vous refusez de prendre en charge.
+Distinguez la manutention, l’emballage, le montage simple et le transport de biens. Définissez les exclusions et les objets refusés. Si le transport pour compte d’autrui est inclus, identifiez le service territorial compétent et les justificatifs d’autorisation, de capacité, d’inscription et de licence à obtenir.
 
 ### Étape 2 — Sécuriser le cumul fonction publique
 
@@ -223,5 +224,7 @@ Vérifiez la région, le département, l’agglomération et la commune avant l�
 * https://www.insee.fr/fr/metadonnees/nafr2/sousClasse/49.42Z
 * https://www.servicesalapersonne.gouv.fr/tout-savoir-sur-les-services-la-personne/les-26-activites-de-services-la-personne
 * https://entreprendre.service-public.fr/vosdroits/R61572
-* https://entreprendre.service-public.fr/vosdroits/F23267
+* https://www.impots.gouv.fr/professionnel/questions/en-tant-que-micro-entrepreneur-sous-quelles-conditions-puis-je-opter-pour-l
 * https://www.impots.gouv.fr/professionnel/tva
+* https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000023086525/LEGISCTA000033449959/
+* https://www.legifrance.gouv.fr/codes/id/LEGISCTA000033450785
