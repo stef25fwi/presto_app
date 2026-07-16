@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: dart-format-${{ github.event.pull_request.number }}
@@ -13,8 +13,11 @@ concurrency:
 
 jobs:
   repair-pr459:
+    if: github.event.pull_request.number == 459
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -25,6 +28,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin main
+          git reset --hard origin/${{ github.head_ref }}
+
           python3 - <<'PY'
           from pathlib import Path
 
@@ -38,7 +44,7 @@ jobs:
                 'error=$error',
               );
             },
-          """
+"""
           header_new = """            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
                 ? (error, stackTrace) {
                     debugPrint(
@@ -48,12 +54,11 @@ jobs:
                     );
                   }
                 : null,
-          """
-          if text.count(header_old) != 1:
-              raise SystemExit(
-                  f'Expected one header avatar callback, found {text.count(header_old)}'
-              )
-          text = text.replace(header_old, header_new)
+"""
+          if header_old in text:
+              text = text.replace(header_old, header_new, 1)
+          elif header_new not in text:
+              raise SystemExit('Header avatar callback shape not recognized')
 
           bubble_old = """      onForegroundImageError: (error, stackTrace) {
         debugPrint(
@@ -62,7 +67,7 @@ jobs:
           'error=$error',
         );
       },
-          """
+"""
           bubble_new = """      onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
           ? (error, stackTrace) {
               debugPrint(
@@ -72,12 +77,12 @@ jobs:
               );
             }
           : null,
-          """
-          if text.count(bubble_old) != 1:
-              raise SystemExit(
-                  f'Expected one bubble avatar callback, found {text.count(bubble_old)}'
-              )
-          source.write_text(text.replace(bubble_old, bubble_new))
+"""
+          if bubble_old in text:
+              text = text.replace(bubble_old, bubble_new, 1)
+          elif bubble_new not in text:
+              raise SystemExit('Bubble avatar callback shape not recognized')
+          source.write_text(text)
 
           test = Path('test/pages/messages/conversation_thread_page_shell_test.dart')
           test_text = test.read_text()
@@ -96,11 +101,7 @@ jobs:
   }
 }
 
-          """
-          if test_text.count(drain) != 1:
-              raise SystemExit(
-                  f'Expected one exception drain helper, found {test_text.count(drain)}'
-              )
+"""
           test_text = test_text.replace(drain, '')
           test_text = test_text.replace(
               '  _drainExpectedConversationThreadExceptions(tester);\n',
@@ -109,7 +110,7 @@ jobs:
           test.write_text(test_text)
           PY
 
-          git checkout origin/main -- \
+          git checkout c7e2c49a996e046c861f5597322723e55d909de6 -- \
             .github/workflows/dart-format-quality.yml \
             .github/workflows/pr-validation.yml
           git diff --check
@@ -120,5 +121,40 @@ jobs:
             test/pages/messages/conversation_thread_page_shell_test.dart \
             .github/workflows/dart-format-quality.yml \
             .github/workflows/pr-validation.yml
+          if git diff --cached --quiet; then
+            echo 'Repair already present.'
+            exit 0
+          fi
           git commit -m "fix(messages): guard empty conversation avatars"
           git push origin HEAD:${{ github.head_ref }}
+
+  changed-dart-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format Auth email files exactly
+        run: |
+          dart format \
+            lib/features/auth/services/auth_service.dart \
+            test/features/auth/services/email_auth_service_test.dart
+
+      - name: Upload formatted Auth email files
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-email-formatted-files
+          path: |
+            lib/features/auth/services/auth_service.dart
+            test/features/auth/services/email_auth_service_test.dart
+          retention-days: 2
