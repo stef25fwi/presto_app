@@ -3,7 +3,6 @@ template-arb-file: app_fr.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 nullable-getter: false
-synthetic-package: false
 preferred-supported-locales:
   - fr
   - en
