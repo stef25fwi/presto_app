@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
 import 'package:presto_app/widgets/payment_info_audio_player_button.dart';
 
+typedef PaymentInfoAudioAdminTextSaver = Future<void> Function(String text);
+typedef PaymentInfoAudioDraftGenerator =
+    Future<PaymentInfoAudioAdminSettings> Function({required String text});
+typedef PaymentInfoAudioDraftPublisher = Future<void> Function();
+typedef PaymentInfoAudioPreviewBuilder = Widget Function({
+  required String audioUrl,
+  required VoidCallback onPlayed,
+});
+
 const String _defaultPaymentInfoPopupAudioText = '''
 Important : ilipresto.fr est un outil de communication et de petites annonces. La plateforme facilite la visibilité des offres et demandes, mais les relations, accords et prestations restent exclusivement conclus et gérés entre les utilisateurs.
 
@@ -16,7 +25,20 @@ ilipresto.fr ne conserve pas les fonds, ne garantit pas la réalisation de la pr
 ''';
 
 class PaymentInfoAudioAdminSection extends StatefulWidget {
-  const PaymentInfoAudioAdminSection({super.key});
+  const PaymentInfoAudioAdminSection({
+    super.key,
+    this.settingsStream,
+    this.saveAdminText,
+    this.generateDraft,
+    this.publishDraft,
+    this.previewBuilder,
+  });
+
+  final Stream<PaymentInfoAudioAdminSettings>? settingsStream;
+  final PaymentInfoAudioAdminTextSaver? saveAdminText;
+  final PaymentInfoAudioDraftGenerator? generateDraft;
+  final PaymentInfoAudioDraftPublisher? publishDraft;
+  final PaymentInfoAudioPreviewBuilder? previewBuilder;
 
   @override
   State<PaymentInfoAudioAdminSection> createState() =>
@@ -25,7 +47,7 @@ class PaymentInfoAudioAdminSection extends StatefulWidget {
 
 class _PaymentInfoAudioAdminSectionState
     extends State<PaymentInfoAudioAdminSection> {
-  late final PaymentInfoAudioService _service;
+  PaymentInfoAudioService? _service;
   late final TextEditingController _textController;
 
   bool _didHydrateText = false;
@@ -38,7 +60,13 @@ class _PaymentInfoAudioAdminSectionState
   @override
   void initState() {
     super.initState();
-    _service = PaymentInfoAudioService();
+    final needsService = widget.settingsStream == null ||
+        widget.saveAdminText == null ||
+        widget.generateDraft == null ||
+        widget.publishDraft == null;
+    if (needsService) {
+      _service = PaymentInfoAudioService();
+    }
     _textController = TextEditingController(
       text: _defaultPaymentInfoPopupAudioText.trim(),
     );
@@ -48,6 +76,36 @@ class _PaymentInfoAudioAdminSectionState
   void dispose() {
     _textController.dispose();
     super.dispose();
+  }
+
+  Stream<PaymentInfoAudioAdminSettings> _watchAdminSettings() {
+    return widget.settingsStream ?? _service!.watchAdminSettings();
+  }
+
+  Future<void> _saveAdminText(String text) async {
+    final action = widget.saveAdminText;
+    if (action != null) {
+      await action(text);
+      return;
+    }
+    await _service!.saveAdminText(text);
+  }
+
+  Future<PaymentInfoAudioAdminSettings> _generateAudioDraft(String text) async {
+    final action = widget.generateDraft;
+    if (action != null) {
+      return action(text: text);
+    }
+    return _service!.generatePaymentInfoAudioDraft(text: text);
+  }
+
+  Future<void> _publishAudioDraft() async {
+    final action = widget.publishDraft;
+    if (action != null) {
+      await action();
+      return;
+    }
+    await _service!.publishPaymentInfoAudioDraft();
   }
 
   void _hydrateTextFromSettings(PaymentInfoAudioAdminSettings settings) {
@@ -84,7 +142,7 @@ class _PaymentInfoAudioAdminSectionState
     setState(() => _isSavingText = true);
 
     try {
-      await _service.saveAdminText(text);
+      await _saveAdminText(text);
 
       if (!mounted) return;
 
@@ -116,11 +174,9 @@ class _PaymentInfoAudioAdminSectionState
     });
 
     try {
-      await _service.saveAdminText(text);
+      await _saveAdminText(text);
 
-      final settings = await _service.generatePaymentInfoAudioDraft(
-        text: text,
-      );
+      final settings = await _generateAudioDraft(text);
 
       if (!mounted) return;
 
@@ -151,7 +207,7 @@ class _PaymentInfoAudioAdminSectionState
     setState(() => _isPublishingDraft = true);
 
     try {
-      await _service.publishPaymentInfoAudioDraft();
+      await _publishAudioDraft();
 
       if (!mounted) return;
 
@@ -181,10 +237,25 @@ class _PaymentInfoAudioAdminSectionState
     );
   }
 
+  Widget _buildPreviewPlayer(String audioUrl) {
+    final builder = widget.previewBuilder;
+    if (builder != null) {
+      return builder(
+        audioUrl: audioUrl,
+        onPlayed: () => _markDraftPreviewed(audioUrl),
+      );
+    }
+    return PaymentInfoAudioPlayerButton(
+      audioUrl: audioUrl,
+      label: 'Pré-écouter le MP3',
+      onPlayed: () => _markDraftPreviewed(audioUrl),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<PaymentInfoAudioAdminSettings>(
-      stream: _service.watchAdminSettings(),
+      stream: _watchAdminSettings(),
       builder: (context, snapshot) {
         final settings = snapshot.data;
 
@@ -347,11 +418,7 @@ class _PaymentInfoAudioAdminSectionState
                           ],
                         ),
                         const SizedBox(height: 10),
-                        PaymentInfoAudioPlayerButton(
-                          audioUrl: draftAudioUrl,
-                          label: 'Pré-écouter le MP3',
-                          onPlayed: () => _markDraftPreviewed(draftAudioUrl),
-                        ),
+                        _buildPreviewPlayer(draftAudioUrl),
                         const SizedBox(height: 10),
                         OutlinedButton.icon(
                           onPressed: () => _markDraftPreviewed(draftAudioUrl),
