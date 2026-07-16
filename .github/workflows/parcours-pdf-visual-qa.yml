@@ -27,10 +27,19 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Generate visual PDF sample
-        run: flutter test test/services/journey_pdf_export_service_test.dart --reporter expanded
+        id: pdf_test
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p build/quality
+          set -o pipefail
+          flutter test test/services/journey_pdf_export_service_test.dart --reporter expanded \
+            2>&1 | tee build/quality/parcours-guide-visual-test.log
       - name: Install PDF renderer
+        if: always() && hashFiles('build/quality/parcours-guide-visual-sample.pdf') != ''
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Inspect and render sample
+        if: always() && hashFiles('build/quality/parcours-guide-visual-sample.pdf') != ''
         run: |
           mkdir -p build/quality/parcours-guide-pages
           pdfinfo build/quality/parcours-guide-visual-sample.pdf | tee build/quality/parcours-guide-pdfinfo.txt
@@ -38,12 +47,18 @@ jobs:
             build/quality/parcours-guide-visual-sample.pdf \
             build/quality/parcours-guide-pages/page
           test -s build/quality/parcours-guide-pages/page-1.png
-      - name: Upload PDF and rendered pages
+      - name: Upload PDF, rendered pages and logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: parcours-pdf-visual-qa
+          if-no-files-found: error
           path: |
+            build/quality/parcours-guide-visual-test.log
             build/quality/parcours-guide-visual-sample.pdf
             build/quality/parcours-guide-pdfinfo.txt
             build/quality/parcours-guide-pages/*.png
           retention-days: 30
+      - name: Enforce visual sample generation
+        if: always() && steps.pdf_test.outcome != 'success'
+        run: exit 1
