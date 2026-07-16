@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - audit/prod-hardening-p0-p11
+    paths:
+      - .github/workflows/apply-prod-hardening.yml
+      - tools/apply_release_validation_fixes.mjs
+      - tools/apply_validation_round2_fixes.mjs
   workflow_dispatch:
 
 permissions:
@@ -23,12 +27,12 @@ jobs:
           ref: audit/prod-hardening-p0-p11
           fetch-depth: 0
 
-      - name: Repair PR451 branch
+      - name: Repair PR451 on clean branch
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin coverage/issue-449-conversation-thread-shell
-          git switch coverage/issue-449-conversation-thread-shell
+          git fetch origin main repair/pr451-complete
+          git switch -C repair/pr451-complete origin/repair/pr451-complete
 
           python3 - <<'PY'
           from pathlib import Path
@@ -127,4 +131,4 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
           git commit -m "fix(messages): guard empty conversation avatars"
-          git push origin HEAD:coverage/issue-449-conversation-thread-shell
+          git push origin HEAD:repair/pr451-complete
