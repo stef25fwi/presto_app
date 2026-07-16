@@ -135,13 +135,12 @@ class JourneyPdfExportService {
     final plan30 = _deduplicateItems(_mapList(journey['plan30']));
     final steps = _orderSteps(_deduplicateItems(_mapList(journey['steps'])));
     final sources = _extractSources(regulationItems);
-    final regulationContent =
-        regulationItems.where((item) => !_isSourceItem(item)).toList();
+    final regulationContent = regulationItems
+        .where((item) => !_isSourceItem(item))
+        .toList();
     final letterTemplates = _buildLetterTemplates(journey);
 
-    final seenDetails = <String>{
-      ...blockingAlerts.map(_fingerprint),
-    };
+    final seenDetails = <String>{...blockingAlerts.map(_fingerprint)};
 
     final widgets = <pw.Widget>[
       _cover(logo, journey),
@@ -151,9 +150,7 @@ class JourneyPdfExportService {
     ];
 
     if (recommendation.isNotEmpty) {
-      widgets.add(
-        _recommendationCard(recommendation),
-      );
+      widgets.add(_recommendationCard(recommendation));
     }
 
     if (blockingAlerts.isNotEmpty) {
@@ -194,13 +191,14 @@ class JourneyPdfExportService {
         ),
         seenDetails,
       );
-      widgets.add(
-        _stepCard(
+      widgets.addAll(
+        _stepCards(
           number: index + 1,
           title: _stepTitle(item, id),
           objective: objective,
           actions: actions,
-          expectedResult: _stepOutcomes[id] ??
+          expectedResult:
+              _stepOutcomes[id] ??
               'Vous disposez d’un résultat vérifiable avant de passer à l’étape suivante.',
         ),
       );
@@ -213,8 +211,9 @@ class JourneyPdfExportService {
           'Remplacez les éléments entre crochets, adaptez le contenu à votre situation et conservez une copie de chaque envoi.',
         ),
       );
-      for (final template in letterTemplates) {
-        widgets.add(_letterTemplate(template));
+      for (var index = 0; index < letterTemplates.length; index++) {
+        if (index > 0) widgets.add(pw.NewPage());
+        widgets.add(_letterTemplate(letterTemplates[index]));
       }
     }
 
@@ -248,19 +247,19 @@ class JourneyPdfExportService {
   }
 
   static pw.Widget _guideNotice() => pw.Container(
-        width: double.infinity,
-        margin: const pw.EdgeInsets.only(bottom: 12),
-        padding: const pw.EdgeInsets.all(10),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.blue50,
-          border: pw.Border.all(color: PdfColors.blue200),
-          borderRadius: pw.BorderRadius.circular(8),
-        ),
-        child: pw.Text(
-          'Comment utiliser ce guide : avancez dans l’ordre, cochez les actions réalisées et ne passez à l’étape suivante que lorsque le résultat attendu est obtenu.',
-          style: const pw.TextStyle(fontSize: 10),
-        ),
-      );
+    width: double.infinity,
+    margin: const pw.EdgeInsets.only(bottom: 12),
+    padding: const pw.EdgeInsets.all(10),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.blue50,
+      border: pw.Border.all(color: PdfColors.blue200),
+      borderRadius: pw.BorderRadius.circular(8),
+    ),
+    child: pw.Text(
+      'Comment utiliser ce guide : avancez dans l’ordre, cochez les actions réalisées et ne passez à l’étape suivante que lorsque le résultat attendu est obtenu.',
+      style: const pw.TextStyle(fontSize: 10),
+    ),
+  );
 
   static pw.Widget _profileSummary(
     Map<String, dynamic> journey,
@@ -273,10 +272,7 @@ class JourneyPdfExportService {
       _kv('Statut actuel', journey['currentStatus']),
     ];
 
-    for (final key in const [
-      'vigilanceLevel',
-      'recommendedPath',
-    ]) {
+    for (final key in const ['vigilanceLevel', 'recommendedPath']) {
       if (summary.containsKey(key)) {
         rows.add(_kv(_prettyLabel(key), summary[key]));
       }
@@ -302,9 +298,7 @@ class JourneyPdfExportService {
     final recommended = _text(
       recommendation['statut'] ?? recommendation['recommended'],
     );
-    final why = _text(
-      recommendation['why'] ?? recommendation['justification'],
-    );
+    final why = _text(recommendation['why'] ?? recommendation['justification']);
     final planB = _text(recommendation['planB']);
 
     return pw.Container(
@@ -352,10 +346,7 @@ class JourneyPdfExportService {
           pw.SizedBox(height: 4),
           pw.Text(
             'Décision attendue : confirmer ce choix avec l’organisme compétent ou un professionnel lorsque la situation le nécessite.',
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
           ),
         ],
       ),
@@ -363,34 +354,32 @@ class JourneyPdfExportService {
   }
 
   static pw.Widget _alertBox(String title, List<String> alerts) => pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.all(12),
-        margin: const pw.EdgeInsets.only(bottom: 10),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.red50,
-          border: pw.Border.all(color: PdfColors.red300),
-          borderRadius: pw.BorderRadius.circular(10),
+    width: double.infinity,
+    padding: const pw.EdgeInsets.all(12),
+    margin: const pw.EdgeInsets.only(bottom: 10),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.red50,
+      border: pw.Border.all(color: PdfColors.red300),
+      borderRadius: pw.BorderRadius.circular(10),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          title,
+          style: pw.TextStyle(
+            fontSize: 11,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.red800,
+          ),
         ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              title,
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.red800,
-              ),
-            ),
-            pw.SizedBox(height: 7),
-            ...alerts.map(_checkLine),
-          ],
-        ),
-      );
+        pw.SizedBox(height: 7),
+        ...alerts.map(_checkLine),
+      ],
+    ),
+  );
 
-  static List<pw.Widget> _buildPlan30Widgets(
-    List<Map<String, dynamic>> plan,
-  ) {
+  static List<pw.Widget> _buildPlan30Widgets(List<Map<String, dynamic>> plan) {
     final grouped = <String, List<String>>{};
     for (final item in plan) {
       final week = _text(item['week'] ?? item['title']);
@@ -441,9 +430,41 @@ class JourneyPdfExportService {
     return widgets;
   }
 
-  static pw.Widget _stepCard({
+  static List<pw.Widget> _stepCards({
     required int number,
     required String title,
+    required String objective,
+    required List<String> actions,
+    required String expectedResult,
+  }) {
+    const maxActionsPerCard = 12;
+    final chunks = <List<String>>[];
+
+    if (actions.isEmpty) {
+      chunks.add(const <String>[]);
+    } else {
+      for (var start = 0; start < actions.length; start += maxActionsPerCard) {
+        final proposedEnd = start + maxActionsPerCard;
+        final end = proposedEnd < actions.length ? proposedEnd : actions.length;
+        chunks.add(actions.sublist(start, end));
+      }
+    }
+
+    return [
+      for (var index = 0; index < chunks.length; index++)
+        _stepCardChunk(
+          heading: index == 0
+              ? 'Étape $number - $title'
+              : 'Étape $number - $title (suite ${index + 1})',
+          objective: index == 0 ? objective : '',
+          actions: chunks[index],
+          expectedResult: index == chunks.length - 1 ? expectedResult : '',
+        ),
+    ];
+  }
+
+  static pw.Widget _stepCardChunk({
+    required String heading,
     required String objective,
     required List<String> actions,
     required String expectedResult,
@@ -469,7 +490,7 @@ class JourneyPdfExportService {
               ),
             ),
             child: pw.Text(
-              'Étape $number - $title',
+              heading,
               style: pw.TextStyle(
                 fontSize: 12,
                 fontWeight: pw.FontWeight.bold,
@@ -490,20 +511,22 @@ class JourneyPdfExportService {
                   _miniHeading('Actions à réaliser'),
                   ...actions.map(_checkLine),
                 ],
-                _miniHeading('Résultat attendu avant de continuer'),
-                pw.Container(
-                  width: double.infinity,
-                  padding: const pw.EdgeInsets.all(8),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.green50,
-                    border: pw.Border.all(color: PdfColors.green200),
-                    borderRadius: pw.BorderRadius.circular(6),
+                if (expectedResult.isNotEmpty) ...[
+                  _miniHeading('Résultat attendu avant de continuer'),
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.all(8),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.green50,
+                      border: pw.Border.all(color: PdfColors.green200),
+                      borderRadius: pw.BorderRadius.circular(6),
+                    ),
+                    child: pw.Text(
+                      expectedResult,
+                      style: const pw.TextStyle(fontSize: 9, lineSpacing: 2),
+                    ),
                   ),
-                  child: pw.Text(
-                    expectedResult,
-                    style: const pw.TextStyle(fontSize: 9, lineSpacing: 2),
-                  ),
-                ),
+                ],
               ],
             ),
           ),
@@ -605,8 +628,7 @@ class JourneyPdfExportService {
       final max = _text(map['max']);
       if (min.isNotEmpty && max.isNotEmpty) return '$min € à $max €';
       return map.entries
-          .map((entry) =>
-              '${_prettyLabel('${entry.key}')} : ${entry.value}')
+          .map((entry) => '${_prettyLabel('${entry.key}')} : ${entry.value}')
           .join(' - ');
     }
     if (value is num) return '${_formatNumber(value)} €';
@@ -632,9 +654,9 @@ class JourneyPdfExportService {
             aide['summary'] ??
             aide['objective'],
       );
-      if (_fingerprint(description).startsWith(
-        _fingerprint('Dispositif identifié pour l’activité'),
-      )) {
+      if (_fingerprint(
+        description,
+      ).startsWith(_fingerprint('Dispositif identifié pour l’activité'))) {
         description = '';
       }
       if (name.isEmpty && description.isEmpty) continue;
@@ -669,13 +691,13 @@ class JourneyPdfExportService {
   }
 
   static List<Map<String, dynamic>> _fallbackSteps() => [
-        for (final id in _stepOrder)
-          <String, dynamic>{
-            'id': id,
-            'title': _stepTitles[id],
-            'objective': _stepOutcomes[id],
-          },
-      ];
+    for (final id in _stepOrder)
+      <String, dynamic>{
+        'id': id,
+        'title': _stepTitles[id],
+        'objective': _stepOutcomes[id],
+      },
+  ];
 
   static String _stepTitle(Map<String, dynamic> item, String id) {
     if (_stepTitles.containsKey(id)) return _stepTitles[id]!;
@@ -764,7 +786,8 @@ Cordialement,
         'use': 'À adresser à plusieurs assureurs avant la première prestation.',
         'subject':
             'Objet : demande de devis pour une assurance professionnelle',
-        'body': '''Madame, Monsieur,
+        'body':
+            '''Madame, Monsieur,
 
 Je prépare le lancement d’une activité de ${activity.isEmpty ? '[activité précise]' : activity}${region.isEmpty ? '' : ' en $region'}.
 
@@ -788,12 +811,9 @@ Cordialement,
   static bool _journeyMentionsInsurance(Map<String, dynamic> journey) {
     final values = <String>[
       ..._expandList(journey['blockingAlerts']),
-      ..._mapList(journey['regulationTutorial']).expand(
-        (item) => [
-          _text(item['title']),
-          _text(item['description']),
-        ],
-      ),
+      ..._mapList(
+        journey['regulationTutorial'],
+      ).expand((item) => [_text(item['title']), _text(item['description'])]),
       ..._mapList(journey['steps']).expand(
         (item) => [
           _text(item['title']),
@@ -833,22 +853,13 @@ Cordialement,
           ),
           if (use.isNotEmpty) ...[
             pw.SizedBox(height: 4),
-            pw.Text(
-              use,
-              style: pw.TextStyle(
-                fontSize: 8,
-                fontStyle: pw.FontStyle.italic,
-              ),
-            ),
+            pw.Text(use, style: pw.TextStyle(fontSize: 8)),
           ],
           if (subject.isNotEmpty) ...[
             pw.SizedBox(height: 8),
             pw.Text(
               subject,
-              style: pw.TextStyle(
-                fontSize: 9,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
             ),
           ],
           if (body.isNotEmpty) ...[
@@ -875,10 +886,7 @@ Cordialement,
         item['title'] ?? item['label'] ?? item['name'] ?? 'Source officielle',
       );
       final description = _text(
-        item['description'] ??
-            item['text'] ??
-            item['summary'] ??
-            item['desc'],
+        item['description'] ?? item['text'] ?? item['summary'] ?? item['desc'],
       );
       for (final match in urlPattern.allMatches(description)) {
         var url = match.group(0) ?? '';
@@ -916,74 +924,71 @@ Cordialement,
   }
 
   static pw.Widget _sourceLine(Map<String, String> source) => pw.Container(
-        width: double.infinity,
-        margin: const pw.EdgeInsets.only(bottom: 6),
-        padding: const pw.EdgeInsets.all(8),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.grey50,
-          border: pw.Border.all(color: PdfColors.grey200),
-          borderRadius: pw.BorderRadius.circular(6),
+    width: double.infinity,
+    margin: const pw.EdgeInsets.only(bottom: 6),
+    padding: const pw.EdgeInsets.all(8),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.grey50,
+      border: pw.Border.all(color: PdfColors.grey200),
+      borderRadius: pw.BorderRadius.circular(6),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          source['title'] ?? 'Source officielle',
+          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
         ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              source['title'] ?? 'Source officielle',
-              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 2),
-            pw.Text(
-              source['url'] ?? '',
-              style: const pw.TextStyle(fontSize: 8),
-            ),
-          ],
-        ),
-      );
+        pw.SizedBox(height: 2),
+        pw.Text(source['url'] ?? '', style: const pw.TextStyle(fontSize: 8)),
+      ],
+    ),
+  );
 
   static pw.Widget _finalChecklist() => pw.Container(
-        width: double.infinity,
-        margin: const pw.EdgeInsets.only(top: 12, bottom: 10),
-        padding: const pw.EdgeInsets.all(12),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.orange50,
-          border: pw.Border.all(color: PdfColors.orange300),
-          borderRadius: pw.BorderRadius.circular(10),
-        ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              'Checklist avant la première prestation',
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.orange800,
-              ),
-            ),
-            pw.SizedBox(height: 6),
-            ...const [
-              'Les autorisations, qualifications ou accords nécessaires sont obtenus.',
-              'L’immatriculation et les justificatifs officiels sont disponibles.',
-              'Les assurances adaptées sont actives à la date de début.',
-              'Les tarifs, devis, factures et conditions de prestation sont prêts.',
-              'Un système de suivi du chiffre d’affaires, des dépenses et des échéances est en place.',
-            ].map(_checkLine),
-          ],
-        ),
-      );
-
-  static pw.Widget _legalNotice() => pw.Container(
-        width: double.infinity,
-        padding: const pw.EdgeInsets.only(top: 8),
-        child: pw.Text(
-          'Ce guide fournit une orientation personnalisée à partir des informations renseignées. Il ne remplace pas la vérification des textes officiels ni, lorsque nécessaire, l’avis d’un professionnel du droit, du chiffre, de l’assurance ou de l’organisme compétent.',
+    width: double.infinity,
+    margin: const pw.EdgeInsets.only(top: 12, bottom: 10),
+    padding: const pw.EdgeInsets.all(12),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.orange50,
+      border: pw.Border.all(color: PdfColors.orange300),
+      borderRadius: pw.BorderRadius.circular(10),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'Checklist avant la première prestation',
           style: pw.TextStyle(
-            fontSize: 8,
-            color: PdfColors.grey700,
-            fontStyle: pw.FontStyle.italic,
+            fontSize: 11,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.orange800,
           ),
         ),
-      );
+        pw.SizedBox(height: 6),
+        ...const [
+          'Les autorisations, qualifications ou accords nécessaires sont obtenus.',
+          'L’immatriculation et les justificatifs officiels sont disponibles.',
+          'Les assurances adaptées sont actives à la date de début.',
+          'Les tarifs, devis, factures et conditions de prestation sont prêts.',
+          'Un système de suivi du chiffre d’affaires, des dépenses et des échéances est en place.',
+        ].map(_checkLine),
+      ],
+    ),
+  );
+
+  static pw.Widget _legalNotice() => pw.Container(
+    width: double.infinity,
+    padding: const pw.EdgeInsets.only(top: 8),
+    child: pw.Text(
+      'Ce guide fournit une orientation personnalisée à partir des informations renseignées. Il ne remplace pas la vérification des textes officiels ni, lorsque nécessaire, l’avis d’un professionnel du droit, du chiffre, de l’assurance ou de l’organisme compétent.',
+      style: pw.TextStyle(
+        fontSize: 8,
+        color: PdfColors.grey700,
+        fontStyle: pw.FontStyle.italic,
+      ),
+    ),
+  );
 
   static pw.Widget _cover(pw.ImageProvider logo, Map<String, dynamic> journey) {
     return pw.Container(
@@ -997,26 +1002,28 @@ Cordialement,
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Row(children: [
-            pw.Image(logo, width: 44, height: 44),
-            pw.SizedBox(width: 12),
-            pw.Expanded(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  _brand(20),
-                  pw.Text(
-                    'Mon guide personnalisé pas à pas',
-                    style: pw.TextStyle(
-                      fontSize: 17,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.blue900,
+          pw.Row(
+            children: [
+              pw.Image(logo, width: 44, height: 44),
+              pw.SizedBox(width: 12),
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    _brand(20),
+                    pw.Text(
+                      'Mon guide personnalisé pas à pas',
+                      style: pw.TextStyle(
+                        fontSize: 17,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
           pw.SizedBox(height: 12),
           _kv('Activité', journey['selectedActivity']),
           _kv('Région', journey['region']),
@@ -1026,103 +1033,107 @@ Cordialement,
     );
   }
 
-  static pw.Widget _header(pw.ImageProvider logo) => pw.Row(children: [
-        pw.Image(logo, width: 22, height: 22),
-        pw.SizedBox(width: 8),
-        _brand(13),
-        pw.Spacer(),
-        pw.Text('Guide personnalisé', style: const pw.TextStyle(fontSize: 9)),
-      ]);
+  static pw.Widget _header(pw.ImageProvider logo) => pw.Row(
+    children: [
+      pw.Image(logo, width: 22, height: 22),
+      pw.SizedBox(width: 8),
+      _brand(13),
+      pw.Spacer(),
+      pw.Text('Guide personnalisé', style: const pw.TextStyle(fontSize: 9)),
+    ],
+  );
 
   static pw.Widget _footer(pw.Context context, pw.ImageProvider logo) => pw.Row(
-        children: [
-          pw.Image(logo, width: 15, height: 15),
-          pw.SizedBox(width: 6),
-          pw.Text(
-            'Document généré par iliprestō',
-            style: const pw.TextStyle(fontSize: 8),
-          ),
-          pw.Spacer(),
-          pw.Text(
-            'Page ${context.pageNumber} / ${context.pagesCount}',
-            style: const pw.TextStyle(fontSize: 8),
-          ),
-        ],
-      );
+    children: [
+      pw.Image(logo, width: 15, height: 15),
+      pw.SizedBox(width: 6),
+      pw.Text(
+        'Document généré par iliprestō',
+        style: const pw.TextStyle(fontSize: 8),
+      ),
+      pw.Spacer(),
+      pw.Text(
+        'Page ${context.pageNumber} / ${context.pagesCount}',
+        style: const pw.TextStyle(fontSize: 8),
+      ),
+    ],
+  );
 
   static pw.Widget _watermark() => pw.FullPage(
-        ignoreMargins: true,
-        child: pw.Center(
-          child: pw.Transform.rotate(
-            angle: -0.55,
-            child: pw.Opacity(
-              opacity: 0.04,
-              child: pw.Text(
-                'ILIPRESTŌ',
-                style: pw.TextStyle(
-                  fontSize: 90,
-                  fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.orange600,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-  static pw.Widget _brand(double size) => pw.RichText(
-        text: pw.TextSpan(children: [
-          pw.TextSpan(
-            text: 'ili',
+    ignoreMargins: true,
+    child: pw.Center(
+      child: pw.Transform.rotate(
+        angle: -0.55,
+        child: pw.Opacity(
+          opacity: 0.04,
+          child: pw.Text(
+            'ILIPRESTŌ',
             style: pw.TextStyle(
-              fontSize: size,
+              fontSize: 90,
               fontWeight: pw.FontWeight.bold,
               color: PdfColors.orange600,
             ),
           ),
-          pw.TextSpan(
-            text: 'prestō',
-            style: pw.TextStyle(
-              fontSize: size,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blue700,
-            ),
+        ),
+      ),
+    ),
+  );
+
+  static pw.Widget _brand(double size) => pw.RichText(
+    text: pw.TextSpan(
+      children: [
+        pw.TextSpan(
+          text: 'ili',
+          style: pw.TextStyle(
+            fontSize: size,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.orange600,
           ),
-        ]),
-      );
+        ),
+        pw.TextSpan(
+          text: 'prestō',
+          style: pw.TextStyle(
+            fontSize: size,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.blue700,
+          ),
+        ),
+      ],
+    ),
+  );
 
   static pw.Widget _section(String text) => pw.Container(
-        margin: const pw.EdgeInsets.only(top: 12, bottom: 7),
-        padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: pw.BoxDecoration(
-          color: PdfColors.blue50,
-          borderRadius: pw.BorderRadius.circular(8),
-        ),
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(
-            fontSize: 12,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.blue900,
-          ),
-        ),
-      );
+    margin: const pw.EdgeInsets.only(top: 12, bottom: 7),
+    padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    decoration: pw.BoxDecoration(
+      color: PdfColors.blue50,
+      borderRadius: pw.BorderRadius.circular(8),
+    ),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(
+        fontSize: 12,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColors.blue900,
+      ),
+    ),
+  );
 
   static pw.Widget _miniHeading(String text) => pw.Padding(
-        padding: const pw.EdgeInsets.only(top: 2, bottom: 5),
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
-        ),
-      );
+    padding: const pw.EdgeInsets.only(top: 2, bottom: 5),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+    ),
+  );
 
   static pw.Widget _paragraph(dynamic value) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 6),
-        child: pw.Text(
-          _text(value),
-          style: const pw.TextStyle(fontSize: 10, lineSpacing: 2),
-        ),
-      );
+    padding: const pw.EdgeInsets.only(bottom: 6),
+    child: pw.Text(
+      _text(value),
+      style: const pw.TextStyle(fontSize: 10, lineSpacing: 2),
+    ),
+  );
 
   static pw.Widget _kv(String label, dynamic value) {
     final text = _text(value);
@@ -1130,44 +1141,43 @@ Cordialement,
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 4),
       child: pw.RichText(
-        text: pw.TextSpan(children: [
-          pw.TextSpan(
-            text: '$label : ',
-            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.TextSpan(text: text, style: const pw.TextStyle(fontSize: 10)),
-        ]),
+        text: pw.TextSpan(
+          children: [
+            pw.TextSpan(
+              text: '$label : ',
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.TextSpan(text: text, style: const pw.TextStyle(fontSize: 10)),
+          ],
+        ),
       ),
     );
   }
 
   static pw.Widget _checkLine(String value) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 5),
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Text(
-              '[ ] ',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-            ),
-            pw.Expanded(
-              child: pw.Text(
-                value,
-                style: const pw.TextStyle(fontSize: 9.5, lineSpacing: 2),
-              ),
-            ),
-          ],
+    padding: const pw.EdgeInsets.only(bottom: 5),
+    child: pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text('[ ] ', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+        pw.Expanded(
+          child: pw.Text(
+            value,
+            style: const pw.TextStyle(fontSize: 9.5, lineSpacing: 2),
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   static Map<String, dynamic> _map(dynamic value) =>
       value is Map ? value.cast<String, dynamic>() : const <String, dynamic>{};
 
   static List<Map<String, dynamic>> _mapList(dynamic value) => value is List
       ? value
-          .whereType<Map>()
-          .map((item) => item.cast<String, dynamic>())
-          .toList()
+            .whereType<Map>()
+            .map((item) => item.cast<String, dynamic>())
+            .toList()
       : const <Map<String, dynamic>>[];
 
   static List<Map<String, dynamic>> _deduplicateItems(
