@@ -1,0 +1,77 @@
+name: Dispatch Firebase deploy after banner
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  dispatch-and-wait:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'agent/deploy-subscription-banner'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Dispatch production deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh workflow run deploy.yml --repo "$REPOSITORY" --ref main
+
+      - name: Resolve deployment run
+        id: deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          for attempt in $(seq 1 30); do
+            run_id=$(gh run list \
+              --repo "$REPOSITORY" \
+              --workflow deploy.yml \
+              --branch main \
+              --event workflow_dispatch \
+              --limit 1 \
+              --json databaseId,status \
+              --jq '.[0].databaseId // empty')
+            if [ -n "$run_id" ]; then
+              echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Déploiement workflow_dispatch introuvable.'
+          exit 1
+
+      - name: Wait for Firebase deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ steps.deployment.outputs.run_id }}
+        run: gh run watch "$RUN_ID" --repo "$REPOSITORY" --exit-status --interval 15
+
+      - name: Confirm deployment on pull request
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ steps.deployment.outputs.run_id }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "✅ DEPLOYMENT_SUCCESS — Firebase production déployé et contrôlé. Run: $RUN_ID"
+
+      - name: Report deployment failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_ID: ${{ steps.deployment.outputs.run_id }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "❌ DEPLOYMENT_FAILED — le déploiement Firebase a échoué. Run: ${RUN_ID:-introuvable}"
