@@ -1,7 +1,7 @@
 name: Apply production hardening patches
 
 on:
-  pull_request:
+  push:
     branches:
       - audit/prod-hardening-p0-p11
   workflow_dispatch:
