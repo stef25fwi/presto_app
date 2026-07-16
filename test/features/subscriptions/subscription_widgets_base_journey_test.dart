@@ -108,6 +108,9 @@ void main() {
     await tester.tap(proSelector);
     await tester.pumpAndSettle();
 
+    expect(find.text('Gratuit Pro'), findsOneWidget);
+    expect(find.text('0 €/mois'), findsNWidgets(2));
+    expect(find.text('ilipro'), findsOneWidget);
     expect(find.text('Choisir ilipro'), findsOneWidget);
     expect(find.text('Choisir iliprestō+'), findsNothing);
 

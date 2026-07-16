@@ -45,6 +45,12 @@
       "target_lines": 500,
       "module": "messagerie",
       "next_split": "extraire entête, flux messages, pièces jointes, audio et modération"
+    },
+    "lib/features/subscriptions/subscription_widgets_base.dart": {
+      "current_lines": 1148,
+      "target_lines": 500,
+      "module": "abonnements",
+      "next_split": "extraire cartes, sélecteur d’audience et administration des abonnements"
     }
   },
   "ignored_paths": [
