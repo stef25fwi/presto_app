@@ -15,12 +15,17 @@ function replaceOnce(content, before, after, label) {
   return content.replace(before, after);
 }
 
-auth = replaceOnce(
-  auth,
-  "  Future<void> syncEmailVerifiedToFirestore() async {\n    final user = _requireUser();\n\n    await _db.collection('users').doc(user.uid).set({\n      'email': user.email,\n      'emailVerified': user.emailVerified,\n      'updatedAt': FieldValue.serverTimestamp(),\n    }, SetOptions(merge: true));\n  }",
-  "  Future<void> syncEmailVerifiedToFirestore() async {\n    _requireUser();\n    await callPrestoFunction<dynamic>(\n      functions: _functions,\n      name: 'syncMyEmailVerification',\n      timeout: const Duration(seconds: 15),\n      parameters: const <String, dynamic>{},\n      area: 'auth',\n    );\n  }",
-  'email verification callable',
-);
+const injectedEmailVerificationCallable =
+  "  Future<void> syncEmailVerifiedToFirestore() async {\n    _requireUser();\n    await _callFunction(\n      name: 'syncMyEmailVerification',\n      timeout: const Duration(seconds: 15),\n      parameters: const <String, dynamic>{},\n      area: 'auth',\n    );\n  }";
+
+if (!auth.includes(injectedEmailVerificationCallable)) {
+  auth = replaceOnce(
+    auth,
+    "  Future<void> syncEmailVerifiedToFirestore() async {\n    final user = _requireUser();\n\n    await _db.collection('users').doc(user.uid).set({\n      'email': user.email,\n      'emailVerified': user.emailVerified,\n      'updatedAt': FieldValue.serverTimestamp(),\n    }, SetOptions(merge: true));\n  }",
+    "  Future<void> syncEmailVerifiedToFirestore() async {\n    _requireUser();\n    await callPrestoFunction<dynamic>(\n      functions: _functions,\n      name: 'syncMyEmailVerification',\n      timeout: const Duration(seconds: 15),\n      parameters: const <String, dynamic>{},\n      area: 'auth',\n    );\n  }",
+    'email verification callable',
+  );
+}
 
 auth = replaceOnce(
   auth,
