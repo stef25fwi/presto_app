@@ -3,124 +3,63 @@ name: Apply production hardening patches
 on:
   push:
     branches:
-      - coverage/issue-449-conversation-thread-shell
+      - audit/prod-hardening-p0-p11
+    paths:
+      - tools/apply_release_validation_fixes.mjs
+      - tools/apply_validation_round2_fixes.mjs
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: apply-pr451-avatar-fix
+  group: apply-prod-hardening
   cancel-in-progress: true
 
 jobs:
   apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: coverage/issue-449-conversation-thread-shell
+          ref: audit/prod-hardening-p0-p11
           fetch-depth: 0
 
-      - name: Apply exact PR451 repair
-        shell: bash
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Apply idempotent patches
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
+          node tools/apply_prod_hardening_patches.mjs
+          node tools/apply_startup_hardening.mjs
+          node tools/apply_auth_client_hardening.mjs
+          node tools/apply_account_cleanup_patch.mjs
+          node tools/normalize_cursor_patch_script.mjs
+          node tools/fix_cursor_query_signature_patch.mjs
+          node tools/apply_cursor_pagination.mjs
+          node tools/apply_validation_fixes.mjs
+          node tools/apply_identity_authority_hardening.mjs
+          node tools/apply_dependency_security_upgrades.mjs
+          node tools/apply_stripe_ordering_hardening.mjs
+          node tools/apply_function_resource_limits.mjs
+          node tools/apply_release_validation_fixes.mjs
+          node tools/apply_validation_round2_fixes.mjs
+          npm --prefix functions install --package-lock-only --ignore-scripts
+          node tools/check_production_guardrails.mjs
 
-          source = Path('lib/pages/messages/conversation_thread_page.dart')
-          text = source.read_text()
-
-          header_old = """            onForegroundImageError: (error, stackTrace) {
-              debugPrint(
-                '[ConversationThread] header avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                'error=$error',
-              );
-            },
-"""
-          header_new = """            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
-                ? (error, stackTrace) {
-                    debugPrint(
-                      '[ConversationThread] header avatar load failed '
-                      'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                      'error=$error',
-                    );
-                  }
-                : null,
-"""
-          header_count = text.count(header_old)
-          if header_count != 1:
-              raise SystemExit(
-                  f'Expected one header avatar callback, found {header_count}'
-              )
-          text = text.replace(header_old, header_new)
-
-          bubble_old = """      onForegroundImageError: (error, stackTrace) {
-        debugPrint(
-          '[ConversationThread] bubble avatar load failed '
-          'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-          'error=$error',
-        );
-      },
-"""
-          bubble_new = """      onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
-          ? (error, stackTrace) {
-              debugPrint(
-                '[ConversationThread] bubble avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                'error=$error',
-              );
-            }
-          : null,
-"""
-          bubble_count = text.count(bubble_old)
-          if bubble_count != 1:
-              raise SystemExit(
-                  f'Expected one bubble avatar callback, found {bubble_count}'
-              )
-          source.write_text(text.replace(bubble_old, bubble_new))
-
-          test = Path('test/pages/messages/conversation_thread_page_shell_test.dart')
-          test_text = test.read_text()
-          drain = """void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
-  Object? exception;
-  while ((exception = tester.takeException()) != null) {
-    final message = exception.toString();
-    final isExpectedCircleAvatarAssertion =
-        message.contains('circle_avatar.dart') &&
-        message.contains(
-          'foregroundImage != null || onForegroundImageError == null',
-        );
-    if (!isExpectedCircleAvatarAssertion) {
-      throw exception!;
-    }
-  }
-}
-
-"""
-          drain_count = test_text.count(drain)
-          if drain_count != 1:
-              raise SystemExit(
-                  f'Expected one exception drain helper, found {drain_count}'
-              )
-          test_text = test_text.replace(drain, '')
-          test_text = test_text.replace(
-              '  _drainExpectedConversationThreadExceptions(tester);\n',
-              '',
-          )
-          test.write_text(test_text)
-          PY
-
-          git checkout origin/main -- \
-            .github/workflows/apply-prod-hardening.yml \
-            .github/workflows/pr-validation.yml \
-            .github/workflows/dart-format-quality.yml
-          rm -f .github/workflows/temporary-fix-pr451.yml
-          git diff --check
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: Commit generated changes
+        run: |
+          if git diff --quiet; then
+            echo "No generated changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "fix(messages): guard empty conversation avatars"
-          git push origin HEAD:coverage/issue-449-conversation-thread-shell
+          git commit -m "chore: régénère les correctifs de durcissement"
+          git push origin HEAD:audit/prod-hardening-p0-p11

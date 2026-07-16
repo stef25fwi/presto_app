@@ -5,93 +5,13 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: dart-format-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  patch-pr451:
-    if: github.head_ref == 'coverage/issue-449-conversation-thread-shell' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-
-      - name: Apply exact conversation avatar correction
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          source = Path('lib/pages/messages/conversation_thread_page.dart')
-          text = source.read_text()
-          old = """            onForegroundImageError: (error, stackTrace) {
-              debugPrint(
-                '[ConversationThread] header avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                'error=$error',
-              );
-            },
-"""
-          new = """            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
-                ? (error, stackTrace) {
-                    debugPrint(
-                      '[ConversationThread] header avatar load failed '
-                      'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                      'error=$error',
-                    );
-                  }
-                : null,
-"""
-          if text.count(old) != 1:
-              raise SystemExit(f'Expected one avatar callback block, found {text.count(old)}')
-          source.write_text(text.replace(old, new))
-
-          test = Path('test/pages/messages/conversation_thread_page_shell_test.dart')
-          test_text = test.read_text()
-          drain = """void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
-  Object? exception;
-  while ((exception = tester.takeException()) != null) {
-    final message = exception.toString();
-    final isExpectedCircleAvatarAssertion =
-        message.contains('circle_avatar.dart') &&
-        message.contains(
-          'foregroundImage != null || onForegroundImageError == null',
-        );
-    if (!isExpectedCircleAvatarAssertion) {
-      throw exception!;
-    }
-  }
-}
-
-"""
-          if test_text.count(drain) != 1:
-              raise SystemExit(f'Expected one exception drain helper, found {test_text.count(drain)}')
-          test_text = test_text.replace(drain, '')
-          test_text = test_text.replace('  _drainExpectedConversationThreadExceptions(tester);\n', '')
-          test.write_text(test_text)
-
-          temporary = Path('.github/workflows/temporary-fix-pr451.yml')
-          if temporary.exists():
-              temporary.unlink()
-          PY
-
-          git checkout origin/main -- .github/workflows/dart-format-quality.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            lib/pages/messages/conversation_thread_page.dart \
-            test/pages/messages/conversation_thread_page_shell_test.dart \
-            .github/workflows/dart-format-quality.yml \
-            .github/workflows/temporary-fix-pr451.yml
-          git commit -m "fix(messages): guard empty conversation avatar"
-          git push origin HEAD:${{ github.head_ref }}
-
   changed-dart-format:
     runs-on: ubuntu-latest
     timeout-minutes: 15
