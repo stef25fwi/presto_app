@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/messaging/services/admin_notification_monitor_service.dart';
 
@@ -25,6 +27,17 @@ Future<void> _addNotification(
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
+
+  test('utilise Firestore par défaut sans dépendance injectée', () {
+    expect(AdminNotificationMonitorService.new, returnsNormally);
+  });
+
   test('observe les notifications de messagerie dans l ordre attendu',
       () async {
     final firestore = FakeFirebaseFirestore();
