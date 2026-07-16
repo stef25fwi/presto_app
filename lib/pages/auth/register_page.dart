@@ -5,10 +5,27 @@ import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 import 'verify_email_page.dart';
 
+typedef RegisterWithEmailCallback = Future<void> Function({
+  required String email,
+  required String password,
+  required String displayName,
+  required String fullName,
+  required String firstName,
+  required String lastName,
+  required String pseudo,
+});
+
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({
+    super.key,
+    this.registerWithEmail,
+    this.successPageBuilder,
+  });
 
   static const routeName = '/register';
+
+  final RegisterWithEmailCallback? registerWithEmail;
+  final WidgetBuilder? successPageBuilder;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -52,21 +69,44 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _loading = true);
 
+    final email = _emailCtrl.text;
+    final password = _passwordCtrl.text;
+    final pseudo = _pseudoCtrl.text.trim();
+    final fullName = _computedFullName;
+    final firstName = _firstName;
+    final lastName = _lastName;
+
     try {
-      await AuthService.instance.registerWithEmail(
-        email: _emailCtrl.text,
-        password: _passwordCtrl.text,
-        displayName: _pseudoCtrl.text.trim(),
-        fullName: _computedFullName,
-        firstName: _firstName,
-        lastName: _lastName,
-        pseudo: _pseudoCtrl.text.trim(),
-      );
+      final registerWithEmail = widget.registerWithEmail;
+      if (registerWithEmail != null) {
+        await registerWithEmail(
+          email: email,
+          password: password,
+          displayName: pseudo,
+          fullName: fullName,
+          firstName: firstName,
+          lastName: lastName,
+          pseudo: pseudo,
+        );
+      } else {
+        await AuthService.instance.registerWithEmail(
+          email: email,
+          password: password,
+          displayName: pseudo,
+          fullName: fullName,
+          firstName: firstName,
+          lastName: lastName,
+          pseudo: pseudo,
+        );
+      }
 
       if (!mounted) return;
 
+      final successPageBuilder = widget.successPageBuilder;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const VerifyEmailPage()),
+        MaterialPageRoute(
+          builder: successPageBuilder ?? (_) => const VerifyEmailPage(),
+        ),
         (_) => false,
       );
     } catch (e) {
