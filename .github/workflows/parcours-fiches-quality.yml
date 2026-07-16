@@ -1,0 +1,36 @@
+name: Parcours fiches quality
+
+on:
+  pull_request:
+    paths:
+      - 'docs/menu_activite_statuts/**'
+      - 'quality/parcours_fiches_*.json'
+      - 'tools/quality/check_parcours_fiches.mjs'
+      - 'tools/quality/check_parcours_fiches.test.mjs'
+      - 'docs/PARCOURS_FICHES_*.md'
+      - 'lib/services/journey_pdf_export_service.dart'
+      - 'test/services/journey_pdf_export_service_test.dart'
+      - '.github/workflows/parcours-fiches-quality.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parcours-fiches-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run audit unit tests
+        run: node --test tools/quality/check_parcours_fiches.test.mjs
+      - name: Generate full catalogue audit
+        run: node tools/quality/check_parcours_fiches.mjs
+      - name: Upload catalogue audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-fiches-audit-report
+          path: build/quality/parcours-fiches-audit-report.json
+          retention-days: 30
