@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "catalogRoots": [
+    "docs/menu_activite_statuts"
+  ],
+  "requiredFields": [
+    "id_fiche",
+    "titre",
+    "statut_utilisateur",
+    "categorie",
+    "activite",
+    "famille",
+    "type_activite",
+    "activite_reglementee",
+    "niveau_vigilance",
+    "statut_recommande",
+    "organisme_formalite",
+    "sources_officielles",
+    "version",
+    "legal_review_status"
+  ],
+  "requiredReviewMetadata": [
+    "review_status",
+    "reviewed_at",
+    "next_review_at",
+    "reviewer"
+  ],
+  "allowedReviewStatuses": [
+    "non_auditee",
+    "audit_automatique_effectue",
+    "correction_metier_necessaire",
+    "correction_juridique_necessaire",
+    "corrigee",
+    "validee",
+    "publiee"
+  ],
+  "visibleEnglishTokens": [
+    "Current Status",
+    "Recommended Path",
+    "Recommended Legal Status",
+    "Vigilance Level",
+    "Region :",
+    "Activity :"
+  ],
+  "stepOrder": [
+    {
+      "id": "droit_exercer",
+      "terms": [
+        "droit d'exercer",
+        "reglement",
+        "qualification",
+        "autorisation"
+      ]
+    },
+    {
+      "id": "situation",
+      "terms": [
+        "situation",
+        "cumul",
+        "contrat",
+        "employeur",
+        "hierarch"
+      ]
+    },
+    {
+      "id": "offre_budget",
+      "terms": [
+        "offre",
+        "prix",
+        "tarif",
+        "budget",
+        "cout"
+      ]
+    },
+    {
+      "id": "aides",
+      "terms": [
+        "aide",
+        "acre",
+        "france travail",
+        "financement"
+      ]
+    },
+    {
+      "id": "statut",
+      "terms": [
+        "statut",
+        "micro-entre",
+        "cadre juridique"
+      ]
+    },
+    {
+      "id": "dossier",
+      "terms": [
+        "dossier",
+        "document",
+        "piece",
+        "justificatif"
+      ]
+    },
+    {
+      "id": "declaration",
+      "terms": [
+        "declar",
+        "guichet unique",
+        "immatricul"
+      ]
+    },
+    {
+      "id": "protections",
+      "terms": [
+        "assurance",
+        "devis",
+        "facture",
+        "conditions generales"
+      ]
+    },
+    {
+      "id": "gestion",
+      "terms": [
+        "gestion",
+        "recette",
+        "urssaf",
+        "cfe",
+        "tva",
+        "echeance",
+        "organiser",
+        "suivi",
+        "renouvellement"
+      ]
+    },
+    {
+      "id": "lancement",
+      "terms": [
+        "lancer",
+        "premier client",
+        "premiere prestation",
+        "prospection"
+      ]
+    }
+  ],
+  "compatibilityRules": [
+    {
+      "id": "demenagement-ne-doit-pas-etre-sap",
+      "severity": "blocker",
+      "activityRegex": "d[ée]m[ée]nagement|manutention|chargement|d[ée]chargement",
+      "forbiddenFamilyRegex": "aide [àa] domicile|services? [àa] la personne",
+      "forbiddenTerms": [
+        "Nova SAP",
+        "publics fragiles",
+        "actes de soin",
+        "agrément enfants",
+        "conseil départemental si autorisation"
+      ]
+    },
+    {
+      "id": "sante-reservee-aux-fiches-sante",
+      "severity": "blocker",
+      "unlessFamilyRegex": "sant[ée]|soin|m[ée]dical|param[ée]dical",
+      "forbiddenTerms": [
+        "actes de soin médical",
+        "diagnostic médical",
+        "prescription médicale"
+      ]
+    },
+    {
+      "id": "sap-reserve-aux-fiches-sap",
+      "severity": "blocker",
+      "unlessFamilyRegex": "aide [àa] domicile|services? [àa] la personne|garde d.enfants",
+      "forbiddenTerms": [
+        "Nova SAP",
+        "déclaration SAP",
+        "agrément SAP",
+        "autorisation du conseil départemental"
+      ]
+    },
+    {
+      "id": "decennale-reservee-au-batiment",
+      "severity": "blocker",
+      "unlessFamilyRegex": "b[âa]timent|construction|travaux|second œuvre|gros œuvre",
+      "forbiddenTerms": [
+        "assurance décennale",
+        "garantie décennale"
+      ]
+    },
+    {
+      "id": "hygiene-alimentaire-reservee-alimentation",
+      "severity": "warning",
+      "unlessFamilyRegex": "aliment|restauration|traiteur|cuisine|boisson",
+      "forbiddenTerms": [
+        "formation hygiène alimentaire",
+        "HACCP",
+        "déclaration sanitaire"
+      ]
+    },
+    {
+      "id": "cnaps-reserve-securite",
+      "severity": "blocker",
+      "unlessFamilyRegex": "s[ée]curit[ée]|gardiennage|surveillance",
+      "forbiddenTerms": [
+        "CNAPS",
+        "carte professionnelle sécurité"
+      ]
+    }
+  ],
+  "duplicateCollections": [
+    "alertes",
+    "assurances",
+    "couts_indicatifs",
+    "documents_a_collecter",
+    "organismes_accompagnement",
+    "sources_officielles",
+    "parcours.4_demarches",
+    "parcours.5_aides",
+    "parcours.6_couts",
+    "parcours.7_plan_30_jours"
+  ],
+  "crossDuplicatePairs": [
+    [
+      "couts_indicatifs",
+      "parcours.6_couts"
+    ],
+    [
+      "alertes",
+      "parcours.1_regles"
+    ],
+    [
+      "assurances",
+      "parcours.1_regles"
+    ]
+  ],
+  "highRiskFamilyRegex": "b[âa]timent|construction|[ée]lectricit[ée]|gaz|sant[ée]|soin|garde d.enfants|personnes [âa]g[ée]es|handicap|transport|s[ée]curit[ée]|aliment|restauration|immobilier|profession r[ée]glement[ée]e"
+}
