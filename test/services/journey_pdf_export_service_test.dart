@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/journey_pdf_export_service.dart';
@@ -160,6 +161,101 @@ void main() {
 
     final bytes = await file.readAsBytes();
     expect(bytes.length, greaterThan(1000));
+    expect(ascii.decode(bytes.take(4).toList()), '%PDF');
+  });
+
+  test('produit un échantillon PDF pour le contrôle visuel CI', () async {
+    const service = JourneyPdfExportService();
+    final file = await service.generateJourneyPdf({
+      'projectLabel': 'Démarrer une activité d’aide au déménagement',
+      'region': 'Guadeloupe',
+      'currentStatus': 'Fonctionnaire',
+      'selectedActivity': 'Aide déménagement',
+      'recommendation': {
+        'statut': 'Micro-entreprise sous réserve du cumul',
+        'why':
+            'Adaptée à une activité accessoire limitée lorsque les frais restent maîtrisés.',
+        'planB': 'Entreprise individuelle au réel si les frais sont importants.',
+      },
+      'blockingAlerts': [
+        'Obtenir la décision écrite relative au cumul avant le démarrage.',
+        'Distinguer la manutention seule du transport routier de biens.',
+        'Obtenir une assurance couvrant les biens confiés et les locaux.',
+      ],
+      'summary': {
+        'vigilanceLevel': 'Élevé si transport, moyen pour la manutention seule',
+        'recommendedPath': 'Création progressive après vérifications',
+      },
+      'costs': {
+        'formalitesEstimees': 'À vérifier sur le Guichet unique',
+        'ficheCoutsIndicatifs': [
+          'Assurance professionnelle adaptée au périmètre réel',
+          'Équipements de protection et matériel de manutention',
+          'Véhicule, carburant, entretien et stationnement',
+        ],
+      },
+      'aides': [
+        {
+          'name': 'ACRE',
+          'desc': 'Vérifier les conditions et le calendrier avant la création.',
+        },
+        {
+          'name': 'Aides territoriales',
+          'desc': 'Vérifier les dispositifs locaux avant l’immatriculation.',
+        },
+      ],
+      'plan30': [
+        {'week': 'Semaine 1', 'label': 'Définir le périmètre et sécuriser le cumul'},
+        {'week': 'Semaine 2', 'label': 'Vérifier les aides, le budget et l’assurance'},
+        {'week': 'Semaine 3', 'label': 'Préparer puis déposer la formalité'},
+        {'week': 'Semaine 4', 'label': 'Lancer une première mission limitée'},
+      ],
+      'steps': [
+        {
+          'id': 'reglementation',
+          'title': 'Vérifier le droit d’exercer',
+          'objective':
+              'Définir si la prestation comprend uniquement de la manutention ou également du transport.',
+          'todos': [
+            'Lister précisément les prestations',
+            'Vérifier les obligations applicables au transport éventuel',
+          ],
+        },
+        {
+          'id': 'situation',
+          'title': 'Sécuriser le cumul',
+          'todos': [
+            'Envoyer la demande à l’administration',
+            'Conserver la réponse écrite',
+          ],
+        },
+        {
+          'id': 'aides',
+          'title': 'Vérifier les aides avant la création',
+          'todos': ['Contrôler l’ACRE et les dispositifs territoriaux'],
+        },
+        {
+          'id': 'declaration',
+          'title': 'Déclarer l’activité',
+          'todos': ['Déposer la formalité au Guichet unique'],
+        },
+        {
+          'id': 'protections',
+          'title': 'Préparer la première mission',
+          'todos': [
+            'Activer l’assurance',
+            'Préparer devis, facture et fiche d’inventaire',
+          ],
+        },
+      ],
+    });
+
+    final bytes = await file.readAsBytes();
+    final output = File('build/quality/parcours-guide-visual-sample.pdf');
+    await output.parent.create(recursive: true);
+    await output.writeAsBytes(bytes, flush: true);
+
+    expect(await output.length(), greaterThan(1000));
     expect(ascii.decode(bytes.take(4).toList()), '%PDF');
   });
 }
