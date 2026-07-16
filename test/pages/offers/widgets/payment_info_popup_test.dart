@@ -173,4 +173,38 @@ void main() {
     expect(find.byType(LegalInfoPage), findsOneWidget);
     expect(await handle.result, isNull);
   });
+
+  testWidgets('rend les quatre règles et leurs justificatifs', (tester) async {
+    tester.view.physicalSize = const Size(1200, 3200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final handle = await _openPopup(tester, FakeFirebaseFirestore());
+
+    for (final label in <String>[
+      'Le paiement doit pouvoir être justifié.',
+      'Paiement en espèces\nlimité à 1 000 €',
+      "Le paiement en espèces est possible lorsqu'il ne s'agit pas d'un besoin professionnel.",
+      'Preuve écrite\nnécessaire au-delà de\n1 500 €',
+      'Pour certaines activités',
+      'Le CESU permet de\ndéclarer et rémunérer',
+      'Privilégiez toujours un paiement traçable',
+      'Carte bancaire, virement,\npaiement sécurisé',
+    ]) {
+      expect(find.textContaining(label), findsOneWidget);
+    }
+    expect(find.byIcon(Icons.storefront_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.handshake_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.home_work_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.verified_user_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.payments_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.receipt_long_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.badge_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.description_rounded), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
+    expect(await handle.result, isFalse);
+  });
 }
