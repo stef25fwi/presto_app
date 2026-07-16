@@ -21,6 +21,17 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
+      - name: Record exact Git tree
+        run: git rev-parse 'HEAD^{tree}' > /tmp/pr459-tree-sha.txt
+
+      - name: Upload exact Git tree
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr459-tree-${{ github.sha }}
+          path: /tmp/pr459-tree-sha.txt
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Setup Flutter 3.44.6
         uses: subosito/flutter-action@v2
         with:
