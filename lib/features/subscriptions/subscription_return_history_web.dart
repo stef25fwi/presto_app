@@ -2,14 +2,14 @@
 
 import 'package:web/web.dart' as web;
 
-const String _subscriptionReturnPath =
-    '/account?section=subscriptions&from=stripe';
+import 'subscription_return_history_policy.dart';
 
 void prepareSubscriptionReturnHistory() {
-  final current = Uri.base;
-  final alreadyPrepared = current.path == '/account' &&
-      current.queryParameters['section'] == 'subscriptions';
-  if (alreadyPrepared) return;
+  final returnPath = subscriptionReturnPathToPush(Uri.base);
+  if (returnPath == null) return;
 
-  web.window.history.replaceState(null, '', _subscriptionReturnPath);
+  // Ajoute une vraie entrée d'historique avant la navigation plein écran vers
+  // Stripe. L'icône retour du navigateur / WebView retrouve ainsi la page
+  // Abonnements au lieu de revenir à l'entrée initiale de l'application.
+  web.window.history.pushState(null, '', returnPath);
 }
