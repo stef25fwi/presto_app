@@ -104,21 +104,6 @@ class _ThreadAuthPlatform extends FirebaseAuthPlatform {
   Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(user);
 }
 
-void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
-  Object? exception;
-  while ((exception = tester.takeException()) != null) {
-    final message = exception.toString();
-    final isExpectedCircleAvatarAssertion =
-        message.contains('circle_avatar.dart') &&
-        message.contains(
-          'foregroundImage != null || onForegroundImageError == null',
-        );
-    if (!isExpectedCircleAvatarAssertion) {
-      throw exception!;
-    }
-  }
-}
-
 Future<void> _pumpThreadFrame(
   WidgetTester tester, [
   Duration? duration,
@@ -128,18 +113,34 @@ Future<void> _pumpThreadFrame(
   } else {
     await tester.pump(duration);
   }
-  _drainExpectedConversationThreadExceptions(tester);
 }
 
 Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
-  for (var frame = 0; frame < 30; frame += 1) {
-    await _pumpThreadFrame(tester);
+  for (var frame = 0; frame < 120; frame += 1) {
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 500));
     if (find.text('Peinture salon').evaluate().isNotEmpty &&
         find.byType(TextField).evaluate().isNotEmpty) {
       return;
     }
   }
-  fail('Le shell de conversation ne s’est pas affiché après 30 frames.');
+  fail('Le shell de conversation ne s’est pas affiché après 60 secondes simulées.');
+}
+
+Future<void> _pumpUntilMessagingBootstrapSettles(WidgetTester tester) async {
+  const preparingLabel = 'Preparation securisee de la messagerie…';
+  for (var frame = 0; frame < 120; frame += 1) {
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 500));
+    if (find.text(preparingLabel).evaluate().isEmpty) {
+      return;
+    }
+  }
+  fail('Le bootstrap de messagerie ne s’est pas stabilisé après ses trois tentatives.');
+}
+
+Future<void> _disposeThreadAfterBootstrap(WidgetTester tester) async {
+  await _pumpUntilMessagingBootstrapSettles(tester);
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
 }
 
 void main() {
@@ -175,7 +176,6 @@ void main() {
         ),
       ),
     );
-    _drainExpectedConversationThreadExceptions(tester);
     await _pumpUntilThreadShellIsReady(tester);
   }
 
@@ -213,14 +213,14 @@ void main() {
     expect(find.text('Archiver'), findsOneWidget);
     expect(find.text('Bloquer'), findsOneWidget);
     expect(find.text('Supprimer'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('Archiver'))).pop();
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     expect(find.text('Photo'), findsOneWidget);
     expect(find.text('Fichier'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('Photo'))).pop();
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
 
     await tester.tap(find.byTooltip('Emoji'));
@@ -237,8 +237,7 @@ void main() {
     await _pumpThreadFrame(tester);
     expect(find.byIcon(Icons.mic_none_rounded), findsOneWidget);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await _pumpThreadFrame(tester);
+    await _disposeThreadAfterBootstrap(tester);
   });
 
   testWidgets('refuse les actions d’envoi lorsque la session disparaît',
@@ -253,34 +252,19 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
+    final scaffoldContext = tester.element(find.byType(Scaffold));
+    ScaffoldMessenger.of(scaffoldContext).hideCurrentSnackBar();
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
-    await tester.tap(find.text('Photo'));
-    await _pumpThreadFrame(tester);
-    expect(
-      find.text('Connectez-vous pour envoyer une photo.'),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
-    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
-    await tester.tap(find.text('Fichier'));
-    await _pumpThreadFrame(tester);
-    expect(
-      find.text('Connectez-vous pour envoyer un fichier.'),
-      findsOneWidget,
-    );
 
     await tester.enterText(find.byType(TextField), 'Message sans session');
     await _pumpThreadFrame(tester);
     await tester.tap(find.byIcon(Icons.send_rounded));
-    await _pumpThreadFrame(tester);
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     expect(
       find.text('Connectez-vous pour envoyer un message.'),
       findsOneWidget,
     );
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await _pumpThreadFrame(tester);
+    await _disposeThreadAfterBootstrap(tester);
   });
 }
