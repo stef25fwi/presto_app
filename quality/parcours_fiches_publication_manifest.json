@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-16",
+  "description": "Liste explicite des fiches autorisées à la publication selon le nouveau processus. Une fiche absente peut rester disponible pendant la migration historique, mais ne peut pas être déclarée nouvellement validée par cette chaîne.",
+  "published": []
+}
