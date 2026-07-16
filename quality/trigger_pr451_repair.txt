@@ -1,0 +1,1 @@
+Déclenchement contrôlé du correctif PR #451 le 16 juillet 2026.
