@@ -3,12 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
 import 'package:presto_app/widgets/payment_info_audio_player_button.dart';
 
-typedef PaymentInfoAudioAdminPlayerBuilder = Widget Function({
-  required String audioUrl,
-  required String label,
-  required VoidCallback onPlayed,
-});
-
 const String _defaultPaymentInfoPopupAudioText = '''
 Important : ilipresto.fr est un outil de communication et de petites annonces. La plateforme facilite la visibilité des offres et demandes, mais les relations, accords et prestations restent exclusivement conclus et gérés entre les utilisateurs.
 
@@ -22,14 +16,7 @@ ilipresto.fr ne conserve pas les fonds, ne garantit pas la réalisation de la pr
 ''';
 
 class PaymentInfoAudioAdminSection extends StatefulWidget {
-  const PaymentInfoAudioAdminSection({
-    super.key,
-    this.service,
-    this.playerBuilder,
-  });
-
-  final PaymentInfoAudioService? service;
-  final PaymentInfoAudioAdminPlayerBuilder? playerBuilder;
+  const PaymentInfoAudioAdminSection({super.key});
 
   @override
   State<PaymentInfoAudioAdminSection> createState() =>
@@ -51,7 +38,7 @@ class _PaymentInfoAudioAdminSectionState
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? PaymentInfoAudioService();
+    _service = PaymentInfoAudioService();
     _textController = TextEditingController(
       text: _defaultPaymentInfoPopupAudioText.trim(),
     );
@@ -191,25 +178,6 @@ class _PaymentInfoAudioAdminSectionState
         content: Text(message),
         backgroundColor: isError ? Colors.red : null,
       ),
-    );
-  }
-
-  Widget _buildPlayer({
-    required String audioUrl,
-    required VoidCallback onPlayed,
-  }) {
-    final builder = widget.playerBuilder;
-    if (builder != null) {
-      return builder(
-        audioUrl: audioUrl,
-        label: 'Pré-écouter le MP3',
-        onPlayed: onPlayed,
-      );
-    }
-    return PaymentInfoAudioPlayerButton(
-      audioUrl: audioUrl,
-      label: 'Pré-écouter le MP3',
-      onPlayed: onPlayed,
     );
   }
 
@@ -379,8 +347,9 @@ class _PaymentInfoAudioAdminSectionState
                           ],
                         ),
                         const SizedBox(height: 10),
-                        _buildPlayer(
+                        PaymentInfoAudioPlayerButton(
                           audioUrl: draftAudioUrl,
+                          label: 'Pré-écouter le MP3',
                           onPlayed: () => _markDraftPreviewed(draftAudioUrl),
                         ),
                         const SizedBox(height: 10),
