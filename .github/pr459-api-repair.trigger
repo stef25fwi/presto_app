@@ -1,1 +1,1 @@
-Déclenchement de la réparation PR459 via l’API GitHub — 2026-07-16.
+Déclenchement final de la réparation PR459 via GitHub Script — 2026-07-16.
