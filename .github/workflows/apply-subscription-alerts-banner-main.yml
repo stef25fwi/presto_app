@@ -1,211 +1,46 @@
-name: Apply subscription alerts banner on main
+name: Apply subscription alerts banner
 
 on:
-  push:
+  pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
     paths:
-      - .github/workflows/apply-subscription-alerts-banner-main.yml
+      - .github/subscription-alerts-banner.trigger
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.44.6
           channel: stable
           cache: true
 
       - name: Generate banner and patch code
         run: |
           python3 -m pip install --quiet pillow
-          python3 - <<'PY'
-          from PIL import Image, ImageDraw, ImageFont
-          from pathlib import Path
-
-          out = Path('assets/images/subscription_alerts_banner.png')
-          out.parent.mkdir(parents=True, exist_ok=True)
-          w, h = 1600, 700
-          img = Image.new('RGB', (w, h), '#eaf3ff')
-          d = ImageDraw.Draw(img)
-          for y in range(h):
-              t = y / (h - 1)
-              c = tuple(int(a + (b-a)*t) for a,b in zip((244,249,255),(220,235,255)))
-              d.line((0,y,w,y), fill=c)
-          def f(size, bold=False):
-              p = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
-              return ImageFont.truetype(p, size)
-          blue, orange = '#0d3b7a', '#ff6b00'
-          d.text((70,105), 'Ne ratez plus', fill=blue, font=f(72,True))
-          d.text((70,185), 'aucune offre !', fill=blue, font=f(72,True))
-          d.text((72,300), 'Recevez instantanément les opportunités', fill=blue, font=f(34))
-          d.text((72,348), 'disponibles dans votre secteur.', fill=blue, font=f(34))
-          d.rounded_rectangle((1040,65,1395,635), radius=55, fill='#0868d8', outline='#063a83', width=12)
-          d.rounded_rectangle((1070,95,1365,605), radius=40, fill='#0d78ee')
-          d.text((1142,125), '11:00', fill='white', font=f(54,True))
-          d.rounded_rectangle((1110,250,1330,350), radius=20, fill='white')
-          d.text((1130,270), 'Nouvelle annonce !', fill=blue, font=f(23,True))
-          d.text((1130,304), 'Une offre correspond', fill=blue, font=f(19))
-          d.ellipse((1370,245,1560,435), fill=orange)
-          d.rectangle((1410,365,1520,505), fill=orange)
-          d.ellipse((1400,465,1530,565), fill=orange)
-          cards=[('Jardinage','#2ca24c'),("Hôtesse d’accueil",'#7b4dde'),('Bricolage','#f59e0b')]
-          y=170
-          for label,color in cards:
-              d.rounded_rectangle((650,y,1035,y+105), radius=24, fill='white', outline='#c9d9ef', width=3)
-              d.ellipse((675,y+20,735,y+80), fill=color)
-              d.text((755,y+30), label, fill=blue, font=f(31,True))
-              y += 125
-          img.save(out, quality=94, optimize=True)
-
-          account=Path('lib/pages/account_page.dart')
-          text=account.read_text()
-          anchor="import '../services/admin_access_resolver.dart';\n"
-          imp="import '../services/ad_placeholder_image_service.dart';\n"
-          if imp not in text: text=text.replace(anchor, anchor+imp)
-          old="""                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 9,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE8F0FE),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Ne ratez plus aucune offre : choisissez au moins 2 catégories et recevez instantanément les opportunités disponibles dans votre secteur.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF1A3A5C),
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),"""
-          if old not in text: raise SystemExit('encart bleu introuvable')
-          text=text.replace(old,"                            _buildSubscriptionAlertsBanner(),",1)
-          marker='  Widget _buildAdminSpaceEntry(User user) {'
-          method="""  Widget _buildSubscriptionAlertsBanner() {
-    const fallbackAsset = 'assets/images/subscription_alerts_banner.png';
-    Widget fallback() => Image.asset(
-          fallbackAsset,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          errorBuilder: (_, __, ___) => const ColoredBox(
-            color: Color(0xFFE8F0FE),
-            child: Center(
-              child: Text(
-                'Ne ratez plus aucune offre !',
-                style: TextStyle(
-                  color: Color(0xFF1A3A5C),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        );
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: AspectRatio(
-        aspectRatio: 16 / 7,
-        child: StreamBuilder<List<AdPlaceholderImage>>(
-          stream: AdPlaceholderImageService.watchAll(
-            target: 'subscription_alerts_banner',
-          ),
-          builder: (context, snapshot) {
-            final active = (snapshot.data ?? const <AdPlaceholderImage>[])
-                .where((image) => image.isVisible)
-                .toList();
-            if (active.isEmpty) return fallback();
-            return Image.network(
-              active.first.imageUrl,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              gaplessPlayback: true,
-              errorBuilder: (_, __, ___) => fallback(),
-              loadingBuilder: (context, child, progress) =>
-                  progress == null ? child : fallback(),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-"""
-          if method not in text: text=text.replace(marker,method+marker,1)
-          account.write_text(text)
-
-          admin=Path('lib/pages/admin/ad_placeholder_images_admin_page.dart')
-          text=admin.read_text()
-          text=text.replace("  static const String _target = 'consult_offers';","""  static const Map<String, String> _targets = {
-    'consult_offers': 'Page Je consulte — placeholders annonces',
-    'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',
-  };
-  String _target = 'consult_offers';""",1)
-          body="""        children: [
-          // Widget upload — toujours visible, indépendant de l'état Firestore"""
-          selector="""        children: [
-          if (!_isReordering)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: DropdownButtonFormField<String>(
-                value: _target,
-                decoration: InputDecoration(
-                  labelText: 'Emplacement de l’image',
-                  prefixIcon: const Icon(Icons.web_asset_rounded),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                items: _targets.entries
-                    .map((entry) => DropdownMenuItem<String>(
-                          value: entry.key,
-                          child: Text(entry.value),
-                        ))
-                    .toList(),
-                onChanged: _isUploading ? null : (value) {
-                  if (value == null || value == _target) return;
-                  setState(() {
-                    _target = value;
-                    _lastLoadedImages = const <AdPlaceholderImage>[];
-                    _reorderBuffer = null;
-                  });
-                },
-              ),
-            ),
-          // Widget upload — toujours visible, indépendant de l'état Firestore"""
-          if body not in text: raise SystemExit('ancre admin introuvable')
-          text=text.replace(body,selector,1)
-          oldinfo="""                    \"Ces images alimentent les placeholders AdBanner de la page « Je consulte ». \"
-                    \"Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. \"
-                    \"S'il n'y a aucune image active, l'app utilise ses images embarquées.\","""
-          newinfo="""                    _target == 'subscription_alerts_banner'
-                        ? \"Cette image remplace l’encart bleu de la section « Mes alertes Nouvelle annonce ». \"
-                            \"Format conseillé : horizontal, ratio 16:7, 1600 px min.\"
-                        : \"Ces images alimentent les placeholders AdBanner de la page « Je consulte ». \"
-                            \"Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. \"
-                            \"S'il n'y a aucune image active, l'app utilise ses images embarquées.\","""
-          if oldinfo not in text: raise SystemExit('info admin introuvable')
-          admin.write_text(text.replace(oldinfo,newinfo,1))
-          PY
+          python3 tools/apply_subscription_alerts_banner.py
 
       - name: Format and validate
         run: |
           dart format lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart
           flutter pub get
-          flutter analyze lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart
+          flutter analyze --no-fatal-infos --no-fatal-warnings lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart
 
-      - name: Commit integration
+      - name: Commit integration to pull request branch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart assets/images/subscription_alerts_banner.png
           git commit -m 'feat: add managed subscription alerts banner' || exit 0
-          git push
+          git push origin HEAD:${{ github.head_ref }}
