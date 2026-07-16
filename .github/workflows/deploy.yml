@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy_functions:
+        description: 'Déployer aussi les Cloud Functions'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -150,12 +156,18 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
           CURRENT_SHA: ${{ github.sha }}
+          DEPLOY_FUNCTIONS_INPUT: ${{ inputs.deploy_functions }}
         run: |
           set -euo pipefail
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Déploiement manuel : Functions forcées." >> "$GITHUB_STEP_SUMMARY"
+            if [ "${DEPLOY_FUNCTIONS_INPUT:-false}" = "true" ]; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              echo "Déploiement manuel : Functions demandées explicitement." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "changed=false" >> "$GITHUB_OUTPUT"
+              echo "Déploiement manuel Web : Functions non demandées, étape ignorée." >> "$GITHUB_STEP_SUMMARY"
+            fi
             exit 0
           fi
 
