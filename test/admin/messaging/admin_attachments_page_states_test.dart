@@ -33,6 +33,8 @@ void main() {
       (tester) async {
     await pumpPage(tester);
 
+    expect(find.byType(RefreshIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.search_rounded), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsWidgets);
     expect(
       find.widgetWithText(
