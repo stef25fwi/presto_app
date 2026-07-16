@@ -151,7 +151,6 @@ void main() {
 
   tearDown(() {
     authPlatform.user = null;
-    _drainExpectedConversationThreadExceptions(TestWidgetsFlutterBinding.ensureInitialized());
   });
 
   testWidgets('affiche et manipule le shell principal de la conversation',
