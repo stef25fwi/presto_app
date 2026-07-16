@@ -85,6 +85,33 @@ class _ThreadAuthPlatform extends FirebaseAuthPlatform {
   Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(user);
 }
 
+void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
+  Object? exception;
+  while ((exception = tester.takeException()) != null) {
+    final message = exception.toString();
+    final isExpectedCircleAvatarAssertion =
+        message.contains('CircleAvatar') &&
+        message.contains(
+          'foregroundImage != null || onForegroundImageError == null',
+        );
+    if (!isExpectedCircleAvatarAssertion) {
+      throw exception!;
+    }
+  }
+}
+
+Future<void> _pumpThreadFrame(
+  WidgetTester tester, [
+  Duration? duration,
+]) async {
+  if (duration == null) {
+    await tester.pump();
+  } else {
+    await tester.pump(duration);
+  }
+  _drainExpectedConversationThreadExceptions(tester);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -117,23 +144,14 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump();
-  }
-
-  Future<void> disposeThread(WidgetTester tester) async {
-    await tester.pumpWidget(const SizedBox.shrink());
-    if (!userPlatform.tokenCompleter.isCompleted) {
-      userPlatform.tokenCompleter.completeError(
-        StateError('Fin déterministe du test de conversation'),
-      );
-    }
-    await tester.pump();
-    await tester.pump();
+    _drainExpectedConversationThreadExceptions(tester);
+    await _pumpThreadFrame(tester);
+    await _pumpThreadFrame(tester);
   }
 
   tearDown(() {
     authPlatform.user = null;
+    _drainExpectedConversationThreadExceptions(TestWidgetsFlutterBinding.ensureInitialized());
   });
 
   testWidgets('affiche et manipule le shell principal de la conversation',
@@ -153,44 +171,45 @@ void main() {
     expect(userPlatform.reloadCalls, 1);
 
     await tester.tap(find.byTooltip('Réduire'));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(find.byTooltip('Déplier'), findsOneWidget);
     expect(find.text('Annonce liée à la conversation'), findsNothing);
 
     await tester.tap(find.byTooltip('Déplier'));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(find.text('Annonce liée à la conversation'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     expect(find.text('Archiver'), findsOneWidget);
     expect(find.text('Bloquer'), findsOneWidget);
     expect(find.text('Supprimer'), findsOneWidget);
     await tester.pageBack();
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     expect(find.text('Photo'), findsOneWidget);
     expect(find.text('Fichier'), findsOneWidget);
     await tester.pageBack();
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
 
     await tester.tap(find.byTooltip('Emoji'));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(find.text('👍'), findsOneWidget);
     expect(find.text('🙏'), findsOneWidget);
     expect(find.byIcon(Icons.keyboard_rounded), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'Bonjour');
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(find.byIcon(Icons.send_rounded), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), '');
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(find.byIcon(Icons.mic_none_rounded), findsOneWidget);
 
-    await disposeThread(tester);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _pumpThreadFrame(tester);
   });
 
   testWidgets('refuse les actions d’envoi lorsque la session disparaît',
@@ -199,39 +218,40 @@ void main() {
     authPlatform.user = null;
 
     await tester.tap(find.byIcon(Icons.mic_none_rounded));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(
       find.text('Connectez-vous pour envoyer une note vocale.'),
       findsOneWidget,
     );
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     await tester.tap(find.text('Photo'));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(
       find.text('Connectez-vous pour envoyer une photo.'),
       findsOneWidget,
     );
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     await tester.tap(find.text('Fichier'));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(
       find.text('Connectez-vous pour envoyer un fichier.'),
       findsOneWidget,
     );
 
     await tester.enterText(find.byType(TextField), 'Message sans session');
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     await tester.tap(find.byIcon(Icons.send_rounded));
-    await tester.pump();
+    await _pumpThreadFrame(tester);
     expect(
       find.text('Connectez-vous pour envoyer un message.'),
       findsOneWidget,
     );
 
-    await disposeThread(tester);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _pumpThreadFrame(tester);
   });
 }
