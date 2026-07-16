@@ -3,10 +3,20 @@ import 'package:flutter/material.dart';
 import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 
+typedef ChangePasswordAction = Future<void> Function({
+  required String currentPassword,
+  required String newPassword,
+});
+
 class ChangePasswordPage extends StatefulWidget {
-  const ChangePasswordPage({super.key});
+  const ChangePasswordPage({
+    super.key,
+    this.onChangePassword,
+  });
 
   static const routeName = '/account/change-password';
+
+  final ChangePasswordAction? onChangePassword;
 
   @override
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
@@ -34,7 +44,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     setState(() => _loading = true);
 
     try {
-      await AuthService.instance.changePassword(
+      final changePassword =
+          widget.onChangePassword ?? AuthService.instance.changePassword;
+      await changePassword(
         currentPassword: _currentPasswordCtrl.text,
         newPassword: _newPasswordCtrl.text,
       );
@@ -92,7 +104,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                        _hideCurrent ? Icons.visibility : Icons.visibility_off),
+                      _hideCurrent ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () =>
                         setState(() => _hideCurrent = !_hideCurrent),
                   ),
@@ -112,8 +125,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   labelText: 'Nouveau mot de passe',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(
-                        _hideNew ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(_hideNew ? Icons.visibility : Icons.visibility_off),
                     onPressed: () => setState(() => _hideNew = !_hideNew),
                   ),
                 ),
