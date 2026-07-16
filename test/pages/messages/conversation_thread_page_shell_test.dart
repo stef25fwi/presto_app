@@ -131,6 +131,17 @@ Future<void> _pumpThreadFrame(
   _drainExpectedConversationThreadExceptions(tester);
 }
 
+Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
+  for (var frame = 0; frame < 30; frame += 1) {
+    await _pumpThreadFrame(tester);
+    if (find.text('Peinture salon').evaluate().isNotEmpty &&
+        find.byType(TextField).evaluate().isNotEmpty) {
+      return;
+    }
+  }
+  fail('Le shell de conversation ne s’est pas affiché après 30 frames.');
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -165,8 +176,7 @@ void main() {
       ),
     );
     _drainExpectedConversationThreadExceptions(tester);
-    await _pumpThreadFrame(tester);
-    await _pumpThreadFrame(tester);
+    await _pumpUntilThreadShellIsReady(tester);
   }
 
   tearDown(() {
