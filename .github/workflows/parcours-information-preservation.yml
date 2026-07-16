@@ -38,15 +38,16 @@ jobs:
           flutter test test/services/parcours_fiches_information_preservation_test.dart --reporter expanded \
             2>&1 | tee build/quality/parcours-information-preservation-test.log
       - name: Install PDF inspection tools
-        if: always() && hashFiles('build/quality/parcours-guide-information-preservation.pdf') != ''
+        if: always() && steps.preservation_test.outcome == 'success'
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Inspect detailed PDF content
         id: pdf_inspection
         continue-on-error: true
-        if: always() && hashFiles('build/quality/parcours-guide-information-preservation.pdf') != ''
+        if: always() && steps.preservation_test.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
+          test -s build/quality/parcours-guide-information-preservation.pdf
           mkdir -p build/quality/parcours-information-pages
           pdfinfo build/quality/parcours-guide-information-preservation.pdf \
             | tee build/quality/parcours-guide-information-pdfinfo.txt
