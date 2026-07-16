@@ -1,28 +1,23 @@
-name: Dart format quality
+name: Temporary PR451 avatar fix
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches:
+      - coverage/issue-449-conversation-thread-shell
 
 permissions:
   contents: write
 
-concurrency:
-  group: dart-format-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
-  patch-pr451:
-    if: github.head_ref == 'coverage/issue-449-conversation-thread-shell' && github.actor != 'github-actions[bot]'
+  patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.head_ref }}
+          ref: coverage/issue-449-conversation-thread-shell
           fetch-depth: 0
-
-      - name: Apply exact conversation avatar correction
+      - name: Apply exact source and test fixes
         shell: bash
         run: |
           python3 - <<'PY'
@@ -49,7 +44,7 @@ jobs:
                 : null,
 """
           if text.count(old) != 1:
-              raise SystemExit(f'Expected one avatar callback block, found {text.count(old)}')
+              raise SystemExit(f'Expected exactly one avatar callback block, found {text.count(old)}')
           source.write_text(text.replace(old, new))
 
           test = Path('test/pages/messages/conversation_thread_page_shell_test.dart')
@@ -71,54 +66,19 @@ jobs:
 
 """
           if test_text.count(drain) != 1:
-              raise SystemExit(f'Expected one exception drain helper, found {test_text.count(drain)}')
+              raise SystemExit(f'Expected exactly one exception drain helper, found {test_text.count(drain)}')
           test_text = test_text.replace(drain, '')
           test_text = test_text.replace('  _drainExpectedConversationThreadExceptions(tester);\n', '')
           test.write_text(test_text)
 
-          temporary = Path('.github/workflows/temporary-fix-pr451.yml')
-          if temporary.exists():
-              temporary.unlink()
+          workflow = Path('.github/workflows/temporary-fix-pr451.yml')
+          workflow.unlink()
           PY
-
-          git checkout origin/main -- .github/workflows/dart-format-quality.yml
+      - name: Commit targeted correction
+        shell: bash
+        run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add \
-            lib/pages/messages/conversation_thread_page.dart \
-            test/pages/messages/conversation_thread_page_shell_test.dart \
-            .github/workflows/dart-format-quality.yml \
-            .github/workflows/temporary-fix-pr451.yml
+          git add lib/pages/messages/conversation_thread_page.dart test/pages/messages/conversation_thread_page_shell_test.dart .github/workflows/temporary-fix-pr451.yml
           git commit -m "fix(messages): guard empty conversation avatar"
-          git push origin HEAD:${{ github.head_ref }}
-
-  changed-dart-format:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-
-      - name: Setup Flutter 3.44.6
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.44.6'
-          channel: stable
-          cache: true
-
-      - name: Format Auth email files exactly
-        run: |
-          dart format \
-            lib/features/auth/services/auth_service.dart \
-            test/features/auth/services/email_auth_service_test.dart
-
-      - name: Upload formatted Auth email files
-        uses: actions/upload-artifact@v4
-        with:
-          name: auth-email-formatted-files
-          path: |
-            lib/features/auth/services/auth_service.dart
-            test/features/auth/services/email_auth_service_test.dart
-          retention-days: 2
+          git push origin HEAD:coverage/issue-449-conversation-thread-shell
