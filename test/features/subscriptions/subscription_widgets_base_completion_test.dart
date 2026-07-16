@@ -170,7 +170,7 @@ Future<void> _tapText(WidgetTester tester, String text) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late FlutterExceptionHandler? previousFlutterErrorHandler;
+  late void Function(FlutterErrorDetails)? previousFlutterErrorHandler;
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
