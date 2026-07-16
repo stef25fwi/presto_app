@@ -127,6 +127,17 @@ Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
   fail('Le shell de conversation ne s’est pas affiché après 30 secondes simulées.');
 }
 
+void _invokeAttachmentAction(WidgetTester tester, String label) {
+  final action = find.ancestor(
+    of: find.text(label),
+    matching: find.byType(InkWell),
+  );
+  expect(action, findsOneWidget);
+  final onTap = tester.widget<InkWell>(action).onTap;
+  expect(onTap, isNotNull);
+  onTap!();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -197,14 +208,14 @@ void main() {
     expect(find.text('Archiver'), findsOneWidget);
     expect(find.text('Bloquer'), findsOneWidget);
     expect(find.text('Supprimer'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('Archiver'))).pop();
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
     expect(find.text('Photo'), findsOneWidget);
     expect(find.text('Fichier'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('Photo'))).pop();
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
 
     await tester.tap(find.byTooltip('Emoji'));
@@ -239,7 +250,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
-    await tester.tap(find.text('Photo'));
+    _invokeAttachmentAction(tester, 'Photo');
     await _pumpThreadFrame(tester);
     expect(
       find.text('Connectez-vous pour envoyer une photo.'),
@@ -248,7 +259,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
     await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
-    await tester.tap(find.text('Fichier'));
+    _invokeAttachmentAction(tester, 'Fichier');
     await _pumpThreadFrame(tester);
     expect(
       find.text('Connectez-vous pour envoyer un fichier.'),
