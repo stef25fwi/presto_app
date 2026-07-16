@@ -1,9 +1,10 @@
 name: Repair PR451 branch
 
 on:
-  push:
+  pull_request_target:
     branches:
       - audit/prod-hardening-p0-p11
+    types: [opened, synchronize, reopened]
     paths:
       - .github/repair-pr451.trigger
 
@@ -28,6 +29,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git fetch origin main repair/pr451-complete
+          git reset --hard origin/repair/pr451-complete
+
           python3 - <<'PY'
           from pathlib import Path
 
@@ -112,13 +116,16 @@ jobs:
           test.write_text(test_text)
           PY
 
-          git checkout origin/main -- .github/workflows/pr-validation.yml
+          git checkout origin/main -- \
+            .github/workflows/dart-format-quality.yml \
+            .github/workflows/pr-validation.yml
           git diff --check
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add \
             lib/pages/messages/conversation_thread_page.dart \
             test/pages/messages/conversation_thread_page_shell_test.dart \
+            .github/workflows/dart-format-quality.yml \
             .github/workflows/pr-validation.yml
           git commit -m "fix(messages): guard empty conversation avatars"
           git push origin HEAD:repair/pr451-complete
