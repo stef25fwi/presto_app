@@ -2,24 +2,16 @@
 
 ## 0. Identité de la fiche
 
-Métier / activité : Aide déménagement
-Statut utilisateur : Fonctionnaire / agent public
-Famille : Aide à domicile / Services à la personne
-Type d’activité : Service à la personne ou prestation d'aide à domicile selon le public et le lieu
-Activité réglementée : non / à vérifier selon périmètre
-Niveau de vigilance : moyen
-Code APE indicatif : 81.21Z, 88.10A, 96.09Z ou 82.99Z selon activité — à confirmer
-Nature fiscale probable : prestation_services_bic_ou_bnc
-Organismes principaux : Administration employeur, Nova SAP, DDETS/DEETS, Guichet unique INPI, Urssaf, Conseil départemental si autorisation
+Métier / activité : Aide déménagement  
+Statut utilisateur : Fonctionnaire / agent public  
+Famille : Déménagement / manutention  
+Type d’activité : emballage, chargement, déchargement, déplacement de mobilier et aide à l’installation  
+Activité réglementée : non pour la manutention seule ; vérifications supplémentaires si transport routier de biens  
+Niveau de vigilance : élevé si transport, moyen pour la manutention seule  
+Code APE indicatif : 49.42Z pour un véritable service de déménagement, à confirmer par l’Insee  
+Nature fiscale probable : prestation de services BIC
 
-Modes d’exercice possibles :
-
-* prestation au domicile du client
-* intervention ponctuelle
-* abonnement régulier
-* aide administrative simple
-
-Cette fiche sert de base de données pour alimenter automatiquement un parcours “Je me lance” lorsqu’un utilisateur sélectionne le statut **Fonctionnaire** et l’activité **Aide déménagement**. Le code APE reste indicatif : il est attribué ou confirmé selon l’activité réellement déclarée.
+Cette activité **ne relève pas des services à la personne**. Elle ne doit pas être reliée aux agréments pour publics fragiles ou au crédit d’impôt SAP.
 
 ---
 
@@ -27,46 +19,47 @@ Cette fiche sert de base de données pour alimenter automatiquement un parcours 
 
 ### Résumé utilisateur
 
-L’utilisateur fonctionnaire ne doit pas démarrer directement l’activité **Aide déménagement** sans vérifier deux niveaux : d’abord les règles propres aux agents publics, ensuite les règles propres au métier. L’activité doit rester compatible avec le service public, ne pas nuire à la neutralité, à l’indépendance ou au fonctionnement normal du service, et faire l’objet d’une déclaration ou d’une autorisation écrite selon le cas.
+Avant de créer l’activité, vous devez sécuriser votre cumul dans la fonction publique et définir si vous proposez uniquement de la manutention ou si vous prenez aussi en charge le transport des biens.
 
 ### Activité libre ou réglementée
 
-Statut de vigilance : **non / à vérifier selon périmètre**.
+L’aide manuelle au chargement, au déchargement, à l’emballage ou au déplacement de mobilier sur un même site ne relève pas des services à la personne. Lorsque la prestation comprend un déménagement avec transport routier pour le compte du client, faites vérifier les obligations applicables avant toute publicité ou mission.
 
-Vérifier si l'activité relève des services à la personne. La déclaration SAP via Nova peut être nécessaire pour ouvrir droit aux avantages clients. L'agrément est requis pour certaines activités auprès d'enfants de moins de 3 ans ou d'enfants handicapés ; l'autorisation peut être requise pour certaines interventions auprès de personnes âgées ou handicapées en mode prestataire.
-
-Même si l’activité paraît simple ou ponctuelle, elle doit être déclarée correctement, facturée légalement et exercée avec les assurances adaptées. Le parcours doit bloquer ou afficher une alerte lorsque l’utilisateur indique un périmètre réglementé, un public fragile, un local recevant du public, une prestation alimentaire, un transport rémunéré, une prestation de sécurité, des travaux du bâtiment ou une activité nécessitant diplôme/carte/autorisation.
+Le code APE 49.42Z correspond aux services de déménagement, mais le code définitif dépend de l’activité principale réellement déclarée et attribuée par l’Insee.
 
 ### Règles spécifiques au fonctionnaire / agent public
 
-Un agent public peut, dans certains cas, cumuler son emploi avec une micro-entreprise, mais le cumul n’est pas automatique. L’activité accessoire doit être demandée par écrit à l’autorité hiérarchique lorsque l’autorisation est requise. La demande doit décrire la nature de l’activité, sa durée, sa périodicité, ses conditions de rémunération et l’organisme ou les clients concernés. L’administration dispose en principe d’un mois pour répondre ; l’absence de réponse vaut rejet pour cette demande de cumul. L’autorisation accordée est limitée dans le temps et doit être renouvelée avant son échéance.
+Décrivez précisément à votre administration :
 
-Pour **Aide déménagement**, l’application doit donc afficher :
+* les tâches réalisées ;
+* la présence ou non d’un transport de biens ;
+* la durée et la périodicité ;
+* les conditions de rémunération ;
+* la clientèle visée ;
+* l’utilisation éventuelle d’un véhicule ;
+* les mesures évitant tout conflit d’intérêts.
 
-* demander l’autorisation ou effectuer la déclaration avant le démarrage ;
-* ne pas utiliser le matériel, les locaux, fichiers, contacts ou informations de l’administration ;
-* ne pas intervenir pendant le temps de service ;
-* ne pas créer de conflit d’intérêts avec les missions publiques ;
-* conserver la réponse écrite de l’administration ;
-* vérifier les règles métier avant immatriculation.
+Conservez la demande et la réponse écrites avant de démarrer lorsque l’autorisation est requise.
 
 ### Assurance
 
-Assurances à prévoir :
+Demandez un devis couvrant explicitement :
 
-* RC pro aide à domicile
-* Assurance véhicule pro si déplacements
-* Protection juridique recommandée
+* la manutention et le déménagement ;
+* les dommages aux biens et aux locaux ;
+* les biens confiés ou transportés lorsque vous en assumez la garde ;
+* l’usage professionnel du véhicule lorsqu’il est utilisé.
 
-### Prix, devis, notes et facturation
+### Prix, devis et facturation
 
-Le professionnel doit annoncer clairement le prix avant la prestation. Une note/facture doit être remise lorsque le client la demande et, pour les prestations de services aux particuliers, lorsque le montant dépasse les seuils applicables. Les factures doivent être conservées, numérotées et cohérentes avec le livre de recettes. Si la franchise en base de TVA s’applique, la mention “TVA non applicable — article 293 B du CGI” doit être prévue.
+Préparez un devis ou une confirmation écrite indiquant le périmètre, le nombre d’intervenants, la durée estimée, les accès, les objets fragiles, les responsabilités, le prix, les frais de déplacement et les conditions d’annulation.
 
 ### Alertes principales
 
-* Ne pas intervenir auprès de publics fragiles sans vérifier agrément/autorisation
-* Ne pas réaliser d'actes de soin médical
-* Ne pas se présenter comme expert-comptable ou conseil juridique
+* Ne promettez aucun avantage fiscal lié aux services à la personne.
+* Ne transportez pas les biens d’un client sans avoir vérifié les obligations et assurances applicables.
+* Évaluez les risques de port de charges, de casse et de dommage aux locaux.
+* N’effectuez pas de travaux techniques sans qualification et assurance adaptées.
 
 ---
 
@@ -74,34 +67,30 @@ Le professionnel doit annoncer clairement le prix avant la prestation. Une note/
 
 ### Résumé utilisateur
 
-Le cas traité ici est : **utilisateur fonctionnaire ou agent public**. Avant toute création, le parcours doit vérifier son type de fonction publique, son temps de travail, son grade ou contrat, ses obligations déontologiques, son planning, son lien éventuel avec l’activité et l’existence d’une autorisation écrite.
+Avant toute création, vérifiez votre type de fonction publique, votre temps de travail, vos obligations déontologiques, votre planning et la compatibilité du projet avec votre poste.
 
 ### Cas : utilisateur fonctionnaire
 
 À vérifier :
 
-* fonction publique concernée : État, territoriale, hospitalière ;
-* statut : titulaire, stagiaire, contractuel ;
-* temps complet, temps partiel, temps non complet ou incomplet ;
-* activité exercée ponctuellement ou régulièrement ;
-* clientèle visée : particuliers, entreprises, associations, collectivités ;
-* risque de conflit d’intérêts avec le poste public ;
-* autorisation écrite ou simple déclaration selon la situation ;
-* compatibilité avec le devoir de réserve, de neutralité et de dignité ;
-* qualification professionnelle si l’activité est réglementée ;
-* assurance et facturation.
+* type de fonction publique et statut ;
+* temps complet, partiel ou non complet ;
+* activité ponctuelle ou régulière ;
+* clientèle et zone d’intervention ;
+* absence de conflit d’intérêts ;
+* autorisation écrite ou déclaration selon la situation ;
+* exercice exclusivement hors temps de service.
 
 ### Documents à demander à l’utilisateur
 
-* demande écrite d'autorisation de cumul
-* réponse écrite de l'administration
-* pièce d'identité
-* justificatif de domicile
-* description précise de l'activité
-* périodicité et revenus prévus
-* attestation RC pro ou devis
-
-Documents complémentaires selon activité : diplôme ou attestation d’expérience, justificatif CMA, attestation d’assurance, formation hygiène, récépissé Nova, licence alcool, carte professionnelle, autorisation AOT, carte ambulant, récépissé spectacle, carte CNAPS ou justificatifs de transport, selon les alertes déclenchées.
+* demande écrite d’autorisation de cumul ;
+* réponse écrite de l’administration ;
+* description des prestations avec ou sans transport ;
+* pièce d’identité et justificatif de domicile ;
+* devis d’assurance ;
+* estimation des revenus et de la périodicité ;
+* inventaire du matériel ;
+* projet de devis et de conditions d’intervention.
 
 ---
 
@@ -109,104 +98,67 @@ Documents complémentaires selon activité : diplôme ou attestation d’expéri
 
 ### Recommandation principale
 
-Statut conseillé : **micro-entrepreneur / entreprise individuelle**, uniquement si l’activité reste compatible avec le statut d’agent public et si l’autorisation ou la déclaration de cumul est sécurisée avant le démarrage.
-
-Ce statut est adapté pour tester **Aide déménagement** sur un volume limité, sans salarié, sans investissement lourd et avec une gestion simple. Il est à éviter si l’activité nécessite un local important, du stock coûteux, des salariés, une responsabilité technique lourde, un chiffre d’affaires élevé ou une forte récupération de TVA.
+La micro-entreprise peut convenir à une activité accessoire limitée, sans salarié et avec peu d’investissements, sous réserve de l’autorisation ou de la déclaration de cumul.
 
 ### Pourquoi ce statut est adapté
 
-* Démarrage rapide via le Guichet unique.
-* Pas de capital social.
-* Comptabilité allégée.
+* Démarrage administratif simplifié.
 * Cotisations calculées sur le chiffre d’affaires encaissé.
-* Compatible avec une activité accessoire si l’administration l’autorise.
-* Adapté aux missions ponctuelles et aux services locaux.
+* Adapté aux missions ponctuelles avec matériel limité.
 
 ### Limites du statut
 
-* Pas de déduction des frais réels en micro.
-* Dépassement des seuils à surveiller.
-* Qualification obligatoire si activité réglementée.
-* Autorisation fonction publique obligatoire dans de nombreux cas.
-* Responsabilité personnelle et assurance à anticiper.
-* Inadapté aux projets lourds ou à forte responsabilité sans accompagnement.
+* Les frais réels de véhicule, de matériel et d’assurance ne sont pas déduits dans le régime micro.
+* Une structure au réel doit être étudiée si les investissements et charges deviennent importants.
+* Le transport de biens peut imposer des vérifications supplémentaires.
 
 ### Fiscalité, cotisations et TVA
 
-Pour les prestations de services BIC, le taux de cotisations micro-sociales 2026 est de 21,2 % du chiffre d’affaires. Pour les activités libérales non réglementées BNC, le taux peut être différent. Le seuil micro-fiscal 2026 pour les prestations de services est de 83 600 € ; le seuil global pour une activité mixte peut nécessiter un suivi séparé.
-
-La franchise en base de TVA pour les prestations de services repose sur un seuil de base de 37 500 € et un seuil majoré de 41 250 €. En cas de dépassement du seuil majoré, la TVA cesse de s’appliquer dès le premier jour du dépassement. Le compte bancaire dédié devient obligatoire si le chiffre d’affaires dépasse 10 000 € pendant deux années consécutives.
+Pour 2026, le seuil micro-fiscal des prestations de services est indiqué à 77 700 €. Le taux micro-social BIC de services est indiqué à 21,2 %, hors situations particulières. Les seuils de franchise de TVA des services sont de 37 500 € et 41 250 €. Vérifiez ces valeurs sur les sources officielles au moment de la démarche.
 
 ---
 
 ## 4. Faire les démarches étape par étape
 
-### Étape 1 — Décrire précisément l’activité
+### Étape 1 — Définir précisément l’activité
 
-Objectif : éviter une déclaration trop vague. L’utilisateur doit préciser ce qu’il fera réellement : lieu, public, matériel utilisé, fréquence, prix, clients, risques et éventuelles qualifications.
+Distinguez la manutention, l’emballage, le montage simple et le transport de biens. Définissez les exclusions et les objets que vous refusez de prendre en charge.
 
-### Étape 2 — Vérifier le cumul fonction publique
+### Étape 2 — Sécuriser le cumul fonction publique
 
-À faire avant toute publicité ou prestation :
+Envoyez la demande ou la déclaration requise, attendez la décision lorsqu’elle est nécessaire et archivez-la.
 
-* rédiger la demande de cumul ;
-* joindre la description de l’activité ;
-* indiquer durée, périodicité et rémunération ;
-* vérifier neutralité, indépendance et conflit d’intérêts ;
-* attendre la réponse écrite si autorisation requise ;
-* archiver la décision.
+### Étape 3 — Définir l’offre et le budget
 
-### Étape 3 — Vérifier la réglementation métier
+Fixez la zone d’intervention, les tarifs, les frais de déplacement, le matériel, les besoins d’assurance et la trésorerie de sécurité.
 
-Le parcours doit afficher les alertes métier listées dans cette fiche. Si une qualification, une carte, une licence, une déclaration sanitaire, une autorisation SAP, une AOT, une carte ambulant ou une assurance décennale est nécessaire, l’utilisateur doit la fournir ou confirmer qu’elle n’est pas requise.
+### Étape 4 — Vérifier les aides avant la création
 
-### Étape 4 — Choisir le statut
+Vérifiez l’ACRE et les accompagnements territoriaux avant l’immatriculation lorsque leur calendrier l’exige.
 
-Par défaut : micro-entreprise si activité accessoire, petite échelle et faibles charges.
-Basculer vers EI au réel, EURL ou SASU si :
+### Étape 5 — Choisir le statut
 
-* investissements importants ;
-* besoin de récupérer la TVA ;
-* local, stock ou salarié ;
-* activité très régulière ;
-* responsabilité technique élevée ;
-* incompatibilité avec le régime micro.
+Comparez micro-entreprise et EI au réel selon le poids des frais de véhicule, de matériel, d’assurance et de sous-traitance.
 
-### Étape 5 — Déclarer l’activité
+### Étape 6 — Préparer le dossier
 
-La création ou la modification d’activité se fait via le Guichet unique des formalités des entreprises. L’Insee attribue ou confirme ensuite Siren, Siret et code APE. Si l’utilisateur est déjà micro-entrepreneur, il faut réaliser une adjonction d’activité ou vérifier que l’activité est correctement couverte.
+Réunissez l’autorisation de cumul, les justificatifs, le devis d’assurance, la description de l’activité et les documents commerciaux.
 
-### Étape 6 — Mettre en place les protections
+### Étape 7 — Déclarer l’activité
 
-À prévoir :
+Déposez la formalité sur le Guichet unique et conservez l’accusé de dépôt puis les justificatifs d’immatriculation.
 
-* assurance RC pro ;
-* assurance véhicule si déplacement ;
-* devis ou confirmation écrite de mission ;
-* grille tarifaire ;
-* modèle de facture ou note ;
-* registre des recettes ;
-* archivage autorisation hiérarchique ;
-* documents métier spécifiques.
+### Étape 8 — Mettre en place les protections
 
-### Étape 7 — Organiser la gestion
+Souscrivez l’assurance correspondant au périmètre exact. Finalisez le devis, la facture, les conditions d’intervention, la fiche d’inventaire et le constat des dommages préexistants.
 
-Dès le premier mois :
+### Étape 9 — Organiser la gestion
 
-* suivre le chiffre d’affaires encaissé ;
-* séparer recettes personnelles et professionnelles ;
-* conserver toutes les factures ;
-* déclarer le CA mensuellement ou trimestriellement ;
-* surveiller TVA, CFE et seuils micro ;
-* éviter tout mélange avec l’activité publique.
+Suivez les recettes, les dépenses, les déclarations, les seuils, les incidents, les franchises et les renouvellements d’assurance.
 
-### Étape 8 — Chercher les aides et accompagnements
+### Étape 10 — Lancer les premières offres
 
-À vérifier : ACRE, accompagnement CMA/CCI/BGE, Initiative France, aides territoriales, France Travail si la situation change, AGEFIPH en cas de handicap, aides régionales et Aides-territoires.
-
-### Étape 9 — Lancer les premières offres
-
-Commencer avec une offre simple, claire et compatible avec l’autorisation obtenue. Ne pas communiquer comme une activité principale si l’autorisation porte seulement sur une activité accessoire limitée.
+Commencez par une mission limitée au périmètre autorisé et assuré. Faites signer le devis et l’inventaire avant le déplacement des biens.
 
 ---
 
@@ -214,121 +166,62 @@ Commencer avec une offre simple, claire et compatible avec l’autorisation obte
 
 ### ACRE
 
-À afficher : “Exonération partielle de cotisations sociales au démarrage, sous conditions.” L’utilisateur doit vérifier son éligibilité rapidement après l’immatriculation.
+Exonération partielle de cotisations sociales sous conditions. Vérifiez l’éligibilité et le calendrier avant ou immédiatement après la création selon la règle applicable.
 
 ### Accompagnement
 
-À afficher : “Un accompagnement CMA, CCI, BGE ou Initiative peut éviter une erreur de qualification, d’assurance ou de formalité.”
+CMA, BGE, Initiative France ou accompagnement territorial selon le projet et les besoins de financement.
 
 ### Aides territoriales
 
-À afficher : “À vérifier selon région, département, agglomération et commune.” Pour Guadeloupe, Martinique, Guyane, Réunion, Mayotte ou métropole, les dispositifs peuvent varier.
-
-### Aides à prévoir dans la base
-
-* ACRE
-* accompagnement CMA / CCI selon activité
-* BGE
-* Initiative France
-* Région / collectivité
-* Aides-territoires
-* AGEFIPH si handicap
-* accompagnement fonction publique / référent déontologue selon besoin
+Vérifiez la région, le département, l’agglomération et la commune avant l’immatriculation lorsqu’une aide exige un dépôt préalable.
 
 ---
 
 ## 6. Prévoir les coûts de lancement
 
-Coûts indicatifs pour **Aide déménagement** :
-
-* Formalités micro-entreprise généralement gratuites
-* RC pro indicative : 100 à 400 €/an selon activité
-* Outils, petits matériels et communication : 50 à 500 €
-* CFE à surveiller après création, avec exonération la première année et exonération possible si CA <= 5 000 €
-* Matériel de ménage ou organisation : 50 à 300 €
-* RC pro : 100 à 300 €/an
-* Déplacements : carburant/assurance
-
-Charges sociales et fiscales à intégrer : cotisations micro-sociales selon nature de l’activité, CFE après l’année de création sauf exonération, TVA si seuils dépassés, impôt sur le revenu dans la catégorie micro-BIC ou micro-BNC, assurance et frais de déplacement.
+* devis d’assurance adapté à la manutention et à l’éventuel transport ;
+* gants, chaussures, sangles, couvertures, diable ou chariot ;
+* carburant, entretien, stationnement et assurance du véhicule ;
+* documents clients, facturation et réservation ;
+* trésorerie couvrant franchises et casse de petit matériel.
 
 ---
 
 ## 7. Plan d’action sur 30 jours
 
-### Semaine 1 — Sécuriser le droit d’exercer
+### Semaine 1 — Sécuriser le projet
 
-1. Décrire précisément l’activité Aide déménagement.
-2. Vérifier si l’activité est accessoire et compatible avec le poste public.
-3. Préparer la demande d’autorisation ou déclaration de cumul.
-4. Identifier les règles métier et assurances.
-5. Lister les documents justificatifs.
+1. Définir les prestations avec ou sans transport.
+2. Préparer la demande de cumul.
+3. Vérifier les obligations métier et l’assurance.
 
-### Semaine 1 — Définir l’offre
+### Semaine 2 — Construire l’offre
 
-1. Définir 3 prestations simples.
-2. Fixer une zone d’intervention.
-3. Fixer un prix clair.
-4. Prévoir conditions d’annulation.
-5. Préparer un modèle de devis/message client.
+1. Vérifier les aides.
+2. Fixer les tarifs et le budget.
+3. Comparer micro-entreprise et régime réel.
 
-### Semaine 2 — Autorisation et formalités
+### Semaine 3 — Préparer la création
 
-1. Envoyer la demande à l’administration.
-2. Attendre la réponse si autorisation requise.
-3. Vérifier qualification, licence ou assurance spécifique.
-4. Préparer la déclaration sur le Guichet unique.
-5. Choisir périodicité Urssaf.
-
-### Semaine 3 — Préparer l’exploitation
-
-1. Souscrire l’assurance adaptée.
-2. Acheter le matériel strictement nécessaire.
-3. Créer livre de recettes.
-4. Créer modèle de facture.
-5. Archiver tous les justificatifs.
+1. Réunir les justificatifs.
+2. Obtenir le devis d’assurance.
+3. Préparer devis, facture et conditions d’intervention.
+4. Déposer la formalité lorsque les conditions préalables sont réunies.
 
 ### Semaine 4 — Lancer prudemment
 
-1. Réaliser une première mission test.
-2. Vérifier satisfaction client.
-3. Ajuster prix et périmètre.
-4. Déclarer les recettes.
-5. Contrôler que l’activité reste dans le cadre autorisé.
+1. Activer l’assurance.
+2. Tester les documents avec une mission limitée.
+3. Contrôler satisfaction, rentabilité et conformité au cumul autorisé.
 
 ---
 
-## Bloc base de données synthétique
-
-id_fiche : fonctionnaire_aide_demenagement
-titre : Aide déménagement — fonctionnaire
-statut_utilisateur : fonctionnaire
-categorie : Main-d'oeuvre
-activite : Aide déménagement
-activite_reglementee : non / à vérifier selon périmètre
-niveau_vigilance : moyen
-statut_recommande : micro-entrepreneur / entreprise individuelle sous réserve d’autorisation de cumul
-statut_alternatif : EI réel, EURL, SASU si projet lourd ou charges importantes
-code_ape_indicatif : 81.21Z, 88.10A, 96.09Z ou 82.99Z selon activité — à confirmer
-organisme_formalite : Guichet unique INPI
-organisme_cumul : administration employeur / autorité hiérarchique
-organismes_accompagnement : Administration employeur, Nova SAP, DDETS/DEETS, Guichet unique INPI, Urssaf, Conseil départemental si autorisation
-assurance_obligatoire_ou_recommandee : RC pro aide à domicile, Assurance véhicule pro si déplacements, Protection juridique recommandée
-tva_franchise_service : 37 500 € seuil base / 41 250 € seuil majoré
-seuil_micro_service_2026 : 83 600 €
-cotisations_micro_bic_service_2026 : 21,2 %
-compte_dedie : obligatoire si CA > 10 000 € pendant 2 années consécutives
-cfe : pas due année création ; exonération possible si CA annuel <= 5 000 €
-alerte_principale : Ne pas permettre le lancement sans vérification du cumul fonction publique et des règles métier.
-
 ## Sources officielles à vérifier / afficher
 
-* https://entreprendre.service-public.gouv.fr/vosdroits/F36610
 * https://www.service-public.fr/particuliers/vosdroits/F1648
-* https://entreprendre.service-public.gouv.fr/vosdroits/R61572
-* https://entreprendre.service-public.gouv.fr/vosdroits/F32353
-* https://entreprendre.service-public.gouv.fr/vosdroits/F36232
-* https://entreprendre.service-public.gouv.fr/vosdroits/F21746
-* https://entreprendre.service-public.gouv.fr/vosdroits/F35991
-* https://entreprendre.service-public.gouv.fr/vosdroits/F23999
-* https://entreprendre.service-public.gouv.fr/vosdroits/F23633
-* https://entreprendre.service-public.gouv.fr/vosdroits/R19148
+* https://www.insee.fr/fr/metadonnees/nafr2/sousClasse/49.42Z
+* https://www.servicesalapersonne.gouv.fr/tout-savoir-sur-les-services-la-personne/les-26-activites-de-services-la-personne
+* https://entreprendre.service-public.fr/vosdroits/R61572
+* https://entreprendre.service-public.fr/vosdroits/F23267
+* https://www.impots.gouv.fr/professionnel/tva
