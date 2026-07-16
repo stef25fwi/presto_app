@@ -16,29 +16,38 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - name: Split oversized step cards
-        shell: python
+      - name: Patch PDF pagination
+        id: patch
+        continue-on-error: true
+        shell: bash
         run: |
+          mkdir -p build/quality
+          set -o pipefail
+          python3 - <<'PY' 2>&1 | tee build/quality/parcours-pdf-pagination-patch.log
           from pathlib import Path
+          import re
 
           path = Path('lib/services/journey_pdf_export_service.dart')
           text = path.read_text(encoding='utf-8')
 
-          old_call = '''      widgets.add(
-            _stepCard('''
-          new_call = '''      widgets.addAll(
-            _stepCards('''
-          if old_call not in text:
-            raise SystemExit('Appel _stepCard attendu introuvable')
-          text = text.replace(old_call, new_call, 1)
+          call_pattern = re.compile(
+              r'(?m)^(\s*)widgets\.add\(\s*\n\s*_stepCard\('
+          )
+          text, call_count = call_pattern.subn(
+              lambda match: (
+                  f'{match.group(1)}widgets.addAll(\n'
+                  f'{match.group(1)}  _stepCards('
+              ),
+              text,
+              count=1,
+          )
+          if call_count != 1:
+              raise SystemExit(f'Remplacement appel _stepCard: {call_count}')
 
-          start_marker = '  static pw.Widget _stepCard({' 
-          end_marker = '\n\n  static List<String> _stepActions('
-          start = text.find(start_marker)
-          end = text.find(end_marker, start)
-          if start < 0 or end < 0:
-            raise SystemExit('Limites de la méthode _stepCard introuvables')
-
+          method_pattern = re.compile(
+              r'(?ms)^  static pw\.Widget _stepCard\(\{.*?'
+              r'^  \}\n\n(?=  static List<String> _stepActions\()'
+          )
           new_method = '''  static List<pw.Widget> _stepCards({
             required int number,
             required String title,
@@ -153,16 +162,50 @@ jobs:
                 ],
               ),
             );
-          }'''
+          }
+'''
+          text, method_count = method_pattern.subn(new_method, text, count=1)
+          if method_count != 1:
+              raise SystemExit(f'Remplacement méthode _stepCard: {method_count}')
 
-          text = text[:start] + new_method + text[end:]
+          letter_pattern = re.compile(
+              r'''      for \(final template in letterTemplates\) \{\n'''
+              r'''        widgets\.add\(_letterTemplate\(template\)\);\n'''
+              r'''      \}'''
+          )
+          letter_replacement = '''      for (var index = 0; index < letterTemplates.length; index++) {
+            if (index > 0) widgets.add(pw.NewPage());
+            widgets.add(_letterTemplate(letterTemplates[index]));
+          }'''
+          text, letter_count = letter_pattern.subn(
+              letter_replacement,
+              text,
+              count=1,
+          )
+          if letter_count != 1:
+              raise SystemExit(f'Remplacement pagination courriers: {letter_count}')
+
+          text = text.replace('              fontStyle: pw.FontStyle.italic,\n', '')
           path.write_text(text, encoding='utf-8')
+          print('Pagination des étapes et des courriers corrigée.')
+          PY
+      - name: Upload patch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-pdf-pagination-patch
+          path: build/quality/parcours-pdf-pagination-patch.log
+          retention-days: 7
       - name: Format and commit
+        if: steps.patch.outcome == 'success'
         run: |
           dart format lib/services/journey_pdf_export_service.dart
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add lib/services/journey_pdf_export_service.dart
           git diff --cached --quiet && exit 0
-          git commit -m 'Corrige la pagination des longues étapes PDF'
+          git commit -m 'Corrige la pagination des étapes et courriers PDF'
           git push origin HEAD:agent/guide-parcours-pas-a-pas
+      - name: Enforce patch
+        if: steps.patch.outcome != 'success'
+        run: exit 1
