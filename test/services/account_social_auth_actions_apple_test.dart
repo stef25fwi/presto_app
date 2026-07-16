@@ -37,7 +37,7 @@ class _AppleUserPlatform extends UserPlatform {
   String? updatedDisplayName;
 
   @override
-  Future<void> updateDisplayName(String? displayName) async {
+  Future<void> updateProfile({String? displayName, String? photoURL}) async {
     updatedDisplayName = displayName;
   }
 
@@ -143,7 +143,6 @@ void main() {
   });
 
   setUp(() {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     platform
       ..credentialError = null
       ..isNewUser = true
@@ -158,38 +157,42 @@ void main() {
 
   tearDown(() {
     messenger.setMockMethodCallHandler(SignInWithApple.channel, null);
-    debugDefaultTargetPlatformOverride = null;
   });
 
   Future<void> runAction(
     WidgetTester tester,
     Future<void> Function(BuildContext context) action,
   ) async {
-    final completed = Completer<void>();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () async {
-                try {
-                  await action(context);
-                  completed.complete();
-                } catch (error, stackTrace) {
-                  completed.completeError(error, stackTrace);
-                }
-              },
-              child: const Text('Connexion Apple'),
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      final completed = Completer<void>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await action(context);
+                    completed.complete();
+                  } catch (error, stackTrace) {
+                    completed.completeError(error, stackTrace);
+                  }
+                },
+                child: const Text('Connexion Apple'),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Connexion Apple'));
-    await tester.pump();
-    await completed.future.timeout(const Duration(seconds: 10));
-    await tester.pump();
+      await tester.tap(find.text('Connexion Apple'));
+      await tester.pump();
+      await completed.future.timeout(const Duration(seconds: 10));
+      await tester.pump();
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   }
 
   Future<void> trackLogin({
