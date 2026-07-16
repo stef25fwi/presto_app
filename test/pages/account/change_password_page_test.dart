@@ -28,17 +28,17 @@ void main() {
     expect(find.text('Nouveau mot de passe'), findsOneWidget);
     expect(find.text('Modifier'), findsOneWidget);
 
-    final fields = find.byType(TextFormField);
-    expect(tester.widget<TextFormField>(fields.at(0)).obscureText, isTrue);
-    expect(tester.widget<TextFormField>(fields.at(1)).obscureText, isTrue);
+    final fields = find.byType(EditableText);
+    expect(tester.widget<EditableText>(fields.at(0)).obscureText, isTrue);
+    expect(tester.widget<EditableText>(fields.at(1)).obscureText, isTrue);
 
     await tester.tap(find.byIcon(Icons.visibility).first);
     await tester.pump();
-    expect(tester.widget<TextFormField>(fields.at(0)).obscureText, isFalse);
+    expect(tester.widget<EditableText>(fields.at(0)).obscureText, isFalse);
 
     await tester.tap(find.byIcon(Icons.visibility).last);
     await tester.pump();
-    expect(tester.widget<TextFormField>(fields.at(1)).obscureText, isFalse);
+    expect(tester.widget<EditableText>(fields.at(1)).obscureText, isFalse);
   });
 
   testWidgets('valide les champs avant d’appeler le service', (tester) async {
