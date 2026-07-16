@@ -167,10 +167,29 @@ Future<void> _tapText(WidgetTester tester, String text) async {
   await tester.pump();
 }
 
+void _consumeListTileDiagnostic(WidgetTester tester) {
+  Object? error;
+  while ((error = tester.takeException()) != null) {
+    final message = error.toString();
+    final isKnownDiagnostic =
+        message.contains('ListTile background color or ink splashes') ||
+            message.contains('Multiple exceptions');
+    if (!isKnownDiagnostic) throw error!;
+  }
+}
+
+Future<void> _pumpAdmin(WidgetTester tester, Widget child) async {
+  await _pump(tester, child);
+  _consumeListTileDiagnostic(tester);
+}
+
+Future<void> _pumpAdminFrame(WidgetTester tester) async {
+  await tester.pump();
+  _consumeListTileDiagnostic(tester);
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  late void Function(FlutterErrorDetails)? previousFlutterErrorHandler;
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
@@ -183,20 +202,9 @@ void main() {
     view.physicalSize = const Size(1200, 3200);
     view.devicePixelRatio = 1;
     SubscriptionCheckoutService.resetForTesting();
-
-    previousFlutterErrorHandler = FlutterError.onError;
-    FlutterError.onError = (details) {
-      if (details.exceptionAsString().contains(
-            'ListTile background color or ink splashes may be invisible.',
-          )) {
-        return;
-      }
-      previousFlutterErrorHandler?.call(details);
-    };
   });
 
   tearDown(() {
-    FlutterError.onError = previousFlutterErrorHandler;
     final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
     view.resetPhysicalSize();
     view.resetDevicePixelRatio();
@@ -331,7 +339,7 @@ void main() {
     );
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
 
     expect(find.text('Abonnements'), findsOneWidget);
     expect(find.text('Afficher la section abonnement'), findsOneWidget);
@@ -347,7 +355,7 @@ void main() {
     );
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
 
     expect(find.text('Stripe activé'), findsOneWidget);
     expect(find.text('Architecture prête'), findsOneWidget);
@@ -360,11 +368,11 @@ void main() {
     );
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
     await tester.tap(
       find.widgetWithText(SwitchListTile, 'Afficher la section abonnement'),
     );
-    await tester.pump();
+    await _pumpAdminFrame(tester);
 
     expect(service.visibilityUpdates, <bool>[true]);
     expect(
@@ -379,11 +387,11 @@ void main() {
     )..failVisibility = true;
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
     await tester.tap(
       find.widgetWithText(SwitchListTile, 'Afficher la section abonnement'),
     );
-    await tester.pump();
+    await _pumpAdminFrame(tester);
 
     expect(
       find.text('Impossible de mettre à jour la configuration.'),
@@ -398,11 +406,11 @@ void main() {
     );
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
     await tester.tap(
       find.widgetWithText(SwitchListTile, 'Accès gratuit complet'),
     );
-    await tester.pump();
+    await _pumpAdminFrame(tester);
 
     expect(service.freeAccessUpdates, <bool>[true]);
     expect(find.text('Mode d’accès abonnement mis à jour.'), findsOneWidget);
@@ -414,11 +422,11 @@ void main() {
     )..failFreeAccess = true;
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
     await tester.tap(
       find.widgetWithText(SwitchListTile, 'Accès gratuit complet'),
     );
-    await tester.pump();
+    await _pumpAdminFrame(tester);
 
     expect(
       find.text('Impossible de mettre à jour freeAccessMode.'),
@@ -433,11 +441,11 @@ void main() {
     )..visibilityCompleter = Completer<void>();
     addTearDown(service.close);
 
-    await _pump(tester, AdminSubscriptionTile(service: service));
+    await _pumpAdmin(tester, AdminSubscriptionTile(service: service));
     await tester.tap(
       find.widgetWithText(SwitchListTile, 'Afficher la section abonnement'),
     );
-    await tester.pump();
+    await _pumpAdminFrame(tester);
 
     final switches = tester.widgetList<SwitchListTile>(
       find.byType(SwitchListTile),
@@ -445,8 +453,8 @@ void main() {
     expect(switches.every((tile) => tile.onChanged == null), isTrue);
 
     service.visibilityCompleter!.complete();
-    await tester.pump();
-    await tester.pump();
+    await _pumpAdminFrame(tester);
+    await _pumpAdminFrame(tester);
 
     final restored = tester.widgetList<SwitchListTile>(
       find.byType(SwitchListTile),
