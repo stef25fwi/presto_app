@@ -1,12 +1,9 @@
 name: Apply production hardening patches
 
 on:
-  push:
+  pull_request:
     branches:
       - audit/prod-hardening-p0-p11
-    paths:
-      - tools/apply_release_validation_fixes.mjs
-      - tools/apply_validation_round2_fixes.mjs
   workflow_dispatch:
 
 permissions:
