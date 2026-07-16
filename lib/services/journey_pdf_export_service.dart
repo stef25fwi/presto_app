@@ -985,7 +985,6 @@ Cordialement,
       style: pw.TextStyle(
         fontSize: 8,
         color: PdfColors.grey700,
-        fontStyle: pw.FontStyle.italic,
       ),
     ),
   );
