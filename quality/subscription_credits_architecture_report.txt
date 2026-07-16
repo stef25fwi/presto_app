@@ -1,0 +1,1 @@
+Flutter architecture size guardrail: OK
