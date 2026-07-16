@@ -3,6 +3,9 @@ name: Temporary repair PR459
 on:
   issue_comment:
     types: [created]
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,9 +18,12 @@ concurrency:
 jobs:
   repair:
     if: >-
-      github.event.issue.pull_request &&
-      github.event.issue.number == 459 &&
-      github.event.comment.body == '/repair-pr459-20260716'
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       github.event.issue.number == 459 &&
+       github.event.comment.body == '/repair-pr459-20260716')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
