@@ -61,10 +61,24 @@ void main() {
     const description =
         'Je recherche une personne soigneuse pour repeindre une chambre.';
     const title = 'Peinture chambre';
-    final fields = find.byType(TextFormField);
-    expect(fields, findsAtLeastNWidgets(2));
-    await tester.enterText(fields.first, description);
-    await tester.enterText(fields.at(1), title);
+    final textFields = tester
+        .widgetList<TextFormField>(find.byType(TextFormField))
+        .toList(growable: false);
+    expect(textFields, isNotEmpty);
+
+    final descriptionWidget = textFields.firstWhere(
+      (field) => (field.maxLines ?? 1) > 1,
+      orElse: () => throw TestFailure(
+        'Le champ de description multiligne est introuvable.',
+      ),
+    );
+    final titleWidget = textFields.firstWhere(
+      (field) => (field.maxLines ?? 1) == 1 && field.controller != null,
+      orElse: () => throw TestFailure('Le champ titre est introuvable.'),
+    );
+
+    await tester.enterText(find.byWidget(descriptionWidget), description);
+    await tester.enterText(find.byWidget(titleWidget), title);
     await tester.pump();
 
     await selectVocalMode(tester);
