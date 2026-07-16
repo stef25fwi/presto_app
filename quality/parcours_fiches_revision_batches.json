@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-16",
+  "catalogueTotal": 102,
+  "strategy": "Révision par famille, P0 avant P1 puis P2. Une vague ne passe à completed qu'après audit sans blocage, validation humaine et contrôle PDF.",
+  "batches": [
+    {
+      "id": "p0-services-personnes-fragiles",
+      "priority": "P0",
+      "families": [
+        {"name": "Garde d'enfants / Services à la personne", "count": 11},
+        {"name": "Aide à domicile / Services à la personne", "count": 11}
+      ],
+      "total": 22,
+      "status": "planned",
+      "checks": ["SAP", "agrément ou autorisation", "publics fragiles", "assurance", "qualification", "sources datées"]
+    },
+    {
+      "id": "p0-batiment-renovation",
+      "priority": "P0",
+      "families": [
+        {"name": "Bricolage / Travaux", "count": 11},
+        {"name": "Peinture / Rénovation", "count": 9}
+      ],
+      "total": 20,
+      "status": "planned",
+      "checks": ["qualification", "décennale", "travaux exclus", "sécurité", "devis", "responsabilité"]
+    },
+    {
+      "id": "p0-restauration",
+      "priority": "P0",
+      "families": [
+        {"name": "Restauration / Extra", "count": 12}
+      ],
+      "total": 12,
+      "status": "planned",
+      "checks": ["hygiène alimentaire", "déclaration sanitaire", "alcool", "allergènes", "assurance", "local ou vente mobile"]
+    },
+    {
+      "id": "p0-logistique-demenagement",
+      "priority": "P0",
+      "families": [
+        {"name": "Main-d'oeuvre / Logistique", "count": 9},
+        {"name": "Déménagement / manutention", "count": 1}
+      ],
+      "total": 10,
+      "status": "in_progress",
+      "checks": ["transport de biens", "manutention", "biens confiés", "véhicule", "sécurité physique", "classification SAP interdite"],
+      "pilot": "fonctionnaire_aide_demenagement"
+    },
+    {
+      "id": "p1-evenementiel",
+      "priority": "P1",
+      "families": [
+        {"name": "Événementiel / DJ", "count": 9}
+      ],
+      "total": 9,
+      "status": "planned",
+      "checks": ["ERP", "spectacle", "musique", "sécurité", "matériel", "assurance"]
+    },
+    {
+      "id": "p1-cours-soutien",
+      "priority": "P1",
+      "families": [
+        {"name": "Cours & soutien", "count": 10}
+      ],
+      "total": 10,
+      "status": "planned",
+      "checks": ["SAP selon lieu", "mineurs", "formation professionnelle", "qualification présentée", "facturation"]
+    },
+    {
+      "id": "p1-jardinage",
+      "priority": "P1",
+      "families": [
+        {"name": "Jardinage", "count": 10}
+      ],
+      "total": 10,
+      "status": "planned",
+      "checks": ["petits travaux SAP", "travaux exclus", "produits phytosanitaires", "élagage", "assurance", "évacuation déchets"]
+    },
+    {
+      "id": "p2-services-ponctuels",
+      "priority": "P2",
+      "families": [
+        {"name": "Autre service ponctuel", "count": 8},
+        {"name": "Couture / Retouches", "count": 1}
+      ],
+      "total": 9,
+      "status": "planned",
+      "checks": ["classification exacte", "assurance", "prix", "documents commerciaux", "absence de blocs génériques étrangers"]
+    }
+  ]
+}
