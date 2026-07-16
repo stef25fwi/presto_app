@@ -18,35 +18,49 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
-      - name: Dispatch production deployment
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          gh workflow run deploy.yml --repo "$REPOSITORY" --ref main
-
-      - name: Resolve deployment run
+      - name: Dispatch and resolve production deployment
         id: deployment
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+        shell: bash
         run: |
-          for attempt in $(seq 1 30); do
-            run_id=$(gh run list \
+          set -euo pipefail
+
+          main_sha=$(gh api "repos/$REPOSITORY/commits/main" --jq .sha)
+          dispatched_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          echo "Déploiement demandé pour main=$main_sha à $dispatched_at"
+          gh workflow run deploy.yml --repo "$REPOSITORY" --ref main
+
+          for attempt in $(seq 1 60); do
+            runs=$(gh run list \
               --repo "$REPOSITORY" \
               --workflow deploy.yml \
               --branch main \
               --event workflow_dispatch \
-              --limit 1 \
-              --json databaseId,status \
-              --jq '.[0].databaseId // empty')
+              --limit 20 \
+              --json databaseId,headSha,createdAt,status)
+
+            run_id=$(printf '%s' "$runs" | jq -r \
+              --arg sha "$main_sha" \
+              --arg since "$dispatched_at" \
+              '[.[] | select(.headSha == $sha and .createdAt >= $since)]
+               | sort_by(.createdAt)
+               | last
+               | .databaseId // empty')
+
             if [ -n "$run_id" ]; then
               echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+              echo "main_sha=$main_sha" >> "$GITHUB_OUTPUT"
+              echo "Run Firebase détecté : $run_id"
               exit 0
             fi
+
             sleep 5
           done
-          echo 'Déploiement workflow_dispatch introuvable.'
+
+          echo "Déploiement workflow_dispatch introuvable pour main=$main_sha après $dispatched_at."
           exit 1
 
       - name: Wait for Firebase deployment
@@ -63,8 +77,9 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           RUN_ID: ${{ steps.deployment.outputs.run_id }}
+          MAIN_SHA: ${{ steps.deployment.outputs.main_sha }}
         run: |
-          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "✅ DEPLOYMENT_SUCCESS — Firebase production déployé et contrôlé. Run: $RUN_ID"
+          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "✅ DEPLOYMENT_SUCCESS — Firebase production déployé et contrôlé. Run: $RUN_ID — main: $MAIN_SHA"
 
       - name: Report deployment failure
         if: failure()
@@ -73,5 +88,6 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           RUN_ID: ${{ steps.deployment.outputs.run_id }}
+          MAIN_SHA: ${{ steps.deployment.outputs.main_sha }}
         run: |
-          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "❌ DEPLOYMENT_FAILED — le déploiement Firebase a échoué. Run: ${RUN_ID:-introuvable}"
+          gh pr comment "$PR_NUMBER" --repo "$REPOSITORY" --body "❌ DEPLOYMENT_FAILED — le déploiement Firebase a échoué. Run: ${RUN_ID:-introuvable} — main: ${MAIN_SHA:-inconnu}"
