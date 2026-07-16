@@ -6,12 +6,21 @@ import 'widgets/admin_confirm_sensitive_action_dialog.dart';
 import 'widgets/admin_messaging_app_bar.dart';
 import 'widgets/admin_report_priority_badge.dart';
 
+typedef AdminMessageReportStatusUpdater = Future<void> Function({
+  required String reportId,
+  required String status,
+  required String decision,
+  required String reason,
+});
+
 class AdminMessageReportDetailPage extends StatefulWidget {
   final AdminMessageReportModel report;
+  final AdminMessageReportStatusUpdater? updateReportStatus;
 
   const AdminMessageReportDetailPage({
     super.key,
     required this.report,
+    this.updateReportStatus,
   });
 
   @override
@@ -21,7 +30,6 @@ class AdminMessageReportDetailPage extends StatefulWidget {
 
 class _AdminMessageReportDetailPageState
     extends State<AdminMessageReportDetailPage> {
-  final AdminModerationService _moderationService = AdminModerationService();
   bool _saving = false;
 
   Future<void> _setStatus(String status, {String decision = ''}) async {
@@ -37,7 +45,9 @@ class _AdminMessageReportDetailPageState
     if (!confirm) return;
     setState(() => _saving = true);
     try {
-      await _moderationService.updateReportStatus(
+      final updateStatus = widget.updateReportStatus ??
+          AdminModerationService().updateReportStatus;
+      await updateStatus(
         reportId: widget.report.id,
         status: status,
         decision: decision,
@@ -85,9 +95,11 @@ class _AdminMessageReportDetailPageState
                 Text('Signalé par: ${widget.report.reportedBy}'),
                 Text('Utilisateur visé: ${widget.report.reportedUserId}'),
                 Text(
-                    'Assigné à: ${widget.report.assignedTo.isEmpty ? 'non assigné' : widget.report.assignedTo}'),
+                  'Assigné à: ${widget.report.assignedTo.isEmpty ? 'non assigné' : widget.report.assignedTo}',
+                ),
                 Text(
-                    'Décision admin: ${widget.report.adminDecision.isEmpty ? 'aucune' : widget.report.adminDecision}'),
+                  'Décision admin: ${widget.report.adminDecision.isEmpty ? 'aucune' : widget.report.adminDecision}',
+                ),
               ],
             ),
           ),
