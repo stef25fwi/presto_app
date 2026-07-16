@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - .github/repair-pr459-main.trigger
+      - tools/repair_pr459.py
+      - .github/repair-pr459-run.trigger
   issue_comment:
     types: [created]
   schedule:
@@ -38,7 +39,7 @@ jobs:
           ref: repair/pr451-complete
           fetch-depth: 0
 
-      - name: Apply exact messaging repair
+      - name: Apply deterministic repair
         id: repair_step
         continue-on-error: true
         shell: bash
@@ -46,101 +47,27 @@ jobs:
           set -o pipefail
           {
             set -euo pipefail
-            git fetch origin main repair/pr451-complete
-            git checkout repair/pr451-complete
-            git reset --hard origin/repair/pr451-complete
+            git fetch origin \
+              +refs/heads/main:refs/remotes/origin/main \
+              +refs/heads/repair/pr451-complete:refs/remotes/origin/repair/pr451-complete
+            git switch -C repair/pr451-complete refs/remotes/origin/repair/pr451-complete
 
-            python3 - <<'PY'
-          from pathlib import Path
+            git show origin/main:tools/repair_pr459.py > /tmp/repair_pr459.py
+            python3 /tmp/repair_pr459.py
 
-          source = Path('lib/pages/messages/conversation_thread_page.dart')
-          text = source.read_text()
+            git show ae64f4c081b4ee4b84a029c7d4c7a9dee9d98a4a:.github/workflows/dart-format-quality.yml \
+              > .github/workflows/dart-format-quality.yml
+            git show ae64f4c081b4ee4b84a029c7d4c7a9dee9d98a4a:.github/workflows/pr-validation.yml \
+              > .github/workflows/pr-validation.yml
 
-          header_old = """            onForegroundImageError: (error, stackTrace) {
-              debugPrint(
-                '[ConversationThread] header avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                'error=$error',
-              );
-            },
-          """
-          header_new = """            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
-                ? (error, stackTrace) {
-                    debugPrint(
-                      '[ConversationThread] header avatar load failed '
-                      'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                      'error=$error',
-                    );
-                  }
-                : null,
-          """
-          if header_new not in text:
-              count = text.count(header_old)
-              if count != 1:
-                  raise SystemExit(
-                      f'Expected one header avatar callback, found {count}'
-                  )
-              text = text.replace(header_old, header_new)
+            rm -f \
+              .github/pr459-repair.trigger \
+              .github/pr459-native-sync-final.trigger \
+              .github/repair-pr459-main.trigger \
+              .github/repair-pr459-native-trigger-2 \
+              .github/pr459-api-repair.trigger
 
-          bubble_old = """      onForegroundImageError: (error, stackTrace) {
-        debugPrint(
-          '[ConversationThread] bubble avatar load failed '
-          'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-          'error=$error',
-        );
-      },
-          """
-          bubble_new = """      onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
-          ? (error, stackTrace) {
-              debugPrint(
-                '[ConversationThread] bubble avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
-                'error=$error',
-              );
-            }
-          : null,
-          """
-          if bubble_new not in text:
-              count = text.count(bubble_old)
-              if count != 1:
-                  raise SystemExit(
-                      f'Expected one bubble avatar callback, found {count}'
-                  )
-              text = text.replace(bubble_old, bubble_new)
-          source.write_text(text)
-
-          test = Path('test/pages/messages/conversation_thread_page_shell_test.dart')
-          test_text = test.read_text()
-          drain = """void _drainExpectedConversationThreadExceptions(WidgetTester tester) {
-  Object? exception;
-  while ((exception = tester.takeException()) != null) {
-    final message = exception.toString();
-    final isExpectedCircleAvatarAssertion =
-        message.contains('circle_avatar.dart') &&
-        message.contains(
-          'foregroundImage != null || onForegroundImageError == null',
-        );
-    if (!isExpectedCircleAvatarAssertion) {
-      throw exception!;
-    }
-  }
-}
-
-          """
-          test_text = test_text.replace(drain, '')
-          test_text = test_text.replace(
-              '  _drainExpectedConversationThreadExceptions(tester);\n',
-              '',
-          )
-          test.write_text(test_text)
-          PY
-
-            git checkout origin/main -- \
-              .github/workflows/dart-format-quality.yml \
-              .github/workflows/pr-validation.yml
-            rm -f .github/pr459-repair.trigger
             git diff --check
-
             if git diff --quiet; then
               echo 'Repair already applied.'
               exit 0
@@ -158,13 +85,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPAIR_OUTCOME: ${{ steps.repair_step.outcome }}
+        shell: bash
         run: |
-          tail -n 80 /tmp/pr459-repair.log > /tmp/pr459-repair-tail.log || true
           {
-            echo "### Temporary PR459 repair: ${REPAIR_OUTCOME}"
+            echo "### Réparation déterministe PR459 : ${REPAIR_OUTCOME}"
             echo
             echo '```text'
-            cat /tmp/pr459-repair-tail.log
+            tail -n 100 /tmp/pr459-repair.log 2>/dev/null || true
             echo '```'
           } > /tmp/pr459-repair-comment.md
           gh pr comment 459 --body-file /tmp/pr459-repair-comment.md
