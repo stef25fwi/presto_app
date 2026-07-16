@@ -290,11 +290,13 @@ void main() {
     expect(find.text('Publication...'), findsOneWidget);
 
     publishCompleter.complete();
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(
       find.text('MP3 Infos paiement validé et publié dans le popup.'),
       findsOneWidget,
     );
+    await tester.pumpAndSettle();
   });
 
   testWidgets('affiche une erreur lorsque la publication échoue',
