@@ -7,16 +7,16 @@ import { db } from "../../core/firestore";
 type SubscriptionPlan = "free" | "ilipresto_plus" | "ilipro";
 type MeteredCreditKind = "pdf" | "voiceAi" | "textAi";
 type CreditKind = MeteredCreditKind | "journeys" | "activeOffers";
-
 type CreditLimits = Record<CreditKind, number>;
 
 type CreditOperationData = {
   kind?: unknown;
   period?: unknown;
   status?: unknown;
+  counted?: unknown;
 };
 
-const UNLIMITED = 999999;
+export const UNLIMITED_SUBSCRIPTION_CREDIT = 999999;
 const MAX_JOURNEY_SNAPSHOT_BYTES = 700_000;
 
 const LIMITS_BY_PLAN: Record<SubscriptionPlan, CreditLimits> = {
@@ -31,14 +31,14 @@ const LIMITS_BY_PLAN: Record<SubscriptionPlan, CreditLimits> = {
     journeys: 5,
     pdf: 5,
     voiceAi: 5,
-    textAi: UNLIMITED,
+    textAi: UNLIMITED_SUBSCRIPTION_CREDIT,
     activeOffers: 10,
   },
   ilipro: {
     journeys: 10,
     pdf: 10,
-    voiceAi: UNLIMITED,
-    textAi: UNLIMITED,
+    voiceAi: UNLIMITED_SUBSCRIPTION_CREDIT,
+    textAi: UNLIMITED_SUBSCRIPTION_CREDIT,
     activeOffers: 30,
   },
 };
@@ -73,7 +73,7 @@ function asInt(value: unknown): number {
   return Math.max(0, Math.floor(parsed));
 }
 
-function normalizePlan(value: unknown): SubscriptionPlan {
+export function normalizeSubscriptionCreditPlan(value: unknown): SubscriptionPlan {
   const raw = asString(value).toLowerCase().replace(/[\s-]/g, "_");
   if (raw === "ilipresto_plus" || raw === "iliprestoplus" || raw === "ilipresto+") {
     return "ilipresto_plus";
@@ -82,7 +82,7 @@ function normalizePlan(value: unknown): SubscriptionPlan {
   return "free";
 }
 
-function currentPeriod(now = new Date()): string {
+export function subscriptionCreditPeriod(now = new Date()): string {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
@@ -92,9 +92,7 @@ function nextResetAt(now = new Date()): string {
 
 function sanitizeOperationId(value: unknown): string {
   const raw = asString(value);
-  if (!raw) {
-    throw new HttpsError("invalid-argument", "operationId est requis.");
-  }
+  if (!raw) throw new HttpsError("invalid-argument", "operationId est requis.");
   return raw.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 160);
 }
 
@@ -104,14 +102,17 @@ function normalizeMeteredKind(value: unknown): MeteredCreditKind {
   throw new HttpsError("invalid-argument", "Type de crédit invalide.");
 }
 
-function limitsFor(plan: SubscriptionPlan, freeAccessMode: boolean): CreditLimits {
+export function subscriptionCreditLimitsForPlan(
+  plan: SubscriptionPlan,
+  freeAccessMode: boolean,
+): CreditLimits {
   if (freeAccessMode) {
     return {
-      journeys: UNLIMITED,
-      pdf: UNLIMITED,
-      voiceAi: UNLIMITED,
-      textAi: UNLIMITED,
-      activeOffers: UNLIMITED,
+      journeys: UNLIMITED_SUBSCRIPTION_CREDIT,
+      pdf: UNLIMITED_SUBSCRIPTION_CREDIT,
+      voiceAi: UNLIMITED_SUBSCRIPTION_CREDIT,
+      textAi: UNLIMITED_SUBSCRIPTION_CREDIT,
+      activeOffers: UNLIMITED_SUBSCRIPTION_CREDIT,
     };
   }
   return LIMITS_BY_PLAN[plan];
@@ -128,19 +129,45 @@ async function loadSubscriptionContext(uid: string): Promise<{
   ]);
   const user = userSnap.data() ?? {};
   const config = configSnap.data() ?? {};
-  const plan = normalizePlan(user.subscriptionPlan ?? user.plan);
+  const plan = normalizeSubscriptionCreditPlan(user.subscriptionPlan ?? user.plan);
   const freeAccessMode = config.freeAccessMode !== false;
-  return { plan, freeAccessMode, limits: limitsFor(plan, freeAccessMode) };
+  return {
+    plan,
+    freeAccessMode,
+    limits: subscriptionCreditLimitsForPlan(plan, freeAccessMode),
+  };
 }
 
-function isActiveListing(data: Record<string, unknown>): boolean {
+export function isSubscriptionCreditActiveListing(
+  data: Record<string, unknown>,
+): boolean {
   const status = asString(data.status).toLowerCase();
+  const excludedStatuses = new Set([
+    "archived",
+    "deleted",
+    "closed",
+    "expired",
+    "rejected",
+    "refused",
+    "declined",
+  ]);
+  if (excludedStatuses.has(status) ||
+      data.isArchived === true ||
+      data.isDeleted === true ||
+      data.deletedAt != null ||
+      data.archivedAt != null) {
+    return false;
+  }
+
   const visibility = data.visibility;
   const visibilityMap = asMap(visibility);
   const visibilityText = asString(visibility).toLowerCase();
   const isPublic = visibilityMap.isPublic === true || visibilityText === "public";
-  return data.isPublished === true || data.isActive === true ||
-    status === "published" || status === "active" || isPublic;
+  return data.isPublished === true ||
+    data.isActive === true ||
+    status === "published" ||
+    status === "active" ||
+    isPublic;
 }
 
 async function countActiveOffers(uid: string): Promise<number> {
@@ -157,7 +184,7 @@ async function countActiveOffers(uid: string): Promise<number> {
   for (const snapshot of snapshots) {
     if (!snapshot) continue;
     for (const doc of snapshot.docs) {
-      if (isActiveListing(doc.data())) activeIds.add(doc.id);
+      if (isSubscriptionCreditActiveListing(doc.data())) activeIds.add(doc.id);
     }
   }
   return activeIds.size;
@@ -169,19 +196,19 @@ async function countSavedJourneys(uid: string): Promise<number> {
 }
 
 function creditPayload(used: number, limit: number): Record<string, unknown> {
-  const unlimited = limit >= UNLIMITED;
+  const unlimited = limit >= UNLIMITED_SUBSCRIPTION_CREDIT;
   return {
     used,
     limit,
     unlimited,
-    remaining: unlimited ? UNLIMITED : Math.max(0, limit - used),
+    remaining: unlimited ? UNLIMITED_SUBSCRIPTION_CREDIT : Math.max(0, limit - used),
     exhausted: !unlimited && used >= limit,
   };
 }
 
 async function buildCreditSnapshot(uid: string): Promise<Record<string, unknown>> {
   const now = new Date();
-  const period = currentPeriod(now);
+  const period = subscriptionCreditPeriod(now);
   const context = await loadSubscriptionContext(uid);
   const usageRef = db.collection("users").doc(uid).collection("subscriptionUsage").doc(period);
   const [usageSnap, savedJourneys, activeOffers] = await Promise.all([
@@ -218,19 +245,18 @@ export const consumeSubscriptionCredit = onCall(
     const data = asMap(request.data);
     const kind = normalizeMeteredKind(data.kind);
     const operationId = sanitizeOperationId(data.operationId);
-    const period = currentPeriod();
+    const period = subscriptionCreditPeriod();
     const context = await loadSubscriptionContext(uid);
     const limit = context.limits[kind];
+    const counted = limit < UNLIMITED_SUBSCRIPTION_CREDIT;
     const usageField = USAGE_FIELD_BY_KIND[kind];
     const userRef = db.collection("users").doc(uid);
     const usageRef = userRef.collection("subscriptionUsage").doc(period);
     const operationRef = userRef.collection("subscriptionCreditOperations").doc(operationId);
 
     const result = await db.runTransaction(async (transaction) => {
-      const [usageSnap, operationSnap] = await Promise.all([
-        transaction.get(usageRef),
-        transaction.get(operationRef),
-      ]);
+      const usageSnap = await transaction.get(usageRef);
+      const operationSnap = await transaction.get(operationRef);
       const usage = usageSnap.data() ?? {};
       const currentUsed = asInt(usage[usageField]);
       const operation = (operationSnap.data() ?? {}) as CreditOperationData;
@@ -238,8 +264,7 @@ export const consumeSubscriptionCredit = onCall(
       if (operationSnap.exists && operation.status === "consumed") {
         return { used: currentUsed, alreadyConsumed: true };
       }
-
-      if (limit < UNLIMITED && currentUsed >= limit) {
+      if (counted && currentUsed >= limit) {
         throw new HttpsError(
           "resource-exhausted",
           "Votre crédit est épuisé pour cette période. Consultez les offres pour augmenter votre quota.",
@@ -247,7 +272,7 @@ export const consumeSubscriptionCredit = onCall(
         );
       }
 
-      const nextUsed = limit >= UNLIMITED ? currentUsed : currentUsed + 1;
+      const nextUsed = counted ? currentUsed + 1 : currentUsed;
       transaction.set(usageRef, {
         period,
         [usageField]: nextUsed,
@@ -256,6 +281,7 @@ export const consumeSubscriptionCredit = onCall(
       transaction.set(operationRef, {
         kind,
         period,
+        counted,
         status: "consumed",
         consumedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -268,7 +294,7 @@ export const consumeSubscriptionCredit = onCall(
       kind,
       period,
       limit,
-      unlimited: limit >= UNLIMITED,
+      unlimited: !counted,
       ...result,
     };
   },
@@ -291,15 +317,19 @@ export const refundSubscriptionCredit = onCall(
       if (operation.status !== "consumed" || operation.kind !== kind) {
         return { ok: true, refunded: false };
       }
-      const period = asString(operation.period) || currentPeriod();
-      const usageField = USAGE_FIELD_BY_KIND[kind];
-      const usageRef = userRef.collection("subscriptionUsage").doc(period);
-      const usageSnap = await transaction.get(usageRef);
-      const currentUsed = asInt((usageSnap.data() ?? {})[usageField]);
-      transaction.set(usageRef, {
-        [usageField]: Math.max(0, currentUsed - 1),
-        updatedAt: FieldValue.serverTimestamp(),
-      }, { merge: true });
+
+      if (operation.counted === true) {
+        const period = asString(operation.period) || subscriptionCreditPeriod();
+        const usageField = USAGE_FIELD_BY_KIND[kind];
+        const usageRef = userRef.collection("subscriptionUsage").doc(period);
+        const usageSnap = await transaction.get(usageRef);
+        const currentUsed = asInt((usageSnap.data() ?? {})[usageField]);
+        transaction.set(usageRef, {
+          [usageField]: Math.max(0, currentUsed - 1),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+
       transaction.set(operationRef, {
         status: "refunded",
         refundedAt: FieldValue.serverTimestamp(),
@@ -329,8 +359,7 @@ export const saveMyJourney = onCall(
     if (Object.keys(snapshot).length === 0) {
       throw new HttpsError("invalid-argument", "Le parcours à sauvegarder est vide.");
     }
-    const serialized = JSON.stringify(snapshot);
-    if (Buffer.byteLength(serialized, "utf8") > MAX_JOURNEY_SNAPSHOT_BYTES) {
+    if (Buffer.byteLength(JSON.stringify(snapshot), "utf8") > MAX_JOURNEY_SNAPSHOT_BYTES) {
       throw new HttpsError("invalid-argument", "Le parcours est trop volumineux pour être sauvegardé.");
     }
 
@@ -345,15 +374,15 @@ export const saveMyJourney = onCall(
     const metadata = journeyMetadata(snapshot);
 
     await db.runTransaction(async (transaction) => {
-      const [journeySnap, usageSnap] = await Promise.all([
-        transaction.get(journeyRef),
-        transaction.get(usageRef),
-      ]);
+      const journeySnap = await transaction.get(journeyRef);
+      const usageSnap = await transaction.get(usageRef);
       const storedCount = usageSnap.exists
         ? asInt((usageSnap.data() ?? {}).savedJourneysCount)
         : actualCount;
       const isNew = !journeySnap.exists;
-      if (isNew && context.limits.journeys < UNLIMITED && storedCount >= context.limits.journeys) {
+      if (isNew &&
+          context.limits.journeys < UNLIMITED_SUBSCRIPTION_CREDIT &&
+          storedCount >= context.limits.journeys) {
         throw new HttpsError(
           "resource-exhausted",
           "Votre bibliothèque de parcours est pleine. Supprimez un parcours ou choisissez une offre supérieure.",
@@ -396,16 +425,15 @@ export const deleteMyJourney = onCall(
     const userRef = db.collection("users").doc(uid);
     const journeyRef = userRef.collection("savedJourneys").doc(journeyId);
     const usageRef = userRef.collection("subscriptionUsage").doc("library");
+    const actualCount = await countSavedJourneys(uid);
 
     await db.runTransaction(async (transaction) => {
-      const [journeySnap, usageSnap] = await Promise.all([
-        transaction.get(journeyRef),
-        transaction.get(usageRef),
-      ]);
+      const journeySnap = await transaction.get(journeyRef);
+      const usageSnap = await transaction.get(usageRef);
       if (!journeySnap.exists) return;
       const current = usageSnap.exists
         ? asInt((usageSnap.data() ?? {}).savedJourneysCount)
-        : await countSavedJourneys(uid);
+        : actualCount;
       transaction.delete(journeyRef);
       transaction.set(usageRef, {
         savedJourneysCount: Math.max(0, current - 1),
