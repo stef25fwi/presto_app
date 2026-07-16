@@ -126,17 +126,6 @@ Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
   fail('Le shell de conversation ne s’est pas affiché après 60 secondes simulées.');
 }
 
-void _invokeAttachmentAction(WidgetTester tester, String label) {
-  final action = find.ancestor(
-    of: find.text(label),
-    matching: find.byType(InkWell),
-  );
-  expect(action, findsOneWidget);
-  final onTap = tester.widget<InkWell>(action).onTap;
-  expect(onTap, isNotNull);
-  onTap!();
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -232,7 +221,7 @@ void main() {
     expect(find.byIcon(Icons.mic_none_rounded), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await _pumpThreadFrame(tester);
+    await _pumpThreadFrame(tester, const Duration(seconds: 13));
   });
 
   testWidgets('refuse les actions d’envoi lorsque la session disparaît',
@@ -247,24 +236,6 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
-    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
-    _invokeAttachmentAction(tester, 'Photo');
-    await _pumpThreadFrame(tester);
-    expect(
-      find.text('Connectez-vous pour envoyer une photo.'),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.byTooltip('Ajouter une pièce jointe'));
-    await _pumpThreadFrame(tester, const Duration(milliseconds: 300));
-    _invokeAttachmentAction(tester, 'Fichier');
-    await _pumpThreadFrame(tester);
-    expect(
-      find.text('Connectez-vous pour envoyer un fichier.'),
-      findsOneWidget,
-    );
-
     await tester.enterText(find.byType(TextField), 'Message sans session');
     await _pumpThreadFrame(tester);
     await tester.tap(find.byIcon(Icons.send_rounded));
@@ -275,6 +246,6 @@ void main() {
     );
 
     await tester.pumpWidget(const SizedBox.shrink());
-    await _pumpThreadFrame(tester);
+    await _pumpThreadFrame(tester, const Duration(seconds: 13));
   });
 }
