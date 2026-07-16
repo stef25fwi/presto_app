@@ -29,10 +29,21 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       - name: Verify detailed information preservation
-        run: flutter test test/services/parcours_fiches_information_preservation_test.dart --reporter expanded
+        id: preservation_test
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p build/quality
+          set -o pipefail
+          flutter test test/services/parcours_fiches_information_preservation_test.dart --reporter expanded \
+            2>&1 | tee build/quality/parcours-information-preservation-test.log
       - name: Install PDF inspection tools
+        if: always() && hashFiles('build/quality/parcours-guide-information-preservation.pdf') != ''
         run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Inspect detailed PDF content
+        id: pdf_inspection
+        continue-on-error: true
+        if: always() && hashFiles('build/quality/parcours-guide-information-preservation.pdf') != ''
         shell: bash
         run: |
           set -euo pipefail
@@ -56,13 +67,21 @@ jobs:
             build/quality/parcours-information-pages/page
           test -s build/quality/parcours-information-pages/page-1.png
       - name: Upload detailed preservation evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: parcours-information-preservation
           if-no-files-found: error
           path: |
+            build/quality/parcours-information-preservation-test.log
             build/quality/parcours-guide-information-preservation.pdf
             build/quality/parcours-guide-information-preservation.txt
             build/quality/parcours-guide-information-pdfinfo.txt
             build/quality/parcours-information-pages/*.png
           retention-days: 30
+      - name: Enforce information preservation
+        if: always()
+        shell: bash
+        run: |
+          test '${{ steps.preservation_test.outcome }}' = 'success'
+          test '${{ steps.pdf_inspection.outcome }}' = 'success'
