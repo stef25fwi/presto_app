@@ -7,12 +7,20 @@ import 'widgets/admin_messaging_app_bar.dart';
 import 'widgets/admin_risk_score_badge.dart';
 import 'widgets/admin_user_messaging_status_badge.dart';
 
+typedef AdminUserMessagingStatusUpdater = Future<void> Function({
+  required String userId,
+  required String status,
+  required String reason,
+});
+
 class AdminMessagingUserDetailPage extends StatefulWidget {
   final AdminMessagingUserModel user;
+  final AdminUserMessagingStatusUpdater? updateUserMessagingStatus;
 
   const AdminMessagingUserDetailPage({
     super.key,
     required this.user,
+    this.updateUserMessagingStatus,
   });
 
   @override
@@ -22,7 +30,6 @@ class AdminMessagingUserDetailPage extends StatefulWidget {
 
 class _AdminMessagingUserDetailPageState
     extends State<AdminMessagingUserDetailPage> {
-  final AdminModerationService _moderationService = AdminModerationService();
   bool _saving = false;
 
   Future<void> _setUserStatus(String status) async {
@@ -37,7 +44,9 @@ class _AdminMessagingUserDetailPageState
     if (!confirm) return;
     setState(() => _saving = true);
     try {
-      await _moderationService.updateUserMessagingStatus(
+      final updateStatus = widget.updateUserMessagingStatus ??
+          AdminModerationService().updateUserMessagingStatus;
+      await updateStatus(
         userId: widget.user.uid,
         status: status,
         reason: 'Action depuis la fiche utilisateur messagerie',
@@ -84,9 +93,11 @@ class _AdminMessagingUserDetailPageState
                 Text('Signalements reçus: ${user.reportsReceived}'),
                 Text('Signalements envoyés: ${user.reportsSent}'),
                 Text(
-                    'Taux de réponse: ${user.responseRate.toStringAsFixed(0)} %'),
+                  'Taux de réponse: ${user.responseRate.toStringAsFixed(0)} %',
+                ),
                 Text(
-                    'Délai moyen: ${user.averageResponseHours.toStringAsFixed(1)} h'),
+                  'Délai moyen: ${user.averageResponseHours.toStringAsFixed(1)} h',
+                ),
               ],
             ),
           ),
