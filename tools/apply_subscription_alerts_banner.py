@@ -1,0 +1,269 @@
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
+
+def _font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
+    path = (
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        if bold
+        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    )
+    return ImageFont.truetype(path, size)
+
+
+def generate_banner() -> None:
+    out = Path("assets/images/subscription_alerts_banner.png")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    width, height = 1600, 700
+    image = Image.new("RGB", (width, height), "#eaf3ff")
+    draw = ImageDraw.Draw(image)
+
+    for y in range(height):
+        ratio = y / max(1, height - 1)
+        color = tuple(
+            int(start + (end - start) * ratio)
+            for start, end in zip((244, 249, 255), (220, 235, 255))
+        )
+        draw.line((0, y, width, y), fill=color)
+
+    blue = "#0d3b7a"
+    orange = "#ff6b00"
+    draw.text((70, 105), "Ne ratez plus", fill=blue, font=_font(72, True))
+    draw.text((70, 185), "aucune offre !", fill=blue, font=_font(72, True))
+    draw.text(
+        (72, 300),
+        "Recevez instantanément les opportunités",
+        fill=blue,
+        font=_font(34),
+    )
+    draw.text(
+        (72, 348),
+        "disponibles dans votre secteur.",
+        fill=blue,
+        font=_font(34),
+    )
+
+    draw.rounded_rectangle(
+        (1040, 65, 1395, 635),
+        radius=55,
+        fill="#0868d8",
+        outline="#063a83",
+        width=12,
+    )
+    draw.rounded_rectangle((1070, 95, 1365, 605), radius=40, fill="#0d78ee")
+    draw.text((1142, 125), "11:00", fill="white", font=_font(54, True))
+    draw.rounded_rectangle((1110, 250, 1330, 350), radius=20, fill="white")
+    draw.text(
+        (1130, 270),
+        "Nouvelle annonce !",
+        fill=blue,
+        font=_font(23, True),
+    )
+    draw.text((1130, 304), "Une offre correspond", fill=blue, font=_font(19))
+
+    draw.ellipse((1370, 245, 1560, 435), fill=orange)
+    draw.rectangle((1410, 365, 1520, 505), fill=orange)
+    draw.ellipse((1400, 465, 1530, 565), fill=orange)
+    draw.ellipse((1452, 535, 1480, 563), fill="#ffd05a")
+
+    cards = [
+        ("Jardinage", "#2ca24c"),
+        ("Hôtesse d’accueil", "#7b4dde"),
+        ("Bricolage", "#f59e0b"),
+    ]
+    y = 170
+    for label, color in cards:
+        draw.rounded_rectangle(
+            (650, y, 1035, y + 105),
+            radius=24,
+            fill="white",
+            outline="#c9d9ef",
+            width=3,
+        )
+        draw.ellipse((675, y + 20, 735, y + 80), fill=color)
+        draw.text((755, y + 30), label, fill=blue, font=_font(31, True))
+        y += 125
+
+    image.save(out, optimize=True)
+
+
+def patch_account_page() -> None:
+    path = Path("lib/pages/account_page.dart")
+    text = path.read_text()
+
+    service_import = "import '../services/ad_placeholder_image_service.dart';\n"
+    anchor = "import '../services/admin_access_resolver.dart';\n"
+    if service_import not in text:
+        if anchor not in text:
+            raise RuntimeError("Import admin_access_resolver introuvable")
+        text = text.replace(anchor, anchor + service_import, 1)
+
+    old_banner = """                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F0FE),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Ne ratez plus aucune offre : choisissez au moins 2 catégories et recevez instantanément les opportunités disponibles dans votre secteur.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF1A3A5C),
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),"""
+    replacement = "                            _buildSubscriptionAlertsBanner(),"
+    if old_banner in text:
+        text = text.replace(old_banner, replacement, 1)
+    elif replacement not in text:
+        raise RuntimeError("Encart bleu introuvable dans account_page.dart")
+
+    marker = "  Widget _buildAdminSpaceEntry(User user) {"
+    method = """  Widget _buildSubscriptionAlertsBanner() {
+    const fallbackAsset = 'assets/images/subscription_alerts_banner.png';
+
+    Widget fallback() => Image.asset(
+          fallbackAsset,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          errorBuilder: (_, __, ___) => const ColoredBox(
+            color: Color(0xFFE8F0FE),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Ne ratez plus aucune offre !',
+                  style: TextStyle(
+                    color: Color(0xFF1A3A5C),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 7,
+        child: StreamBuilder<List<AdPlaceholderImage>>(
+          stream: AdPlaceholderImageService.watchAll(
+            target: 'subscription_alerts_banner',
+          ),
+          builder: (context, snapshot) {
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
+
+            return Image.network(
+              activeImages.first.imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              gaplessPlayback: true,
+              errorBuilder: (_, __, ___) => fallback(),
+              loadingBuilder: (context, child, progress) =>
+                  progress == null ? child : fallback(),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+"""
+    if "Widget _buildSubscriptionAlertsBanner()" not in text:
+        if marker not in text:
+            raise RuntimeError("Point insertion bannière introuvable")
+        text = text.replace(marker, method + marker, 1)
+
+    path.write_text(text)
+
+
+def patch_admin_page() -> None:
+    path = Path("lib/pages/admin/ad_placeholder_images_admin_page.dart")
+    text = path.read_text()
+
+    old_target = "  static const String _target = 'consult_offers';"
+    new_target = """  static const Map<String, String> _targets = {
+    'consult_offers': 'Page Je consulte — placeholders annonces',
+    'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',
+  };
+  String _target = 'consult_offers';"""
+    if old_target in text:
+        text = text.replace(old_target, new_target, 1)
+    elif "'subscription_alerts_banner'" not in text:
+        raise RuntimeError("Cible admin introuvable")
+
+    body_anchor = """        children: [
+          // Widget upload — toujours visible, indépendant de l'état Firestore"""
+    selector = """        children: [
+          if (!_isReordering)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: DropdownButtonFormField<String>(
+                initialValue: _target,
+                decoration: InputDecoration(
+                  labelText: 'Emplacement de l’image',
+                  prefixIcon: const Icon(Icons.web_asset_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                items: _targets.entries
+                    .map(
+                      (entry) => DropdownMenuItem<String>(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _isUploading
+                    ? null
+                    : (value) {
+                        if (value == null || value == _target) return;
+                        setState(() {
+                          _target = value;
+                          _lastLoadedImages = const <AdPlaceholderImage>[];
+                          _reorderBuffer = null;
+                        });
+                      },
+              ),
+            ),
+          // Widget upload — toujours visible, indépendant de l'état Firestore"""
+    if "labelText: 'Emplacement de l’image'" not in text:
+        if body_anchor not in text:
+            raise RuntimeError("Point insertion sélecteur admin introuvable")
+        text = text.replace(body_anchor, selector, 1)
+
+    old_info = """                    \"Ces images alimentent les placeholders AdBanner de la page « Je consulte ». \"
+                    \"Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. \"
+                    \"S'il n'y a aucune image active, l'app utilise ses images embarquées.\","""
+    new_info = """                    _target == 'subscription_alerts_banner'
+                        ? \"Cette image remplace l’encart bleu de la section « Mes alertes Nouvelle annonce ». \"
+                            \"Format conseillé : horizontal, ratio 16:7, 1600 px min.\"
+                        : \"Ces images alimentent les placeholders AdBanner de la page « Je consulte ». \"
+                            \"Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. \"
+                            \"S'il n'y a aucune image active, l'app utilise ses images embarquées.\","""
+    if old_info in text:
+        text = text.replace(old_info, new_info, 1)
+
+    path.write_text(text)
+
+
+def main() -> None:
+    generate_banner()
+    patch_account_page()
+    patch_admin_page()
+
+
+if __name__ == "__main__":
+    main()
