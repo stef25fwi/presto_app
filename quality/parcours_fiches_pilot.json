@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-16",
+  "goal": "Valider la nouvelle méthode sur des activités représentatives avant révision industrielle du catalogue.",
+  "requiredProfiles": ["salarie", "fonctionnaire", "demandeur_emploi", "etudiant", "retraite", "deja_independant"],
+  "activities": [
+    {"activity": "Aide déménagement", "family": "Déménagement / manutention", "risk": "high", "status": "corrected_first_pass"},
+    {"activity": "Aide livraison", "family": "Transport / livraison", "risk": "high", "status": "planned"},
+    {"activity": "Chargement déchargement", "family": "Manutention", "risk": "medium", "status": "planned"},
+    {"activity": "Petit bricolage", "family": "Bricolage", "risk": "high", "status": "planned"},
+    {"activity": "Jardinage", "family": "Espaces verts", "risk": "medium", "status": "planned"},
+    {"activity": "Ménage à domicile", "family": "Services à la personne", "risk": "high", "status": "planned"},
+    {"activity": "Garde d'enfants", "family": "Services à la personne", "risk": "high", "status": "planned"},
+    {"activity": "Aide aux personnes âgées", "family": "Services à la personne", "risk": "high", "status": "planned"},
+    {"activity": "Électricien", "family": "Bâtiment", "risk": "high", "status": "planned"},
+    {"activity": "Peintre en bâtiment", "family": "Bâtiment", "risk": "high", "status": "planned"},
+    {"activity": "Traiteur", "family": "Alimentation", "risk": "high", "status": "planned"},
+    {"activity": "Livraison de repas", "family": "Alimentation / livraison", "risk": "high", "status": "planned"},
+    {"activity": "Coach sportif", "family": "Sport / bien-être", "risk": "high", "status": "planned"},
+    {"activity": "Coiffure à domicile", "family": "Beauté", "risk": "high", "status": "planned"},
+    {"activity": "Création de site internet", "family": "Numérique", "risk": "low", "status": "planned"},
+    {"activity": "Community manager", "family": "Communication", "risk": "low", "status": "planned"},
+    {"activity": "Formateur indépendant", "family": "Formation", "risk": "high", "status": "planned"},
+    {"activity": "Assistant administratif", "family": "Administratif", "risk": "medium", "status": "planned"},
+    {"activity": "Photographe", "family": "Création", "risk": "medium", "status": "planned"},
+    {"activity": "Vente ambulante", "family": "Commerce", "risk": "high", "status": "planned"}
+  ]
+}
