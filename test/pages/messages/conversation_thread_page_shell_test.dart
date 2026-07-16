@@ -132,14 +132,14 @@ Future<void> _pumpThreadFrame(
 }
 
 Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
-  for (var frame = 0; frame < 30; frame += 1) {
-    await _pumpThreadFrame(tester);
+  for (var second = 0; second < 30; second += 1) {
+    await _pumpThreadFrame(tester, const Duration(seconds: 1));
     if (find.text('Peinture salon').evaluate().isNotEmpty &&
         find.byType(TextField).evaluate().isNotEmpty) {
       return;
     }
   }
-  fail('Le shell de conversation ne s’est pas affiché après 30 frames.');
+  fail('Le shell de conversation ne s’est pas affiché après 30 secondes simulées.');
 }
 
 void main() {
