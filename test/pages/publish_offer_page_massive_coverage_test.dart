@@ -55,6 +55,18 @@ void main() {
     );
   }
 
+  Finder titleField() {
+    return find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is TextFormField &&
+              (widget.maxLines ?? 1) == 1 &&
+              widget.controller != null,
+          description: 'champs texte monolignes avec contrôleur',
+        )
+        .first;
+  }
+
   testWidgets('bascule entre IA vocale et texte sans perdre le brouillon',
       (tester) async {
     await pumpPage(tester);
@@ -68,10 +80,6 @@ void main() {
     const description =
         'Je recherche une personne soigneuse pour repeindre une chambre.';
     const title = 'Peinture chambre';
-    final textFields = tester
-        .widgetList<TextFormField>(find.byType(TextFormField))
-        .toList(growable: false);
-    expect(textFields, isNotEmpty);
 
     final descriptionFinder = descriptionField();
     expect(descriptionFinder, findsOneWidget);
@@ -82,18 +90,16 @@ void main() {
     await tester.pump();
 
     expect(tester.widget<TextFormField>(descriptionFinder).readOnly, isFalse);
-
-    final titleWidget = textFields.firstWhere(
-      (field) => (field.maxLines ?? 1) == 1 && field.controller != null,
-      orElse: () => throw TestFailure('Le champ titre est introuvable.'),
-    );
+    expect(titleField(), findsOneWidget);
 
     await tester.enterText(descriptionFinder, description);
-    await tester.enterText(find.byWidget(titleWidget), title);
+    await tester.enterText(titleField(), title);
     await tester.pump();
 
-    expect(tester.widget<TextFormField>(descriptionFinder).controller?.text,
-        description);
+    expect(
+      tester.widget<TextFormField>(descriptionFinder).controller?.text,
+      description,
+    );
 
     await selectVocalMode(tester);
     expect(find.text('Appuyez pour parler'), findsOneWidget);
