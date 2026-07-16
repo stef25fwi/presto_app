@@ -14,7 +14,11 @@ class AdPlaceholderImagesAdminPage extends StatefulWidget {
 
 class _AdPlaceholderImagesAdminPageState
     extends State<AdPlaceholderImagesAdminPage> {
-  static const String _target = 'consult_offers';
+  static const Map<String, String> _targets = {
+    'consult_offers': 'Page Je consulte — placeholders annonces',
+    'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',
+  };
+  String _target = 'consult_offers';
   static const _orange = Color(0xFFFF6600);
 
   final ImagePicker _picker = ImagePicker();
@@ -96,20 +100,26 @@ class _AdPlaceholderImagesAdminPageState
             : 'Terminé · ${files.length} images ajoutées aux placeholders.';
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(files.length == 1
-            ? 'Image ajoutée aux placeholders.'
-            : '${files.length} images ajoutées aux placeholders.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            files.length == 1
+                ? 'Image ajoutée aux placeholders.'
+                : '${files.length} images ajoutées aux placeholders.',
+          ),
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _uploadStatus = "Erreur pendant l'ajout : $error";
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Erreur pendant l'ajout : $error"),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur pendant l'ajout : $error"),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -144,14 +154,17 @@ class _AdPlaceholderImagesAdminPageState
     try {
       await AdPlaceholderImageService.deleteImage(image);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Image supprimée.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Image supprimée.')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Suppression impossible : $error'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Suppression impossible : $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -203,8 +216,9 @@ class _AdPlaceholderImagesAdminPageState
 
   Future<void> _openEditSlideDialog(AdPlaceholderImage image) async {
     final titleController = TextEditingController(text: image.title ?? '');
-    final descriptionController =
-        TextEditingController(text: image.description ?? '');
+    final descriptionController = TextEditingController(
+      text: image.description ?? '',
+    );
     final linkUrlController = TextEditingController(text: image.linkUrl ?? '');
 
     if (!mounted) return;
@@ -232,7 +246,8 @@ class _AdPlaceholderImagesAdminPageState
                           errorBuilder: (_, __, ___) => const ColoredBox(
                             color: Color(0xFFF2F4F7),
                             child: Center(
-                                child: Icon(Icons.broken_image_outlined)),
+                              child: Icon(Icons.broken_image_outlined),
+                            ),
                           ),
                         ),
                         Center(
@@ -242,8 +257,11 @@ class _AdPlaceholderImagesAdminPageState
                               color: Colors.black38,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.zoom_in_rounded,
-                                color: Colors.white, size: 18),
+                            child: const Icon(
+                              Icons.zoom_in_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ],
@@ -479,15 +497,17 @@ class _AdPlaceholderImagesAdminPageState
         _isReordering = false;
         _reorderBuffer = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ordre sauvegardé.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ordre sauvegardé.')));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Erreur sauvegarde : $error'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur sauvegarde : $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSavingOrder = false);
     }
@@ -506,7 +526,8 @@ class _AdPlaceholderImagesAdminPageState
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-            _isReordering ? 'Réorganiser les images' : 'Gestion Placeholders'),
+          _isReordering ? 'Réorganiser les images' : 'Gestion Placeholders',
+        ),
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
         elevation: 2,
@@ -529,8 +550,10 @@ class _AdPlaceholderImagesAdminPageState
                 else ...[
                   TextButton(
                     onPressed: _cancelReorder,
-                    child: const Text('Annuler',
-                        style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'Annuler',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                   TextButton(
                     onPressed: _saveReorder,
@@ -568,6 +591,38 @@ class _AdPlaceholderImagesAdminPageState
             ),
       body: Column(
         children: [
+          if (!_isReordering)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: DropdownButtonFormField<String>(
+                initialValue: _target,
+                decoration: InputDecoration(
+                  labelText: 'Emplacement de l’image',
+                  prefixIcon: const Icon(Icons.web_asset_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                items: _targets.entries
+                    .map(
+                      (entry) => DropdownMenuItem<String>(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _isUploading
+                    ? null
+                    : (value) {
+                        if (value == null || value == _target) return;
+                        setState(() {
+                          _target = value;
+                          _lastLoadedImages = const <AdPlaceholderImage>[];
+                          _reorderBuffer = null;
+                        });
+                      },
+              ),
+            ),
           // Widget upload — toujours visible, indépendant de l'état Firestore
           if (_isUploading || _uploadPreviewBytes != null)
             Padding(
@@ -618,8 +673,9 @@ class _AdPlaceholderImagesAdminPageState
                     ? (_reorderBuffer ?? streamImages)
                     : streamImages;
 
-                final visibleCount =
-                    streamImages.where((img) => img.isVisible).length;
+                final visibleCount = streamImages
+                    .where((img) => img.isVisible)
+                    .length;
 
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     streamImages.isEmpty) {
@@ -654,8 +710,11 @@ class _AdPlaceholderImagesAdminPageState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded,
-                  color: Colors.red.shade600, size: 40),
+              Icon(
+                Icons.error_outline_rounded,
+                color: Colors.red.shade600,
+                size: 40,
+              ),
               const SizedBox(height: 12),
               Text(
                 'Erreur de chargement\n$error',
@@ -698,10 +757,7 @@ class _AdPlaceholderImagesAdminPageState
             icon: Icons.swap_vert_rounded,
             label: 'Réorganiser',
           ),
-          _PlaceholderToolChip(
-            icon: Icons.delete_rounded,
-            label: 'Supprimer',
-          ),
+          _PlaceholderToolChip(icon: Icons.delete_rounded, label: 'Supprimer'),
         ],
       ),
     );
@@ -716,8 +772,8 @@ class _AdPlaceholderImagesAdminPageState
     final spotlightImage = activeImages.isNotEmpty
         ? activeImages.first
         : images.isNotEmpty
-            ? images.first
-            : null;
+        ? images.first
+        : null;
     final activePositionById = <String, int>{
       for (var i = 0; i < activeImages.length; i++) activeImages[i].id: i + 1,
     };
@@ -731,21 +787,28 @@ class _AdPlaceholderImagesAdminPageState
         Card(
           elevation: 0,
           color: const Color(0xFFFFF3EA),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.image_search_outlined,
-                    color: _orange, size: 30),
+                const Icon(
+                  Icons.image_search_outlined,
+                  color: _orange,
+                  size: 30,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "Ces images alimentent les placeholders AdBanner de la page « Je consulte ». "
-                    "Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. "
-                    "S'il n'y a aucune image active, l'app utilise ses images embarquées.",
+                    _target == 'subscription_alerts_banner'
+                        ? "Cette image remplace l’encart bleu de la section « Mes alertes Nouvelle annonce ». "
+                              "Format conseillé : horizontal, ratio 16:7, 1600 px min."
+                        : "Ces images alimentent les placeholders AdBanner de la page « Je consulte ». "
+                              "Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. "
+                              "S'il n'y a aucune image active, l'app utilise ses images embarquées.",
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
@@ -773,12 +836,11 @@ class _AdPlaceholderImagesAdminPageState
                     visibleCount == 0
                         ? '⚠️  Aucune image active sur ${images.length}'
                         : visibleCount == 1
-                            ? '✅ 1 image active sur ${images.length}'
-                            : '✅ $visibleCount images actives sur ${images.length}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                        ? '✅ 1 image active sur ${images.length}'
+                        : '✅ $visibleCount images actives sur ${images.length}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   _buildToolsChips(),
@@ -786,7 +848,9 @@ class _AdPlaceholderImagesAdminPageState
                   Text(
                     '✏️ Modifier · 👁️ Cocher pour afficher · 🔍 Zoom · 🗑️ Supprimer',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.black54, fontWeight: FontWeight.w600),
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -796,9 +860,7 @@ class _AdPlaceholderImagesAdminPageState
                 message: 'Réorganiser l\'ordre des images par glisser-déposer',
                 child: FilledButton.icon(
                   onPressed: () => _enterReorderMode(images),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _orange,
-                  ),
+                  style: FilledButton.styleFrom(backgroundColor: _orange),
                   icon: const Icon(Icons.swap_vert_rounded, size: 18),
                   label: const Text('Réorganiser'),
                 ),
@@ -825,9 +887,9 @@ class _AdPlaceholderImagesAdminPageState
                     onTapImage: () => _openViewer(image.imageUrl),
                     onVisibilityChanged: (value) =>
                         AdPlaceholderImageService.setVisible(
-                      id: image.id,
-                      isVisible: value,
-                    ),
+                          id: image.id,
+                          isVisible: value,
+                        ),
                     onDelete: () => _confirmDelete(image),
                     onEdit: () => _openEditSlideDialog(image),
                   ),
@@ -991,8 +1053,9 @@ class _SelectedAdPlaceholderPreview extends StatelessWidget {
     final bytes = fileBytes;
     final uploadValue = uploadProgress?.clamp(0.0, 1.0);
     final conversionValue = conversionProgress?.clamp(0.0, 1.0);
-    final uploadPercent =
-        uploadValue == null ? null : (uploadValue * 100).round();
+    final uploadPercent = uploadValue == null
+        ? null
+        : (uploadValue * 100).round();
     final title = totalCount > 1 && currentIndex > 0
         ? '$fileName · $currentIndex/$totalCount'
         : fileName;
@@ -1116,10 +1179,7 @@ class _SelectedAdPlaceholderPreview extends StatelessWidget {
             IconButton(
               tooltip: 'Masquer le visualiseur',
               onPressed: onClear,
-              icon: const Icon(
-                Icons.close_rounded,
-                color: Color(0xFF6B7280),
-              ),
+              icon: const Icon(Icons.close_rounded, color: Color(0xFF6B7280)),
             ),
           ],
         ],
@@ -1203,8 +1263,8 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
     final activeLabel = selected && activePosition != null && activeTotal > 0
         ? 'Active $activePosition/$activeTotal'
         : selected
-            ? 'Affichée'
-            : 'Masquée';
+        ? 'Affichée'
+        : 'Masquée';
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -1248,8 +1308,11 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                 color: Colors.black54,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.zoom_in_rounded,
-                  color: Colors.white, size: 24),
+              child: const Icon(
+                Icons.zoom_in_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
           // Checkbox visibilité (haut droite) - plus grand
@@ -1300,8 +1363,10 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                 children: [
                   // Badge état (bas gauche)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: selected ? orange : Colors.grey.shade600,
                       borderRadius: BorderRadius.circular(12),
@@ -1333,8 +1398,10 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                             child: IconButton(
                               padding: EdgeInsets.zero,
                               iconSize: 16,
-                              icon: const Icon(Icons.edit_rounded,
-                                  color: Colors.white),
+                              icon: const Icon(
+                                Icons.edit_rounded,
+                                color: Colors.white,
+                              ),
                               onPressed: onEdit,
                             ),
                           ),
@@ -1355,8 +1422,10 @@ class _AdminPlaceholderImageTile extends StatelessWidget {
                             child: IconButton(
                               padding: EdgeInsets.zero,
                               iconSize: 16,
-                              icon: const Icon(Icons.delete_rounded,
-                                  color: Colors.white),
+                              icon: const Icon(
+                                Icons.delete_rounded,
+                                color: Colors.white,
+                              ),
                               onPressed: onDelete,
                             ),
                           ),
@@ -1402,8 +1471,11 @@ class _ReorderTile extends StatelessWidget {
           // Poignée drag
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
-            child:
-                Icon(Icons.drag_handle_rounded, color: Colors.grey, size: 26),
+            child: Icon(
+              Icons.drag_handle_rounded,
+              color: Colors.grey,
+              size: 26,
+            ),
           ),
           // Aperçu image
           GestureDetector(
@@ -1425,8 +1497,11 @@ class _ReorderTile extends StatelessWidget {
                       ),
                     ),
                     const Center(
-                      child: Icon(Icons.zoom_in_rounded,
-                          color: Colors.white70, size: 16),
+                      child: Icon(
+                        Icons.zoom_in_rounded,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
                     ),
                   ],
                 ),
@@ -1448,8 +1523,10 @@ class _ReorderTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: image.isVisible
                         ? const Color(0xFFE8F5E9)
@@ -1514,10 +1591,7 @@ class _EmptyPlaceholderAdminState extends StatelessWidget {
 }
 
 class _PlaceholderToolChip extends StatelessWidget {
-  const _PlaceholderToolChip({
-    required this.icon,
-    required this.label,
-  });
+  const _PlaceholderToolChip({required this.icon, required this.label});
 
   final IconData icon;
   final String label;

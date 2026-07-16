@@ -21,6 +21,7 @@ import '../features/subscriptions/subscription_widgets.dart';
 import '../models/admin_access_state.dart';
 import 'admin_space_loader.dart';
 import '../services/admin_access_resolver.dart';
+import '../services/ad_placeholder_image_service.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
@@ -292,26 +293,29 @@ class _AccountPageState extends State<AccountPage> {
     );
     _adminAccessFuture = future;
     unawaited(
-      future.then((state) {
-        if (!mounted || _adminAccessFuture != future) {
-          return;
-        }
-        _adminLoadingTimeoutTimer?.cancel();
-        setState(() {
-          _lastAdminAccessState = state;
-          _adminLastCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
-          _adminLoadingTimedOut = false;
-        });
-        if (state.effectiveIsAdmin) {
-          unawaited(adminAudioRuntimeStore.enableCloudSync());
-        }
-        if (returnOnLocalAdminEvidence && !state.serverCheckAttempted) {
-          unawaited(_refreshAdminAccessServerForUser(uid));
-        }
-      }).catchError((Object error, StackTrace stackTrace) {
-        _adminLoadingTimeoutTimer?.cancel();
-        debugPrint('[AdminProfile] admin access resolution failed: $error');
-      }),
+      future
+          .then((state) {
+            if (!mounted || _adminAccessFuture != future) {
+              return;
+            }
+            _adminLoadingTimeoutTimer?.cancel();
+            setState(() {
+              _lastAdminAccessState = state;
+              _adminLastCheckedAt =
+                  state.serverCheckedAt ?? _adminLastCheckedAt;
+              _adminLoadingTimedOut = false;
+            });
+            if (state.effectiveIsAdmin) {
+              unawaited(adminAudioRuntimeStore.enableCloudSync());
+            }
+            if (returnOnLocalAdminEvidence && !state.serverCheckAttempted) {
+              unawaited(_refreshAdminAccessServerForUser(uid));
+            }
+          })
+          .catchError((Object error, StackTrace stackTrace) {
+            _adminLoadingTimeoutTimer?.cancel();
+            debugPrint('[AdminProfile] admin access resolution failed: $error');
+          }),
     );
   }
 
@@ -913,7 +917,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<DocumentSnapshot<Map<String, dynamic>>?>
-      _fetchCachedUserProfileDocument(String uid) async {
+  _fetchCachedUserProfileDocument(String uid) async {
     try {
       return await FirebaseFirestore.instance
           .collection('users')
@@ -1109,8 +1113,8 @@ class _AccountPageState extends State<AccountPage> {
           ? FirebaseStorage.instance.ref().child(storedPath)
           : FirebaseStorage.instance.refFromURL(currentPhotoValue.trim());
       final downloadUrl = await ref.getDownloadURL().timeout(
-            const Duration(seconds: 12),
-          );
+        const Duration(seconds: 12),
+      );
       final normalizedUrl = downloadUrl.trim();
       if (normalizedUrl.isEmpty || !mounted || _activeProfileUid != user.uid) {
         return;
@@ -1355,85 +1359,90 @@ class _AccountPageState extends State<AccountPage> {
     );
 
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    _profileDocSub = userRef.snapshots(includeMetadataChanges: true).listen(
-      (snapshot) {
-        if (!mounted || _activeProfileUid != uid) return;
-        if (snapshot.metadata.hasPendingWrites) return;
+    _profileDocSub = userRef
+        .snapshots(includeMetadataChanges: true)
+        .listen(
+          (snapshot) {
+            if (!mounted || _activeProfileUid != uid) return;
+            if (snapshot.metadata.hasPendingWrites) return;
 
-        final previousPseudo = _profilePseudoController.text.trim();
-        final previousCity = _profileCityController.text.trim();
-        final previousPhoneCountryCode = _profilePhoneCountryCode;
-        final previousPhone = _profilePhoneController.text.trim();
-        final previousFavoriteCategories = _favoriteCategories.toSet();
-        final previousSelectedFavoriteCategories =
-            _selectedFavoriteCategories.toSet();
-        final previousSelectedFavoriteSubcategories =
-            _selectedFavoriteSubcategories.toSet();
-        final previousDraftFavoriteSelections =
-            _draftFavoriteSelections.toSet();
+            final previousPseudo = _profilePseudoController.text.trim();
+            final previousCity = _profileCityController.text.trim();
+            final previousPhoneCountryCode = _profilePhoneCountryCode;
+            final previousPhone = _profilePhoneController.text.trim();
+            final previousFavoriteCategories = _favoriteCategories.toSet();
+            final previousSelectedFavoriteCategories =
+                _selectedFavoriteCategories.toSet();
+            final previousSelectedFavoriteSubcategories =
+                _selectedFavoriteSubcategories.toSet();
+            final previousDraftFavoriteSelections = _draftFavoriteSelections
+                .toSet();
 
-        final data = snapshot.data();
-        var hydratedPhotoUrl = '';
+            final data = snapshot.data();
+            var hydratedPhotoUrl = '';
 
-        setState(() {
-          _applyImmediateAuthProfile(user);
-          if (data != null) {
-            _applyUserProfileDocument(
-              user,
-              data: data,
-              previousPseudo: previousPseudo,
-              previousCity: previousCity,
-              previousPhoneCountryCode: previousPhoneCountryCode,
-              previousPhone: previousPhone,
-              previousFavoriteCategories: previousFavoriteCategories,
-              previousSelectedFavoriteCategories:
-                  previousSelectedFavoriteCategories,
-              previousSelectedFavoriteSubcategories:
-                  previousSelectedFavoriteSubcategories,
-              previousDraftFavoriteSelections: previousDraftFavoriteSelections,
-            );
-            final hydratedEmail = _firstNonEmptyProfileValue(
-              data,
-              const ['email'],
-              fallbackValues: <String>[_profileEmail, user.email ?? ''],
-            );
-            if (hydratedEmail.isNotEmpty) {
-              _profileEmail = hydratedEmail;
+            setState(() {
+              _applyImmediateAuthProfile(user);
+              if (data != null) {
+                _applyUserProfileDocument(
+                  user,
+                  data: data,
+                  previousPseudo: previousPseudo,
+                  previousCity: previousCity,
+                  previousPhoneCountryCode: previousPhoneCountryCode,
+                  previousPhone: previousPhone,
+                  previousFavoriteCategories: previousFavoriteCategories,
+                  previousSelectedFavoriteCategories:
+                      previousSelectedFavoriteCategories,
+                  previousSelectedFavoriteSubcategories:
+                      previousSelectedFavoriteSubcategories,
+                  previousDraftFavoriteSelections:
+                      previousDraftFavoriteSelections,
+                );
+                final hydratedEmail = _firstNonEmptyProfileValue(
+                  data,
+                  const ['email'],
+                  fallbackValues: <String>[_profileEmail, user.email ?? ''],
+                );
+                if (hydratedEmail.isNotEmpty) {
+                  _profileEmail = hydratedEmail;
+                }
+                hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
+                final photoUploadedRecently =
+                    _profilePhotoUploadedAt != null &&
+                    DateTime.now().difference(_profilePhotoUploadedAt!) <
+                        const Duration(seconds: 10);
+                if (hydratedPhotoUrl.isNotEmpty && !photoUploadedRecently) {
+                  _profilePhotoUrl = hydratedPhotoUrl;
+                }
+              }
+              _profileLoadError = false;
+              _profileLoaded = true;
+              _profileLoadRequested = true;
+              _profileSyncInProgress = false;
+              _lastMissingRequiredCount =
+                  _missingRequiredProfileFields().length;
+            });
+
+            if (data != null &&
+                (hydratedPhotoUrl.isEmpty ||
+                    _isResolvableStorageProfilePhoto(hydratedPhotoUrl))) {
+              unawaited(_hydrateProfilePhotoFromStorage(user, data));
             }
-            hydratedPhotoUrl = _firstNonEmptyProfilePhoto(data);
-            final photoUploadedRecently = _profilePhotoUploadedAt != null &&
-                DateTime.now().difference(_profilePhotoUploadedAt!) <
-                    const Duration(seconds: 10);
-            if (hydratedPhotoUrl.isNotEmpty && !photoUploadedRecently) {
-              _profilePhotoUrl = hydratedPhotoUrl;
+          },
+          onError: (Object error) {
+            if (!mounted || _activeProfileUid != uid) {
+              return;
             }
-          }
-          _profileLoadError = false;
-          _profileLoaded = true;
-          _profileLoadRequested = true;
-          _profileSyncInProgress = false;
-          _lastMissingRequiredCount = _missingRequiredProfileFields().length;
-        });
-
-        if (data != null &&
-            (hydratedPhotoUrl.isEmpty ||
-                _isResolvableStorageProfilePhoto(hydratedPhotoUrl))) {
-          unawaited(_hydrateProfilePhotoFromStorage(user, data));
-        }
-      },
-      onError: (Object error) {
-        if (!mounted || _activeProfileUid != uid) {
-          return;
-        }
-        debugPrint('[Profile] snapshot users/$uid failed: $error');
-        setState(() {
-          _profileLoadError = true;
-          _profileLoaded = true;
-          _profileLoadRequested = true;
-          _profileSyncInProgress = false;
-        });
-      },
-    );
+            debugPrint('[Profile] snapshot users/$uid failed: $error');
+            setState(() {
+              _profileLoadError = true;
+              _profileLoaded = true;
+              _profileLoadRequested = true;
+              _profileSyncInProgress = false;
+            });
+          },
+        );
   }
 
   void _applyUserProfileDocument(
@@ -1510,8 +1519,9 @@ class _AccountPageState extends State<AccountPage> {
           .map((e) => e.toString())
           .toList();
       final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
-      _favoriteCategories =
-          hasFavoriteCategoriesKey ? favs.toSet() : previousFavoriteCategories;
+      _favoriteCategories = hasFavoriteCategoriesKey
+          ? favs.toSet()
+          : previousFavoriteCategories;
       _draftFavoriteSelections = hasFavoriteCategoriesKey
           ? _favoriteCategories.toSet()
           : previousDraftFavoriteSelections;
@@ -1543,7 +1553,8 @@ class _AccountPageState extends State<AccountPage> {
                 .toSet();
       }
 
-      final hasStoredFavorites = hasFavoriteCategoriesKey ||
+      final hasStoredFavorites =
+          hasFavoriteCategoriesKey ||
           hasSelectedFavoriteCategoriesKey ||
           hasSelectedFavoriteSubcategoriesKey;
       final mergedFavoriteSelections = <String>{
@@ -1561,14 +1572,15 @@ class _AccountPageState extends State<AccountPage> {
         const ['accountType'],
         fallbackValues: <String>[_profileAccountType],
       );
-      _profileAccountType =
-          loadedAccountType.isNotEmpty ? loadedAccountType : 'Particulier';
+      _profileAccountType = loadedAccountType.isNotEmpty
+          ? loadedAccountType
+          : 'Particulier';
     } else {
       if (_canHydrateProfileField(_profilePseudoController)) {
         _profilePseudoController.text =
             user.displayName?.trim().isNotEmpty == true
-                ? user.displayName!.trim()
-                : previousPseudo;
+            ? user.displayName!.trim()
+            : previousPseudo;
       }
       if (_canHydrateProfileField(_profileCityController)) {
         _profileCityController.text = previousCity;
@@ -1623,7 +1635,8 @@ class _AccountPageState extends State<AccountPage> {
 
       if (result?.user != null) {
         final isNew = result!.additionalUserInfo?.isNewUser ?? false;
-        final providerId = result.additionalUserInfo?.providerId ??
+        final providerId =
+            result.additionalUserInfo?.providerId ??
             result.user!.providerData.firstOrNull?.providerId ??
             '';
         final authMethod = switch (providerId) {
@@ -1895,8 +1908,9 @@ class _AccountPageState extends State<AccountPage> {
         await refreshAppCheckToken(reason: 'profile-save');
       } catch (_) {}
 
-      final userRef =
-          FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid);
       debugPrint('[ProfileSave] write path=users/${user.uid}');
       await userRef
           .set(profileData, SetOptions(merge: true))
@@ -2015,12 +2029,12 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _applyDraftFavorites(User user) async {
     final draft = _draftFavoriteSelections.toSet();
     final previousFavoriteCategories = _favoriteCategories.toSet();
-    final previousSelectedFavoriteCategories =
-        _selectedFavoriteCategories.toSet();
-    final previousSelectedFavoriteSubcategories =
-        _selectedFavoriteSubcategories.toSet();
-    final previousSelectedFavoriteDepartements =
-        _selectedFavoriteDepartements.toSet();
+    final previousSelectedFavoriteCategories = _selectedFavoriteCategories
+        .toSet();
+    final previousSelectedFavoriteSubcategories = _selectedFavoriteSubcategories
+        .toSet();
+    final previousSelectedFavoriteDepartements = _selectedFavoriteDepartements
+        .toSet();
 
     final selectedCats = draft.where((e) => !e.contains('—')).toSet();
     final selectedSubcats = draft.where((e) => e.contains('—')).toSet();
@@ -2337,8 +2351,9 @@ class _AccountPageState extends State<AccountPage> {
       backgroundColor: overlayTheme.surfaceColor,
       shape: overlayTheme.sheetShape,
       builder: (ctx) {
-        final selectedCategories =
-            workingSelections.where((e) => !e.contains('—')).toList();
+        final selectedCategories = workingSelections
+            .where((e) => !e.contains('—'))
+            .toList();
         if (selectedCategories.isEmpty) {
           return SafeArea(
             child: SizedBox(
@@ -2369,8 +2384,9 @@ class _AccountPageState extends State<AccountPage> {
 
         return StatefulBuilder(
           builder: (context, sheetSetState) {
-            final visibleCategories =
-                workingSelections.where((e) => !e.contains('—')).toList();
+            final visibleCategories = workingSelections
+                .where((e) => !e.contains('—'))
+                .toList();
             final items =
                 <({String category, String? subcategory, bool isHeader})>[];
             for (final category in visibleCategories) {
@@ -2646,20 +2662,19 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final pseudo = _profilePseudoController.text.trim();
-    final displayName =
-        pseudo.isNotEmpty ? pseudo : _deriveImmediatePseudo(user);
+    final displayName = pseudo.isNotEmpty
+        ? pseudo
+        : _deriveImmediatePseudo(user);
     final visibleEmail = _profileEmail.trim().isNotEmpty
         ? _profileEmail.trim()
         : (user.email ?? '');
     final visiblePhotoUrl = customProfilePhotoUrl(_profilePhotoUrl) ?? '';
-    final draftCategoryLabels = _draftFavoriteSelections
-        .where((entry) => !entry.contains('—'))
-        .toList()
-      ..sort();
-    final draftSubcategoryLabels = _draftFavoriteSelections
-        .where((entry) => entry.contains('—'))
-        .toList()
-      ..sort();
+    final draftCategoryLabels =
+        _draftFavoriteSelections.where((entry) => !entry.contains('—')).toList()
+          ..sort();
+    final draftSubcategoryLabels =
+        _draftFavoriteSelections.where((entry) => entry.contains('—')).toList()
+          ..sort();
 
     if (_profileAccountType == 'Entreprise') {
       return _buildEnterpriseScaffold(user, displayName, visiblePhotoUrl);
@@ -2803,26 +2818,7 @@ class _AccountPageState extends State<AccountPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 9,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE8F0FE),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Ne ratez plus aucune offre : choisissez au moins 2 catégories et recevez instantanément les opportunités disponibles dans votre secteur.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF1A3A5C),
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
+                            _buildSubscriptionAlertsBanner(),
                             const SizedBox(height: 8),
                             AccountFavoriteCategoriesSection(
                               categoriesCount: draftCategoryLabels.length,
@@ -2961,6 +2957,59 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  Widget _buildSubscriptionAlertsBanner() {
+    const fallbackAsset = 'assets/images/subscription_alerts_banner.png';
+
+    Widget fallback() => Image.asset(
+      fallbackAsset,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      errorBuilder: (_, __, ___) => const ColoredBox(
+        color: Color(0xFFE8F0FE),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Ne ratez plus aucune offre !',
+              style: TextStyle(
+                color: Color(0xFF1A3A5C),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 7,
+        child: StreamBuilder<List<AdPlaceholderImage>>(
+          stream: AdPlaceholderImageService.watchAll(
+            target: 'subscription_alerts_banner',
+          ),
+          builder: (context, snapshot) {
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
+
+            return Image.network(
+              activeImages.first.imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              gaplessPlayback: true,
+              errorBuilder: (_, __, ___) => fallback(),
+              loadingBuilder: (context, child, progress) =>
+                  progress == null ? child : fallback(),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildAdminSpaceEntry(User user) {
     if (_adminAccessFuture == null || _adminAccessFutureUid != user.uid) {
       _refreshAdminAccessForUser(user.uid, returnOnLocalAdminEvidence: true);
@@ -3066,7 +3115,8 @@ class _AccountPageState extends State<AccountPage> {
               title: 'Vérification admin temporairement indisponible',
               message:
                   'Tes droits admin sont reconnus localement mais la vérification serveur a échoué. Réessaie ou reconnecte-toi.',
-              detail: accessState.serverErrorMessage ??
+              detail:
+                  accessState.serverErrorMessage ??
                   accessState.serverErrorCode ??
                   'Erreur inconnue côté serveur.',
             );
@@ -3309,8 +3359,8 @@ class _AccountPageState extends State<AccountPage> {
     final fallbackDetail = detail?.trim().isNotEmpty == true
         ? detail!.trim()
         : (state.serverErrorCode != null
-            ? _adminStateErrorDetail(state)
-            : null);
+              ? _adminStateErrorDetail(state)
+              : null);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -3449,16 +3499,20 @@ class _AccountPageState extends State<AccountPage> {
 
   String get _profileFirstName {
     final pseudo = _profilePseudoController.text.trim();
-    final parts =
-        pseudo.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = pseudo
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '';
     return parts.first;
   }
 
   String get _profileLastName {
     final pseudo = _profilePseudoController.text.trim();
-    final parts =
-        pseudo.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = pseudo
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.length <= 1) return '';
     return parts.skip(1).join(' ');
   }
@@ -4192,8 +4246,9 @@ class _DeptPickerDialogState extends State<_DeptPickerDialog> {
                     title: Text(
                       '${e.value} (${e.key})',
                       style: TextStyle(
-                        fontWeight:
-                            isDrom ? FontWeight.w700 : FontWeight.normal,
+                        fontWeight: isDrom
+                            ? FontWeight.w700
+                            : FontWeight.normal,
                         color: isDrom ? kPrestoBlue : Colors.black87,
                         fontSize: 13,
                       ),
