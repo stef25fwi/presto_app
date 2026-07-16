@@ -434,6 +434,11 @@ class _FonctionnaireParcoursFiche {
         normalized.contains('situation personnelle')) {
       return 'situation';
     }
+    if (normalized.contains('lancer') ||
+        normalized.contains('première offre') ||
+        normalized.contains('premières offres')) {
+      return 'lancement';
+    }
     if (normalized.contains('offre') ||
         normalized.contains('budget') ||
         normalized.contains('prix')) {
@@ -457,11 +462,6 @@ class _FonctionnaireParcoursFiche {
     if (normalized.contains('gestion') ||
         normalized.contains('obligation récurrente')) {
       return 'gestion';
-    }
-    if (normalized.contains('lancer') ||
-        normalized.contains('première offre') ||
-        normalized.contains('premières offres')) {
-      return 'lancement';
     }
     if (normalized.contains('activité') ||
         normalized.contains('règle') ||
