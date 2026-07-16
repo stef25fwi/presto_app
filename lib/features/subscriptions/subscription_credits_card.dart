@@ -25,14 +25,24 @@ class SubscriptionCreditsCard extends StatefulWidget {
 }
 
 class _SubscriptionCreditsCardState extends State<SubscriptionCreditsCard> {
-  late final SubscriptionCreditService _service =
-      widget.service ?? SubscriptionCreditService();
-  late Future<SubscriptionCreditSnapshot> _future = _service.getSnapshot();
+  late SubscriptionCreditService _service;
+  late Future<SubscriptionCreditSnapshot> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = widget.service ?? SubscriptionCreditService();
+    _future = _service.getSnapshot();
+  }
 
   @override
   void didUpdateWidget(covariant SubscriptionCreditsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.userId != widget.userId) {
+    if (oldWidget.service != widget.service) {
+      _service = widget.service ?? SubscriptionCreditService();
+    }
+    if (oldWidget.userId != widget.userId ||
+        oldWidget.service != widget.service) {
       _reload();
     }
   }
@@ -138,9 +148,24 @@ class SubscriptionCreditsInlineBadges extends StatefulWidget {
 
 class _SubscriptionCreditsInlineBadgesState
     extends State<SubscriptionCreditsInlineBadges> {
-  late final SubscriptionCreditService _service =
-      widget.service ?? SubscriptionCreditService();
-  late Future<SubscriptionCreditSnapshot> _future = _service.getSnapshot();
+  late SubscriptionCreditService _service;
+  late Future<SubscriptionCreditSnapshot> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = widget.service ?? SubscriptionCreditService();
+    _future = _service.getSnapshot();
+  }
+
+  @override
+  void didUpdateWidget(covariant SubscriptionCreditsInlineBadges oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.service != widget.service) {
+      _service = widget.service ?? SubscriptionCreditService();
+      _future = _service.getSnapshot();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
