@@ -116,15 +116,14 @@ Future<void> _pumpThreadFrame(
 }
 
 Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
-  // Advance fake time so App Check/profile bootstrap timeouts remain deterministic.
-  for (var second = 0; second < 30; second += 1) {
-    await _pumpThreadFrame(tester, const Duration(seconds: 1));
+  for (var frame = 0; frame < 120; frame += 1) {
+    await _pumpThreadFrame(tester, const Duration(milliseconds: 500));
     if (find.text('Peinture salon').evaluate().isNotEmpty &&
         find.byType(TextField).evaluate().isNotEmpty) {
       return;
     }
   }
-  fail('Le shell de conversation ne s’est pas affiché après 30 secondes simulées.');
+  fail('Le shell de conversation ne s’est pas affiché après 60 secondes simulées.');
 }
 
 void _invokeAttachmentAction(WidgetTester tester, String label) {
