@@ -20,12 +20,12 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-      - name: Build exact repository tarball
-        run: tar --exclude=.git -czf /tmp/pr451-repository.tar.gz .
-      - name: Upload exact repository snapshot
+      - name: Capture exact Git tree
+        run: git rev-parse HEAD^{tree} > /tmp/tree-sha.txt
+      - name: Upload exact Git tree SHA
         uses: actions/upload-artifact@v7
         with:
-          name: pr451-repository-${{ github.sha }}
-          path: /tmp/pr451-repository.tar.gz
+          name: pr451-tree-${{ github.sha }}
+          path: /tmp/tree-sha.txt
           if-no-files-found: error
           retention-days: 1
