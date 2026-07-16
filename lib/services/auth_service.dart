@@ -6,6 +6,15 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import 'firebase_functions_region.dart';
 
+typedef AuthFunctionCaller = Future<void> Function({
+  required String name,
+  required Duration timeout,
+  required Map<String, dynamic> parameters,
+  required String area,
+});
+
+typedef AuthGoogleSignOut = Future<void> Function();
+
 enum AuthStatus {
   loading,
   signedOut,
@@ -16,13 +25,45 @@ enum AuthStatus {
 }
 
 class AuthService {
-  AuthService._();
+  AuthService._({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+    AuthFunctionCaller? functionCaller,
+    AuthGoogleSignOut? googleSignOut,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _db = firestore ?? FirebaseFirestore.instance,
+        _functionsOverride = functions,
+        _functionCaller = functionCaller,
+        _googleSignOut = googleSignOut;
 
   static final AuthService instance = AuthService._();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  @visibleForTesting
+  factory AuthService.forTesting({
+    required FirebaseAuth auth,
+    required FirebaseFirestore firestore,
+    FirebaseFunctions? functions,
+    AuthFunctionCaller? functionCaller,
+    AuthGoogleSignOut? googleSignOut,
+  }) {
+    return AuthService._(
+      auth: auth,
+      firestore: firestore,
+      functions: functions,
+      functionCaller: functionCaller,
+      googleSignOut: googleSignOut,
+    );
+  }
+
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _db;
+  final FirebaseFunctions? _functionsOverride;
+  final AuthFunctionCaller? _functionCaller;
+  final AuthGoogleSignOut? _googleSignOut;
+
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? prestoFirebaseFunctions;
 
   User? get currentUser => _auth.currentUser;
 
@@ -47,6 +88,32 @@ class AuthService {
     return ActionCodeSettings(
       url: 'https://www.ilipresto.fr/auth/action',
       handleCodeInApp: false,
+    );
+  }
+
+  Future<void> _callFunction({
+    required String name,
+    required Duration timeout,
+    required Map<String, dynamic> parameters,
+    required String area,
+  }) async {
+    final override = _functionCaller;
+    if (override != null) {
+      await override(
+        name: name,
+        timeout: timeout,
+        parameters: parameters,
+        area: area,
+      );
+      return;
+    }
+
+    await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: name,
+      timeout: timeout,
+      parameters: parameters,
+      area: area,
     );
   }
 
@@ -130,7 +197,12 @@ class AuthService {
   Future<void> signOut() async {
     try {
       if (!kIsWeb) {
-        await GoogleSignIn.instance.signOut();
+        final override = _googleSignOut;
+        if (override != null) {
+          await override();
+        } else {
+          await GoogleSignIn.instance.signOut();
+        }
       }
     } catch (_) {
       // Ignore si GoogleSignIn n’est pas initialisé.
@@ -191,8 +263,7 @@ class AuthService {
 
   Future<void> syncEmailVerifiedToFirestore() async {
     _requireUser();
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _callFunction(
       name: 'syncMyEmailVerification',
       timeout: const Duration(seconds: 15),
       parameters: const <String, dynamic>{},
@@ -299,8 +370,7 @@ class AuthService {
       }
     }
 
-    await callPrestoFunction<dynamic>(
-      functions: _functions,
+    await _callFunction(
       name: 'requestAccountDeletion',
       timeout: const Duration(seconds: 120),
       parameters: const <String, dynamic>{},
