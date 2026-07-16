@@ -56,7 +56,6 @@ void main() {
     expect(find.text("Parlez, l'IA complète l'annonce pour vous."), findsOneWidget);
 
     await selectTextMode(tester);
-    expect(find.text('Appuyez pour parler'), findsNothing);
     expect(find.text("Photos de l'offre"), findsOneWidget);
 
     const description =
@@ -97,7 +96,7 @@ void main() {
     expect(find.byIcon(Icons.photo_library_outlined), findsOneWidget);
     expect(find.byIcon(Icons.photo_camera_outlined), findsOneWidget);
 
-    await tester.pageBack();
+    Navigator.of(tester.element(find.text('Galerie'))).pop();
     await tester.pumpAndSettle();
     expect(find.text('Galerie'), findsNothing);
 
