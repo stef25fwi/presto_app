@@ -1,0 +1,35 @@
+name: Apply subscription credits dashboard
+
+on:
+  push:
+    branches:
+      - agent/subscription-credits-dashboard
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, 'apply subscription credits patch') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/subscription-credits-dashboard
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply idempotent patch
+        run: python tools/patch_subscription_credits_dashboard.py
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "No patch needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart lib/widgets/ai_publish_control.dart
+          git commit -m "feat: apply subscription credits patch"
+          git push origin HEAD:agent/subscription-credits-dashboard
