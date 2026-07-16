@@ -39,6 +39,10 @@ void main() {
           'description':
               'Vérifier la formation, les locaux et la conservation des produits.',
         },
+        {
+          'title': 'Source officielle',
+          'description': 'https://entreprendre.service-public.fr/',
+        },
       ],
       'statusWarnings': [
         {
@@ -62,6 +66,7 @@ void main() {
       ],
       'steps': [
         {
+          'id': 'reglementation',
           'title': 'Préparer le lancement',
           'objective': 'Réunir les documents utiles.',
           'todos': [
@@ -90,6 +95,7 @@ void main() {
       'recommendation': {'statut': 'Micro-entreprise'},
       'steps': [
         {
+          'id': 'reglementation',
           'title': 'Checklist complète',
           'description':
               'Cette étape longue vérifie la répartition sur plusieurs pages.',
@@ -98,6 +104,56 @@ void main() {
             (index) =>
                 'Action détaillée ${index + 1} : vérifier les documents, les règles et les justificatifs nécessaires.',
           ),
+        },
+      ],
+    });
+
+    final bytes = await file.readAsBytes();
+    expect(bytes.length, greaterThan(1000));
+    expect(ascii.decode(bytes.take(4).toList()), '%PDF');
+  });
+
+  test('tolère les informations dupliquées et les blocs hétérogènes', () async {
+    const service = JourneyPdfExportService();
+    final file = await service.generateJourneyPdf({
+      'projectLabel': 'Aide au déménagement',
+      'region': 'Bretagne',
+      'currentStatus': 'Salarié',
+      'selectedActivity': 'Aide déménagement',
+      'recommendation': {
+        'statut': 'Micro-entreprise',
+        'why': 'Démarrage progressif.',
+      },
+      'blockingAlerts': [
+        'Relire le contrat de travail.',
+        'Relire le contrat de travail.',
+        'Vérifier la clause d’exclusivité ; vérifier la clause d’exclusivité.',
+      ],
+      'costs': {
+        'formalitesEstimees': {'min': 0, 'max': 50},
+        'ficheCoutsIndicatifs': [
+          'RC pro : 100 à 300 €/an',
+          'RC pro : 100 à 300 €/an',
+        ],
+      },
+      'aides': [
+        {'name': 'ACRE', 'desc': 'Exonération partielle de cotisations.'},
+        {'name': 'ACRE', 'desc': 'Exonération partielle de cotisations.'},
+      ],
+      'plan30': [
+        {'week': 'Semaine 1', 'label': 'Vérifier le contrat'},
+        {'week': 'Semaine 1', 'label': 'Vérifier le contrat'},
+      ],
+      'steps': [
+        {
+          'id': 'situation',
+          'title': 'Situation',
+          'todos': ['Relire le contrat de travail.'],
+        },
+        {
+          'id': 'protections',
+          'title': 'Assurances',
+          'todos': ['Demander un devis d’assurance professionnelle'],
         },
       ],
     });
