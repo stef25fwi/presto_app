@@ -21,6 +21,17 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
+      - name: Upload PR451 source snapshot
+        if: github.head_ref == 'coverage/issue-449-conversation-thread-shell'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr451-source-${{ github.sha }}
+          path: |
+            lib/pages/messages/conversation_thread_page.dart
+            test/pages/messages/conversation_thread_page_shell_test.dart
+          if-no-files-found: error
+          retention-days: 1
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
