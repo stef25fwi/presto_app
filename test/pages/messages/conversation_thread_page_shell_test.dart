@@ -116,6 +116,7 @@ Future<void> _pumpThreadFrame(
 }
 
 Future<void> _pumpUntilThreadShellIsReady(WidgetTester tester) async {
+  // Advance fake time so App Check/profile bootstrap timeouts remain deterministic.
   for (var second = 0; second < 30; second += 1) {
     await _pumpThreadFrame(tester, const Duration(seconds: 1));
     if (find.text('Peinture salon').evaluate().isNotEmpty &&
@@ -159,7 +160,7 @@ void main() {
         ),
       ),
     );
-      await _pumpUntilThreadShellIsReady(tester);
+    await _pumpUntilThreadShellIsReady(tester);
   }
 
   tearDown(() {
