@@ -8,79 +8,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/account/signed_out_account_fallback.dart';
 import 'package:presto_app/pages/account_page.dart';
 
-class _AccountMultiFactorPlatform extends MultiFactorPlatform {
-  _AccountMultiFactorPlatform(super.auth);
-}
-
-class _AccountTokenResult extends IdTokenResult {
-  _AccountTokenResult()
-      : super(
-          InternalIdTokenResult(
-            token: 'account-shell-token',
-            claims: const <String?, Object?>{},
-            authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
-            signInProvider: 'password',
-          ),
-        );
-}
-
-class _AccountUserPlatform extends UserPlatform {
-  _AccountUserPlatform(FirebaseAuthPlatform auth)
-      : super(
-          auth,
-          _AccountMultiFactorPlatform(auth),
-          InternalUserDetails(
-            userInfo: InternalUserInfo(
-              uid: 'account-shell-user',
-              email: 'account-shell@ilipresto.fr',
-              displayName: 'Compte temporaire',
-              isAnonymous: false,
-              isEmailVerified: true,
-              creationTimestamp:
-                  DateTime(2026, 1, 1).millisecondsSinceEpoch,
-              lastSignInTimestamp:
-                  DateTime(2026, 7, 16).millisecondsSinceEpoch,
-            ),
-            providerData: const <Map<String, dynamic>?>[
-              <String, dynamic>{
-                'providerId': 'password',
-                'uid': 'account-shell-user',
-                'email': 'account-shell@ilipresto.fr',
-                'displayName': 'Compte temporaire',
-                'phoneNumber': null,
-                'photoURL': null,
-                'isAnonymous': false,
-                'isEmailVerified': true,
-              },
-            ],
-          ),
-        );
-
-  @override
-  Future<void> reload() async {}
-
-  @override
-  Future<String?> getIdToken(bool forceRefresh) async => 'account-shell-token';
-
-  @override
-  Future<IdTokenResult> getIdTokenResult(bool forceRefresh) async {
-    return _AccountTokenResult();
-  }
-}
-
 class _AccountAuthPlatform extends FirebaseAuthPlatform {
   _AccountAuthPlatform() : super(appInstance: null);
 
   final StreamController<UserPlatform?> _authController =
-      StreamController<UserPlatform?>.broadcast(sync: true);
+      StreamController<UserPlatform?>.broadcast();
   final StreamController<UserPlatform?> _idTokenController =
-      StreamController<UserPlatform?>.broadcast(sync: true);
+      StreamController<UserPlatform?>.broadcast();
   final StreamController<UserPlatform?> _userController =
-      StreamController<UserPlatform?>.broadcast(sync: true);
-
-  UserPlatform? user;
+      StreamController<UserPlatform?>.broadcast();
 
   @override
   FirebaseAuthPlatform delegateFor({required FirebaseApp app}) => this;
@@ -93,7 +29,7 @@ class _AccountAuthPlatform extends FirebaseAuthPlatform {
       this;
 
   @override
-  UserPlatform? get currentUser => user;
+  UserPlatform? get currentUser => null;
 
   @override
   Stream<UserPlatform?> authStateChanges() => _authController.stream;
@@ -104,20 +40,10 @@ class _AccountAuthPlatform extends FirebaseAuthPlatform {
   @override
   Stream<UserPlatform?> userChanges() => _userController.stream;
 
-  bool get hasAccountListeners =>
-      _authController.hasListener && _idTokenController.hasListener;
+  bool get hasIdTokenListener => _idTokenController.hasListener;
 
-  void emitTransientTokenUser() {
-    final transientUser = _AccountUserPlatform(this);
-    user = transientUser;
-    _idTokenController.add(transientUser);
-  }
-
-  void emitSignedOut() {
-    user = null;
-    _authController.add(null);
+  void emitIdTokenSignedOut() {
     _idTokenController.add(null);
-    _userController.add(null);
   }
 
   Future<void> disposeControllers() async {
@@ -160,30 +86,28 @@ void main() {
     await tester.pump();
   }
 
-  Future<void> waitForAccountAuthListeners(WidgetTester tester) async {
+  Future<void> waitForIdTokenListener(WidgetTester tester) async {
     for (var frame = 0; frame < 20; frame += 1) {
-      if (authPlatform.hasAccountListeners) return;
+      if (authPlatform.hasIdTokenListener) return;
       await tester.pump();
     }
-    fail('AccountPage ne s’est pas abonnée aux flux Auth attendus.');
+    fail('AccountPage ne s’est pas abonnée au flux idTokenChanges attendu.');
   }
 
   Future<void> emitSignedOutAndWaitForFallback(WidgetTester tester) async {
-    await waitForAccountAuthListeners(tester);
-    authPlatform.emitTransientTokenUser();
-    await tester.pump();
-    authPlatform.emitSignedOut();
+    await waitForIdTokenListener(tester);
+    authPlatform.emitIdTokenSignedOut();
     for (var frame = 0; frame < 20; frame += 1) {
       await tester.pump();
       if (find.byType(SignedOutAccountFallback).evaluate().isNotEmpty) return;
     }
-    fail('Le parcours déconnecté ne s’est pas affiché après la transition Auth.');
+    fail('Le parcours déconnecté ne s’est pas affiché après l’événement idToken.');
   }
 
   testWidgets('affiche la restauration tant que le flux Auth ne répond pas',
       (tester) async {
     await pumpAccountPage(tester);
-    await waitForAccountAuthListeners(tester);
+    await waitForIdTokenListener(tester);
 
     expect(find.text('Restauration de la session…'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -225,7 +149,7 @@ void main() {
     await pumpAccountPage(tester);
     await emitSignedOutAndWaitForFallback(tester);
 
-    authPlatform.emitSignedOut();
+    authPlatform.emitIdTokenSignedOut();
     await tester.pump();
 
     expect(find.byType(SignedOutAccountFallback), findsOneWidget);
