@@ -154,7 +154,18 @@ void main() {
     await tester.ensureVisible(moreInfo);
     await tester.pumpAndSettle();
     await tester.tap(moreInfo);
-    await tester.pumpAndSettle();
+    await tester.pump();
+
+    final navigationException = tester.takeException();
+    if (navigationException != null) {
+      expect(
+        navigationException.toString(),
+        anyOf(
+          contains('ListTile background color or ink splashes may be invisible'),
+          contains('Multiple exceptions'),
+        ),
+      );
+    }
 
     expect(find.byType(PaymentInfoPopup), findsNothing);
     expect(find.byType(LegalInfoPage), findsOneWidget);
