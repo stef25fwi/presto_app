@@ -148,24 +148,26 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final previousFlutterErrorHandler = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (details.exceptionAsString().contains(
+            'ListTile background color or ink splashes may be invisible',
+          )) {
+        return;
+      }
+      previousFlutterErrorHandler?.call(details);
+    };
+    addTearDown(() {
+      FlutterError.onError = previousFlutterErrorHandler;
+    });
+
     final handle = await _openPopup(tester, FakeFirebaseFirestore());
     final moreInfo = find.text('En savoir plus sur les règles de paiement');
 
     await tester.ensureVisible(moreInfo);
     await tester.pumpAndSettle();
     await tester.tap(moreInfo);
-    await tester.pump();
-
-    final navigationException = tester.takeException();
-    if (navigationException != null) {
-      expect(
-        navigationException.toString(),
-        anyOf(
-          contains('ListTile background color or ink splashes may be invisible'),
-          contains('Multiple exceptions'),
-        ),
-      );
-    }
+    await tester.pumpAndSettle();
 
     expect(find.byType(PaymentInfoPopup), findsNothing);
     expect(find.byType(LegalInfoPage), findsOneWidget);
