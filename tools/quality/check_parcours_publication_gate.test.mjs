@@ -28,6 +28,15 @@ function fiche(overrides = {}) {
     reviewed_at: '2026-07-16',
     next_review_at: '2027-01-16',
     reviewer: 'équipe contenu',
+    human_validation: {
+      coherence_metier: true,
+      chronologie: true,
+      personnalisation: true,
+      fiabilite: true,
+      controle_pdf: true,
+      approved_by: 'Validateur métier',
+      approved_at: '2026-07-16',
+    },
     parcours: {
       '4_demarches': [
         "Vérifier le droit d'exercer",
@@ -56,7 +65,7 @@ function fixture({ ficheValue, published }) {
   return { root, manifest };
 }
 
-test('une fiche validée, propre et planifiée est autorisée', () => {
+test('une fiche validée, propre, contrôlée et planifiée est autorisée', () => {
   const data = fixture({ ficheValue: fiche(), published: ['fiche_test'] });
   const report = buildPublicationGate({ root: data.root, manifestPath: data.manifest, rulesPath, today: '2026-07-16' });
   assert.equal(report.allowed, 1);
@@ -75,6 +84,26 @@ test('une date de révision échue bloque une fiche publiée', () => {
   const report = buildPublicationGate({ root: data.root, manifestPath: data.manifest, rulesPath, today: '2026-07-16' });
   assert.equal(report.allowed, 0);
   assert.match(report.results[0].reasons.join(' '), /calendrier/i);
+});
+
+test('une validation humaine incomplète bloque la publication', () => {
+  const data = fixture({
+    ficheValue: fiche({
+      human_validation: {
+        coherence_metier: true,
+        chronologie: true,
+        personnalisation: true,
+        fiabilite: true,
+        controle_pdf: false,
+        approved_by: 'Validateur métier',
+        approved_at: '2026-07-16',
+      },
+    }),
+    published: ['fiche_test'],
+  });
+  const report = buildPublicationGate({ root: data.root, manifestPath: data.manifest, rulesPath, today: '2026-07-16' });
+  assert.equal(report.allowed, 0);
+  assert.match(report.results[0].reasons.join(' '), /controle_pdf/i);
 });
 
 test('une fiche absente du catalogue est refusée', () => {
