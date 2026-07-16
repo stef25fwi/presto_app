@@ -4,7 +4,7 @@ import '../features/subscriptions/subscription_credit_service.dart';
 import '../features/subscriptions/subscription_credits_card.dart';
 import 'ai_publish_control.dart';
 
-export 'ai_publish_control.dart' show AiPublishState;
+export 'ai_publish_control.dart';
 
 class AiPublishControlWithCredits extends StatelessWidget {
   final AiPublishState state;
