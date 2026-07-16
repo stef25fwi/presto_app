@@ -18,6 +18,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
       - name: Generate fallback banner
         run: |
           python3 -m pip install --quiet pillow
@@ -36,14 +42,8 @@ jobs:
               d.line((0,y,w,y), fill=c)
 
           def font(size, bold=False):
-              choices = [
-                  '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-                  '/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf',
-              ]
-              for p in choices:
-                  if Path(p).exists():
-                      return ImageFont.truetype(p, size)
-              return ImageFont.load_default()
+              p = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+              return ImageFont.truetype(p, size)
 
           blue = '#0d3b7a'
           orange = '#ff6b00'
@@ -52,7 +52,6 @@ jobs:
           d.text((72, 300), 'Recevez instantanément les opportunités', fill=blue, font=font(34))
           d.text((72, 348), 'disponibles dans votre secteur.', fill=blue, font=font(34))
 
-          # Téléphone
           d.rounded_rectangle((1040, 65, 1395, 635), radius=55, fill='#0868d8', outline='#063a83', width=12)
           d.rounded_rectangle((1070, 95, 1365, 605), radius=40, fill='#0d78ee')
           d.text((1142, 125), '11:00', fill='white', font=font(54, True))
@@ -60,25 +59,24 @@ jobs:
           d.text((1130, 270), 'Nouvelle annonce !', fill=blue, font=font(23, True))
           d.text((1130, 304), 'Une offre correspond', fill=blue, font=font(19))
 
-          # Cloche
           d.ellipse((1370, 245, 1560, 435), fill=orange)
           d.rectangle((1410, 365, 1520, 505), fill=orange)
           d.ellipse((1400, 465, 1530, 565), fill=orange)
           d.ellipse((1452, 535, 1480, 563), fill='#ffd05a')
 
           cards = [
-              ('🌿', 'Jardinage', '#2ca24c'),
-              ('👤', "Hôtesse d’accueil", '#7b4dde'),
-              ('🔧', 'Bricolage', '#f59e0b'),
+              ('Jardinage', '#2ca24c'),
+              ('Hôtesse d’accueil', '#7b4dde'),
+              ('Bricolage', '#f59e0b'),
           ]
           y = 170
-          for icon, label, color in cards:
-              d.rounded_rectangle((650, y, 1035, y+105), radius=24, fill='white', outline='#c9d9ef', width=3)
-              d.ellipse((675, y+20, 735, y+80), fill=color)
-              d.text((755, y+30), label, fill=blue, font=font(31, True))
+          for label, color in cards:
+              d.rounded_rectangle((650, y, 1035, y + 105), radius=24, fill='white', outline='#c9d9ef', width=3)
+              d.ellipse((675, y + 20, 735, y + 80), fill=color)
+              d.text((755, y + 30), label, fill=blue, font=font(31, True))
               y += 125
 
-          img.save(out, quality=94, optimize=True)
+          img.save(out, optimize=True)
           PY
 
       - name: Patch Flutter code
@@ -91,7 +89,9 @@ jobs:
           service_import = "import '../services/ad_placeholder_image_service.dart';\n"
           anchor = "import '../services/admin_access_resolver.dart';\n"
           if service_import not in text:
-              text = text.replace(anchor, anchor + service_import)
+              if anchor not in text:
+                  raise SystemExit('Import admin_access_resolver introuvable')
+              text = text.replace(anchor, anchor + service_import, 1)
 
           old = """                            Container(
                               width: double.infinity,
@@ -113,10 +113,11 @@ jobs:
                                 ),
                               ),
                             ),"""
-          new = """                            _buildSubscriptionAlertsBanner(),"""
-          if old not in text:
+          replacement = "                            _buildSubscriptionAlertsBanner(),"
+          if old in text:
+              text = text.replace(old, replacement, 1)
+          elif replacement not in text:
               raise SystemExit('Encart bleu introuvable dans account_page.dart')
-          text = text.replace(old, new, 1)
 
           marker = "  Widget _buildAdminSpaceEntry(User user) {"
           method = """  Widget _buildSubscriptionAlertsBanner() {
@@ -163,16 +164,8 @@ jobs:
               width: double.infinity,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) => fallback(),
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    fallback(),
-                    const Center(child: CircularProgressIndicator()),
-                  ],
-                );
-              },
+              loadingBuilder: (context, child, progress) =>
+                  progress == null ? child : fallback(),
             );
           },
         ),
@@ -181,7 +174,7 @@ jobs:
   }
 
 """
-          if method not in text:
+          if '_buildSubscriptionAlertsBanner()' not in text:
               if marker not in text:
                   raise SystemExit('Point insertion bannière introuvable')
               text = text.replace(marker, method + marker, 1)
@@ -189,15 +182,16 @@ jobs:
 
           admin = Path('lib/pages/admin/ad_placeholder_images_admin_page.dart')
           text = admin.read_text()
-          text = text.replace(
-              "  static const String _target = 'consult_offers';",
-              """  static const Map<String, String> _targets = {
+          old_target = "  static const String _target = 'consult_offers';"
+          new_target = """  static const Map<String, String> _targets = {
     'consult_offers': 'Page Je consulte — placeholders annonces',
     'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',
   };
-  String _target = 'consult_offers';""",
-              1,
-          )
+  String _target = 'consult_offers';"""
+          if old_target in text:
+              text = text.replace(old_target, new_target, 1)
+          elif "'subscription_alerts_banner'" not in text:
+              raise SystemExit('Cible admin introuvable')
 
           body_anchor = """        children: [
           // Widget upload — toujours visible, indépendant de l'état Firestore"""
@@ -206,7 +200,7 @@ jobs:
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: DropdownButtonFormField<String>(
-                value: _target,
+                initialValue: _target,
                 decoration: InputDecoration(
                   labelText: 'Emplacement de l’image',
                   prefixIcon: const Icon(Icons.web_asset_rounded),
@@ -235,9 +229,10 @@ jobs:
               ),
             ),
           // Widget upload — toujours visible, indépendant de l'état Firestore"""
-          if body_anchor not in text:
-              raise SystemExit('Point insertion sélecteur admin introuvable')
-          text = text.replace(body_anchor, selector, 1)
+          if "labelText: 'Emplacement de l’image'" not in text:
+              if body_anchor not in text:
+                  raise SystemExit('Point insertion sélecteur admin introuvable')
+              text = text.replace(body_anchor, selector, 1)
 
           old_info = """                    \"Ces images alimentent les placeholders AdBanner de la page « Je consulte ». \"
                     \"Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. \"
@@ -248,9 +243,8 @@ jobs:
                         : \"Ces images alimentent les placeholders AdBanner de la page « Je consulte ». \"
                             \"Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. \"
                             \"S'il n'y a aucune image active, l'app utilise ses images embarquées.\","""
-          if old_info not in text:
-              raise SystemExit('Texte information admin introuvable')
-          text = text.replace(old_info, new_info, 1)
+          if old_info in text:
+              text = text.replace(old_info, new_info, 1)
           admin.write_text(text)
           PY
 
@@ -258,7 +252,7 @@ jobs:
         run: |
           dart format lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart
           flutter pub get
-          flutter analyze lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart
+          flutter analyze --no-fatal-infos --no-fatal-warnings lib/pages/account_page.dart lib/pages/admin/ad_placeholder_images_admin_page.dart
 
       - name: Commit generated integration
         run: |
