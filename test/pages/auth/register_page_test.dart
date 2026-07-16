@@ -1,15 +1,21 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/auth/register_page.dart';
 import 'package:presto_app/pages/legal_info_page.dart';
 
 void main() {
-  Future<void> pumpRegister(WidgetTester tester) async {
+  Future<void> pumpRegister(
+    WidgetTester tester, {
+    RegisterPage page = const RegisterPage(),
+  }) async {
     tester.view.physicalSize = const Size(430, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const MaterialApp(home: RegisterPage()));
+    await tester.pumpWidget(MaterialApp(home: page));
     await tester.pump();
   }
 
@@ -106,6 +112,101 @@ void main() {
     await tester.pump();
     expect(passwordField().obscureText, isFalse);
     expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+  });
+
+  testWidgets('soumet les données normalisées puis ouvre la vérification',
+      (tester) async {
+    final submission = Completer<void>();
+    final captured = <String, String>{};
+
+    await pumpRegister(
+      tester,
+      page: RegisterPage(
+        registerWithEmail: ({
+          required email,
+          required password,
+          required displayName,
+          required fullName,
+          required firstName,
+          required lastName,
+          required pseudo,
+        }) async {
+          captured.addAll(<String, String>{
+            'email': email,
+            'password': password,
+            'displayName': displayName,
+            'fullName': fullName,
+            'firstName': firstName,
+            'lastName': lastName,
+            'pseudo': pseudo,
+          });
+          await submission.future;
+        },
+        successPageBuilder: (_) => const Scaffold(
+          body: Text('Vérification test'),
+        ),
+      ),
+    );
+
+    await tester.enterText(field('Nom *'), '  Durand  ');
+    await tester.enterText(field('Prénom *'), '  Lina  ');
+    await tester.enterText(field('Pseudo'), '  Lina D  ');
+    await tester.enterText(field('Email'), '  lina@example.com  ');
+    await tester.enterText(field('Mot de passe'), 'Password1');
+    await tester.tap(find.text('Créer mon compte'));
+    await tester.pump();
+
+    expect(captured, <String, String>{
+      'email': '  lina@example.com  ',
+      'password': 'Password1',
+      'displayName': 'Lina D',
+      'fullName': 'Lina Durand',
+      'firstName': 'Lina',
+      'lastName': 'Durand',
+      'pseudo': 'Lina D',
+    });
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
+        isNull);
+
+    submission.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Vérification test'), findsOneWidget);
+    expect(find.byType(RegisterPage), findsNothing);
+  });
+
+  testWidgets('affiche l erreur Firebase et réactive la soumission',
+      (tester) async {
+    await pumpRegister(
+      tester,
+      page: RegisterPage(
+        registerWithEmail: ({
+          required email,
+          required password,
+          required displayName,
+          required fullName,
+          required firstName,
+          required lastName,
+          required pseudo,
+        }) async {
+          throw FirebaseAuthException(code: 'email-already-in-use');
+        },
+      ),
+    );
+    await fillBase(tester);
+
+    await tester.tap(find.text('Créer mon compte'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Cette adresse email est déjà associée à un compte.'),
+      findsOneWidget,
+    );
+    expect(find.byType(RegisterPage), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
+        isNotNull);
   });
 
   testWidgets('ouvre les mentions légales sur les CGU', (tester) async {
