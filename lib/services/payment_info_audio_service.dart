@@ -14,6 +14,8 @@ typedef PaymentInfoAudioUploader = Future<String> Function({
   required String contentType,
 });
 
+typedef PaymentInfoAudioTextSaver = Future<void> Function(String text);
+
 class PaymentInfoAudioConfig {
   const PaymentInfoAudioConfig({
     required this.enabled,
@@ -127,25 +129,40 @@ class PaymentInfoAudioService {
     FirebaseFunctions? functions,
     PaymentInfoAudioCallable? callable,
     PaymentInfoAudioUploader? uploader,
+    PaymentInfoAudioTextSaver? textSaver,
   }) : _firestore =
            firestore ??
            _firestoreOverrideForTesting ??
            FirebaseFirestore.instance,
        _functions = functions,
-       _callableOverride = callable,
-       _uploaderOverride = uploader;
+       _callableOverride = callable ?? _callableOverrideForTesting,
+       _uploaderOverride = uploader,
+       _textSaverOverride = textSaver ?? _textSaverOverrideForTesting;
 
   static FirebaseFirestore? _firestoreOverrideForTesting;
+  static PaymentInfoAudioCallable? _callableOverrideForTesting;
+  static PaymentInfoAudioTextSaver? _textSaverOverrideForTesting;
 
   @visibleForTesting
   static void setFirestoreForTesting(FirebaseFirestore? firestore) {
     _firestoreOverrideForTesting = firestore;
   }
 
+  @visibleForTesting
+  static void setCallableForTesting(PaymentInfoAudioCallable? callable) {
+    _callableOverrideForTesting = callable;
+  }
+
+  @visibleForTesting
+  static void setTextSaverForTesting(PaymentInfoAudioTextSaver? textSaver) {
+    _textSaverOverrideForTesting = textSaver;
+  }
+
   final FirebaseFirestore _firestore;
   final FirebaseFunctions? _functions;
   final PaymentInfoAudioCallable? _callableOverride;
   final PaymentInfoAudioUploader? _uploaderOverride;
+  final PaymentInfoAudioTextSaver? _textSaverOverride;
 
   FirebaseFunctions get _callableFunctions =>
       _functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
@@ -209,10 +226,17 @@ class PaymentInfoAudioService {
   }
 
   Future<void> saveAdminText(String text) async {
+    final cleanText = text.trim();
+    final override = _textSaverOverride;
+    if (override != null) {
+      await override(cleanText);
+      return;
+    }
+
     await _settingsRef.set({
-      'text': text.trim(),
-      'paymentText': text.trim(),
-      'audioText': text.trim(),
+      'text': cleanText,
+      'paymentText': cleanText,
+      'audioText': cleanText,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
