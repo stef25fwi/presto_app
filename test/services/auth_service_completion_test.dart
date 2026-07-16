@@ -13,8 +13,8 @@ class _CompletionMultiFactorPlatform extends MultiFactorPlatform {
 class _CompletionCredentialPlatform extends UserCredentialPlatform {
   _CompletionCredentialPlatform({
     required super.auth,
-    required UserPlatform? user,
-  }) : super(user: user);
+    required super.user,
+  });
 }
 
 class _CompletionUserPlatform extends UserPlatform {
