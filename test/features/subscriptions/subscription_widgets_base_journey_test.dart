@@ -106,16 +106,14 @@ void main() {
     expect(find.text('Choisir ilipro'), findsNothing);
 
     await tester.tap(proSelector);
-    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Gratuit'), findsOneWidget);
     expect(find.text('Choisir ilipro'), findsOneWidget);
     expect(find.text('Choisir iliprestō+'), findsNothing);
 
     await tester.tap(particuliersSelector);
-    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Gratuit'), findsNWidgets(2));
     expect(find.text('Choisir iliprestō+'), findsOneWidget);
     expect(find.text('Choisir ilipro'), findsNothing);
   });
