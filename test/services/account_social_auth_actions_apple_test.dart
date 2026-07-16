@@ -37,8 +37,8 @@ class _AppleUserPlatform extends UserPlatform {
   String? updatedDisplayName;
 
   @override
-  Future<void> updateProfile({String? displayName, String? photoURL}) async {
-    updatedDisplayName = displayName;
+  Future<void> updateProfile(Map<String, String?> profile) async {
+    updatedDisplayName = profile['displayName'];
   }
 
   @override
