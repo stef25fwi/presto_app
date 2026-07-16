@@ -1,0 +1,151 @@
+name: Apply Gratuit Pro offer
+
+on:
+  push:
+    branches:
+      - agent/gratuit-pro-offer
+    paths:
+      - .github/gratuit-pro-offer.trigger
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/gratuit-pro-offer
+          fetch-depth: 0
+
+      - name: Apply product and regression-test changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('lib/features/subscriptions/subscription_widgets_base.dart')
+          text = source.read_text()
+
+          replacements = [
+              (
+                  """      final audienceMatches = audience == OfferAudience.particuliers
+                    ? plan.plan != SubscriptionPlan.ilipro
+                    : plan.plan == SubscriptionPlan.ilipro;
+          """,
+                  """      final audienceMatches = audience == OfferAudience.particuliers
+                    ? plan.plan != SubscriptionPlan.ilipro
+                    : plan.plan == SubscriptionPlan.free ||
+                        plan.plan == SubscriptionPlan.ilipro;
+          """,
+              ),
+              (
+                  """          _PlanCard(
+                    presentation: plans[i],
+                    currentPlan: userState.plan,
+                    config: config,
+                  ),
+          """,
+                  """          _PlanCard(
+                    presentation: plans[i],
+                    currentPlan: userState.plan,
+                    config: config,
+                    audience: audience,
+                  ),
+          """,
+              ),
+              (
+                  """  final SubscriptionPlan currentPlan;
+            final SubscriptionAppConfig config;
+
+            const _PlanCard({
+              required this.presentation,
+              required this.currentPlan,
+              required this.config,
+            });
+          """,
+                  """  final SubscriptionPlan currentPlan;
+            final SubscriptionAppConfig config;
+            final OfferAudience audience;
+
+            const _PlanCard({
+              required this.presentation,
+              required this.currentPlan,
+              required this.config,
+              required this.audience,
+            });
+          """,
+              ),
+              (
+                  """    final isCurrent = presentation.plan == currentPlan;
+              final isFree = presentation.plan == SubscriptionPlan.free;
+          """,
+                  """    final isCurrent = presentation.plan == currentPlan;
+              final isFree = presentation.plan == SubscriptionPlan.free;
+              final isProFree = isFree && audience == OfferAudience.pro;
+          """,
+              ),
+              (
+                  """                          presentation.title,
+          """,
+                  """                          isProFree ? 'Gratuit Pro' : presentation.title,
+          """,
+              ),
+              (
+                  """                      presentation.summary,
+          """,
+                  """                      isProFree
+                                ? 'L’essentiel pour commencer une activité professionnelle sur iliprestō.'
+                                : presentation.summary,
+          """,
+              ),
+              (
+                  """                      _buttonLabel(presentation.plan),
+          """,
+                  """                      isProFree
+                                ? 'Choisir Gratuit Pro'
+                                : _buttonLabel(presentation.plan),
+          """,
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected one source match, found {count}: {old[:80]!r}')
+              text = text.replace(old, new)
+
+          source.write_text(text)
+
+          test = Path('test/features/subscriptions/subscription_widgets_base_journey_test.dart')
+          test_text = test.read_text()
+          old_test = """    expect(find.text('Choisir ilipro'), findsOneWidget);
+              expect(find.text('Choisir iliprestō+'), findsNothing);
+          """
+          new_test = """    expect(find.text('Gratuit Pro'), findsOneWidget);
+              expect(find.text('ilipro'), findsOneWidget);
+              expect(find.text('Choisir ilipro'), findsOneWidget);
+              expect(find.text('Choisir iliprestō+'), findsNothing);
+          """
+          count = test_text.count(old_test)
+          if count != 1:
+              raise SystemExit(f'Expected one test assertion block, found {count}')
+          test.write_text(test_text.replace(old_test, new_test))
+
+          Path('.github/gratuit-pro-offer.trigger').unlink(missing_ok=True)
+          Path('.github/workflows/apply-gratuit-pro-offer.yml').unlink(missing_ok=True)
+          PY
+
+          git diff --check
+
+      - name: Commit correction
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "fix(subscriptions): afficher l’offre Gratuit Pro"
+          git push origin HEAD:agent/gratuit-pro-offer
