@@ -14,7 +14,11 @@ class AdPlaceholderImagesAdminPage extends StatefulWidget {
 
 class _AdPlaceholderImagesAdminPageState
     extends State<AdPlaceholderImagesAdminPage> {
-  static const String _target = 'consult_offers';
+  static const Map<String, String> _targets = {
+    'consult_offers': 'Page Je consulte — placeholders annonces',
+    'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',
+  };
+  String _target = 'consult_offers';
   static const _orange = Color(0xFFFF6600);
 
   final ImagePicker _picker = ImagePicker();
@@ -568,6 +572,38 @@ class _AdPlaceholderImagesAdminPageState
             ),
       body: Column(
         children: [
+          if (!_isReordering)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: DropdownButtonFormField<String>(
+                initialValue: _target,
+                decoration: InputDecoration(
+                  labelText: 'Emplacement de l’image',
+                  prefixIcon: const Icon(Icons.web_asset_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                items: _targets.entries
+                    .map(
+                      (entry) => DropdownMenuItem<String>(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _isUploading
+                    ? null
+                    : (value) {
+                        if (value == null || value == _target) return;
+                        setState(() {
+                          _target = value;
+                          _lastLoadedImages = const <AdPlaceholderImage>[];
+                          _reorderBuffer = null;
+                        });
+                      },
+              ),
+            ),
           // Widget upload — toujours visible, indépendant de l'état Firestore
           if (_isUploading || _uploadPreviewBytes != null)
             Padding(
@@ -743,9 +779,12 @@ class _AdPlaceholderImagesAdminPageState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "Ces images alimentent les placeholders AdBanner de la page « Je consulte ». "
-                    "Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. "
-                    "S'il n'y a aucune image active, l'app utilise ses images embarquées.",
+                    _target == 'subscription_alerts_banner'
+                        ? "Cette image remplace l’encart bleu de la section « Mes alertes Nouvelle annonce ». "
+                            "Format conseillé : horizontal, ratio 16:7, 1600 px min."
+                        : "Ces images alimentent les placeholders AdBanner de la page « Je consulte ». "
+                            "Format conseillé : horizontale, WebP, 1920 px min, ratio 16:9, < 450 Ko. "
+                            "S'il n'y a aucune image active, l'app utilise ses images embarquées.",
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
