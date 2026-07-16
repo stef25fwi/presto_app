@@ -18,6 +18,12 @@ Future<HttpsCallableResult<T>> callPrestoFunction<T>({
 }) async {
   final startedAt = DateTime.now();
   final payloadSummary = _summarizeCallableData(parameters);
+  final creditKind = _meteredCreditKind(name);
+  final operationId = creditKind == null
+      ? null
+      : _creditOperationId(name: name, parameters: parameters);
+  var creditConsumed = false;
+
   AdminWebDebugStore.instance.recordEvent(
     area: area,
     message: name,
@@ -27,6 +33,15 @@ Future<HttpsCallableResult<T>> callPrestoFunction<T>({
   );
 
   try {
+    if (creditKind != null && operationId != null) {
+      await _consumeCredit(
+        functions: functions,
+        kind: creditKind,
+        operationId: operationId,
+      );
+      creditConsumed = true;
+    }
+
     final result = await functions
         .httpsCallable(
           name,
@@ -40,11 +55,19 @@ Future<HttpsCallableResult<T>> callPrestoFunction<T>({
       level: 'success',
       message: name,
       detail: 'status=success durationMs=$durationMs'
+          '${creditKind == null ? '' : ' credit=$creditKind'}'
           '${resultSummary == null ? '' : ' result=$resultSummary'}',
       isCallable: true,
     );
     return result;
   } on FirebaseFunctionsException catch (error, stackTrace) {
+    if (creditConsumed && creditKind != null && operationId != null) {
+      await _refundCredit(
+        functions: functions,
+        kind: creditKind,
+        operationId: operationId,
+      );
+    }
     final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
     AdminWebDebugStore.instance.recordError(
       area,
@@ -63,6 +86,13 @@ Future<HttpsCallableResult<T>> callPrestoFunction<T>({
     );
     rethrow;
   } catch (error, stackTrace) {
+    if (creditConsumed && creditKind != null && operationId != null) {
+      await _refundCredit(
+        functions: functions,
+        kind: creditKind,
+        operationId: operationId,
+      );
+    }
     final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
     AdminWebDebugStore.instance.recordError(
       area,
@@ -80,6 +110,67 @@ Future<HttpsCallableResult<T>> callPrestoFunction<T>({
       isCallable: true,
     );
     rethrow;
+  }
+}
+
+String? _meteredCreditKind(String name) {
+  switch (name) {
+    case 'microIaProcessAudio':
+    case 'openAiTranscribeListingAudio':
+    case 'openAiExtractListingFieldsFromAudio':
+      return 'voiceAi';
+    case 'generateOfferDraft':
+    case 'openAiExtractListingFields':
+      return 'textAi';
+    default:
+      return null;
+  }
+}
+
+String _creditOperationId({
+  required String name,
+  required Object? parameters,
+}) {
+  if (parameters is Map) {
+    for (final key in const [
+      'creditOperationId',
+      'clientRequestId',
+      'requestId',
+    ]) {
+      final value = '${parameters[key] ?? ''}'.trim();
+      if (value.isNotEmpty) return '${name}_$value';
+    }
+  }
+  return '${name}_${DateTime.now().microsecondsSinceEpoch}';
+}
+
+Future<void> _consumeCredit({
+  required FirebaseFunctions functions,
+  required String kind,
+  required String operationId,
+}) async {
+  await functions
+      .httpsCallable(
+        'consumeSubscriptionCredit',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+      )
+      .call<void>({'kind': kind, 'operationId': operationId});
+}
+
+Future<void> _refundCredit({
+  required FirebaseFunctions functions,
+  required String kind,
+  required String operationId,
+}) async {
+  try {
+    await functions
+        .httpsCallable(
+          'refundSubscriptionCredit',
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+        )
+        .call<void>({'kind': kind, 'operationId': operationId});
+  } catch (_) {
+    // Compensation best effort : l'erreur fonctionnelle initiale reste prioritaire.
   }
 }
 
