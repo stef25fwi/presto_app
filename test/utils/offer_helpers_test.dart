@@ -36,7 +36,8 @@ void main() {
   group('conversion des dates et échéance overlay', () {
     test('convertit Timestamp, DateTime, millisecondes et texte ISO', () {
       final date = DateTime.utc(2026, 7, 16, 9, 30);
-      expect(offerDateTimeFromDynamic(Timestamp.fromDate(date)), date);
+      final timestampResult = offerDateTimeFromDynamic(Timestamp.fromDate(date));
+      expect(timestampResult?.millisecondsSinceEpoch, date.millisecondsSinceEpoch);
       expect(offerDateTimeFromDynamic(date), same(date));
       expect(
         offerDateTimeFromDynamic(date.millisecondsSinceEpoch),
@@ -221,40 +222,28 @@ void main() {
     test('applique strictement le contrat moderne', () {
       expect(
         isVisibleInPublicBrowse(
-          <String, dynamic>{
-            'status': 'active',
-            'visibility': 'public',
-          },
+          <String, dynamic>{'status': 'active', 'visibility': 'public'},
           preferModernListingContract: true,
         ),
         isTrue,
       );
       expect(
         isVisibleInPublicBrowse(
-          <String, dynamic>{
-            'status': 'active',
-            'visibility': 'private',
-          },
+          <String, dynamic>{'status': 'active', 'visibility': 'private'},
           preferModernListingContract: true,
         ),
         isFalse,
       );
       expect(
         isVisibleInPublicBrowse(
-          <String, dynamic>{
-            'status': 'archived',
-            'visibility': 'public',
-          },
+          <String, dynamic>{'status': 'archived', 'visibility': 'public'},
           preferModernListingContract: true,
         ),
         isFalse,
       );
       expect(
         isVisibleInPublicBrowse(
-          <String, dynamic>{
-            'status': 'published',
-            'visibility': 'public',
-          },
+          <String, dynamic>{'status': 'published', 'visibility': 'public'},
           preferModernListingContract: true,
         ),
         isFalse,
@@ -369,8 +358,10 @@ void main() {
     });
 
     test('convertit et nettoie une valeur non map', () {
-      expect(extractOfferImageUrl('  https://image.test/photo.jpg  '),
-          'https://image.test/photo.jpg');
+      expect(
+        extractOfferImageUrl('  https://image.test/photo.jpg  '),
+        'https://image.test/photo.jpg',
+      );
       expect(extractOfferImageUrl(123), '123');
     });
   });
