@@ -1,6 +1,10 @@
 name: Temporary repair PR459
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/repair-pr459-main.trigger
   issue_comment:
     types: [created]
   schedule:
@@ -19,6 +23,7 @@ concurrency:
 jobs:
   repair:
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
