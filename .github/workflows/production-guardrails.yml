@@ -24,8 +24,8 @@ jobs:
           ref: repair/pr451-complete
           fetch-depth: 0
 
-      - name: Apply exact messaging repair
-        id: repair_step
+      - name: Prepare exact repaired files
+        id: prepare
         continue-on-error: true
         shell: bash
         run: |
@@ -61,10 +61,12 @@ jobs:
                   }
                 : null,
           """
-          if header_old in text:
+          if header_new not in text:
+              if text.count(header_old) != 1:
+                  raise SystemExit(
+                      f'Header avatar callback shape not recognized: {text.count(header_old)}'
+                  )
               text = text.replace(header_old, header_new, 1)
-          elif header_new not in text:
-              raise SystemExit('Header avatar callback shape not recognized')
 
           bubble_old = """      onForegroundImageError: (error, stackTrace) {
         debugPrint(
@@ -84,10 +86,12 @@ jobs:
             }
           : null,
           """
-          if bubble_old in text:
+          if bubble_new not in text:
+              if text.count(bubble_old) != 1:
+                  raise SystemExit(
+                      f'Bubble avatar callback shape not recognized: {text.count(bubble_old)}'
+                  )
               text = text.replace(bubble_old, bubble_new, 1)
-          elif bubble_new not in text:
-              raise SystemExit('Bubble avatar callback shape not recognized')
           source.write_text(text)
 
           test = Path('test/pages/messages/conversation_thread_page_shell_test.dart')
@@ -116,42 +120,102 @@ jobs:
           test.write_text(test_text)
           PY
 
-            git checkout ae64f4c081b4ee4b84a029c7d4c7a9dee9d98a4a -- \
-              .github/workflows/dart-format-quality.yml \
-              .github/workflows/pr-validation.yml
-            rm -f \
-              .github/pr459-repair.trigger \
-              .github/repair-pr459-main.trigger
+            git show ae64f4c081b4ee4b84a029c7d4c7a9dee9d98a4a:.github/workflows/dart-format-quality.yml \
+              > .github/workflows/dart-format-quality.yml
             git diff --check
+          } 2>&1 | tee /tmp/pr459-prepare.log
 
-            if git diff --quiet; then
-              echo 'Repair already present.'
-              exit 0
-            fi
+      - name: Update repair branch through GitHub API
+        id: update_branch
+        if: steps.prepare.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPAIR_BRANCH: repair/pr451-complete
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            set -euo pipefail
 
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m 'fix(messages): guard empty conversation avatars'
-            git push origin HEAD:repair/pr451-complete
-          } 2>&1 | tee /tmp/pr459-native-repair.log
+            update_file() {
+              local path="$1"
+              local message="$2"
+              local sha
+              sha=$(gh api \
+                "repos/${GITHUB_REPOSITORY}/contents/${path}?ref=${REPAIR_BRANCH}" \
+                --jq .sha)
+              base64 -w0 "$path" > /tmp/pr459-content.b64
+              jq -n \
+                --arg message "$message" \
+                --rawfile content /tmp/pr459-content.b64 \
+                --arg branch "$REPAIR_BRANCH" \
+                --arg sha "$sha" \
+                '{message:$message,content:$content,branch:$branch,sha:$sha}' \
+                > /tmp/pr459-update.json
+              gh api --method PUT \
+                "repos/${GITHUB_REPOSITORY}/contents/${path}" \
+                --input /tmp/pr459-update.json >/dev/null
+            }
+
+            delete_file() {
+              local path="$1"
+              local sha
+              sha=$(gh api \
+                "repos/${GITHUB_REPOSITORY}/contents/${path}?ref=${REPAIR_BRANCH}" \
+                --jq .sha 2>/dev/null || true)
+              if [ -z "$sha" ]; then
+                return 0
+              fi
+              jq -n \
+                --arg message "chore(ci): supprimer le déclencheur temporaire PR459" \
+                --arg branch "$REPAIR_BRANCH" \
+                --arg sha "$sha" \
+                '{message:$message,branch:$branch,sha:$sha}' \
+                > /tmp/pr459-delete.json
+              gh api --method DELETE \
+                "repos/${GITHUB_REPOSITORY}/contents/${path}" \
+                --input /tmp/pr459-delete.json >/dev/null
+            }
+
+            update_file \
+              lib/pages/messages/conversation_thread_page.dart \
+              'fix(messages): protéger les avatars sans image'
+            update_file \
+              test/pages/messages/conversation_thread_page_shell_test.dart \
+              'test(messages): retirer le contournement CircleAvatar'
+            update_file \
+              .github/workflows/dart-format-quality.yml \
+              'chore(ci): restaurer la validation de format standard'
+
+            delete_file .github/pr459-repair.trigger
+            delete_file .github/pr459-native-sync-final.trigger
+            delete_file .github/repair-pr459-main.trigger
+            delete_file .github/repair-pr459-native-trigger-2
+          } 2>&1 | tee /tmp/pr459-api-update.log
 
       - name: Report repair result
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
-          REPAIR_OUTCOME: ${{ steps.repair_step.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+          UPDATE_OUTCOME: ${{ steps.update_branch.outcome }}
+        shell: bash
         run: |
-          tail -n 80 /tmp/pr459-native-repair.log > /tmp/pr459-native-repair-tail.log || true
           {
-            echo "### Native PR459 repair: ${REPAIR_OUTCOME}"
+            echo "### Réparation API PR459"
+            echo
+            echo "- préparation : ${PREPARE_OUTCOME}"
+            echo "- mise à jour branche : ${UPDATE_OUTCOME}"
             echo
             echo '```text'
-            cat /tmp/pr459-native-repair-tail.log
+            tail -n 35 /tmp/pr459-prepare.log 2>/dev/null || true
+            tail -n 45 /tmp/pr459-api-update.log 2>/dev/null || true
             echo '```'
-          } > /tmp/pr459-native-repair-comment.md
-          gh pr comment 459 --body-file /tmp/pr459-native-repair-comment.md
-          test "$REPAIR_OUTCOME" = success
+          } > /tmp/pr459-result.md
+          gh pr comment 459 --body-file /tmp/pr459-result.md
+          test "$PREPARE_OUTCOME" = success
+          test "$UPDATE_OUTCOME" = success
 
   guardrails:
     runs-on: ubuntu-latest
