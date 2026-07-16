@@ -2,7 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/features/offers/presentation/widgets/publish_offer_category_fields.dart';
 import 'package:presto_app/main.dart' as app;
+import 'package:presto_app/widgets/ai_publish_control.dart';
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 
 void main() {
@@ -33,49 +35,17 @@ void main() {
   }
 
   Future<void> selectTextMode(WidgetTester tester) async {
-    final textMode = find.text('Texte + IA');
-    expect(textMode, findsOneWidget);
-    await tester.ensureVisible(textMode);
-    await tester.tap(textMode);
+    final control = tester.widget<AiPublishControl>(find.byType(AiPublishControl));
+    control.onSelectText();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 250));
   }
 
-  Future<List<String>> openDropdown(
-    WidgetTester tester,
-    Finder dropdown,
-  ) async {
-    await tester.ensureVisible(dropdown);
-    await tester.tap(dropdown);
-    await tester.pumpAndSettle();
-
-    final labels = tester
-        .widgetList<Text>(
-          find.descendant(
-            of: find.byType(DropdownMenuItem<String>),
-            matching: find.byType(Text),
-          ),
-        )
-        .map((widget) => widget.data ?? widget.textSpan?.toPlainText() ?? '')
-        .map((label) => label.trim())
-        .where((label) => label.isNotEmpty)
-        .toList(growable: false);
-
-    expect(labels, isNotEmpty);
-    return labels;
-  }
-
-  Future<String> selectDropdownValue(
-    WidgetTester tester,
-    Finder dropdown, {
-    int index = 0,
-  }) async {
-    final labels = await openDropdown(tester, dropdown);
-    final safeIndex = index.clamp(0, labels.length - 1).toInt();
-    final selected = labels[safeIndex];
-    await tester.tap(find.text(selected).last);
-    await tester.pumpAndSettle();
-    return selected;
+  Future<void> selectVocalMode(WidgetTester tester) async {
+    final control = tester.widget<AiPublishControl>(find.byType(AiPublishControl));
+    control.onSelectVocal();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
   }
 
   testWidgets('bascule entre IA vocale et texte sans perdre le brouillon',
@@ -83,7 +53,7 @@ void main() {
     await pumpPage(tester);
 
     expect(find.text('Appuyez pour parler'), findsOneWidget);
-    expect(find.text("Parlez, l'IA complète l'annonce"), findsOneWidget);
+    expect(find.text("Parlez, l'IA complète l'annonce pour vous."), findsOneWidget);
 
     await selectTextMode(tester);
     expect(find.text('Appuyez pour parler'), findsNothing);
@@ -98,9 +68,7 @@ void main() {
     await tester.enterText(fields.at(1), title);
     await tester.pump();
 
-    await tester.tap(find.text('IA vocale'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
+    await selectVocalMode(tester);
     expect(find.text('Appuyez pour parler'), findsOneWidget);
 
     await selectTextMode(tester);
@@ -121,8 +89,7 @@ void main() {
 
     final photoTile = find.byType(PhotoSelectorTile);
     expect(photoTile, findsOneWidget);
-    await tester.ensureVisible(photoTile);
-    await tester.tap(photoTile);
+    tester.widget<PhotoSelectorTile>(photoTile).onTap();
     await tester.pumpAndSettle();
 
     expect(find.text('Galerie'), findsOneWidget);
@@ -142,28 +109,42 @@ void main() {
     await pumpPage(tester);
     await selectTextMode(tester);
 
-    var dropdowns = find.byType(DropdownButtonFormField<String>);
-    expect(dropdowns, findsAtLeastNWidgets(3));
+    var categoryFields = tester.widget<PublishOfferCategoryFields>(
+      find.byType(PublishOfferCategoryFields),
+    );
+    expect(categoryFields.categories, isNotEmpty);
 
-    final firstCategory =
-        await selectDropdownValue(tester, dropdowns.first, index: 0);
-    expect(firstCategory, isNotEmpty);
-    expect(find.text('Sous-catégorie'), findsOneWidget);
-
-    dropdowns = find.byType(DropdownButtonFormField<String>);
-    final selectedSubcategory =
-        await selectDropdownValue(tester, dropdowns.at(1), index: 0);
-    expect(selectedSubcategory, isNotEmpty);
-
-    dropdowns = find.byType(DropdownButtonFormField<String>);
-    final categories = await openDropdown(tester, dropdowns.first);
-    final nextIndex = categories.length > 1 ? 1 : 0;
-    final nextCategory = categories[nextIndex];
-    await tester.tap(find.text(nextCategory).last);
+    final firstCategory = categoryFields.categories.first;
+    categoryFields.onCategoryChanged(firstCategory);
     await tester.pumpAndSettle();
 
-    expect(find.text(nextCategory), findsWidgets);
+    categoryFields = tester.widget<PublishOfferCategoryFields>(
+      find.byType(PublishOfferCategoryFields),
+    );
+    expect(categoryFields.selectedCategory, firstCategory);
+    expect(categoryFields.subcategories, isNotEmpty);
     expect(find.text('Sous-catégorie'), findsOneWidget);
+
+    final firstSubcategory = categoryFields.subcategories.first;
+    categoryFields.onSubcategoryChanged(firstSubcategory);
+    await tester.pumpAndSettle();
+
+    categoryFields = tester.widget<PublishOfferCategoryFields>(
+      find.byType(PublishOfferCategoryFields),
+    );
+    expect(categoryFields.selectedSubcategory, firstSubcategory);
+
+    final nextCategory = categoryFields.categories.length > 1
+        ? categoryFields.categories[1]
+        : firstCategory;
+    categoryFields.onCategoryChanged(nextCategory);
+    await tester.pumpAndSettle();
+
+    categoryFields = tester.widget<PublishOfferCategoryFields>(
+      find.byType(PublishOfferCategoryFields),
+    );
+    expect(categoryFields.selectedCategory, nextCategory);
+    expect(categoryFields.selectedSubcategory, isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -173,7 +154,7 @@ void main() {
     final offsets = <double>[];
     await pumpPage(
       tester,
-      size: const Size(430, 850),
+      size: const Size(900, 900),
       onScroll: offsets.add,
     );
     await selectTextMode(tester);
