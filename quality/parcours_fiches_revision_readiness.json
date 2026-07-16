@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "programme": "Révision globale des fiches parcours personnalisés",
+  "updatedAt": "2026-07-16",
+  "target": {
+    "catalogueCoveragePercent": 100,
+    "duplicateFreePercent": 100,
+    "datedSourcesPercent": 100,
+    "humanValidatedPercent": 100,
+    "visuallyCheckedPdfPercent": 100
+  },
+  "controls": [
+    {"id": 1, "name": "Geler les nouveaux blocs non structurés", "status": "verified", "evidence": [".github/workflows/parcours-fiches-quality.yml"]},
+    {"id": 2, "name": "Inventorier toutes les fiches", "status": "in_progress", "evidence": ["tools/quality/check_parcours_fiches.mjs"]},
+    {"id": 3, "name": "Séparer données universelles, statut, métier, territoire et valeurs datées", "status": "in_progress", "evidence": ["docs/PARCOURS_FICHES_REVISION_PLAN.md"]},
+    {"id": 4, "name": "Détecter automatiquement doublons, mélanges métier et données périmées", "status": "verified", "evidence": ["quality/parcours_fiches_audit_rules.json", "tools/quality/check_parcours_fiches.mjs"]},
+    {"id": 5, "name": "Valider un lot pilote représentatif", "status": "in_progress", "evidence": ["quality/parcours_fiches_pilot.json"]},
+    {"id": 6, "name": "Adapter le générateur au guide chronologique", "status": "verified", "evidence": ["lib/services/journey_pdf_export_service.dart", "test/services/journey_pdf_export_service_test.dart"]},
+    {"id": 7, "name": "Réviser les familles à risque élevé", "status": "pending", "evidence": []},
+    {"id": 8, "name": "Réviser les autres familles par lots", "status": "pending", "evidence": []},
+    {"id": 9, "name": "Constituer la bibliothèque de courriers et documents", "status": "in_progress", "evidence": ["lib/services/journey_pdf_export_service.dart"]},
+    {"id": 10, "name": "Exécuter les tests automatiques", "status": "verified", "evidence": ["tools/quality/check_parcours_fiches.test.mjs", ".github/workflows/parcours-fiches-quality.yml"]},
+    {"id": 11, "name": "Contrôler visuellement les PDF", "status": "pending", "evidence": []},
+    {"id": 12, "name": "Publier uniquement les fiches validées", "status": "in_progress", "evidence": ["quality/parcours_fiches_audit_rules.json"]},
+    {"id": 13, "name": "Archiver les anciennes versions", "status": "pending", "evidence": []},
+    {"id": 14, "name": "Programmer les révisions réglementaires", "status": "in_progress", "evidence": ["quality/parcours_fiches_audit_rules.json"]},
+    {"id": 15, "name": "Appliquer la définition de fiche validée", "status": "in_progress", "evidence": ["docs/PARCOURS_FICHES_REVIEW_CHECKLIST.md"]}
+  ]
+}
