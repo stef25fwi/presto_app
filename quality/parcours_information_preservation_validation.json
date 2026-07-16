@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "validatedAt": "2026-07-16",
+  "scope": "fonctionnaire_aide_demenagement",
+  "sourceToPdfPreservation": {
+    "status": "verified",
+    "canonicalSteps": 10,
+    "officialSourcesExpected": 8,
+    "officialSourcesFound": 8,
+    "pdfPages": 16,
+    "pdfFormat": "A4",
+    "testStatus": "passed",
+    "textInspectionStatus": "passed",
+    "visualInspectionStatus": "passed"
+  },
+  "preservedInformation": [
+    "cumul fonction publique",
+    "distinction manutention et transport pour compte d'autrui",
+    "autorisation d'exercer et inscription au registre transport",
+    "capacites professionnelle et financiere",
+    "licence adaptee",
+    "assurances et biens confies",
+    "documents a collecter",
+    "couts indicatifs",
+    "seuil micro-fiscal 2026 de 83 600 euros",
+    "cotisations micro-sociales BIC services de 21,2 pour cent",
+    "seuils TVA de 37 500 et 41 250 euros",
+    "huit sources officielles",
+    "dix etapes chronologiques",
+    "modeles de courriers"
+  ],
+  "removedAsOutOfScope": [
+    "Nova SAP",
+    "publics fragiles",
+    "actes de soin medical",
+    "materiel et couts de menage"
+  ],
+  "riskClassification": {
+    "handlingOnly": "medium",
+    "transportForOthers": "high",
+    "publicAgentCumul": "authorization_required_when_applicable"
+  },
+  "evidence": {
+    "workflow": ".github/workflows/parcours-information-preservation.yml",
+    "test": "test/services/parcours_fiches_information_preservation_test.dart",
+    "artifactName": "parcours-information-preservation",
+    "workflowRunId": 29529930186,
+    "artifactId": 8388234415,
+    "artifactDigest": "sha256:e137fd5da619e0dd382d4d4f37bac2918eaeebe476ebffabdd32a1fc82361ad6"
+  },
+  "publicationDecision": "keep_corrected_pending_specialist_transport_validation"
+}
