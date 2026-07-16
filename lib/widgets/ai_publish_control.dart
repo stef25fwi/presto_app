@@ -2,8 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../features/subscriptions/subscription_credit_service.dart';
-import '../features/subscriptions/subscription_credits_card.dart';
 import 'orbiting_ai_visual.dart';
 
 enum AiPublishState {
@@ -78,13 +76,6 @@ class _AiPublishControlState extends State<AiPublishControl> {
             fontWeight: FontWeight.w700,
             color: Color(0xFF1A2238),
           ),
-        ),
-        const SizedBox(height: 10),
-        const SubscriptionCreditsInlineBadges(
-          kinds: [
-            SubscriptionCreditKind.voiceAi,
-            SubscriptionCreditKind.textAi,
-          ],
         ),
         const SizedBox(height: 14),
         _MethodTabRow(
