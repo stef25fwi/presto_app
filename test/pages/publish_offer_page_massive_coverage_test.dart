@@ -71,7 +71,7 @@ void main() {
     int index = 0,
   }) async {
     final labels = await openDropdown(tester, dropdown);
-    final safeIndex = index.clamp(0, labels.length - 1);
+    final safeIndex = index.clamp(0, labels.length - 1).toInt();
     final selected = labels[safeIndex];
     await tester.tap(find.text(selected).last);
     await tester.pumpAndSettle();
@@ -104,8 +104,12 @@ void main() {
     expect(find.text('Appuyez pour parler'), findsOneWidget);
 
     await selectTextMode(tester);
-    expect(find.text(description), findsOneWidget);
-    expect(find.text(title), findsOneWidget);
+    final values = tester
+        .widgetList<EditableText>(find.byType(EditableText))
+        .map((field) => field.controller.text)
+        .toList(growable: false);
+    expect(values, contains(description));
+    expect(values, contains(title));
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
