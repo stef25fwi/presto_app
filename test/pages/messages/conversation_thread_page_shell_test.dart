@@ -121,6 +121,17 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> disposeThread(WidgetTester tester) async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    if (!userPlatform.tokenCompleter.isCompleted) {
+      userPlatform.tokenCompleter.completeError(
+        StateError('Fin déterministe du test de conversation'),
+      );
+    }
+    await tester.pump();
+    await tester.pump();
+  }
+
   tearDown(() {
     authPlatform.user = null;
   });
@@ -179,8 +190,7 @@ void main() {
     await tester.pump();
     expect(find.byIcon(Icons.mic_none_rounded), findsOneWidget);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    await disposeThread(tester);
   });
 
   testWidgets('refuse les actions d’envoi lorsque la session disparaît',
@@ -222,7 +232,6 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    await disposeThread(tester);
   });
 }
