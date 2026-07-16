@@ -40,7 +40,7 @@ void main() {
 
   Finder descriptionField() {
     return find.byWidgetPredicate(
-      (widget) => widget is TextFormField && (widget.maxLines ?? 1) > 1,
+      (widget) => widget is TextField && (widget.maxLines ?? 1) > 1,
       description: 'description multiligne de publication',
     );
   }
@@ -48,8 +48,8 @@ void main() {
   Finder titleField() {
     return find.byWidgetPredicate(
       (widget) =>
-          widget is TextFormField &&
-          widget.decoration.hintText == 'Ex : Monter un meuble IKEA',
+          widget is TextField &&
+          widget.decoration?.hintText == 'Ex : Monter un meuble IKEA',
       description: 'titre de publication',
     );
   }
@@ -180,7 +180,7 @@ void main() {
     expect(description, findsOneWidget);
     expect(title, findsOneWidget);
 
-    final descriptionWidget = tester.widget<TextFormField>(description);
+    final descriptionWidget = tester.widget<TextField>(description);
     descriptionWidget.onTap?.call();
     await tester.pump();
 
@@ -199,11 +199,11 @@ void main() {
     await tester.tap(find.text('Annuler'));
     await tester.pump();
     expect(
-      tester.widget<TextFormField>(descriptionField()).controller?.text,
+      tester.widget<TextField>(descriptionField()).controller?.text,
       descriptionValue,
     );
     expect(
-      tester.widget<TextFormField>(titleField()).controller?.text,
+      tester.widget<TextField>(titleField()).controller?.text,
       titleValue,
     );
 
@@ -213,11 +213,11 @@ void main() {
     await tester.pump();
 
     expect(
-      tester.widget<TextFormField>(descriptionField()).controller?.text,
+      tester.widget<TextField>(descriptionField()).controller?.text,
       isEmpty,
     );
     expect(
-      tester.widget<TextFormField>(titleField()).controller?.text,
+      tester.widget<TextField>(titleField()).controller?.text,
       isEmpty,
     );
 
