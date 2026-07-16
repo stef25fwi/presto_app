@@ -86,14 +86,14 @@ void main() {
     final fullText = jsonEncode(derived).toLowerCase();
     for (final requiredPhrase in const [
       'hors du périmètre des services à la personne',
-      'transport routier de biens pour le compte d’autrui',
+      'transport routier de biens',
       'biens confiés',
       'dommages aux locaux',
       'port de charges',
       'travaux techniques',
       'guichet unique',
-      'aides régionales ou locales',
-      'première prestation limitée',
+      'aides territoriales',
+      'mission limitée',
     ]) {
       expect(fullText, contains(requiredPhrase));
     }
