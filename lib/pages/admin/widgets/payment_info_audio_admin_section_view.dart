@@ -72,7 +72,7 @@ extension _PaymentInfoAudioAdminSectionView
                   ),
                   onChanged: (_) {
                     if (_hasPreviewedDraft || _lastPreviewedDraftUrl != null) {
-                      setState(() {
+                      _update(() {
                         _hasPreviewedDraft = false;
                         _lastPreviewedDraftUrl = null;
                       });
