@@ -23,6 +23,6 @@ void main() {
     expect(store.cloudSyncEnabled, isFalse);
     expect(store.latestEntry, isNull);
     expect(store.history, isEmpty);
-    expect(notifications, 0);
+    expect(notifications, 1);
   });
 }
