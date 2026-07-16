@@ -85,7 +85,7 @@ void main() {
 
     final fullText = jsonEncode(derived).toLowerCase();
     for (final requiredPhrase in const [
-      'hors du périmètre des services à la personne',
+      'ne relève pas des services à la personne',
       'transport routier de biens',
       'biens confiés',
       'dommages aux locaux',
