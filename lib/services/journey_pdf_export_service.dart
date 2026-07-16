@@ -470,7 +470,8 @@ class JourneyPdfExportService {
     }
 
     return [
-      for (var index = 0; index < chunks.length; index++)
+      for (var index = 0; index < chunks.length; index++) ...[
+        pw.NewPage(freeSpace: 320),
         _stepCardChunk(
           heading: index == 0
               ? 'Étape $number - $title'
@@ -479,6 +480,7 @@ class JourneyPdfExportService {
           actions: chunks[index],
           expectedResult: index == chunks.length - 1 ? expectedResult : '',
         ),
+      ],
     ];
   }
 
