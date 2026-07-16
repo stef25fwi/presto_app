@@ -59,6 +59,7 @@ void main() {
       _app(SubscriptionSection(userId: 'user-section', service: service)),
     );
     await tester.pump();
+    await tester.pump();
 
     expect(find.text('Mon abonnement iliprestō'), findsOneWidget);
     expect(find.text('Gratuit'), findsOneWidget);
@@ -88,21 +89,25 @@ void main() {
     );
     await tester.pump();
 
+    final particuliersSelector =
+        find.widgetWithText(InkWell, 'Particuliers');
+    final proSelector = find.widgetWithText(InkWell, 'Pro');
+
     expect(find.text('Découvrez les offres'), findsOneWidget);
-    expect(find.text('Particuliers'), findsOneWidget);
-    expect(find.text('Pro'), findsOneWidget);
+    expect(particuliersSelector, findsOneWidget);
+    expect(proSelector, findsOneWidget);
     expect(find.text('Gratuit'), findsOneWidget);
     expect(find.text('iliprestō+'), findsOneWidget);
     expect(find.text('ilipro'), findsNothing);
 
-    await tester.tap(find.text('Pro'));
+    await tester.tap(proSelector);
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('ilipro'), findsOneWidget);
     expect(find.text('Gratuit'), findsNothing);
     expect(find.text('iliprestō+'), findsNothing);
 
-    await tester.tap(find.text('Particuliers'));
+    await tester.tap(particuliersSelector);
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('Gratuit'), findsOneWidget);
