@@ -44,6 +44,7 @@
   "evidence": {
     "workflow": ".github/workflows/parcours-information-preservation.yml",
     "test": "test/services/parcours_fiches_information_preservation_test.dart",
+    "auditDocument": "docs/PARCOURS_INFORMATION_PRESERVATION_AUDIT.md",
     "artifactName": "parcours-information-preservation",
     "workflowRunId": 29529930186,
     "artifactId": 8388234415,
