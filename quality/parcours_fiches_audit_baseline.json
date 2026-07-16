@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-16T18:10:41Z",
+  "source": "GitHub Actions — Parcours fiches quality run 6",
+  "scope": "Fichiers JSON versionnés sous docs/menu_activite_statuts/**/json",
+  "inventory": {
+    "totalFiles": 102,
+    "highRiskFiles": 44,
+    "publishableFiles": 0,
+    "byStatus": {
+      "non_auditee": 101,
+      "corrigee": 1
+    }
+  },
+  "totals": {
+    "blockerSignals": 55,
+    "errorSignals": 0,
+    "warningSignals": 706,
+    "filesWithBlockerSignals": 49,
+    "filesWithWarnings": 101
+  },
+  "mainFindings": {
+    "missingReviewMetadata": 404,
+    "undatedRegulatoryValues": 202,
+    "duplicateAcrossSections": 100,
+    "sapCompatibilitySignals": 21,
+    "healthCompatibilitySignals": 11,
+    "cnapsCompatibilitySignals": 9,
+    "decennialInsuranceCompatibilitySignals": 9,
+    "movingSapCompatibilitySignals": 5
+  },
+  "interpretation": [
+    "Les signaux de compatibilité sont des éléments à contrôler humainement et ne constituent pas tous une erreur juridique confirmée.",
+    "Le nombre 102 correspond au catalogue JSON actuellement versionné et audité par le dépôt, pas à une estimation historique de 735 fiches.",
+    "Aucune fiche n'est encore déclarée publiable car la première fiche corrigée reste en attente de validation spécialisée et les autres sont non auditées.",
+    "Le mode CI reste non bloquant pendant la migration du catalogue historique ; les lots validés pourront ensuite passer en mode enforce."
+  ]
+}
