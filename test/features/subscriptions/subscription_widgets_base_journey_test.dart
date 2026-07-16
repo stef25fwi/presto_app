@@ -19,6 +19,15 @@ class _StaticSubscriptionConfigService extends SubscriptionConfigService {
   }
 }
 
+SubscriptionAppConfig _enabledConfig() {
+  return const SubscriptionAppConfig(
+    subscriptionSectionEnabled: true,
+    subscriptionsPrepared: true,
+    stripeEnabled: false,
+    freeAccessMode: false,
+  );
+}
+
 Widget _app(Widget child) {
   return MaterialApp(
     home: Scaffold(
@@ -51,9 +60,7 @@ void main() {
 
   testWidgets('la section active présente l abonnement gratuit par défaut',
       (tester) async {
-    final service = _StaticSubscriptionConfigService(
-      const SubscriptionAppConfig.defaults(),
-    );
+    final service = _StaticSubscriptionConfigService(_enabledConfig());
 
     await tester.pumpWidget(
       _app(SubscriptionSection(userId: 'user-section', service: service)),
@@ -75,9 +82,7 @@ void main() {
 
   testWidgets('la page détails bascule des offres particuliers vers pro',
       (tester) async {
-    final service = _StaticSubscriptionConfigService(
-      const SubscriptionAppConfig.defaults(),
-    );
+    final service = _StaticSubscriptionConfigService(_enabledConfig());
 
     await tester.pumpWidget(
       MaterialApp(
@@ -89,28 +94,29 @@ void main() {
     );
     await tester.pump();
 
-    final particuliersSelector =
-        find.widgetWithText(InkWell, 'Particuliers');
+    final particuliersSelector = find.widgetWithText(InkWell, 'Particuliers');
     final proSelector = find.widgetWithText(InkWell, 'Pro');
 
     expect(find.text('Découvrez les offres'), findsOneWidget);
     expect(particuliersSelector, findsOneWidget);
     expect(proSelector, findsOneWidget);
-    expect(find.text('Gratuit'), findsOneWidget);
+    expect(find.text('Gratuit'), findsNWidgets(2));
     expect(find.text('iliprestō+'), findsOneWidget);
-    expect(find.text('ilipro'), findsNothing);
+    expect(find.text('Choisir iliprestō+'), findsOneWidget);
+    expect(find.text('Choisir ilipro'), findsNothing);
 
     await tester.tap(proSelector);
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('ilipro'), findsOneWidget);
-    expect(find.text('Gratuit'), findsNothing);
-    expect(find.text('iliprestō+'), findsNothing);
+    expect(find.text('Gratuit'), findsOneWidget);
+    expect(find.text('Choisir ilipro'), findsOneWidget);
+    expect(find.text('Choisir iliprestō+'), findsNothing);
 
     await tester.tap(particuliersSelector);
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('Gratuit'), findsOneWidget);
-    expect(find.text('iliprestō+'), findsOneWidget);
+    expect(find.text('Gratuit'), findsNWidgets(2));
+    expect(find.text('Choisir iliprestō+'), findsOneWidget);
+    expect(find.text('Choisir ilipro'), findsNothing);
   });
 }
