@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "validatedAt": "2026-07-16",
+  "workflow": {
+    "name": "Parcours PDF visual QA",
+    "runId": 29524949445,
+    "headSha": "301e33c8004e4b72cb6eadc9bb72c9f19a1ce8b7",
+    "artifactId": 8386268047,
+    "artifactDigest": "sha256:94693f4a93a0419c937c92e8f13a6346c88997edbca5d76ab82e1bb949762e83"
+  },
+  "sample": {
+    "activity": "Aide déménagement",
+    "status": "Fonctionnaire",
+    "region": "Guadeloupe",
+    "pages": 5,
+    "pageFormat": "A4",
+    "pdfVersion": "1.7",
+    "fileSizeBytes": 621410
+  },
+  "automatedChecks": {
+    "journeyPdfTests": "passed_4_of_4",
+    "longStepPagination": true,
+    "pdfStructure": true,
+    "pngRendering": true,
+    "artifactUploaded": true
+  },
+  "humanVisualReview": {
+    "pageBreaks": true,
+    "letterTemplatesNotSplit": true,
+    "noMissingGlyphs": true,
+    "headingsReadable": true,
+    "checklistsReadable": true,
+    "footerAndPaginationReadable": true,
+    "approved": true
+  },
+  "notes": [
+    "Les étapes longues sont découpées en cartes successives de taille maîtrisée.",
+    "Chaque courrier suivant commence sur une nouvelle page afin de conserver son en-tête et son contenu ensemble.",
+    "Le style italique non pris en charge a été retiré de l’avertissement juridique pour conserver tous les caractères français."
+  ]
+}
