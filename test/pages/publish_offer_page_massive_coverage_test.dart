@@ -38,8 +38,7 @@ void main() {
     final control = tester.widget<AiPublishControl>(find.byType(AiPublishControl));
     control.onSelectText();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pump();
+    await tester.pumpAndSettle();
   }
 
   Future<void> selectVocalMode(WidgetTester tester) async {
