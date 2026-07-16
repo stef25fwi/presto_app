@@ -1,0 +1,31 @@
+name: Restore account and route journey library
+
+on:
+  push:
+    branches:
+      - agent/subscription-credits-dashboard
+
+permissions:
+  contents: write
+
+jobs:
+  route:
+    if: ${{ !contains(github.event.head_commit.message, 'route journey library compat') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/subscription-credits-dashboard
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tools/restore_account_and_route_library.py
+      - name: Commit routing
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart lib/pages/account/mon_entreprise_parcours_page.dart
+          git commit -m "refactor: route journey library compat"
+          git push origin HEAD:agent/subscription-credits-dashboard
