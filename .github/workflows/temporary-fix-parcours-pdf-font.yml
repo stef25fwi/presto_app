@@ -1,0 +1,36 @@
+name: Temporary fix parcours PDF font
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/temporary-fix-parcours-pdf-font.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-font:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Remove unsupported italic fallback
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('lib/services/journey_pdf_export_service.dart')
+          text = path.read_text(encoding='utf-8')
+          target = '        fontStyle: pw.FontStyle.italic,\n'
+          if target not in text:
+              raise SystemExit('Style italique attendu introuvable')
+          path.write_text(text.replace(target, '', 1), encoding='utf-8')
+          PY
+      - name: Commit correction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/services/journey_pdf_export_service.dart
+          git commit -m 'Corrige les glyphes du pied de guide PDF'
+          git push origin HEAD:agent/guide-parcours-pas-a-pas
