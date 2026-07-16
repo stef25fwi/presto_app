@@ -22,6 +22,8 @@ class AiDraftService {
     String? city,
     String? category,
   }) async {
+    final clientRequestId =
+        'text_${DateTime.now().microsecondsSinceEpoch}_${text.hashCode}';
     try {
       await _prepareAuthenticatedCallableSession();
       final res = await retry(
@@ -33,6 +35,7 @@ class AiDraftService {
             'hint': text,
             if (city != null) 'city': city,
             if (category != null) 'category': category,
+            'clientRequestId': clientRequestId,
           },
         ),
         maxAttempts: 3,
