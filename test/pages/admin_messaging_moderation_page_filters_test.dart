@@ -29,7 +29,13 @@ void main() {
       find.text('Journal des messages passés en revue, masqués ou refusés.'),
       findsOneWidget,
     );
-    expect(find.byType(SegmentedButton), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString().startsWith('SegmentedButton<'),
+        description: 'bouton segmenté des filtres de modération',
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     for (final label in const ['Tous', 'Pending', 'Revue', 'Refusés']) {
