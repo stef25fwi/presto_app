@@ -34,12 +34,11 @@ Future<HttpsCallableResult<T>> callPrestoFunction<T>({
 
   try {
     if (creditKind != null && operationId != null) {
-      await _consumeCredit(
+      creditConsumed = await _consumeCredit(
         functions: functions,
         kind: creditKind,
         operationId: operationId,
       );
-      creditConsumed = true;
     }
 
     final result = await functions
@@ -144,17 +143,30 @@ String _creditOperationId({
   return '${name}_${DateTime.now().microsecondsSinceEpoch}';
 }
 
-Future<void> _consumeCredit({
+/// Réserve un crédit pour un utilisateur connecté.
+///
+/// Les essais IA historiquement disponibles avant connexion restent utilisables :
+/// le callable de quota répond alors `unauthenticated`, ce qui signifie
+/// simplement qu'aucun compteur de compte ne peut encore être débité. Toute
+/// autre erreur est conservée afin de ne jamais exécuter une action payante sans
+/// contrôle lorsque le service de crédits est indisponible.
+Future<bool> _consumeCredit({
   required FirebaseFunctions functions,
   required String kind,
   required String operationId,
 }) async {
-  await functions
-      .httpsCallable(
-        'consumeSubscriptionCredit',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-      )
-      .call<void>({'kind': kind, 'operationId': operationId});
+  try {
+    await functions
+        .httpsCallable(
+          'consumeSubscriptionCredit',
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+        )
+        .call<void>({'kind': kind, 'operationId': operationId});
+    return true;
+  } on FirebaseFunctionsException catch (error) {
+    if (error.code == 'unauthenticated') return false;
+    rethrow;
+  }
 }
 
 Future<void> _refundCredit({
