@@ -7,6 +7,14 @@ import { pathToFileURL } from 'node:url';
 import { auditFiche } from './check_parcours_fiches.mjs';
 import { reviewState } from './check_parcours_review_schedule.mjs';
 
+const requiredHumanChecks = [
+  'coherence_metier',
+  'chronologie',
+  'personnalisation',
+  'fiabilite',
+  'controle_pdf',
+];
+
 function parseArgs(argv) {
   const args = {
     root: 'docs/menu_activite_statuts',
@@ -42,6 +50,27 @@ function collectJsonFiles(root) {
     }
   }
   return files.sort();
+}
+
+function humanValidationReasons(fiche) {
+  const validation = fiche.human_validation;
+  if (!validation || typeof validation !== 'object') {
+    return ['La validation humaine structurée est absente.'];
+  }
+
+  const reasons = [];
+  for (const check of requiredHumanChecks) {
+    if (validation[check] !== true) {
+      reasons.push(`Validation humaine non confirmée : ${check}.`);
+    }
+  }
+  if (!validation.approved_by) {
+    reasons.push('Le validateur final n’est pas renseigné.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(validation.approved_at ?? ''))) {
+    reasons.push('La date de validation finale est absente ou invalide.');
+  }
+  return reasons;
 }
 
 export function buildPublicationGate({ root, manifestPath, rulesPath, today }) {
@@ -84,6 +113,7 @@ export function buildPublicationGate({ root, manifestPath, rulesPath, today }) {
       reasons.push(`Calendrier de révision non conforme : ${calendar.reason}`);
     }
     if (!found.fiche.reviewer) reasons.push('Le relecteur humain n’est pas renseigné.');
+    reasons.push(...humanValidationReasons(found.fiche));
 
     results.push({
       id,
@@ -92,6 +122,7 @@ export function buildPublicationGate({ root, manifestPath, rulesPath, today }) {
       reviewStatus: found.fiche.review_status ?? 'non_auditee',
       auditCounts: audit.counts,
       reviewCalendarState: calendar.state,
+      humanValidation: found.fiche.human_validation ?? null,
       allowed: reasons.length === 0,
       reasons,
     });
