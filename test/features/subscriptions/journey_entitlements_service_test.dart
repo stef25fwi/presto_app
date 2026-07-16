@@ -32,7 +32,7 @@ SubscriptionCreditStatus _credit({
   return SubscriptionCreditStatus(
     used: used,
     limit: limit,
-    remaining: unlimited ? 999999 : (limit - used).clamp(0, limit),
+    remaining: unlimited ? 999999 : (used >= limit ? 0 : limit - used),
     unlimited: unlimited,
     exhausted: !unlimited && used >= limit,
   );
