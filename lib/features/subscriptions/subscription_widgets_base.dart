@@ -486,7 +486,8 @@ class SubscriptionPlanTabs extends StatelessWidget {
     final plans = _plans.where((plan) {
       final audienceMatches = audience == OfferAudience.particuliers
           ? plan.plan != SubscriptionPlan.ilipro
-          : plan.plan == SubscriptionPlan.ilipro;
+          : plan.plan == SubscriptionPlan.free ||
+              plan.plan == SubscriptionPlan.ilipro;
       return audienceMatches &&
           (showCurrentPlan || plan.plan != userState.plan);
     }).toList(growable: false);
@@ -498,6 +499,7 @@ class SubscriptionPlanTabs extends StatelessWidget {
             presentation: plans[i],
             currentPlan: userState.plan,
             config: config,
+            audience: audience,
           ),
           if (i != plans.length - 1) const SizedBox(height: 14),
         ],
@@ -510,17 +512,20 @@ class _PlanCard extends StatelessWidget {
   final _PlanPresentation presentation;
   final SubscriptionPlan currentPlan;
   final SubscriptionAppConfig config;
+  final OfferAudience audience;
 
   const _PlanCard({
     required this.presentation,
     required this.currentPlan,
     required this.config,
+    required this.audience,
   });
 
   @override
   Widget build(BuildContext context) {
     final isCurrent = presentation.plan == currentPlan;
     final isFree = presentation.plan == SubscriptionPlan.free;
+    final isProFree = isFree && audience == OfferAudience.pro;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
@@ -563,7 +568,7 @@ class _PlanCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          presentation.title,
+                          isProFree ? 'Gratuit Pro' : presentation.title,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -590,7 +595,9 @@ class _PlanCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      presentation.summary,
+                      isProFree
+                          ? 'L’essentiel pour commencer une activité professionnelle sur iliprestō.'
+                          : presentation.summary,
                       style: const TextStyle(
                         color: _muted,
                         height: 1.35,
@@ -634,7 +641,9 @@ class _PlanCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      _buttonLabel(presentation.plan),
+                      isProFree
+                          ? 'Choisir Gratuit Pro'
+                          : _buttonLabel(presentation.plan),
                       style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
