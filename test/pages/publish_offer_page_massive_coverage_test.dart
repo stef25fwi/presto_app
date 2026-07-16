@@ -50,7 +50,7 @@ void main() {
 
   Finder descriptionField() {
     return find.byWidgetPredicate(
-      (widget) => widget is TextFormField && (widget.maxLines ?? 1) > 1,
+      (widget) => widget is TextField && (widget.maxLines ?? 1) > 1,
       description: 'champ de description multiligne',
     );
   }
@@ -59,7 +59,7 @@ void main() {
     return find
         .byWidgetPredicate(
           (widget) =>
-              widget is TextFormField &&
+              widget is TextField &&
               (widget.maxLines ?? 1) == 1 &&
               widget.controller != null,
           description: 'champs texte monolignes avec contrôleur',
@@ -83,13 +83,13 @@ void main() {
 
     final descriptionFinder = descriptionField();
     expect(descriptionFinder, findsOneWidget);
-    final lockedDescription = tester.widget<TextFormField>(descriptionFinder);
+    final lockedDescription = tester.widget<TextField>(descriptionFinder);
     expect(lockedDescription.readOnly, isTrue);
     expect(lockedDescription.onTap, isNotNull);
     lockedDescription.onTap!();
     await tester.pump();
 
-    expect(tester.widget<TextFormField>(descriptionFinder).readOnly, isFalse);
+    expect(tester.widget<TextField>(descriptionFinder).readOnly, isFalse);
     expect(titleField(), findsOneWidget);
 
     await tester.enterText(descriptionFinder, description);
@@ -97,7 +97,7 @@ void main() {
     await tester.pump();
 
     expect(
-      tester.widget<TextFormField>(descriptionFinder).controller?.text,
+      tester.widget<TextField>(descriptionFinder).controller?.text,
       description,
     );
 
