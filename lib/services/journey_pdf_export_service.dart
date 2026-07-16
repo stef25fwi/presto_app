@@ -930,7 +930,7 @@ Cordialement,
       for (final match in urlPattern.allMatches(description)) {
         var url = match.group(0) ?? '';
         url = url.replaceAll(RegExp(r'[\),.;]+$'), '');
-        final key = _fingerprint(url);
+        final key = url.toLowerCase();
         if (url.isEmpty || seen.contains(key)) continue;
         seen.add(key);
         result.add({
