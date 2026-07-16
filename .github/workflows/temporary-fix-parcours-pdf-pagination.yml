@@ -1,0 +1,250 @@
+name: Temporary fix parcours PDF pagination
+
+on:
+  push:
+    branches:
+      - 'agent/guide-parcours-pas-a-pas'
+    paths:
+      - '.github/workflows/temporary-fix-parcours-pdf-pagination.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-pagination:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/guide-parcours-pas-a-pas
+          fetch-depth: 0
+      - name: Split oversized step cards
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('lib/services/journey_pdf_export_service.dart')
+          text = path.read_text(encoding='utf-8')
+
+          old_call = '''      widgets.add(
+            _stepCard(
+              number: index + 1,
+              title: _stepTitle(item, id),
+              objective: objective,
+              actions: actions,
+              expectedResult: _stepOutcomes[id] ??
+                  'Vous disposez d’un résultat vérifiable avant de passer à l’étape suivante.',
+            ),
+          );'''
+          new_call = '''      widgets.addAll(
+            _stepCards(
+              number: index + 1,
+              title: _stepTitle(item, id),
+              objective: objective,
+              actions: actions,
+              expectedResult: _stepOutcomes[id] ??
+                  'Vous disposez d’un résultat vérifiable avant de passer à l’étape suivante.',
+            ),
+          );'''
+
+          old_method = '''  static pw.Widget _stepCard({
+            required int number,
+            required String title,
+            required String objective,
+            required List<String> actions,
+            required String expectedResult,
+          }) {
+            return pw.Container(
+              width: double.infinity,
+              margin: const pw.EdgeInsets.only(bottom: 12),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: pw.BorderRadius.circular(10),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.blue50,
+                      borderRadius: pw.BorderRadius.only(
+                        topLeft: pw.Radius.circular(10),
+                        topRight: pw.Radius.circular(10),
+                      ),
+                    ),
+                    child: pw.Text(
+                      'Étape $number - $title',
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(11),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        if (objective.isNotEmpty) ...[
+                          _miniHeading('Objectif'),
+                          _paragraph(objective),
+                        ],
+                        if (actions.isNotEmpty) ...[
+                          _miniHeading('Actions à réaliser'),
+                          ...actions.map(_checkLine),
+                        ],
+                        _miniHeading('Résultat attendu avant de continuer'),
+                        pw.Container(
+                          width: double.infinity,
+                          padding: const pw.EdgeInsets.all(8),
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.green50,
+                            border: pw.Border.all(color: PdfColors.green200),
+                            borderRadius: pw.BorderRadius.circular(6),
+                          ),
+                          child: pw.Text(
+                            expectedResult,
+                            style: const pw.TextStyle(fontSize: 9, lineSpacing: 2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }'''
+
+          new_method = '''  static List<pw.Widget> _stepCards({
+            required int number,
+            required String title,
+            required String objective,
+            required List<String> actions,
+            required String expectedResult,
+          }) {
+            const maxActionsPerCard = 12;
+            final chunks = <List<String>>[];
+
+            if (actions.isEmpty) {
+              chunks.add(const <String>[]);
+            } else {
+              for (var start = 0;
+                  start < actions.length;
+                  start += maxActionsPerCard) {
+                final proposedEnd = start + maxActionsPerCard;
+                final end = proposedEnd < actions.length
+                    ? proposedEnd
+                    : actions.length;
+                chunks.add(actions.sublist(start, end));
+              }
+            }
+
+            return [
+              for (var index = 0; index < chunks.length; index++)
+                _stepCardChunk(
+                  heading: index == 0
+                      ? 'Étape $number - $title'
+                      : 'Étape $number - $title (suite ${index + 1})',
+                  objective: index == 0 ? objective : '',
+                  actions: chunks[index],
+                  expectedResult:
+                      index == chunks.length - 1 ? expectedResult : '',
+                ),
+            ];
+          }
+
+          static pw.Widget _stepCardChunk({
+            required String heading,
+            required String objective,
+            required List<String> actions,
+            required String expectedResult,
+          }) {
+            return pw.Container(
+              width: double.infinity,
+              margin: const pw.EdgeInsets.only(bottom: 12),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: pw.BorderRadius.circular(10),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.blue50,
+                      borderRadius: pw.BorderRadius.only(
+                        topLeft: pw.Radius.circular(10),
+                        topRight: pw.Radius.circular(10),
+                      ),
+                    ),
+                    child: pw.Text(
+                      heading,
+                      style: pw.TextStyle(
+                        fontSize: 12,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blue900,
+                      ),
+                    ),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(11),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        if (objective.isNotEmpty) ...[
+                          _miniHeading('Objectif'),
+                          _paragraph(objective),
+                        ],
+                        if (actions.isNotEmpty) ...[
+                          _miniHeading('Actions à réaliser'),
+                          ...actions.map(_checkLine),
+                        ],
+                        if (expectedResult.isNotEmpty) ...[
+                          _miniHeading('Résultat attendu avant de continuer'),
+                          pw.Container(
+                            width: double.infinity,
+                            padding: const pw.EdgeInsets.all(8),
+                            decoration: pw.BoxDecoration(
+                              color: PdfColors.green50,
+                              border: pw.Border.all(color: PdfColors.green200),
+                              borderRadius: pw.BorderRadius.circular(6),
+                            ),
+                            child: pw.Text(
+                              expectedResult,
+                              style: const pw.TextStyle(
+                                fontSize: 9,
+                                lineSpacing: 2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }'''
+
+          if old_call not in text:
+            raise SystemExit('Appel _stepCard attendu introuvable')
+          if old_method not in text:
+            raise SystemExit('Méthode _stepCard attendue introuvable')
+
+          text = text.replace(old_call, new_call, 1)
+          text = text.replace(old_method, new_method, 1)
+          path.write_text(text, encoding='utf-8')
+      - name: Format and commit
+        run: |
+          dart format lib/services/journey_pdf_export_service.dart
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/services/journey_pdf_export_service.dart
+          git diff --cached --quiet && exit 0
+          git commit -m 'Corrige la pagination des longues étapes PDF'
+          git push origin HEAD:agent/guide-parcours-pas-a-pas
