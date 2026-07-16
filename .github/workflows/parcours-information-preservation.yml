@@ -1,0 +1,68 @@
+name: Parcours information preservation
+
+on:
+  pull_request:
+    paths:
+      - 'lib/services/parcours_fiches_service.dart'
+      - 'lib/services/journey_pdf_export_service.dart'
+      - 'docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/json/fonctionnaire_aide_demenagement.json'
+      - 'docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/fonctionnaire_aide_demenagement.md'
+      - 'test/services/parcours_fiches_information_preservation_test.dart'
+      - '.github/workflows/parcours-information-preservation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  information-preservation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Verify detailed information preservation
+        run: flutter test test/services/parcours_fiches_information_preservation_test.dart --reporter expanded
+      - name: Install PDF inspection tools
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Inspect detailed PDF content
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/quality/parcours-information-pages
+          pdfinfo build/quality/parcours-guide-information-preservation.pdf \
+            | tee build/quality/parcours-guide-information-pdfinfo.txt
+          pdftotext -layout \
+            build/quality/parcours-guide-information-preservation.pdf \
+            build/quality/parcours-guide-information-preservation.txt
+          grep -Fq '83 600' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq '21,2' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq '37 500' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq '41 250' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq 'registre électronique national' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq 'autorisation de cumul' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq 'inventaire du matériel' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq 'services à la personne' build/quality/parcours-guide-information-preservation.txt
+          grep -Fq 'legifrance.gouv.fr' build/quality/parcours-guide-information-preservation.txt
+          pdftoppm -png -f 1 -l 12 -r 120 \
+            build/quality/parcours-guide-information-preservation.pdf \
+            build/quality/parcours-information-pages/page
+          test -s build/quality/parcours-information-pages/page-1.png
+      - name: Upload detailed preservation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-information-preservation
+          if-no-files-found: error
+          path: |
+            build/quality/parcours-guide-information-preservation.pdf
+            build/quality/parcours-guide-information-preservation.txt
+            build/quality/parcours-guide-information-pdfinfo.txt
+            build/quality/parcours-information-pages/*.png
+          retention-days: 30
