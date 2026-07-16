@@ -1,0 +1,37 @@
+name: Parcours fiches publication gate
+
+on:
+  pull_request:
+    paths:
+      - 'docs/menu_activite_statuts/**'
+      - 'quality/parcours_fiches_publication_manifest.json'
+      - 'quality/parcours_fiches_audit_rules.json'
+      - 'tools/quality/check_parcours_fiches.mjs'
+      - 'tools/quality/check_parcours_review_schedule.mjs'
+      - 'tools/quality/check_parcours_publication_gate.mjs'
+      - 'tools/quality/check_parcours_publication_gate.test.mjs'
+      - '.github/workflows/parcours-fiches-publication-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publication-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run publication gate tests
+        run: node --test tools/quality/check_parcours_publication_gate.test.mjs
+      - name: Enforce publication manifest
+        run: node tools/quality/check_parcours_publication_gate.mjs --enforce
+      - name: Upload publication gate report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-fiches-publication-gate
+          path: build/quality/parcours-fiches-publication-gate.json
+          retention-days: 30
