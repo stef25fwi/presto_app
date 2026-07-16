@@ -121,6 +121,12 @@ Future<void> _tapText(WidgetTester tester, String text) async {
   await tester.pump();
 }
 
+void _clearSnackBars(WidgetTester tester) {
+  ScaffoldMessenger.of(
+    tester.element(find.byType(PaymentInfoAudioAdminSection)),
+  ).clearSnackBars();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -184,9 +190,7 @@ void main() {
     expect(find.text('Le texte audio ne peut pas être vide.'), findsOneWidget);
     expect(backend.savedTexts, isEmpty);
 
-    ScaffoldMessenger.of(
-      tester.element(find.byType(PaymentInfoAudioAdminSection)),
-    ).clearSnackBars();
+    _clearSnackBars(tester);
     await tester.pump();
 
     await _tapText(tester, 'Générer le MP3 depuis ce texte');
@@ -225,6 +229,8 @@ void main() {
     await tester.pump();
     expect(find.text('Sauvegarder texte'), findsOneWidget);
 
+    _clearSnackBars(tester);
+    await tester.pump();
     backend
       ..saveCompleter = null
       ..saveError = StateError('accès refusé');
@@ -276,6 +282,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    _clearSnackBars(tester);
+    await tester.pump();
     backend
       ..generateCompleter = null
       ..generateError = StateError('service indisponible');
@@ -305,9 +313,7 @@ void main() {
       findsOneWidget,
     );
 
-    ScaffoldMessenger.of(
-      tester.element(find.byType(PaymentInfoAudioAdminSection)),
-    ).clearSnackBars();
+    _clearSnackBars(tester);
     await tester.pump();
     await _tapText(tester, 'J’ai pré-écouté ce MP3');
     expect(find.text('Pré-écoute confirmée'), findsOneWidget);
@@ -345,6 +351,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    _clearSnackBars(tester);
+    await tester.pump();
     backend
       ..publishCompleter = null
       ..publishError = StateError('publication refusée');
