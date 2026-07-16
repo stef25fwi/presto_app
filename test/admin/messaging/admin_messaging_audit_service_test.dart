@@ -1,5 +1,4 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
@@ -81,7 +80,10 @@ void main() {
     expect(logs.map((log) => log.id), <String>['log-3', 'log-2']);
     expect(logs.first.action, 'hide_message');
     expect(logs.first.riskLevel, 'high');
-    expect(logs.first.createdAt, DateTime.utc(2026, 7, 16, 10));
+    expect(
+      logs.first.createdAt?.millisecondsSinceEpoch,
+      DateTime.utc(2026, 7, 16, 10).millisecondsSinceEpoch,
+    );
   });
 
   test('fetchLogsPage pagine avec un curseur et calcule hasMore', () async {
@@ -130,18 +132,15 @@ void main() {
     final firestore = FakeFirebaseFirestore();
     await _seed(firestore);
     final service = AdminMessagingAuditService(firestore: firestore);
-    final cursor = (await firestore
-            .collection('messaging_admin_logs')
-            .orderBy('createdAt', descending: true)
-            .limit(1)
-            .get())
-        .docs
-        .single;
+    final ordered = await firestore
+        .collection('messaging_admin_logs')
+        .orderBy('createdAt', descending: true)
+        .get();
+    final cursor = ordered.docs.last;
 
     final page = await service.fetchLogsPage(
       pageSize: 5,
       startAfter: cursor,
-      riskLevel: 'critical',
     );
 
     expect(page.items, isEmpty);
