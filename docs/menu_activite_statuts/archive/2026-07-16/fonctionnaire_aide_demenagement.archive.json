@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "archivedAt": "2026-07-16",
+  "ficheId": "fonctionnaire_aide_demenagement",
+  "reason": "Remplacement de la fiche contaminée par des blocs Aide à domicile / Services à la personne lors de la migration vers le nouveau guide chronologique.",
+  "sourceBranch": "agent/guide-parcours-pas-a-pas",
+  "previousVersion": {
+    "json": {
+      "path": "docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/json/fonctionnaire_aide_demenagement.json",
+      "blobSha": "9e2b1d0fc801039eb7f0cb79625446045a44d219"
+    },
+    "markdown": {
+      "path": "docs/menu_activite_statuts/pack_fiches_fonctionnaire_firebase/markdown/fonctionnaire_aide_demenagement.md",
+      "blobSha": "c3a1b6f0c7a2acead3a1cc3db3346132c30febd3"
+    }
+  },
+  "replacementVersion": {
+    "jsonBlobSha": "76342ff7f2549c925351ed72adf247924cb0a3a0",
+    "markdownBlobSha": "0df95fcc23e6d34c82a9921942135031f4ef54eb",
+    "reviewStatus": "corrigee"
+  },
+  "restoration": "Les contenus antérieurs sont récupérables par leur blob SHA Git. Toute restauration doit repasser l'audit automatique et la checklist humaine."
+}
