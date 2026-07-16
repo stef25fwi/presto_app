@@ -1,0 +1,1 @@
+Déclenchement contrôlé final du correctif PR #451.
