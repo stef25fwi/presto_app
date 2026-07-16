@@ -11,7 +11,8 @@
     "pdfFormat": "A4",
     "testStatus": "passed",
     "textInspectionStatus": "passed",
-    "visualInspectionStatus": "passed"
+    "visualInspectionStatus": "passed",
+    "orphanStepHeaders": false
   },
   "preservedInformation": [
     "cumul fonction publique",
