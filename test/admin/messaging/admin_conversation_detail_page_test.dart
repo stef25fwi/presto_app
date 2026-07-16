@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/messaging/admin_conversation_detail_page.dart';
@@ -5,6 +7,11 @@ import 'package:presto_app/admin/messaging/models/admin_conversation_model.dart'
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
 
   AdminConversationModel conversation({
     bool watchlisted = false,
