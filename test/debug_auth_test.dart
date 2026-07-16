@@ -11,6 +11,41 @@ class _DebugCredentialPlatform extends UserCredentialPlatform {
   _DebugCredentialPlatform({required super.auth}) : super(user: null);
 }
 
+class _DebugMultiFactorPlatform extends MultiFactorPlatform {
+  _DebugMultiFactorPlatform(super.auth);
+}
+
+class _DebugUserPlatform extends UserPlatform {
+  _DebugUserPlatform(
+    FirebaseAuthPlatform auth, {
+    required String uid,
+    required this.token,
+  }) : super(
+          auth,
+          _DebugMultiFactorPlatform(auth),
+          InternalUserDetails(
+            userInfo: InternalUserInfo(
+              uid: uid,
+              displayName: 'Debug User',
+              isAnonymous: false,
+              isEmailVerified: true,
+              creationTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+              lastSignInTimestamp: DateTime(2026, 7, 16).millisecondsSinceEpoch,
+            ),
+            providerData: const <Map<String, dynamic>?>[],
+          ),
+        );
+
+  final String? token;
+  final List<bool> tokenRequests = <bool>[];
+
+  @override
+  Future<String?> getIdToken(bool forceRefresh) async {
+    tokenRequests.add(forceRefresh);
+    return token;
+  }
+}
+
 class _DebugAuthPlatform extends FirebaseAuthPlatform {
   _DebugAuthPlatform() : super(appInstance: null);
 
@@ -97,6 +132,43 @@ void main() {
     expect(
       logs,
       contains('[AUTH] idTokenChanges: user=null token=null'),
+    );
+  });
+
+  test('installAuthStateLogs masque un jeton court', () async {
+    final user = _DebugUserPlatform(platform, uid: 'short-user', token: 'short');
+    DebugAuth.installAuthStateLogs();
+
+    platform.authController.add(user);
+    platform.tokenController.add(user);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(user.tokenRequests, <bool>[false]);
+    expect(
+      logs,
+      contains('[AUTH] authStateChanges: authenticated=true'),
+    );
+    expect(
+      logs,
+      contains('[AUTH] idTokenChanges: user=short-user token=short...'),
+    );
+  });
+
+  test('installAuthStateLogs tronque un jeton long', () async {
+    final user = _DebugUserPlatform(
+      platform,
+      uid: 'long-user',
+      token: 'abcdefghijklmnop',
+    );
+    DebugAuth.installAuthStateLogs();
+
+    platform.tokenController.add(user);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(user.tokenRequests, <bool>[false]);
+    expect(
+      logs,
+      contains('[AUTH] idTokenChanges: user=long-user token=abcdefghijkl...'),
     );
   });
 
