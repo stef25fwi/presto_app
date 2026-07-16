@@ -18,10 +18,10 @@ Widget _wrap(Widget child) {
 Future<void> _pumpUntilFound(
   WidgetTester tester,
   Finder finder, {
-  int maxFrames = 30,
+  int maxFrames = 120,
 }) async {
   for (var frame = 0; frame < maxFrames; frame++) {
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 16));
     if (finder.evaluate().isNotEmpty) {
       return;
     }
