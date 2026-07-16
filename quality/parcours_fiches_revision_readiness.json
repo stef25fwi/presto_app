@@ -20,7 +20,7 @@
     {"id": 8, "name": "Réviser les autres familles par lots", "status": "in_progress", "evidence": ["quality/parcours_fiches_revision_batches.json"]},
     {"id": 9, "name": "Constituer la bibliothèque de courriers et documents", "status": "in_progress", "evidence": ["lib/services/journey_pdf_export_service.dart"]},
     {"id": 10, "name": "Exécuter les tests automatiques", "status": "verified", "evidence": ["tools/quality/check_parcours_fiches.test.mjs", ".github/workflows/parcours-fiches-quality.yml"]},
-    {"id": 11, "name": "Contrôler visuellement les PDF", "status": "pending", "evidence": []},
+    {"id": 11, "name": "Contrôler visuellement les PDF", "status": "in_progress", "evidence": ["test/services/journey_pdf_export_service_test.dart", ".github/workflows/parcours-pdf-visual-qa.yml"]},
     {"id": 12, "name": "Publier uniquement les fiches validées", "status": "in_progress", "evidence": ["quality/parcours_fiches_audit_rules.json"]},
     {"id": 13, "name": "Archiver les anciennes versions", "status": "in_progress", "evidence": ["docs/menu_activite_statuts/archive/2026-07-16/fonctionnaire_aide_demenagement.archive.json"]},
     {"id": 14, "name": "Programmer les révisions réglementaires", "status": "verified", "evidence": ["tools/quality/check_parcours_review_schedule.mjs", "tools/quality/check_parcours_review_schedule.test.mjs", ".github/workflows/parcours-fiches-review-schedule.yml"]},
