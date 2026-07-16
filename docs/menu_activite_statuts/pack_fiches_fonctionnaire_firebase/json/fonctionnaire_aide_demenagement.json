@@ -5,129 +5,131 @@
   "statut_utilisateur": "fonctionnaire",
   "categorie": "Main-d'oeuvre",
   "activite": "Aide déménagement",
-  "famille": "Aide à domicile / Services à la personne",
-  "type_activite": "Service à la personne ou prestation d'aide à domicile selon le public et le lieu",
+  "famille": "Déménagement / manutention",
+  "type_activite": "Prestation de déménagement et de manutention : emballage, chargement, déchargement, déplacement de mobilier et aide à l'installation. Le transport routier pour le compte d'autrui doit être vérifié séparément lorsqu'il est inclus.",
   "activite_reglementee": false,
-  "niveau_vigilance": "moyen",
-  "code_ape_indicatif": "81.21Z, 88.10A, 96.09Z ou 82.99Z selon activité — à confirmer",
-  "nature_fiscale_probable": "prestation_services_bic_ou_bnc",
-  "statut_recommande": "micro-entrepreneur / entreprise individuelle sous réserve d'autorisation de cumul",
+  "niveau_vigilance": "élevé si transport de biens, moyen pour la manutention seule",
+  "code_ape_indicatif": "49.42Z pour un véritable service de déménagement ; l'Insee confirme le code selon l'activité principale réellement déclarée",
+  "nature_fiscale_probable": "prestation_services_bic",
+  "statut_recommande": "micro-entrepreneur / entreprise individuelle sous réserve d'autorisation de cumul et d'un périmètre compatible avec le régime micro",
   "statut_alternatif": [
-    "EI réel",
+    "EI au réel si véhicule, matériel ou frais importants",
     "EURL",
     "SASU"
   ],
   "organisme_formalite": "Guichet unique INPI",
   "organisme_cumul": "Administration employeur / autorité hiérarchique",
   "organismes_accompagnement": [
-    "Administration employeur",
-    "Nova SAP",
-    "DDETS/DEETS",
+    "Administration employeur ou référent déontologue",
+    "Chambre de métiers et de l'artisanat selon qualification retenue",
     "Guichet unique INPI",
     "Urssaf",
-    "Conseil départemental si autorisation"
+    "Assureur professionnel",
+    "Organisme compétent en transport si la prestation inclut le transport routier pour compte d'autrui"
   ],
   "modes_exercice": [
-    "prestation au domicile du client",
-    "intervention ponctuelle",
-    "abonnement régulier",
-    "aide administrative simple"
+    "aide au chargement et au déchargement",
+    "emballage et déballage",
+    "déplacement de mobilier sur un même site",
+    "montage ou démontage simple de mobilier non technique",
+    "déménagement avec transport uniquement après vérification des obligations applicables"
   ],
-  "qualification_regles": "Vérifier si l'activité relève des services à la personne. La déclaration SAP via Nova peut être nécessaire pour ouvrir droit aux avantages clients. L'agrément est requis pour certaines activités auprès d'enfants de moins de 3 ans ou d'enfants handicapés ; l'autorisation peut être requise pour certaines interventions auprès de personnes âgées ou handicapées en mode prestataire.",
+  "qualification_regles": "L'aide au déménagement est hors du périmètre des services à la personne. La manutention seule ne nécessite pas, par principe, de déclaration propre à ce secteur. Si la prestation comprend l'organisation d'un déménagement avec transport routier de biens pour le compte d'autrui, vérifier avant le lancement les obligations propres au transport et au déménagement, ainsi que la couverture des biens confiés.",
   "assurances": [
-    "RC pro aide à domicile",
-    "Assurance véhicule pro si déplacements",
+    "RC professionnelle couvrant explicitement la manutention et le déménagement",
+    "Assurance automobile à usage professionnel si un véhicule est utilisé",
+    "Garantie couvrant les biens confiés ou transportés lorsque l'entrepreneur en assume la garde",
     "Protection juridique recommandée"
   ],
   "documents_a_collecter": [
     "demande écrite d'autorisation de cumul",
     "réponse écrite de l'administration",
+    "description précise des prestations avec ou sans transport",
     "pièce d'identité",
     "justificatif de domicile",
-    "description précise de l'activité",
-    "périodicité et revenus prévus",
-    "attestation RC pro ou devis"
+    "devis d'assurance correspondant au périmètre réel",
+    "inventaire du matériel de manutention",
+    "modèle de devis et conditions d'intervention"
   ],
   "alertes": [
-    "Ne pas intervenir auprès de publics fragiles sans vérifier agrément/autorisation",
-    "Ne pas réaliser d'actes de soin médical",
-    "Ne pas se présenter comme expert-comptable ou conseil juridique"
+    "Ne pas présenter cette activité comme un service à la personne et ne pas promettre de crédit d'impôt SAP",
+    "Ne pas transporter les biens d'un client sans avoir vérifié les obligations applicables et la couverture d'assurance",
+    "Évaluer les risques de port de charges, de casse et de dommages aux locaux avant chaque mission",
+    "Ne pas réaliser de branchement électrique, de plomberie ou de travaux techniques sans qualification et assurance adaptées"
   ],
   "fiscalite": {
-    "seuil_micro_service_2026": "83 600 €",
-    "seuil_micro_vente_2026": "203 100 €",
-    "cotisations_micro_bic_service_2026": "21,2 %",
-    "tva_franchise_service_base": "37 500 €",
-    "tva_franchise_service_majore": "41 250 €",
-    "compte_dedie": "obligatoire si CA > 10 000 € pendant 2 années consécutives",
-    "cfe": "exonération première année ; exonération possible si CA <= 5 000 €"
+    "seuil_micro_service_2026": "77 700 € de chiffre d'affaires annuel pour les prestations de services, sous réserve des règles de dépassement",
+    "cotisations_micro_bic_service_2026": "21,2 % du chiffre d'affaires encaissé hors contributions ou situations particulières",
+    "tva_franchise_service_base_2026": "37 500 €",
+    "tva_franchise_service_majore_2026": "41 250 €",
+    "compte_dedie": "obligatoire si le chiffre d'affaires dépasse 10 000 € pendant 2 années consécutives",
+    "cfe": "à vérifier après l'année de création selon le chiffre d'affaires et la commune"
   },
   "couts_indicatifs": [
-    "Formalités micro-entreprise généralement gratuites",
-    "RC pro indicative : 100 à 400 €/an selon activité",
-    "Outils, petits matériels et communication : 50 à 500 €",
-    "CFE à surveiller après création, avec exonération la première année et exonération possible si CA <= 5 000 €",
-    "Matériel de ménage ou organisation : 50 à 300 €",
-    "RC pro : 100 à 300 €/an",
-    "Déplacements : carburant/assurance"
+    "Formalité de micro-entreprise : vérifier le coût affiché par le Guichet unique avant validation",
+    "Assurance professionnelle : demander un devis décrivant manutention, casse, dommages aux locaux et éventuel transport",
+    "Matériel de sécurité et de manutention : gants, chaussures, sangles, couvertures, diable ou chariot selon les missions",
+    "Déplacements et véhicule : calculer carburant, entretien, stationnement et assurance professionnelle",
+    "Trésorerie de sécurité : prévoir les franchises d'assurance et le remplacement du petit matériel"
   ],
   "parcours": {
-    "0_identite": "Activité Aide déménagement, statut fonctionnaire, catégorie Main-d'oeuvre, code APE indicatif 81.21Z, 88.10A, 96.09Z ou 82.99Z selon activité — à confirmer.",
-    "1_regles": "Vérifier cumul fonction publique puis règles métier. Vérifier si l'activité relève des services à la personne. La déclaration SAP via Nova peut être nécessaire pour ouvrir droit aux avantages clients. L'agrément est requis pour certaines activités auprès d'enfants de moins de 3 ans ou d'enfants handicapés ; l'autorisation peut être requise pour certaines interventions auprès de personnes âgées ou handicapées en mode prestataire.",
-    "2_situation_personnelle": "Vérifier fonction publique, temps de travail, poste, conflit d'intérêts, autorisation hiérarchique, devoir de neutralité et justificatifs.",
-    "3_cadre": "Micro-entreprise conseillée pour activité accessoire simple, sous réserve d'autorisation et de seuils ; basculer vers EI réel/société si projet lourd.",
+    "0_identite": "Activité Aide déménagement, statut fonctionnaire, famille Déménagement / manutention. Le code APE est indicatif et dépend du périmètre réellement exercé.",
+    "1_regles": "Vérifier d'abord le cumul dans la fonction publique, puis distinguer la manutention sans transport du déménagement comprenant le transport de biens. L'activité est exclue du périmètre des services à la personne.",
+    "2_situation_personnelle": "Décrire à l'administration la nature exacte de l'activité, sa durée, sa périodicité, les conditions de rémunération, l'utilisation éventuelle d'un véhicule et l'absence de conflit d'intérêts.",
+    "3_cadre": "La micro-entreprise peut convenir à une activité accessoire limitée avec peu d'investissements. Une EI au réel ou une société doit être étudiée lorsque les frais de véhicule, de matériel, d'assurance ou de sous-traitance deviennent importants.",
     "4_demarches": [
-      "décrire l'activité",
-      "demander autorisation ou déclaration",
-      "vérifier qualification",
-      "déclarer au Guichet unique",
-      "assurer et facturer",
-      "suivre recettes"
+      "Définir précisément les prestations et confirmer si le transport de biens est inclus",
+      "Demander l'autorisation de cumul ou accomplir la déclaration requise auprès de l'administration",
+      "Définir l'offre, la zone d'intervention, les tarifs, le matériel et le budget",
+      "Vérifier avant la création les aides et financements mobilisables",
+      "Choisir le statut juridique et le régime fiscal adaptés aux frais réels",
+      "Préparer les justificatifs, le devis d'assurance et les documents commerciaux",
+      "Déclarer l'activité au Guichet unique",
+      "Souscrire les assurances et finaliser devis, facture, conditions d'intervention et fiche d'inventaire",
+      "Organiser le suivi des recettes, déclarations, seuils, incidents et renouvellements d'assurance",
+      "Lancer une première prestation limitée au périmètre autorisé"
     ],
     "5_aides": [
-      "ACRE",
-      "CMA/CCI/BGE",
-      "Initiative France",
-      "Région",
-      "Aides-territoires",
-      "AGEFIPH si handicap"
+      "ACRE sous conditions d'éligibilité",
+      "Accompagnement CMA, BGE ou Initiative France selon le projet",
+      "Aides régionales ou locales à vérifier avant l'immatriculation",
+      "AGEFIPH si la situation de handicap et le projet répondent aux conditions"
     ],
     "6_couts": [
-      "Formalités micro-entreprise généralement gratuites",
-      "RC pro indicative : 100 à 400 €/an selon activité",
-      "Outils, petits matériels et communication : 50 à 500 €",
-      "CFE à surveiller après création, avec exonération la première année et exonération possible si CA <= 5 000 €",
-      "Matériel de ménage ou organisation : 50 à 300 €",
-      "RC pro : 100 à 300 €/an",
-      "Déplacements : carburant/assurance"
+      "Assurance couvrant le périmètre exact de la prestation",
+      "Matériel de manutention et équipements de protection",
+      "Déplacements, véhicule, stationnement et entretien",
+      "Communication, devis, facturation et éventuels outils de réservation"
     ],
     "7_plan_30_jours": [
-      "semaine 1 : droit d'exercer et offre",
-      "semaine 2 : autorisation/formalités",
-      "semaine 3 : assurance/gestion",
-      "semaine 4 : lancement prudent"
+      "Semaine 1 : définir le périmètre, vérifier le cumul et distinguer manutention et transport",
+      "Semaine 2 : étudier aides, budget, tarifs, statut et assurance",
+      "Semaine 3 : préparer puis déposer la formalité et finaliser les documents clients",
+      "Semaine 4 : vérifier les protections et réaliser une première mission limitée"
     ]
   },
   "sources_officielles": [
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F36610",
     "https://www.service-public.fr/particuliers/vosdroits/F1648",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/R61572",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F32353",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F36232",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F21746",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F35991",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F23999",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/F23633",
-    "https://entreprendre.service-public.gouv.fr/vosdroits/R19148"
+    "https://www.insee.fr/fr/metadonnees/nafr2/sousClasse/49.42Z",
+    "https://www.servicesalapersonne.gouv.fr/tout-savoir-sur-les-services-la-personne/les-26-activites-de-services-la-personne",
+    "https://entreprendre.service-public.fr/vosdroits/R61572",
+    "https://entreprendre.service-public.fr/vosdroits/F23267",
+    "https://www.impots.gouv.fr/professionnel/tva"
   ],
   "search_keys": [
     "main_d_oeuvre",
-    "aide_demenagement",
+    "demenagement",
+    "manutention",
+    "chargement",
     "fonctionnaire",
     "micro_entreprise",
     "cumul",
     "parcours"
   ],
-  "version": "2026-07-07",
-  "legal_review_status": "socle officiel intégré ; contrôle final recommandé par CMA/administration/organisme compétent selon activité avant mise en production"
+  "version": "2026-07-16",
+  "review_status": "corrigee",
+  "reviewed_at": "2026-07-16",
+  "next_review_at": "2027-01-16",
+  "reviewer": "audit ilipresto — première passe",
+  "legal_review_status": "Classification SAP supprimée et sources officielles actualisées. Validation spécialisée encore requise si la prestation inclut le transport routier de biens pour le compte d'autrui."
 }
