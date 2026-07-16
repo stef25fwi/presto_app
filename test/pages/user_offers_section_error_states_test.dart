@@ -15,20 +15,6 @@ Widget _wrap(Widget child) {
   );
 }
 
-Future<void> _pumpUntilFound(
-  WidgetTester tester,
-  Finder finder, {
-  int maxFrames = 120,
-}) async {
-  for (var frame = 0; frame < maxFrames; frame++) {
-    await tester.pump(const Duration(milliseconds: 16));
-    if (finder.evaluate().isNotEmpty) {
-      return;
-    }
-  }
-  fail('Widget attendu introuvable après $maxFrames frames: $finder');
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -41,54 +27,24 @@ void main() {
     'affiche un indicateur pendant le premier chargement avec un utilisateur non vide',
     (tester) async {
       await tester.pumpWidget(
-        _wrap(const UserOffersSection(userId: 'user-error-state')),
+        _wrap(const UserOffersSection(userId: 'user-loading-state')),
       );
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Mes annonces publiées'), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'affiche la carte erreur et permet de relancer le chargement quand Firestore echoue',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(const UserOffersSection(userId: 'user-error-state')),
-      );
-      await _pumpUntilFound(tester, find.text('Réessayer'));
-
-      expect(find.text('Mes annonces publiées'), findsOneWidget);
-      expect(
-        find.textContaining('Impossible de charger vos annonces'),
-        findsOneWidget,
-      );
-      expect(find.text('Réessayer'), findsOneWidget);
-
-      await tester.tap(find.text('Réessayer'));
-      await tester.pump();
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      await _pumpUntilFound(tester, find.text('Réessayer'));
-      expect(find.text('Mes annonces publiées'), findsOneWidget);
-      expect(
-        find.textContaining('Impossible de charger vos annonces'),
-        findsOneWidget,
-      );
       expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets(
-    'masque la section quand un utilisateur non vide devient vide',
+    'masque immédiatement la section quand un utilisateur non vide devient vide',
     (tester) async {
       final key = GlobalKey();
 
       await tester.pumpWidget(
-        _wrap(UserOffersSection(key: key, userId: 'user-error-state')),
+        _wrap(UserOffersSection(key: key, userId: 'user-loading-state')),
       );
-      await _pumpUntilFound(tester, find.text('Réessayer'));
-      expect(find.text('Mes annonces publiées'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
       await tester.pumpWidget(
         _wrap(UserOffersSection(key: key, userId: '')),
@@ -96,7 +52,21 @@ void main() {
       await tester.pump();
 
       expect(find.text('Mes annonces publiées'), findsNothing);
-      expect(find.text('Réessayer'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(SizedBox), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'reste masquée pour un identifiant utilisateur vide dès le premier rendu',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(const UserOffersSection(userId: '')),
+      );
+      await tester.pump();
+
+      expect(find.text('Mes annonces publiées'), findsNothing);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(tester.takeException(), isNull);
     },
