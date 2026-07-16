@@ -51,8 +51,10 @@ void main() {
       expect(regulationText, contains(source));
     }
     expect(regulationText, contains('registre électronique national'));
-    expect(regulationText, contains('capacité professionnelle'));
-    expect(regulationText, contains('capacité financière'));
+    expect(
+      regulationText,
+      contains('capacité professionnelle et financière'),
+    );
     expect(regulationText, contains('licence adaptée'));
 
     final situationText = jsonEncode(derived['statusWarnings']);
