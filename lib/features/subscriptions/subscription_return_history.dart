@@ -3,8 +3,9 @@ import 'subscription_return_history_stub.dart'
 
 /// Prépare l'entrée d'historique utilisée avant d'ouvrir Stripe.
 ///
-/// Sur mobile, cette fonction ne fait rien. Sur le Web, elle remplace l'URL
-/// courante par la route Compte/Abonnements sans reconstruire l'application.
+/// Sur mobile, cette fonction ne fait rien. Sur le Web, elle ajoute une entrée
+/// Compte/Abonnements afin que le retour depuis Stripe ne relance pas l'écran
+/// initial de l'application.
 void prepareSubscriptionReturnHistory() {
   impl.prepareSubscriptionReturnHistory();
 }
