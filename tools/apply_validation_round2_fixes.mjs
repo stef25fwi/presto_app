@@ -157,3 +157,4 @@ await patchRulesDiagnostics();
 await patchWebBudgets();
 
 console.log('validation round 2 fixes: OK');
+// Trigger contrôlé du correctif PR451 — 2026-07-16.
