@@ -96,4 +96,16 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('traduit une erreur unavailable', (tester) async {
+    await _trigger(
+      tester,
+      FirebaseFunctionsException(code: 'unavailable', message: '   '),
+    );
+
+    expect(
+      find.text('Stripe est temporairement indisponible.'),
+      findsOneWidget,
+    );
+  });
 }
