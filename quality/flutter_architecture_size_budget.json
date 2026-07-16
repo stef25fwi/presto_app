@@ -39,6 +39,12 @@
       "target_lines": 500,
       "module": "parcours_personnalise",
       "next_split": "extraire génération, sauvegarde, résumé, sections métier et actions PDF"
+    },
+    "lib/pages/messages/conversation_thread_page.dart": {
+      "current_lines": 5182,
+      "target_lines": 500,
+      "module": "messagerie",
+      "next_split": "extraire entête, flux messages, pièces jointes, audio et modération"
     }
   },
   "ignored_paths": [
