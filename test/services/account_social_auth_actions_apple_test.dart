@@ -39,6 +39,7 @@ class _AppleUserPlatform extends UserPlatform {
   @override
   Future<void> updateProfile(Map<String, String?> profile) async {
     updatedDisplayName = profile['displayName'];
+    throw StateError('profile persistence unavailable in widget tests');
   }
 
   @override
