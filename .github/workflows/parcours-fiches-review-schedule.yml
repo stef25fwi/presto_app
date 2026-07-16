@@ -1,0 +1,28 @@
+name: Parcours fiches review schedule
+
+on:
+  schedule:
+    - cron: '17 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run review schedule tests
+        run: node --test tools/quality/check_parcours_review_schedule.test.mjs
+      - name: Generate review calendar
+        run: node tools/quality/check_parcours_review_schedule.mjs
+      - name: Upload review calendar
+        uses: actions/upload-artifact@v4
+        with:
+          name: parcours-fiches-review-schedule
+          path: build/quality/parcours-fiches-review-schedule.json
+          retention-days: 90
