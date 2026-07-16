@@ -21,6 +21,7 @@ import '../features/subscriptions/subscription_widgets.dart';
 import '../models/admin_access_state.dart';
 import 'admin_space_loader.dart';
 import '../services/admin_access_resolver.dart';
+import '../services/ad_placeholder_image_service.dart';
 import '../services/email_action_service.dart';
 import '../services/firebase_functions_region.dart';
 import '../services/notification_service.dart';
@@ -2803,26 +2804,7 @@ class _AccountPageState extends State<AccountPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 9,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE8F0FE),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Ne ratez plus aucune offre : choisissez au moins 2 catégories et recevez instantanément les opportunités disponibles dans votre secteur.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF1A3A5C),
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
+                            _buildSubscriptionAlertsBanner(),
                             const SizedBox(height: 8),
                             AccountFavoriteCategoriesSection(
                               categoriesCount: draftCategoryLabels.length,
@@ -2956,6 +2938,59 @@ class _AccountPageState extends State<AccountPage> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionAlertsBanner() {
+    const fallbackAsset = 'assets/images/subscription_alerts_banner.png';
+
+    Widget fallback() => Image.asset(
+          fallbackAsset,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          errorBuilder: (_, __, ___) => const ColoredBox(
+            color: Color(0xFFE8F0FE),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Ne ratez plus aucune offre !',
+                  style: TextStyle(
+                    color: Color(0xFF1A3A5C),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 7,
+        child: StreamBuilder<List<AdPlaceholderImage>>(
+          stream: AdPlaceholderImageService.watchAll(
+            target: 'subscription_alerts_banner',
+          ),
+          builder: (context, snapshot) {
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
+
+            return Image.network(
+              activeImages.first.imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              gaplessPlayback: true,
+              errorBuilder: (_, __, ___) => fallback(),
+              loadingBuilder: (context, child, progress) =>
+                  progress == null ? child : fallback(),
+            );
+          },
         ),
       ),
     );
