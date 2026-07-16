@@ -1,0 +1,36 @@
+name: Temporary patch parcours full pagination
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/temporary-patch-parcours-full-pagination.yml'
+      - 'tools/temporary_patch_parcours_full_pagination.py'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-pagination:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+      - name: Apply full pagination patch
+        run: python3 tools/temporary_patch_parcours_full_pagination.py
+      - name: Format and commit
+        run: |
+          dart format lib/services/journey_pdf_export_service.dart
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/services/journey_pdf_export_service.dart
+          git diff --cached --quiet && exit 0
+          git commit -m 'Paginer le parcours complet sans perte de contenu'
+          git push origin HEAD:agent/guide-parcours-pas-a-pas
