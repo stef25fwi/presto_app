@@ -6,6 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/admin/widgets/payment_info_audio_admin_section.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
 
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pump();
+  await tester.tap(finder);
+}
+
 void main() {
   PaymentInfoAudioAdminSettings settings({
     String text = '',
@@ -111,12 +117,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '   ');
 
-    await tester.tap(find.text('Sauvegarder texte'));
+    await _tapVisible(tester, find.text('Sauvegarder texte'));
     await tester.pump();
     expect(find.text('Le texte audio ne peut pas être vide.'), findsOneWidget);
     expect(saveCalls, 0);
 
-    await tester.tap(find.text('Générer le MP3 depuis ce texte'));
+    await _tapVisible(tester, find.text('Générer le MP3 depuis ce texte'));
     await tester.pump();
     expect(find.text('Le texte audio ne peut pas être vide.'), findsWidgets);
     expect(generateCalls, 0);
@@ -138,7 +144,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '  Nouveau texte  ');
-    await tester.tap(find.text('Sauvegarder texte'));
+    await _tapVisible(tester, find.text('Sauvegarder texte'));
     await tester.pump();
 
     expect(savedText, 'Nouveau texte');
@@ -166,7 +172,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Texte valide 123');
-    await tester.tap(find.text('Sauvegarder texte'));
+    await _tapVisible(tester, find.text('Sauvegarder texte'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Sauvegarde impossible'), findsOneWidget);
@@ -193,7 +199,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '  Audio sécurisé  ');
-    await tester.tap(find.text('Générer le MP3 depuis ce texte'));
+    await _tapVisible(tester, find.text('Générer le MP3 depuis ce texte'));
     await tester.pump();
 
     expect(savedValues, ['Audio sécurisé']);
@@ -232,7 +238,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Texte génération');
-    await tester.tap(find.text('Générer le MP3 depuis ce texte'));
+    await _tapVisible(tester, find.text('Générer le MP3 depuis ce texte'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Génération MP3 impossible'), findsOneWidget);
@@ -257,7 +263,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Valider et publier le MP3'));
+    await _tapVisible(tester, find.text('Valider et publier le MP3'));
     await tester.pump();
     expect(
       find.text(
@@ -267,7 +273,10 @@ void main() {
     );
     expect(publishCalls, 0);
 
-    await tester.tap(find.text('Lire https://example.test/draft.mp3'));
+    await _tapVisible(
+      tester,
+      find.text('Lire https://example.test/draft.mp3'),
+    );
     await tester.pump();
     expect(find.text('Pré-écoute confirmée'), findsOneWidget);
     expect(
@@ -275,7 +284,7 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.text('Valider et publier le MP3'));
+    await _tapVisible(tester, find.text('Valider et publier le MP3'));
     await tester.pump();
     expect(publishCalls, 1);
     expect(find.text('Publication...'), findsOneWidget);
@@ -301,9 +310,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('J’ai pré-écouté ce MP3'));
+    await _tapVisible(tester, find.text('J’ai pré-écouté ce MP3'));
     await tester.pump();
-    await tester.tap(find.text('Valider et publier le MP3'));
+    await _tapVisible(tester, find.text('Valider et publier le MP3'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('Publication impossible'), findsOneWidget);
@@ -320,7 +329,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('J’ai pré-écouté ce MP3'));
+    await _tapVisible(tester, find.text('J’ai pré-écouté ce MP3'));
     await tester.pump();
     expect(find.text('Pré-écoute confirmée'), findsOneWidget);
 
