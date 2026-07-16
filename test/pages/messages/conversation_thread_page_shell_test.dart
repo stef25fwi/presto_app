@@ -126,9 +126,10 @@ void main() {
   });
 
   setUp(() {
+    final tokenCompleter = Completer<String?>()..complete('thread-test-token');
     userPlatform = _ThreadUserPlatform(
       authPlatform,
-      tokenCompleter: Completer<String?>(),
+      tokenCompleter: tokenCompleter,
     );
     authPlatform.user = userPlatform;
   });
