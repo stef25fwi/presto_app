@@ -27,20 +27,26 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('lib/pages/account_page.dart')
           source = path.read_text(encoding='utf-8')
 
-          unintended_old = """          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator("""
-          unintended_new = """          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator("""
-          if unintended_old in source:
-              source = source.replace(unintended_old, unintended_new, 1)
+          completeness_start = source.find('Widget _buildProfileCompletenessBanner()')
+          completeness_end = source.find('Future<bool> _saveProfile', completeness_start)
+          if completeness_start < 0 or completeness_end < 0:
+              raise SystemExit('Profile completeness section was not found')
+          completeness = source[completeness_start:completeness_end]
+          completeness = completeness.replace(
+              'const SizedBox(height: 16),',
+              'const SizedBox(height: 8),',
+              1,
+          )
+          source = (
+              source[:completeness_start]
+              + completeness
+              + source[completeness_end:]
+          )
 
           top_old = 'padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),'
           top_new = 'padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),'
@@ -49,16 +55,22 @@ jobs:
           elif top_new not in source:
               raise SystemExit('Target top padding was not found')
 
-          card_old = """                    const SizedBox(height: 8),
-                    _buildAccountSectionCard(
-                      icon: Icons.person_rounded,"""
-          card_new = """                    const SizedBox(height: 16),
-                    _buildAccountSectionCard(
-                      icon: Icons.person_rounded,"""
-          if card_old in source:
-              source = source.replace(card_old, card_new, 1)
-          elif card_new not in source:
-              raise SystemExit('Target spacing before Mon profil was not found')
+          profile_marker = source.find("title: 'Mon profil'")
+          if profile_marker < 0:
+              raise SystemExit('Mon profil marker was not found')
+          card_anchor = source.rfind('_buildAccountSectionCard(', 0, profile_marker)
+          if card_anchor < 0:
+              raise SystemExit('Mon profil card anchor was not found')
+          matches = list(
+              re.finditer(
+                  r'const SizedBox\(height: (8|16)\),',
+                  source[:card_anchor],
+              )
+          )
+          if not matches:
+              raise SystemExit('Spacing before Mon profil was not found')
+          gap = matches[-1]
+          source = source[:gap.start()] + 'const SizedBox(height: 16),' + source[gap.end():]
 
           path.write_text(source, encoding='utf-8')
           PY
