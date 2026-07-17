@@ -3,17 +3,23 @@ name: Temporary account header spacing
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: '*/5 * * * *'
 
 permissions:
   contents: write
   issues: read
+  pull-requests: read
 
 jobs:
   apply-spacing:
     if: >-
       github.event_name == 'schedule' ||
+      (github.event_name == 'pull_request' &&
+       github.head_ref == 'fix/account-header-profile-spacing') ||
       (github.event_name == 'issue_comment' &&
        github.event.issue.number == 478 &&
        github.event.comment.body == '/apply-account-header-spacing')
