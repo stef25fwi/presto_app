@@ -70,8 +70,11 @@ void main() {
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNull);
 
     completer.complete(const <GeneratedVideo>[]);
-    await tester.pumpAndSettle();
-    expect(find.text('Aucune vidéo générée pour le moment.'), findsOneWidget);
+    await pumpUntilFound(tester, find.text('Aucune vidéo générée'));
+    expect(
+      find.text('Votre première création VEO apparaîtra ici.'),
+      findsOneWidget,
+    );
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNotNull);
   });
 
