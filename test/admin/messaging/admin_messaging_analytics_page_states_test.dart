@@ -39,6 +39,12 @@ void main() {
     );
   }
 
+  Future<void> flushStreams(WidgetTester tester) async {
+    for (var index = 0; index < 8; index++) {
+      await tester.pump();
+    }
+  }
+
   testWidgets('affiche le chargement tant que les conversations attendent',
       (tester) async {
     final conversations = StreamController<List<AdminConversationModel>>();
@@ -69,7 +75,7 @@ void main() {
       notifications: Stream.value(const <AdminNotificationLogModel>[]),
       metrics: Stream.value(null),
     );
-    await tester.pumpAndSettle();
+    await flushStreams(tester);
 
     expect(
       find.text(
@@ -121,7 +127,7 @@ void main() {
       notifications: Stream.value(const <AdminNotificationLogModel>[]),
       metrics: Stream.value(scheduled),
     );
-    await tester.pumpAndSettle();
+    await flushStreams(tester);
 
     expect(
       find.text(
