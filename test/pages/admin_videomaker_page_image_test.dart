@@ -2,14 +2,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:presto_app/features/admin_videomaker/video_maker_models.dart';
+import 'package:presto_app/features/admin_videomaker/video_maker_page_operations.dart';
 import 'package:presto_app/pages/admin_videomaker_page.dart';
 
 void main() {
   Future<void> pumpPage(
     WidgetTester tester,
-    Future<XFile?> Function() picker,
+    Future<VideoMakerSelectedImage?> Function() picker,
   ) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1;
@@ -40,7 +40,11 @@ void main() {
   testWidgets('refuse une image vide', (tester) async {
     await pumpPage(
       tester,
-      () async => XFile.fromData(Uint8List(0), name: 'vide.png'),
+      () async => VideoMakerSelectedImage(
+        bytes: Uint8List(0),
+        name: 'vide.png',
+        mimeType: 'image/png',
+      ),
     );
 
     await tester.tap(pickButton());
@@ -53,8 +57,8 @@ void main() {
   testWidgets('refuse un format d’image non pris en charge', (tester) async {
     await pumpPage(
       tester,
-      () async => XFile.fromData(
-        Uint8List.fromList(<int>[1]),
+      () async => VideoMakerSelectedImage(
+        bytes: Uint8List.fromList(<int>[1]),
         name: 'animation.gif',
         mimeType: 'image/gif',
       ),
