@@ -140,9 +140,12 @@ class SubscriptionQuotaExceededException implements Exception {
 
 class SubscriptionCreditService {
   SubscriptionCreditService({FirebaseFunctions? functions})
-      : _functions = functions ?? prestoFirebaseFunctions;
+      : _functionsOverride = functions;
 
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functionsOverride;
+
+  FirebaseFunctions get _functions =>
+      _functionsOverride ?? prestoFirebaseFunctions;
 
   Future<SubscriptionCreditSnapshot> getSnapshot() async {
     final result = await _call('getMySubscriptionCredits');
