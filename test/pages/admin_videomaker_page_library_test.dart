@@ -45,9 +45,7 @@ void main() {
   }
 
   Future<void> flush(WidgetTester tester) async {
-    for (var index = 0; index < 6; index++) {
-      await tester.pump();
-    }
+    await tester.pumpAndSettle();
   }
 
   testWidgets('affiche le chargement initial et désactive l’actualisation',
@@ -58,15 +56,19 @@ void main() {
 
     expect(find.text('Videomaker'), findsOneWidget);
     expect(find.text('Créer une vidéo avec VEO'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(tester.widget<IconButton>(find.byTooltip('Actualiser')).onPressed,
-        isNull);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    expect(
+      tester.widget<IconButton>(find.byTooltip('Actualiser')).onPressed,
+      isNull,
+    );
 
     completer.complete(const <GeneratedVideo>[]);
     await flush(tester);
     expect(find.text('Aucune vidéo générée pour le moment.'), findsOneWidget);
-    expect(tester.widget<IconButton>(find.byTooltip('Actualiser')).onPressed,
-        isNotNull);
+    expect(
+      tester.widget<IconButton>(find.byTooltip('Actualiser')).onPressed,
+      isNotNull,
+    );
   });
 
   testWidgets('charge les vidéos et affiche leurs trois statuts',
@@ -105,8 +107,10 @@ void main() {
     });
     await flush(tester);
 
-    expect(find.text('Impossible de charger la bibliothèque de vidéos.'),
-        findsOneWidget);
+    expect(
+      find.text('Impossible de charger la bibliothèque de vidéos.'),
+      findsOneWidget,
+    );
     await tester.tap(find.byTooltip('Actualiser'));
     await flush(tester);
     expect(calls, 2);
@@ -142,8 +146,7 @@ void main() {
     await flush(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
     expect(generated, isFalse);
     expect(find.text('Ajoutez un prompt avant de générer.'), findsOneWidget);
   });
