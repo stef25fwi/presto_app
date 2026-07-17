@@ -44,9 +44,12 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> showNotice(WidgetTester tester) async {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
+  Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
+    for (var attempt = 0; attempt < 40; attempt++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      if (finder.evaluate().isNotEmpty) return;
+    }
+    fail('Widget attendu introuvable après traitement asynchrone: $finder');
   }
 
   testWidgets('sélectionne une image, génère puis recharge la bibliothèque',
@@ -70,8 +73,7 @@ void main() {
     );
 
     await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
-    await showNotice(tester);
-    expect(find.text('depart.png'), findsOneWidget);
+    await pumpUntilFound(tester, find.text('depart.png'));
     expect(find.text('4 o'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'temporary-value');
@@ -82,7 +84,7 @@ void main() {
     await tester.tap(find.text('16:9 Paysage'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
-    await showNotice(tester);
+    await pumpUntilFound(tester, find.text('Nouvelle vidéo VEO'));
 
     expect(parameters, hasLength(1));
     expect(parameters.single['prompt'], 'Un portail bleu peint en accéléré');
@@ -91,7 +93,6 @@ void main() {
     expect(parameters.single['imageMimeType'], 'image/png');
     expect(parameters.single['imageBase64'], 'AQIDBA==');
     expect(loads, 2);
-    expect(find.text('Nouvelle vidéo VEO'), findsOneWidget);
     expect(
       find.text('Vidéo VEO générée et ajoutée à la bibliothèque.'),
       findsOneWidget,
@@ -157,19 +158,17 @@ void main() {
 
     await tester.enterText(prompt, 'Première tentative');
     await tester.tap(generate);
-    await showNotice(tester);
-    expect(
+    await pumpUntilFound(
+      tester,
       find.text('Cette fonction est réservée aux administrateurs.'),
-      findsOneWidget,
     );
 
     functionsError = false;
     await tester.enterText(prompt, 'Deuxième tentative');
     await tester.tap(generate);
-    await showNotice(tester);
-    expect(
+    await pumpUntilFound(
+      tester,
       find.text('La génération a échoué. Vérifiez la clé API et réessayez.'),
-      findsOneWidget,
     );
   });
 }
