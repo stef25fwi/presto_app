@@ -1,17 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'subscription_config_service.dart';
+import 'subscription_credit_service.dart';
 import 'subscription_models.dart';
 
 /// Résout les droits du parcours à partir du plan réel et du mode d'accès
 /// global piloté depuis l'administration.
-///
-/// Le mode `freeAccessMode` correspond à « Accès gratuit complet » : toutes
-/// les fonctions du parcours, y compris la génération PDF, doivent alors être
-/// disponibles sans quota quel que soit le plan stocké sur le profil.
 JourneyEntitlements resolveJourneyEntitlementsForAccess(
   SubscriptionPlan plan, {
   required bool freeAccessMode,
@@ -32,46 +28,30 @@ JourneyEntitlements resolveJourneyEntitlementsForAccess(
   );
 }
 
-/// Résout les droits (entitlements) de l'utilisateur courant pour "Mon
-/// parcours personnalisé" et suit ses quotas mensuels de sauvegarde locale
-/// et d'export PDF.
+/// Compatibilité avec les écrans historiques du parcours.
 ///
-/// Le compteur est stocké en local (SharedPreferences), car la sauvegarde du
-/// parcours elle-même est locale à l'appareil (voir
-/// `JourneyLocalStorageService`) : il n'y a donc pas de synchronisation
-/// multi-appareils du quota, ce qui est cohérent avec la fonctionnalité.
+/// Les compteurs ne sont plus stockés dans SharedPreferences : la source de
+/// vérité est désormais le service Firestore `SubscriptionCreditService`,
+/// partagé entre tous les appareils. Les anciennes méthodes `record*` restent
+/// présentes mais sont volontairement sans effet :
+/// - la bibliothèque est débitée atomiquement par `saveMyJourney` ;
+/// - le PDF est réservé par `saveJourneyPdfBytes` puis remboursé en cas d'échec.
 class JourneyEntitlementsService {
   JourneyEntitlementsService({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     SubscriptionConfigService? configService,
+    SubscriptionCreditService? creditService,
   })  : _auth = auth ?? FirebaseAuth.instance,
         _db = firestore ?? FirebaseFirestore.instance,
-        _configService = configService ?? SubscriptionConfigService();
-
-  static const _kSavesCountKey = 'toolbox.journey_quota.saves_count';
-  static const _kSavesPeriodKey = 'toolbox.journey_quota.saves_period';
-  static const _kPdfCountKey = 'toolbox.journey_quota.pdf_count';
-  static const _kPdfPeriodKey = 'toolbox.journey_quota.pdf_period';
+        _configService = configService ?? SubscriptionConfigService(),
+        _creditService = creditService ?? SubscriptionCreditService();
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
   final SubscriptionConfigService _configService;
+  final SubscriptionCreditService _creditService;
 
-  String _currentPeriodKey() {
-    final now = DateTime.now();
-    return '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
-  }
-
-  /// Détermine les droits applicables au parcours personnalisé pour
-  /// l'utilisateur courant.
-  ///
-  /// Lorsque « Accès gratuit complet » est actif, le parcours est entièrement
-  /// ouvert : sauvegardes et exports PDF sont disponibles sans quota. Lorsque
-  /// ce mode est désactivé, les quotas du plan réel s'appliquent :
-  /// - Gratuit : 2 sauvegardes/mois, 0 PDF ;
-  /// - ilipresto+ : 5 sauvegardes/mois, 5 PDF/mois ;
-  /// - ilipro : 10 sauvegardes/mois, 10 PDF/mois.
   Future<JourneyEntitlements> resolveEntitlements() async {
     try {
       final config = await _configService.getConfig();
@@ -100,52 +80,44 @@ class JourneyEntitlementsService {
     }
   }
 
-  int _readCount(SharedPreferences prefs, String countKey, String periodKey) {
-    final storedPeriod = prefs.getString(periodKey);
-    if (storedPeriod != _currentPeriodKey()) {
-      return 0;
+  Future<SubscriptionCreditSnapshot?> _tryLoadCredits() async {
+    try {
+      return await _creditService.getSnapshot();
+    } catch (error) {
+      debugPrint('[JourneyEntitlements] credit snapshot unavailable: $error');
+      return null;
     }
-    return prefs.getInt(countKey) ?? 0;
   }
 
-  Future<void> _increment(
-    SharedPreferences prefs,
-    String countKey,
-    String periodKey,
-  ) async {
-    final period = _currentPeriodKey();
-    final current = _readCount(prefs, countKey, periodKey);
-    await prefs.setString(periodKey, period);
-    await prefs.setInt(countKey, current + 1);
-  }
-
+  /// Conserve le nom historique pour ne pas casser les écrans existants.
+  /// La valeur représente maintenant le nombre de parcours présents dans la
+  /// bibliothèque cloud, et non un compteur mensuel local.
   Future<int> getLocalSavesUsedThisMonth() async {
-    final prefs = await SharedPreferences.getInstance();
-    return _readCount(prefs, _kSavesCountKey, _kSavesPeriodKey);
+    final snapshot = await _tryLoadCredits();
+    return snapshot?[SubscriptionCreditKind.journeys].used ?? 0;
   }
 
   Future<int> getPdfExportsUsedThisMonth() async {
-    final prefs = await SharedPreferences.getInstance();
-    return _readCount(prefs, _kPdfCountKey, _kPdfPeriodKey);
+    final snapshot = await _tryLoadCredits();
+    return snapshot?[SubscriptionCreditKind.pdf].used ?? 0;
   }
 
-  /// À appeler avant d'autoriser une sauvegarde locale du parcours.
   Future<JourneySaveDecision> evaluateLocalSave() async {
     final entitlements = await resolveEntitlements();
-    final used = await getLocalSavesUsedThisMonth();
+    final snapshot = await _tryLoadCredits();
+    final status = snapshot?[SubscriptionCreditKind.journeys];
+    final used = status?.used ?? 0;
     return JourneySaveDecision(
-      allowed: used < entitlements.maxLocalSavesPerMonth,
+      allowed: status == null || status.unlimited || !status.exhausted,
       entitlements: entitlements,
       usedThisMonth: used,
     );
   }
 
-  Future<void> recordLocalSave() async {
-    final prefs = await SharedPreferences.getInstance();
-    await _increment(prefs, _kSavesCountKey, _kSavesPeriodKey);
-  }
+  /// Le débit est effectué dans `JourneyLocalStorageService.saveSnapshot` par
+  /// l'opération serveur `saveMyJourney`.
+  Future<void> recordLocalSave() async {}
 
-  /// À appeler avant d'autoriser un export PDF du parcours.
   Future<JourneyPdfExportDecision> evaluatePdfExport() async {
     final entitlements = await resolveEntitlements();
     if (!entitlements.canExportPdf) {
@@ -157,19 +129,19 @@ class JourneyEntitlementsService {
       );
     }
 
-    final used = await getPdfExportsUsedThisMonth();
+    final snapshot = await _tryLoadCredits();
+    final status = snapshot?[SubscriptionCreditKind.pdf];
     return JourneyPdfExportDecision(
-      allowed: used < entitlements.maxPdfExportsPerMonth,
+      allowed: status == null || status.unlimited || !status.exhausted,
       requiresUpgrade: false,
       entitlements: entitlements,
-      usedThisMonth: used,
+      usedThisMonth: status?.used ?? 0,
     );
   }
 
-  Future<void> recordPdfExport() async {
-    final prefs = await SharedPreferences.getInstance();
-    await _increment(prefs, _kPdfCountKey, _kPdfPeriodKey);
-  }
+  /// Le débit PDF est centralisé dans `saveJourneyPdfBytes`, après génération
+  /// du document et avant son téléchargement effectif.
+  Future<void> recordPdfExport() async {}
 }
 
 class JourneySaveDecision {

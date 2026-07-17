@@ -50,7 +50,7 @@ import '../utils/friendly_snackbar.dart';
 import '../utils/runtime_action_logger.dart';
 import '../utils/recording_path_web.dart'
     if (dart.library.io) '../utils/recording_path_io.dart';
-import '../widgets/ai_publish_control.dart';
+import '../widgets/ai_publish_control_with_credits.dart';
 import 'publish_offer_widgets.dart';
 import '../features/offers/presentation/widgets/publish_offer_photos_section.dart';
 import '../features/offers/presentation/widgets/publish_offer_category_fields.dart';
@@ -4571,7 +4571,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       borderRadius: BorderRadius.circular(28),
                       child: Stack(
                         children: [
-                          AiPublishControl(
+                          AiPublishControlWithCredits(
                             state: _aiPublishState,
                             micAnchorLink: _publishAiMicAnchorLink,
                             isAudioAnalyzing: _isAnalyzing,
