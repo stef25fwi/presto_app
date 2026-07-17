@@ -128,7 +128,10 @@ void main() {
 
   testWidgets('affiche une erreur puis recharge avec succès', (tester) async {
     final service = _FakeCreditService([
-      Future<SubscriptionCreditSnapshot>.error(StateError('réseau')),
+      Future<SubscriptionCreditSnapshot>.delayed(
+        Duration.zero,
+        () => throw StateError('réseau'),
+      ),
       Future.value(_snapshot()),
     ]);
 
