@@ -23,14 +23,11 @@ void main() {
         ),
       ),
     );
-    for (var index = 0; index < 6; index++) {
-      await tester.pump();
-    }
+    await tester.pumpAndSettle();
   }
 
   Future<void> notice(WidgetTester tester) async {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
   }
 
   testWidgets('valide les images invalides et les erreurs de sélection',
