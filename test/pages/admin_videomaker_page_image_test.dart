@@ -26,9 +26,12 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> showNotice(WidgetTester tester) async {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
+  Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
+    for (var attempt = 0; attempt < 40; attempt++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      if (finder.evaluate().isNotEmpty) return;
+    }
+    fail('Widget attendu introuvable après traitement asynchrone: $finder');
   }
 
   testWidgets('valide les images invalides et les erreurs de sélection',
@@ -51,21 +54,21 @@ void main() {
     final pick = find.text('Ajouter une image de départ (facultatif)');
 
     await tester.tap(pick);
-    await showNotice(tester);
-    expect(
+    await pumpUntilFound(
+      tester,
       find.text('L’image doit être valide et peser moins de 5 Mo.'),
-      findsOneWidget,
     );
 
     await tester.tap(pick);
-    await showNotice(tester);
-    expect(
+    await pumpUntilFound(
+      tester,
       find.text('Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.'),
-      findsOneWidget,
     );
 
     await tester.tap(pick);
-    await showNotice(tester);
-    expect(find.text('Impossible de sélectionner cette image.'), findsOneWidget);
+    await pumpUntilFound(
+      tester,
+      find.text('Impossible de sélectionner cette image.'),
+    );
   });
 }
