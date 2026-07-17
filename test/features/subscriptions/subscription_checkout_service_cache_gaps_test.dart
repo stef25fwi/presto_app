@@ -58,6 +58,40 @@ void main() {
     expect(calls, 1);
   });
 
+  testWidgets('checkout attend le prefetch en cours sans second appel backend',
+      (tester) async {
+    final response = Completer<Map<String, dynamic>>();
+    var fetchCalls = 0;
+    var launchCalls = 0;
+    final service = SubscriptionCheckoutService(
+      stripeDataFetcher: (_, __) {
+        fetchCalls++;
+        return response.future;
+      },
+      externalLauncher: (_) async {
+        launchCalls++;
+        return true;
+      },
+      returnHistoryPreparer: () {},
+    );
+
+    final prefetch = service.prefetchCheckout(SubscriptionPlan.iliprestoPlus);
+    await Future<void>.delayed(Duration.zero);
+    await tester.pumpWidget(_host(service));
+    await tester.tap(find.text('Ouvrir Stripe'));
+    await tester.pump();
+
+    expect(fetchCalls, 1);
+    response.complete(<String, dynamic>{
+      'url': 'https://checkout.stripe.com/c/pay/pending-prefetch',
+    });
+    await prefetch;
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(fetchCalls, 1);
+    expect(launchCalls, 1);
+  });
+
   testWidgets('expiration de secours renouvelle le cache après vingt minutes',
       (tester) async {
     var now = DateTime(2026, 7, 17, 12);
