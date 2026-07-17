@@ -1,0 +1,64 @@
+name: Apply account header spacing
+
+on:
+  push:
+    branches:
+      - fix/account-header-profile-spacing
+
+permissions:
+  contents: write
+
+jobs:
+  apply-spacing:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/account-header-profile-spacing
+          fetch-depth: 0
+
+      - name: Apply targeted spacing changes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/account_page.dart')
+          source = path.read_text(encoding='utf-8')
+
+          top_old = 'padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),'
+          top_new = 'padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),'
+          card_old = """                    const SizedBox(height: 8),
+                    _buildAccountSectionCard(
+                      icon: Icons.person_rounded,"""
+          card_new = """                    const SizedBox(height: 16),
+                    _buildAccountSectionCard(
+                      icon: Icons.person_rounded,"""
+
+          if top_old in source:
+              source = source.replace(top_old, top_new, 1)
+          elif top_new not in source:
+              raise SystemExit('Target top padding was not found')
+
+          if card_old in source:
+              source = source.replace(card_old, card_new, 1)
+          elif card_new not in source:
+              raise SystemExit('Target profile-to-card spacing was not found')
+
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Commit targeted UI fix
+        shell: bash
+        run: |
+          if git diff --quiet -- lib/pages/account_page.dart; then
+            echo "Spacing already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/account_page.dart
+          git commit -m "fix(account): espace le profil sous le header"
+          git push origin HEAD:fix/account-header-profile-spacing
