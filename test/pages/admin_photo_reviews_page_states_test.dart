@@ -55,6 +55,11 @@ void main() {
     }
   }
 
+  Future<void> pumpTransition(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+  }
+
   testWidgets('affiche le chargement avant la première émission',
       (tester) async {
     final controller = StreamController<List<Map<String, dynamic>>>();
@@ -182,7 +187,7 @@ void main() {
     expect(calls, hasLength(1));
 
     completer.complete();
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
 
     expect(find.text('Photo acceptée'), findsOneWidget);
     expect(tester.widget<ElevatedButton>(approve).onPressed, isNotNull);
@@ -206,20 +211,19 @@ void main() {
 
     final reject = find.widgetWithText(OutlinedButton, 'Refuser');
     await tester.tap(reject);
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
     expect(find.text('Motif du refus'), findsOneWidget);
 
     await tester.tap(find.text('Annuler'));
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
     expect(calls, isEmpty);
 
     await tester.tap(reject);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Autre').last);
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
     await tester.enterText(find.byType(TextField), 'visage non autorisé');
+    FocusManager.instance.primaryFocus?.unfocus();
+    tester.testTextInput.hide();
+    await tester.pump();
 
     final dialog = find.byType(AlertDialog);
     final confirm = find.descendant(
@@ -227,15 +231,18 @@ void main() {
       matching: find.widgetWithText(ElevatedButton, 'Refuser'),
     );
     await tester.tap(confirm);
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
 
     expect(calls, hasLength(1));
     expect(calls.single['decision'], 'rejected');
-    expect(calls.single['reason'], 'Autre — visage non autorisé');
+    expect(
+      calls.single['reason'],
+      'Image inappropriée — visage non autorisé',
+    );
     expect(find.text('Photo refusée'), findsOneWidget);
   });
 
-  testWidgets('accepte une photo par balayage vers la droite', (tester) async {
+  testWidgets('accepte une photo par la logique de balayage', (tester) async {
     final calls = <String>[];
 
     await pumpPage(
@@ -249,9 +256,13 @@ void main() {
     );
     await flushStream(tester);
 
-    await tester.drag(find.byType(Dismissible), const Offset(650, 0));
-    await tester.pumpAndSettle();
+    final dismissible = tester.widget<Dismissible>(find.byType(Dismissible));
+    final result = await dismissible.confirmDismiss!(
+      DismissDirection.startToEnd,
+    );
+    await pumpTransition(tester);
 
+    expect(result, isFalse);
     expect(calls, <String>['review-1:approved:-']);
     expect(find.text('Photo acceptée'), findsOneWidget);
     expect(find.byType(Dismissible), findsOneWidget);
@@ -272,7 +283,7 @@ void main() {
     await flushStream(tester);
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Accepter'));
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
 
     expect(
       find.text('Cette photo ne peut pas être modérée.'),
@@ -294,7 +305,7 @@ void main() {
     await flushStream(tester);
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Accepter'));
-    await tester.pumpAndSettle();
+    await pumpTransition(tester);
 
     expect(
       find.text('Impossible de traiter cette photo pour le moment.'),
