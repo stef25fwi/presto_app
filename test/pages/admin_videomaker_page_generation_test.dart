@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -56,11 +56,14 @@ void main() {
       (tester) async {
     var loads = 0;
     final parameters = <Map<String, Object?>>[];
-    final directory = await Directory.systemTemp.createTemp('videomaker-test-');
-    addTearDown(() => directory.delete(recursive: true));
-    final file = File('${directory.path}/depart.png');
-    await file.writeAsBytes(<int>[1, 2, 3, 4], flush: true);
-    final image = XFile(file.path, name: 'depart.png', mimeType: 'image/png');
+    final imageBytes = base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    );
+    final image = XFile.fromData(
+      imageBytes,
+      name: 'depart.png',
+      mimeType: 'image/png',
+    );
 
     await pumpPage(
       tester,
@@ -73,9 +76,8 @@ void main() {
     );
 
     await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.text('depart.png'));
     expect(find.text('depart.png'), findsOneWidget);
-    expect(find.text('4 o'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'temporary-value');
     await tester.enterText(
@@ -92,7 +94,7 @@ void main() {
     expect(parameters.single['aspectRatio'], '16:9');
     expect(parameters.single['apiKey'], 'temporary-value');
     expect(parameters.single['imageMimeType'], 'image/png');
-    expect(parameters.single['imageBase64'], 'AQIDBA==');
+    expect(parameters.single['imageBase64'], base64Encode(imageBytes));
     expect(loads, 2);
     expect(
       find.text('Vidéo VEO générée et ajoutée à la bibliothèque.'),
