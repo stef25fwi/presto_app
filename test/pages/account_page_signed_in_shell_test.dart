@@ -127,7 +127,11 @@ void main() {
     expect(find.byType(SignedOutAccountFallback), findsNothing);
     expect(find.text('Restauration de la session…'), findsNothing);
 
+    // L'écran connecté lance plusieurs délais de fallback (profil et admin).
+    // On les laisse expirer dans le temps simulé avant de démonter le widget,
+    // afin que le test reste déterministe et ne laisse aucun Timer en attente.
+    await tester.pump(const Duration(seconds: 20));
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    await tester.pump(const Duration(seconds: 20));
   });
 }
