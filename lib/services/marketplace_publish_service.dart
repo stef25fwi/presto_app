@@ -137,6 +137,29 @@ class MarketplacePublishService {
     );
   }
 
+  @visibleForTesting
+  static ListingMediaInput parseProcessedOfferPhotoForTest(
+    Map<String, dynamic> data,
+  ) {
+    return _ProcessedOfferPhotoPayload.fromMap(data).toListingMediaInput();
+  }
+
+  @visibleForTesting
+  static String resolveStorageExtensionForTest({
+    required String path,
+    String? mimeType,
+  }) {
+    return _storageExtension(XFile(path, mimeType: mimeType));
+  }
+
+  @visibleForTesting
+  static String resolveStorageContentTypeForTest({
+    required String path,
+    String? mimeType,
+  }) {
+    return _storageContentType(XFile(path, mimeType: mimeType));
+  }
+
   String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {
     final user = currentUser ?? FirebaseAuth.instance.currentUser;
     if (user?.uid.trim() == ownerId.trim()) {
@@ -636,7 +659,7 @@ class MarketplacePublishService {
     );
   }
 
-  String _storageExtension(XFile photo) {
+  static String _storageExtension(XFile photo) {
     final mime = (photo.mimeType ?? '').toLowerCase().trim();
     if (mime == 'image/webp') return 'webp';
     if (mime == 'image/avif') return 'avif';
@@ -659,7 +682,7 @@ class MarketplacePublishService {
     return 'jpg';
   }
 
-  String _storageContentType(XFile photo) {
+  static String _storageContentType(XFile photo) {
     final mime = (photo.mimeType ?? '').toLowerCase().trim();
     if (mime.startsWith('image/')) {
       return mime;
