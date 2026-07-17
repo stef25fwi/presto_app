@@ -189,12 +189,15 @@ void main() {
     expect(find.text('ACCOUNT_DESTINATION'), findsOneWidget);
   });
 
-  testWidgets('utilise le flux Firebase par défaut quand aucun override existe', (
+  testWidgets('utilise et convertit le flux Firebase Auth par défaut', (
     tester,
   ) async {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
     final platform = _AuthGatePlatform();
+    final controller = StreamController<UserPlatform?>.broadcast(sync: true);
+    addTearDown(controller.close);
+    platform.changes = controller.stream;
     FirebaseAuthPlatform.instance = platform;
 
     await tester.pumpWidget(
@@ -206,37 +209,19 @@ void main() {
         ),
       ),
     );
+
+    controller.add(null);
     await tester.pump();
-
     expect(find.text('ACCOUNT_DESTINATION'), findsOneWidget);
-  });
 
-  testWidgets('convertit le user Firebase par défaut en identité AuthGate', (
-    tester,
-  ) async {
-    setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
-    final platform = _AuthGatePlatform();
-    platform.changes = Stream<UserPlatform?>.value(
+    controller.add(
       _AuthGateUserPlatform(
         platform,
         providerId: 'password',
         emailVerified: false,
       ),
-    ).asBroadcastStream();
-    FirebaseAuthPlatform.instance = platform;
-
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: AuthGate(
-          accountChild: account,
-          verifyEmailChild: verify,
-          verifiedChild: verified,
-        ),
-      ),
     );
     await tester.pump();
-
     expect(find.text('VERIFY_DESTINATION'), findsOneWidget);
   });
 }
