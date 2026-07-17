@@ -2,16 +2,82 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/subscriptions/journey_entitlements_service.dart';
+import 'package:presto_app/features/subscriptions/subscription_credit_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_models.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+class _FakeCreditService extends SubscriptionCreditService {
+  _FakeCreditService(this.snapshot);
+
+  SubscriptionCreditSnapshot snapshot;
+
+  @override
+  Future<SubscriptionCreditSnapshot> getSnapshot() async => snapshot;
+}
 
 class _EntitlementsService extends JourneyEntitlementsService {
-  _EntitlementsService(this.entitlements);
+  _EntitlementsService(this.entitlements, SubscriptionCreditSnapshot snapshot)
+      : super(creditService: _FakeCreditService(snapshot));
 
   final JourneyEntitlements entitlements;
 
   @override
   Future<JourneyEntitlements> resolveEntitlements() async => entitlements;
+}
+
+SubscriptionCreditStatus _credit({
+  required int used,
+  required int limit,
+  bool unlimited = false,
+}) {
+  return SubscriptionCreditStatus(
+    used: used,
+    limit: limit,
+    remaining: unlimited ? 999999 : (used >= limit ? 0 : limit - used),
+    unlimited: unlimited,
+    exhausted: !unlimited && used >= limit,
+  );
+}
+
+SubscriptionCreditSnapshot _snapshot({
+  int journeysUsed = 0,
+  int journeysLimit = 5,
+  int pdfUsed = 0,
+  int pdfLimit = 5,
+  bool unlimited = false,
+}) {
+  return SubscriptionCreditSnapshot(
+    plan: 'ilipresto_plus',
+    period: '2026-07',
+    freeAccessMode: unlimited,
+    nextResetAt: DateTime.utc(2026, 8),
+    credits: {
+      SubscriptionCreditKind.journeys: _credit(
+        used: journeysUsed,
+        limit: unlimited ? 999999 : journeysLimit,
+        unlimited: unlimited,
+      ),
+      SubscriptionCreditKind.pdf: _credit(
+        used: pdfUsed,
+        limit: unlimited ? 999999 : pdfLimit,
+        unlimited: unlimited,
+      ),
+      SubscriptionCreditKind.voiceAi: _credit(
+        used: 0,
+        limit: unlimited ? 999999 : 5,
+        unlimited: unlimited,
+      ),
+      SubscriptionCreditKind.textAi: _credit(
+        used: 0,
+        limit: 999999,
+        unlimited: true,
+      ),
+      SubscriptionCreditKind.activeOffers: _credit(
+        used: 1,
+        limit: unlimited ? 999999 : 10,
+        unlimited: unlimited,
+      ),
+    },
+  );
 }
 
 void main() {
@@ -22,10 +88,6 @@ void main() {
     await Firebase.initializeApp();
   });
 
-  setUp(() {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-  });
-
   group('resolveJourneyEntitlementsForAccess', () {
     test('le mode gratuit complet ouvre tous les quotas', () {
       for (final plan in SubscriptionPlan.values) {
@@ -33,7 +95,6 @@ void main() {
           plan,
           freeAccessMode: true,
         );
-
         expect(entitlements.hasUnlimitedLocalSaves, isTrue);
         expect(entitlements.canExportPdf, isTrue);
         expect(entitlements.hasUnlimitedPdfExports, isTrue);
@@ -42,17 +103,14 @@ void main() {
       }
     });
 
-    test('le plan Gratuit conserve deux sauvegardes et aucun PDF', () {
+    test('le plan Gratuit conserve deux parcours et aucun PDF', () {
       final entitlements = resolveJourneyEntitlementsForAccess(
         SubscriptionPlan.free,
         freeAccessMode: false,
       );
-
       expect(entitlements.maxLocalSavesPerMonth, 2);
       expect(entitlements.canExportPdf, isFalse);
       expect(entitlements.maxPdfExportsPerMonth, 0);
-      expect(entitlements.pdfRequiresLogo, isFalse);
-      expect(entitlements.pdfRequiresWatermark, isFalse);
     });
 
     test('ilipresto+ et ilipro appliquent leurs quotas réels', () {
@@ -64,147 +122,89 @@ void main() {
         SubscriptionPlan.ilipro,
         freeAccessMode: false,
       );
-
       expect(plus.maxLocalSavesPerMonth, 5);
       expect(plus.maxPdfExportsPerMonth, 5);
-      expect(plus.canExportPdf, isTrue);
       expect(pro.maxLocalSavesPerMonth, 10);
       expect(pro.maxPdfExportsPerMonth, 10);
-      expect(pro.canExportPdf, isTrue);
     });
   });
 
-  group('compteurs mensuels locaux', () {
-    test('les compteurs démarrent à zéro', () async {
+  group('compteurs Firestore partagés', () {
+    test('expose les utilisations de la bibliothèque et des PDF', () async {
       final service = _EntitlementsService(
         getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus),
+        _snapshot(journeysUsed: 3, pdfUsed: 2),
       );
-
-      expect(await service.getLocalSavesUsedThisMonth(), 0);
-      expect(await service.getPdfExportsUsedThisMonth(), 0);
+      expect(await service.getLocalSavesUsedThisMonth(), 3);
+      expect(await service.getPdfExportsUsedThisMonth(), 2);
     });
 
-    test('recordLocalSave incrémente sans écraser le compteur', () async {
+    test('autorise la bibliothèque tant qu une place reste disponible', () async {
       final service = _EntitlementsService(
-        getJourneyEntitlementsForPlan(SubscriptionPlan.ilipro),
+        getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus),
+        _snapshot(journeysUsed: 4),
       );
-
-      await service.recordLocalSave();
-      await service.recordLocalSave();
-
-      expect(await service.getLocalSavesUsedThisMonth(), 2);
+      final decision = await service.evaluateLocalSave();
+      expect(decision.allowed, isTrue);
+      expect(decision.usedThisMonth, 4);
     });
 
-    test('recordPdfExport incrémente le compteur PDF', () async {
+    test('bloque la bibliothèque uniquement quand la capacité est atteinte', () async {
       final service = _EntitlementsService(
-        getJourneyEntitlementsForPlan(SubscriptionPlan.ilipro),
+        getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus),
+        _snapshot(journeysUsed: 5),
       );
-
-      await service.recordPdfExport();
-      await service.recordPdfExport();
-      await service.recordPdfExport();
-
-      expect(await service.getPdfExportsUsedThisMonth(), 3);
-    });
-
-    test('un compteur provenant d une ancienne période est ignoré', () async {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        'toolbox.journey_quota.saves_count': 9,
-        'toolbox.journey_quota.saves_period': '2000-01',
-        'toolbox.journey_quota.pdf_count': 8,
-        'toolbox.journey_quota.pdf_period': '2000-01',
-      });
-      final service = _EntitlementsService(
-        getJourneyEntitlementsForPlan(SubscriptionPlan.ilipro),
-      );
-
-      expect(await service.getLocalSavesUsedThisMonth(), 0);
-      expect(await service.getPdfExportsUsedThisMonth(), 0);
-
-      await service.recordLocalSave();
-      await service.recordPdfExport();
-
-      expect(await service.getLocalSavesUsedThisMonth(), 1);
-      expect(await service.getPdfExportsUsedThisMonth(), 1);
-    });
-  });
-
-  group('décisions de quota', () {
-    test('autorise une sauvegarde tant que le quota n est pas atteint', () async {
-      final service = _EntitlementsService(
-        const JourneyEntitlements(
-          maxLocalSavesPerMonth: 2,
-          canExportPdf: false,
-          maxPdfExportsPerMonth: 0,
-          pdfRequiresLogo: false,
-          pdfRequiresWatermark: false,
-        ),
-      );
-
-      final first = await service.evaluateLocalSave();
-      expect(first.allowed, isTrue);
-      expect(first.usedThisMonth, 0);
-      expect(first.entitlements.maxLocalSavesPerMonth, 2);
-
-      await service.recordLocalSave();
-      await service.recordLocalSave();
-      final blocked = await service.evaluateLocalSave();
-      expect(blocked.allowed, isFalse);
-      expect(blocked.usedThisMonth, 2);
+      final decision = await service.evaluateLocalSave();
+      expect(decision.allowed, isFalse);
+      expect(decision.usedThisMonth, 5);
     });
 
     test('un plan sans PDF demande une mise à niveau', () async {
       final service = _EntitlementsService(
         getJourneyEntitlementsForPlan(SubscriptionPlan.free),
+        _snapshot(pdfLimit: 0),
       );
-
       final decision = await service.evaluatePdfExport();
-
       expect(decision.allowed, isFalse);
       expect(decision.requiresUpgrade, isTrue);
-      expect(decision.usedThisMonth, 0);
-      expect(decision.entitlements.canExportPdf, isFalse);
     });
 
-    test('autorise puis bloque les PDF lorsque le quota est atteint', () async {
+    test('bloque les PDF uniquement lorsque le compteur serveur est plein', () async {
       final service = _EntitlementsService(
-        const JourneyEntitlements(
-          maxLocalSavesPerMonth: 5,
-          canExportPdf: true,
-          maxPdfExportsPerMonth: 2,
-          pdfRequiresLogo: true,
-          pdfRequiresWatermark: true,
-        ),
+        getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus),
+        _snapshot(pdfUsed: 5),
       );
-
-      final initial = await service.evaluatePdfExport();
-      expect(initial.allowed, isTrue);
-      expect(initial.requiresUpgrade, isFalse);
-      expect(initial.usedThisMonth, 0);
-
-      await service.recordPdfExport();
-      await service.recordPdfExport();
-      final blocked = await service.evaluatePdfExport();
-      expect(blocked.allowed, isFalse);
-      expect(blocked.requiresUpgrade, isFalse);
-      expect(blocked.usedThisMonth, 2);
+      final decision = await service.evaluatePdfExport();
+      expect(decision.allowed, isFalse);
+      expect(decision.requiresUpgrade, isFalse);
+      expect(decision.usedThisMonth, 5);
     });
 
-    test('les quotas illimités restent autorisés après plusieurs usages', () async {
+    test('les crédits illimités restent disponibles', () async {
       final service = _EntitlementsService(
         resolveJourneyEntitlementsForAccess(
           SubscriptionPlan.free,
           freeAccessMode: true,
         ),
+        _snapshot(
+          journeysUsed: 120,
+          pdfUsed: 80,
+          unlimited: true,
+        ),
       );
-
-      for (var index = 0; index < 12; index += 1) {
-        await service.recordLocalSave();
-        await service.recordPdfExport();
-      }
-
       expect((await service.evaluateLocalSave()).allowed, isTrue);
       expect((await service.evaluatePdfExport()).allowed, isTrue);
+    });
+
+    test('les anciennes méthodes record ne doublent pas le débit serveur', () async {
+      final service = _EntitlementsService(
+        getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus),
+        _snapshot(journeysUsed: 2, pdfUsed: 1),
+      );
+      await service.recordLocalSave();
+      await service.recordPdfExport();
+      expect(await service.getLocalSavesUsedThisMonth(), 2);
+      expect(await service.getPdfExportsUsedThisMonth(), 1);
     });
   });
 }

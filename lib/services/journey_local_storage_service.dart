@@ -2,42 +2,66 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Clé SharedPreferences du parcours "véritablement sauvegardé" par
-/// l'utilisateur (action explicite sur le bouton "Sauvegarder"). Cette
-/// sauvegarde est disponible pour tous les abonnements (Gratuit inclus),
-/// avec un quota mensuel géré par `JourneyEntitlementsService`. Elle n'est
-/// remplacée que par une nouvelle sauvegarde explicite.
+import '../features/subscriptions/subscription_credit_service.dart';
+
+/// Cache local du dernier parcours explicitement sauvegardé.
 const String kLocalSavedJourneyPrefsKey = 'toolbox.saved_journey.latest';
 
-/// Clé SharedPreferences de l'historique : le dernier parcours généré,
-/// mis à jour automatiquement à chaque parcours terminé, sans quota et
-/// sans action de l'utilisateur. Toujours écrasé par le parcours suivant,
-/// indépendamment du parcours "véritablement sauvegardé".
+/// Historique local du dernier parcours généré, toujours écrasé.
 const String kLocalHistoryJourneyPrefsKey = 'toolbox.saved_journey.history';
 
-/// Sauvegarde/lecture du parcours personnalisé stocké localement sur
-/// l'appareil (aucune synchronisation cloud pour ces copies).
+/// Bibliothèque de parcours synchronisée dans Firestore.
 ///
-/// Deux emplacements distincts sont gérés :
-/// - [saveSnapshot]/[loadSnapshot] : le parcours explicitement sauvegardé
-///   par l'utilisateur (limité par le quota mensuel de l'abonnement).
-/// - [saveHistorySnapshot]/[loadHistorySnapshot] : le dernier parcours
-///   généré, toujours écrasé automatiquement, sans limite.
+/// Le dernier parcours reste mis en cache pour conserver la reprise immédiate
+/// et la compatibilité avec les écrans historiques. La source de vérité des
+/// sauvegardes explicites est toutefois `users/{uid}/savedJourneys`.
 class JourneyLocalStorageService {
   const JourneyLocalStorageService();
 
+  static final SubscriptionCreditService _credits =
+      SubscriptionCreditService();
+
   Future<void> saveSnapshot(Map<String, dynamic> snapshot) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(kLocalSavedJourneyPrefsKey, jsonEncode(snapshot));
+    final currentCache = await loadSnapshot();
+    final identity = _journeyIdentity(snapshot);
+    final cachedIdentity = '${currentCache?['_journeyIdentity'] ?? ''}';
+    final cachedCloudId = '${currentCache?['_cloudJourneyId'] ?? ''}'.trim();
+    final journeyId = identity == cachedIdentity && cachedCloudId.isNotEmpty
+        ? cachedCloudId
+        : null;
+
+    final cloudId = await _credits.saveJourney(
+      _withoutLocalMetadata(snapshot),
+      journeyId: journeyId,
+    );
+    final cache = <String, dynamic>{
+      ...snapshot,
+      '_cloudJourneyId': cloudId,
+      '_journeyIdentity': identity,
+    };
+    await prefs.setString(kLocalSavedJourneyPrefsKey, jsonEncode(cache));
   }
 
   Future<Map<String, dynamic>?> loadSnapshot() async {
     return _load(kLocalSavedJourneyPrefsKey);
   }
 
+  /// Efface uniquement le cache de reprise. Les éléments de la bibliothèque
+  /// sont supprimés explicitement via [deleteLibraryJourney].
   Future<void> clearSnapshot() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(kLocalSavedJourneyPrefsKey);
+  }
+
+  Future<List<SavedJourneyRecord>> loadLibrary() => _credits.listJourneys();
+
+  Future<void> deleteLibraryJourney(String journeyId) async {
+    await _credits.deleteJourney(journeyId);
+    final cached = await loadSnapshot();
+    if ('${cached?['_cloudJourneyId'] ?? ''}' == journeyId) {
+      await clearSnapshot();
+    }
   }
 
   Future<void> saveHistorySnapshot(Map<String, dynamic> snapshot) async {
@@ -60,5 +84,34 @@ class JourneyLocalStorageService {
     } catch (_) {
       return null;
     }
+  }
+
+  static String _journeyIdentity(Map<String, dynamic> snapshot) {
+    final summary = snapshot['summary'] is Map
+        ? Map<String, dynamic>.from(snapshot['summary'] as Map)
+        : const <String, dynamic>{};
+    final project = '${snapshot['projectLabel'] ?? summary['title'] ?? ''}'
+        .trim()
+        .toLowerCase();
+    final activity =
+        '${snapshot['selectedActivity'] ?? summary['activity'] ?? ''}'
+            .trim()
+            .toLowerCase();
+    final status = '${snapshot['currentStatus'] ?? summary['currentStatus'] ?? ''}'
+        .trim()
+        .toLowerCase();
+    final region = '${snapshot['region'] ?? summary['region'] ?? ''}'
+        .trim()
+        .toLowerCase();
+    return '$project|$activity|$status|$region';
+  }
+
+  static Map<String, dynamic> _withoutLocalMetadata(
+    Map<String, dynamic> snapshot,
+  ) {
+    return <String, dynamic>{
+      for (final entry in snapshot.entries)
+        if (!entry.key.startsWith('_')) entry.key: entry.value,
+    };
   }
 }

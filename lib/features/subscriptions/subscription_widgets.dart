@@ -2,9 +2,41 @@ import 'package:flutter/material.dart';
 
 import '../../pages/admin_videomaker_page.dart';
 import 'subscription_config_service.dart';
+import 'subscription_credits_card.dart';
 import 'subscription_widgets_base.dart' as base;
 
-export 'subscription_widgets_base.dart' hide AdminSubscriptionTile;
+export 'subscription_widgets_base.dart'
+    hide AdminSubscriptionTile, SubscriptionSection;
+export 'subscription_credit_service.dart';
+export 'subscription_credits_card.dart';
+
+/// Bloc abonnement du tableau de bord.
+///
+/// Le composant historique reste la source de vérité pour l'offre active ; la
+/// carte « Mes crédits » est ajoutée juste en dessous afin que l'utilisateur
+/// voie immédiatement ses cinq capacités principales.
+class SubscriptionSection extends StatelessWidget {
+  final String userId;
+  final SubscriptionConfigService? service;
+
+  const SubscriptionSection({
+    super.key,
+    required this.userId,
+    this.service,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        base.SubscriptionSection(userId: userId, service: service),
+        const SizedBox(height: 10),
+        SubscriptionCreditsCard(userId: userId),
+      ],
+    );
+  }
+}
 
 class AdminSubscriptionTile extends StatelessWidget {
   final SubscriptionConfigService? service;
