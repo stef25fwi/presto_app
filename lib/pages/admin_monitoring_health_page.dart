@@ -2,27 +2,40 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class AdminMonitoringHealthPage extends StatelessWidget {
-  const AdminMonitoringHealthPage({super.key});
+  final Stream<List<Map<String, dynamic>>>? eventsStream;
 
-  @override
-  Widget build(BuildContext context) {
+  const AdminMonitoringHealthPage({
+    super.key,
+    this.eventsStream,
+  });
+
+  Stream<List<Map<String, dynamic>>> _watchEvents() {
     final since = DateTime.now()
         .subtract(const Duration(hours: 24))
         .toUtc()
         .toIso8601String();
 
-    final query = FirebaseFirestore.instance
+    return FirebaseFirestore.instance
         .collection('app_monitoring_events')
         .where('createdAtClient', isGreaterThan: since)
         .orderBy('createdAtClient', descending: true)
-        .limit(100);
+        .limit(100)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((document) => document.data())
+              .toList(growable: false),
+        );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Santé app'),
       ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: query.snapshots(),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: eventsStream ?? _watchEvents(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Padding(
@@ -35,25 +48,29 @@ class AdminMonitoringHealthPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final events = snapshot.data!.docs.map((doc) => doc.data()).toList();
+          final events = snapshot.data!;
 
           final errors = events
-              .where((e) => e['level'] == 'error' || e['level'] == 'critical')
+              .where((event) =>
+                  event['level'] == 'error' || event['level'] == 'critical')
               .length;
 
           final criticals =
-              events.where((e) => e['level'] == 'critical').length;
+              events.where((event) => event['level'] == 'critical').length;
 
-          final warnings = events.where((e) => e['level'] == 'warning').length;
+          final warnings =
+              events.where((event) => event['level'] == 'warning').length;
 
           final appCheckRefused = events
-              .where(
-                  (e) => e['scope'] == 'app_check' && e['action'] == 'refused')
+              .where((event) =>
+                  event['scope'] == 'app_check' &&
+                  event['action'] == 'refused')
               .length;
 
           final adminConnections = events
-              .where((e) =>
-                  e['scope'] == 'admin' && e['action'] == 'admin_connected')
+              .where((event) =>
+                  event['scope'] == 'admin' &&
+                  event['action'] == 'admin_connected')
               .length;
 
           return ListView(
