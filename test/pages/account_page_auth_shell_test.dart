@@ -159,4 +159,20 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });
+
+  testWidgets('conserve les paramètres publics du shell AccountPage',
+      (tester) async {
+    void handleScroll(double offset) {}
+
+    final page = AccountPage(onScroll: handleScroll, startInSignup: true);
+    expect(page.onScroll, same(handleScroll));
+    expect(page.startInSignup, isTrue);
+
+    await tester.pumpWidget(MaterialApp(home: page));
+    await waitForIdTokenListener(tester);
+    expect(find.text('Restauration de la session…'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 }
