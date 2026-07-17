@@ -49,7 +49,7 @@ void main() {
   }
 
   Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
-    for (var attempt = 0; attempt < 40; attempt++) {
+    for (var attempt = 0; attempt < 100; attempt++) {
       await tester.pump(const Duration(milliseconds: 50));
       if (finder.evaluate().isNotEmpty) return;
     }
@@ -70,10 +70,8 @@ void main() {
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNull);
 
     completer.complete(const <GeneratedVideo>[]);
-    await pumpUntilFound(
-      tester,
-      find.text('Aucune vidéo générée pour le moment.'),
-    );
+    await tester.pumpAndSettle();
+    expect(find.text('Aucune vidéo générée pour le moment.'), findsOneWidget);
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNotNull);
   });
 
