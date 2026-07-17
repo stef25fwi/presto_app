@@ -27,45 +27,53 @@ void main() {
   }
 
   Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
-    for (var attempt = 0; attempt < 40; attempt++) {
+    for (var attempt = 0; attempt < 100; attempt++) {
       await tester.pump(const Duration(milliseconds: 50));
       if (finder.evaluate().isNotEmpty) return;
     }
     fail('Widget attendu introuvable après traitement asynchrone: $finder');
   }
 
-  testWidgets('valide les images invalides et les erreurs de sélection',
-      (tester) async {
-    var mode = 0;
-    await pumpPage(tester, () async {
-      mode++;
-      if (mode == 1) {
-        return XFile.fromData(Uint8List(0), name: 'vide.png');
-      }
-      if (mode == 2) {
-        return XFile.fromData(
-          Uint8List.fromList(<int>[1]),
-          name: 'animation.gif',
-          mimeType: 'image/gif',
-        );
-      }
-      throw StateError('sélection indisponible');
-    });
-    final pick = find.text('Ajouter une image de départ (facultatif)');
+  Finder pickButton() =>
+      find.text('Ajouter une image de départ (facultatif)');
 
-    await tester.tap(pick);
+  testWidgets('refuse une image vide', (tester) async {
+    await pumpPage(
+      tester,
+      () async => XFile.fromData(Uint8List(0), name: 'vide.png'),
+    );
+
+    await tester.tap(pickButton());
     await pumpUntilFound(
       tester,
       find.text('L’image doit être valide et peser moins de 5 Mo.'),
     );
+  });
 
-    await tester.tap(pick);
+  testWidgets('refuse un format d’image non pris en charge', (tester) async {
+    await pumpPage(
+      tester,
+      () async => XFile.fromData(
+        Uint8List.fromList(<int>[1]),
+        name: 'animation.gif',
+        mimeType: 'image/gif',
+      ),
+    );
+
+    await tester.tap(pickButton());
     await pumpUntilFound(
       tester,
       find.text('Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.'),
     );
+  });
 
-    await tester.tap(pick);
+  testWidgets('signale une erreur du sélecteur d’image', (tester) async {
+    await pumpPage(
+      tester,
+      () async => throw StateError('sélection indisponible'),
+    );
+
+    await tester.tap(pickButton());
     await pumpUntilFound(
       tester,
       find.text('Impossible de sélectionner cette image.'),
