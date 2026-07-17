@@ -223,7 +223,7 @@ void main() {
         providerId: 'password',
         emailVerified: false,
       ),
-    );
+    ).asBroadcastStream();
     FirebaseAuthPlatform.instance = platform;
 
     await tester.pumpWidget(
