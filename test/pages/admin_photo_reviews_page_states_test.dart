@@ -256,7 +256,8 @@ void main() {
     );
     await flushStream(tester);
 
-    final dismissible = tester.widget<Dismissible>(find.byType(Dismissible));
+    final reviewCard = find.byKey(const ValueKey<String>('review-1'));
+    final dismissible = tester.widget<Dismissible>(reviewCard);
     final result = await dismissible.confirmDismiss!(
       DismissDirection.startToEnd,
     );
@@ -265,7 +266,7 @@ void main() {
     expect(result, isFalse);
     expect(calls, <String>['review-1:approved:-']);
     expect(find.text('Photo acceptée'), findsOneWidget);
-    expect(find.byType(Dismissible), findsOneWidget);
+    expect(reviewCard, findsOneWidget);
   });
 
   testWidgets('affiche le message précis d’une erreur Functions',
