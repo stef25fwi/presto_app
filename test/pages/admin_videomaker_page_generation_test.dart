@@ -62,7 +62,11 @@ void main() {
     );
     final tempDirectory =
         await Directory.systemTemp.createTemp('presto-videomaker-test-');
-    addTearDown(() => tempDirectory.delete(recursive: true));
+    addTearDown(() {
+      if (tempDirectory.existsSync()) {
+        tempDirectory.deleteSync(recursive: true);
+      }
+    });
     final imageFile = File('${tempDirectory.path}/depart.png');
     await imageFile.writeAsBytes(imageBytes, flush: true);
     final image = XFile(imageFile.path, mimeType: 'image/png');
