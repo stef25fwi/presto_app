@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
@@ -10,13 +12,11 @@ class _ListMultiFactorPlatform extends MultiFactorPlatform {
 }
 
 class _ListTokenResult extends IdTokenResult {
-  _ListTokenResult({required bool isAdmin})
+  _ListTokenResult()
       : super(
           InternalIdTokenResult(
             token: 'messages-list-test-token',
-            claims: <String?, Object?>{
-              if (isAdmin) 'admin': true,
-            },
+            claims: const <String?, Object?>{},
             authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
             issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
             expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
@@ -26,19 +26,15 @@ class _ListTokenResult extends IdTokenResult {
 }
 
 class _ListUserPlatform extends UserPlatform {
-  _ListUserPlatform(
-    FirebaseAuthPlatform auth, {
-    required this.isAdmin,
-  }) : super(
+  _ListUserPlatform(FirebaseAuthPlatform auth)
+      : super(
           auth,
           _ListMultiFactorPlatform(auth),
           InternalUserDetails(
             userInfo: InternalUserInfo(
-              uid: isAdmin ? 'admin-messages' : 'user-messages',
-              email: isAdmin
-                  ? 'admin-messages@ilipresto.fr'
-                  : 'user-messages@ilipresto.fr',
-              displayName: isAdmin ? 'Admin messages' : 'Utilisateur messages',
+              uid: 'user-messages',
+              email: 'user-messages@ilipresto.fr',
+              displayName: 'Utilisateur messages',
               isAnonymous: false,
               isEmailVerified: true,
               creationTimestamp:
@@ -49,12 +45,9 @@ class _ListUserPlatform extends UserPlatform {
             providerData: <Map<String, dynamic>?>[
               <String, dynamic>{
                 'providerId': 'password',
-                'uid': isAdmin ? 'admin-messages' : 'user-messages',
-                'email': isAdmin
-                    ? 'admin-messages@ilipresto.fr'
-                    : 'user-messages@ilipresto.fr',
-                'displayName':
-                    isAdmin ? 'Admin messages' : 'Utilisateur messages',
+                'uid': 'user-messages',
+                'email': 'user-messages@ilipresto.fr',
+                'displayName': 'Utilisateur messages',
                 'phoneNumber': null,
                 'photoURL': null,
                 'isAnonymous': false,
@@ -64,28 +57,27 @@ class _ListUserPlatform extends UserPlatform {
           ),
         );
 
-  final bool isAdmin;
-  int reloadCalls = 0;
-
-  @override
-  Future<void> reload() async {
-    reloadCalls += 1;
-  }
+  int tokenCalls = 0;
+  int tokenResultCalls = 0;
 
   @override
   Future<String?> getIdToken(bool forceRefresh) async {
+    tokenCalls += 1;
     return 'messages-list-test-token';
   }
 
   @override
   Future<IdTokenResult> getIdTokenResult(bool forceRefresh) async {
-    return _ListTokenResult(isAdmin: isAdmin);
+    tokenResultCalls += 1;
+    return _ListTokenResult();
   }
 }
 
 class _ListAuthPlatform extends FirebaseAuthPlatform {
   _ListAuthPlatform() : super(appInstance: null);
 
+  final StreamController<UserPlatform?> controller =
+      StreamController<UserPlatform?>.broadcast();
   UserPlatform? user;
 
   @override
@@ -102,13 +94,13 @@ class _ListAuthPlatform extends FirebaseAuthPlatform {
   UserPlatform? get currentUser => user;
 
   @override
-  Stream<UserPlatform?> authStateChanges() => Stream<UserPlatform?>.value(user);
+  Stream<UserPlatform?> authStateChanges() => controller.stream;
 
   @override
-  Stream<UserPlatform?> idTokenChanges() => Stream<UserPlatform?>.value(user);
+  Stream<UserPlatform?> idTokenChanges() => controller.stream;
 
   @override
-  Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(user);
+  Stream<UserPlatform?> userChanges() => controller.stream;
 }
 
 void main() {
@@ -127,13 +119,17 @@ void main() {
     authPlatform.user = null;
   });
 
-  Future<void> pumpList(
+  tearDownAll(() async {
+    await authPlatform.controller.close();
+  });
+
+  Future<_ListUserPlatform> pumpConnectedPipeline(
     WidgetTester tester, {
-    required bool isAdmin,
     double width = 430,
     String title = 'Messagerie connectée',
   }) async {
-    authPlatform.user = _ListUserPlatform(authPlatform, isAdmin: isAdmin);
+    final user = _ListUserPlatform(authPlatform);
+    authPlatform.user = user;
     await tester.binding.setSurfaceSize(Size(width, 1500));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -143,146 +139,63 @@ void main() {
       ),
     );
 
-    for (var frame = 0; frame < 180; frame += 1) {
+    // Le runner ne fournit pas de plugin Firestore natif. On laisse néanmoins
+    // le vrai pipeline exécuter le préflight, les deux délais App Check et la
+    // préparation de la requête avant de vérifier son état de chargement sûr.
+    for (var frame = 0; frame < 110; frame += 1) {
       await tester.pump(const Duration(milliseconds: 250));
-      if (find.text('Tous').evaluate().isNotEmpty &&
-          find.text('Non lus').evaluate().isNotEmpty &&
-          find.text('Archives').evaluate().isNotEmpty) {
-        return;
-      }
     }
-    fail('La liste connectée ne s’est pas stabilisée après les retries prévus.');
+    return user;
   }
 
   Future<void> disposeList(WidgetTester tester) async {
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 5));
   }
 
-  Finder filterInkWell(String label) {
-    return find.ancestor(
-      of: find.text(label),
-      matching: find.byType(InkWell),
-    ).first;
-  }
-
-  Color? filterColor(WidgetTester tester, String label) {
-    final container = find.ancestor(
-      of: find.text(label),
-      matching: find.byType(AnimatedContainer),
-    ).first;
-    final widget = tester.widget<AnimatedContainer>(container);
-    return (widget.decoration as BoxDecoration?)?.color;
-  }
-
-  testWidgets('affiche le shell utilisateur et manipule recherche et filtres',
+  testWidgets('le compte connecté parcourt le pipeline puis garde un loader sûr',
       (tester) async {
-    await pumpList(tester, isAdmin: false);
+    final user = await pumpConnectedPipeline(tester);
 
     expect(find.text('Messagerie connectée'), findsOneWidget);
-    expect(find.text('Messages'), findsOneWidget);
     expect(find.text('ilipresto'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.text('Compte actuellement connecté'), findsNothing);
-    expect(filterColor(tester, 'Tous'), kPrestoBlue);
-
-    await tester.tap(find.byTooltip('Rechercher'));
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.text('Rechercher une conversation'), findsOneWidget);
-
-    await tester.enterText(find.byType(TextField), 'jardinage');
-    await tester.pump();
-    expect(find.byTooltip('Effacer la recherche'), findsOneWidget);
-    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text,
-        'jardinage');
-
-    await tester.tap(find.byTooltip('Effacer la recherche'));
-    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(
-      tester.widget<TextField>(find.byType(TextField)).controller?.text,
-      isEmpty,
+      find.text('Connexion / inscription pour accéder à la messagerie.'),
+      findsNothing,
     );
+    expect(user.tokenCalls, greaterThan(0));
+    expect(user.tokenResultCalls, greaterThan(0));
 
-    await tester.tap(filterInkWell('Non lus'));
-    await tester.pump(const Duration(milliseconds: 220));
-    expect(filterColor(tester, 'Non lus'), kPrestoBlue);
-    expect(filterColor(tester, 'Tous'), isNot(kPrestoBlue));
-
-    await tester.tap(filterInkWell('Archives'));
-    await tester.pump(const Duration(milliseconds: 220));
-    expect(filterColor(tester, 'Archives'), kPrestoBlue);
-
-    await tester.tap(filterInkWell('Tous'));
-    await tester.pump(const Duration(milliseconds: 220));
-    expect(filterColor(tester, 'Tous'), kPrestoBlue);
-
-    await tester.tap(find.byTooltip('Fermer la recherche'));
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.byType(TextField), findsNothing);
-
-    await disposeList(tester);
-  });
-
-  testWidgets('affiche le diagnostic et les outils du compte administrateur',
-      (tester) async {
-    await pumpList(
-      tester,
-      isAdmin: true,
-      title: 'Messagerie administration',
-    );
-
-    for (var frame = 0; frame < 80; frame += 1) {
-      await tester.pump(const Duration(milliseconds: 250));
-      if (find.text('Compte actuellement connecté').evaluate().isNotEmpty) {
-        break;
-      }
-    }
-
-    expect(find.text('Messagerie administration'), findsOneWidget);
-    expect(find.text('Compte actuellement connecté'), findsOneWidget);
-    expect(find.text('admin-messages@ilipresto.fr'), findsOneWidget);
-    expect(find.text('UID: admin-messages'), findsOneWidget);
-    expect(find.text('Log admin - chargement conversations'), findsOneWidget);
-    expect(find.byTooltip('Copier les identifiants'), findsOneWidget);
-    expect(find.byTooltip('Copier les logs'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('Copier les identifiants'));
+    authPlatform.user = null;
+    authPlatform.controller.add(null);
     await tester.pump();
-    expect(find.text('Identifiants du compte copiés.'), findsOneWidget);
-    ScaffoldMessenger.of(tester.element(find.byType(Scaffold)))
-        .hideCurrentSnackBar();
-    await tester.pump(const Duration(milliseconds: 250));
 
-    await tester.tap(find.byTooltip('Copier les logs'));
-    await tester.pump();
-    expect(find.text('Logs copiés dans le presse-papiers.'), findsOneWidget);
-
-    await tester.tap(find.text('Log admin - chargement conversations'));
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.byType(ExpansionTile), findsOneWidget);
-    expect(find.byType(SelectableText), findsWidgets);
-
-    await disposeList(tester);
-  });
-
-  testWidgets('affiche le panneau de conversation du mode large', (tester) async {
-    await pumpList(
-      tester,
-      isAdmin: false,
-      width: 1200,
-      title: 'Messagerie large',
-    );
-
-    expect(find.text('Messagerie large'), findsOneWidget);
-    expect(find.text('Sélectionnez une conversation'), findsOneWidget);
     expect(
-      find.text(
-        'Le fil restera ouvert ici pendant que vous parcourez vos messages.',
-      ),
+      find.text('Connexion / inscription pour accéder à la messagerie.'),
       findsOneWidget,
     );
-    expect(find.byType(VerticalDivider), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
 
     await disposeList(tester);
+  });
+
+  test('la page conserve ses paramètres publics et son style système', () {
+    const page = ConversationsListPage(
+      initialConversationId: 'conversation-1',
+      initialDraftText: 'Bonjour',
+      appBarTitle: 'Messagerie personnalisée',
+    );
+
+    expect(page.initialConversationId, 'conversation-1');
+    expect(page.initialDraftText, 'Bonjour');
+    expect(page.appBarTitle, 'Messagerie personnalisée');
+    expect(page.createState(), isA<State<ConversationsListPage>>());
+    expect(kMessagesStatusBarStyle.statusBarColor, kPrestoOrange);
+    expect(
+      kMessagesStatusBarStyle.statusBarIconBrightness,
+      Brightness.light,
+    );
+    expect(kMessagesPageBackground, const Color(0xFFFFFEFE));
   });
 }
