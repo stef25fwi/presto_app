@@ -31,22 +31,23 @@ class AdminMessagingAnalyticsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final messagingService = AdminMessagingService();
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       body: StreamBuilder<List<AdminConversationModel>>(
         stream: conversationsStream ??
-            messagingService.watchConversations(limit: 200),
+            AdminMessagingService().watchConversations(limit: 200),
         builder: (context, conversationsSnapshot) {
           return StreamBuilder<List<AdminMessageReportModel>>(
-            stream: reportsStream ?? messagingService.watchReports(limit: 200),
+            stream: reportsStream ??
+                AdminMessagingService().watchReports(limit: 200),
             builder: (context, reportsSnapshot) {
               return StreamBuilder<List<AdminMessagingUserModel>>(
-                stream: usersStream ?? messagingService.watchUsers(limit: 200),
+                stream: usersStream ??
+                    AdminMessagingService().watchUsers(limit: 200),
                 builder: (context, usersSnapshot) {
                   return StreamBuilder<List<AdminAttachmentModel>>(
                     stream: attachmentsStream ??
-                        messagingService.watchAttachments(limit: 200),
+                        AdminMessagingService().watchAttachments(limit: 200),
                     builder: (context, attachmentsSnapshot) {
                       return StreamBuilder<List<AdminNotificationLogModel>>(
                         stream: notificationsStream ??
