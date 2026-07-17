@@ -48,21 +48,22 @@ jobs:
 
           top_old = 'padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),'
           top_new = 'padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),'
-          card_old = """                    const SizedBox(height: 8),
-                    _buildAccountSectionCard(
-                      icon: Icons.person_rounded,"""
-          card_new = """                    const SizedBox(height: 16),
-                    _buildAccountSectionCard(
-                      icon: Icons.person_rounded,"""
-
           if top_old in source:
               source = source.replace(top_old, top_new, 1)
           elif top_new not in source:
               raise SystemExit('Target top padding was not found')
 
-          if card_old in source:
-              source = source.replace(card_old, card_new, 1)
-          elif card_new not in source:
+          profile_marker = "title: 'Mon profil'"
+          marker_index = source.find(profile_marker)
+          if marker_index < 0:
+              raise SystemExit('Mon profil marker was not found')
+
+          gap_old = 'const SizedBox(height: 8),'
+          gap_new = 'const SizedBox(height: 16),'
+          gap_index = source.rfind(gap_old, 0, marker_index)
+          if gap_index >= 0:
+              source = source[:gap_index] + gap_new + source[gap_index + len(gap_old):]
+          elif source.rfind(gap_new, 0, marker_index) < 0:
               raise SystemExit('Target profile-to-card spacing was not found')
 
           path.write_text(source, encoding='utf-8')
