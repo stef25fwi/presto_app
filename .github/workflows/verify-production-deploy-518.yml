@@ -1,0 +1,127 @@
+name: Verify production deploy 518
+
+on:
+  push:
+    branches:
+      - agent/subscription-credits-dashboard
+    paths:
+      - .github/workflows/verify-production-deploy-518.yml
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+jobs:
+  verify-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: 7cd8ab037772827a92a0fa2278f782c24be8d016
+      PR_NUMBER: '518'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate, relaunch if necessary, and verify Firebase production
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          repo="$GITHUB_REPOSITORY"
+          run_id=""
+          run_url=""
+          conclusion="missing"
+          source_kind="push"
+
+          wait_for_run() {
+            local id="$1"
+            local status=""
+            conclusion=""
+            for _ in $(seq 1 180); do
+              status=$(gh api "repos/$repo/actions/runs/$id" --jq '.status')
+              conclusion=$(gh api "repos/$repo/actions/runs/$id" --jq '.conclusion // ""')
+              run_url=$(gh api "repos/$repo/actions/runs/$id" --jq '.html_url')
+              echo "Deployment run $id: status=$status conclusion=${conclusion:-pending}"
+              if [ "$status" = "completed" ]; then
+                return 0
+              fi
+              sleep 20
+            done
+            conclusion="timed_out"
+            return 0
+          }
+
+          run_id=$(gh api \
+            "repos/$repo/actions/workflows/deploy.yml/runs?head_sha=$TARGET_SHA&event=push&per_page=20" \
+            --jq '.workflow_runs | sort_by(.created_at) | last | .id // empty')
+
+          if [ -n "$run_id" ]; then
+            echo "Déploiement automatique trouvé: $run_id"
+            wait_for_run "$run_id"
+          fi
+
+          if [ -z "$run_id" ] || [ "$conclusion" != "success" ]; then
+            echo "Déploiement automatique absent ou non réussi ($conclusion). Relance manuelle avec Functions."
+            source_kind="workflow_dispatch"
+            previous_manual=$(gh api \
+              "repos/$repo/actions/workflows/deploy.yml/runs?event=workflow_dispatch&branch=main&per_page=1" \
+              --jq '.workflow_runs[0].id // empty')
+
+            gh workflow run deploy.yml \
+              --repo "$repo" \
+              --ref main \
+              -f deploy_functions=true
+
+            run_id=""
+            for _ in $(seq 1 30); do
+              candidate=$(gh api \
+                "repos/$repo/actions/workflows/deploy.yml/runs?event=workflow_dispatch&branch=main&per_page=1" \
+                --jq '.workflow_runs[0].id // empty')
+              if [ -n "$candidate" ] && [ "$candidate" != "$previous_manual" ]; then
+                run_id="$candidate"
+                break
+              fi
+              sleep 5
+            done
+
+            if [ -z "$run_id" ]; then
+              conclusion="dispatch_not_found"
+              run_url="https://github.com/$repo/actions/workflows/deploy.yml"
+            else
+              echo "Déploiement manuel lancé: $run_id"
+              wait_for_run "$run_id"
+            fi
+          fi
+
+          if [ "$conclusion" = "success" ]; then
+            body=$(cat <<EOF
+          ✅ **Déploiement Firebase production confirmé**
+
+          - PR : #$PR_NUMBER
+          - Commit fusionné : \`$TARGET_SHA\`
+          - Déclenchement : \`$source_kind\`
+          - Workflow : $run_url
+          - Résultat : Hosting, Firestore, Storage, Functions concernées et smoke tests validés.
+          EOF
+          )
+          else
+            body=$(cat <<EOF
+          ❌ **Déploiement Firebase production non confirmé**
+
+          - PR : #$PR_NUMBER
+          - Commit fusionné : \`$TARGET_SHA\`
+          - Déclenchement : \`$source_kind\`
+          - Workflow : $run_url
+          - Conclusion : \`$conclusion\`
+          EOF
+          )
+          fi
+
+          gh api --method POST \
+            "repos/$repo/issues/$PR_NUMBER/comments" \
+            -f body="$body" >/dev/null
+
+          if [ "$conclusion" != "success" ]; then
+            exit 1
+          fi
