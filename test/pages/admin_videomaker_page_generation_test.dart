@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:presto_app/features/admin_videomaker/video_maker_models.dart';
+import 'package:presto_app/features/admin_videomaker/video_maker_page_operations.dart';
 import 'package:presto_app/pages/admin_videomaker_page.dart';
 
 void main() {
@@ -26,7 +26,7 @@ void main() {
     WidgetTester tester, {
     required Future<List<GeneratedVideo>> Function() loader,
     required Future<void> Function(Map<String, Object?>) generator,
-    Future<XFile?> Function()? picker,
+    Future<VideoMakerSelectedImage?> Function()? picker,
   }) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1;
@@ -59,8 +59,7 @@ void main() {
     final imageBytes = base64Decode(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     );
-    final image = XFile(
-      'depart.png',
+    final image = VideoMakerSelectedImage(
       bytes: imageBytes,
       name: 'depart.png',
       mimeType: 'image/png',
