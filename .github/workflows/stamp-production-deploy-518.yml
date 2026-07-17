@@ -1,0 +1,56 @@
+name: Stamp production deploy 518
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/stamp-production-deploy-518.yml
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  stamp:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stamp deployment result and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          target="7cd8ab037772827a92a0fa2278f782c24be8d016"
+          path=".github/workflows/stamp-production-deploy-518.yml"
+
+          selected=$(gh api \
+            "repos/$repo/actions/workflows/deploy.yml/runs?head_sha=$target&event=push&per_page=20" \
+            --jq '.workflow_runs | map(select(.conclusion == "success")) | sort_by(.created_at) | last | [.id, .conclusion] | @tsv' 2>/dev/null || true)
+
+          if [ -z "$selected" ]; then
+            selected=$(gh api \
+              "repos/$repo/actions/workflows/deploy.yml/runs?event=workflow_dispatch&branch=main&per_page=30" \
+              --jq '.workflow_runs | map(select(.created_at >= "2026-07-17T03:45:00Z" and .conclusion == "success")) | sort_by(.created_at) | last | [.id, .conclusion] | @tsv' 2>/dev/null || true)
+          fi
+
+          if [ -z "$selected" ]; then
+            selected=$(gh api \
+              "repos/$repo/actions/workflows/deploy.yml/runs?head_sha=$target&event=push&per_page=20" \
+              --jq '.workflow_runs | sort_by(.created_at) | last | [.id, (.conclusion // .status // "missing")] | @tsv' 2>/dev/null || true)
+          fi
+
+          run_id="none"
+          conclusion="missing"
+          if [ -n "$selected" ]; then
+            IFS=$'\t' read -r run_id conclusion <<< "$selected"
+          fi
+
+          file_sha=$(gh api "repos/$repo/contents/$path?ref=main" --jq '.sha')
+          message="chore: déploiement 518 $conclusion run $run_id [skip ci]"
+          gh api --method DELETE "repos/$repo/contents/$path" \
+            -f message="$message" \
+            -f sha="$file_sha" \
+            -f branch=main >/dev/null
