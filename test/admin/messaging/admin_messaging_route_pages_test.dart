@@ -5,6 +5,7 @@ import 'package:presto_app/admin/messaging/admin_message_reports_page.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_center_page.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_dashboard_page.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_users_page.dart';
+import 'package:presto_app/models/admin_access_state.dart';
 
 class _AdminMessagingRouteProbe extends StatelessWidget {
   const _AdminMessagingRouteProbe({
@@ -70,6 +71,24 @@ void main() {
       expect(builtPage!.accessState, isNull);
     });
   }
+
+  testWidgets('le dashboard transmet l état d accès fourni', (tester) async {
+    final accessState = AdminAccessState.initial();
+    AdminMessagingCenterPage? builtPage;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _AdminMessagingRouteProbe(
+          wrapper: AdminMessagingDashboardPage(accessState: accessState),
+          onBuilt: (page) => builtPage = page,
+        ),
+      ),
+    );
+
+    expect(builtPage, isNotNull);
+    expect(builtPage!.initialSection, AdminMessagingSection.dashboard);
+    expect(builtPage!.accessState, same(accessState));
+  });
 
   test('chaque section admin expose un libellé et une icône stables', () {
     final expected = <AdminMessagingSection, (String, IconData)>{
