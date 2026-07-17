@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +8,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:presto_app/features/admin_videomaker/video_maker_models.dart';
 import 'package:presto_app/pages/admin_videomaker_page.dart';
+
+class _MemoryImageFile extends XFile {
+  final Uint8List data;
+
+  _MemoryImageFile(this.data)
+      : super.fromData(
+          data,
+          name: 'depart.png',
+          mimeType: 'image/png',
+        );
+
+  @override
+  Future<Uint8List> readAsBytes() async => data;
+}
 
 void main() {
   GeneratedVideo video() {
@@ -60,16 +74,7 @@ void main() {
     final imageBytes = base64Decode(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     );
-    final tempDirectory =
-        await Directory.systemTemp.createTemp('presto-videomaker-test-');
-    addTearDown(() {
-      if (tempDirectory.existsSync()) {
-        tempDirectory.deleteSync(recursive: true);
-      }
-    });
-    final imageFile = File('${tempDirectory.path}/depart.png');
-    await imageFile.writeAsBytes(imageBytes, flush: true);
-    final image = XFile(imageFile.path, mimeType: 'image/png');
+    final image = _MemoryImageFile(imageBytes);
 
     await pumpPage(
       tester,
