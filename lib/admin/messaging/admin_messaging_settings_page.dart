@@ -5,10 +5,12 @@ import 'services/admin_messaging_settings_service.dart';
 
 class AdminMessagingSettingsPage extends StatefulWidget {
   final bool canEdit;
+  final AdminMessagingSettingsService? service;
 
   const AdminMessagingSettingsPage({
     super.key,
     required this.canEdit,
+    this.service,
   });
 
   @override
@@ -18,13 +20,13 @@ class AdminMessagingSettingsPage extends StatefulWidget {
 
 class _AdminMessagingSettingsPageState
     extends State<AdminMessagingSettingsPage> {
-  final AdminMessagingSettingsService _service =
-      AdminMessagingSettingsService();
+  late final AdminMessagingSettingsService _service;
   bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? AdminMessagingSettingsService();
     _ensureDefaults();
   }
 
