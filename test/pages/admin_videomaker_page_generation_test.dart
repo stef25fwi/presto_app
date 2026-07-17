@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -59,11 +60,12 @@ void main() {
     final imageBytes = base64Decode(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
     );
-    final image = XFile.fromData(
-      imageBytes,
-      name: 'depart.png',
-      mimeType: 'image/png',
-    );
+    final tempDirectory =
+        await Directory.systemTemp.createTemp('presto-videomaker-test-');
+    addTearDown(() => tempDirectory.delete(recursive: true));
+    final imageFile = File('${tempDirectory.path}/depart.png');
+    await imageFile.writeAsBytes(imageBytes, flush: true);
+    final image = XFile(imageFile.path, mimeType: 'image/png');
 
     await pumpPage(
       tester,
