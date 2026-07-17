@@ -65,13 +65,13 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
           pickVideoMakerImageFromGallery(_imagePicker));
       if (image == null) return;
 
-      final bytes = await image.readAsBytes();
+      final bytes = image.bytes;
       if (bytes.isEmpty || bytes.length > maxVideoMakerImageBytes) {
         throw const FormatException(
           'L’image doit être valide et peser moins de 5 Mo.',
         );
       }
-      final mimeType = imageMimeTypeFor(image);
+      final mimeType = image.mimeType;
       if (!supportedVideoMakerImageMimeTypes.contains(mimeType)) {
         throw const FormatException(
           'Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.',
