@@ -93,6 +93,12 @@ void main() {
 
     expect(find.text('Messagerie activée'), findsOneWidget);
     expect(find.text('25'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Mode modération'),
+      300,
+      scrollable: find.byType(Scrollable),
+    );
     expect(find.text('hybrid'), findsOneWidget);
   });
 
