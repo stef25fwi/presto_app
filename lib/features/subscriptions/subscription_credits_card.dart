@@ -38,17 +38,21 @@ class _SubscriptionCreditsCardState extends State<SubscriptionCreditsCard> {
   @override
   void didUpdateWidget(covariant SubscriptionCreditsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.service != widget.service) {
+    final serviceChanged = oldWidget.service != widget.service;
+    final userChanged = oldWidget.userId != widget.userId;
+    if (serviceChanged) {
       _service = widget.service ?? SubscriptionCreditService();
     }
-    if (oldWidget.userId != widget.userId ||
-        oldWidget.service != widget.service) {
-      _reload();
+    if (serviceChanged || userChanged) {
+      _future = _service.getSnapshot();
     }
   }
 
   void _reload() {
-    setState(() => _future = _service.getSnapshot());
+    final nextSnapshot = _service.getSnapshot();
+    setState(() {
+      _future = nextSnapshot;
+    });
   }
 
   @override
@@ -79,7 +83,10 @@ class _SubscriptionCreditsCardState extends State<SubscriptionCreditsCard> {
                 const Expanded(
                   child: Text(
                     'Impossible de charger vos crédits pour le moment.',
-                    style: TextStyle(color: _muted, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: _muted,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -377,8 +384,7 @@ class _CreditPill extends StatelessWidget {
 Color _statusColor(SubscriptionCreditStatus status) {
   if (status.unlimited) return _green;
   if (status.limit <= 0 || status.exhausted) return _red;
-  final ratio = status.remaining / status.limit;
-  if (ratio <= 0.25) return _orange;
+  if (status.remaining / status.limit <= 0.25) return _orange;
   return _blue;
 }
 
