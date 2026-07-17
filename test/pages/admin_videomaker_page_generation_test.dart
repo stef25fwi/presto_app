@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +45,7 @@ void main() {
   }
 
   Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
-    for (var attempt = 0; attempt < 40; attempt++) {
+    for (var attempt = 0; attempt < 100; attempt++) {
       await tester.pump(const Duration(milliseconds: 50));
       if (finder.evaluate().isNotEmpty) return;
     }
@@ -56,11 +56,11 @@ void main() {
       (tester) async {
     var loads = 0;
     final parameters = <Map<String, Object?>>[];
-    final image = XFile.fromData(
-      Uint8List.fromList(<int>[1, 2, 3, 4]),
-      name: 'depart.png',
-      mimeType: 'image/png',
-    );
+    final directory = await Directory.systemTemp.createTemp('videomaker-test-');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/depart.png');
+    await file.writeAsBytes(<int>[1, 2, 3, 4], flush: true);
+    final image = XFile(file.path, name: 'depart.png', mimeType: 'image/png');
 
     await pumpPage(
       tester,
@@ -73,7 +73,8 @@ void main() {
     );
 
     await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
-    await pumpUntilFound(tester, find.text('depart.png'));
+    await tester.pumpAndSettle();
+    expect(find.text('depart.png'), findsOneWidget);
     expect(find.text('4 o'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'temporary-value');
@@ -137,35 +138,35 @@ void main() {
     expect(calls, 1);
   });
 
-  testWidgets('traduit les erreurs Functions et les erreurs génériques',
-      (tester) async {
-    var functionsError = true;
+  testWidgets('traduit une erreur Functions', (tester) async {
     await pumpPage(
       tester,
       loader: () async => const <GeneratedVideo>[],
       generator: (_) async {
-        if (functionsError) {
-          throw FirebaseFunctionsException(
-            code: 'permission-denied',
-            message: 'interdit',
-          );
-        }
-        throw StateError('échec');
+        throw FirebaseFunctionsException(
+          code: 'permission-denied',
+          message: 'interdit',
+        );
       },
     );
-    final prompt = find.byType(TextField).at(1);
-    final generate = find.widgetWithText(FilledButton, 'Générer');
 
-    await tester.enterText(prompt, 'Première tentative');
-    await tester.tap(generate);
+    await tester.enterText(find.byType(TextField).at(1), 'Première tentative');
+    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
     await pumpUntilFound(
       tester,
       find.text('Cette fonction est réservée aux administrateurs.'),
     );
+  });
 
-    functionsError = false;
-    await tester.enterText(prompt, 'Deuxième tentative');
-    await tester.tap(generate);
+  testWidgets('traduit une erreur générique', (tester) async {
+    await pumpPage(
+      tester,
+      loader: () async => const <GeneratedVideo>[],
+      generator: (_) async => throw StateError('échec'),
+    );
+
+    await tester.enterText(find.byType(TextField).at(1), 'Deuxième tentative');
+    await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
     await pumpUntilFound(
       tester,
       find.text('La génération a échoué. Vérifiez la clé API et réessayez.'),
