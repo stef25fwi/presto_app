@@ -1,0 +1,76 @@
+name: Temporary account spacing cleanup
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup-spacing:
+    if: github.head_ref == 'fix/account-header-profile-spacing'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/account-header-profile-spacing
+          fetch-depth: 0
+
+      - name: Keep only the requested spacing changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/pages/account_page.dart')
+          source = path.read_text(encoding='utf-8')
+
+          unintended_old = """          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator("""
+          unintended_new = """          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator("""
+          if unintended_old in source:
+              source = source.replace(unintended_old, unintended_new, 1)
+
+          top_old = 'padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),'
+          top_new = 'padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),'
+          if top_old in source:
+              source = source.replace(top_old, top_new, 1)
+          elif top_new not in source:
+              raise SystemExit('Target top padding was not found')
+
+          card_old = """                    const SizedBox(height: 8),
+                    _buildAccountSectionCard(
+                      icon: Icons.person_rounded,"""
+          card_new = """                    const SizedBox(height: 16),
+                    _buildAccountSectionCard(
+                      icon: Icons.person_rounded,"""
+          if card_old in source:
+              source = source.replace(card_old, card_new, 1)
+          elif card_new not in source:
+              raise SystemExit('Target spacing before Mon profil was not found')
+
+          path.write_text(source, encoding='utf-8')
+          PY
+
+          git diff --check
+          if git diff --quiet -- lib/pages/account_page.dart; then
+            echo 'Requested spacing is already clean.'
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/pages/account_page.dart
+          git commit -m 'fix(account): limite le correctif aux espacements demandés'
+          git push origin HEAD:fix/account-header-profile-spacing
