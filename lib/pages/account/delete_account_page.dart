@@ -1,13 +1,26 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 
+typedef DeleteAccountAction = Future<void> Function({String? password});
+
 class DeleteAccountPage extends StatefulWidget {
-  const DeleteAccountPage({super.key});
+  const DeleteAccountPage({
+    super.key,
+    this.usesPasswordProviderOverride,
+    this.deleteAccountAction,
+  });
 
   static const routeName = '/account/delete';
+
+  @visibleForTesting
+  final bool? usesPasswordProviderOverride;
+
+  @visibleForTesting
+  final DeleteAccountAction? deleteAccountAction;
 
   @override
   State<DeleteAccountPage> createState() => _DeleteAccountPageState();
@@ -22,10 +35,19 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
   bool _hidePassword = true;
 
   bool get _usesPasswordProvider {
+    final override = widget.usesPasswordProviderOverride;
+    if (override != null) return override;
+
     final user = FirebaseAuth.instance.currentUser;
     return user?.providerData
             .any((provider) => provider.providerId == 'password') ==
         true;
+  }
+
+  Future<void> _runDeleteAccount({String? password}) {
+    final override = widget.deleteAccountAction;
+    if (override != null) return override(password: password);
+    return AuthService.instance.deleteCurrentAccount(password: password);
   }
 
   @override
@@ -41,7 +63,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
     setState(() => _loading = true);
 
     try {
-      await AuthService.instance.deleteCurrentAccount(
+      await _runDeleteAccount(
         password: _usesPasswordProvider ? _passwordCtrl.text : null,
       );
 
