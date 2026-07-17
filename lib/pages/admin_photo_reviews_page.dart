@@ -6,17 +6,74 @@ import '../app_core.dart';
 import '../services/firebase_functions_region.dart';
 import '../utils/friendly_snackbar.dart';
 
+part 'admin_photo_reviews_widgets.dart';
+
+typedef AdminPhotoReviewDecision = Future<void> Function({
+  required String reviewId,
+  required String decision,
+  String? reason,
+});
+
 class AdminPhotoReviewsPage extends StatefulWidget {
-  const AdminPhotoReviewsPage({super.key});
+  final Stream<List<Map<String, dynamic>>>? reviewsStream;
+  final AdminPhotoReviewDecision? onDecision;
+
+  const AdminPhotoReviewsPage({
+    super.key,
+    this.reviewsStream,
+    this.onDecision,
+  });
 
   @override
   State<AdminPhotoReviewsPage> createState() => _AdminPhotoReviewsPageState();
 }
 
 class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions = prestoFirebaseFunctions;
   final Set<String> _busyReviewIds = <String>{};
+
+  Stream<List<Map<String, dynamic>>> _watchReviews() {
+    return FirebaseFirestore.instance
+        .collection('listingPhotoReviews')
+        .where('status', isEqualTo: 'pending')
+        .limit(100)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (document) => <String, dynamic>{
+                  ...document.data(),
+                  '_reviewId': document.id,
+                },
+              )
+              .toList(growable: false),
+        );
+  }
+
+  Future<void> _callDecision({
+    required String reviewId,
+    required String decision,
+    String? reason,
+  }) async {
+    final injectedDecision = widget.onDecision;
+    if (injectedDecision != null) {
+      await injectedDecision(
+        reviewId: reviewId,
+        decision: decision,
+        reason: reason,
+      );
+      return;
+    }
+
+    final callable = prestoFirebaseFunctions.httpsCallable(
+      'reviewListingPhoto',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+    );
+    await callable.call(<String, dynamic>{
+      'reviewId': reviewId,
+      'decision': decision,
+      'reason': reason,
+    });
+  }
 
   Future<void> _submitDecision({
     required String reviewId,
@@ -27,27 +84,20 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
       return;
     }
 
-    setState(() {
-      _busyReviewIds.add(reviewId);
-    });
+    setState(() => _busyReviewIds.add(reviewId));
 
     try {
-      final callable = _functions.httpsCallable(
-        'reviewListingPhoto',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+      await _callDecision(
+        reviewId: reviewId,
+        decision: decision,
+        reason: reason,
       );
-      await callable.call(<String, dynamic>{
-        'reviewId': reviewId,
-        'decision': decision,
-        'reason': reason,
-      });
 
       if (!mounted) return;
-      if (decision == 'approved') {
-        showSuccessSnackBar(context, 'Photo acceptée');
-      } else {
-        showSuccessSnackBar(context, 'Photo refusée');
-      }
+      showSuccessSnackBar(
+        context,
+        decision == 'approved' ? 'Photo acceptée' : 'Photo refusée',
+      );
     } on FirebaseFunctionsException catch (error) {
       if (!mounted) return;
       showErrorSnackBar(
@@ -62,9 +112,7 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
       );
     } finally {
       if (mounted) {
-        setState(() {
-          _busyReviewIds.remove(reviewId);
-        });
+        setState(() => _busyReviewIds.remove(reviewId));
       }
     }
   }
@@ -103,9 +151,7 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
                         .toList(growable: false),
                     onChanged: (value) {
                       if (value == null) return;
-                      setDialogState(() {
-                        selected = value;
-                      });
+                      setDialogState(() => selected = value);
                     },
                   ),
                   const SizedBox(height: 12),
@@ -183,12 +229,8 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _firestore
-            .collection('listingPhotoReviews')
-            .where('status', isEqualTo: 'pending')
-            .limit(100)
-            .snapshots(),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: widget.reviewsStream ?? _watchReviews(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -207,18 +249,18 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
             );
           }
 
-          final docs = (snapshot.data?.docs ?? const [])
-              .map(_PhotoReviewItem.fromSnapshot)
+          final reviews = (snapshot.data ?? const <Map<String, dynamic>>[])
+              .map(_PhotoReviewItem.fromMap)
               .toList(growable: false)
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-          if (docs.isEmpty) {
-            return Center(
+          if (reviews.isEmpty) {
+            return const Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Icon(Icons.verified_outlined, size: 56, color: kPrestoBlue),
                     SizedBox(height: 14),
                     Text(
@@ -233,10 +275,10 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
 
           return ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 16),
-            itemCount: docs.length,
+            itemCount: reviews.length,
             separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
-              final item = docs[index];
+              final item = reviews[index];
               final isBusy = _busyReviewIds.contains(item.reviewId);
               return Dismissible(
                 key: ValueKey<String>(item.reviewId),
@@ -247,14 +289,14 @@ class _AdminPhotoReviewsPageState extends State<AdminPhotoReviewsPage> {
                   item: item,
                   direction: direction,
                 ),
-                background: _SwipeActionBackground(
-                  color: const Color(0xFF16A34A),
+                background: const _SwipeActionBackground(
+                  color: Color(0xFF16A34A),
                   icon: Icons.check_rounded,
                   alignment: Alignment.centerLeft,
                   label: 'Accepter',
                 ),
-                secondaryBackground: _SwipeActionBackground(
-                  color: const Color(0xFFDC2626),
+                secondaryBackground: const _SwipeActionBackground(
+                  color: Color(0xFFDC2626),
                   icon: Icons.close_rounded,
                   alignment: Alignment.centerRight,
                   label: 'Refuser',
@@ -310,26 +352,25 @@ class _PhotoReviewItem {
   final String detectedText;
   final String safeSearchSummary;
 
-  factory _PhotoReviewItem.fromSnapshot(
-    QueryDocumentSnapshot<Map<String, dynamic>> snapshot,
-  ) {
-    final data = snapshot.data();
+  factory _PhotoReviewItem.fromMap(Map<String, dynamic> data) {
     final safeSearch = (data['safeSearch'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     final summary = (safeSearch['summary'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     final createdRaw = data['createdAt'];
-    final createdAt =
-        createdRaw is Timestamp ? createdRaw.toDate() : DateTime.now();
+    final createdAt = switch (createdRaw) {
+      Timestamp value => value.toDate(),
+      DateTime value => value,
+      String value => DateTime.tryParse(value) ?? DateTime.now(),
+      _ => DateTime.now(),
+    };
+    final listingId = (data['listingId'] ?? '').toString().trim();
+    final rawTitle = (data['listingTitle'] ?? '').toString().trim();
 
     return _PhotoReviewItem(
-      reviewId: snapshot.id,
-      listingId: (data['listingId'] ?? '').toString().trim(),
-      listingTitle: ((data['listingTitle'] ?? '').toString().trim().isEmpty
-              ? data['listingId']
-              : data['listingTitle'])
-          .toString()
-          .trim(),
+      reviewId: (data['_reviewId'] ?? data['reviewId'] ?? '').toString().trim(),
+      listingId: listingId,
+      listingTitle: rawTitle.isEmpty ? listingId : rawTitle,
       imageUrl: (data['imageUrl'] ?? '').toString().trim(),
       thumbnailUrl: (data['thumbnailUrl'] ?? '').toString().trim(),
       reason: (data['reason'] ?? '').toString().trim(),
@@ -338,239 +379,6 @@ class _PhotoReviewItem {
       safeSearchSummary: summary.entries
           .map((entry) => '${entry.key}: ${entry.value}')
           .join(' · '),
-    );
-  }
-}
-
-class _PhotoReviewCard extends StatelessWidget {
-  const _PhotoReviewCard({
-    required this.item,
-    required this.isBusy,
-    required this.onApprove,
-    required this.onReject,
-  });
-
-  final _PhotoReviewItem item;
-  final bool isBusy;
-  final VoidCallback onApprove;
-  final VoidCallback onReject;
-
-  @override
-  Widget build(BuildContext context) {
-    final imageSource =
-        item.imageUrl.isNotEmpty ? item.imageUrl : item.thumbnailUrl;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x11000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: AspectRatio(
-                aspectRatio: 4 / 3,
-                child: imageSource.isEmpty
-                    ? Container(
-                        color: const Color(0xFFF3F4F6),
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.image_not_supported_outlined),
-                      )
-                    : Image.network(
-                        imageSource,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: const Color(0xFFF3F4F6),
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.broken_image_outlined),
-                        ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              item.listingTitle,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Glissez à droite pour accepter, à gauche pour refuser',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _ReviewInfoPill(
-                  icon: Icons.flag_outlined,
-                  label: item.reason.isEmpty
-                      ? 'Revue manuelle requise'
-                      : item.reason,
-                ),
-                if (item.safeSearchSummary.isNotEmpty)
-                  _ReviewInfoPill(
-                    icon: Icons.shield_outlined,
-                    label: item.safeSearchSummary,
-                  ),
-              ],
-            ),
-            if (item.detectedText.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                'Texte OCR détecté',
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(item.detectedText),
-            ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: isBusy ? null : onReject,
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text('Refuser'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFB42318),
-                      side: const BorderSide(color: Color(0xFFFDA29B)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: isBusy ? null : onApprove,
-                    icon: isBusy
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.check_rounded),
-                    label: const Text('Accepter'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A73E8),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReviewInfoPill extends StatelessWidget {
-  const _ReviewInfoPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F6FC),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: kPrestoBlue),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SwipeActionBackground extends StatelessWidget {
-  const _SwipeActionBackground({
-    required this.color,
-    required this.icon,
-    required this.alignment,
-    required this.label,
-  });
-
-  final Color color;
-  final IconData icon;
-  final Alignment alignment;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      alignment: alignment,
-      child: Row(
-        mainAxisAlignment: alignment == Alignment.centerLeft
-            ? MainAxisAlignment.start
-            : MainAxisAlignment.end,
-        children: [
-          if (alignment == Alignment.centerRight)
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          if (alignment == Alignment.centerRight) const SizedBox(width: 8),
-          Icon(icon, color: Colors.white),
-          if (alignment == Alignment.centerLeft) const SizedBox(width: 8),
-          if (alignment == Alignment.centerLeft)
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-        ],
-      ),
     );
   }
 }
