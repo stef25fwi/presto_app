@@ -26,8 +26,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> notice(WidgetTester tester) async {
-    await tester.pumpAndSettle();
+  Future<void> showNotice(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
   }
 
   testWidgets('valide les images invalides et les erreurs de sélection',
@@ -50,21 +51,21 @@ void main() {
     final pick = find.text('Ajouter une image de départ (facultatif)');
 
     await tester.tap(pick);
-    await notice(tester);
+    await showNotice(tester);
     expect(
       find.text('L’image doit être valide et peser moins de 5 Mo.'),
       findsOneWidget,
     );
 
     await tester.tap(pick);
-    await notice(tester);
+    await showNotice(tester);
     expect(
       find.text('Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.'),
       findsOneWidget,
     );
 
     await tester.tap(pick);
-    await notice(tester);
+    await showNotice(tester);
     expect(find.text('Impossible de sélectionner cette image.'), findsOneWidget);
   });
 }
