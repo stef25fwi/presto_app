@@ -14,8 +14,32 @@ import '../features/admin_videomaker/video_maker_widgets.dart';
 import '../services/firebase_functions_region.dart';
 import '../utils/friendly_snackbar.dart';
 
+typedef VideoMakerVideosLoader = Future<List<GeneratedVideo>> Function();
+typedef VideoMakerGenerator = Future<void> Function(
+  Map<String, Object?> parameters,
+);
+typedef VideoMakerImagePicker = Future<XFile?> Function();
+typedef VideoMakerVideoOpener = Future<bool> Function(Uri uri);
+typedef VideoMakerVideoSharer = Future<void> Function(
+  GeneratedVideo video,
+  Rect? shareOrigin,
+);
+
 class AdminVideoMakerPage extends StatefulWidget {
-  const AdminVideoMakerPage({super.key});
+  final VideoMakerVideosLoader? loadVideos;
+  final VideoMakerGenerator? generateVideo;
+  final VideoMakerImagePicker? pickImage;
+  final VideoMakerVideoOpener? openVideo;
+  final VideoMakerVideoSharer? shareVideo;
+
+  const AdminVideoMakerPage({
+    super.key,
+    this.loadVideos,
+    this.generateVideo,
+    this.pickImage,
+    this.openVideo,
+    this.shareVideo,
+  });
 
   @override
   State<AdminVideoMakerPage> createState() => _AdminVideoMakerPageState();
@@ -49,14 +73,18 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     super.dispose();
   }
 
+  Future<XFile?> _pickImageFromGallery() {
+    return _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 92,
+      maxWidth: 2048,
+      maxHeight: 2048,
+    );
+  }
+
   Future<void> _pickImage() async {
     try {
-      final image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 92,
-        maxWidth: 2048,
-        maxHeight: 2048,
-      );
+      final image = await (widget.pickImage?.call() ?? _pickImageFromGallery());
       if (image == null) return;
 
       final bytes = await image.readAsBytes();
@@ -115,22 +143,28 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     try {
       final apiKey = _apiKeyController.text.trim();
       final imageBytes = _imageBytes;
-      await callPrestoFunction<dynamic>(
-        functions: prestoFirebaseFunctions,
-        name: 'adminGenerateVideo',
-        timeout: const Duration(minutes: 9),
-        area: 'admin-videomaker',
-        parameters: <String, Object?>{
-          'prompt': prompt,
-          'model': 'veo-3.1-generate-preview',
-          'aspectRatio': _aspectRatio,
-          'durationSeconds': '8',
-          'resolution': '720p',
-          if (apiKey.isNotEmpty) 'apiKey': apiKey,
-          if (imageBytes != null) 'imageBase64': base64Encode(imageBytes),
-          if (_imageMimeType != null) 'imageMimeType': _imageMimeType,
-        },
-      );
+      final parameters = <String, Object?>{
+        'prompt': prompt,
+        'model': 'veo-3.1-generate-preview',
+        'aspectRatio': _aspectRatio,
+        'durationSeconds': '8',
+        'resolution': '720p',
+        if (apiKey.isNotEmpty) 'apiKey': apiKey,
+        if (imageBytes != null) 'imageBase64': base64Encode(imageBytes),
+        if (_imageMimeType != null) 'imageMimeType': _imageMimeType,
+      };
+      final generator = widget.generateVideo;
+      if (generator != null) {
+        await generator(parameters);
+      } else {
+        await callPrestoFunction<dynamic>(
+          functions: prestoFirebaseFunctions,
+          name: 'adminGenerateVideo',
+          timeout: const Duration(minutes: 9),
+          area: 'admin-videomaker',
+          parameters: parameters,
+        );
+      }
       if (!mounted) return;
       showSuccessSnackBar(
         context,
@@ -159,21 +193,26 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     }
   }
 
+  Future<List<GeneratedVideo>> _loadVideosFromFunctions() async {
+    final result = await callPrestoFunction<dynamic>(
+      functions: prestoFirebaseFunctions,
+      name: 'adminListGeneratedVideos',
+      timeout: const Duration(seconds: 45),
+      area: 'admin-videomaker',
+      parameters: const <String, Object?>{'limit': 50},
+    );
+    final rawVideos = stringMap(result.data)['videos'];
+    return rawVideos is List
+        ? rawVideos.map(GeneratedVideo.fromObject).toList(growable: false)
+        : const <GeneratedVideo>[];
+  }
+
   Future<void> _loadVideos({bool showFailure = true}) async {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      final result = await callPrestoFunction<dynamic>(
-        functions: prestoFirebaseFunctions,
-        name: 'adminListGeneratedVideos',
-        timeout: const Duration(seconds: 45),
-        area: 'admin-videomaker',
-        parameters: const <String, Object?>{'limit': 50},
-      );
-      final rawVideos = stringMap(result.data)['videos'];
-      final videos = rawVideos is List
-          ? rawVideos.map(GeneratedVideo.fromObject).toList(growable: false)
-          : const <GeneratedVideo>[];
+      final videos = await (widget.loadVideos?.call() ??
+          _loadVideosFromFunctions());
       if (mounted) {
         setState(() => _videos = videos);
       }
@@ -193,11 +232,13 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
 
   Future<void> _downloadVideo(GeneratedVideo video) async {
     final uri = Uri.tryParse(video.publicUrl ?? '');
-    if (uri == null ||
-        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        showErrorSnackBar(context, 'Impossible d’ouvrir cette vidéo.');
-      }
+    final opener = widget.openVideo;
+    final opened = uri != null &&
+        (opener != null
+            ? await opener(uri)
+            : await launchUrl(uri, mode: LaunchMode.externalApplication));
+    if (!opened && mounted) {
+      showErrorSnackBar(context, 'Impossible d’ouvrir cette vidéo.');
     }
   }
 
@@ -217,6 +258,12 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
         ? null
         : box.localToGlobal(Offset.zero) & box.size;
     try {
+      final sharer = widget.shareVideo;
+      if (sharer != null) {
+        await sharer(video, shareOrigin);
+        return;
+      }
+
       final response = await http
           .get(Uri.parse(url))
           .timeout(const Duration(minutes: 2));
