@@ -2682,7 +2682,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: Colors.white,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
+            padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: SingleChildScrollView(
@@ -2742,7 +2742,7 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     _buildAccountSectionCard(
                       icon: Icons.person_rounded,
                       title: 'Mon profil',
