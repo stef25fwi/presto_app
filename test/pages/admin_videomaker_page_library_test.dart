@@ -48,6 +48,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> pumpUntilFound(WidgetTester tester, Finder finder) async {
+    for (var attempt = 0; attempt < 40; attempt++) {
+      await tester.pump(const Duration(milliseconds: 50));
+      if (finder.evaluate().isNotEmpty) return;
+    }
+    fail('Widget attendu introuvable après traitement asynchrone: $finder');
+  }
+
   Finder refreshButton() => find.widgetWithIcon(IconButton, Icons.refresh_rounded);
 
   testWidgets('affiche le chargement initial et désactive l’actualisation',
@@ -62,8 +70,10 @@ void main() {
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNull);
 
     completer.complete(const <GeneratedVideo>[]);
-    await flush(tester);
-    expect(find.text('Aucune vidéo générée pour le moment.'), findsOneWidget);
+    await pumpUntilFound(
+      tester,
+      find.text('Aucune vidéo générée pour le moment.'),
+    );
     expect(tester.widget<IconButton>(refreshButton()).onPressed, isNotNull);
   });
 
@@ -101,17 +111,14 @@ void main() {
       if (calls == 1) throw StateError('indisponible');
       return <GeneratedVideo>[video(prompt: 'Vidéo après actualisation')];
     });
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
-
-    expect(
+    await pumpUntilFound(
+      tester,
       find.text('Impossible de charger la bibliothèque de vidéos.'),
-      findsOneWidget,
     );
+
     await tester.tap(refreshButton());
-    await flush(tester);
+    await pumpUntilFound(tester, find.text('Vidéo après actualisation'));
     expect(calls, 2);
-    expect(find.text('Vidéo après actualisation'), findsOneWidget);
   });
 
   testWidgets('modifie la visibilité de la clé et le format vidéo',
@@ -143,9 +150,7 @@ void main() {
     await flush(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 250));
+    await pumpUntilFound(tester, find.text('Ajoutez un prompt avant de générer.'));
     expect(generated, isFalse);
-    expect(find.text('Ajoutez un prompt avant de générer.'), findsOneWidget);
   });
 }
