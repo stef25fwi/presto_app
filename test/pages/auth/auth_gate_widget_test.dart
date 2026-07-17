@@ -26,6 +26,44 @@ class _AuthGatePlatform extends FirebaseAuthPlatform {
   Stream<UserPlatform?> userChanges() => changes;
 }
 
+class _AuthGateMultiFactorPlatform extends MultiFactorPlatform {
+  _AuthGateMultiFactorPlatform(super.auth);
+}
+
+class _AuthGateUserPlatform extends UserPlatform {
+  _AuthGateUserPlatform(
+    FirebaseAuthPlatform auth, {
+    required String providerId,
+    required bool emailVerified,
+  }) : super(
+          auth,
+          _AuthGateMultiFactorPlatform(auth),
+          InternalUserDetails(
+            userInfo: InternalUserInfo(
+              uid: 'auth-gate-user',
+              email: 'auth-gate@example.com',
+              displayName: 'Auth Gate',
+              isAnonymous: false,
+              isEmailVerified: emailVerified,
+              creationTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+              lastSignInTimestamp: DateTime(2026, 7, 16).millisecondsSinceEpoch,
+            ),
+            providerData: <Map<String, dynamic>?>[
+              <String, dynamic>{
+                'providerId': providerId,
+                'uid': 'auth-gate-user',
+                'email': 'auth-gate@example.com',
+                'displayName': 'Auth Gate',
+                'phoneNumber': null,
+                'photoURL': null,
+                'isAnonymous': false,
+                'isEmailVerified': emailVerified,
+              },
+            ],
+          ),
+        );
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -151,12 +189,15 @@ void main() {
     expect(find.text('ACCOUNT_DESTINATION'), findsOneWidget);
   });
 
-  testWidgets('utilise le flux Firebase par défaut quand aucun override existe', (
+  testWidgets('utilise et convertit le flux Firebase Auth par défaut', (
     tester,
   ) async {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
     final platform = _AuthGatePlatform();
+    final controller = StreamController<UserPlatform?>.broadcast(sync: true);
+    addTearDown(controller.close);
+    platform.changes = controller.stream;
     FirebaseAuthPlatform.instance = platform;
 
     await tester.pumpWidget(
@@ -168,8 +209,19 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
 
+    controller.add(null);
+    await tester.pump();
     expect(find.text('ACCOUNT_DESTINATION'), findsOneWidget);
+
+    controller.add(
+      _AuthGateUserPlatform(
+        platform,
+        providerId: 'password',
+        emailVerified: false,
+      ),
+    );
+    await tester.pump();
+    expect(find.text('VERIFY_DESTINATION'), findsOneWidget);
   });
 }
