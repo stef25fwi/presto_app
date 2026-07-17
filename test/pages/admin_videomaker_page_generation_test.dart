@@ -41,14 +41,11 @@ void main() {
         ),
       ),
     );
-    for (var index = 0; index < 6; index++) {
-      await tester.pump();
-    }
+    await tester.pumpAndSettle();
   }
 
   Future<void> notice(WidgetTester tester) async {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
   }
 
   testWidgets('sélectionne une image, génère puis recharge la bibliothèque',
@@ -72,7 +69,7 @@ void main() {
     );
 
     await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('depart.png'), findsOneWidget);
     expect(find.text('4 o'), findsOneWidget);
 
@@ -84,9 +81,7 @@ void main() {
     await tester.tap(find.text('16:9 Paysage'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
-    for (var index = 0; index < 8; index++) {
-      await tester.pump();
-    }
+    await tester.pumpAndSettle();
 
     expect(parameters, hasLength(1));
     expect(parameters.single['prompt'], 'Un portail bleu peint en accéléré');
@@ -136,9 +131,7 @@ void main() {
     );
 
     completer.complete();
-    for (var index = 0; index < 6; index++) {
-      await tester.pump();
-    }
+    await tester.pumpAndSettle();
     expect(calls, 1);
   });
 
