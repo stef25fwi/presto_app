@@ -4,18 +4,28 @@ import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../features/admin_videomaker/video_maker_models.dart';
+import '../features/admin_videomaker/video_maker_page_operations.dart';
 import '../features/admin_videomaker/video_maker_widgets.dart';
-import '../services/firebase_functions_region.dart';
 import '../utils/friendly_snackbar.dart';
 
 class AdminVideoMakerPage extends StatefulWidget {
-  const AdminVideoMakerPage({super.key});
+  final VideoMakerVideosLoader? loadVideos;
+  final VideoMakerGenerator? generateVideo;
+  final VideoMakerImagePicker? pickImage;
+  final VideoMakerVideoOpener? openVideo;
+  final VideoMakerVideoSharer? shareVideo;
+
+  const AdminVideoMakerPage({
+    super.key,
+    this.loadVideos,
+    this.generateVideo,
+    this.pickImage,
+    this.openVideo,
+    this.shareVideo,
+  });
 
   @override
   State<AdminVideoMakerPage> createState() => _AdminVideoMakerPageState();
@@ -51,21 +61,17 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
 
   Future<void> _pickImage() async {
     try {
-      final image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 92,
-        maxWidth: 2048,
-        maxHeight: 2048,
-      );
+      final image = await (widget.pickImage?.call() ??
+          pickVideoMakerImageFromGallery(_imagePicker));
       if (image == null) return;
 
-      final bytes = await image.readAsBytes();
+      final bytes = image.bytes;
       if (bytes.isEmpty || bytes.length > maxVideoMakerImageBytes) {
         throw const FormatException(
           'L’image doit être valide et peser moins de 5 Mo.',
         );
       }
-      final mimeType = imageMimeTypeFor(image);
+      final mimeType = image.mimeType;
       if (!supportedVideoMakerImageMimeTypes.contains(mimeType)) {
         throw const FormatException(
           'Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.',
@@ -115,22 +121,18 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     try {
       final apiKey = _apiKeyController.text.trim();
       final imageBytes = _imageBytes;
-      await callPrestoFunction<dynamic>(
-        functions: prestoFirebaseFunctions,
-        name: 'adminGenerateVideo',
-        timeout: const Duration(minutes: 9),
-        area: 'admin-videomaker',
-        parameters: <String, Object?>{
-          'prompt': prompt,
-          'model': 'veo-3.1-generate-preview',
-          'aspectRatio': _aspectRatio,
-          'durationSeconds': '8',
-          'resolution': '720p',
-          if (apiKey.isNotEmpty) 'apiKey': apiKey,
-          if (imageBytes != null) 'imageBase64': base64Encode(imageBytes),
-          if (_imageMimeType != null) 'imageMimeType': _imageMimeType,
-        },
-      );
+      final parameters = <String, Object?>{
+        'prompt': prompt,
+        'model': 'veo-3.1-generate-preview',
+        'aspectRatio': _aspectRatio,
+        'durationSeconds': '8',
+        'resolution': '720p',
+        if (apiKey.isNotEmpty) 'apiKey': apiKey,
+        if (imageBytes != null) 'imageBase64': base64Encode(imageBytes),
+        if (_imageMimeType != null) 'imageMimeType': _imageMimeType,
+      };
+      await (widget.generateVideo?.call(parameters) ??
+          generateVideoWithFunctions(parameters));
       if (!mounted) return;
       showSuccessSnackBar(
         context,
@@ -163,17 +165,8 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      final result = await callPrestoFunction<dynamic>(
-        functions: prestoFirebaseFunctions,
-        name: 'adminListGeneratedVideos',
-        timeout: const Duration(seconds: 45),
-        area: 'admin-videomaker',
-        parameters: const <String, Object?>{'limit': 50},
-      );
-      final rawVideos = stringMap(result.data)['videos'];
-      final videos = rawVideos is List
-          ? rawVideos.map(GeneratedVideo.fromObject).toList(growable: false)
-          : const <GeneratedVideo>[];
+      final videos = await (widget.loadVideos?.call() ??
+          loadVideosWithFunctions());
       if (mounted) {
         setState(() => _videos = videos);
       }
@@ -193,11 +186,10 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
 
   Future<void> _downloadVideo(GeneratedVideo video) async {
     final uri = Uri.tryParse(video.publicUrl ?? '');
-    if (uri == null ||
-        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        showErrorSnackBar(context, 'Impossible d’ouvrir cette vidéo.');
-      }
+    final opened = uri != null &&
+        await (widget.openVideo?.call(uri) ?? openGeneratedVideo(uri));
+    if (!opened && mounted) {
+      showErrorSnackBar(context, 'Impossible d’ouvrir cette vidéo.');
     }
   }
 
@@ -217,34 +209,9 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
         ? null
         : box.localToGlobal(Offset.zero) & box.size;
     try {
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(minutes: 2));
-      if (response.statusCode < 200 ||
-          response.statusCode >= 300 ||
-          response.bodyBytes.isEmpty) {
-        throw StateError('Téléchargement vidéo impossible.');
-      }
-
-      await Share.shareXFiles(
-        [
-          XFile.fromData(
-            response.bodyBytes,
-            mimeType: 'video/mp4',
-            name: 'veo-${video.id}.mp4',
-          ),
-        ],
-        text: 'Vidéo iliprestō créée avec VEO',
-        subject: 'Vidéo iliprestō',
-        sharePositionOrigin: shareOrigin,
-      );
-    } catch (_) {
-      await Share.share(
-        'Vidéo iliprestō créée avec VEO\n$url',
-        subject: 'Vidéo iliprestō',
-        sharePositionOrigin: shareOrigin,
-      );
-      if (mounted) {
+      final attached = await (widget.shareVideo?.call(video, shareOrigin) ??
+          shareGeneratedVideo(video, shareOrigin));
+      if (!attached && mounted) {
         showPrestoSnackBar(
           context,
           'Le fichier n’a pas pu être joint : le lien vidéo a été partagé.',
