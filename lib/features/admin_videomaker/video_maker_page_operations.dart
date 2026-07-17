@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -7,23 +9,43 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/firebase_functions_region.dart';
 import 'video_maker_models.dart';
 
+class VideoMakerSelectedImage {
+  final Uint8List bytes;
+  final String name;
+  final String mimeType;
+
+  const VideoMakerSelectedImage({
+    required this.bytes,
+    required this.name,
+    required this.mimeType,
+  });
+}
+
 typedef VideoMakerVideosLoader = Future<List<GeneratedVideo>> Function();
 typedef VideoMakerGenerator = Future<void> Function(
   Map<String, Object?> parameters,
 );
-typedef VideoMakerImagePicker = Future<XFile?> Function();
+typedef VideoMakerImagePicker = Future<VideoMakerSelectedImage?> Function();
 typedef VideoMakerVideoOpener = Future<bool> Function(Uri uri);
 typedef VideoMakerVideoSharer = Future<bool> Function(
   GeneratedVideo video,
   Rect? shareOrigin,
 );
 
-Future<XFile?> pickVideoMakerImageFromGallery(ImagePicker picker) {
-  return picker.pickImage(
+Future<VideoMakerSelectedImage?> pickVideoMakerImageFromGallery(
+  ImagePicker picker,
+) async {
+  final image = await picker.pickImage(
     source: ImageSource.gallery,
     imageQuality: 92,
     maxWidth: 2048,
     maxHeight: 2048,
+  );
+  if (image == null) return null;
+  return VideoMakerSelectedImage(
+    bytes: await image.readAsBytes(),
+    name: image.name,
+    mimeType: imageMimeTypeFor(image),
   );
 }
 
