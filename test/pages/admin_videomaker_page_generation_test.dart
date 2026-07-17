@@ -44,8 +44,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> notice(WidgetTester tester) async {
-    await tester.pumpAndSettle();
+  Future<void> showNotice(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
   }
 
   testWidgets('sélectionne une image, génère puis recharge la bibliothèque',
@@ -69,7 +70,7 @@ void main() {
     );
 
     await tester.tap(find.text('Ajouter une image de départ (facultatif)'));
-    await tester.pumpAndSettle();
+    await showNotice(tester);
     expect(find.text('depart.png'), findsOneWidget);
     expect(find.text('4 o'), findsOneWidget);
 
@@ -81,7 +82,7 @@ void main() {
     await tester.tap(find.text('16:9 Paysage'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Générer'));
-    await tester.pumpAndSettle();
+    await showNotice(tester);
 
     expect(parameters, hasLength(1));
     expect(parameters.single['prompt'], 'Un portail bleu peint en accéléré');
@@ -156,7 +157,7 @@ void main() {
 
     await tester.enterText(prompt, 'Première tentative');
     await tester.tap(generate);
-    await notice(tester);
+    await showNotice(tester);
     expect(
       find.text('Cette fonction est réservée aux administrateurs.'),
       findsOneWidget,
@@ -165,7 +166,7 @@ void main() {
     functionsError = false;
     await tester.enterText(prompt, 'Deuxième tentative');
     await tester.tap(generate);
-    await notice(tester);
+    await showNotice(tester);
     expect(
       find.text('La génération a échoué. Vérifiez la clé API et réessayez.'),
       findsOneWidget,
