@@ -1,0 +1,311 @@
+name: Temporary issue 503 photo metadata
+
+on:
+  push:
+    branches:
+      - coverage/issue-503-marketplace-photo-metadata
+
+permissions:
+  contents: write
+
+jobs:
+  apply-tests:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout coverage branch
+        uses: actions/checkout@v7
+        with:
+          ref: coverage/issue-503-marketplace-photo-metadata
+          fetch-depth: 0
+
+      - name: Add test seams and deterministic tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('lib/services/marketplace_publish_service.dart')
+          source = source_path.read_text(encoding='utf-8')
+
+          anchor = """  String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {
+"""
+          seams = """  @visibleForTesting
+  static ListingMediaInput parseProcessedOfferPhotoForTest(
+    Map<String, dynamic> data,
+  ) {
+    return _ProcessedOfferPhotoPayload.fromMap(data).toListingMediaInput();
+  }
+
+  @visibleForTesting
+  static String resolveStorageExtensionForTest({
+    required String path,
+    String? mimeType,
+  }) {
+    return _storageExtension(XFile(path, mimeType: mimeType));
+  }
+
+  @visibleForTesting
+  static String resolveStorageContentTypeForTest({
+    required String path,
+    String? mimeType,
+  }) {
+    return _storageContentType(XFile(path, mimeType: mimeType));
+  }
+
+"""
+          if seams not in source:
+              if anchor not in source:
+                  raise SystemExit('Owner display-name anchor not found')
+              source = source.replace(anchor, seams + anchor, 1)
+
+          source = source.replace(
+              '  String _storageExtension(XFile photo) {',
+              '  static String _storageExtension(XFile photo) {',
+              1,
+          )
+          source = source.replace(
+              '  String _storageContentType(XFile photo) {',
+              '  static String _storageContentType(XFile photo) {',
+              1,
+          )
+          source_path.write_text(source, encoding='utf-8')
+
+          test_path = Path('test/services/marketplace_publish_service_photo_metadata_test.dart')
+          test_path.write_text("""import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/services/marketplace_publish_service.dart';
+
+void main() {
+  group('métadonnées processOfferPhoto', () {
+    test('convertit et normalise un payload complet', () {
+      final media = MarketplacePublishService.parseProcessedOfferPhotoForTest(
+        <String, dynamic>{
+          'storagePath': ' processed/photo.webp ',
+          'downloadUrl': ' https://cdn.example/photo.webp ',
+          'thumbnailUrl': ' https://cdn.example/thumb.webp ',
+          'width': 1280.9,
+          'height': 720,
+          'mimeType': ' image/webp ',
+          'sizeBytes': 456789.8,
+        },
+      );
+
+      expect(media.storagePath, 'processed/photo.webp');
+      expect(media.downloadUrl, 'https://cdn.example/photo.webp');
+      expect(media.thumbnailUrl, 'https://cdn.example/thumb.webp');
+      expect(media.width, 1280);
+      expect(media.height, 720);
+      expect(media.mimeType, 'image/webp');
+      expect(media.sizeBytes, 456789);
+    });
+
+    test('utilise downloadUrl quand thumbnailUrl est absent ou nul', () {
+      for (final payload in <Map<String, dynamic>>[
+        <String, dynamic>{
+          'storagePath': 'processed/photo.jpg',
+          'downloadUrl': 'https://cdn.example/photo.jpg',
+        },
+        <String, dynamic>{
+          'storagePath': 'processed/photo.jpg',
+          'downloadUrl': 'https://cdn.example/photo.jpg',
+          'thumbnailUrl': null,
+        },
+      ]) {
+        final media = MarketplacePublishService.parseProcessedOfferPhotoForTest(
+          payload,
+        );
+        expect(media.thumbnailUrl, 'https://cdn.example/photo.jpg');
+      }
+    });
+
+    test('ignore les dimensions, tailles et mime non exploitables', () {
+      final media = MarketplacePublishService.parseProcessedOfferPhotoForTest(
+        <String, dynamic>{
+          'storagePath': 'processed/photo.jpg',
+          'downloadUrl': 'https://cdn.example/photo.jpg',
+          'thumbnailUrl': 'https://cdn.example/thumb.jpg',
+          'width': '1280',
+          'height': <String, dynamic>{'value': 720},
+          'mimeType': '   ',
+          'sizeBytes': '456789',
+        },
+      );
+
+      expect(media.width, isNull);
+      expect(media.height, isNull);
+      expect(media.mimeType, isNull);
+      expect(media.sizeBytes, isNull);
+    });
+
+    test('refuse les payloads incomplets ou vides', () {
+      final invalidPayloads = <Map<String, dynamic>>[
+        <String, dynamic>{
+          'downloadUrl': 'https://cdn.example/photo.jpg',
+          'thumbnailUrl': 'https://cdn.example/thumb.jpg',
+        },
+        <String, dynamic>{
+          'storagePath': 'processed/photo.jpg',
+          'thumbnailUrl': 'https://cdn.example/thumb.jpg',
+        },
+        <String, dynamic>{
+          'storagePath': 'processed/photo.jpg',
+          'downloadUrl': 'https://cdn.example/photo.jpg',
+          'thumbnailUrl': '   ',
+        },
+        <String, dynamic>{
+          'storagePath': '   ',
+          'downloadUrl': '   ',
+        },
+      ];
+
+      for (final payload in invalidPayloads) {
+        expect(
+          () => MarketplacePublishService.parseProcessedOfferPhotoForTest(
+            payload,
+          ),
+          throwsA(
+            isA<StateError>().having(
+              (error) => error.message,
+              'message',
+              contains('métadonnées attendues'),
+            ),
+          ),
+        );
+      }
+    });
+  });
+
+  group('formats de stockage photo', () {
+    test('résout l extension depuis tous les MIME image supportés', () {
+      const expected = <String, String>{
+        'image/webp': 'webp',
+        'image/avif': 'avif',
+        'image/png': 'png',
+        'image/heic': 'heic',
+        'image/heif': 'heic',
+        'image/gif': 'gif',
+        'image/bmp': 'bmp',
+        'image/tiff': 'tiff',
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+      };
+
+      for (final entry in expected.entries) {
+        expect(
+          MarketplacePublishService.resolveStorageExtensionForTest(
+            path: '/tmp/photo.unknown',
+            mimeType: ' ${entry.key.toUpperCase()} ',
+          ),
+          entry.value,
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('résout l extension depuis le chemin quand le MIME est absent', () {
+      const expected = <String, String>{
+        '/tmp/photo.WEBP': 'webp',
+        '/tmp/photo.avif': 'avif',
+        '/tmp/photo.png': 'png',
+        '/tmp/photo.heic': 'heic',
+        '/tmp/photo.heif': 'heic',
+        '/tmp/photo.gif': 'gif',
+        '/tmp/photo.bmp': 'bmp',
+        '/tmp/photo.tif': 'tiff',
+        '/tmp/photo.tiff': 'tiff',
+        '/tmp/photo.jpeg': 'jpg',
+        '/tmp/photo.jpg': 'jpg',
+      };
+
+      for (final entry in expected.entries) {
+        expect(
+          MarketplacePublishService.resolveStorageExtensionForTest(
+            path: entry.key,
+          ),
+          entry.value,
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('utilise jpg pour un format inconnu', () {
+      expect(
+        MarketplacePublishService.resolveStorageExtensionForTest(
+          path: '/tmp/photo.binary',
+          mimeType: 'application/octet-stream',
+        ),
+        'jpg',
+      );
+    });
+
+    test('conserve un MIME image valide après normalisation', () {
+      expect(
+        MarketplacePublishService.resolveStorageContentTypeForTest(
+          path: '/tmp/photo.unknown',
+          mimeType: ' IMAGE/WEBP ',
+        ),
+        'image/webp',
+      );
+    });
+
+    test('déduit le type de contenu du chemin et replie vers JPEG', () {
+      const expected = <String, String>{
+        '/tmp/photo.webp': 'image/webp',
+        '/tmp/photo.avif': 'image/avif',
+        '/tmp/photo.png': 'image/png',
+        '/tmp/photo.heif': 'image/heic',
+        '/tmp/photo.gif': 'image/gif',
+        '/tmp/photo.bmp': 'image/bmp',
+        '/tmp/photo.tiff': 'image/tiff',
+        '/tmp/photo.jpg': 'image/jpeg',
+        '/tmp/photo.unknown': 'image/jpeg',
+      };
+
+      for (final entry in expected.entries) {
+        expect(
+          MarketplacePublishService.resolveStorageContentTypeForTest(
+            path: entry.key,
+            mimeType: 'application/octet-stream',
+          ),
+          entry.value,
+          reason: entry.key,
+        );
+      }
+    });
+  });
+}
+""", encoding='utf-8')
+          PY
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format and run focused tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter pub get
+          dart format \
+            lib/services/marketplace_publish_service.dart \
+            test/services/marketplace_publish_service_photo_metadata_test.dart
+          flutter test \
+            test/services/marketplace_publish_service_photo_metadata_test.dart
+          git diff --check
+
+      - name: Commit coverage wave
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/services/marketplace_publish_service.dart \
+            test/services/marketplace_publish_service_photo_metadata_test.dart
+          git commit -m 'test(publication): couvrir les métadonnées photo marketplace'
+          git push origin HEAD:coverage/issue-503-marketplace-photo-metadata
