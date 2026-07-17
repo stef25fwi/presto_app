@@ -1,3 +1,4 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/auth/services/user_profile_service.dart';
@@ -164,6 +165,76 @@ void main() {
 
       expect(userData?.containsKey('email'), isFalse);
       expect(proData?.containsKey('contactEmail'), isFalse);
+    });
+
+    test('écrit le document utilisateur dans Firestore sans writer injecté',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      final user = _FakeUser(
+        uidValue: 'firestore-user',
+        emailValue: '  FIRESTORE@Example.COM ',
+        emailVerifiedValue: true,
+      );
+      final service = AuthUserProfileService(
+        firestore: firestore,
+        timestampFactory: () => 'firestore-now',
+        bootstrapUserProfile: ({
+          required user,
+          required authMethod,
+          required isNewUserHint,
+          required forceRefresh,
+        }) async {},
+      );
+
+      await service.ensureEmailUserProfile(
+        user: user,
+        displayName: '  Profil Firestore ',
+        isBusinessAccount: false,
+      );
+
+      final snapshot =
+          await firestore.collection('users').doc('firestore-user').get();
+      expect(snapshot.exists, isTrue);
+      expect(snapshot.data()?['email'], 'firestore@example.com');
+      expect(snapshot.data()?['displayName'], 'Profil Firestore');
+      expect(snapshot.data()?['profileKind'], 'individual');
+      expect(snapshot.data()?['updatedAt'], 'firestore-now');
+    });
+
+    test('lit puis écrit le brouillon pro directement dans Firestore',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      final user = _FakeUser(
+        uidValue: 'firestore-pro',
+        emailValue: 'PRO-FIRESTORE@example.com',
+      );
+      var prepareCalls = 0;
+      final service = AuthUserProfileService(
+        firestore: firestore,
+        timestampFactory: () => 'pro-now',
+        prepareProfileAccess: ({
+          required user,
+          required forceRefreshToken,
+          required forceRefreshAppCheckToken,
+        }) async {
+          prepareCalls += 1;
+        },
+      );
+
+      await service.ensureBusinessProfileDraft(
+        user: user,
+        displayName: '  Pro Firestore ',
+      );
+
+      final snapshot =
+          await firestore.collection('pros').doc('firestore-pro').get();
+      expect(prepareCalls, 1);
+      expect(snapshot.exists, isTrue);
+      expect(snapshot.data()?['contactName'], 'Pro Firestore');
+      expect(snapshot.data()?['contactEmail'], 'pro-firestore@example.com');
+      expect(snapshot.data()?['status'], 'pending');
+      expect(snapshot.data()?['plan'], 'free_pro_trial');
+      expect(snapshot.data()?['createdAt'], 'pro-now');
     });
   });
 }
