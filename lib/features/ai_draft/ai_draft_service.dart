@@ -1,19 +1,53 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
 
 import '../micro_ia/micro_ia_service.dart';
 import '../../services/firebase_functions_region.dart';
 import '../../utils/crashlytics_context.dart';
 import '../../utils/retry.dart';
 
+typedef AiDraftSessionPreparer = Future<void> Function();
+typedef AiDraftCallable = Future<Map<dynamic, dynamic>> Function(
+  Map<String, dynamic> parameters,
+);
+
 class AiDraftService {
+  AiDraftService({
+    @visibleForTesting AiDraftSessionPreparer? sessionPreparer,
+    @visibleForTesting AiDraftCallable? callable,
+  })  : _sessionPreparer = sessionPreparer,
+        _callable = callable;
+
+  final AiDraftSessionPreparer? _sessionPreparer;
+  final AiDraftCallable? _callable;
+
   FirebaseFunctions get _functions => prestoFirebaseFunctions;
 
   Future<void> _prepareAuthenticatedCallableSession() async {
+    final override = _sessionPreparer;
+    if (override != null) {
+      await override();
+      return;
+    }
     await MicroIaService.prepareSecureCallableContext(
       forceRefreshToken: true,
     );
     await FirebaseAuth.instance.currentUser?.getIdToken(false);
+  }
+
+  Future<Map<dynamic, dynamic>> _callGenerateOfferDraft(
+    Map<String, dynamic> parameters,
+  ) async {
+    final override = _callable;
+    if (override != null) return override(parameters);
+    final result = await callPrestoFunction<dynamic>(
+      functions: _functions,
+      name: 'generateOfferDraft',
+      timeout: const Duration(seconds: 45),
+      parameters: parameters,
+    );
+    return result.data as Map<dynamic, dynamic>;
   }
 
   /// Génère un brouillon enrichi avec format JSON riche
@@ -26,18 +60,13 @@ class AiDraftService {
         'text_${DateTime.now().microsecondsSinceEpoch}_${text.hashCode}';
     try {
       await _prepareAuthenticatedCallableSession();
-      final res = await retry(
-        () => callPrestoFunction<dynamic>(
-          functions: _functions,
-          name: 'generateOfferDraft',
-          timeout: const Duration(seconds: 45),
-          parameters: <String, dynamic>{
-            'hint': text,
-            if (city != null) 'city': city,
-            if (category != null) 'category': category,
-            'clientRequestId': clientRequestId,
-          },
-        ),
+      final data = await retry(
+        () => _callGenerateOfferDraft(<String, dynamic>{
+          'hint': text,
+          if (city != null) 'city': city,
+          if (category != null) 'category': category,
+          'clientRequestId': clientRequestId,
+        }),
         maxAttempts: 3,
         retryIf: (e) {
           if (e is FirebaseFunctionsException) {
@@ -49,8 +78,6 @@ class AiDraftService {
           return false;
         },
       );
-
-      final data = (res.data as Map<dynamic, dynamic>);
 
       return {
         // Ancien format (compatibilité)
