@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/messaging/admin_conversations_page.dart';
 import 'package:presto_app/admin/messaging/admin_message_reports_page.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_center_page.dart';
+import 'package:presto_app/admin/messaging/admin_messaging_dashboard_page.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_users_page.dart';
 
 class _AdminMessagingRouteProbe extends StatelessWidget {
@@ -27,6 +28,11 @@ void main() {
     StatelessWidget wrapper,
     AdminMessagingSection section
   })>[
+    (
+      label: 'tableau de bord',
+      wrapper: const AdminMessagingDashboardPage(),
+      section: AdminMessagingSection.dashboard,
+    ),
     (
       label: 'conversations',
       wrapper: const AdminConversationsPage(),
