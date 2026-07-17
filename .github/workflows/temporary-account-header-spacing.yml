@@ -12,7 +12,7 @@ on:
 permissions:
   contents: write
   issues: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   apply-spacing:
@@ -33,10 +33,14 @@ jobs:
           fetch-depth: 0
 
       - name: Apply targeted spacing changes
+        id: apply
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
+          set -o pipefail
+          {
+            set -euo pipefail
+            python3 - <<'PY'
           from pathlib import Path
 
           path = Path('lib/pages/account_page.dart')
@@ -64,14 +68,32 @@ jobs:
           path.write_text(source, encoding='utf-8')
           PY
 
-          git diff --check
-          if git diff --quiet -- lib/pages/account_page.dart; then
-            echo 'Spacing already applied.'
-            exit 0
-          fi
+            git diff --check
+            if git diff --quiet -- lib/pages/account_page.dart; then
+              echo 'Spacing already applied.'
+              exit 0
+            fi
 
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lib/pages/account_page.dart
-          git commit -m 'fix(account): espace le profil sous le header'
-          git push origin HEAD:fix/account-header-profile-spacing
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add lib/pages/account_page.dart
+            git commit -m 'fix(account): espace le profil sous le header'
+            git push origin HEAD:fix/account-header-profile-spacing
+          } 2>&1 | tee /tmp/account-spacing.log
+
+      - name: Report result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLY_OUTCOME: ${{ steps.apply.outcome }}
+        shell: bash
+        run: |
+          {
+            echo "### Correction espacement compte : ${APPLY_OUTCOME}"
+            echo
+            echo '```text'
+            tail -n 120 /tmp/account-spacing.log 2>/dev/null || true
+            echo '```'
+          } > /tmp/account-spacing-comment.md
+          gh pr comment 530 --body-file /tmp/account-spacing-comment.md
+          test "$APPLY_OUTCOME" = success
