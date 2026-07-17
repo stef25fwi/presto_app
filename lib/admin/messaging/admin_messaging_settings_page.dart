@@ -191,11 +191,14 @@ class _SettingsSwitchTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: SwitchListTile(
-        value: value,
-        onChanged: enabled ? onChanged : null,
-        title: Text(title),
-        contentPadding: EdgeInsets.zero,
+      child: Material(
+        color: Colors.transparent,
+        child: SwitchListTile(
+          value: value,
+          onChanged: enabled ? onChanged : null,
+          title: Text(title),
+          contentPadding: EdgeInsets.zero,
+        ),
       ),
     );
   }
