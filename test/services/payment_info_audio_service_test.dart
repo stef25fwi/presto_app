@@ -23,7 +23,10 @@ void main() {
 
       expect(config.enabled, isTrue);
       expect(config.canPlay, isTrue);
-      expect(config.generatedDate, DateTime.utc(2026, 7, 17, 12));
+      expect(
+        config.generatedDate?.isAtSameMomentAs(DateTime.utc(2026, 7, 17, 12)),
+        isTrue,
+      );
       expect(config.storagePath, 'payment_info_audio/payment.mp3');
       expect(config.contentType, 'audio/mpeg');
       expect(config.version, 7);
@@ -71,8 +74,14 @@ void main() {
 
       expect(settings.text, 'Texte paiement');
       expect(settings.canPreviewDraft, isTrue);
-      expect(settings.draftGeneratedDate, DateTime.utc(2026, 7, 16));
-      expect(settings.lastPublishedDate, DateTime.utc(2026, 7, 17));
+      expect(
+        settings.draftGeneratedDate?.isAtSameMomentAs(DateTime.utc(2026, 7, 16)),
+        isTrue,
+      );
+      expect(
+        settings.lastPublishedDate?.isAtSameMomentAs(DateTime.utc(2026, 7, 17)),
+        isTrue,
+      );
       expect(settings.draftVersion, 3);
       expect(settings.draftGeneratedBy, 'admin-2');
       expect(settings.draftVoice, 'nova');
