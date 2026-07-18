@@ -6,6 +6,7 @@ on:
       - agent/fix-account-alerts-image
     paths:
       - .github/workflows/fix-account-alerts-image.yml
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,37 +27,37 @@ jobs:
           service = Path('lib/services/ad_placeholder_image_service.dart')
           text = service.read_text()
           old_watch_all = """    return _collection
-        .where('target', isEqualTo: target)
-        .orderBy('sortOrder')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
-        );"""
+              .where('target', isEqualTo: target)
+              .orderBy('sortOrder')
+              .snapshots()
+              .map(
+                (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
+              );"""
           new_watch_all = """    return _collection
-        .where('target', isEqualTo: target)
-        .snapshots()
-        .map((snapshot) {
-          final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
-            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-          return images;
-        });"""
+              .where('target', isEqualTo: target)
+              .snapshots()
+              .map((snapshot) {
+                final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
+                  ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+                return images;
+              });"""
           old_watch_visible = """    return _collection
-        .where('target', isEqualTo: target)
-        .where('isVisible', isEqualTo: true)
-        .orderBy('sortOrder')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
-        );"""
+              .where('target', isEqualTo: target)
+              .where('isVisible', isEqualTo: true)
+              .orderBy('sortOrder')
+              .snapshots()
+              .map(
+                (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
+              );"""
           new_watch_visible = """    return _collection
-        .where('target', isEqualTo: target)
-        .where('isVisible', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) {
-          final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
-            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-          return images;
-        });"""
+              .where('target', isEqualTo: target)
+              .where('isVisible', isEqualTo: true)
+              .snapshots()
+              .map((snapshot) {
+                final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
+                  ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+                return images;
+              });"""
           if old_watch_all not in text or old_watch_visible not in text:
               raise SystemExit('Requêtes AdPlaceholderImageService introuvables')
           text = text.replace(old_watch_all, new_watch_all, 1)
@@ -80,26 +81,26 @@ jobs:
           account = Path('lib/pages/account_page.dart')
           text = account.read_text()
           old_builder = """          builder: (context, snapshot) {
-            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
-                .where((image) => image.isVisible)
-                .toList();
-            if (activeImages.isEmpty) return fallback();
+                final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                    .where((image) => image.isVisible)
+                    .toList();
+                if (activeImages.isEmpty) return fallback();
 
-            return Image.network("""
+                return Image.network("""
           new_builder = """          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              debugPrint(
-                '[AccountAlertsBanner] loading failed: ${snapshot.error}',
-              );
-              return fallback();
-            }
+                if (snapshot.hasError) {
+                  debugPrint(
+                    '[AccountAlertsBanner] loading failed: ${snapshot.error}',
+                  );
+                  return fallback();
+                }
 
-            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
-                .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
-                .toList();
-            if (activeImages.isEmpty) return fallback();
+                final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                    .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
+                    .toList();
+                if (activeImages.isEmpty) return fallback();
 
-            return Image.network("""
+                return Image.network("""
           if old_builder not in text:
               raise SystemExit('Builder bannière alertes introuvable')
           text = text.replace(old_builder, new_builder, 1)
