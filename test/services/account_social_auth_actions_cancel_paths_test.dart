@@ -121,4 +121,50 @@ void main() {
       );
     });
   }
+
+  final firebaseCases = <String, String>{
+    'account-exists-with-different-credential':
+        'Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.',
+    'operation-not-allowed':
+        'Connexion Facebook non activée dans Firebase Authentication.',
+    'invalid-credential': 'Identifiants Facebook invalides. Réessaie.',
+    'network-request-failed': 'Erreur réseau. Vérifie la connexion internet.',
+  };
+
+  for (final entry in firebaseCases.entries) {
+    testWidgets('Facebook affiche le message dédié pour ${entry.key}',
+        (tester) async {
+      platform.providerError = FirebaseAuthException(code: entry.key);
+
+      await runAction(tester);
+
+      expect(platform.providerCalls, 1);
+      expect(find.text(entry.value), findsOneWidget);
+    });
+  }
+
+  testWidgets('Facebook conserve un message Firebase explicite', (tester) async {
+    platform.providerError = FirebaseAuthException(
+      code: 'provider-specific-error',
+      message: 'Message Facebook précis.',
+    );
+
+    await runAction(tester);
+
+    expect(platform.providerCalls, 1);
+    expect(find.text('Message Facebook précis.'), findsOneWidget);
+  });
+
+  testWidgets('Facebook utilise le message générique pour une erreur inconnue',
+      (tester) async {
+    platform.providerError = StateError('échec inattendu');
+
+    await runAction(tester);
+
+    expect(platform.providerCalls, 1);
+    expect(
+      find.text('Erreur lors de la connexion Facebook. Reessayez.'),
+      findsOneWidget,
+    );
+  });
 }
