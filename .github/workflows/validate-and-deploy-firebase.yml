@@ -1,0 +1,93 @@
+name: Validate and Deploy Firebase
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ilipresto-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Flutter validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build web
+        run: |
+          flutter build web --release \
+            --dart-define=FIREBASE_API_KEY="${{ secrets.FIREBASE_API_KEY }}" \
+            --dart-define=FIREBASE_APP_ID="${{ secrets.FIREBASE_APP_ID }}" \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID="${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" \
+            --dart-define=FIREBASE_PROJECT_ID="presto-app-74abe"
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ilipresto-web-build
+          path: build/web
+          retention-days: 7
+
+  deploy:
+    name: Deploy Firebase production
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: ilipresto-web-build
+          path: build/web
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Create Firebase credentials file
+        shell: bash
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PRESTO_APP_74ABE }}' \
+            > "${RUNNER_TEMP}/firebase-service-account.json"
+          chmod 600 "${RUNNER_TEMP}/firebase-service-account.json"
+
+      - name: Deploy Hosting
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          firebase deploy \
+            --project presto-app-74abe \
+            --only hosting \
+            --non-interactive
