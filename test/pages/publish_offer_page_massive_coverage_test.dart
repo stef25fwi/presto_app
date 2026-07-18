@@ -3,8 +3,10 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/offers/presentation/widgets/publish_offer_category_fields.dart';
+import 'package:presto_app/features/subscriptions/subscription_credit_service.dart';
+import 'package:presto_app/features/subscriptions/subscription_credits_card.dart';
 import 'package:presto_app/main.dart' as app;
-import 'package:presto_app/widgets/ai_publish_control.dart';
+import 'package:presto_app/widgets/ai_publish_control_with_credits.dart';
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 
 void main() {
@@ -66,6 +68,33 @@ void main() {
         )
         .first;
   }
+
+  testWidgets('affiche les quotas IA vocale et texte dans les deux parcours',
+      (tester) async {
+    await pumpPage(tester);
+
+    expect(find.byType(AiPublishControlWithCredits), findsOneWidget);
+    final badges = tester.widget<SubscriptionCreditsInlineBadges>(
+      find.byType(SubscriptionCreditsInlineBadges),
+    );
+    expect(
+      badges.kinds,
+      const <SubscriptionCreditKind>[
+        SubscriptionCreditKind.voiceAi,
+        SubscriptionCreditKind.textAi,
+      ],
+    );
+
+    await selectTextMode(tester);
+    expect(find.byType(AiPublishControlWithCredits), findsOneWidget);
+    expect(find.byType(SubscriptionCreditsInlineBadges), findsOneWidget);
+
+    await selectVocalMode(tester);
+    expect(find.text('Appuyez pour parler'), findsOneWidget);
+    expect(find.byType(SubscriptionCreditsInlineBadges), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('bascule entre IA vocale et texte sans perdre le brouillon',
       (tester) async {
