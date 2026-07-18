@@ -15,13 +15,37 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    outputs:
+      web_changed: ${{ steps.scope.outputs.web }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
+      - name: Detect changed validation scopes
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          git diff --name-only "$BASE_SHA"...HEAD | tee /tmp/changed-files.txt
+
+          changed() {
+            local pattern="$1"
+            if grep -Eq "$pattern" /tmp/changed-files.txt; then
+              echo true
+            else
+              echo false
+            fi
+          }
+
+          echo "functions=$(changed '^(functions/|package.json$|package-lock.json$)')" >> "$GITHUB_OUTPUT"
+          echo "firestore=$(changed '^(functions/|firestore\.rules$|firestore\.indexes\.json$|storage\.rules$)')" >> "$GITHUB_OUTPUT"
+          echo "web=$(changed '^(lib/|web/|assets/|fonts/|pubspec\.yaml$|pubspec\.lock$|firebase\.json$|\.firebaserc$)')" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v4
+        if: steps.scope.outputs.functions == 'true' || steps.scope.outputs.firestore == 'true' || steps.scope.outputs.web == 'true'
         with:
           node-version: '22'
           cache: npm
@@ -49,7 +73,9 @@ jobs:
           node tools/apply_function_resource_limits.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_release_validation_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           node tools/apply_validation_round2_fixes.mjs 2>&1 | tee -a pr_validation_logs/patches.log
-          npm --prefix functions install --package-lock-only --ignore-scripts 2>&1 | tee -a pr_validation_logs/patches.log
+          if [ -f functions/package-lock.json ]; then
+            npm --prefix functions install --package-lock-only --ignore-scripts 2>&1 | tee -a pr_validation_logs/patches.log
+          fi
           node tools/check_production_guardrails.mjs 2>&1 | tee -a pr_validation_logs/patches.log
           if ! git diff --quiet; then
             echo 'Generated changes are missing from this branch.' | tee -a pr_validation_logs/patches.log
@@ -107,6 +133,7 @@ jobs:
             --enforce 2>&1 | tee pr_validation_logs/critical_coverage.log
 
       - name: Functions dependencies
+        if: steps.scope.outputs.functions == 'true'
         id: functions_deps
         continue-on-error: true
         run: |
@@ -114,6 +141,7 @@ jobs:
           npm --prefix functions ci 2>&1 | tee pr_validation_logs/functions_deps.log
 
       - name: Functions build
+        if: steps.scope.outputs.functions == 'true'
         id: functions_build
         continue-on-error: true
         run: |
@@ -121,6 +149,7 @@ jobs:
           npm --prefix functions run build 2>&1 | tee pr_validation_logs/functions_build.log
 
       - name: Functions tests
+        if: steps.scope.outputs.functions == 'true'
         id: functions_test
         continue-on-error: true
         run: |
@@ -128,13 +157,15 @@ jobs:
           npm --prefix functions test 2>&1 | tee pr_validation_logs/functions_test.log
 
       - name: Install Firebase CLI
+        if: steps.scope.outputs.firestore == 'true'
         id: firebase_cli
         continue-on-error: true
         run: |
           set -o pipefail
-          npm install -g firebase-tools@13 2>&1 | tee pr_validation_logs/firebase_cli.log
+          npx --yes firebase-tools@13 --version 2>&1 | tee pr_validation_logs/firebase_cli.log
 
       - name: Test Firestore rules
+        if: steps.scope.outputs.firestore == 'true'
         id: firestore_rules
         continue-on-error: true
         run: |
@@ -142,6 +173,7 @@ jobs:
           npm --prefix functions run test:firestore 2>&1 | tee pr_validation_logs/firestore_rules.log
 
       - name: Build web
+        if: steps.scope.outputs.web == 'true'
         id: web_build
         continue-on-error: true
         env:
@@ -151,6 +183,7 @@ jobs:
           bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run 2>&1 | tee pr_validation_logs/web_build.log
 
       - name: Check bundle size
+        if: steps.web_build.outcome == 'success'
         id: bundle_budget
         continue-on-error: true
         run: |
@@ -214,7 +247,7 @@ jobs:
   preview:
     name: Firebase Hosting preview
     needs: validate
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.head.repo.full_name == github.repository && needs.validate.outputs.web_changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -252,7 +285,7 @@ jobs:
 
       - name: Install Firebase CLI
         if: steps.preview_config.outputs.enabled == 'true'
-        run: npm install -g firebase-tools@13
+        run: npx --yes firebase-tools@13 --version
 
       - name: Deploy isolated preview channel
         if: steps.preview_config.outputs.enabled == 'true'
@@ -262,7 +295,7 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
           set -o pipefail
-          firebase hosting:channel:deploy "pr-${{ github.event.pull_request.number }}" \
+          npx --yes firebase-tools@13 hosting:channel:deploy "pr-${{ github.event.pull_request.number }}" \
             --expires 7d \
             --project "$FIREBASE_PROJECT_ID" \
             --token "$FIREBASE_TOKEN" \
