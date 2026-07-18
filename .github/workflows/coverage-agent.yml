@@ -1,4 +1,4 @@
-name: Coverage Autopilot
+name: Coverage 80% Single Agent
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
         required: false
         default: "80"
   schedule:
-    - cron: "0 * * * *"
+    - cron: "*/15 * * * *"
   push:
     branches: [main]
     paths:
@@ -21,7 +21,7 @@ on:
       - ".github/workflows/coverage-agent.yml"
 
 concurrency:
-  group: coverage-autopilot
+  group: coverage-80-single-agent
   cancel-in-progress: true
 
 permissions:
@@ -31,8 +31,8 @@ permissions:
   actions: read
 
 jobs:
-  measure-and-dispatch:
-    name: Measure LCOV and dispatch one priority lane
+  measure-and-steer:
+    name: Measure LCOV and steer the single active mission
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -83,6 +83,96 @@ jobs:
           print(f"path={data['target']['path']}")
           PY
 
+      - name: Detect the single active coverage pull request
+        id: active_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh pr list \
+            --state open \
+            --json number,title,url,headRefName \
+            --jq '[.[] | select(.headRefName | startswith("coverage/"))] | .[0] // {}' \
+            > /tmp/active-coverage-pr.json
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path('/tmp/active-coverage-pr.json').read_text())
+          print(f"exists={str(bool(data)).lower()}")
+          print(f"number={data.get('number', '')}")
+          print(f"title={data.get('title', '')}")
+          print(f"url={data.get('url', '')}")
+          PY
+
+      - name: Update the single coverage dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DASHBOARD_ISSUE: "553"
+          GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
+          TARGET_REACHED: ${{ steps.target.outputs.target_reached }}
+          CATEGORY: ${{ steps.target.outputs.category }}
+          TARGET_PATH: ${{ steps.target.outputs.path }}
+          ACTIVE_PR_EXISTS: ${{ steps.active_pr.outputs.exists }}
+          ACTIVE_PR_NUMBER: ${{ steps.active_pr.outputs.number }}
+          ACTIVE_PR_TITLE: ${{ steps.active_pr.outputs.title }}
+          ACTIVE_PR_URL: ${{ steps.active_pr.outputs.url }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          active = os.environ.get("ACTIVE_PR_EXISTS") == "true"
+          reached = os.environ.get("TARGET_REACHED") == "true"
+          if reached:
+              status = "✅ Objectif global atteint."
+          elif active:
+              status = (
+                  f"🔄 PR active : #{os.environ.get('ACTIVE_PR_NUMBER')} "
+                  f"[{os.environ.get('ACTIVE_PR_TITLE')}]"
+                  f"({os.environ.get('ACTIVE_PR_URL')})"
+              )
+          else:
+              status = "🟠 Aucune PR de couverture active : la cible ci-dessous est prête."
+
+          body = f"""## Agent unique LCOV vers 80 %
+
+          Ce ticket est l'unique tableau de bord de couverture. Aucun autre ticket `coverage-agent` ne doit être ouvert en parallèle.
+
+          ## État automatique
+
+          - Couverture globale réelle : **{os.environ.get('GLOBAL_PERCENT')} %**
+          - Objectif : **80 %**
+          - Domaine prioritaire suivant : **{os.environ.get('CATEGORY')}**
+          - Fichier cible suivant : `{os.environ.get('TARGET_PATH')}`
+          - Statut : {status}
+          - Dernière mise à jour : exécution GitHub Actions `{os.environ.get('GITHUB_RUN_ID')}`
+
+          ## Boucle obligatoire
+
+          1. Une seule branche `coverage/*` et une seule PR active.
+          2. Mesure LCOV réelle depuis `main`.
+          3. Sélection de la cible au meilleur rendement dans l'ordre : paiements, publication, messagerie, administration, authentification.
+          4. Tests comportementaux déterministes uniquement.
+          5. Aucun seuil abaissé, aucune exclusion artificielle, aucun `skip` ou faux succès.
+          6. Après fusion, recalcul immédiat et sélection de la cible suivante.
+          7. Répéter jusqu'à une couverture globale réelle supérieure ou égale à 80 %.
+
+          ## Contrôles avant fusion
+
+          - `dart format`
+          - `flutter analyze`
+          - `flutter test`
+          - `flutter test --coverage`
+          - contrôles Functions et règles Firestore
+          - build Web
+          - absence de régression LCOV globale
+          """
+          Path('/tmp/coverage-dashboard.md').write_text(body, encoding='utf-8')
+          PY
+          gh issue edit "$DASHBOARD_ISSUE" --body-file /tmp/coverage-dashboard.md
+
       - name: Upload LCOV and selection evidence
         uses: actions/upload-artifact@v4
         with:
@@ -93,69 +183,12 @@ jobs:
             quality_reports/coverage-agent/issue.md
           retention-days: 14
 
-      - name: Detect an active coverage pull request
-        if: steps.target.outputs.target_reached != 'true'
-        id: active_pr
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Report next action
         run: |
-          set -euo pipefail
-          count=$(gh pr list \
-            --state open \
-            --json headRefName \
-            --jq '[.[] | select(.headRefName | startswith("coverage/"))] | length')
-          echo "exists=$([[ "$count" -gt 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "active_count=$count" >> "$GITHUB_OUTPUT"
-
-      - name: Ensure coverage labels exist
-        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh label create "coverage-agent" \
-            --description "Task generated from real LCOV coverage" \
-            --color "1D76DB" --force
-          gh label create "coverage:${{ steps.target.outputs.category }}" \
-            --description "Coverage priority domain" \
-            --color "FBCA04" --force
-
-      - name: Create one active coverage mission
-        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE }}
-        run: |
-          set -euo pipefail
-
-          existing=$(gh issue list \
-            --state open \
-            --label coverage-agent \
-            --json number \
-            --jq 'length')
-          if [ "$existing" != "0" ]; then
-            echo "An active coverage mission already exists; skipping."
-            exit 0
+          if [ "${{ steps.target.outputs.target_reached }}" = "true" ]; then
+            echo "Global LCOV target reached: ${{ steps.target.outputs.global_percent }}%."
+          elif [ "${{ steps.active_pr.outputs.exists }}" = "true" ]; then
+            echo "Single coverage PR already active: #${{ steps.active_pr.outputs.number }}."
+          else
+            echo "Next target ready: ${{ steps.target.outputs.category }} — ${{ steps.target.outputs.path }}."
           fi
-
-          category='${{ steps.target.outputs.category }}'
-          path='${{ steps.target.outputs.path }}'
-          command=(gh issue create
-            --title "[Coverage Agent] ${category} — ${path}"
-            --body-file quality_reports/coverage-agent/issue.md
-            --label coverage-agent
-            --label "coverage:${category}")
-          if [ -n "${AGENT_ASSIGNEE:-}" ]; then
-            command+=(--assignee "$AGENT_ASSIGNEE")
-          fi
-          "${command[@]}"
-
-      - name: Report active coverage work
-        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists == 'true'
-        run: |
-          echo "Coverage work already active in ${{ steps.active_pr.outputs.active_count }} pull request(s); no duplicate mission created."
-
-      - name: Report target reached
-        if: steps.target.outputs.target_reached == 'true'
-        run: |
-          echo "Global LCOV target reached: ${{ steps.target.outputs.global_percent }}%."
