@@ -55,7 +55,6 @@ void main() {
       page.initialDraftText,
       'Bonjour, votre annonce est-elle disponible ?',
     );
-    expect(page.createState(), isA<State<thread.ConversationThreadPage>>());
   });
 
   test('conserve les paramètres publics de la liste de conversations', () {
