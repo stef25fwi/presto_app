@@ -14,10 +14,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late FirebaseApp firebaseApp;
+
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
+    const appName = 'hero-slides-service-test';
+    try {
+      firebaseApp = await Firebase.initializeApp(
+        name: appName,
         options: const FirebaseOptions(
           apiKey: 'test-api-key',
           appId: '1:1234567890:web:test',
@@ -26,6 +30,11 @@ void main() {
           storageBucket: 'presto-test.appspot.com',
         ),
       );
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') {
+        rethrow;
+      }
+      firebaseApp = Firebase.app(appName);
     }
   });
 
@@ -89,9 +98,10 @@ void main() {
     service = HeroSlidesService(
       firestore: firestore,
       storage: FirebaseStorage.instanceFor(
+        app: firebaseApp,
         bucket: 'gs://presto-test.appspot.com',
       ),
-      auth: FirebaseAuth.instance,
+      auth: FirebaseAuth.instanceFor(app: firebaseApp),
     );
   });
 
