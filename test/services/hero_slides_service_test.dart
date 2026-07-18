@@ -86,7 +86,9 @@ void main() {
     firestore = FakeFirebaseFirestore();
     service = HeroSlidesService(
       firestore: firestore,
-      storage: FirebaseStorage.instance,
+      storage: FirebaseStorage.instanceFor(
+        bucket: 'gs://presto-test.appspot.com',
+      ),
       auth: FirebaseAuth.instance,
     );
   });
