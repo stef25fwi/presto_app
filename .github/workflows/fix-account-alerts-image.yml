@@ -23,33 +23,26 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           service = Path('lib/services/ad_placeholder_image_service.dart')
           text = service.read_text()
-          old_watch_all = """    return _collection
-              .where('target', isEqualTo: target)
-              .orderBy('sortOrder')
-              .snapshots()
-              .map(
-                (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
-              );"""
-          new_watch_all = """    return _collection
+          text, count_all = re.subn(
+              r"return _collection\s*\.where\('target', isEqualTo: target\)\s*\.orderBy\('sortOrder'\)\s*\.snapshots\(\)\s*\.map\(\s*\(snapshot\) => snapshot\.docs\.map\(AdPlaceholderImage\.fromDoc\)\.toList\(\),\s*\);",
+              """return _collection
               .where('target', isEqualTo: target)
               .snapshots()
               .map((snapshot) {
                 final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
                   ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
                 return images;
-              });"""
-          old_watch_visible = """    return _collection
-              .where('target', isEqualTo: target)
-              .where('isVisible', isEqualTo: true)
-              .orderBy('sortOrder')
-              .snapshots()
-              .map(
-                (snapshot) => snapshot.docs.map(AdPlaceholderImage.fromDoc).toList(),
-              );"""
-          new_watch_visible = """    return _collection
+              });""",
+              text,
+              count=1,
+          )
+          text, count_visible = re.subn(
+              r"return _collection\s*\.where\('target', isEqualTo: target\)\s*\.where\('isVisible', isEqualTo: true\)\s*\.orderBy\('sortOrder'\)\s*\.snapshots\(\)\s*\.map\(\s*\(snapshot\) => snapshot\.docs\.map\(AdPlaceholderImage\.fromDoc\)\.toList\(\),\s*\);",
+              """return _collection
               .where('target', isEqualTo: target)
               .where('isVisible', isEqualTo: true)
               .snapshots()
@@ -57,20 +50,23 @@ jobs:
                 final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
                   ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
                 return images;
-              });"""
-          if old_watch_all not in text or old_watch_visible not in text:
-              raise SystemExit('Requêtes AdPlaceholderImageService introuvables')
-          text = text.replace(old_watch_all, new_watch_all, 1)
-          text = text.replace(old_watch_visible, new_watch_visible, 1)
+              });""",
+              text,
+              count=1,
+          )
+          if count_all != 1 or count_visible != 1:
+              raise SystemExit(f'Patch service incomplet: all={count_all}, visible={count_visible}')
           service.write_text(text)
 
           admin = Path('lib/pages/admin/ad_placeholder_images_admin_page.dart')
           text = admin.read_text()
-          text = text.replace(
-              "'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',",
-              "'subscription_alerts_banner': 'Page Mon compte — Mes alertes nouvelles annonces',",
-              1,
-          )
+          old_label = "'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',"
+          new_label = "'subscription_alerts_banner': 'Page Mon compte — Mes alertes nouvelles annonces',"
+          if old_label not in text:
+              raise SystemExit('Libellé cible admin introuvable')
+          text = text.replace(old_label, new_label, 1)
+          if "  String _target = 'consult_offers';" not in text:
+              raise SystemExit('Cible admin par défaut introuvable')
           text = text.replace(
               "  String _target = 'consult_offers';",
               "  String _target = 'subscription_alerts_banner';",
@@ -80,31 +76,30 @@ jobs:
 
           account = Path('lib/pages/account_page.dart')
           text = account.read_text()
-          old_builder = """          builder: (context, snapshot) {
-                final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
-                    .where((image) => image.isVisible)
-                    .toList();
-                if (activeImages.isEmpty) return fallback();
+          old = """          builder: (context, snapshot) {
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
 
-                return Image.network("""
-          new_builder = """          builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  debugPrint(
-                    '[AccountAlertsBanner] loading failed: ${snapshot.error}',
-                  );
-                  return fallback();
-                }
+            return Image.network("""
+          new = """          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              debugPrint(
+                '[AccountAlertsBanner] loading failed: ${snapshot.error}',
+              );
+              return fallback();
+            }
 
-                final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
-                    .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
-                    .toList();
-                if (activeImages.isEmpty) return fallback();
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
 
-                return Image.network("""
-          if old_builder not in text:
+            return Image.network("""
+          if old not in text:
               raise SystemExit('Builder bannière alertes introuvable')
-          text = text.replace(old_builder, new_builder, 1)
-          account.write_text(text)
+          account.write_text(text.replace(old, new, 1))
           PY
 
       - name: Format and validate
