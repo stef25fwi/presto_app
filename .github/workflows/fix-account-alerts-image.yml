@@ -3,7 +3,7 @@ name: Fix account alerts image
 on:
   push:
     branches:
-      - agent/fix-account-alerts-image
+      - main
     paths:
       - .github/workflows/fix-account-alerts-image.yml
   workflow_dispatch:
