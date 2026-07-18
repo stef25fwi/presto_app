@@ -8,7 +8,7 @@ on:
         required: false
         default: "80"
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 * * * *"
   push:
     branches: [main]
     paths:
@@ -16,12 +16,13 @@ on:
       - "test/**"
       - "integration_test/**"
       - "pubspec.yaml"
+      - "pubspec.lock"
       - "tools/coverage/**"
       - ".github/workflows/coverage-agent.yml"
 
 concurrency:
   group: coverage-autopilot
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -31,7 +32,7 @@ permissions:
 
 jobs:
   measure-and-dispatch:
-    name: Measure LCOV and dispatch priority lanes
+    name: Measure LCOV and dispatch one priority lane
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -41,9 +42,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Set up Flutter
+      - name: Set up Flutter 3.44.6
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: "3.44.6"
           channel: stable
           cache: true
 
@@ -53,7 +55,7 @@ jobs:
       - name: Run tests with real LCOV coverage
         run: flutter test --coverage
 
-      - name: Select one target per priority domain
+      - name: Select the highest-value priority target
         id: target
         env:
           INPUT_TARGET: ${{ inputs.global_target }}
@@ -77,7 +79,8 @@ jobs:
           )
           print(f"target_reached={str(data['global']['target_reached']).lower()}")
           print(f"global_percent={data['global']['percent']}")
-          print(f"target_count={len(data['targets'])}")
+          print(f"category={data['target']['category']}")
+          print(f"path={data['target']['path']}")
           PY
 
       - name: Upload LCOV and selection evidence
@@ -88,10 +91,24 @@ jobs:
             coverage/lcov.info
             quality_reports/coverage-agent/target.json
             quality_reports/coverage-agent/issue.md
-          retention-days: 30
+          retention-days: 14
+
+      - name: Detect an active coverage pull request
+        if: steps.target.outputs.target_reached != 'true'
+        id: active_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          count=$(gh pr list \
+            --state open \
+            --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("coverage/"))] | length')
+          echo "exists=$([[ "$count" -gt 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "active_count=$count" >> "$GITHUB_OUTPUT"
 
       - name: Ensure coverage labels exist
-        if: steps.target.outputs.target_reached != 'true'
+        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -99,122 +116,44 @@ jobs:
           gh label create "coverage-agent" \
             --description "Task generated from real LCOV coverage" \
             --color "1D76DB" --force
+          gh label create "coverage:${{ steps.target.outputs.category }}" \
+            --description "Coverage priority domain" \
+            --color "FBCA04" --force
 
-          python3 - <<'PY' > /tmp/coverage-categories.txt
-          import json
-          from pathlib import Path
-
-          data = json.loads(
-              Path("quality_reports/coverage-agent/target.json").read_text()
-          )
-          for target in data["targets"]:
-              print(target["category"])
-          PY
-
-          while IFS= read -r category; do
-            gh label create "coverage:${category}" \
-              --description "Coverage priority domain" \
-              --color "FBCA04" --force
-          done < /tmp/coverage-categories.txt
-
-      - name: Create one active task per priority domain
-        if: steps.target.outputs.target_reached != 'true'
+      - name: Create one active coverage mission
+        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          import subprocess
-          import textwrap
-          from pathlib import Path
 
-          data = json.loads(
-              Path("quality_reports/coverage-agent/target.json").read_text()
-          )
-          global_data = data["global"]
-          assignee = os.environ.get("AGENT_ASSIGNEE", "").strip()
+          existing=$(gh issue list \
+            --state open \
+            --label coverage-agent \
+            --json number \
+            --jq 'length')
+          if [ "$existing" != "0" ]; then
+            echo "An active coverage mission already exists; skipping."
+            exit 0
+          fi
 
-          for target in data["targets"]:
-              category = target["category"]
-              label = f"coverage:{category}"
-              existing = subprocess.run(
-                  [
-                      "gh",
-                      "issue",
-                      "list",
-                      "--state",
-                      "open",
-                      "--label",
-                      "coverage-agent",
-                      "--label",
-                      label,
-                      "--json",
-                      "number",
-                      "--jq",
-                      "length",
-                  ],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              ).stdout.strip()
-              if existing != "0":
-                  print(f"Active task already exists for {category}; skipping.")
-                  continue
+          category='${{ steps.target.outputs.category }}'
+          path='${{ steps.target.outputs.path }}'
+          command=(gh issue create
+            --title "[Coverage Agent] ${category} — ${path}"
+            --body-file quality_reports/coverage-agent/issue.md
+            --label coverage-agent
+            --label "coverage:${category}")
+          if [ -n "${AGENT_ASSIGNEE:-}" ]; then
+            command+=(--assignee "$AGENT_ASSIGNEE")
+          fi
+          "${command[@]}"
 
-              body = textwrap.dedent(
-                  f"""\
-                  ## Mission de couverture automatique
-
-                  ### Mesure réelle
-                  - Couverture globale LCOV : **{global_data['percent']:.2f} %** ({global_data['hit']}/{global_data['found']})
-                  - Objectif global : **{global_data['target']:.2f} %**
-                  - Domaine prioritaire : **{category}**
-                  - Fichier sélectionné : `{target['path']}`
-                  - Couverture du fichier : **{target['percent']:.2f} %** ({target['hit']}/{target['found']})
-                  - Lignes non couvertes : `{target['uncovered_ranges']}`
-
-                  ### Travail demandé
-                  1. Lire le fichier et ses tests existants.
-                  2. Ajouter des tests comportementaux déterministes pour augmenter sa couverture.
-                  3. Extraire uniquement les dépendances strictement nécessaires à la testabilité.
-                  4. Exécuter `dart format`, `flutter analyze`, `flutter test` et `flutter test --coverage`.
-                  5. Fournir dans la PR la couverture avant/après, globale et pour ce fichier.
-
-                  ### Garde-fous obligatoires
-                  - Ne pas abaisser de seuil de couverture.
-                  - Ne pas exclure de fichier ou de ligne du LCOV.
-                  - Ne pas ajouter `skip`, faux succès, attente arbitraire ou test vide.
-                  - Ne pas modifier le comportement produit sauf correction justifiée et testée.
-                  - Une seule cible principale par PR.
-                  - Ne pas fusionner si les tests échouent ou si la couverture globale régresse.
-
-                  ### Critère de fin
-                  La PR doit augmenter la couverture LCOV réelle et conserver tous les contrôles au vert.
-                  """
-              )
-              body_path = Path(f"/tmp/coverage-{category}.md")
-              body_path.write_text(body, encoding="utf-8")
-              title = f"[Coverage Agent] {category} — {target['path']}"
-              command = [
-                  "gh",
-                  "issue",
-                  "create",
-                  "--title",
-                  title,
-                  "--body-file",
-                  str(body_path),
-                  "--label",
-                  "coverage-agent",
-                  "--label",
-                  label,
-              ]
-              if assignee:
-                  command.extend(["--assignee", assignee])
-              subprocess.run(command, check=True)
-          PY
+      - name: Report active coverage work
+        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists == 'true'
+        run: |
+          echo "Coverage work already active in ${{ steps.active_pr.outputs.active_count }} pull request(s); no duplicate mission created."
 
       - name: Report target reached
         if: steps.target.outputs.target_reached == 'true'
