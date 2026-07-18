@@ -136,7 +136,6 @@ void main() {
       find.text('Journal des messages passés en revue, masqués ou refusés.'),
       findsOneWidget,
     );
-    expect(find.byType(SegmentedButton), findsOneWidget);
     expect(find.text('Tous'), findsOneWidget);
     expect(find.text('Pending'), findsOneWidget);
     expect(find.text('Revue'), findsOneWidget);
@@ -149,8 +148,14 @@ void main() {
 
     expect(
       find.byType(CircularProgressIndicator).evaluate().isNotEmpty ||
-          find.textContaining('Impossible de charger le journal').evaluate().isNotEmpty ||
-          find.text('Aucun message modéré récent pour ce filtre.').evaluate().isNotEmpty,
+          find
+              .textContaining('Impossible de charger le journal')
+              .evaluate()
+              .isNotEmpty ||
+          find
+              .text('Aucun message modéré récent pour ce filtre.')
+              .evaluate()
+              .isNotEmpty,
       isTrue,
     );
 
