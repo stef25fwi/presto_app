@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/account/signed_out_account_fallback.dart';
 
+class _NullUserCredentialPlatform extends UserCredentialPlatform {
+  _NullUserCredentialPlatform({required super.auth}) : super(user: null);
+}
+
 class _SignedOutAuthPlatform extends FirebaseAuthPlatform {
   _SignedOutAuthPlatform() : super(appInstance: null);
 
@@ -36,7 +40,7 @@ class _SignedOutAuthPlatform extends FirebaseAuthPlatform {
   ) async {
     providerCalls += 1;
     providerId = provider.providerId;
-    return UserCredentialPlatform(auth: this, user: null);
+    return _NullUserCredentialPlatform(auth: this);
   }
 }
 
