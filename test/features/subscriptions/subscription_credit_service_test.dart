@@ -74,6 +74,19 @@ void main() {
       expect(missing.remaining, 0);
       expect(missing.exhausted, isTrue);
     });
+
+    test('applique les valeurs par défaut sur une réponse vide', () {
+      final snapshot = SubscriptionCreditSnapshot.fromMap(const {});
+
+      expect(snapshot.plan, 'free');
+      expect(snapshot.period, isEmpty);
+      expect(snapshot.freeAccessMode, isFalse);
+      expect(snapshot.nextResetAt, isNull);
+      for (final kind in SubscriptionCreditKind.values) {
+        expect(snapshot[kind].used, 0);
+        expect(snapshot[kind].limit, 0);
+      }
+    });
   });
 
   group('SavedJourneyRecord', () {
@@ -108,6 +121,55 @@ void main() {
       expect(record.createdAt, isNull);
       expect(record.updatedAt, isNull);
       expect(record.snapshot, isEmpty);
+    });
+
+    test('normalise les valeurs absentes et les snapshots non map', () {
+      final record = SavedJourneyRecord.fromMap({
+        'id': null,
+        'snapshot': 'invalide',
+      });
+
+      expect(record.id, isEmpty);
+      expect(record.title, isEmpty);
+      expect(record.activity, isEmpty);
+      expect(record.currentStatus, isEmpty);
+      expect(record.region, isEmpty);
+      expect(record.snapshot, isEmpty);
+    });
+  });
+
+  group('SubscriptionCreditService garde-fous', () {
+    final service = SubscriptionCreditService();
+
+    test('refuse la consommation directe des parcours', () async {
+      await expectLater(
+        service.consume(
+          kind: SubscriptionCreditKind.journeys,
+          operationId: 'journey-op',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('refuse la consommation directe des annonces actives', () async {
+      await expectLater(
+        service.consume(
+          kind: SubscriptionCreditKind.activeOffers,
+          operationId: 'offer-op',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('ignore le remboursement des crédits non consommables', () async {
+      await service.refund(
+        kind: SubscriptionCreditKind.journeys,
+        operationId: 'journey-refund',
+      );
+      await service.refund(
+        kind: SubscriptionCreditKind.activeOffers,
+        operationId: 'offer-refund',
+      );
     });
   });
 
