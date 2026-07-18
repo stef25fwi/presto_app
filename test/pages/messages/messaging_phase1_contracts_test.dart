@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/messaging/admin_messaging_center_page.dart';
@@ -8,6 +10,13 @@ import 'package:presto_app/pages/messages/conversations_list_page.dart'
     as conversations;
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
+
   test('décrit les requêtes de conversations', () {
     final adminShape = conversations.ConversationsQueryContract.shape(
       isAdminMode: true,
@@ -80,8 +89,10 @@ void main() {
     expect(thread.kPrestoBlue, const Color(0xFF1A73E8));
     expect(thread.kThreadMineColor, const Color(0xFFD9FDD3));
     expect(thread.kThreadOtherColor, Colors.white);
-    expect(thread.kConversationThreadStatusBarStyle.statusBarColor,
-        thread.kPrestoOrange);
+    expect(
+      thread.kConversationThreadStatusBarStyle.statusBarColor,
+      thread.kPrestoOrange,
+    );
     expect(
       thread.kConversationThreadStatusBarStyle.statusBarIconBrightness,
       Brightness.light,
@@ -106,5 +117,44 @@ void main() {
       page.createState(),
       isA<State<AdminMessagingModerationPage>>(),
     );
+  });
+
+  testWidgets('affiche le journal et parcourt les filtres de modération',
+      (tester) async {
+    tester.view.physicalSize = const Size(1200, 1800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(home: AdminMessagingModerationPage()),
+    );
+    await tester.pump();
+
+    expect(find.text('Modération messages'), findsOneWidget);
+    expect(
+      find.text('Journal des messages passés en revue, masqués ou refusés.'),
+      findsOneWidget,
+    );
+    expect(find.byType(SegmentedButton), findsOneWidget);
+    expect(find.text('Tous'), findsOneWidget);
+    expect(find.text('Pending'), findsOneWidget);
+    expect(find.text('Revue'), findsOneWidget);
+    expect(find.text('Refusés'), findsOneWidget);
+
+    for (final label in const ['Pending', 'Revue', 'Refusés', 'Tous']) {
+      await tester.tap(find.text(label));
+      await tester.pump();
+    }
+
+    expect(
+      find.byType(CircularProgressIndicator).evaluate().isNotEmpty ||
+          find.textContaining('Impossible de charger le journal').evaluate().isNotEmpty ||
+          find.text('Aucun message modéré récent pour ce filtre.').evaluate().isNotEmpty,
+      isTrue,
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
   });
 }
