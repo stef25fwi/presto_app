@@ -8,6 +8,9 @@ import 'package:presto_app/features/account/signed_out_account_fallback.dart';
 class _SignedOutAuthPlatform extends FirebaseAuthPlatform {
   _SignedOutAuthPlatform() : super(appInstance: null);
 
+  var providerCalls = 0;
+  String? providerId;
+
   @override
   FirebaseAuthPlatform delegateFor({required FirebaseApp app}) => this;
 
@@ -20,15 +23,39 @@ class _SignedOutAuthPlatform extends FirebaseAuthPlatform {
 
   @override
   UserPlatform? get currentUser => null;
+
+  @override
+  Stream<UserPlatform?> authStateChanges() => Stream<UserPlatform?>.value(null);
+
+  @override
+  Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(null);
+
+  @override
+  Future<UserCredentialPlatform> signInWithProvider(
+    AuthProvider provider,
+  ) async {
+    providerCalls += 1;
+    providerId = provider.providerId;
+    return UserCredentialPlatform(auth: this, user: null);
+  }
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late _SignedOutAuthPlatform platform;
+
   setUpAll(() async {
     setupFirebaseCoreMocks();
     await Firebase.initializeApp();
-    FirebaseAuthPlatform.instance = _SignedOutAuthPlatform();
+    platform = _SignedOutAuthPlatform();
+    FirebaseAuthPlatform.instance = platform;
+  });
+
+  setUp(() {
+    platform
+      ..providerCalls = 0
+      ..providerId = null;
   });
 
   Future<void> pumpPage(
@@ -144,5 +171,36 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('obligatoire'), findsWidgets);
+  });
+
+  testWidgets('entreprise refuse la création sans SIRET vérifié', (tester) async {
+    await pumpPage(tester, startInSignup: true);
+
+    await tester.tap(find.text('Entreprise'));
+    await tester.pump();
+    await tester.tap(find.text('Créer le compte entreprise'));
+    await tester.pump();
+
+    expect(
+      find.text('Vérifiez votre SIRET avant de créer le compte entreprise.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Google traverse le fallback et signale le credential vide', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+
+    await tester.tap(find.text('Continuer avec Google'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(platform.providerCalls, 1);
+    expect(platform.providerId, 'google.com');
+    expect(
+      find.text('Connexion Google incomplete. Reessayez.'),
+      findsOneWidget,
+    );
   });
 }
