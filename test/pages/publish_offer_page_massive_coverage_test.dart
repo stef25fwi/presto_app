@@ -6,7 +6,6 @@ import 'package:presto_app/features/offers/presentation/widgets/publish_offer_ca
 import 'package:presto_app/features/subscriptions/subscription_credit_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_credits_card.dart';
 import 'package:presto_app/main.dart' as app;
-import 'package:presto_app/widgets/ai_publish_control.dart';
 import 'package:presto_app/widgets/ai_publish_control_with_credits.dart';
 import 'package:presto_app/widgets/photo_selector_tile.dart';
 
