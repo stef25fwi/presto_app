@@ -102,11 +102,9 @@ jobs:
           account.write_text(text.replace(old, new, 1))
           PY
 
-      - name: Format and validate
+      - name: Format corrected files
         run: |
           dart format lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
-          flutter pub get
-          flutter analyze lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
 
       - name: Commit fix
         run: |
@@ -115,3 +113,8 @@ jobs:
           git add lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
           git commit -m 'fix: display selected account alerts image' || exit 0
           git push
+
+      - name: Validate corrected files
+        run: |
+          flutter pub get
+          flutter analyze lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
