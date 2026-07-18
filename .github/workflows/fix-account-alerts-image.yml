@@ -1,0 +1,120 @@
+name: Fix account alerts image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fix-account-alerts-image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch alert image loading
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          service = Path('lib/services/ad_placeholder_image_service.dart')
+          text = service.read_text()
+          text, count_all = re.subn(
+              r"return _collection\s*\.where\('target', isEqualTo: target\)\s*\.orderBy\('sortOrder'\)\s*\.snapshots\(\)\s*\.map\(\s*\(snapshot\) => snapshot\.docs\.map\(AdPlaceholderImage\.fromDoc\)\.toList\(\),\s*\);",
+              """return _collection
+              .where('target', isEqualTo: target)
+              .snapshots()
+              .map((snapshot) {
+                final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
+                  ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+                return images;
+              });""",
+              text,
+              count=1,
+          )
+          text, count_visible = re.subn(
+              r"return _collection\s*\.where\('target', isEqualTo: target\)\s*\.where\('isVisible', isEqualTo: true\)\s*\.orderBy\('sortOrder'\)\s*\.snapshots\(\)\s*\.map\(\s*\(snapshot\) => snapshot\.docs\.map\(AdPlaceholderImage\.fromDoc\)\.toList\(\),\s*\);",
+              """return _collection
+              .where('target', isEqualTo: target)
+              .where('isVisible', isEqualTo: true)
+              .snapshots()
+              .map((snapshot) {
+                final images = snapshot.docs.map(AdPlaceholderImage.fromDoc).toList()
+                  ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+                return images;
+              });""",
+              text,
+              count=1,
+          )
+          if count_all != 1 or count_visible != 1:
+              raise SystemExit(f'Patch service incomplet: all={count_all}, visible={count_visible}')
+          service.write_text(text)
+
+          admin = Path('lib/pages/admin/ad_placeholder_images_admin_page.dart')
+          text = admin.read_text()
+          old_label = "'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',"
+          new_label = "'subscription_alerts_banner': 'Page Mon compte — Mes alertes nouvelles annonces',"
+          if old_label not in text:
+              raise SystemExit('Libellé cible admin introuvable')
+          text = text.replace(old_label, new_label, 1)
+          if "  String _target = 'consult_offers';" not in text:
+              raise SystemExit('Cible admin par défaut introuvable')
+          text = text.replace(
+              "  String _target = 'consult_offers';",
+              "  String _target = 'subscription_alerts_banner';",
+              1,
+          )
+          admin.write_text(text)
+
+          account = Path('lib/pages/account_page.dart')
+          text = account.read_text()
+          old = """          builder: (context, snapshot) {
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
+
+            return Image.network("""
+          new = """          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              debugPrint(
+                '[AccountAlertsBanner] loading failed: ${snapshot.error}',
+              );
+              return fallback();
+            }
+
+            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
+                .toList();
+            if (activeImages.isEmpty) return fallback();
+
+            return Image.network("""
+          if old not in text:
+              raise SystemExit('Builder bannière alertes introuvable')
+          account.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Format corrected files
+        run: |
+          dart format lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
+
+      - name: Commit fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
+          git commit -m 'fix: display selected account alerts image' || exit 0
+          git push
+
+      - name: Validate corrected files
+        run: |
+          flutter pub get
+          flutter analyze lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
