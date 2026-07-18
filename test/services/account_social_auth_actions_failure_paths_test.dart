@@ -106,6 +106,31 @@ void main() {
 
   Future<void> trackLogin({String? authMethod, bool isNewUser = false}) async {}
 
+  Future<void> expectFacebookFirebaseError(
+    WidgetTester tester, {
+    required String code,
+    String? message,
+    required String expectedText,
+  }) async {
+    platform.providerError = FirebaseAuthException(
+      code: code,
+      message: message,
+    );
+
+    await runAction(
+      tester,
+      (context) => AccountSocialAuthActions.signInWithFacebook(
+        context: context,
+        auth: auth,
+        trackLogin: trackLogin,
+      ),
+    );
+
+    expect(platform.providerCalls, 1);
+    expect(platform.providerId, 'facebook.com');
+    expect(find.text(expectedText), findsOneWidget);
+  }
+
   testWidgets('Google signale un credential sans utilisateur', (tester) async {
     await runAction(
       tester,
@@ -205,23 +230,63 @@ void main() {
   });
 
   testWidgets('Facebook traduit une erreur Firebase', (tester) async {
-    platform.providerError = FirebaseAuthException(
+    await expectFacebookFirebaseError(
+      tester,
       code: 'operation-not-allowed',
       message: 'disabled',
+      expectedText:
+          'Connexion Facebook non activée dans Firebase Authentication.',
     );
+  });
 
-    await runAction(
+  testWidgets('Facebook traduit un compte déjà associé', (tester) async {
+    await expectFacebookFirebaseError(
       tester,
-      (context) => AccountSocialAuthActions.signInWithFacebook(
-        context: context,
-        auth: auth,
-        trackLogin: trackLogin,
-      ),
+      code: 'account-exists-with-different-credential',
+      expectedText:
+          'Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.',
     );
+  });
 
-    expect(
-      find.text('Connexion Facebook non activée dans Firebase Authentication.'),
-      findsOneWidget,
+  testWidgets('Facebook traduit une popup bloquée', (tester) async {
+    await expectFacebookFirebaseError(
+      tester,
+      code: 'popup-blocked',
+      expectedText:
+          'Pop-up Facebook bloquée. Autorise les pop-ups puis réessaie.',
+    );
+  });
+
+  testWidgets('Facebook traduit des identifiants invalides', (tester) async {
+    await expectFacebookFirebaseError(
+      tester,
+      code: 'invalid-credential',
+      expectedText: 'Identifiants Facebook invalides. Réessaie.',
+    );
+  });
+
+  testWidgets('Facebook traduit une panne réseau', (tester) async {
+    await expectFacebookFirebaseError(
+      tester,
+      code: 'network-request-failed',
+      expectedText: 'Erreur réseau. Vérifie la connexion internet.',
+    );
+  });
+
+  testWidgets('Facebook conserve le message Firebase inconnu', (tester) async {
+    await expectFacebookFirebaseError(
+      tester,
+      code: 'unknown-provider-error',
+      message: 'Erreur fournisseur détaillée',
+      expectedText: 'Erreur fournisseur détaillée',
+    );
+  });
+
+  testWidgets('Facebook utilise le repli sans message Firebase', (tester) async {
+    await expectFacebookFirebaseError(
+      tester,
+      code: 'unknown-provider-error',
+      expectedText: 'Erreur de connexion Facebook.',
     );
   });
 
