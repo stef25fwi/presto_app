@@ -16,7 +16,15 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'test-api-key',
+        appId: '1:1234567890:web:test',
+        messagingSenderId: '1234567890',
+        projectId: 'presto-test',
+        storageBucket: 'presto-test.appspot.com',
+      ),
+    );
   });
 
   late FakeFirebaseFirestore firestore;
