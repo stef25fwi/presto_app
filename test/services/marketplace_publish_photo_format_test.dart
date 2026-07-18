@@ -168,7 +168,7 @@ void main() {
         extension: 'webp',
         timestampMs: 123456,
       ),
-      'listingDrafts/user-1/draft-1/raw/123456_2.webp',
+      'listingDrafts/user-1/draft-1/123456_2.webp',
     );
   });
 }
