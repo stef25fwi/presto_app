@@ -175,18 +175,23 @@ void main() {
     expect(listings.submitCalls, 0);
   });
 
-  test('utilise le fallback vide après deux erreurs de canal reCAPTCHA',
+  test('utilise le fallback vide après épuisement des retries reCAPTCHA',
       () async {
     final listings = _RetryListingRepository();
     final verification = _RetryVerification(
-      <Object>[channelError(), channelError()],
+      <Object>[
+        channelError(),
+        channelError(),
+        channelError(),
+        channelError(),
+      ],
     );
 
     final result = await publish(
       service(listings: listings, verification: verification),
     );
 
-    expect(verification.calls, 2);
+    expect(verification.calls, 4);
     expect(listings.submittedToken, '');
     expect(result.listingId, 'retry-listing');
   });
