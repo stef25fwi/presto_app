@@ -111,55 +111,198 @@ void main() {
     );
   });
 
-  test('crée l’état de la page de modération', () {
-    const page = AdminMessagingModerationPage();
-    expect(
-      page.createState(),
-      isA<State<AdminMessagingModerationPage>>(),
+  test('normalise les données de modération historiques et actuelles', () {
+    final entry = ModerationLogEntry.fromMap(
+      messageId: 'message-1',
+      conversationId: 'conversation-1',
+      data: {
+        'sender_id': 'user-1',
+        'sender_name': 'Alice',
+        'body': 'Contenu signalé',
+        'created_at': DateTime(2026, 7, 18, 12, 30),
+        'moderation': {
+          'mode': 'automatic',
+          'status': 'manual_review',
+          'visibility': 'hidden',
+          'reason': 'language',
+          'userMessage': 'Message refusé',
+          'autoFlags': ['insulte', '', 42],
+          'riskScore': 71.6,
+        },
+      },
     );
+
+    expect(entry.messageId, 'message-1');
+    expect(entry.conversationId, 'conversation-1');
+    expect(entry.senderId, 'user-1');
+    expect(entry.senderName, 'Alice');
+    expect(entry.text, 'Contenu signalé');
+    expect(entry.mode, 'automatic');
+    expect(entry.status, 'manual_review');
+    expect(entry.visibility, 'hidden');
+    expect(entry.reason, 'language');
+    expect(entry.userMessage, 'Message refusé');
+    expect(entry.autoFlags, ['insulte', '42']);
+    expect(entry.riskScore, 72);
+    expect(entry.createdAt, isNotNull);
+    expect(entry.isModerated, isTrue);
   });
 
-  testWidgets('affiche le journal et parcourt les filtres de modération',
-      (tester) async {
+  test('distingue les messages approuvés des messages modérés', () {
+    ModerationLogEntry entry(String status, String reason) {
+      return ModerationLogEntry(
+        messageId: status,
+        conversationId: 'conversation',
+        senderId: 'user',
+        senderName: '',
+        text: '',
+        mode: '',
+        status: status,
+        visibility: '',
+        reason: reason,
+        userMessage: '',
+        autoFlags: const [],
+        riskScore: 0,
+        createdAt: null,
+      );
+    }
+
+    expect(entry('pending', '').isModerated, isTrue);
+    expect(entry('manual_review', '').isModerated, isTrue);
+    expect(entry('rejected', '').isModerated, isTrue);
+    expect(entry('approved', 'policy').isModerated, isTrue);
+    expect(entry('approved', 'approved_automatically').isModerated, isFalse);
+    expect(entry('approved', '').isModerated, isFalse);
+  });
+
+  Future<void> pumpModeration(
+    WidgetTester tester,
+    Stream<List<ModerationLogEntry>> stream,
+  ) async {
     tester.view.physicalSize = const Size(1200, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-
     await tester.pumpWidget(
-      const MaterialApp(home: AdminMessagingModerationPage()),
+      MaterialApp(
+        home: AdminMessagingModerationPage(entriesStream: stream),
+      ),
+    );
+    await tester.pump();
+  }
+
+  const pending = ModerationLogEntry(
+    messageId: 'pending-1',
+    conversationId: 'conversation-pending',
+    senderId: 'sender-pending',
+    senderName: 'Alice',
+    text: 'Message en attente',
+    mode: 'hybrid',
+    status: 'pending',
+    visibility: 'visible',
+    reason: 'vérification',
+    userMessage: 'Analyse en cours',
+    autoFlags: ['flag-a'],
+    riskScore: 30,
+    createdAt: null,
+  );
+  final manual = ModerationLogEntry(
+    messageId: 'manual-1',
+    conversationId: 'conversation-manual',
+    senderId: 'sender-manual',
+    senderName: '',
+    text: '',
+    mode: '',
+    status: 'manual_review',
+    visibility: '',
+    reason: '',
+    userMessage: '',
+    autoFlags: const [],
+    riskScore: 50,
+    createdAt: DateTime(2026, 7, 18, 14, 5),
+  );
+  const rejected = ModerationLogEntry(
+    messageId: 'rejected-1',
+    conversationId: 'conversation-rejected',
+    senderId: 'sender-rejected',
+    senderName: 'Bob',
+    text: 'Message refusé',
+    mode: 'automatic',
+    status: 'rejected',
+    visibility: 'hidden',
+    reason: 'contenu interdit',
+    userMessage: 'Votre message a été refusé',
+    autoFlags: ['violence', 'spam'],
+    riskScore: 95,
+    createdAt: null,
+  );
+
+  testWidgets('affiche les cartes modérées et leurs détails', (tester) async {
+    await pumpModeration(
+      tester,
+      Stream.value([pending, manual, rejected]),
     );
     await tester.pump();
 
     expect(find.text('Modération messages'), findsOneWidget);
+    expect(find.text('Alice'), findsOneWidget);
+    expect(find.text('sender-manual'), findsOneWidget);
+    expect(find.text('Bob'), findsOneWidget);
+    expect(find.text('Message en attente'), findsOneWidget);
+    expect(find.text('Message sans texte explicite'), findsOneWidget);
+    expect(find.text('Raison: contenu interdit'), findsOneWidget);
+    expect(find.text('Message utilisateur: Analyse en cours'), findsOneWidget);
+    expect(find.text('violence'), findsOneWidget);
+    expect(find.text('spam'), findsOneWidget);
+    expect(find.text('Risk 95'), findsOneWidget);
+    expect(find.textContaining('Date inconnue'), findsWidgets);
+  });
+
+  testWidgets('filtre pending revue refusés puis revient à tous', (tester) async {
+    await pumpModeration(
+      tester,
+      Stream.value([pending, manual, rejected]),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Pending'));
+    await tester.pump();
+    expect(find.text('Alice'), findsOneWidget);
+    expect(find.text('Bob'), findsNothing);
+
+    await tester.tap(find.text('Revue'));
+    await tester.pump();
+    expect(find.text('sender-manual'), findsOneWidget);
+    expect(find.text('Alice'), findsNothing);
+
+    await tester.tap(find.text('Refusés'));
+    await tester.pump();
+    expect(find.text('Bob'), findsOneWidget);
+    expect(find.text('sender-manual'), findsNothing);
+
+    await tester.tap(find.text('Tous'));
+    await tester.pump();
+    expect(find.text('Alice'), findsOneWidget);
+    expect(find.text('sender-manual'), findsOneWidget);
+    expect(find.text('Bob'), findsOneWidget);
+  });
+
+  testWidgets('affiche les états vide et erreur', (tester) async {
+    await pumpModeration(tester, Stream.value(const []));
+    await tester.pump();
     expect(
-      find.text('Journal des messages passés en revue, masqués ou refusés.'),
+      find.text('Aucun message modéré récent pour ce filtre.'),
       findsOneWidget,
     );
-    expect(find.text('Tous'), findsOneWidget);
-    expect(find.text('Pending'), findsOneWidget);
-    expect(find.text('Revue'), findsOneWidget);
-    expect(find.text('Refusés'), findsOneWidget);
 
-    for (final label in const ['Pending', 'Revue', 'Refusés', 'Tous']) {
-      await tester.tap(find.text(label));
-      await tester.pump();
-    }
-
-    expect(
-      find.byType(CircularProgressIndicator).evaluate().isNotEmpty ||
-          find
-              .textContaining('Impossible de charger le journal')
-              .evaluate()
-              .isNotEmpty ||
-          find
-              .text('Aucun message modéré récent pour ce filtre.')
-              .evaluate()
-              .isNotEmpty,
-      isTrue,
+    await pumpModeration(
+      tester,
+      Stream<List<ModerationLogEntry>>.error('permission-denied'),
     );
-
-    await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
+    expect(
+      find.textContaining('permission-denied'),
+      findsOneWidget,
+    );
   });
 }
