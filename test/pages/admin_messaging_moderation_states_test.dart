@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/admin_messaging_moderation_page.dart';
@@ -55,6 +56,44 @@ void main() {
     expect(entry.riskScore, 0);
     expect(entry.createdAt, DateTime.utc(2026, 7, 19, 12));
     expect(entry.isModerated, isFalse);
+  });
+
+  test('convertit un document Firestore avec son identifiant de conversation',
+      () async {
+    final firestore = FakeFirebaseFirestore();
+    await firestore
+        .collection('conversations')
+        .doc('conversation-document')
+        .collection('messages')
+        .doc('message-document')
+        .set(<String, dynamic>{
+      'sender_id': 'sender-legacy',
+      'sender_name': 'Legacy User',
+      'body': 'Message depuis Firestore',
+      'created_at': '2026-07-19T13:00:00.000Z',
+      'moderation': <String, dynamic>{
+        'status': 'rejected',
+        'reason': 'spam',
+        'riskScore': 91,
+      },
+    });
+
+    final snapshot = await firestore
+        .collection('conversations')
+        .doc('conversation-document')
+        .collection('messages')
+        .get();
+    final entry = ModerationLogEntry.fromDocument(snapshot.docs.single);
+
+    expect(entry.messageId, 'message-document');
+    expect(entry.conversationId, 'conversation-document');
+    expect(entry.senderId, 'sender-legacy');
+    expect(entry.senderName, 'Legacy User');
+    expect(entry.text, 'Message depuis Firestore');
+    expect(entry.status, 'rejected');
+    expect(entry.reason, 'spam');
+    expect(entry.riskScore, 91);
+    expect(entry.isModerated, isTrue);
   });
 
   test('accepte une modération absente et des valeurs nulles', () {
