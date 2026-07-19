@@ -39,7 +39,9 @@ void main() {
     PaymentInfoAudioService.setCallableForTesting((name, parameters) async {
       calls.add(name);
     });
-    PaymentInfoAudioService.setTextSaverForTesting(savedTexts.add);
+    PaymentInfoAudioService.setTextSaverForTesting((text) async {
+      savedTexts.add(text);
+    });
 
     final service = PaymentInfoAudioService();
     await service.saveAdminText('  Règles de paiement  ');
