@@ -25,10 +25,11 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   issues: write
-  pull-requests: read
+  pull-requests: write
   actions: read
+  checks: read
 
 jobs:
   measure-and-steer:
