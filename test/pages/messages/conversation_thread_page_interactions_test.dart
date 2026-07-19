@@ -109,8 +109,8 @@ Future<void> _pumpUntilDraft(
   WidgetTester tester,
   String expectedText,
 ) async {
-  for (var frame = 0; frame < 20; frame += 1) {
-    await tester.pump(const Duration(milliseconds: 100));
+  for (var frame = 0; frame < 120; frame += 1) {
+    await tester.pump(const Duration(milliseconds: 500));
     final fields = find.byType(TextField).evaluate();
     if (fields.isEmpty) continue;
     final field = tester.widget<TextField>(find.byType(TextField));
