@@ -80,14 +80,14 @@ void main() {
 
     await tester.tap(cityField);
     await tester.enterText(cityField, 'Baie-Mahault');
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(countryCodes.last, '+33');
     final option = find.text('Baie-Mahault (97122)');
     expect(option, findsOneWidget);
 
     await tester.tap(option);
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(controllers.city.text, 'Baie-Mahault (97122)');
     expect(countryCodes.last, '+590');
