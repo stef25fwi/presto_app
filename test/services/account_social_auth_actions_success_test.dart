@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/account_social_auth_actions.dart';
@@ -60,6 +61,8 @@ class _SuccessfulSocialAuthPlatform extends FirebaseAuthPlatform {
 
   late final UserPlatform user;
   bool isNewUser = true;
+  bool exposeCurrentUser = true;
+  Object? providerError;
   var providerCalls = 0;
   String? providerId;
 
@@ -74,13 +77,15 @@ class _SuccessfulSocialAuthPlatform extends FirebaseAuthPlatform {
       this;
 
   @override
-  UserPlatform? get currentUser => user;
+  UserPlatform? get currentUser => exposeCurrentUser ? user : null;
 
   @override
-  Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(user);
+  Stream<UserPlatform?> userChanges() =>
+      Stream<UserPlatform?>.value(currentUser);
 
   @override
-  Stream<UserPlatform?> authStateChanges() => Stream<UserPlatform?>.value(user);
+  Stream<UserPlatform?> authStateChanges() =>
+      Stream<UserPlatform?>.value(currentUser);
 
   @override
   Future<UserCredentialPlatform> signInWithProvider(
@@ -88,6 +93,8 @@ class _SuccessfulSocialAuthPlatform extends FirebaseAuthPlatform {
   ) async {
     providerCalls += 1;
     providerId = provider.providerId;
+    final error = providerError;
+    if (error != null) throw error;
     return _SocialCredentialPlatform(
       auth: this,
       user: user,
@@ -104,7 +111,11 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    await Firebase.initializeApp();
+    try {
+      await Firebase.initializeApp();
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') rethrow;
+    }
     platform = _SuccessfulSocialAuthPlatform();
     FirebaseAuthPlatform.instance = platform;
     auth = FirebaseAuth.instance;
@@ -113,8 +124,15 @@ void main() {
   setUp(() {
     platform
       ..isNewUser = true
+      ..exposeCurrentUser = true
+      ..providerError = null
       ..providerCalls = 0
       ..providerId = null;
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  tearDown(() {
+    debugDefaultTargetPlatformOverride = null;
   });
 
   Future<void> run(
@@ -192,6 +210,26 @@ void main() {
     expect(find.text('✓ Connecté avec Google'), findsOneWidget);
   });
 
+  testWidgets('Google signale une session absente après le provider',
+      (tester) async {
+    platform.exposeCurrentUser = false;
+
+    await run(
+      tester,
+      (context) => AccountSocialAuthActions.signInWithGoogle(
+        context: context,
+        auth: auth,
+        googleAuthService: GoogleAuthService(),
+        trackLogin: ({authMethod, isNewUser = false}) async {},
+      ),
+    );
+
+    expect(
+      find.text('Connexion Google incomplete. Reessayez.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Facebook finalise la connexion et transmet isNewUser',
       (tester) async {
     String? trackedMethod;
@@ -232,5 +270,65 @@ void main() {
     );
 
     expect(find.text('✓ Connecté avec Facebook'), findsOneWidget);
+  });
+
+  testWidgets('Facebook signale une session absente après le provider',
+      (tester) async {
+    platform.exposeCurrentUser = false;
+
+    await run(
+      tester,
+      (context) => AccountSocialAuthActions.signInWithFacebook(
+        context: context,
+        auth: auth,
+        trackLogin: ({authMethod, isNewUser = false}) async {},
+      ),
+    );
+
+    expect(
+      find.text('Connexion Facebook incomplete. Reessayez.'),
+      findsOneWidget,
+    );
+  });
+
+  final facebookErrors = <String, String>{
+    'account-exists-with-different-credential':
+        'Un compte existe déjà avec cet email.',
+    'popup-blocked': 'Pop-up Facebook bloquée.',
+    'operation-not-allowed': 'Connexion Facebook non activée',
+    'invalid-credential': 'Identifiants Facebook invalides.',
+  };
+
+  for (final entry in facebookErrors.entries) {
+    testWidgets('Facebook mappe ${entry.key}', (tester) async {
+      platform.providerError = FirebaseAuthException(code: entry.key);
+
+      await run(
+        tester,
+        (context) => AccountSocialAuthActions.signInWithFacebook(
+          context: context,
+          auth: auth,
+          trackLogin: ({authMethod, isNewUser = false}) async {},
+        ),
+      );
+
+      expect(find.textContaining(entry.value), findsOneWidget);
+    });
+  }
+
+  testWidgets('Apple iOS prépare le flux avant l erreur de plateforme',
+      (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    await run(
+      tester,
+      (context) => AccountSocialAuthActions.signInWithApple(
+        context: context,
+        auth: auth,
+        trackLogin: ({authMethod, isNewUser = false}) async {},
+      ),
+    );
+
+    expect(find.textContaining('Erreur inattendue'), findsOneWidget);
   });
 }
