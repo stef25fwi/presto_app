@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/account/change_email_page.dart';
 
+Finder get _emailField => find.byType(TextFormField).at(0);
+Finder get _passwordField => find.byType(TextFormField).at(1);
+Finder get _passwordTextField => find.byType(TextField).at(1);
+Finder get _submitButton => find.text('Envoyer le lien de validation');
+
 void main() {
   Future<void> openPage(
     WidgetTester tester, {
@@ -36,10 +41,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder get emailField => find.byType(TextFormField).at(0);
-  Finder get passwordField => find.byType(TextFormField).at(1);
-  Finder get submitButton => find.text('Envoyer le lien de validation');
-
   testWidgets('valide les deux champs avant tout appel', (tester) async {
     var calls = 0;
     await openPage(
@@ -52,16 +53,16 @@ void main() {
       },
     );
 
-    await tester.tap(submitButton);
+    await tester.tap(_submitButton);
     await tester.pump();
 
     expect(find.text('Nouvel email obligatoire.'), findsOneWidget);
     expect(find.text('Mot de passe obligatoire.'), findsOneWidget);
     expect(calls, 0);
 
-    await tester.enterText(emailField, 'email-invalide');
-    await tester.enterText(passwordField, 'mot-de-passe');
-    await tester.tap(submitButton);
+    await tester.enterText(_emailField, 'email-invalide');
+    await tester.enterText(_passwordField, 'mot-de-passe');
+    await tester.tap(_submitButton);
     await tester.pump();
 
     expect(find.text('Email invalide.'), findsOneWidget);
@@ -71,19 +72,13 @@ void main() {
   testWidgets('affiche puis masque le mot de passe', (tester) async {
     await openPage(tester);
 
-    expect(
-      tester.widget<TextFormField>(passwordField).obscureText,
-      isTrue,
-    );
+    expect(tester.widget<TextField>(_passwordTextField).obscureText, isTrue);
     expect(find.byIcon(Icons.visibility), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.visibility));
     await tester.pump();
 
-    expect(
-      tester.widget<TextFormField>(passwordField).obscureText,
-      isFalse,
-    );
+    expect(tester.widget<TextField>(_passwordTextField).obscureText, isFalse);
     expect(find.byIcon(Icons.visibility_off), findsOneWidget);
   });
 
@@ -103,9 +98,9 @@ void main() {
       },
     );
 
-    await tester.enterText(emailField, 'nouveau@ilipresto.fr');
-    await tester.enterText(passwordField, 'secret-actuel');
-    await tester.tap(submitButton);
+    await tester.enterText(_emailField, 'nouveau@ilipresto.fr');
+    await tester.enterText(_passwordField, 'secret-actuel');
+    await tester.tap(_submitButton);
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -136,15 +131,15 @@ void main() {
       errorMessageMapper: (error) => 'Erreur de changement maîtrisée.',
     );
 
-    await tester.enterText(emailField, 'nouveau@ilipresto.fr');
-    await tester.enterText(passwordField, 'secret-actuel');
-    await tester.tap(submitButton);
+    await tester.enterText(_emailField, 'nouveau@ilipresto.fr');
+    await tester.enterText(_passwordField, 'secret-actuel');
+    await tester.tap(_submitButton);
     await tester.pumpAndSettle();
 
     expect(calls, 1);
     expect(find.text('Changer mon email'), findsOneWidget);
     expect(find.text('Erreur de changement maîtrisée.'), findsOneWidget);
-    expect(submitButton, findsOneWidget);
+    expect(_submitButton, findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }
