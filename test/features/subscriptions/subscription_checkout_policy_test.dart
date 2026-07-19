@@ -5,6 +5,13 @@ void main() {
   const policy = SubscriptionCheckoutPolicy();
   const nowMs = 1_800_000_000_000;
 
+  test('SubscriptionCheckoutException expose son message', () {
+    const exception = SubscriptionCheckoutException('paiement indisponible');
+
+    expect(exception.message, 'paiement indisponible');
+    expect(exception.toString(), 'paiement indisponible');
+  });
+
   group('extractCheckoutUrl', () {
     test('accepte les alias directs', () {
       for (final key in <String>[
@@ -172,6 +179,25 @@ void main() {
           fallback: 'fallback',
         ),
         'fallback',
+      );
+    });
+
+    test('utilise les messages par défaut quand le backend est vide', () {
+      expect(
+        policy.messageForFirebaseFailure(
+          code: 'failed-precondition',
+          message: '   ',
+          fallback: 'fallback',
+        ),
+        'Ce plan n’est pas disponible pour le moment.',
+      );
+      expect(
+        policy.messageForFirebaseFailure(
+          code: 'invalid-argument',
+          message: '',
+          fallback: 'fallback',
+        ),
+        'Le plan ou la période de facturation est invalide.',
       );
     });
   });
