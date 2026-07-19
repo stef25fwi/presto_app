@@ -1,4 +1,4 @@
-name: Coverage 80% Single Agent
+name: Coverage 80% Autopilot
 
 on:
   workflow_dispatch:
@@ -21,26 +21,27 @@ on:
       - ".github/workflows/coverage-agent.yml"
 
 concurrency:
-  group: coverage-80-single-agent
-  cancel-in-progress: true
+  group: coverage-80-autopilot
+  cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
   issues: write
-  pull-requests: read
+  pull-requests: write
   actions: read
 
 jobs:
-  measure-and-steer:
-    name: Measure LCOV and steer the single active mission
+  autopilot:
+    name: Measure, implement and open the single LCOV mission
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          fetch-depth: 1
+          ref: main
+          fetch-depth: 0
 
       - name: Set up Flutter 3.44.6
         uses: subosito/flutter-action@v2
@@ -52,8 +53,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests with real LCOV coverage
-        run: flutter test --coverage
+      - name: Measure the real main baseline
+        run: |
+          set -euo pipefail
+          flutter test --coverage
+          cp coverage/lcov.info /tmp/main-lcov.info
 
       - name: Select the highest-value priority target
         id: target
@@ -105,90 +109,195 @@ jobs:
           print(f"url={data.get('url', '')}")
           PY
 
-      - name: Update the single coverage dashboard
+      - name: Stop when the objective is reached
+        if: steps.target.outputs.target_reached == 'true'
+        run: echo "Global LCOV target reached at ${{ steps.target.outputs.global_percent }}%."
+
+      - name: Stop while one coverage PR is active
+        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists == 'true'
+        run: echo "Single coverage PR already active: #${{ steps.active_pr.outputs.number }}."
+
+      - name: Report missing OpenAI key
+        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true' && secrets.OPENAI_API_KEY == ''
         env:
           GH_TOKEN: ${{ github.token }}
-          DASHBOARD_ISSUE: "553"
-          GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
-          TARGET_REACHED: ${{ steps.target.outputs.target_reached }}
-          CATEGORY: ${{ steps.target.outputs.category }}
-          TARGET_PATH: ${{ steps.target.outputs.path }}
-          ACTIVE_PR_EXISTS: ${{ steps.active_pr.outputs.exists }}
-          ACTIVE_PR_NUMBER: ${{ steps.active_pr.outputs.number }}
-          ACTIVE_PR_TITLE: ${{ steps.active_pr.outputs.title }}
-          ACTIVE_PR_URL: ${{ steps.active_pr.outputs.url }}
+        run: |
+          gh issue comment 553 --body \
+            "⚠️ Autopilote prêt mais bloqué : ajoutez le secret GitHub Actions \`OPENAI_API_KEY\`. Cible actuelle : \`${{ steps.target.outputs.path }}\` (${{
+              steps.target.outputs.category }})."
+
+      - name: Create the unique working branch
+        id: branch
+        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true' && secrets.OPENAI_API_KEY != ''
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import os
+          branch="coverage/autopilot-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          echo "name=$branch" >> "$GITHUB_OUTPUT"
+
+      - name: Ask Codex to implement real coverage
+        id: codex
+        if: steps.branch.outcome == 'success'
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+          output-file: quality_reports/coverage-agent/codex-result.md
+          prompt: |
+            Work in repository ${{ github.repository }} on branch ${{ steps.branch.outputs.name }}.
+
+            Objective: increase real global Flutter LCOV coverage toward 80.00%.
+            Current global coverage: ${{ steps.target.outputs.global_percent }}%.
+            Priority domain: ${{ steps.target.outputs.category }}.
+            Primary target: ${{ steps.target.outputs.path }}.
+
+            Inspect production code, existing tests and /tmp/main-lcov.info. Add deterministic behavioral tests that execute genuinely uncovered production lines. You may make the smallest injection-friendly production refactor required for testability, without changing behavior.
+
+            Hard rules:
+            - do not create skips, fake assertions, sleeps, forced successes or empty tests;
+            - do not lower thresholds or exclude files/lines from LCOV;
+            - do not delete production lines merely to improve the percentage;
+            - do not edit GitHub workflows;
+            - preserve all existing tests;
+            - prioritize payments, authentication, publication, messaging, administration, then best gain;
+            - keep one coherent mission and avoid unrelated changes.
+
+            Run focused tests while working. Leave all useful changes in the working tree. Do not commit or push.
+
+      - name: Guard the generated changes
+        if: steps.codex.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- .github/workflows || {
+            echo "Codex modified workflows; refusing the mission."
+            exit 1
+          }
+          if git diff -- test integration_test lib | grep -E '^\+.*(skip:|@Skip|LCOV_EXCL|coverage:ignore|expect\(true, *isTrue\))'; then
+            echo "Forbidden coverage bypass detected."
+            exit 1
+          fi
+          changed_dart="$(git diff --name-only --diff-filter=ACMR -- '*.dart')"
+          if [ -n "$changed_dart" ]; then
+            dart format $changed_dart
+          fi
+
+      - name: Validate the generated mission
+        if: steps.codex.outcome == 'success'
+        run: |
+          set -euo pipefail
+          flutter analyze --fatal-infos
+          flutter test --coverage
+
+      - name: Require a real LCOV gain
+        id: gain
+        if: steps.codex.outcome == 'success'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
           from pathlib import Path
 
-          active = os.environ.get("ACTIVE_PR_EXISTS") == "true"
-          reached = os.environ.get("TARGET_REACHED") == "true"
-          if reached:
-              status = "✅ Objectif global atteint."
-          elif active:
-              status = (
-                  f"🔄 PR active : #{os.environ.get('ACTIVE_PR_NUMBER')} "
-                  f"[{os.environ.get('ACTIVE_PR_TITLE')}]"
-                  f"({os.environ.get('ACTIVE_PR_URL')})"
+          def totals(path):
+              lf = lh = 0
+              for line in Path(path).read_text().splitlines():
+                  if line.startswith('LF:'):
+                      lf += int(line[3:])
+                  elif line.startswith('LH:'):
+                      lh += int(line[3:])
+              return lh, lf
+
+          old_lh, old_lf = totals('/tmp/main-lcov.info')
+          new_lh, new_lf = totals('coverage/lcov.info')
+          delta = new_lh - old_lh
+          if new_lf < old_lf:
+              raise SystemExit(
+                  f'LCOV denominator decreased ({old_lf} -> {new_lf}); refusing exclusions/deletions.'
               )
-          else:
-              status = "🟠 Aucune PR de couverture active : la cible ci-dessous est prête."
-
-          body = f"""## Agent unique LCOV vers 80 %
-
-          Ce ticket est l'unique tableau de bord de couverture. Aucun autre ticket `coverage-agent` ne doit être ouvert en parallèle.
-
-          ## État automatique
-
-          - Couverture globale réelle : **{os.environ.get('GLOBAL_PERCENT')} %**
-          - Objectif : **80 %**
-          - Domaine prioritaire suivant : **{os.environ.get('CATEGORY')}**
-          - Fichier cible suivant : `{os.environ.get('TARGET_PATH')}`
-          - Statut : {status}
-          - Dernière mise à jour : exécution GitHub Actions `{os.environ.get('GITHUB_RUN_ID')}`
-
-          ## Boucle obligatoire
-
-          1. Une seule branche `coverage/*` et une seule PR active.
-          2. Mesure LCOV réelle depuis `main`.
-          3. Sélection de la cible au meilleur rendement dans l'ordre : paiements, publication, messagerie, administration, authentification.
-          4. Tests comportementaux déterministes uniquement.
-          5. Aucun seuil abaissé, aucune exclusion artificielle, aucun `skip` ou faux succès.
-          6. Après fusion, recalcul immédiat et sélection de la cible suivante.
-          7. Répéter jusqu'à une couverture globale réelle supérieure ou égale à 80 %.
-
-          ## Contrôles avant fusion
-
-          - `dart format`
-          - `flutter analyze`
-          - `flutter test`
-          - `flutter test --coverage`
-          - contrôles Functions et règles Firestore
-          - build Web
-          - absence de régression LCOV globale
-          """
-          Path('/tmp/coverage-dashboard.md').write_text(body, encoding='utf-8')
+          if delta <= 0:
+              raise SystemExit(f'No real LCOV gain ({old_lh} -> {new_lh}).')
+          print(f'old_lh={old_lh}')
+          print(f'old_lf={old_lf}')
+          print(f'new_lh={new_lh}')
+          print(f'new_lf={new_lf}')
+          print(f'delta={delta}')
+          print(f'percent={new_lh / new_lf * 100:.4f}')
           PY
-          gh issue edit "$DASHBOARD_ISSUE" --body-file /tmp/coverage-dashboard.md
 
-      - name: Upload LCOV and selection evidence
+      - name: Commit and push the single mission
+        if: steps.gain.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git config user.name "coverage-autopilot[bot]"
+          git config user.email "coverage-autopilot[bot]@users.noreply.github.com"
+          git add lib test integration_test quality_reports/coverage-agent/codex-result.md
+          git commit -m "test(coverage): autopilot ${{ steps.target.outputs.category }} +${{ steps.gain.outputs.delta }} lignes"
+          git push --set-upstream origin "${{ steps.branch.outputs.name }}"
+
+      - name: Open the unique coverage pull request
+        id: pr
+        if: steps.gain.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          body="$(cat <<EOF
+          ## Coverage Autopilot
+
+          - Baseline : ${{ steps.gain.outputs.old_lh }} / ${{ steps.gain.outputs.old_lf }}
+          - Nouvelle mesure : ${{ steps.gain.outputs.new_lh }} / ${{ steps.gain.outputs.new_lf }} — ${{ steps.gain.outputs.percent }} %
+          - Gain réel : +${{ steps.gain.outputs.delta }} lignes
+          - Domaine : ${{ steps.target.outputs.category }}
+          - Cible primaire : \`${{ steps.target.outputs.path }}\`
+
+          Validation locale du runner : `flutter analyze --fatal-infos` et `flutter test --coverage` réussis.
+          EOF
+          )"
+          url="$(gh pr create \
+            --base main \
+            --head "${{ steps.branch.outputs.name }}" \
+            --title "test(coverage): autopilot ${{ steps.target.outputs.category }} (+${{ steps.gain.outputs.delta }} lignes)" \
+            --body "$body" \
+            --draft)"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          gh pr merge "$url" --auto --squash || true
+
+      - name: Update the coverage dashboard
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
+          CATEGORY: ${{ steps.target.outputs.category }}
+          TARGET_PATH: ${{ steps.target.outputs.path }}
+          ACTIVE_PR_URL: ${{ steps.active_pr.outputs.url }}
+          CREATED_PR_URL: ${{ steps.pr.outputs.url }}
+        run: |
+          status="Mesure terminée."
+          if [ -n "${CREATED_PR_URL:-}" ]; then
+            status="Nouvelle PR autopilote : ${CREATED_PR_URL}"
+          elif [ -n "${ACTIVE_PR_URL:-}" ]; then
+            status="PR de couverture déjà active : ${ACTIVE_PR_URL}"
+          elif [ "${{ steps.target.outputs.target_reached }}" = "true" ]; then
+            status="✅ Objectif global atteint."
+          elif [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            status="⚠️ Secret OPENAI_API_KEY manquant."
+          fi
+          gh issue comment 553 --body \
+            "### Coverage Autopilot — run $GITHUB_RUN_ID
+
+          - Couverture main : **${GLOBAL_PERCENT}%**
+          - Domaine : **${CATEGORY}**
+          - Cible : \`${TARGET_PATH}\`
+          - Statut : ${status}"
+
+      - name: Upload LCOV and autopilot evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-agent-${{ github.run_id }}
+          name: coverage-autopilot-${{ github.run_id }}
           path: |
             coverage/lcov.info
             quality_reports/coverage-agent/target.json
             quality_reports/coverage-agent/issue.md
+            quality_reports/coverage-agent/codex-result.md
+          if-no-files-found: ignore
           retention-days: 14
-
-      - name: Report next action
-        run: |
-          if [ "${{ steps.target.outputs.target_reached }}" = "true" ]; then
-            echo "Global LCOV target reached: ${{ steps.target.outputs.global_percent }}%."
-          elif [ "${{ steps.active_pr.outputs.exists }}" = "true" ]; then
-            echo "Single coverage PR already active: #${{ steps.active_pr.outputs.number }}."
-          else
-            echo "Next target ready: ${{ steps.target.outputs.category }} — ${{ steps.target.outputs.path }}."
-          fi
