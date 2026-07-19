@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../services/notification_service.dart';
 import '../utils/friendly_snackbar.dart';
+import 'account_notifications_status_chip.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
 
@@ -236,7 +237,7 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 else
-                  _StatusChip(
+                  AccountNotificationsStatusChip(
                     label: badge.label,
                     color: badge.color,
                     icon: badge.icon,
@@ -281,44 +282,6 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
-
-  final String label;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
-        ],
       ),
     );
   }
