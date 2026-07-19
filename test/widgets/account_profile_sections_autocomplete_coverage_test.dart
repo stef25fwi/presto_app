@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/services/city_search.dart';
 import 'package:presto_app/widgets/account_profile_sections.dart';
 
 Finder _fieldWithLabel(String label) {
@@ -62,6 +63,8 @@ void main() {
 
   testWidgets('recherche une ville sans code postal puis sélectionne une option',
       (tester) async {
+    await CitySearch.instance.ensureLoaded();
+
     final controllers = _Controllers();
     addTearDown(controllers.dispose);
     final countryCodes = <String>[];
