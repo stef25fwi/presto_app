@@ -72,17 +72,16 @@ class _RetryReadRepository extends ListingReadRepository {
 }
 
 class _RetryVerification extends MarketplaceHumanVerification {
-  _RetryVerification(this.errors, {this.token = 'token-ok'});
+  _RetryVerification(this.errors);
 
   final List<Object> errors;
-  final String token;
   var calls = 0;
 
   @override
   Future<String> obtainToken(MarketplaceHumanVerificationAction action) async {
     calls += 1;
     if (errors.isNotEmpty) throw errors.removeAt(0);
-    return token;
+    return 'token-ok';
   }
 }
 
@@ -131,7 +130,7 @@ void main() {
     );
   }
 
-  PlatformException channelError() => const PlatformException(
+  PlatformException channelError() => PlatformException(
         code: 'channel-error',
         message: 'Unable to establish connection on channel.',
       );
