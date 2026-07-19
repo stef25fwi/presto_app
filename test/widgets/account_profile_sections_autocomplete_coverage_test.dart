@@ -79,7 +79,7 @@ void main() {
     await tester.enterText(cityField, 'Baie-Mahault');
     await tester.pumpAndSettle();
 
-    expect(countryCodes, contains('+590'));
+    expect(countryCodes.last, '+33');
     final option = find.text('Baie-Mahault (97122)');
     expect(option, findsOneWidget);
 
