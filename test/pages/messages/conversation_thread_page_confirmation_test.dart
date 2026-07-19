@@ -144,7 +144,13 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Supprimer'));
+
+    final deleteMenuItem = find.ancestor(
+      of: find.text('Supprimer'),
+      matching: find.byType(PopupMenuItem),
+    );
+    expect(deleteMenuItem, findsOneWidget);
+    await tester.tap(deleteMenuItem);
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsOneWidget);
