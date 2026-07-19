@@ -3,17 +3,23 @@ import 'package:flutter/services.dart';
 
 import 'package:presto_app/services/pro_siret_service.dart';
 
+typedef ProSiretPreVerifier = Future<ProSiretVerificationResult> Function(
+  String rawSiret,
+);
+
 class ProSiretSignupSection extends StatefulWidget {
   const ProSiretSignupSection({
     super.key,
     required this.visible,
     this.onSiretChanged,
     this.onVerified,
+    this.preVerifier,
   });
 
   final bool visible;
   final ValueChanged<String>? onSiretChanged;
   final ValueChanged<ProSiretVerificationResult>? onVerified;
+  final ProSiretPreVerifier? preVerifier;
 
   @override
   State<ProSiretSignupSection> createState() => _ProSiretSignupSectionState();
@@ -21,7 +27,8 @@ class ProSiretSignupSection extends StatefulWidget {
 
 class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
   final TextEditingController _siretController = TextEditingController();
-  final ProSiretService _service = ProSiretService();
+
+  ProSiretService get _service => ProSiretService();
 
   bool _loading = false;
   String? _error;
@@ -56,7 +63,8 @@ class _ProSiretSignupSectionState extends State<ProSiretSignupSection> {
     try {
       // Pré-vérification autorisée avant connexion :
       // App Check obligatoire, aucune écriture dans users/pro_profiles.
-      final result = await _service.preVerifySiret(_siretController.text);
+      final verifier = widget.preVerifier ?? _service.preVerifySiret;
+      final result = await verifier(_siretController.text);
 
       if (!mounted) return;
 
