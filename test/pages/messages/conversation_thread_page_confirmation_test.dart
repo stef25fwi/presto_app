@@ -150,7 +150,7 @@ void main() {
     expect(deleteLabel, findsOneWidget);
     final deleteItem = find.ancestor(
       of: deleteLabel,
-      matching: find.byType(PopupMenuItem<String>),
+      matching: find.byWidgetPredicate((widget) => widget is PopupMenuItem),
     );
     expect(deleteItem, findsOneWidget);
 
