@@ -145,12 +145,10 @@ void main() {
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pump(const Duration(milliseconds: 300));
 
-    final deleteMenuItem = find.ancestor(
-      of: find.text('Supprimer'),
-      matching: find.byWidgetPredicate((widget) => widget is PopupMenuItem),
-    );
-    expect(deleteMenuItem, findsOneWidget);
-    await tester.tap(deleteMenuItem);
+    final deleteLabel = find.text('Supprimer');
+    expect(deleteLabel, findsOneWidget);
+    await tester.ensureVisible(deleteLabel);
+    await tester.tap(deleteLabel);
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsOneWidget);
