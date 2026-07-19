@@ -4,10 +4,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'firebase_functions_region.dart';
 
+typedef EmailActionCallableInvoker = Future<void> Function(
+  String functionName,
+  Map<String, dynamic>? payload,
+);
+
 class EmailActionService {
   EmailActionService._();
 
   static final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  static EmailActionCallableInvoker _callableInvoker = _invokeFirebaseCallable;
+
+  static Future<void> _invokeFirebaseCallable(
+    String functionName,
+    Map<String, dynamic>? payload,
+  ) async {
+    final callable = _functions.httpsCallable(functionName);
+    if (payload == null) {
+      await callable.call();
+      return;
+    }
+    await callable.call(payload);
+  }
+
+  static void setCallableInvokerForTest(EmailActionCallableInvoker invoker) {
+    _callableInvoker = invoker;
+  }
+
+  static void resetCallableInvokerForTest() {
+    _callableInvoker = _invokeFirebaseCallable;
+  }
 
   static Future<bool> syncCurrentUserEmailVerificationState() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -49,18 +75,18 @@ class EmailActionService {
   }
 
   static Future<void> requestPasswordResetEmail(String email) async {
-    final callable = _functions.httpsCallable('requestPasswordResetEmail');
-    await callable.call(<String, dynamic>{'email': email.trim()});
+    await _callableInvoker(
+      'requestPasswordResetEmail',
+      <String, dynamic>{'email': email.trim()},
+    );
   }
 
   static Future<void> requestEmailVerificationEmail() async {
-    final callable = _functions.httpsCallable('requestEmailVerificationEmail');
-    await callable.call();
+    await _callableInvoker('requestEmailVerificationEmail', null);
   }
 
   static Future<void> reportPasswordChanged() async {
-    final callable = _functions.httpsCallable('reportPasswordChanged');
-    await callable.call(<String, dynamic>{
+    await _callableInvoker('reportPasswordChanged', <String, dynamic>{
       'changedAt': DateTime.now().millisecondsSinceEpoch,
     });
   }
