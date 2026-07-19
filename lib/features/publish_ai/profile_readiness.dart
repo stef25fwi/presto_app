@@ -5,6 +5,17 @@ import 'package:flutter/foundation.dart';
 import '../../app_core.dart';
 import '../../services/user_profile_bootstrap_service.dart';
 
+typedef ProfileAccessPreparer = Future<User?> Function({
+  required User user,
+  required bool forceRefreshAppCheckToken,
+});
+
+typedef ProfileDocumentReader =
+    Future<DocumentSnapshot<Map<String, dynamic>>> Function({
+  required String uid,
+  required Source source,
+});
+
 /// Reasons a user is not allowed to start the AI publishing flow.
 enum ProfileReadinessGate {
   /// No Firebase user — auth required.
@@ -143,13 +154,47 @@ class ProfileReadinessChecker {
   ProfileReadinessChecker({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
+    ProfileAccessPreparer? accessPreparer,
+    ProfileDocumentReader? documentReader,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _accessPreparer = accessPreparer,
+        _documentReader = documentReader;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final ProfileAccessPreparer? _accessPreparer;
+  final ProfileDocumentReader? _documentReader;
 
   static const Duration _readTimeout = Duration(seconds: 6);
+
+  Future<User?> _prepareProfileAccess(User user) {
+    final override = _accessPreparer;
+    if (override != null) {
+      return override(
+        user: user,
+        forceRefreshAppCheckToken: true,
+      );
+    }
+    return UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      user: user,
+      forceRefreshAppCheckToken: true,
+    );
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _readProfileDocument({
+    required String uid,
+    required Source source,
+  }) {
+    final override = _documentReader;
+    final read = override != null
+        ? override(uid: uid, source: source)
+        : _firestore
+            .collection('users')
+            .doc(uid)
+            .get(GetOptions(source: source));
+    return read.timeout(_readTimeout);
+  }
 
   /// One-shot check. Reads users/{uid} from server with a short cache
   /// fallback so the AI button stays responsive even when the network is
@@ -163,12 +208,7 @@ class ProfileReadinessChecker {
     }
 
     try {
-      user = await UserProfileBootstrapService.prepareProfileFirestoreAccess(
-            user: user,
-            forceRefreshAppCheckToken: true,
-          ) ??
-          _auth.currentUser ??
-          user;
+      user = await _prepareProfileAccess(user) ?? _auth.currentUser ?? user;
     } catch (error) {
       debugPrint(
         '[ProfileReadiness] profile access preparation failed '
@@ -185,21 +225,13 @@ class ProfileReadinessChecker {
 
     DocumentSnapshot<Map<String, dynamic>>? snap;
     try {
-      snap = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .get(const GetOptions(source: Source.server))
-          .timeout(_readTimeout);
+      snap = await _readProfileDocument(uid: user.uid, source: Source.server);
     } catch (serverError) {
       debugPrint(
         '[ProfileReadiness] server read failed uid=${user.uid} err=$serverError',
       );
       try {
-        snap = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .get(const GetOptions(source: Source.cache))
-            .timeout(_readTimeout);
+        snap = await _readProfileDocument(uid: user.uid, source: Source.cache);
       } catch (cacheError) {
         debugPrint(
           '[ProfileReadiness] cache read failed uid=${user.uid} err=$cacheError',
