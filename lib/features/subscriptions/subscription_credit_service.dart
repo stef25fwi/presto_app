@@ -2,6 +2,11 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../services/firebase_functions_region.dart';
 
+typedef SubscriptionCreditCaller = Future<Map<String, dynamic>> Function(
+  String name,
+  Map<String, dynamic>? parameters,
+);
+
 enum SubscriptionCreditKind {
   journeys('journeys'),
   pdf('pdf'),
@@ -139,10 +144,14 @@ class SubscriptionQuotaExceededException implements Exception {
 }
 
 class SubscriptionCreditService {
-  SubscriptionCreditService({FirebaseFunctions? functions})
-      : _functionsOverride = functions;
+  SubscriptionCreditService({
+    FirebaseFunctions? functions,
+    SubscriptionCreditCaller? caller,
+  })  : _functionsOverride = functions,
+        _caller = caller;
 
   final FirebaseFunctions? _functionsOverride;
+  final SubscriptionCreditCaller? _caller;
 
   FirebaseFunctions get _functions =>
       _functionsOverride ?? prestoFirebaseFunctions;
@@ -226,6 +235,10 @@ class SubscriptionCreditService {
     SubscriptionCreditKind? quotaKind,
   }) async {
     try {
+      final caller = _caller;
+      if (caller != null) {
+        return await caller(name, parameters);
+      }
       final result = await _functions
           .httpsCallable(
             name,
