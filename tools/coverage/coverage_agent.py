@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Select high-value Flutter coverage targets from an LCOV report.
+"""Select profitable Flutter coverage targets from an LCOV report.
 
-The selector is deterministic and intentionally never edits coverage thresholds,
-excludes files, or generates fake tests. It emits JSON and Markdown consumed by
-GitHub Actions. The JSON contains one primary target for backward compatibility
-and one target per priority domain so independent coverage waves can run in
-parallel without duplicating the same domain.
+The selector never changes thresholds or excludes ordinary production files. It
+ranks targets using expected LCOV gain, domain priority and a small complexity
+proxy so the autopilot prefers files that can move the global percentage fast.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -19,10 +18,10 @@ from typing import Iterable
 
 PRIORITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("payments", ("payment", "stripe", "subscription", "billing", "checkout")),
+    ("authentication", ("auth", "login", "register", "password", "credential")),
     ("publication", ("publish", "listing", "offer", "annonce")),
     ("messaging", ("message", "messaging", "chat", "conversation", "thread")),
     ("administration", ("admin", "moderation", "dashboard")),
-    ("authentication", ("auth", "login", "register", "password", "credential")),
 )
 
 EXCLUDED_PATH_PARTS = (
@@ -49,6 +48,15 @@ class FileCoverage:
     @property
     def uncovered(self) -> int:
         return self.found - self.hit
+
+    @property
+    def profitability(self) -> float:
+        """Expected gain divided by a conservative file-complexity proxy.
+
+        Large uncovered files remain attractive, but extremely large files no
+        longer monopolise the queue merely because their percentage is low.
+        """
+        return self.uncovered / max(1.0, math.sqrt(self.found))
 
 
 def normalise_path(raw: str) -> str:
@@ -77,16 +85,17 @@ def parse_lcov(path: Path) -> list[FileCoverage]:
         if not current:
             return
         normalised = normalise_path(current)
-        if not normalised.startswith("lib/"):
-            current, line_hits = None, {}
-            return
-        if any(part in normalised for part in EXCLUDED_PATH_PARTS):
+        if not normalised.startswith("lib/") or any(
+            part in normalised for part in EXCLUDED_PATH_PARTS
+        ):
             current, line_hits = None, {}
             return
         found = len(line_hits)
         if found:
             hit = sum(1 for count in line_hits.values() if count > 0)
-            uncovered = sorted(line for line, count in line_hits.items() if count == 0)
+            uncovered = sorted(
+                line for line, count in line_hits.items() if count == 0
+            )
             category, rank = classify(normalised)
             records.append(
                 FileCoverage(
@@ -128,32 +137,27 @@ def compact_ranges(lines: Iterable[int], limit: int = 80) -> str:
         ranges.append(str(start) if start == previous else f"{start}-{previous}")
         start = previous = value
     ranges.append(str(start) if start == previous else f"{start}-{previous}")
-    suffix = "…" if len(unique_values) > limit else ""
-    return ", ".join(ranges) + suffix
+    return ", ".join(ranges) + ("…" if len(unique_values) > limit else "")
 
 
-def _target_sort_key(item: FileCoverage) -> tuple[float, int, str]:
-    return (item.percent, -item.uncovered, item.path)
+def target_sort_key(item: FileCoverage) -> tuple[int, float, int, float, str]:
+    return (
+        item.category_rank,
+        -item.profitability,
+        -item.uncovered,
+        item.percent,
+        item.path,
+    )
 
 
 def choose_target(records: list[FileCoverage]) -> FileCoverage:
     candidates = [record for record in records if record.uncovered > 0]
     if not candidates:
         raise SystemExit("No uncovered production file found in LCOV report.")
-    return min(
-        candidates,
-        key=lambda item: (
-            item.category_rank,
-            *_target_sort_key(item),
-        ),
-    )
+    return min(candidates, key=target_sort_key)
 
 
-def choose_targets_by_category(
-    records: list[FileCoverage],
-) -> list[FileCoverage]:
-    """Return at most one uncovered target for each configured priority domain."""
-
+def choose_targets_by_category(records: list[FileCoverage]) -> list[FileCoverage]:
     selected: list[FileCoverage] = []
     for category, _ in PRIORITY_RULES:
         candidates = [
@@ -162,7 +166,7 @@ def choose_targets_by_category(
             if record.category == category and record.uncovered > 0
         ]
         if candidates:
-            selected.append(min(candidates, key=_target_sort_key))
+            selected.append(min(candidates, key=target_sort_key))
     return selected
 
 
@@ -171,6 +175,7 @@ def target_payload(target: FileCoverage) -> dict[str, object]:
         **asdict(target),
         "percent": round(target.percent, 2),
         "uncovered": target.uncovered,
+        "profitability": round(target.profitability, 2),
         "uncovered_ranges": compact_ranges(target.uncovered_lines),
     }
 
@@ -191,25 +196,21 @@ def issue_body(
 - Domaine prioritaire : **{target.category}**
 - Fichier sélectionné : `{target.path}`
 - Couverture du fichier : **{target.percent:.2f} %** ({target.hit}/{target.found})
-- Lignes non couvertes : `{compact_ranges(target.uncovered_lines)}`
+- Lignes non couvertes : **{target.uncovered}**
+- Score de rendement estimé : **{target.profitability:.2f}**
+- Plages non couvertes : `{compact_ranges(target.uncovered_lines)}`
 
 ### Travail demandé
-1. Lire le fichier et ses tests existants.
-2. Ajouter des tests comportementaux déterministes pour augmenter sa couverture.
-3. Extraire uniquement les dépendances strictement nécessaires à la testabilité.
-4. Exécuter `dart format`, `flutter analyze`, `flutter test` et `flutter test --coverage`.
-5. Fournir dans la PR la couverture avant/après, globale et pour ce fichier.
+1. Ajouter des tests comportementaux déterministes sur cette cible.
+2. Utiliser les tests ciblés et `flutter analyze lib test` pendant le développement.
+3. Avant la PR, exécuter `dart format`, `flutter analyze --fatal-infos` et `flutter test --coverage`.
+4. Fournir dans la PR la couverture avant/après, globale et pour ce fichier.
 
-### Garde-fous obligatoires
-- Ne pas abaisser de seuil de couverture.
-- Ne pas exclure de fichier ou de ligne du LCOV.
-- Ne pas ajouter `skip`, faux succès, attente arbitraire ou test vide.
-- Ne pas modifier le comportement produit sauf correction justifiée et testée.
-- Une seule cible principale par PR.
-- Ne pas fusionner si les tests échouent ou si la couverture globale régresse.
-
-### Critère de fin
-La PR doit augmenter la couverture LCOV réelle et conserver tous les contrôles au vert.
+### Garde-fous
+- Aucun abaissement de seuil ou exclusion LCOV.
+- Aucun `skip`, test vide, faux succès ou attente arbitraire.
+- Une seule branche et une seule PR `coverage/*` active.
+- La couverture globale ne doit pas régresser.
 """
 
 

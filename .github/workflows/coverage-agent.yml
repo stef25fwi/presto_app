@@ -7,8 +7,11 @@ on:
         description: Global LCOV target percentage
         required: false
         default: "80"
-  schedule:
-    - cron: "*/15 * * * *"
+      force_measure:
+        description: Force a complete LCOV measurement
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [main]
     paths:
@@ -19,6 +22,11 @@ on:
       - "pubspec.lock"
       - "tools/coverage/**"
       - ".github/workflows/coverage-agent.yml"
+  workflow_run:
+    workflows: ["Pull request validation"]
+    types: [completed]
+  schedule:
+    - cron: "17 * * * *"
 
 concurrency:
   group: coverage-80-autopilot
@@ -32,8 +40,45 @@ permissions:
   checks: read
 
 jobs:
-  autopilot:
-    name: Measure and dispatch the single LCOV mission
+  watchdog:
+    name: Remove stale coverage locks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close orphaned missions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          active_pr_count="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/"))] | length')"
+          if [ "$active_pr_count" != "0" ]; then
+            echo "A coverage PR is active; no mission is stale."
+            exit 0
+          fi
+
+          now="$(date -u +%s)"
+          gh issue list --repo "$GITHUB_REPOSITORY" --state open --label coverage-agent --limit 100 \
+            --json number,updatedAt,title \
+            --jq '.[] | [.number, .updatedAt, .title] | @tsv' |
+          while IFS=$'\t' read -r number updated_at title; do
+            [ -n "$number" ] || continue
+            [ "$number" = "553" ] && continue
+            updated_epoch="$(date -u -d "$updated_at" +%s)"
+            age=$((now - updated_epoch))
+            if [ "$age" -ge 7200 ]; then
+              gh issue comment --repo "$GITHUB_REPOSITORY" "$number" --body \
+                "Mission fermée automatiquement : aucune branche ou PR de couverture n'a été créée dans les deux heures. Le verrou est libéré pour permettre une nouvelle phase."
+              gh issue close --repo "$GITHUB_REPOSITORY" "$number" --reason "not planned"
+              echo "Closed stale mission #$number — $title"
+            fi
+          done
+
+  measure:
+    name: Measure main and prepare the next profitable phase
+    needs: watchdog
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 120
 
@@ -44,7 +89,25 @@ jobs:
           ref: main
           fetch-depth: 1
 
+      - name: Skip duplicate measurement for unchanged main
+        id: dedupe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_MEASURE: ${{ inputs.force_measure }}
+        run: |
+          set -euo pipefail
+          main_sha="$(git rev-parse HEAD)"
+          previous_sha="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" --comments --json comments --jq '[.comments[].body | capture("<!-- coverage-main-sha:(?<sha>[0-9a-f]{40}) -->")?.sha] | map(select(. != null)) | last // ""')"
+          if [ "${FORCE_MEASURE:-false}" != "true" ] && [ "$main_sha" = "$previous_sha" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Main is unchanged; full LCOV measurement skipped."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "main_sha=$main_sha" >> "$GITHUB_OUTPUT"
+
       - name: Set up Flutter 3.44.6
+        if: steps.dedupe.outputs.run == 'true'
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.44.6"
@@ -52,14 +115,15 @@ jobs:
           cache: true
 
       - name: Install dependencies
+        if: steps.dedupe.outputs.run == 'true'
         run: flutter pub get
 
       - name: Measure the real main baseline
-        run: |
-          set -euo pipefail
-          flutter test --coverage
+        if: steps.dedupe.outputs.run == 'true'
+        run: flutter test --coverage
 
-      - name: Select the highest-value priority target
+      - name: Select the highest-yield priority target
+        if: steps.dedupe.outputs.run == 'true'
         id: target
         env:
           INPUT_TARGET: ${{ inputs.global_target }}
@@ -81,112 +145,95 @@ jobs:
           print(f"global_percent={data['global']['percent']}")
           print(f"category={data['target']['category']}")
           print(f"path={data['target']['path']}")
+          print(f"uncovered={data['target']['uncovered']}")
           PY
 
-      - name: Detect the single active coverage pull request
-        id: active_pr
+      - name: Detect active execution
+        if: steps.dedupe.outputs.run == 'true'
+        id: active
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh pr list --state open --json number,title,url,headRefName \
-            --jq '[.[] | select(.headRefName | startswith("coverage/"))] | .[0] // {}' \
-            > /tmp/active-coverage-pr.json
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from pathlib import Path
-          data = json.loads(Path('/tmp/active-coverage-pr.json').read_text())
-          print(f"exists={str(bool(data)).lower()}")
-          print(f"number={data.get('number', '')}")
-          print(f"url={data.get('url', '')}")
+          pr="$(gh pr list --state open --json number,url,headRefName --jq '[.[] | select(.headRefName | startswith("coverage/"))] | .[0] // {}')"
+          mission="$(gh issue list --state open --label coverage-agent --limit 100 --json number,url,updatedAt --jq '[.[] | select(.number != 553)] | .[0] // {}')"
+          python3 - "$pr" "$mission" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, sys
+          pr = json.loads(sys.argv[1])
+          mission = json.loads(sys.argv[2])
+          print(f"pr_exists={str(bool(pr)).lower()}")
+          print(f"pr_url={pr.get('url', '')}")
+          print(f"mission_exists={str(bool(mission)).lower()}")
+          print(f"mission_url={mission.get('url', '')}")
           PY
 
-      - name: Detect an existing open coverage mission
-        id: active_mission
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh issue list --state open --label coverage-agent --limit 100 \
-            --json number,title,url \
-            --jq '[.[] | select(.number != 553)] | .[0] // {}' \
-            > /tmp/active-coverage-mission.json
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from pathlib import Path
-          data = json.loads(Path('/tmp/active-coverage-mission.json').read_text())
-          print(f"exists={str(bool(data)).lower()}")
-          print(f"number={data.get('number', '')}")
-          print(f"url={data.get('url', '')}")
-          PY
-
-      - name: Create the unique coverage mission without external AI key
+      - name: Create one executable coverage mission
+        if: steps.dedupe.outputs.run == 'true' && steps.target.outputs.target_reached != 'true' && steps.active.outputs.pr_exists != 'true' && steps.active.outputs.mission_exists != 'true'
         id: mission
-        if: steps.target.outputs.target_reached != 'true' && steps.active_pr.outputs.exists != 'true' && steps.active_mission.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TARGET_PATH: ${{ steps.target.outputs.path }}
           TARGET_CATEGORY: ${{ steps.target.outputs.category }}
           GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
+          UNCOVERED: ${{ steps.target.outputs.uncovered }}
         run: |
           set -euo pipefail
+          branch="coverage/${TARGET_CATEGORY}-$(date -u +%Y%m%d-%H%M%S)"
           body="$(cat <<EOF
-          ## Mission unique LCOV
+          ## Phase LCOV prête à exécuter
 
           - Baseline réelle sur main : **${GLOBAL_PERCENT}%**
           - Domaine prioritaire : **${TARGET_CATEGORY}**
-          - Cible primaire : \`${TARGET_PATH}\`
-          - Objectif global : **80,00 %**
+          - Cible rentable : \`${TARGET_PATH}\`
+          - Lignes actuellement non couvertes : **${UNCOVERED}**
+          - Branche réservée : \`${branch}\`
 
-          Ajouter des tests comportementaux déterministes qui exécutent réellement les lignes non couvertes. Une refactorisation minimale pour injecter les dépendances est autorisée uniquement si elle conserve le comportement produit.
+          ### Boucle d'exécution obligatoire
+          1. Créer la branche réservée depuis main.
+          2. Ajouter des tests comportementaux déterministes sur la cible.
+          3. Pendant le développement, exécuter seulement les tests ciblés et \`flutter analyze lib test\`.
+          4. Avant la PR, exécuter \`dart format\`, \`flutter analyze --fatal-infos\` et \`flutter test --coverage\`.
+          5. Ouvrir une PR \`coverage/*\`, consigner le LCOV avant/après puis fermer cette mission.
 
-          Contrôles obligatoires avant PR :
-          - \`dart format\`
-          - \`flutter analyze --fatal-infos\`
-          - \`flutter test --coverage\`
-          - gain LCOV réel avec dénominateur non réduit
-
-          Interdictions : aucun \`skip\`, test vide, attente arbitraire, faux succès, exclusion LCOV ou baisse de seuil. Une seule branche et une seule PR \`coverage/*\` active.
+          Cette mission expire automatiquement après deux heures sans branche ou PR afin de ne plus bloquer l'autopilote.
           EOF
           )"
-          url="$(gh issue create \
-            --title "[Coverage] ${TARGET_CATEGORY} — ${TARGET_PATH}" \
-            --body "$body" \
-            --label coverage-agent \
-            --assignee stef25fwi)"
+          url="$(gh issue create --title "[Coverage execution] ${TARGET_CATEGORY} — ${TARGET_PATH}" --body "$body" --label coverage-agent --assignee stef25fwi)"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Update the coverage dashboard
-        if: always()
+      - name: Update coverage dashboard
+        if: steps.dedupe.outputs.run == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ steps.dedupe.outputs.main_sha }}
           GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
           TARGET_CATEGORY: ${{ steps.target.outputs.category }}
           TARGET_PATH: ${{ steps.target.outputs.path }}
-          ACTIVE_PR_URL: ${{ steps.active_pr.outputs.url }}
-          ACTIVE_MISSION_URL: ${{ steps.active_mission.outputs.url }}
+          ACTIVE_PR_URL: ${{ steps.active.outputs.pr_url }}
+          ACTIVE_MISSION_URL: ${{ steps.active.outputs.mission_url }}
           CREATED_MISSION_URL: ${{ steps.mission.outputs.url }}
         run: |
           status="Mesure terminée."
           if [ -n "${CREATED_MISSION_URL:-}" ]; then
-            status="Nouvelle mission sans clé externe : ${CREATED_MISSION_URL}"
+            status="Nouvelle phase exécutable : ${CREATED_MISSION_URL}"
           elif [ -n "${ACTIVE_PR_URL:-}" ]; then
-            status="PR de couverture déjà active : ${ACTIVE_PR_URL}"
+            status="PR de couverture active : ${ACTIVE_PR_URL}"
           elif [ -n "${ACTIVE_MISSION_URL:-}" ]; then
-            status="Mission de couverture déjà active : ${ACTIVE_MISSION_URL}"
+            status="Mission active : ${ACTIVE_MISSION_URL}"
           elif [ "${{ steps.target.outputs.target_reached }}" = "true" ]; then
             status="✅ Objectif global atteint."
           fi
-          gh issue comment 553 --body \
-            "### Coverage Autopilot sans clé externe — run $GITHUB_RUN_ID
+          gh issue comment 553 --body "### Coverage Autopilot — run $GITHUB_RUN_ID
 
           - Couverture main : **${GLOBAL_PERCENT}%**
           - Domaine : **${TARGET_CATEGORY}**
           - Cible : \`${TARGET_PATH}\`
-          - Statut : ${status}"
+          - Statut : ${status}
 
-      - name: Upload LCOV and dispatch evidence
-        if: always()
+          <!-- coverage-main-sha:${MAIN_SHA} -->"
+
+      - name: Upload LCOV evidence
+        if: always() && steps.dedupe.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-autopilot-${{ github.run_id }}
