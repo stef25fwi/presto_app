@@ -10,6 +10,11 @@ import '../utils/friendly_snackbar.dart';
 
 const Color _kOrange = Color(0xFFFF6600);
 
+typedef AccountNotificationStatusLoader = Future<AuthorizationStatus> Function();
+typedef AccountNotificationAction = Future<void> Function();
+typedef AccountNotificationPermissionRequester = Future<bool> Function();
+typedef AccountNotificationFailureMessage = String Function();
+
 /// Carte « Notifications » de la page Mon compte.
 ///
 /// Affiche l'état des notifications (Activées / Bloquées / Désactivées) et
@@ -17,7 +22,20 @@ const Color _kOrange = Color(0xFFFF6600);
 /// directement les réglages système (la permission OS ne peut pas être
 /// modifiée depuis l'app). Le test de réception vit dans l'espace admin.
 class AccountNotificationsTile extends StatefulWidget {
-  const AccountNotificationsTile({super.key});
+  const AccountNotificationsTile({
+    super.key,
+    this.statusLoader,
+    this.ensureDeviceRegistered,
+    this.requestPushPermission,
+    this.activationFailureMessage,
+    this.openSystemSettings,
+  });
+
+  final AccountNotificationStatusLoader? statusLoader;
+  final AccountNotificationAction? ensureDeviceRegistered;
+  final AccountNotificationPermissionRequester? requestPushPermission;
+  final AccountNotificationFailureMessage? activationFailureMessage;
+  final AccountNotificationAction? openSystemSettings;
 
   @override
   State<AccountNotificationsTile> createState() =>
@@ -45,16 +63,21 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
 
   Future<void> _load() async {
     try {
-      final settings = await _service.getPermissionSettings();
+      final loader = widget.statusLoader;
+      final status = loader != null
+          ? await loader()
+          : (await _service.getPermissionSettings()).authorizationStatus;
       if (!mounted) return;
       setState(() {
-        _status = settings.authorizationStatus;
+        _status = status;
         _loading = false;
       });
       if (_isAuthorized) {
         // Best-effort : garantir que le token est enregistré côté serveur même
         // si la permission avait été accordée dans une session précédente.
-        unawaited(_service.ensureDeviceRegistered());
+        final ensureRegistered =
+            widget.ensureDeviceRegistered ?? _service.ensureDeviceRegistered;
+        unawaited(ensureRegistered());
       }
     } catch (_) {
       if (!mounted) return;
@@ -75,14 +98,20 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
     // Première activation : on demande la permission OS.
     setState(() => _busy = true);
     try {
-      final activated = await _service.requestPushPermission();
+      final requestPermission =
+          widget.requestPushPermission ?? _service.requestPushPermission;
+      final activated = await requestPermission();
       await _load();
       if (!mounted) return;
       if (activated) {
         showSuccessSnackBar(
-            context, 'Notifications activées sur cet appareil.');
+          context,
+          'Notifications activées sur cet appareil.',
+        );
       } else {
-        showErrorSnackBar(context, _service.pushActivationFailureMessage());
+        final failureMessage = widget.activationFailureMessage ??
+            _service.pushActivationFailureMessage;
+        showErrorSnackBar(context, failureMessage());
       }
     } catch (error) {
       if (!mounted) return;
@@ -93,6 +122,17 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
   }
 
   Future<void> _openSystemSettings() async {
+    final override = widget.openSystemSettings;
+    if (override != null) {
+      try {
+        await override();
+      } catch (_) {
+        if (!mounted) return;
+        await _showSystemSettingsFallback();
+      }
+      return;
+    }
+
     if (kIsWeb) {
       await _showInfoDialog(
         title: 'Réglages des notifications',
@@ -106,13 +146,16 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       await AppSettings.openAppSettings(type: AppSettingsType.notification);
     } catch (_) {
       if (!mounted) return;
-      await _showInfoDialog(
-        title: 'Réglages des notifications',
-        message:
-            'Ouvre les réglages de ton téléphone → Notifications → iliprestō '
-            'pour gérer les autorisations.',
-      );
+      await _showSystemSettingsFallback();
     }
+  }
+
+  Future<void> _showSystemSettingsFallback() {
+    return _showInfoDialog(
+      title: 'Réglages des notifications',
+      message: 'Ouvre les réglages de ton téléphone → Notifications → iliprestō '
+          'pour gérer les autorisations.',
+    );
   }
 
   Future<void> _showInfoDialog({
@@ -194,7 +237,10 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
                   )
                 else
                   _StatusChip(
-                      label: badge.label, color: badge.color, icon: badge.icon),
+                    label: badge.label,
+                    color: badge.color,
+                    icon: badge.icon,
+                  ),
               ],
             ),
             const SizedBox(height: 4),
