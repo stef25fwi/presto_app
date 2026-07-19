@@ -42,7 +42,7 @@ class AccountNotificationsTile extends StatefulWidget {
 }
 
 class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
-  final NotificationService _service = NotificationService();
+  NotificationService get _service => NotificationService();
 
   AuthorizationStatus? _status;
   bool _loading = true;
