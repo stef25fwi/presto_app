@@ -10,7 +10,7 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    if (Firebase.apps.isEmpty) {
+    try {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: 'test-api-key',
@@ -20,6 +20,8 @@ void main() {
           storageBucket: 'presto-audio-test.appspot.com',
         ),
       );
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') rethrow;
     }
   });
 
