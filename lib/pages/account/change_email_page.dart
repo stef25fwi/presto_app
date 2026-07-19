@@ -3,10 +3,23 @@ import 'package:flutter/material.dart';
 import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
 
+typedef ChangeEmailRequest = Future<void> Function({
+  required String currentPassword,
+  required String newEmail,
+});
+typedef ChangeEmailErrorMessageMapper = String Function(Object error);
+
 class ChangeEmailPage extends StatefulWidget {
-  const ChangeEmailPage({super.key});
+  const ChangeEmailPage({
+    super.key,
+    this.requestEmailChange,
+    this.errorMessageMapper,
+  });
 
   static const routeName = '/account/change-email';
+
+  final ChangeEmailRequest? requestEmailChange;
+  final ChangeEmailErrorMessageMapper? errorMessageMapper;
 
   @override
   State<ChangeEmailPage> createState() => _ChangeEmailPageState();
@@ -33,7 +46,16 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
     setState(() => _loading = true);
 
     try {
-      await AuthService.instance.requestEmailChange(
+      final requestEmailChange = widget.requestEmailChange ??
+          ({
+            required String currentPassword,
+            required String newEmail,
+          }) =>
+              AuthService.instance.requestEmailChange(
+                currentPassword: currentPassword,
+                newEmail: newEmail,
+              );
+      await requestEmailChange(
         currentPassword: _passwordCtrl.text,
         newEmail: _newEmailCtrl.text,
       );
@@ -49,8 +71,10 @@ class _ChangeEmailPageState extends State<ChangeEmailPage> {
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
+      final errorMessageMapper =
+          widget.errorMessageMapper ?? AuthErrorMapper.message;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AuthErrorMapper.message(e))),
+        SnackBar(content: Text(errorMessageMapper(e))),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
