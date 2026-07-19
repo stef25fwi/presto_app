@@ -94,6 +94,14 @@ Future<void> _pumpUntilReady(WidgetTester tester) async {
   fail('Le fil de conversation ne s’est pas affiché.');
 }
 
+Future<void> _pumpUntilDeleteDialog(WidgetTester tester) async {
+  for (var frame = 0; frame < 80; frame += 1) {
+    await tester.pump(const Duration(milliseconds: 500));
+    if (find.text('Supprimer la conversation').evaluate().isNotEmpty) return;
+  }
+  fail('La confirmation de suppression ne s’est pas affichée.');
+}
+
 Future<void> _disposeAfterBootstrap(WidgetTester tester) async {
   const preparingLabel = 'Preparation securisee de la messagerie…';
   for (var frame = 0; frame < 120; frame += 1) {
@@ -155,8 +163,7 @@ void main() {
     expect(deleteItem, findsOneWidget);
 
     await tester.tap(deleteItem);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await _pumpUntilDeleteDialog(tester);
 
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('Annuler'), findsOneWidget);
