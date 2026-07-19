@@ -88,6 +88,7 @@ void main() {
       final service = SubscriptionCreditService(
         caller: (_, __) async => throw FirebaseFunctionsException(
           code: 'resource-exhausted',
+          message: null,
           details: const {
             'kind': 'inconnu',
             'used': '1',
