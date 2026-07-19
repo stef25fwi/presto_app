@@ -250,9 +250,9 @@ class SubscriptionCreditService {
       if (error.code == 'resource-exhausted') {
         final details = _map(error.details);
         final detailKind = _kindFromKey('${details['kind'] ?? ''}') ?? quotaKind;
-        final serverMessage = error.message.trim();
+        final serverMessage = error.message?.trim();
         throw SubscriptionQuotaExceededException(
-          message: serverMessage.isEmpty
+          message: serverMessage == null || serverMessage.isEmpty
               ? 'Votre crédit est épuisé. Consultez les offres disponibles.'
               : serverMessage,
           kind: detailKind,
