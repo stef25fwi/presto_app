@@ -29,6 +29,7 @@ permissions:
   issues: write
   pull-requests: write
   actions: read
+  checks: read
 
 env:
   OPENAI_KEY_AVAILABLE: ${{ secrets.OPENAI_API_KEY != '' }}
