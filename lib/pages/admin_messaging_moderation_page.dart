@@ -4,41 +4,136 @@ import 'package:flutter/material.dart';
 import '../admin/messaging/widgets/admin_messaging_app_bar.dart';
 import '../services/firestore_date_parser.dart';
 
-class AdminMessagingModerationPage extends StatefulWidget {
-  const AdminMessagingModerationPage({super.key});
-
-  @override
-  State<AdminMessagingModerationPage> createState() =>
-      _AdminMessagingModerationPageState();
-}
-
-enum _ModerationLogFilter {
+enum ModerationLogFilter {
   all,
   pending,
   manualReview,
   rejected,
 }
 
+class ModerationLogEntry {
+  final String messageId;
+  final String conversationId;
+  final String senderId;
+  final String senderName;
+  final String text;
+  final String mode;
+  final String status;
+  final String visibility;
+  final String reason;
+  final String userMessage;
+  final List<String> autoFlags;
+  final int riskScore;
+  final DateTime? createdAt;
+
+  const ModerationLogEntry({
+    required this.messageId,
+    required this.conversationId,
+    required this.senderId,
+    required this.senderName,
+    required this.text,
+    required this.mode,
+    required this.status,
+    required this.visibility,
+    required this.reason,
+    required this.userMessage,
+    required this.autoFlags,
+    required this.riskScore,
+    required this.createdAt,
+  });
+
+  bool get isModerated {
+    return status == 'pending' ||
+        status == 'manual_review' ||
+        status == 'rejected' ||
+        reason.isNotEmpty && reason != 'approved_automatically';
+  }
+
+  factory ModerationLogEntry.fromMap({
+    required String messageId,
+    required String conversationId,
+    required Map<String, dynamic> data,
+  }) {
+    final moderation = data['moderation'] is Map
+        ? Map<String, dynamic>.from(data['moderation'] as Map)
+        : const <String, dynamic>{};
+    return ModerationLogEntry(
+      messageId: messageId,
+      conversationId: conversationId,
+      senderId: ((data['senderId'] ?? data['sender_id']) ?? '').toString(),
+      senderName:
+          ((data['senderName'] ?? data['sender_name']) ?? '').toString(),
+      text: ((data['text'] ?? data['body']) ?? '').toString(),
+      mode: (moderation['mode'] ?? '').toString(),
+      status: (moderation['status'] ?? '').toString(),
+      visibility: (moderation['visibility'] ?? '').toString(),
+      reason: (moderation['reason'] ?? '').toString(),
+      userMessage: (moderation['userMessage'] ?? '').toString(),
+      autoFlags: ((moderation['autoFlags'] as List?) ?? const <dynamic>[])
+          .map((flag) => flag.toString())
+          .where((flag) => flag.trim().isNotEmpty)
+          .toList(growable: false),
+      riskScore: moderation['riskScore'] is num
+          ? (moderation['riskScore'] as num).round()
+          : 0,
+      createdAt: parseFirestoreDateTime(
+        data['createdAt'] ?? data['created_at'],
+      ),
+    );
+  }
+
+  factory ModerationLogEntry.fromDocument(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    return ModerationLogEntry.fromMap(
+      messageId: doc.id,
+      conversationId: doc.reference.parent.parent?.id ?? '',
+      data: doc.data(),
+    );
+  }
+}
+
+class AdminMessagingModerationPage extends StatefulWidget {
+  final Stream<List<ModerationLogEntry>>? entriesStream;
+
+  const AdminMessagingModerationPage({
+    super.key,
+    this.entriesStream,
+  });
+
+  @override
+  State<AdminMessagingModerationPage> createState() =>
+      _AdminMessagingModerationPageState();
+}
+
 class _AdminMessagingModerationPageState
     extends State<AdminMessagingModerationPage> {
-  _ModerationLogFilter _filter = _ModerationLogFilter.all;
+  ModerationLogFilter _filter = ModerationLogFilter.all;
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> get _stream =>
-      FirebaseFirestore.instance
-          .collectionGroup('messages')
-          .orderBy('createdAt', descending: true)
-          .limit(120)
-          .snapshots();
+  Stream<List<ModerationLogEntry>> get _stream {
+    final injected = widget.entriesStream;
+    if (injected != null) return injected;
+    return FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .orderBy('createdAt', descending: true)
+        .limit(120)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(ModerationLogEntry.fromDocument)
+              .toList(growable: false),
+        );
+  }
 
-  bool _matchesFilter(_ModerationLogEntry entry) {
+  bool _matchesFilter(ModerationLogEntry entry) {
     switch (_filter) {
-      case _ModerationLogFilter.all:
+      case ModerationLogFilter.all:
         return true;
-      case _ModerationLogFilter.pending:
+      case ModerationLogFilter.pending:
         return entry.status == 'pending';
-      case _ModerationLogFilter.manualReview:
+      case ModerationLogFilter.manualReview:
         return entry.status == 'manual_review';
-      case _ModerationLogFilter.rejected:
+      case ModerationLogFilter.rejected:
         return entry.status == 'rejected';
     }
   }
@@ -64,22 +159,22 @@ class _AdminMessagingModerationPageState
                     ),
                   ),
                   const SizedBox(height: 12),
-                  SegmentedButton<_ModerationLogFilter>(
+                  SegmentedButton<ModerationLogFilter>(
                     segments: const [
                       ButtonSegment(
-                        value: _ModerationLogFilter.all,
+                        value: ModerationLogFilter.all,
                         label: Text('Tous'),
                       ),
                       ButtonSegment(
-                        value: _ModerationLogFilter.pending,
+                        value: ModerationLogFilter.pending,
                         label: Text('Pending'),
                       ),
                       ButtonSegment(
-                        value: _ModerationLogFilter.manualReview,
+                        value: ModerationLogFilter.manualReview,
                         label: Text('Revue'),
                       ),
                       ButtonSegment(
-                        value: _ModerationLogFilter.rejected,
+                        value: ModerationLogFilter.rejected,
                         label: Text('Refusés'),
                       ),
                     ],
@@ -92,7 +187,7 @@ class _AdminMessagingModerationPageState
               ),
             ),
             Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              child: StreamBuilder<List<ModerationLogEntry>>(
                 stream: _stream,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
@@ -115,12 +210,10 @@ class _AdminMessagingModerationPageState
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final entries = snapshot.data?.docs
-                          .map(_ModerationLogEntry.fromDocument)
-                          .where((entry) => entry.isModerated)
-                          .where(_matchesFilter)
-                          .toList(growable: false) ??
-                      const <_ModerationLogEntry>[];
+                  final entries = (snapshot.data ?? const <ModerationLogEntry>[])
+                      .where((entry) => entry.isModerated)
+                      .where(_matchesFilter)
+                      .toList(growable: false);
 
                   if (entries.isEmpty) {
                     return const Center(
@@ -143,8 +236,7 @@ class _AdminMessagingModerationPageState
                     itemCount: entries.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final entry = entries[index];
-                      return _ModerationLogCard(entry: entry);
+                      return _ModerationLogCard(entry: entries[index]);
                     },
                   );
                 },
@@ -157,79 +249,8 @@ class _AdminMessagingModerationPageState
   }
 }
 
-class _ModerationLogEntry {
-  final String messageId;
-  final String conversationId;
-  final String senderId;
-  final String senderName;
-  final String text;
-  final String mode;
-  final String status;
-  final String visibility;
-  final String reason;
-  final String userMessage;
-  final List<String> autoFlags;
-  final int riskScore;
-  final DateTime? createdAt;
-
-  const _ModerationLogEntry({
-    required this.messageId,
-    required this.conversationId,
-    required this.senderId,
-    required this.senderName,
-    required this.text,
-    required this.mode,
-    required this.status,
-    required this.visibility,
-    required this.reason,
-    required this.userMessage,
-    required this.autoFlags,
-    required this.riskScore,
-    required this.createdAt,
-  });
-
-  bool get isModerated {
-    return status == 'pending' ||
-        status == 'manual_review' ||
-        status == 'rejected' ||
-        reason.isNotEmpty && reason != 'approved_automatically';
-  }
-
-  factory _ModerationLogEntry.fromDocument(
-    QueryDocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data();
-    final moderation = (data['moderation'] is Map)
-        ? Map<String, dynamic>.from(data['moderation'] as Map)
-        : const <String, dynamic>{};
-    final parentConversation = doc.reference.parent.parent;
-    return _ModerationLogEntry(
-      messageId: doc.id,
-      conversationId: parentConversation?.id ?? '',
-      senderId: ((data['senderId'] ?? data['sender_id']) ?? '').toString(),
-      senderName:
-          ((data['senderName'] ?? data['sender_name']) ?? '').toString(),
-      text: ((data['text'] ?? data['body']) ?? '').toString(),
-      mode: (moderation['mode'] ?? '').toString(),
-      status: (moderation['status'] ?? '').toString(),
-      visibility: (moderation['visibility'] ?? '').toString(),
-      reason: (moderation['reason'] ?? '').toString(),
-      userMessage: (moderation['userMessage'] ?? '').toString(),
-      autoFlags: ((moderation['autoFlags'] as List?) ?? const <dynamic>[])
-          .map((flag) => flag.toString())
-          .where((flag) => flag.trim().isNotEmpty)
-          .toList(growable: false),
-      riskScore: (moderation['riskScore'] is num)
-          ? (moderation['riskScore'] as num).round()
-          : 0,
-      createdAt:
-          parseFirestoreDateTime(data['createdAt'] ?? data['created_at']),
-    );
-  }
-}
-
 class _ModerationLogCard extends StatelessWidget {
-  final _ModerationLogEntry entry;
+  final ModerationLogEntry entry;
 
   const _ModerationLogCard({required this.entry});
 
@@ -346,10 +367,12 @@ class _ModerationLogCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _InfoChip(
-                  label: 'Mode ${entry.mode.isEmpty ? 'hybrid' : entry.mode}'),
+                label: 'Mode ${entry.mode.isEmpty ? 'hybrid' : entry.mode}',
+              ),
               _InfoChip(
-                  label:
-                      'Visibilité ${entry.visibility.isEmpty ? 'visible' : entry.visibility}'),
+                label:
+                    'Visibilité ${entry.visibility.isEmpty ? 'visible' : entry.visibility}',
+              ),
               _InfoChip(label: 'Risk ${entry.riskScore}'),
             ],
           ),
