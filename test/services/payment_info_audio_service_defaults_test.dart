@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
@@ -12,15 +10,17 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'test-api-key',
-        appId: '1:123456789:web:test',
-        messagingSenderId: '123456789',
-        projectId: 'presto-audio-test',
-        storageBucket: 'presto-audio-test.appspot.com',
-      ),
-    );
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'test-api-key',
+          appId: '1:123456789:web:test',
+          messagingSenderId: '123456789',
+          projectId: 'presto-audio-test',
+          storageBucket: 'presto-audio-test.appspot.com',
+        ),
+      );
+    }
   });
 
   tearDown(() {
