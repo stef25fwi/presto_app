@@ -147,7 +147,7 @@ void main() {
 
     final deleteMenuItem = find.ancestor(
       of: find.text('Supprimer'),
-      matching: find.byType(PopupMenuItem),
+      matching: find.byWidgetPredicate((widget) => widget is PopupMenuItem),
     );
     expect(deleteMenuItem, findsOneWidget);
     await tester.tap(deleteMenuItem);
