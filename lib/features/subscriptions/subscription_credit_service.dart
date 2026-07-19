@@ -2,6 +2,11 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../services/firebase_functions_region.dart';
 
+typedef SubscriptionCreditCaller = Future<Map<String, dynamic>> Function(
+  String name,
+  Map<String, dynamic>? parameters,
+);
+
 enum SubscriptionCreditKind {
   journeys('journeys'),
   pdf('pdf'),
@@ -139,10 +144,14 @@ class SubscriptionQuotaExceededException implements Exception {
 }
 
 class SubscriptionCreditService {
-  SubscriptionCreditService({FirebaseFunctions? functions})
-      : _functionsOverride = functions;
+  SubscriptionCreditService({
+    FirebaseFunctions? functions,
+    SubscriptionCreditCaller? caller,
+  })  : _functionsOverride = functions,
+        _caller = caller;
 
   final FirebaseFunctions? _functionsOverride;
+  final SubscriptionCreditCaller? _caller;
 
   FirebaseFunctions get _functions =>
       _functionsOverride ?? prestoFirebaseFunctions;
@@ -226,6 +235,10 @@ class SubscriptionCreditService {
     SubscriptionCreditKind? quotaKind,
   }) async {
     try {
+      final caller = _caller;
+      if (caller != null) {
+        return await caller(name, parameters);
+      }
       final result = await _functions
           .httpsCallable(
             name,
@@ -237,9 +250,11 @@ class SubscriptionCreditService {
       if (error.code == 'resource-exhausted') {
         final details = _map(error.details);
         final detailKind = _kindFromKey('${details['kind'] ?? ''}') ?? quotaKind;
+        final serverMessage = error.message?.trim();
         throw SubscriptionQuotaExceededException(
-          message: error.message ??
-              'Votre crédit est épuisé. Consultez les offres disponibles.',
+          message: serverMessage == null || serverMessage.isEmpty
+              ? 'Votre crédit est épuisé. Consultez les offres disponibles.'
+              : serverMessage,
           kind: detailKind,
           used: _int(details['used']),
           limit: _int(details['limit']),
