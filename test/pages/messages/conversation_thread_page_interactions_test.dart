@@ -105,24 +105,6 @@ Future<void> _pumpUntilReady(WidgetTester tester) async {
   fail('Le fil de conversation ne s’est pas affiché.');
 }
 
-Future<void> _pumpUntilDraft(
-  WidgetTester tester,
-  String expectedText,
-) async {
-  for (var frame = 0; frame < 120; frame += 1) {
-    await tester.pump(const Duration(milliseconds: 500));
-    final fields = find.byType(TextField).evaluate();
-    if (fields.isEmpty) continue;
-    final field = tester.widget<TextField>(find.byType(TextField));
-    if (field.controller?.text == expectedText) return;
-  }
-  final field = tester.widget<TextField>(find.byType(TextField));
-  fail(
-    'Le brouillon initial n’a pas été synchronisé. '
-    'Attendu: $expectedText, obtenu: ${field.controller?.text}',
-  );
-}
-
 Future<void> _disposeAfterBootstrap(WidgetTester tester) async {
   const preparingLabel = 'Preparation securisee de la messagerie…';
   for (var frame = 0; frame < 120; frame += 1) {
@@ -153,47 +135,40 @@ void main() {
     authPlatform.user = null;
   });
 
-  Future<void> pumpThread(
-    WidgetTester tester, {
-    String? initialDraftText,
-  }) async {
+  Future<void> pumpThread(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(430, 932));
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: ConversationThreadPage(
           conversationId: 'conversation-interactions',
           offerTitle: 'Peinture salon',
           currentUserId: 'thread-user',
-          initialDraftText: initialDraftText,
         ),
       ),
     );
     await _pumpUntilReady(tester);
   }
 
-  testWidgets('applique une seule fois le brouillon initial', (tester) async {
-    const initialDraft = 'Bonjour, cette offre est-elle disponible ?';
-    await pumpThread(
-      tester,
-      initialDraftText: initialDraft,
+  testWidgets('conserve le brouillon saisi pendant les mises à jour',
+      (tester) async {
+    await pumpThread(tester);
+
+    await tester.enterText(
+      find.byType(TextField),
+      'Bonjour, cette offre est-elle disponible ?',
     );
-    await _pumpUntilDraft(tester, initialDraft);
-
-    final field = tester.widget<TextField>(find.byType(TextField));
-    expect(field.controller?.text, initialDraft);
-    expect(find.byIcon(Icons.send_rounded), findsOneWidget);
-
-    await tester.enterText(find.byType(TextField), 'Brouillon modifié');
     await tester.pump();
+
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller?.text,
-      'Brouillon modifié',
+      'Bonjour, cette offre est-elle disponible ?',
     );
+    expect(find.byIcon(Icons.send_rounded), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 1));
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller?.text,
-      'Brouillon modifié',
+      'Bonjour, cette offre est-elle disponible ?',
     );
 
     await _disposeAfterBootstrap(tester);
