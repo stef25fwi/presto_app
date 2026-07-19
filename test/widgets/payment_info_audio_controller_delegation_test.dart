@@ -36,6 +36,8 @@ class _RecordingAudioPlayer extends AudioPlayer {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('délègue les commandes de lecture au lecteur Audioplayers', () async {
     final player = _RecordingAudioPlayer();
     final controller = AudioplayersPaymentInfoAudioController(player: player);
