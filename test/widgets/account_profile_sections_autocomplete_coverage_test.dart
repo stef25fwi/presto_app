@@ -113,15 +113,17 @@ void main() {
     await tester.enterText(cityField, 'Baie-Mahault');
     await tester.pump();
 
-    expect(countryCodes.last, '+33');
+    expect(countryCodes, isNotEmpty);
+    expect(countryCodes.last, '+590');
     final option = find.text('Baie-Mahault (97122)');
     expect(option, findsOneWidget);
 
+    countryCodes.clear();
     await tester.tap(option);
     await tester.pump();
 
     expect(controllers.city.text, 'Baie-Mahault (97122)');
-    expect(countryCodes.last, '+590');
+    expect(countryCodes, <String>['+590']);
   });
 
   testWidgets('affiche le titre messages et transmet son action', (tester) async {
