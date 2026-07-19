@@ -105,6 +105,24 @@ Future<void> _pumpUntilReady(WidgetTester tester) async {
   fail('Le fil de conversation ne s’est pas affiché.');
 }
 
+Future<void> _pumpUntilDraft(
+  WidgetTester tester,
+  String expectedText,
+) async {
+  for (var frame = 0; frame < 20; frame += 1) {
+    await tester.pump(const Duration(milliseconds: 100));
+    final fields = find.byType(TextField).evaluate();
+    if (fields.isEmpty) continue;
+    final field = tester.widget<TextField>(find.byType(TextField));
+    if (field.controller?.text == expectedText) return;
+  }
+  final field = tester.widget<TextField>(find.byType(TextField));
+  fail(
+    'Le brouillon initial n’a pas été synchronisé. '
+    'Attendu: $expectedText, obtenu: ${field.controller?.text}',
+  );
+}
+
 Future<void> _disposeAfterBootstrap(WidgetTester tester) async {
   const preparingLabel = 'Preparation securisee de la messagerie…';
   for (var frame = 0; frame < 120; frame += 1) {
@@ -154,16 +172,15 @@ void main() {
   }
 
   testWidgets('applique une seule fois le brouillon initial', (tester) async {
+    const initialDraft = 'Bonjour, cette offre est-elle disponible ?';
     await pumpThread(
       tester,
-      initialDraftText: 'Bonjour, cette offre est-elle disponible ?',
+      initialDraftText: initialDraft,
     );
+    await _pumpUntilDraft(tester, initialDraft);
 
     final field = tester.widget<TextField>(find.byType(TextField));
-    expect(
-      field.controller?.text,
-      'Bonjour, cette offre est-elle disponible ?',
-    );
+    expect(field.controller?.text, initialDraft);
     expect(find.byIcon(Icons.send_rounded), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'Brouillon modifié');
