@@ -35,8 +35,12 @@ class EmailActionService {
     _callableInvoker = _invokeFirebaseCallable;
   }
 
-  static Future<bool> syncCurrentUserEmailVerificationState() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
+  static Future<bool> syncCurrentUserEmailVerificationState({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+  }) async {
+    final effectiveAuth = auth ?? FirebaseAuth.instance;
+    final currentUser = effectiveAuth.currentUser;
     if (currentUser == null) {
       return false;
     }
@@ -47,14 +51,15 @@ class EmailActionService {
       // Best effort: continue with the freshest local state available.
     }
 
-    final refreshedUser = FirebaseAuth.instance.currentUser ?? currentUser;
+    final refreshedUser = effectiveAuth.currentUser ?? currentUser;
     final email = refreshedUser.email?.trim().toLowerCase() ?? '';
     if (email.isEmpty || !refreshedUser.emailVerified) {
       return false;
     }
 
+    final effectiveFirestore = firestore ?? FirebaseFirestore.instance;
     final userRef =
-        FirebaseFirestore.instance.collection('users').doc(refreshedUser.uid);
+        effectiveFirestore.collection('users').doc(refreshedUser.uid);
 
     await refreshedUser.getIdToken(true);
 
