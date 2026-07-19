@@ -37,8 +37,8 @@ void main() {
     FirebaseAuthPlatform.instance = _SignedOutAuthPlatform();
   });
 
-  testWidgets('utilise le rendu plein écran sur téléphone', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
+  testWidgets('utilise le rendu plein écran sur mobile large', (tester) async {
+    tester.view.physicalSize = const Size(480, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
