@@ -212,7 +212,7 @@ class ProfileReadinessChecker {
     } catch (error) {
       debugPrint(
         '[ProfileReadiness] profile access preparation failed '
-        'uid=${user.uid} err=$error',
+        'uid=${user?.uid ?? 'null'} err=$error',
       );
       return ProfileReadinessResult.blocked(
         gate: ProfileReadinessGate.readFailed,
