@@ -143,12 +143,20 @@ void main() {
     await pumpThread(tester);
 
     await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     final deleteLabel = find.text('Supprimer');
     expect(deleteLabel, findsOneWidget);
-    await tester.tap(deleteLabel);
-    await tester.pumpAndSettle();
+    final deleteItem = find.ancestor(
+      of: deleteLabel,
+      matching: find.byType(PopupMenuItem<String>),
+    );
+    expect(deleteItem, findsOneWidget);
+
+    await tester.tap(deleteItem);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('Annuler'), findsOneWidget);
