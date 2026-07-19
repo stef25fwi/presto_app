@@ -7,8 +7,12 @@ import 'package:flutter/material.dart';
 
 import '../services/notification_service.dart';
 import '../utils/friendly_snackbar.dart';
+import 'account_notifications_card.dart';
 
-const Color _kOrange = Color(0xFFFF6600);
+typedef AccountNotificationStatusLoader = Future<AuthorizationStatus> Function();
+typedef AccountNotificationAction = Future<void> Function();
+typedef AccountNotificationPermissionRequester = Future<bool> Function();
+typedef AccountNotificationFailureMessage = String Function();
 
 /// Carte « Notifications » de la page Mon compte.
 ///
@@ -17,7 +21,20 @@ const Color _kOrange = Color(0xFFFF6600);
 /// directement les réglages système (la permission OS ne peut pas être
 /// modifiée depuis l'app). Le test de réception vit dans l'espace admin.
 class AccountNotificationsTile extends StatefulWidget {
-  const AccountNotificationsTile({super.key});
+  const AccountNotificationsTile({
+    super.key,
+    this.statusLoader,
+    this.ensureDeviceRegistered,
+    this.requestPushPermission,
+    this.activationFailureMessage,
+    this.openSystemSettings,
+  });
+
+  final AccountNotificationStatusLoader? statusLoader;
+  final AccountNotificationAction? ensureDeviceRegistered;
+  final AccountNotificationPermissionRequester? requestPushPermission;
+  final AccountNotificationFailureMessage? activationFailureMessage;
+  final AccountNotificationAction? openSystemSettings;
 
   @override
   State<AccountNotificationsTile> createState() =>
@@ -25,7 +42,7 @@ class AccountNotificationsTile extends StatefulWidget {
 }
 
 class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
-  final NotificationService _service = NotificationService();
+  NotificationService get _service => NotificationService();
 
   AuthorizationStatus? _status;
   bool _loading = true;
@@ -45,16 +62,19 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
 
   Future<void> _load() async {
     try {
-      final settings = await _service.getPermissionSettings();
+      final loader = widget.statusLoader;
+      final status = loader != null
+          ? await loader()
+          : (await _service.getPermissionSettings()).authorizationStatus;
       if (!mounted) return;
       setState(() {
-        _status = settings.authorizationStatus;
+        _status = status;
         _loading = false;
       });
       if (_isAuthorized) {
-        // Best-effort : garantir que le token est enregistré côté serveur même
-        // si la permission avait été accordée dans une session précédente.
-        unawaited(_service.ensureDeviceRegistered());
+        final ensureRegistered =
+            widget.ensureDeviceRegistered ?? _service.ensureDeviceRegistered;
+        unawaited(ensureRegistered());
       }
     } catch (_) {
       if (!mounted) return;
@@ -64,25 +84,27 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
 
   Future<void> _onToggle(bool value) async {
     if (_busy) return;
-
-    // Désactiver, ou débloquer une permission refusée : impossible depuis
-    // l'app → on ouvre directement les réglages système.
     if (!value || _isBlocked) {
       await _openSystemSettings();
       return;
     }
 
-    // Première activation : on demande la permission OS.
     setState(() => _busy = true);
     try {
-      final activated = await _service.requestPushPermission();
+      final requestPermission =
+          widget.requestPushPermission ?? _service.requestPushPermission;
+      final activated = await requestPermission();
       await _load();
       if (!mounted) return;
       if (activated) {
         showSuccessSnackBar(
-            context, 'Notifications activées sur cet appareil.');
+          context,
+          'Notifications activées sur cet appareil.',
+        );
       } else {
-        showErrorSnackBar(context, _service.pushActivationFailureMessage());
+        final failureMessage = widget.activationFailureMessage ??
+            _service.pushActivationFailureMessage;
+        showErrorSnackBar(context, failureMessage());
       }
     } catch (error) {
       if (!mounted) return;
@@ -93,6 +115,17 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
   }
 
   Future<void> _openSystemSettings() async {
+    final override = widget.openSystemSettings;
+    if (override != null) {
+      try {
+        await override();
+      } catch (_) {
+        if (!mounted) return;
+        await _showSystemSettingsFallback();
+      }
+      return;
+    }
+
     if (kIsWeb) {
       await _showInfoDialog(
         title: 'Réglages des notifications',
@@ -106,13 +139,16 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
       await AppSettings.openAppSettings(type: AppSettingsType.notification);
     } catch (_) {
       if (!mounted) return;
-      await _showInfoDialog(
-        title: 'Réglages des notifications',
-        message:
-            'Ouvre les réglages de ton téléphone → Notifications → iliprestō '
-            'pour gérer les autorisations.',
-      );
+      await _showSystemSettingsFallback();
     }
+  }
+
+  Future<void> _showSystemSettingsFallback() {
+    return _showInfoDialog(
+      title: 'Réglages des notifications',
+      message: 'Ouvre les réglages de ton téléphone → Notifications → iliprestō '
+          'pour gérer les autorisations.',
+    );
   }
 
   Future<void> _showInfoDialog({
@@ -159,121 +195,16 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
   @override
   Widget build(BuildContext context) {
     final badge = _statusBadge;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Color(0xFFB8BEC7), width: 2),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.notifications_active_rounded, color: _kOrange),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Notifications',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                if (_loading)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  _StatusChip(
-                      label: badge.label, color: badge.color, icon: badge.icon),
-              ],
-            ),
-            const SizedBox(height: 4),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: VisualDensity.compact,
-              activeThumbColor: _kOrange,
-              title: const Text(
-                'Recevoir les notifications',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                _isAuthorized
-                    ? 'Nouveaux messages, réponses à tes annonces et alertes.'
-                    : _isBlocked
-                        ? 'Bloquées dans les réglages système.'
-                        : 'Active-les pour ne rien manquer.',
-              ),
-              value: _isAuthorized,
-              onChanged: (_loading || _busy) ? null : _onToggle,
-              secondary: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _loading ? null : _openSystemSettings,
-                icon: const Icon(Icons.settings_outlined, size: 18),
-                label: const Text('Gérer dans les réglages système'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
-
-  final String label;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
+    return AccountNotificationsCard(
+      loading: _loading,
+      busy: _busy,
+      authorized: _isAuthorized,
+      blocked: _isBlocked,
+      badgeLabel: badge.label,
+      badgeColor: badge.color,
+      badgeIcon: badge.icon,
+      onToggle: _onToggle,
+      onOpenSettings: _openSystemSettings,
     );
   }
 }
