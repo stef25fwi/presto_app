@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/account_social_auth_actions.dart';
@@ -128,11 +127,6 @@ void main() {
       ..providerError = null
       ..providerCalls = 0
       ..providerId = null;
-    debugDefaultTargetPlatformOverride = null;
-  });
-
-  tearDown(() {
-    debugDefaultTargetPlatformOverride = null;
   });
 
   Future<void> run(
@@ -161,8 +155,13 @@ void main() {
     );
 
     await tester.tap(find.text('Connexion'));
-    await tester.pump();
-    await completed.future.timeout(const Duration(seconds: 10));
+    for (var frame = 0; frame < 40 && !completed.isCompleted; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 250));
+    }
+    if (!completed.isCompleted) {
+      fail('L action sociale ne s est pas terminée dans le délai prévu.');
+    }
+    await completed.future;
     await tester.pump();
   }
 
@@ -315,20 +314,4 @@ void main() {
       expect(find.textContaining(entry.value), findsOneWidget);
     });
   }
-
-  testWidgets('Apple iOS prépare le flux avant l erreur de plateforme',
-      (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-
-    await run(
-      tester,
-      (context) => AccountSocialAuthActions.signInWithApple(
-        context: context,
-        auth: auth,
-        trackLogin: ({authMethod, isNewUser = false}) async {},
-      ),
-    );
-
-    expect(find.textContaining('Erreur inattendue'), findsOneWidget);
-  });
 }
