@@ -147,8 +147,13 @@ void main() {
 
     final deleteLabel = find.text('Supprimer');
     expect(deleteLabel, findsOneWidget);
-    await tester.ensureVisible(deleteLabel);
-    await tester.tap(deleteLabel);
+    final deleteItem = find.ancestor(
+      of: deleteLabel,
+      matching: find.byWidgetPredicate((widget) => widget is PopupMenuItem),
+    );
+    expect(deleteItem, findsOneWidget);
+    final item = tester.widget(deleteItem) as dynamic;
+    Navigator.of(tester.element(deleteLabel)).pop(item.value);
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(AlertDialog), findsOneWidget);
