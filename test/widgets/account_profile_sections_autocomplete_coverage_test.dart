@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/city_search.dart';
 import 'package:presto_app/widgets/account_profile_sections.dart';
@@ -25,6 +29,34 @@ class _Controllers {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  Future<void> loadMinimalCitiesAsset() async {
+    final messenger = TestDefaultBinaryMessengerBinding
+        .instance.defaultBinaryMessenger;
+    messenger.setMockMessageHandler('flutter/assets', (message) async {
+      if (message == null) return null;
+      final key = utf8.decode(
+        message.buffer.asUint8List(
+          message.offsetInBytes,
+          message.lengthInBytes,
+        ),
+      );
+      if (key != 'assets/data/cities_compact.json') return null;
+
+      final bytes = Uint8List.fromList(
+        utf8.encode(
+          '[{"name":"Baie-Mahault","dept":"971","region":"01","cps":["97122"]}]',
+        ),
+      );
+      return ByteData.sublistView(bytes);
+    });
+    addTearDown(
+      () => messenger.setMockMessageHandler('flutter/assets', null),
+    );
+    await CitySearch.instance.ensureLoaded();
+  }
+
   Future<void> pumpProfile(
     WidgetTester tester, {
     required _Controllers controllers,
@@ -63,7 +95,7 @@ void main() {
 
   testWidgets('recherche une ville sans code postal puis sélectionne une option',
       (tester) async {
-    await CitySearch.instance.ensureLoaded();
+    await loadMinimalCitiesAsset();
 
     final controllers = _Controllers();
     addTearDown(controllers.dispose);
