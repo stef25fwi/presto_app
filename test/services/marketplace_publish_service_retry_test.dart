@@ -135,6 +135,16 @@ void main() {
         message: 'Unable to establish connection on channel.',
       );
 
+  test('construit les dépendances par défaut et l exception non constante', () {
+    final defaultService = MarketplacePublishService();
+    final error = MarketplaceHumanVerificationUnavailable(
+      'vérification temporairement indisponible',
+    );
+
+    expect(defaultService, isA<MarketplacePublishService>());
+    expect(error.toString(), 'vérification temporairement indisponible');
+  });
+
   test('réessaie le brouillon après une erreur de canal puis réussit', () async {
     final listings = _RetryListingRepository()
       ..createErrors.add(channelError());
