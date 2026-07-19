@@ -7,9 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../services/notification_service.dart';
 import '../utils/friendly_snackbar.dart';
-import 'account_notifications_status_chip.dart';
-
-const Color _kOrange = Color(0xFFFF6600);
+import 'account_notifications_card.dart';
 
 typedef AccountNotificationStatusLoader = Future<AuthorizationStatus> Function();
 typedef AccountNotificationAction = Future<void> Function();
@@ -74,8 +72,6 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
         _loading = false;
       });
       if (_isAuthorized) {
-        // Best-effort : garantir que le token est enregistré côté serveur même
-        // si la permission avait été accordée dans une session précédente.
         final ensureRegistered =
             widget.ensureDeviceRegistered ?? _service.ensureDeviceRegistered;
         unawaited(ensureRegistered());
@@ -88,15 +84,11 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
 
   Future<void> _onToggle(bool value) async {
     if (_busy) return;
-
-    // Désactiver, ou débloquer une permission refusée : impossible depuis
-    // l'app → on ouvre directement les réglages système.
     if (!value || _isBlocked) {
       await _openSystemSettings();
       return;
     }
 
-    // Première activation : on demande la permission OS.
     setState(() => _busy = true);
     try {
       final requestPermission =
@@ -203,86 +195,16 @@ class _AccountNotificationsTileState extends State<AccountNotificationsTile> {
   @override
   Widget build(BuildContext context) {
     final badge = _statusBadge;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Color(0xFFB8BEC7), width: 2),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.notifications_active_rounded, color: _kOrange),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Notifications',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                if (_loading)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  AccountNotificationsStatusChip(
-                    label: badge.label,
-                    color: badge.color,
-                    icon: badge.icon,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              visualDensity: VisualDensity.compact,
-              activeThumbColor: _kOrange,
-              title: const Text(
-                'Recevoir les notifications',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                _isAuthorized
-                    ? 'Nouveaux messages, réponses à tes annonces et alertes.'
-                    : _isBlocked
-                        ? 'Bloquées dans les réglages système.'
-                        : 'Active-les pour ne rien manquer.',
-              ),
-              value: _isAuthorized,
-              onChanged: (_loading || _busy) ? null : _onToggle,
-              secondary: _busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _loading ? null : _openSystemSettings,
-                icon: const Icon(Icons.settings_outlined, size: 18),
-                label: const Text('Gérer dans les réglages système'),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AccountNotificationsCard(
+      loading: _loading,
+      busy: _busy,
+      authorized: _isAuthorized,
+      blocked: _isBlocked,
+      badgeLabel: badge.label,
+      badgeColor: badge.color,
+      badgeIcon: badge.icon,
+      onToggle: _onToggle,
+      onOpenSettings: _openSystemSettings,
     );
   }
 }
