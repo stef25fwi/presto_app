@@ -138,3 +138,38 @@ mesurées sur site réel. Les chiffres bundle proviennent du contrôle de budget
 du déploiement 1876 ; les constats fluidité sont issus de l'analyse statique.
 Une passe Lighthouse/DevTools depuis un poste ayant accès à
 `https://ilipresto.web.app` complèterait utilement ce rapport.
+
+## Contrôle du 20 juillet 2026
+
+Re-vérification demandée après 8 commits supplémentaires sur `main`
+(`94917655` → `e0c5236f`, run de déploiement `29759879206`, tous verts).
+
+- **Bundle inchangé au byte près** : `main.dart.js` 6,06 MiB, `assets/`
+  23,90 MiB, total 67,17 MiB, même classement des 30 plus gros fichiers
+  (CanvasKit, JSON de données, symboles de debug, logos). Le budget de 75 MiB
+  reste consommé à 90 %.
+- **Tous les compteurs d'anti-patterns strictement identiques** au 19
+  juillet : 658 `setState`, 57 `StreamBuilder`, 33 `.snapshots()`, 114
+  `FirebaseFirestore.instance` direct, 322 `print`/`debugPrint`, 39 `ListView(`
+  non virtualisées vs 14 `.builder`, 17 `shrinkWrap: true`, 1 seul
+  `deferred as` dans tout `lib/`. Le stream inline de
+  `mes_projets_fiche_page.dart:85` est toujours présent tel quel.
+- **Classement des 14 plus gros fichiers inchangé** (`toolbox_je_me_lance_page.dart`
+  toujours en tête à 7 217 lignes). `lib/` est passé de 119 325 à 119 526
+  lignes (+201, négligeable).
+- **Seul mouvement notable** : `lib/pages/offers/widgets/payment_info_popup.dart`
+  a été décomposé (−418 lignes, extraction de
+  `payment_info_popup_header.dart` et `payment_info_popup_rules.dart`) — dans
+  l'esprit de la recommandation P1, même si ce fichier n'était pas parmi les
+  plus gros audités. Aucun des autres fichiers cités dans ce rapport n'a été
+  touché ; les 8 commits recensés sont uniquement des vagues de couverture de
+  tests.
+- **Bonus sécurité observé en passant** : les dumps `env:` du run
+  `29759879206` ne contiennent plus de `GOOGLE_CREDENTIALS_JSON` — seuls
+  `GOOGLE_APPLICATION_CREDENTIALS` et `CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE`
+  pointent vers le fichier de credentials éphémère généré par Workload
+  Identity Federation. Confirme, sur un run réel, que la migration WIF ne
+  réintroduit aucune fuite de clé dans les logs.
+
+**Conclusion : aucun des constats ni des recommandations de ce rapport n'est
+caduc.** Les priorités P0/P1/P2 restent valables telles quelles.
