@@ -3,6 +3,8 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/offers/presentation/widgets/publish_offer_category_fields.dart';
+import 'package:presto_app/features/offers/presentation/widgets/publish_offer_contact_fields.dart';
+import 'package:presto_app/features/offers/presentation/widgets/publish_offer_mission_fields.dart';
 import 'package:presto_app/features/subscriptions/subscription_credit_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_credits_card.dart';
 import 'package:presto_app/main.dart' as app;
@@ -229,6 +231,79 @@ void main() {
 
     expect(offsets, isNotEmpty);
     expect(offsets.any((offset) => offset > 0), isTrue);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('active puis désactive la confidentialité du téléphone',
+      (tester) async {
+    await pumpPage(tester);
+    await selectTextMode(tester);
+
+    var phoneFields = tester.widget<PublishOfferPhoneFields>(
+      find.byType(PublishOfferPhoneFields),
+    );
+    expect(phoneFields.hidePhone, isFalse);
+
+    phoneFields.onHidePhoneChanged(true);
+    await tester.pump();
+    phoneFields = tester.widget<PublishOfferPhoneFields>(
+      find.byType(PublishOfferPhoneFields),
+    );
+    expect(phoneFields.hidePhone, isTrue);
+
+    phoneFields.onHidePhoneChanged(false);
+    await tester.pump();
+    phoneFields = tester.widget<PublishOfferPhoneFields>(
+      find.byType(PublishOfferPhoneFields),
+    );
+    expect(phoneFields.hidePhone, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('synchronise le délai urgent et le budget négociable',
+      (tester) async {
+    await pumpPage(tester);
+    await selectTextMode(tester);
+
+    var missionFields = tester.widget<PublishOfferMissionFields>(
+      find.byType(PublishOfferMissionFields),
+    );
+    expect(missionFields.selectedDelay, isNull);
+    expect(missionFields.selectedBudgetType, 'Fixe');
+
+    missionFields.onDelayChanged('Urgent');
+    await tester.pump();
+    missionFields = tester.widget<PublishOfferMissionFields>(
+      find.byType(PublishOfferMissionFields),
+    );
+    expect(missionFields.selectedDelay, 'Urgent');
+
+    missionFields.onDelayChanged('À convenir');
+    await tester.pump();
+    missionFields = tester.widget<PublishOfferMissionFields>(
+      find.byType(PublishOfferMissionFields),
+    );
+    expect(missionFields.selectedDelay, 'À convenir');
+
+    missionFields.onBudgetTypeChanged('À négocier');
+    await tester.pump();
+    missionFields = tester.widget<PublishOfferMissionFields>(
+      find.byType(PublishOfferMissionFields),
+    );
+    expect(missionFields.selectedBudgetType, 'À négocier');
+    expect(missionFields.budgetValidator(''), isNull);
+
+    missionFields.onBudgetTypeChanged('Fixe');
+    await tester.pump();
+    missionFields = tester.widget<PublishOfferMissionFields>(
+      find.byType(PublishOfferMissionFields),
+    );
+    expect(missionFields.selectedBudgetType, 'Fixe');
+    expect(missionFields.budgetValidator(''), 'Montant invalide');
+    expect(missionFields.budgetValidator('0'), 'Le montant doit être > 0');
+    expect(missionFields.budgetValidator('75'), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
