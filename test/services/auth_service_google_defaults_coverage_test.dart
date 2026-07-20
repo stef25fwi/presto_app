@@ -141,7 +141,7 @@ class _AuthPlatform extends FirebaseAuthPlatform {
   _AuthPlatform() : super(appInstance: null);
 
   UserPlatform? user;
-  String? languageCode;
+  String? languageCodeValue;
   String? credentialProviderId;
   String? createdEmail;
   String? createdPassword;
@@ -167,7 +167,7 @@ class _AuthPlatform extends FirebaseAuthPlatform {
 
   @override
   Future<void> setLanguageCode(String? value) async {
-    languageCode = value;
+    languageCodeValue = value;
   }
 
   @override
@@ -226,7 +226,7 @@ void main() {
     googlePlatform.authenticateCalls = 0;
     authPlatform
       ..user = null
-      ..languageCode = null
+      ..languageCodeValue = null
       ..credentialProviderId = null
       ..createdEmail = null
       ..createdPassword = null
@@ -270,7 +270,7 @@ void main() {
     final credential = await service().signInWithGoogle();
 
     expect(googlePlatform.authenticateCalls, 1);
-    expect(authPlatform.languageCode, 'fr');
+    expect(authPlatform.languageCodeValue, 'fr');
     expect(authPlatform.credentialCalls, 1);
     expect(authPlatform.credentialProviderId, 'google.com');
     expect(credential.user?.uid, 'google-user-1');
