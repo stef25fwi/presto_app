@@ -43,14 +43,17 @@ void main() {
       find.byType(PublishOfferLocationFields),
     );
 
-    location.onCitySelected(
-      CityEntry(
-        name: 'Fort-de-France',
-        dept: '972',
-        cps: const ['97200'],
-        nameNorm: 'fort de france',
-      ),
+    final martinique = CityEntry(
+      name: 'Fort-de-France',
+      dept: '972',
+      cps: const ['97200'],
+      nameNorm: 'fort de france',
     );
+    // CityPostalAutocompleteField remplit les deux contrôleurs avant d'appeler
+    // le callback parent. Le test reproduit ce contrat sans dépendre du réseau.
+    location.cityController.text = martinique.name;
+    location.postalCodeController.text = martinique.cps.single;
+    location.onCitySelected(martinique);
     await tester.pump();
 
     location = tester.widget<PublishOfferLocationFields>(
@@ -63,14 +66,15 @@ void main() {
     expect(location.postalCodeController.text, '97200');
     expect(phone.initialCountryCode, '+596');
 
-    location.onCitySelected(
-      CityEntry(
-        name: 'Cayenne',
-        dept: '973',
-        cps: const ['97300'],
-        nameNorm: 'cayenne',
-      ),
+    final guyane = CityEntry(
+      name: 'Cayenne',
+      dept: '973',
+      cps: const ['97300'],
+      nameNorm: 'cayenne',
     );
+    location.cityController.text = guyane.name;
+    location.postalCodeController.text = guyane.cps.single;
+    location.onCitySelected(guyane);
     await tester.pump();
 
     location = tester.widget<PublishOfferLocationFields>(
@@ -97,14 +101,14 @@ void main() {
     );
     location.postalCodeController.text = '97190';
 
-    location.onCitySelected(
-      CityEntry(
-        name: 'Le Gosier',
-        dept: '971',
-        cps: const <String>[],
-        nameNorm: 'le gosier',
-      ),
+    final guadeloupe = CityEntry(
+      name: 'Le Gosier',
+      dept: '971',
+      cps: const <String>[],
+      nameNorm: 'le gosier',
     );
+    location.cityController.text = guadeloupe.name;
+    location.onCitySelected(guadeloupe);
     await tester.pump();
 
     location = tester.widget<PublishOfferLocationFields>(
