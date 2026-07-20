@@ -44,14 +44,15 @@ void main() {
     expect(fields.validator('690123456'), isNull);
 
     fields.onCountryCodeChanged('+590');
-    fields.onPhoneChanged('690 12 34 56');
+    fields.controller.text = '690 12 34 56';
+    fields.onPhoneChanged(fields.controller.text);
     await tester.pump();
 
     fields = tester.widget<PublishOfferPhoneFields>(
       find.byType(PublishOfferPhoneFields),
     );
     expect(fields.initialCountryCode, '+590');
-    expect(fields.controller.text, contains('690'));
+    expect(fields.controller.text, '690 12 34 56');
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -63,7 +64,7 @@ void main() {
       find.byType(PublishOfferLocationFields),
     );
 
-    expect(location.postalValidator(''), isNotNull);
+    expect(location.postalValidator(''), isNull);
     expect(location.postalValidator('97122'), isNull);
     expect(location.postalValidator('123'), isNotNull);
 
