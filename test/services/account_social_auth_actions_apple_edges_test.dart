@@ -131,7 +131,6 @@ void main() {
 
   tearDown(() {
     messenger.setMockMethodCallHandler(SignInWithApple.channel, null);
-    debugDefaultTargetPlatformOverride = null;
   });
 
   Future<void> runAction(
@@ -139,27 +138,31 @@ void main() {
     Future<void> Function(BuildContext context) action,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    final completed = Completer<void>();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () async {
-                await action(context);
-                completed.complete();
-              },
-              child: const Text('Connexion Apple'),
+    try {
+      final completed = Completer<void>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  await action(context);
+                  completed.complete();
+                },
+                child: const Text('Connexion Apple'),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Connexion Apple'));
-    await tester.pump();
-    await completed.future.timeout(const Duration(seconds: 10));
-    await tester.pump();
+      await tester.tap(find.text('Connexion Apple'));
+      await tester.pump();
+      await completed.future.timeout(const Duration(seconds: 10));
+      await tester.pump();
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   }
 
   testWidgets('Apple finalise avec le credential quand currentUser est absent',
