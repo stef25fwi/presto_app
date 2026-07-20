@@ -1,5 +1,5 @@
-// The platform interface is used only to provide a deterministic in-memory
-// Firebase Storage delegate for this integration boundary.
+// The platform interface is used only to provide deterministic in-memory
+// Firebase Core and Storage delegates for this integration boundary.
 // ignore_for_file: depend_on_referenced_packages
 
 import 'dart:typed_data';
@@ -10,6 +10,42 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:firebase_storage_platform_interface/firebase_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/payment_info_audio_service.dart';
+
+class _StorageFirebaseCoreHostApi implements TestFirebaseCoreHostApi {
+  CoreFirebaseOptions get _options => CoreFirebaseOptions(
+        apiKey: 'test-api-key',
+        appId: '1:123456789:web:payment-audio-storage',
+        messagingSenderId: '123456789',
+        projectId: 'presto-audio-test',
+        storageBucket: 'presto-audio-test.appspot.com',
+      );
+
+  @override
+  Future<CoreInitializeResponse> initializeApp(
+    String appName,
+    CoreFirebaseOptions initializeAppRequest,
+  ) async {
+    return CoreInitializeResponse(
+      name: appName,
+      options: _options,
+      pluginConstants: <String, dynamic>{},
+    );
+  }
+
+  @override
+  Future<List<CoreInitializeResponse>> initializeCore() async {
+    return <CoreInitializeResponse>[
+      CoreInitializeResponse(
+        name: '[DEFAULT]',
+        options: _options,
+        pluginConstants: <String, dynamic>{},
+      ),
+    ];
+  }
+
+  @override
+  Future<CoreFirebaseOptions> optionsFromResource() async => _options;
+}
 
 class _MemoryStoragePlatform extends FirebaseStoragePlatform {
   _MemoryStoragePlatform() : super(bucket: 'presto-audio-test.appspot.com');
@@ -99,21 +135,8 @@ void main() {
   late _MemoryStoragePlatform storagePlatform;
 
   setUpAll(() async {
-    setupFirebaseCoreMocks();
-    try {
-      await Firebase.app().delete();
-    } on FirebaseException catch (error) {
-      if (error.code != 'no-app') rethrow;
-    }
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'test-api-key',
-        appId: '1:123456789:web:payment-audio-storage',
-        messagingSenderId: '123456789',
-        projectId: 'presto-audio-test',
-        storageBucket: 'presto-audio-test.appspot.com',
-      ),
-    );
+    TestFirebaseCoreHostApi.setUp(_StorageFirebaseCoreHostApi());
+    await Firebase.initializeApp();
     originalStoragePlatform = FirebaseStoragePlatform.instance;
   });
 
