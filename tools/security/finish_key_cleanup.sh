@@ -75,9 +75,17 @@ echo "4/4 — Empêcher toute recréation future de clé (org policy)"
 echo "############################################"
 read -p "Activer iam.disableServiceAccountKeyCreation sur ce projet ? (o/N) " confirm2
 if [[ "$confirm2" == "o" || "$confirm2" == "O" ]]; then
-  gcloud resource-manager org-policies enable-enforce \
-    iam.disableServiceAccountKeyCreation --project="$PROJECT_ID"
-  echo "Activé. Toute tentative future de créer une clé JSON échouera par défaut."
+  if gcloud resource-manager org-policies enable-enforce \
+       iam.disableServiceAccountKeyCreation --project="$PROJECT_ID"; then
+    echo "Activé. Toute tentative future de créer une clé JSON échouera par défaut."
+  else
+    echo "ÉCHEC — la commande a renvoyé une erreur (voir ci-dessus, souvent un"
+    echo "droit orgpolicy.policyAdmin manquant). La policy N'EST PAS active."
+    echo "Vérifie ton rôle avec :"
+    echo "  gcloud projects get-iam-policy $PROJECT_ID --flatten=\"bindings[].members\" \\"
+    echo "    --filter=\"bindings.members:\$(gcloud config get-value account)\" \\"
+    echo "    --format=\"table(bindings.role)\""
+  fi
 else
   echo "Ignoré."
 fi
