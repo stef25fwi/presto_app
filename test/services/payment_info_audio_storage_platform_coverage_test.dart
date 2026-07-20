@@ -101,18 +101,19 @@ void main() {
   setUpAll(() async {
     setupFirebaseCoreMocks();
     try {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: 'test-api-key',
-          appId: '1:123456789:web:payment-audio-storage',
-          messagingSenderId: '123456789',
-          projectId: 'presto-audio-test',
-          storageBucket: 'presto-audio-test.appspot.com',
-        ),
-      );
+      await Firebase.app().delete();
     } on FirebaseException catch (error) {
-      if (error.code != 'duplicate-app') rethrow;
+      if (error.code != 'no-app') rethrow;
     }
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'test-api-key',
+        appId: '1:123456789:web:payment-audio-storage',
+        messagingSenderId: '123456789',
+        projectId: 'presto-audio-test',
+        storageBucket: 'presto-audio-test.appspot.com',
+      ),
+    );
     originalStoragePlatform = FirebaseStoragePlatform.instance;
   });
 
