@@ -6,7 +6,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/account_social_auth_actions.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -33,22 +32,6 @@ class _EdgeAppleUserPlatform extends UserPlatform {
             providerData: const <Map<String, dynamic>?>[],
           ),
         );
-
-  String? updatedDisplayName;
-
-  @override
-  Future<void> updateProfile(Map<String, String?> profile) async {
-    updatedDisplayName = profile['displayName'];
-  }
-
-  @override
-  Future<String?> getIdToken(bool forceRefresh) async {
-    throw FirebaseException(
-      plugin: 'firebase_auth',
-      code: 'permission-denied',
-      message: 'bootstrap unavailable in deterministic widget test',
-    );
-  }
 }
 
 class _EdgeAppleCredentialPlatform extends UserCredentialPlatform {
@@ -68,8 +51,8 @@ class _EdgeAppleAuthPlatform extends FirebaseAuthPlatform {
   }
 
   late final _EdgeAppleUserPlatform user;
-  bool exposeCurrentUser = true;
-  bool isNewUser = true;
+  bool exposeCurrentUser = false;
+  bool isNewUser = false;
   var credentialCalls = 0;
 
   @override
@@ -105,18 +88,15 @@ class _EdgeAppleAuthPlatform extends FirebaseAuthPlatform {
   }
 }
 
-Map<String, Object?> _appleResponse({
-  String? givenName,
-  String? familyName,
-}) {
+Map<String, Object?> _appleResponse({String? identityToken = 'identity-token'}) {
   return <String, Object?>{
     'type': 'appleid',
     'userIdentifier': 'apple-edge-user',
-    'givenName': givenName,
-    'familyName': familyName,
+    'givenName': null,
+    'familyName': null,
     'authorizationCode': 'authorization-code',
     'email': 'edge@ilipresto.fr',
-    'identityToken': 'identity-token',
+    'identityToken': identityToken,
     'state': null,
   };
 }
@@ -140,13 +120,12 @@ void main() {
 
   setUp(() {
     platform
-      ..exposeCurrentUser = true
-      ..isNewUser = true
+      ..exposeCurrentUser = false
+      ..isNewUser = false
       ..credentialCalls = 0;
-    platform.user.updatedDisplayName = null;
     messenger.setMockMethodCallHandler(
       SignInWithApple.channel,
-      (call) async => _appleResponse(familyName: 'Martin'),
+      (call) async => _appleResponse(),
     );
   });
 
@@ -183,25 +162,8 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('Apple construit le nom avec le seul nom de famille',
+  testWidgets('Apple finalise avec le credential quand currentUser est absent',
       (tester) async {
-    await runAction(
-      tester,
-      (context) => AccountSocialAuthActions.signInWithApple(
-        context: context,
-        auth: auth,
-        trackLogin: ({authMethod, isNewUser = false}) async {},
-      ),
-    );
-
-    expect(platform.credentialCalls, 1);
-    expect(platform.user.updatedDisplayName, 'Martin');
-    expect(find.text('Connecte avec Apple ✓'), findsOneWidget);
-  });
-
-  testWidgets('Apple finalise même si currentUser reste momentanément absent',
-      (tester) async {
-    platform.exposeCurrentUser = false;
     String? trackedMethod;
     bool? trackedNewUser;
 
@@ -219,7 +181,7 @@ void main() {
 
     expect(platform.credentialCalls, 1);
     expect(trackedMethod, 'apple');
-    expect(trackedNewUser, isTrue);
+    expect(trackedNewUser, isFalse);
     expect(find.text('Connecte avec Apple ✓'), findsOneWidget);
   });
 
@@ -239,6 +201,28 @@ void main() {
     expect(platform.credentialCalls, 1);
     expect(
       find.textContaining('Erreur inattendue : Bad state: tracking indisponible'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Apple refuse une réponse sans jeton d’identité', (tester) async {
+    messenger.setMockMethodCallHandler(
+      SignInWithApple.channel,
+      (call) async => _appleResponse(identityToken: null),
+    );
+
+    await runAction(
+      tester,
+      (context) => AccountSocialAuthActions.signInWithApple(
+        context: context,
+        auth: auth,
+        trackLogin: ({authMethod, isNewUser = false}) async {},
+      ),
+    );
+
+    expect(platform.credentialCalls, 0);
+    expect(
+      find.textContaining('Erreur inattendue : Exception: Identité Apple non reçue'),
       findsOneWidget,
     );
   });
