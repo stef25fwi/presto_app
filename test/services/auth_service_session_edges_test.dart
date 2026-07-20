@@ -42,6 +42,7 @@ void main() {
 
   late _SessionAuthPlatform platform;
   late AuthService service;
+  late int googleSignOutCalls;
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
@@ -51,6 +52,7 @@ void main() {
   });
 
   setUp(() {
+    googleSignOutCalls = 0;
     platform
       ..user = null
       ..signOutError = null
@@ -58,7 +60,9 @@ void main() {
     service = AuthService.forTesting(
       auth: FirebaseAuth.instance,
       firestore: FakeFirebaseFirestore(),
-      googleSignOut: () async {},
+      googleSignOut: () async {
+        googleSignOutCalls += 1;
+      },
     );
   });
 
@@ -71,6 +75,14 @@ void main() {
     );
   });
 
+  test('termine la déconnexion Google puis Firebase', () async {
+    await service.signOut();
+
+    expect(googleSignOutCalls, 1);
+    expect(platform.signOutCalls, 1);
+    expect(service.currentUser, isNull);
+  });
+
   test('propage une erreur Firebase de déconnexion après la phase Google',
       () async {
     final expected = FirebaseAuthException(
@@ -80,6 +92,7 @@ void main() {
     platform.signOutError = expected;
 
     await expectLater(service.signOut(), throwsA(same(expected)));
+    expect(googleSignOutCalls, 1);
     expect(platform.signOutCalls, 1);
   });
 }
