@@ -57,7 +57,7 @@
     "nodemailer": "^9.0.3",
     "openai": "^4.104.0",
     "resend": "^6.17.2",
-    "sharp": "^0.33.5"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",
