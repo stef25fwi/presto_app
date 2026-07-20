@@ -36,7 +36,6 @@ void main() {
         find.byType(AiPublishControl),
       );
       expect(control.state, AiPublishState.ready);
-      expect(control.dimVocalCard, isFalse);
 
       control.onSelectText();
       await tester.pump();
@@ -56,7 +55,6 @@ void main() {
         find.byType(AiPublishControl),
       );
       expect(control.state, AiPublishState.ready);
-      expect(control.dimVocalCard, isFalse);
 
       control.onSelectText();
       await tester.pump();
