@@ -18,44 +18,21 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   read-timings:
     environment: recaptcha
     runs-on: ubuntu-latest
     steps:
-      - name: Decode Google Credentials
-        env:
-          GOOGLE_CREDENTIALS_B64: ${{ secrets.GOOGLE_CREDENTIALS_B64 }}
-        run: |
-          if [ -z "$GOOGLE_CREDENTIALS_B64" ]; then
-            echo "❌ GOOGLE_CREDENTIALS_B64 est vide."
-            exit 1
-          fi
-
-          printf "%s" "$GOOGLE_CREDENTIALS_B64" \
-            | tr -d '\r\n[:space:]' \
-            | base64 -d > "$RUNNER_TEMP/google-credentials.json"
-
-          python3 -m json.tool "$RUNNER_TEMP/google-credentials.json" >/dev/null
-          echo "✅ Google credentials JSON décodé et validé"
-
-          # Masque chaque ligne du JSON décodé : sans cela, la valeur exportée
-          # dans GITHUB_ENV est imprimée en clair dans les dumps env: des logs.
-          while IFS= read -r credentials_line; do
-            if [ -n "$credentials_line" ]; then
-              echo "::add-mask::$credentials_line"
-            fi
-          done < "$RUNNER_TEMP/google-credentials.json"
-
-          echo "GOOGLE_CREDENTIALS_JSON<<HEREDOC_EOF" >> "$GITHUB_ENV"
-          cat "$RUNNER_TEMP/google-credentials.json" >> "$GITHUB_ENV"
-          echo "HEREDOC_EOF" >> "$GITHUB_ENV"
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: '${{ env.GOOGLE_CREDENTIALS_JSON }}'
+          # Workload Identity Federation : aucune clé de service account
+          # stockée. Le jeton OIDC GitHub est échangé contre un jeton GCP
+          # de courte durée (permission id-token: write requise).
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v3
