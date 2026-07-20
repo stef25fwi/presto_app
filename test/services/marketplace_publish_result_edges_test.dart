@@ -146,11 +146,10 @@ void main() {
     expect(execution.result.isPubliclyVisible, isFalse);
   });
 
-  test('normalise le brouillon avec catégorie de repli et options métier',
-      () async {
+  test('préserve la catégorie fournie et propage les options métier', () async {
     final execution = await publishWith(null);
 
-    expect(execution.draft.category, 'Autre');
+    expect(execution.draft.category, 'Catégorie inconnue');
     expect(execution.draft.hidePhone, isTrue);
     expect(execution.draft.isUrgent, isTrue);
     expect(execution.draft.subCategory, isNull);
