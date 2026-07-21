@@ -62,44 +62,59 @@ jobs:
           text = admin.read_text()
           old_label = "'subscription_alerts_banner': 'Page abonnement — alertes nouvelle annonce',"
           new_label = "'subscription_alerts_banner': 'Page Mon compte — Mes alertes nouvelles annonces',"
-          if old_label not in text:
-              raise SystemExit('Libellé cible admin introuvable')
-          text = text.replace(old_label, new_label, 1)
-          if "  String _target = 'consult_offers';" not in text:
-              raise SystemExit('Cible admin par défaut introuvable')
-          text = text.replace(
-              "  String _target = 'consult_offers';",
-              "  String _target = 'subscription_alerts_banner';",
-              1,
-          )
+          if old_label in text:
+              text = text.replace(old_label, new_label, 1)
+          if "  String _target = 'consult_offers';" in text:
+              text = text.replace(
+                  "  String _target = 'consult_offers';",
+                  "  String _target = 'subscription_alerts_banner';",
+                  1,
+              )
           admin.write_text(text)
 
           account = Path('lib/pages/account_page.dart')
           text = account.read_text()
           old = """          builder: (context, snapshot) {
-            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
-                .where((image) => image.isVisible)
-                .toList();
-            if (activeImages.isEmpty) return fallback();
+             final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                 .where((image) => image.isVisible)
+                 .toList();
+             if (activeImages.isEmpty) return fallback();
 
-            return Image.network("""
+             return Image.network(
+               activeImages.first.imageUrl,"""
           new = """          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              debugPrint(
-                '[AccountAlertsBanner] loading failed: ${snapshot.error}',
-              );
-              return fallback();
-            }
+             if (snapshot.hasError) {
+               debugPrint(
+                 '[AccountAlertsBanner] loading failed: ${snapshot.error}',
+               );
+               return fallback();
+             }
 
-            final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
-                .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
-                .toList();
-            if (activeImages.isEmpty) return fallback();
+             final activeImages = (snapshot.data ?? const <AdPlaceholderImage>[])
+                 .where((image) => image.isVisible && image.imageUrl.isNotEmpty)
+                 .toList()
+               ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+             if (activeImages.isEmpty) return fallback();
 
-            return Image.network("""
+             final selectedImage = activeImages.last;
+             final revision = selectedImage.updatedAt?.millisecondsSinceEpoch ??
+                 selectedImage.createdAt?.millisecondsSinceEpoch ??
+                 selectedImage.sortOrder;
+             final separator = selectedImage.imageUrl.contains('?') ? '&' : '?';
+             final cacheBustedUrl =
+                 '${selectedImage.imageUrl}${separator}revision=$revision';
+
+             return Image.network(
+               cacheBustedUrl,"""
           if old not in text:
               raise SystemExit('Builder bannière alertes introuvable')
-          account.write_text(text.replace(old, new, 1))
+          text = text.replace(old, new, 1)
+          text = text.replace(
+              "loadingBuilder: (context, child, progress) =>\n                   progress == null ? child : fallback(),",
+              "loadingBuilder: (context, child, progress) => progress == null\n                   ? child\n                   : const ColoredBox(\n                       color: Color(0xFFE8F0FE),\n                       child: Center(child: CircularProgressIndicator()),\n                     ),",
+              1,
+          )
+          account.write_text(text)
           PY
 
       - name: Format corrected files
@@ -111,7 +126,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add lib/services/ad_placeholder_image_service.dart lib/pages/admin/ad_placeholder_images_admin_page.dart lib/pages/account_page.dart
-          git commit -m 'fix: display selected account alerts image' || exit 0
+          git commit -m 'fix: display newest account alerts image' || exit 0
           git push
 
       - name: Validate corrected files
