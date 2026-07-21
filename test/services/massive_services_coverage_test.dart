@@ -14,14 +14,20 @@ void main() {
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'test-api-key',
-        appId: '1:1234567890:web:massive-services',
-        messagingSenderId: '1234567890',
-        projectId: 'presto-test',
-      ),
-    );
+    try {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'test-api-key',
+          appId: '1:1234567890:web:massive-services',
+          messagingSenderId: '1234567890',
+          projectId: 'presto-test',
+        ),
+      );
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') {
+        rethrow;
+      }
+    }
   });
 
   setUp(() {
@@ -29,7 +35,7 @@ void main() {
   });
 
   group('ProductAnalyticsEvent', () {
-    test('construit tous les événements typés avec leur étape', () {
+    test('construit les événements typés avec leur étape', () {
       final events = <ProductAnalyticsEvent>[
         ProductAnalyticsEvent.acquisitionLandingViewed(
           source: 'organic',
@@ -146,7 +152,7 @@ void main() {
       service = ProSiretService();
     });
 
-    test('nettoie et valide le format puis le contrôle de Luhn', () {
+    test('nettoie, valide le format et contrôle Luhn', () {
       expect(service.cleanSiret('732 829 320 00074'), '73282932000074');
       expect(service.isValidSiretFormat('732 829 320 00074'), isTrue);
       expect(service.isValidSiretFormat('123'), isFalse);
@@ -178,10 +184,7 @@ void main() {
     });
 
     test('rejette localement les SIRET invalides avant le réseau', () async {
-      await expectLater(
-        service.preVerifySiret('123'),
-        throwsA(isA<Exception>()),
-      );
+      await expectLater(service.preVerifySiret('123'), throwsA(isA<Exception>()));
       await expectLater(
         service.preVerifySiret('12345678901234'),
         throwsA(isA<Exception>()),
