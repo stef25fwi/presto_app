@@ -101,10 +101,19 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('France métropolitaine'), findsOneWidget);
-      expect(find.text('DROM'), findsOneWidget);
-      expect(find.text('01 — Guadeloupe'), findsOneWidget);
 
-      await tester.tap(find.text('01 — Guadeloupe').last);
+      final guadeloupeFinder = find.text('01 — Guadeloupe');
+      await tester.scrollUntilVisible(
+        guadeloupeFinder,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('DROM'), findsOneWidget);
+      expect(guadeloupeFinder, findsOneWidget);
+
+      await tester.tap(guadeloupeFinder);
       await tester.pumpAndSettle();
 
       expect(selected?.name, 'Guadeloupe');
