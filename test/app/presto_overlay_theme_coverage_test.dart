@@ -41,7 +41,7 @@ void main() {
     expect(copy.sheetRadius, original.sheetRadius);
   });
 
-  test('lerp interpole toutes les propriétés et ignore un autre type', () {
+  test('lerp interpole toutes les propriétés et ignore null', () {
     final start = PrestoOverlayTheme.fallback;
     final end = start.copyWith(
       surfaceColor: Colors.black,
@@ -73,7 +73,7 @@ void main() {
     expect(middle.popupRadius,
         BorderRadius.lerp(start.popupRadius, end.popupRadius, 0.5));
 
-    expect(start.lerp(const _OtherTheme(), 0.5), same(start));
+    expect(start.lerp(null, 0.5), same(start));
   });
 
   testWidgets('extension de contexte retourne extension puis fallback', (tester) async {
@@ -108,15 +108,4 @@ void main() {
     );
     expect(withoutExtension, same(PrestoOverlayTheme.fallback));
   });
-}
-
-@immutable
-class _OtherTheme extends ThemeExtension<_OtherTheme> {
-  const _OtherTheme();
-
-  @override
-  _OtherTheme copyWith() => this;
-
-  @override
-  _OtherTheme lerp(covariant ThemeExtension<_OtherTheme>? other, double t) => this;
 }
