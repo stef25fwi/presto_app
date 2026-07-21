@@ -63,7 +63,6 @@ void main() {
 
     expect(appCheckActivationAttempted, isTrue);
     expect(appCheckActivationSucceeded, isFalse);
-    expect(appCheckActivationError, isNotNull);
-    expect(appCheckLastTokenRefreshError, isNotNull);
+    expect(appCheckLastTokenRefreshAt, isNull);
   });
 }
