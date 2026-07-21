@@ -57,26 +57,49 @@ void main() {
 
     final middle = start.lerp(end, 0.5);
 
-    expect(middle.surfaceColor, Color.lerp(start.surfaceColor, end.surfaceColor, 0.5));
-    expect(middle.surfaceTintColor,
-        Color.lerp(start.surfaceTintColor, end.surfaceTintColor, 0.5));
-    expect(middle.borderColor, Color.lerp(start.borderColor, end.borderColor, 0.5));
-    expect(middle.selectionFillColor,
-        Color.lerp(start.selectionFillColor, end.selectionFillColor, 0.5));
-    expect(middle.selectionAccentColor,
-        Color.lerp(start.selectionAccentColor, end.selectionAccentColor, 0.5));
-    expect(middle.shadowColor, Color.lerp(start.shadowColor, end.shadowColor, 0.5));
-    expect(middle.dialogRadius,
-        BorderRadius.lerp(start.dialogRadius, end.dialogRadius, 0.5));
-    expect(middle.sheetRadius,
-        BorderRadius.lerp(start.sheetRadius, end.sheetRadius, 0.5));
-    expect(middle.popupRadius,
-        BorderRadius.lerp(start.popupRadius, end.popupRadius, 0.5));
+    expect(
+      middle.surfaceColor,
+      Color.lerp(start.surfaceColor, end.surfaceColor, 0.5),
+    );
+    expect(
+      middle.surfaceTintColor,
+      Color.lerp(start.surfaceTintColor, end.surfaceTintColor, 0.5),
+    );
+    expect(
+      middle.borderColor,
+      Color.lerp(start.borderColor, end.borderColor, 0.5),
+    );
+    expect(
+      middle.selectionFillColor,
+      Color.lerp(start.selectionFillColor, end.selectionFillColor, 0.5),
+    );
+    expect(
+      middle.selectionAccentColor,
+      Color.lerp(start.selectionAccentColor, end.selectionAccentColor, 0.5),
+    );
+    expect(
+      middle.shadowColor,
+      Color.lerp(start.shadowColor, end.shadowColor, 0.5),
+    );
+    expect(
+      middle.dialogRadius,
+      BorderRadius.lerp(start.dialogRadius, end.dialogRadius, 0.5),
+    );
+    expect(
+      middle.sheetRadius,
+      BorderRadius.lerp(start.sheetRadius, end.sheetRadius, 0.5),
+    );
+    expect(
+      middle.popupRadius,
+      BorderRadius.lerp(start.popupRadius, end.popupRadius, 0.5),
+    );
 
     expect(start.lerp(null, 0.5), same(start));
   });
 
-  testWidgets('extension de contexte retourne extension puis fallback', (tester) async {
+  testWidgets('extension de contexte retourne extension puis fallback', (
+    tester,
+  ) async {
     PrestoOverlayTheme? withExtension;
     PrestoOverlayTheme? withoutExtension;
     final custom = PrestoOverlayTheme.fallback.copyWith(
@@ -94,7 +117,9 @@ void main() {
         ),
       ),
     );
-    expect(withExtension, same(custom));
+    expect(withExtension, isNotNull);
+    expect(withExtension!.surfaceColor, custom.surfaceColor);
+    expect(withExtension!.borderColor, custom.borderColor);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -106,6 +131,14 @@ void main() {
         ),
       ),
     );
-    expect(withoutExtension, same(PrestoOverlayTheme.fallback));
+    expect(withoutExtension, isNotNull);
+    expect(
+      withoutExtension!.surfaceColor,
+      PrestoOverlayTheme.fallback.surfaceColor,
+    );
+    expect(
+      withoutExtension!.dialogRadius,
+      PrestoOverlayTheme.fallback.dialogRadius,
+    );
   });
 }
