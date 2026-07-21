@@ -117,9 +117,13 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
     expect(withExtension, isNotNull);
     expect(withExtension!.surfaceColor, custom.surfaceColor);
     expect(withExtension!.borderColor, custom.borderColor);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
 
     await tester.pumpWidget(
       MaterialApp(
@@ -131,6 +135,7 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
     expect(withoutExtension, isNotNull);
     expect(
       withoutExtension!.surfaceColor,
