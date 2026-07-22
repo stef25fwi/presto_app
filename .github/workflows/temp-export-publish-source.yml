@@ -1,4 +1,4 @@
-name: Temporary export publication source
+name: Temporary publication coverage executor
 
 on:
   pull_request:
@@ -6,18 +6,52 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  export:
-    if: github.head_ref == 'coverage/publication-massive-widget-wave'
+  implement-and-test:
+    if: github.head_ref == 'coverage/publication-massive-widget-wave' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref }}
-      - uses: actions/upload-artifact@v7
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
         with:
-          name: publish-offer-source-${{ github.run_id }}
-          path: lib/pages/publish_offer_page.dart
-          retention-days: 1
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Apply zero-line-growth testability refactor
+        run: python3 tools/temp_publish_offer_public_helpers_patch.py
+
+      - name: Format changed Dart files
+        run: dart format lib/pages/publish_offer_page.dart test/pages/publish_offer_pure_helpers_massive_coverage_test.dart
+
+      - name: Enforce legacy page line budget
+        shell: bash
+        run: |
+          test "$(wc -l < lib/pages/publish_offer_page.dart)" -le 5131
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Targeted publication helper tests
+        run: flutter test test/pages/publish_offer_pure_helpers_massive_coverage_test.dart
+
+      - name: Targeted analyzer
+        run: flutter analyze lib/pages/publish_offer_page.dart test/pages/publish_offer_pure_helpers_massive_coverage_test.dart
+
+      - name: Commit validated implementation and clean executor
+        shell: bash
+        run: |
+          rm -f .github/workflows/temp-export-publish-source.yml
+          rm -f tools/temp_publish_offer_public_helpers_patch.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "test(coverage): cover publication parsing and validation helpers"
+          git push origin HEAD:${{ github.head_ref }}
