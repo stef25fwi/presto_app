@@ -1,15 +1,25 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/messages/conversation_thread_page.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+  });
+
   dynamic createState() => const ConversationThreadPage(
-        conversationId: 'conversation-helper',
-        offerTitle: 'Peinture salon',
-        currentUserId: 'user-current',
-      ).createState();
+    conversationId: 'conversation-helper',
+    offerTitle: 'Peinture salon',
+    currentUserId: 'user-current',
+  ).createState();
 
   test('normalise les codes et messages d erreur de messagerie', () {
     final state = createState();
@@ -164,16 +174,17 @@ void main() {
     );
 
     expect(
-      state.firstProfilePhotoValue(
-        <String, dynamic>{'photoUrl': ' ', 'avatarURL': ' https://img/a.png '},
-      ),
+      state.firstProfilePhotoValue(<String, dynamic>{
+        'photoUrl': ' ',
+        'avatarURL': ' https://img/a.png ',
+      }),
       'https://img/a.png',
     );
     expect(state.firstProfilePhotoValue(<String, dynamic>{}), isEmpty);
     expect(
-      state.firstStoredProfilePhotoPath(
-        <String, dynamic>{'profilePhotoPath': ' profilePhotos/u/a.webp '},
-      ),
+      state.firstStoredProfilePhotoPath(<String, dynamic>{
+        'profilePhotoPath': ' profilePhotos/u/a.webp ',
+      }),
       'profilePhotos/u/a.webp',
     );
 
@@ -198,10 +209,7 @@ void main() {
       isTrue,
     );
     expect(
-      state.isSameCalendarDay(
-        DateTime(2026, 7, 22),
-        DateTime(2026, 7, 23),
-      ),
+      state.isSameCalendarDay(DateTime(2026, 7, 22), DateTime(2026, 7, 23)),
       isFalse,
     );
     expect(state.isSameCalendarDay(null, DateTime(2026, 7, 22)), isFalse);
@@ -210,8 +218,10 @@ void main() {
   test('normalise noms MIME et types de pièces jointes', () {
     final state = createState();
 
-    expect(state.safeAttachmentName(' Mon fichier été.pdf ', 'fallback.pdf'),
-        'Mon_fichier_t_.pdf');
+    expect(
+      state.safeAttachmentName(' Mon fichier été.pdf ', 'fallback.pdf'),
+      'Mon_fichier_t_.pdf',
+    );
     expect(state.safeAttachmentName(' ', 'document.pdf'), 'document.pdf');
     expect(state.safeAttachmentName('***', '***'), 'piece-jointe');
 
@@ -267,8 +277,10 @@ void main() {
     ]) {
       expect(state.attachmentTypeForFile(name, ''), 'audio', reason: name);
     }
-    expect(state.attachmentTypeForFile('document.pdf', 'application/pdf'),
-        'document');
+    expect(
+      state.attachmentTypeForFile('document.pdf', 'application/pdf'),
+      'document',
+    );
   });
 
   test('normalise les pièces jointes et leur texte métier', () {
@@ -310,9 +322,10 @@ void main() {
     expect(document!.name, 'devis.pdf');
 
     expect(
-      MessageAttachment.fromMap(
-        <String, dynamic>{'type': 'video', 'url': 'https://cdn/video.mp4'},
-      ),
+      MessageAttachment.fromMap(<String, dynamic>{
+        'type': 'video',
+        'url': 'https://cdn/video.mp4',
+      }),
       isNull,
     );
     expect(
@@ -333,7 +346,9 @@ void main() {
     expect(state.attachmentMessageText(audio), 'Note vocale');
     expect(state.attachmentMessageText(document), 'Document : devis.pdf');
     expect(
-      state.shouldHideAttachmentText('Photo : Photo', <MessageAttachment>[image]),
+      state.shouldHideAttachmentText('Photo : Photo', <MessageAttachment>[
+        image,
+      ]),
       isTrue,
     );
     expect(
@@ -347,20 +362,26 @@ void main() {
       ),
       isFalse,
     );
-    expect(state.shouldHideAttachmentText('', <MessageAttachment>[image]), isFalse);
-    expect(state.shouldHideAttachmentText('Photo : Photo', const []), isFalse);
-
     expect(
-      document.toInput().toJson(),
-      <String, dynamic>{
-        'type': 'document',
-        'name': 'devis.pdf',
-        'url': 'https://cdn/devis.pdf',
-        'storagePath': 'messages/devis.pdf',
-        'mimeType': 'application/pdf',
-        'sizeBytes': 200,
-      },
+      state.shouldHideAttachmentText('', <MessageAttachment>[image]),
+      isFalse,
     );
+    expect(
+      state.shouldHideAttachmentText(
+        'Photo : Photo',
+        const <MessageAttachment>[],
+      ),
+      isFalse,
+    );
+
+    expect(document.toInput().toJson(), <String, dynamic>{
+      'type': 'document',
+      'name': 'devis.pdf',
+      'url': 'https://cdn/devis.pdf',
+      'storagePath': 'messages/devis.pdf',
+      'mimeType': 'application/pdf',
+      'sizeBytes': 200,
+    });
   });
 
   test('applique la modération et les états optimistes', () {
@@ -370,27 +391,30 @@ void main() {
     expect(none.shouldHideContent, isFalse);
     expect(none.placeholderText, 'Message modéré');
 
-    final rejected = MessageModeration.fromMap(
-      <String, dynamic>{'status': ' Rejected ', 'visibility': 'visible'},
-    );
+    final rejected = MessageModeration.fromMap(<String, dynamic>{
+      'status': ' Rejected ',
+      'visibility': 'visible',
+    });
     expect(rejected.shouldHideContent, isTrue);
     expect(rejected.placeholderText, 'Message retiré par la modération');
 
-    final manual = MessageModeration.fromMap(
-      <String, dynamic>{'status': 'manual_review'},
-    );
+    final manual = MessageModeration.fromMap(<String, dynamic>{
+      'status': 'manual_review',
+    });
     expect(manual.shouldHideContent, isTrue);
     expect(manual.placeholderText, 'Message masqué en attente de vérification');
 
-    final pendingHidden = MessageModeration.fromMap(
-      <String, dynamic>{'status': 'pending', 'visibility': 'hidden'},
-    );
+    final pendingHidden = MessageModeration.fromMap(<String, dynamic>{
+      'status': 'pending',
+      'visibility': 'hidden',
+    });
     expect(pendingHidden.shouldHideContent, isTrue);
     expect(pendingHidden.placeholderText, 'Message en cours de vérification');
 
-    final pendingVisible = MessageModeration.fromMap(
-      <String, dynamic>{'status': 'pending', 'visibility': 'visible'},
-    );
+    final pendingVisible = MessageModeration.fromMap(<String, dynamic>{
+      'status': 'pending',
+      'visibility': 'visible',
+    });
     expect(pendingVisible.shouldHideContent, isFalse);
 
     final optimistic = OptimisticMessage(
@@ -450,23 +474,22 @@ void main() {
     expect(empty.imageUrl, isEmpty);
 
     expect(
-      OfferPreview.fromMap('offer-5', <String, dynamic>{'salary': '75 €'})
-          .priceLabel,
+      OfferPreview.fromMap('offer-5', <String, dynamic>{
+        'salary': '75 €',
+      }).priceLabel,
       '75 €',
     );
     expect(
-      OfferPreview.fromMap('offer-6', <String, dynamic>{'dailyRate': ' '})
-          .priceLabel,
+      OfferPreview.fromMap('offer-6', <String, dynamic>{
+        'dailyRate': ' ',
+      }).priceLabel,
       isEmpty,
     );
   });
 
   test('formate les dates, présences et identités supprimées', () {
     expect(formatMessageTimestamp(null), 'Envoi...');
-    expect(
-      formatMessageTimestamp(DateTime(2026, 7, 22, 9, 5)),
-      '22/07 09:05',
-    );
+    expect(formatMessageTimestamp(DateTime(2026, 7, 22, 9, 5)), '22/07 09:05');
     expect(formatThreadDateLabel(null), '--/--/----');
 
     final now = DateTime.now();
@@ -474,13 +497,12 @@ void main() {
     final yesterday = today.subtract(const Duration(days: 1));
     expect(formatThreadDateLabel(today), 'Aujourd’hui');
     expect(formatThreadDateLabel(yesterday), 'Hier');
-    expect(
-      formatThreadDateLabel(DateTime(2020, 1, 2, 12)),
-      '02/01/2020',
-    );
+    expect(formatThreadDateLabel(DateTime(2020, 1, 2, 12)), '02/01/2020');
 
     expect(
-      formatPresenceSeenAt(DateTime.now().subtract(const Duration(seconds: 20))),
+      formatPresenceSeenAt(
+        DateTime.now().subtract(const Duration(seconds: 20)),
+      ),
       'à l’instant',
     );
     expect(
@@ -509,7 +531,9 @@ void main() {
     expect(deletedAwareDisplayName(<String, dynamic>{}, ' '), 'Utilisateur');
   });
 
-  testWidgets('retourne l avatar supprimé ou le fallback actif', (tester) async {
+  testWidgets('retourne l avatar supprimé ou le fallback actif', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
