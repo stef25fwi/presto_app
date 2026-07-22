@@ -1,0 +1,26 @@
+name: Temporary export messaging thread
+
+on:
+  push:
+    branches:
+      - coverage/messaging-thread-massive-wave
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-artifact@v7
+        with:
+          name: messaging-thread-source-${{ github.run_id }}
+          path: |
+            lib/pages/messages/conversation_thread_page.dart
+            test/pages/messages/conversation_thread_page_smoke_test.dart
+            test/pages/messages/conversation_thread_page_interactions_test.dart
+            test/pages/messages/conversation_thread_page_shell_test.dart
+            test/pages/messages/conversation_thread_page_confirmation_test.dart
+            test/pages/messages/conversation_thread_avatar_source_test.dart
+          retention-days: 1
