@@ -97,11 +97,10 @@ void main() {
     expect(start.lerp(null, 0.5), same(start));
   });
 
-  testWidgets('extension de contexte retourne extension puis fallback', (
+  testWidgets('extension de contexte retourne le thème personnalisé', (
     tester,
   ) async {
-    PrestoOverlayTheme? withExtension;
-    PrestoOverlayTheme? withoutExtension;
+    PrestoOverlayTheme? resolved;
     final custom = PrestoOverlayTheme.fallback.copyWith(
       surfaceColor: const Color(0xFFABCDEF),
     );
@@ -111,39 +110,39 @@ void main() {
         theme: ThemeData(extensions: <ThemeExtension<dynamic>>[custom]),
         home: Builder(
           builder: (context) {
-            withExtension = context.prestoOverlayTheme;
+            resolved = context.prestoOverlayTheme;
             return const SizedBox();
           },
         ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(withExtension, isNotNull);
-    expect(withExtension!.surfaceColor, custom.surfaceColor);
-    expect(withExtension!.borderColor, custom.borderColor);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    expect(resolved, isNotNull);
+    expect(resolved!.surfaceColor, custom.surfaceColor);
+    expect(resolved!.borderColor, custom.borderColor);
+  });
+
+  testWidgets('extension de contexte retourne le fallback sans extension', (
+    tester,
+  ) async {
+    PrestoOverlayTheme? resolved;
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(extensions: const <ThemeExtension<dynamic>>[]),
         home: Builder(
           builder: (context) {
-            withoutExtension = context.prestoOverlayTheme;
+            resolved = context.prestoOverlayTheme;
             return const SizedBox();
           },
         ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(withoutExtension, isNotNull);
-    expect(
-      withoutExtension!.surfaceColor,
-      PrestoOverlayTheme.fallback.surfaceColor,
-    );
-    expect(
-      withoutExtension!.dialogRadius,
-      PrestoOverlayTheme.fallback.dialogRadius,
-    );
+
+    expect(resolved, isNotNull);
+    expect(resolved!.surfaceColor, PrestoOverlayTheme.fallback.surfaceColor);
+    expect(resolved!.dialogRadius, PrestoOverlayTheme.fallback.dialogRadius);
   });
 }
