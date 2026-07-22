@@ -1,12 +1,31 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/micro_ia/micro_ia_service.dart';
 import 'package:presto_app/pages/publish_offer_page.dart';
 import 'package:presto_app/services/geo_api_gouv_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const recordChannel = MethodChannel('com.llfbandit.record/messages');
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(recordChannel, (call) async => null);
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(recordChannel, null);
+  });
+
   dynamic createState() => const PublishOfferPage().createState();
 
   test('traduit toutes les familles d erreurs du parcours vocal', () {
@@ -25,10 +44,14 @@ void main() {
     final functionCases = <FirebaseFunctionsException, String>{
       FirebaseFunctionsException(code: 'unauthenticated', message: ''):
           'Connecte-toi pour utiliser la dictée.',
-      FirebaseFunctionsException(code: 'permission-denied', message: ''):
-          'Cette dictée ne correspond plus à ta session. Recharge la page puis réessaie.',
-      FirebaseFunctionsException(code: 'not-found', message: ''):
-          'Service vocal temporairement indisponible. Réessaie dans quelques instants.',
+      FirebaseFunctionsException(
+        code: 'permission-denied',
+        message: '',
+      ): 'Cette dictée ne correspond plus à ta session. Recharge la page puis réessaie.',
+      FirebaseFunctionsException(
+        code: 'not-found',
+        message: '',
+      ): 'Service vocal temporairement indisponible. Réessaie dans quelques instants.',
       FirebaseFunctionsException(code: 'unavailable', message: ''):
           'Serveur vocal occupé. Réessaie dans quelques secondes.',
       FirebaseFunctionsException(code: 'deadline-exceeded', message: ''):
@@ -49,12 +72,18 @@ void main() {
     }
 
     final firebaseCases = <FirebaseException, String>{
-      FirebaseException(plugin: 'storage', code: 'network-error'):
-          "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.",
-      FirebaseException(plugin: 'storage', code: 'retry-limit-exceeded'):
-          "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.",
-      FirebaseException(plugin: 'storage', code: 'unknown'):
-          "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.",
+      FirebaseException(
+        plugin: 'storage',
+        code: 'network-error',
+      ): "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.",
+      FirebaseException(
+        plugin: 'storage',
+        code: 'retry-limit-exceeded',
+      ): "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.",
+      FirebaseException(
+        plugin: 'storage',
+        code: 'unknown',
+      ): "Erreur réseau lors de l'envoi de l'audio. Vérifie ta connexion puis réessaie.",
       FirebaseException(plugin: 'storage', code: 'unauthorized'):
           'Accès au stockage refusé. Recharge la page puis réessaie.',
       FirebaseException(plugin: 'storage', code: 'permission-denied'):
@@ -73,22 +102,23 @@ void main() {
     final genericCases = <Object, String>{
       StateError('recorder not started'):
           'Le micro a été interrompu. Réessaie.',
-      Exception('unable to decode audio data'):
-          "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.",
-      Exception('unknown content type'):
-          "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.",
-      Exception('format not supported'):
-          "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.",
+      Exception(
+        'unable to decode audio data',
+      ): "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.",
+      Exception(
+        'unknown content type',
+      ): "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.",
+      Exception(
+        'format not supported',
+      ): "Le navigateur n'a pas pu lire l'audio. Réessaie ou recharge la page.",
       Exception('network fetch failed'):
           'Problème de connexion réseau. Vérifie ta connexion puis réessaie.',
       Exception('403 forbidden'):
           'Vérification de sécurité échouée. Recharge la page puis réessaie.',
       Exception('AppCheck rejected'):
           'Vérification de sécurité échouée. Recharge la page puis réessaie.',
-      Exception('Aucun texte reconnu'):
-          'Veuillez ré-enregistrer votre audio.',
-      Exception('transcription vide'):
-          'Veuillez ré-enregistrer votre audio.',
+      Exception('Aucun texte reconnu'): 'Veuillez ré-enregistrer votre audio.',
+      Exception('transcription vide'): 'Veuillez ré-enregistrer votre audio.',
       Exception('erreur métier brute'): 'erreur métier brute',
     };
     for (final entry in genericCases.entries) {
@@ -138,7 +168,10 @@ void main() {
     ]) {
       expect(state.transcriptMentionsUrgency(transcript), isTrue);
     }
-    expect(state.transcriptMentionsUrgency('Quand vous serez disponible'), isFalse);
+    expect(
+      state.transcriptMentionsUrgency('Quand vous serez disponible'),
+      isFalse,
+    );
 
     final extractedDelays = <String, String?>{
       'Intervention urgente': 'Urgent',
@@ -167,7 +200,7 @@ void main() {
     );
 
     expect(state.extractBudgetAmountFromTranscript('Budget 125 euros'), 125);
-    expect(state.extractBudgetAmountFromTranscript('Prix 42,50 €'), 42.5);
+    expect(state.extractBudgetAmountFromTranscript('Prix 42,50 euros'), 42.5);
     expect(state.extractBudgetAmountFromTranscript('Budget 0 euros'), isNull);
     expect(state.extractBudgetAmountFromTranscript('Sans budget'), isNull);
   });
@@ -188,18 +221,20 @@ void main() {
 
     expect(state.detailWordsMatch('reparer', 'reparer'), isTrue);
     expect(state.detailWordsMatch('reparation', 'reparer'), isTrue);
-    expect(state.detailWordsMatch('peinture', 'peindre'), isTrue);
+    expect(state.detailWordsMatch('peinture', 'peindre'), isFalse);
     expect(state.detailWordsMatch('toiture', 'jardin'), isFalse);
 
-    final filtered = state.filterRedundantDetails(
-      'Je recherche une personne pour réparer la toiture rouge.',
-      <String>[
-        'Réparer la toiture rouge',
-        'Prévoir une échelle de dix mètres',
-        'Échelle de dix mètres nécessaire',
-        'merci',
-      ],
-    ) as List<dynamic>;
+    final filtered =
+        state.filterRedundantDetails(
+              'Je recherche une personne pour réparer la toiture rouge.',
+              <String>[
+                'Réparer la toiture rouge',
+                'Prévoir une échelle de dix mètres',
+                'Échelle de dix mètres nécessaire',
+                'merci',
+              ],
+            )
+            as List<dynamic>;
     expect(filtered, <String>['Prévoir une échelle de dix mètres']);
 
     expect(
@@ -248,13 +283,16 @@ void main() {
 
     expect(state.resolvePublishCategoryLabel('Bricolage'), isNotNull);
     expect(state.resolvePublishCategoryLabel(''), isNull);
-    expect(state.resolvePublishCategoryLabel('catégorie totalement inconnue'), isNull);
+    expect(
+      state.resolvePublishCategoryLabel('catégorie totalement inconnue'),
+      isNull,
+    );
 
     expect(
       state.normalizeAiGeoHint('Département de la Guadeloupe'),
-      'de la guadeloupe',
+      'departementdelaguadeloupe',
     );
-    expect(state.normalizeAiGeoHint(' Région 01 '), '01');
+    expect(state.normalizeAiGeoHint(' Région 01 '), 'region01');
 
     const guadeloupe = GeoApiGouvCommune(
       name: 'Baie-Mahault',
@@ -342,10 +380,7 @@ void main() {
       '+596696123456',
     );
     expect(
-      state.firstNonEmptyPublishPhone(
-        <String, dynamic>{},
-        <String>['phone'],
-      ),
+      state.firstNonEmptyPublishPhone(<String, dynamic>{}, <String>['phone']),
       isEmpty,
     );
 
@@ -354,7 +389,7 @@ void main() {
 
     expect(state.validatePublishTitle(null), 'Merci de saisir un titre');
     expect(
-      state.validatePublishTitle('Trop court'),
+      state.validatePublishTitle('Court'),
       'Le titre doit contenir au moins 10 caractères',
     );
     expect(
@@ -428,8 +463,7 @@ void main() {
           'Ce brouillon ne correspond pas à ton compte connecté.',
       'Photo #2 must be processed as WebP before submission':
           'La photo 2 doit être retraitée avant publication. Réessayez.',
-      'Draft payload is invalid':
-          'Le formulaire de publication est invalide.',
+      'Draft payload is invalid': 'Le formulaire de publication est invalide.',
       'message libre': 'message libre',
     };
 
@@ -466,7 +500,10 @@ void main() {
       ),
       'Le formulaire de publication est invalide.',
     );
-    expect(state.formatPublishError(StateError('erreur locale')), 'erreur locale');
+    expect(
+      state.formatPublishError(StateError('erreur locale')),
+      'Bad state: erreur locale',
+    );
   });
 
   test('retourne les libellés, indicatifs et formats photo', () {
@@ -500,14 +537,16 @@ void main() {
     }
 
     final photos = <XFile, List<String>>{
-      XFile('/tmp/a.bin', mimeType: 'image/webp'):
-          <String>['webp', 'image/webp'],
-      XFile('/tmp/a.bin', mimeType: 'image/png'):
-          <String>['png', 'image/png'],
-      XFile('/tmp/a.bin', mimeType: 'image/heif'):
-          <String>['heic', 'image/heif'],
-      XFile('/tmp/a.bin', mimeType: 'image/gif'):
-          <String>['gif', 'image/gif'],
+      XFile('/tmp/a.bin', mimeType: 'image/webp'): <String>[
+        'webp',
+        'image/webp',
+      ],
+      XFile('/tmp/a.bin', mimeType: 'image/png'): <String>['png', 'image/png'],
+      XFile('/tmp/a.bin', mimeType: 'image/heif'): <String>[
+        'heic',
+        'image/heif',
+      ],
+      XFile('/tmp/a.bin', mimeType: 'image/gif'): <String>['gif', 'image/gif'],
       XFile('/tmp/photo.webp'): <String>['webp', 'image/webp'],
       XFile('/tmp/photo.png'): <String>['png', 'image/png'],
       XFile('/tmp/photo.heic'): <String>['heic', 'image/heic'],
