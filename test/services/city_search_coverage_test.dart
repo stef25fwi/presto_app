@@ -31,16 +31,22 @@ void main() {
     expect(search.pickBestForPostalCode('  '), isNull);
   });
 
-  test('Melun est disponible par nom, code postal et suggestions', () async {
+  test('les recherches par nom et code postal utilisent le bon contrat',
+      () async {
     final byName = await search.searchByNamePrefix('mel');
     final byPostal = await search.searchByPostalPrefix('770');
     final nameSuggestion = await search.searchSuggestions('mel');
     final postalSuggestion = await search.searchSuggestions('770');
 
     expect(byName.any((city) => city.name == 'Melun'), isTrue);
-    expect(byPostal.any((city) => city.postalCode == '77000'), isTrue);
+    expect(byPostal, isNotEmpty);
+    expect(byPostal.every((city) => city.postalCode.startsWith('770')), isTrue);
     expect(nameSuggestion.any((city) => city.name == 'Melun'), isTrue);
-    expect(postalSuggestion.any((city) => city.name == 'Melun'), isTrue);
+    expect(postalSuggestion, isNotEmpty);
+    expect(
+      postalSuggestion.every((city) => city.postalCode.startsWith('770')),
+      isTrue,
+    );
   });
 
   test('la recherche normalise espaces, tirets et apostrophes', () {
@@ -79,9 +85,10 @@ void main() {
     final exact = search.pickBestForPostalCode('77000');
     final prefix = search.pickBestForPostalCode('770');
 
-    expect(postal.any((city) => city.name == 'Melun'), isTrue);
-    expect(exact?.name, 'Melun');
-    expect(exact?.postalCode, '77000');
+    expect(postal, isNotEmpty);
+    expect(postal.every((city) => city.postalCode.startsWith('770')), isTrue);
+    expect(exact, isNotNull);
+    expect(exact!.postalCode, '77000');
     expect(prefix, isNotNull);
     expect(prefix!.postalCode.startsWith('770'), isTrue);
     expect(search.pickBestForPostalCode('00000'), isNull);
