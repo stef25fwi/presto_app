@@ -43,3 +43,30 @@ for old, new in renames.items():
     source = source.replace(old, new)
 
 path.write_text(source)
+
+test_path = Path('test/pages/publish_offer_pure_helpers_massive_coverage_test.dart')
+test_source = test_path.read_text()
+platform_import = "import 'package:firebase_core_platform_interface/test.dart';\n"
+if platform_import not in test_source:
+    test_source = test_source.replace(
+        "import 'package:firebase_core/firebase_core.dart';\n",
+        "import 'package:firebase_core/firebase_core.dart';\n" + platform_import,
+        1,
+    )
+
+main_marker = "void main() {\n  dynamic createState()"
+main_replacement = """void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+  });
+
+  dynamic createState()"""
+if main_marker not in test_source:
+    raise SystemExit('publication helper test main marker not found')
+test_source = test_source.replace(main_marker, main_replacement, 1)
+test_path.write_text(test_source)
