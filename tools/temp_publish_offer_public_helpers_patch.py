@@ -46,27 +46,67 @@ path.write_text(source)
 
 test_path = Path('test/pages/publish_offer_pure_helpers_massive_coverage_test.dart')
 test_source = test_path.read_text()
-platform_import = "import 'package:firebase_core_platform_interface/test.dart';\n"
-if platform_import not in test_source:
-    test_source = test_source.replace(
-        "import 'package:firebase_core/firebase_core.dart';\n",
-        "import 'package:firebase_core/firebase_core.dart';\n" + platform_import,
-        1,
-    )
+
+imports = {
+    "import 'package:firebase_core/firebase_core.dart';\n": (
+        "import 'package:firebase_core/firebase_core.dart';\n"
+        "import 'package:firebase_core_platform_interface/test.dart';\n"
+        "import 'package:flutter/services.dart';\n"
+    ),
+}
+for marker, replacement in imports.items():
+    if "firebase_core_platform_interface/test.dart" not in test_source:
+        if marker not in test_source:
+            raise SystemExit('firebase core import marker not found')
+        test_source = test_source.replace(marker, replacement, 1)
 
 main_marker = "void main() {\n  dynamic createState()"
 main_replacement = """void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  const recordChannel = MethodChannel('com.llfbandit.record/messages');
 
   setUpAll(() async {
     setupFirebaseCoreMocks();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(recordChannel, (call) async => null);
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp();
     }
+  });
+
+  tearDownAll(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(recordChannel, null);
   });
 
   dynamic createState()"""
 if main_marker not in test_source:
     raise SystemExit('publication helper test main marker not found')
 test_source = test_source.replace(main_marker, main_replacement, 1)
+
+expectation_fixes = {
+    "'Prix 42,50 €'": "'Prix 42,50 euros'",
+    "state.detailWordsMatch('peinture', 'peindre'), isTrue": (
+        "state.detailWordsMatch('peinture', 'peindre'), isFalse"
+    ),
+    "'de la guadeloupe'": "'departementdelaguadeloupe'",
+    "expect(state.normalizeAiGeoHint(' Région 01 '), '01');": (
+        "expect(state.normalizeAiGeoHint(' Région 01 '), 'region01');"
+    ),
+    "state.validatePublishTitle('Trop court')": (
+        "state.validatePublishTitle('Court')"
+    ),
+    "expect(state.formatPublishError(StateError('erreur locale')), 'erreur locale');": (
+        "expect(\n"
+        "      state.formatPublishError(StateError('erreur locale')),\n"
+        "      'Bad state: erreur locale',\n"
+        "    );"
+    ),
+}
+
+for old, new in expectation_fixes.items():
+    if old not in test_source:
+        raise SystemExit(f'publication expectation marker not found: {old}')
+    test_source = test_source.replace(old, new, 1)
+
 test_path.write_text(test_source)
