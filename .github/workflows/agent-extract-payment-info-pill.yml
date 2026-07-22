@@ -48,17 +48,6 @@ jobs:
                   1,
               )
 
-          usage_count = text.count('_AnimatedPaymentInfoPill(')
-          if usage_count != 1:
-              raise SystemExit(
-                  f'Unexpected local payment info pill usage count: {usage_count}'
-              )
-          text = text.replace(
-              '_AnimatedPaymentInfoPill(',
-              'AnimatedPaymentInfoPill(',
-              1,
-          )
-
           start_marker = 'class _AnimatedPaymentInfoPill extends StatefulWidget {'
           end_marker = 'class _AdvertiserMetaLine extends StatelessWidget {'
           start = text.find(start_marker)
@@ -66,6 +55,17 @@ jobs:
           if start < 0 or end < 0:
               raise SystemExit('Local payment info pill class markers not found')
           text = text[:start] + text[end:]
+
+          usage_count = text.count('_AnimatedPaymentInfoPill(')
+          if usage_count != 1:
+              raise SystemExit(
+                  f'Unexpected payment info pill usage count after extraction: {usage_count}'
+              )
+          text = text.replace(
+              '_AnimatedPaymentInfoPill(',
+              'AnimatedPaymentInfoPill(',
+              1,
+          )
 
           if '_AnimatedPaymentInfoPill' in text:
               raise SystemExit('Local payment info pill symbol still present')
