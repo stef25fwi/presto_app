@@ -45,10 +45,9 @@ class _WebUserPlatform extends UserPlatform {
 class _WebCredentialPlatform extends UserCredentialPlatform {
   _WebCredentialPlatform({
     required super.auth,
-    required UserPlatform? user,
+    required super.user,
     bool isNewUser = false,
   }) : super(
-         user: user,
          additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
        );
 }
