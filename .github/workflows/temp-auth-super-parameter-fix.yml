@@ -54,9 +54,6 @@ jobs:
           path.write_text(updated)
           PY
 
-      - name: Format corrected test
-        run: dart format test/services/account_social_auth_actions_web_coverage_test.dart
-
       - name: Commit and remove temporary workflow
         shell: bash
         run: |
