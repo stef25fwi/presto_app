@@ -34,6 +34,7 @@ void main() {
           'Identifiants Facebook invalides. Réessaie.',
       FirebaseAuthException(code: 'network-request-failed'):
           'Erreur réseau. Vérifie la connexion internet.',
+      FirebaseAuthException(code: 'popup-closed-by-user'): '',
       FirebaseAuthException(code: 'unknown', message: 'détail distant'):
           'détail distant',
       FirebaseAuthException(code: 'unknown'):
