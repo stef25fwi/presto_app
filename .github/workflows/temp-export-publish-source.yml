@@ -1,18 +1,21 @@
 name: Temporary export publication source
 
 on:
-  push:
-    branches:
-      - coverage/publication-massive-widget-wave
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   export:
+    if: github.head_ref == 'coverage/publication-massive-widget-wave'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
       - uses: actions/upload-artifact@v7
         with:
           name: publish-offer-source-${{ github.run_id }}
