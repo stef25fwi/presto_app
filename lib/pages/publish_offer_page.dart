@@ -74,10 +74,7 @@ enum PublishOfferAiFlowStep {
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
 
-  const PublishOfferPage({
-    super.key,
-    this.onScroll,
-  });
+  const PublishOfferPage({super.key, this.onScroll});
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
@@ -93,7 +90,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       MarketplaceRemoteConfigService();
   int _maxListingPhotos = _defaultMaxListingPhotos;
 
-  String _formatMicroIaRuntimeError(Object error) {
+  String formatMicroIaRuntimeError(Object error) {
     if (error is MicroIaClientAuthException) {
       return error.message;
     }
@@ -114,9 +111,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return 'Serveur vocal occupé. Réessaie dans quelques secondes.';
       }
       if (message.isNotEmpty) {
-        return _translatePublishIssue(message);
+        return translatePublishIssue(message);
       }
-      return _translatePublishIssue(code);
+      return translatePublishIssue(code);
     }
 
     if (error is FirebaseException) {
@@ -656,7 +653,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _notifyPublishAiTraceChanged();
   }
 
-  String _publishAiDebugValue(Object? value) {
+  String publishAiDebugValue(Object? value) {
     if (value == null) return '-';
     if (value is bool) return value ? 'yes' : 'no';
     final text = value.toString().trim();
@@ -672,18 +669,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ? Map<String, dynamic>.from(payload['debug'] as Map)
         : const <String, dynamic>{};
     final parts = <String>[
-      'uid=${_publishAiDebugValue(payload['uid'])}',
-      'isAdmin=${_publishAiDebugValue(payload['isAdmin'])}',
-      'source=${_publishAiDebugValue(payload['source'])}',
+      'uid=${publishAiDebugValue(payload['uid'])}',
+      'isAdmin=${publishAiDebugValue(payload['isAdmin'])}',
+      'source=${publishAiDebugValue(payload['source'])}',
     ];
 
     if (debug.isNotEmpty) {
       parts.addAll(<String>[
-        'tokenAdmin=${_publishAiDebugValue(debug['tokenHasAdmin'])}',
-        'userDoc=${_publishAiDebugValue(debug['userDocExists'])}',
-        'userAdmin=${_publishAiDebugValue(debug['userHasAdmin'])}',
-        'adminDoc=${_publishAiDebugValue(debug['adminDocExists'])}',
-        'adminEnabled=${_publishAiDebugValue(debug['adminDocEnabled'])}',
+        'tokenAdmin=${publishAiDebugValue(debug['tokenHasAdmin'])}',
+        'userDoc=${publishAiDebugValue(debug['userDocExists'])}',
+        'userAdmin=${publishAiDebugValue(debug['userHasAdmin'])}',
+        'adminDoc=${publishAiDebugValue(debug['adminDocExists'])}',
+        'adminEnabled=${publishAiDebugValue(debug['adminDocEnabled'])}',
       ]);
     }
 
@@ -696,17 +693,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     PublishAiTraceLevel level = PublishAiTraceLevel.info,
   }) {
     final parts = <String>[
-      'uid=${_publishAiDebugValue(state.uid)}',
-      'effectiveAdmin=${_publishAiDebugValue(state.effectiveIsAdmin)}',
-      'source=${_publishAiDebugValue(state.sourceOfTruth)}',
-      'tokenAdmin=${_publishAiDebugValue(state.tokenHasAdmin)}',
-      'profileAdmin=${_publishAiDebugValue(state.profileHasAdmin)}',
-      'serverOk=${_publishAiDebugValue(state.serverCheckSucceeded)}',
-      'serverAdmin=${_publishAiDebugValue(state.serverIsAdmin)}',
+      'uid=${publishAiDebugValue(state.uid)}',
+      'effectiveAdmin=${publishAiDebugValue(state.effectiveIsAdmin)}',
+      'source=${publishAiDebugValue(state.sourceOfTruth)}',
+      'tokenAdmin=${publishAiDebugValue(state.tokenHasAdmin)}',
+      'profileAdmin=${publishAiDebugValue(state.profileHasAdmin)}',
+      'serverOk=${publishAiDebugValue(state.serverCheckSucceeded)}',
+      'serverAdmin=${publishAiDebugValue(state.serverIsAdmin)}',
     ];
 
     if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
-      parts.add('serverError=${_publishAiDebugValue(state.serverErrorCode)}');
+      parts.add('serverError=${publishAiDebugValue(state.serverErrorCode)}');
     }
 
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
@@ -783,12 +780,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       return null;
     } catch (error) {
-      final message = _formatMicroIaRuntimeError(error);
-      _appendPublishAiTrace(
-        'auth',
-        message,
-        level: PublishAiTraceLevel.error,
-      );
+      final message = formatMicroIaRuntimeError(error);
+      _appendPublishAiTrace('auth', message, level: PublishAiTraceLevel.error);
       _logMicroIaDebug('AUTH', 'unexpected_error stage=$stage err=$message');
       if (showUserMessage && mounted) {
         showErrorSnackBar(context, message);
@@ -797,7 +790,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  String _adminAudioModeLabel(String mode) {
+  String adminAudioModeLabel(String mode) {
     switch (mode.toUpperCase()) {
       case 'GOOGLE_ONLY':
         return 'Google STT';
@@ -911,7 +904,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
         _appendPublishAiTrace(
           'admin_config',
-          'mode=${_publishAiDebugValue(mode)} source=${_publishAiDebugValue(data['source'])}',
+          'mode=${publishAiDebugValue(mode)} source=${publishAiDebugValue(data['source'])}',
           level: PublishAiTraceLevel.success,
         );
 
@@ -920,7 +913,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _adminAudioRuntimeMode = mode;
           if (_adminAudioRuntimeLabel == 'Mode serveur') {
             _adminAudioRuntimeDetail =
-                'Mode configure: ${_adminAudioModeLabel(mode)}';
+                'Mode configure: ${adminAudioModeLabel(mode)}';
           }
         });
         unawaited(_adminAudioRuntimeStore.enableCloudSync());
@@ -928,7 +921,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       } on FirebaseFunctionsException catch (e) {
         _appendPublishAiTrace(
           'admin_config',
-          'Erreur config code=${e.code} message=${_publishAiDebugValue(e.message)}',
+          'Erreur config code=${e.code} message=${publishAiDebugValue(e.message)}',
           level: PublishAiTraceLevel.warning,
         );
         if (!mounted) return;
@@ -942,14 +935,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       } catch (error) {
         _appendPublishAiTrace(
           'admin_config',
-          'Erreur config inattendue: ${_publishAiDebugValue(error)}',
+          'Erreur config inattendue: ${publishAiDebugValue(error)}',
           level: PublishAiTraceLevel.warning,
         );
       }
     } on FirebaseFunctionsException catch (e) {
       _appendPublishAiTrace(
         'admin_check',
-        'Erreur callable code=${e.code} message=${_publishAiDebugValue(e.message)} uid=${user.uid}',
+        'Erreur callable code=${e.code} message=${publishAiDebugValue(e.message)} uid=${user.uid}',
         level: PublishAiTraceLevel.error,
       );
       if ((e.code == 'permission-denied' || e.code == 'unauthenticated') &&
@@ -1209,7 +1202,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final isCompleted = _isPublishFlowCompleted;
     final isAnalyzing =
         _publishAiFlowStep == PublishOfferAiFlowStep.voiceAnalyzing ||
-            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
 
     return AnimatedContainer(
       key: _publishAiFlowHintKey,
@@ -1220,8 +1213,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         color: isCompleted ? const Color(0xFFF2F8FF) : const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              isCompleted ? const Color(0xFFD7E7FF) : const Color(0xFFE5E7EB),
+          color: isCompleted
+              ? const Color(0xFFD7E7FF)
+              : const Color(0xFFE5E7EB),
         ),
       ),
       child: Row(
@@ -1231,8 +1225,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             isAnalyzing
                 ? Icons.auto_awesome_rounded
                 : isCompleted
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.tips_and_updates_outlined,
+                ? Icons.check_circle_outline_rounded
+                : Icons.tips_and_updates_outlined,
             color: isCompleted ? kPrestoBlue : const Color(0xFF5B6475),
             size: 18,
           ),
@@ -1350,7 +1344,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
-  String? _normalizeDraftMissionDelay(String? rawUrgency) {
+  String? normalizeDraftMissionDelay(String? rawUrgency) {
     final urgency = (rawUrgency ?? '').trim().toLowerCase();
     switch (urgency) {
       case 'immediat':
@@ -1370,10 +1364,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  bool _transcriptMentionsBudget(String transcript) {
+  bool transcriptMentionsBudget(String transcript) {
     final lower = transcript.toLowerCase();
-    return RegExp(r'\b\d{2,5}(?:[.,]\d{1,2})?\s*(€|euros?)\b')
-            .hasMatch(lower) ||
+    return RegExp(
+          r'\b\d{2,5}(?:[.,]\d{1,2})?\s*(€|euros?)\b',
+        ).hasMatch(lower) ||
         lower.contains('budget') ||
         lower.contains('tarif') ||
         lower.contains('prix') ||
@@ -1381,7 +1376,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('a negocier');
   }
 
-  bool _transcriptMentionsUrgency(String transcript) {
+  bool transcriptMentionsUrgency(String transcript) {
     final lower = transcript.toLowerCase();
     return lower.contains('urgent') ||
         lower.contains('urgence') ||
@@ -1398,7 +1393,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('immediat');
   }
 
-  String? _extractMissionDelayFromTranscript(String transcript) {
+  String? extractMissionDelayFromTranscript(String transcript) {
     final lower = transcript.toLowerCase();
 
     if (lower.contains('urgent') ||
@@ -1438,7 +1433,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
-  bool _transcriptRequestsNegotiatedBudget(String transcript) {
+  bool transcriptRequestsNegotiatedBudget(String transcript) {
     final lower = transcript.toLowerCase();
     return lower.contains('à négocier') ||
         lower.contains('a negocier') ||
@@ -1448,7 +1443,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('budget flexible');
   }
 
-  double? _extractBudgetAmountFromTranscript(String transcript) {
+  double? extractBudgetAmountFromTranscript(String transcript) {
     final matches = RegExp(
       r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
       caseSensitive: false,
@@ -1505,7 +1500,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     'quartier',
   };
 
-  String _normalizeDetailText(String input) {
+  String normalizeDetailText(String input) {
     const accents = 'àâäáãåçèéêëìíîïñòóôöõùúûüýÿ';
     const plain = 'aaaaaaceeeeiiiinooooouuuuyy';
     final buffer = StringBuffer();
@@ -1523,8 +1518,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return buffer.toString();
   }
 
-  List<String> _significantDetailWords(String text) {
-    return _normalizeDetailText(text)
+  List<String> significantDetailWords(String text) {
+    return normalizeDetailText(text)
         .split(RegExp(r'\s+'))
         .where((w) => w.length >= 4 && !_kDetailFillerWords.contains(w))
         .toList();
@@ -1533,7 +1528,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// Deux mots comptent comme la même information s'ils sont identiques,
   /// si l'un contient l'autre (recherché/cherche) ou s'ils partagent une
   /// racine d'au moins 5 caractères (réparation/réparer).
-  bool _detailWordsMatch(String a, String b) {
+  bool detailWordsMatch(String a, String b) {
     if (a == b) return true;
     if (a.contains(b) || b.contains(a)) return true;
     final maxCommon = a.length < b.length ? a.length : b.length;
@@ -1548,17 +1543,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// reformuler la description (ou une puce déjà retenue). Une puce est
   /// jugée redondante quand au moins 60 % de ses mots significatifs sont
   /// déjà présents dans le texte de référence.
-  List<String> _filterRedundantDetails(
+  List<String> filterRedundantDetails(
     String description,
     List<String> details,
   ) {
-    final referenceWords = _significantDetailWords(description);
+    final referenceWords = significantDetailWords(description);
     final kept = <String>[];
     for (final detail in details) {
-      final words = _significantDetailWords(detail);
+      final words = significantDetailWords(detail);
       if (words.isEmpty) continue;
       final matched = words
-          .where((w) => referenceWords.any((d) => _detailWordsMatch(w, d)))
+          .where((w) => referenceWords.any((d) => detailWordsMatch(w, d)))
           .length;
       if (matched / words.length >= 0.6) continue;
       kept.add(detail);
@@ -1567,15 +1562,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return kept;
   }
 
-  String _buildRichDraftDescription(Map<String, dynamic> draft) {
+  String buildRichDraftDescription(Map<String, dynamic> draft) {
     final shortDescription =
         ((draft['description_courte'] ?? draft['description']) as String? ?? '')
             .trim();
     final details = (draft['details'] is List)
         ? (draft['details'] as List)
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList()
+              .map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList()
         : const <String>[];
     final availabilities =
         ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
@@ -1583,7 +1578,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Anti-doublon : le modèle peut renvoyer des puces qui paraphrasent la
     // transcription déjà présente dans la description — on ne garde que
     // celles qui apportent une information réellement nouvelle.
-    final uniqueDetails = _filterRedundantDetails(shortDescription, details);
+    final uniqueDetails = filterRedundantDetails(shortDescription, details);
 
     final lines = <String>[];
     if (shortDescription.isNotEmpty) {
@@ -1598,7 +1593,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return lines.join('\n').trim();
   }
 
-  String _firstNonEmptyDraftValue(
+  String firstNonEmptyDraftValue(
     Map<String, dynamic> draft,
     List<String> keys,
   ) {
@@ -1612,22 +1607,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _applyRichDraftToForm(Map<String, dynamic> draft) {
-    final title = _firstNonEmptyDraftValue(draft, const [
+    final title = firstNonEmptyDraftValue(draft, const [
       'title',
       'titre',
       'listingTitle',
       'offerTitle',
     ]);
-    final description = _buildRichDraftDescription(draft);
-    final category = _resolvePublishCategoryLabel(
-      _firstNonEmptyDraftValue(draft, const [
+    final description = buildRichDraftDescription(draft);
+    final category = resolvePublishCategoryLabel(
+      firstNonEmptyDraftValue(draft, const [
         'category',
         'categorie',
         'catégorie',
         'mainCategory',
       ]),
     );
-    final rawLocation = _firstNonEmptyDraftValue(draft, const [
+    final rawLocation = firstNonEmptyDraftValue(draft, const [
       'city',
       'ville',
       'location',
@@ -1639,14 +1634,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'adresse',
       'rawLocation',
     ]);
-    var detectedCity = _firstNonEmptyDraftValue(draft, const [
+    var detectedCity = firstNonEmptyDraftValue(draft, const [
       'city',
       'ville',
       'commune',
       'locality',
       'locationCity',
     ]);
-    var detectedPostalCode = _firstNonEmptyDraftValue(draft, const [
+    var detectedPostalCode = firstNonEmptyDraftValue(draft, const [
       'postalCode',
       'codePostal',
       'code_postal',
@@ -1661,7 +1656,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       detectedCity = rawLocation;
     }
     if (detectedPostalCode.isEmpty && rawLocation.isNotEmpty) {
-      final cpFromLocation = _extractPostalCodeFromTranscript(rawLocation);
+      final cpFromLocation = extractPostalCodeFromTranscript(rawLocation);
       if ((cpFromLocation ?? '').isNotEmpty) {
         detectedPostalCode = cpFromLocation!;
       }
@@ -1676,7 +1671,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     }
 
-    final missionDelay = _normalizeDraftMissionDelay(
+    final missionDelay = normalizeDraftMissionDelay(
       (draft['urgence'] ?? '').toString(),
     );
     final budget = draft['budget'] is Map
@@ -1691,7 +1686,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .toString()
         .trim()
         .toLowerCase();
-    final wantsNegotiation = rawBudgetType == 'negotiable' ||
+    final wantsNegotiation =
+        rawBudgetType == 'negotiable' ||
         rawBudgetType == 'a_negocier' ||
         rawBudgetType == 'à négocier';
 
@@ -1699,10 +1695,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // user input. If the field is empty (user typed then cleared, or never
     // typed), we still apply the AI suggestion — otherwise the IA button
     // appears broken because it never updates anything.
-    bool canFillController(
-      TextEditingController controller,
-      bool editedFlag,
-    ) {
+    bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
 
@@ -1753,12 +1746,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyDetectedCityData(
       city: detectedCity,
       postalCode: detectedPostalCode,
-      departmentHint: (draft['department'] ??
-              draft['departement'] ??
-              draft['departmentName'] ??
-              draft['departmentCode'] ??
-              '')
-          .toString(),
+      departmentHint:
+          (draft['department'] ??
+                  draft['departement'] ??
+                  draft['departmentName'] ??
+                  draft['departmentCode'] ??
+                  '')
+              .toString(),
       regionHint:
           (draft['region'] ?? draft['regionName'] ?? draft['regionCode'] ?? '')
               .toString(),
@@ -1773,7 +1767,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
-  String? _extractPostalCodeFromTranscript(String transcript) {
+  String? extractPostalCodeFromTranscript(String transcript) {
     final t = transcript;
     // 5 chiffres métropole + 97x/98x (DROM/COM) acceptés aussi (souvent 5 chiffres au final)
     final m = RegExp(r'\b(97[0-9]{3}|98[0-9]{3}|[0-9]{5})\b').firstMatch(t);
@@ -1781,8 +1775,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
-  CityRecord? _extractCityRecordFromTranscript(String transcript,
-      {String? cp}) {
+  CityRecord? _extractCityRecordFromTranscript(
+    String transcript, {
+    String? cp,
+  }) {
     if (cp != null && cp.trim().isNotEmpty) {
       return FrenchCityPostalValidator.instance.resolveCanonicalCity(
         city: '',
@@ -1805,7 +1801,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
-  String? _resolvePublishCategoryLabel(String? rawCategory) {
+  String? resolvePublishCategoryLabel(String? rawCategory) {
     final canonical = canonicalizeOfferCategory(rawCategory);
     if (canonical == null || canonical.trim().isEmpty) return null;
 
@@ -1830,10 +1826,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
-  CityRecord? _resolveCanonicalCityRecord({
-    String? city,
-    String? postalCode,
-  }) {
+  CityRecord? _resolveCanonicalCityRecord({String? city, String? postalCode}) {
     return FrenchCityPostalValidator.instance.resolveCanonicalCity(
       city: city,
       postalCode: postalCode,
@@ -1854,7 +1847,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyCity(best, forceApply: true);
   }
 
-  String _normalizeAiGeoHint(String value) {
+  String normalizeAiGeoHint(String value) {
     return normalizeLocationLookupKey(value)
         .replaceAll(RegExp(r'\bdepartement\b'), '')
         .replaceAll(RegExp(r'\bdepartment\b'), '')
@@ -1863,7 +1856,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         .trim();
   }
 
-  bool _geoCommuneMatchesAiHint(
+  bool geoCommuneMatchesAiHint(
     GeoApiGouvCommune commune, {
     required String departmentHint,
     required String regionHint,
@@ -1876,7 +1869,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       departmentHint,
       regionHint,
       locationHint,
-    ].map(_normalizeAiGeoHint).where((v) => v.isNotEmpty).toList();
+    ].map(normalizeAiGeoHint).where((v) => v.isNotEmpty).toList();
 
     if (hints.isEmpty) {
       return true;
@@ -1944,13 +1937,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final candidates = communes.where((commune) {
         final normalizedCommune = normalizeLocationLookupKey(commune.name);
 
-        final nameMatches = normalizedCommune == normalizedCity ||
+        final nameMatches =
+            normalizedCommune == normalizedCity ||
             normalizedCommune.contains(normalizedCity) ||
             normalizedCity.contains(normalizedCommune);
 
         if (!nameMatches) return false;
 
-        return _geoCommuneMatchesAiHint(
+        return geoCommuneMatchesAiHint(
           commune,
           departmentHint: departmentHint,
           regionHint: regionHint,
@@ -1958,8 +1952,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }).toList();
 
-      final selected =
-          candidates.isNotEmpty ? candidates.first : communes.first;
+      final selected = candidates.isNotEmpty
+          ? candidates.first
+          : communes.first;
       final resolvedCp = selected.primaryPostalCode.trim();
 
       if (resolvedCp.isEmpty) return;
@@ -1978,8 +1973,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         _selectedDeptCode = selected.departmentCode;
         _selectedRegionCode = selected.regionCode;
-        _selectedPhoneCountryCode =
-            _countryCodeForDept(selected.departmentCode);
+        _selectedPhoneCountryCode = countryCodeForDept(selected.departmentCode);
       });
 
       if (kDebugMode) {
@@ -2039,14 +2033,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final currentCategory = (_category ?? '').trim();
     final currentSubCategory = (_selectedSubCategory ?? '').trim();
-    final sameCategory = currentCategory.isNotEmpty &&
+    final sameCategory =
+        currentCategory.isNotEmpty &&
         normalizeOfferText(currentCategory) ==
             normalizeOfferText(match.category);
     final canSetCategory = !_categoryEditedByUser && currentCategory.isEmpty;
-    final canSetSubCategory = !_categoryEditedByUser &&
+    final canSetSubCategory =
+        !_categoryEditedByUser &&
         currentSubCategory.isEmpty &&
         (canSetCategory || sameCategory);
-    final canSetTitle = !_titleEditedByUser &&
+    final canSetTitle =
+        !_titleEditedByUser &&
         _titleController.text.trim().isEmpty &&
         (match.suggestedTitle ?? '').trim().isNotEmpty;
 
@@ -2082,10 +2079,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final t = transcript.trim();
     if (t.isEmpty) return;
 
-    bool canFillController(
-      TextEditingController controller,
-      bool editedFlag,
-    ) {
+    bool canFillController(TextEditingController controller, bool editedFlag) {
       return controller.text.trim().isEmpty || !editedFlag;
     }
 
@@ -2107,7 +2101,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     if (canFillController(_postalCodeController, _postalCodeEditedByUser)) {
-      final cp = _extractPostalCodeFromTranscript(t);
+      final cp = extractPostalCodeFromTranscript(t);
       if (cp != null && cp.isNotEmpty) {
         _setControllerText(_postalCodeController, cp);
       }
@@ -2133,12 +2127,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() {
           _selectedDeptCode = cityRec.dept;
           _selectedRegionCode = cityRec.region;
-          _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
+          _selectedPhoneCountryCode = countryCodeForDept(cityRec.dept);
         });
       }
     }
 
-    final inferredMissionDelay = _extractMissionDelayFromTranscript(t);
+    final inferredMissionDelay = extractMissionDelayFromTranscript(t);
     if ((_missionDelay == null || !_delayEditedByUser) &&
         inferredMissionDelay != null) {
       setState(() {
@@ -2148,13 +2142,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     if (canFillController(_budgetController, _budgetEditedByUser)) {
-      if (_transcriptRequestsNegotiatedBudget(t)) {
+      if (transcriptRequestsNegotiatedBudget(t)) {
         setState(() {
           _budgetType = 'À négocier';
           _setControllerText(_budgetController, '');
         });
       } else {
-        final inferredBudget = _extractBudgetAmountFromTranscript(t);
+        final inferredBudget = extractBudgetAmountFromTranscript(t);
         if (inferredBudget != null) {
           final formattedBudget = inferredBudget % 1 == 0
               ? inferredBudget.toInt().toString()
@@ -2260,8 +2254,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final normalizedLimit = configuredLimit < _minimumMaxListingPhotos
           ? _minimumMaxListingPhotos
           : configuredLimit > _publishPhotoHardLimit
-              ? _publishPhotoHardLimit
-              : configuredLimit;
+          ? _publishPhotoHardLimit
+          : configuredLimit;
       if (!mounted || normalizedLimit == _maxListingPhotos) {
         return;
       }
@@ -2280,7 +2274,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return _selectedPhotos.length + 1;
   }
 
-  bool _isValidPhoneFR(String raw) {
+  bool isValidPhoneFR(String raw) {
     final sanitized = raw.replaceAll(RegExp(r'\s+'), '');
     if (sanitized.isEmpty) return false;
 
@@ -2291,7 +2285,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return RegExp(r'^[0-9]{6,15}$').hasMatch(sanitized);
   }
 
-  String _firstNonEmptyPublishPhone(
+  String firstNonEmptyPublishPhone(
     Map<String, dynamic>? data,
     List<String> keys, {
     List<String> fallbackValues = const <String>[],
@@ -2329,8 +2323,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final allDigits = compact.replaceAll(RegExp(r'\D'), '');
 
     final normalizedExplicitCode = (explicitCountryCode ?? '').trim();
-    final knownCodes =
-        kPhoneCountryCodes.map((country) => country.code).toList();
+    final knownCodes = kPhoneCountryCodes
+        .map((country) => country.code)
+        .toList();
 
     String selectedCode = normalizedExplicitCode;
     if (selectedCode.isEmpty || !knownCodes.contains(selectedCode)) {
@@ -2361,7 +2356,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _prefillPublishFromProfile() async {
     final phoneNeeded = _phoneController.text.trim().isEmpty;
-    final locationNeeded = !_locationEditedByUser &&
+    final locationNeeded =
+        !_locationEditedByUser &&
         !_postalCodeEditedByUser &&
         _locationController.text.trim().isEmpty &&
         _postalCodeController.text.trim().isEmpty;
@@ -2414,7 +2410,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           data != null &&
           mounted &&
           _phoneController.text.trim().isEmpty) {
-        final rawPhone = _firstNonEmptyPublishPhone(
+        final rawPhone = firstNonEmptyPublishPhone(
           data,
           const ['phone', 'phoneNumber', 'phone_number'],
           fallbackValues: <String>[user.phoneNumber ?? ''],
@@ -2439,19 +2435,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (profileCity.isNotEmpty || profilePostalCode.isNotEmpty) {
           CityRecord? cityRecord;
           if (profilePostalCode.isNotEmpty) {
-            cityRecord =
-                FrenchCityPostalValidator.instance.resolveCanonicalCity(
-              city: profileCity,
-              postalCode: profilePostalCode,
-            );
+            cityRecord = FrenchCityPostalValidator.instance
+                .resolveCanonicalCity(
+                  city: profileCity,
+                  postalCode: profilePostalCode,
+                );
           }
           if (cityRecord == null && profileCity.isNotEmpty) {
-            final matches =
-                FrenchCityPostalValidator.instance.searchSuggestions(
-              profileCity,
-              postalCodeHint: profilePostalCode,
-              limit: 5,
-            );
+            final matches = FrenchCityPostalValidator.instance
+                .searchSuggestions(
+                  profileCity,
+                  postalCodeHint: profilePostalCode,
+                  limit: 5,
+                );
             for (final candidate in matches) {
               if (profilePostalCode.isEmpty ||
                   candidate.cp == profilePostalCode) {
@@ -2483,11 +2479,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 _setControllerText(_postalCodeController, resolvedPostalCode);
                 changed = true;
               }
-              final dept = cityRecord?.dept ??
+              final dept =
+                  cityRecord?.dept ??
                   departmentFromPostalCode(resolvedPostalCode);
               if (dept != null && dept.isNotEmpty) {
                 _selectedDeptCode = dept;
-                _selectedPhoneCountryCode = _countryCodeForDept(dept);
+                _selectedPhoneCountryCode = countryCodeForDept(dept);
               }
               final region = cityRecord?.region;
               if (region != null && region.isNotEmpty) {
@@ -2503,14 +2500,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  double? _parseBudget(String raw) {
+  double? parseBudget(String raw) {
     final cleaned = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
     return double.tryParse(cleaned);
   }
 
   Widget _requiredLabel(String text) {
     final theme = Theme.of(context);
-    final base = theme.inputDecorationTheme.labelStyle ??
+    final base =
+        theme.inputDecorationTheme.labelStyle ??
         theme.textTheme.bodyLarge ??
         const TextStyle(fontSize: 16, color: Colors.black87);
     final baseColor = base.color ?? Colors.black87;
@@ -2564,7 +2562,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
-  String? _validatePublishTitle(String? value) {
+  String? validatePublishTitle(String? value) {
     final trimmed = (value ?? '').trim();
     if (trimmed.isEmpty) {
       return 'Merci de saisir un titre';
@@ -2578,7 +2576,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
-  String? _validatePublishDescription(String? value) {
+  String? validatePublishDescription(String? value) {
     final trimmed = (value ?? '').trim();
     if (trimmed.isEmpty) {
       return 'Merci de décrire votre besoin';
@@ -2630,7 +2628,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
-  String _translatePublishIssue(String issue) {
+  String translatePublishIssue(String issue) {
     final trimmed = issue.trim();
     if (trimmed == 'Title must contain at least 10 characters') {
       return 'Le titre doit contenir au moins 10 caractères.';
@@ -2706,7 +2704,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return trimmed;
   }
 
-  String _formatPublishError(Object error) {
+  String formatPublishError(Object error) {
     if (error is FirebaseFunctionsException) {
       final details = error.details;
       if (details is Map) {
@@ -2715,7 +2713,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           final issues = rawIssues
               .map((entry) => entry.toString().trim())
               .where((entry) => entry.isNotEmpty)
-              .map(_translatePublishIssue)
+              .map(translatePublishIssue)
               .toList(growable: false);
           if (issues.isNotEmpty) {
             return issues.join(' ');
@@ -2724,7 +2722,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       final message = (error.message ?? error.code).trim();
-      return _translatePublishIssue(message);
+      return translatePublishIssue(message);
     }
 
     return error
@@ -2734,18 +2732,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   bool _requiredOk() {
-    final titleOk = _validatePublishTitle(_titleController.text) == null;
+    final titleOk = validatePublishTitle(_titleController.text) == null;
     final descOk =
-        _validatePublishDescription(_descriptionController.text) == null;
+        validatePublishDescription(_descriptionController.text) == null;
     final cityOk = _locationController.text.trim().isNotEmpty;
     final catOk = (_category ?? '').trim().isNotEmpty;
     const subOk = true;
     final delayOk = (_missionDelay ?? '').trim().isNotEmpty;
-    final phoneOk = _isValidPhoneFR(_phoneController.text);
+    final phoneOk = isValidPhoneFR(_phoneController.text);
     final budgetOk = _budgetType == 'À négocier'
         ? true
         : () {
-            final b = _parseBudget(_budgetController.text);
+            final b = parseBudget(_budgetController.text);
             return b != null && b > 0;
           }();
 
@@ -2760,14 +2758,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Iterable<String> get _requiredPublishFieldOrder => const <String>[
-        'title',
-        'category',
-        'description',
-        'city',
-        'phone',
-        'delay',
-        'budget',
-      ];
+    'title',
+    'category',
+    'description',
+    'city',
+    'phone',
+    'delay',
+    'budget',
+  ];
 
   GlobalKey _publishFieldKeyFor(String fieldId) {
     switch (fieldId) {
@@ -2790,7 +2788,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  String _publishFieldLabel(String fieldId) {
+  String publishFieldLabel(String fieldId) {
     switch (fieldId) {
       case 'title':
         return 'titre';
@@ -2814,20 +2812,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isPublishFieldInvalid(String fieldId) {
     switch (fieldId) {
       case 'title':
-        return _validatePublishTitle(_titleController.text) != null;
+        return validatePublishTitle(_titleController.text) != null;
       case 'category':
         return (_category ?? '').trim().isEmpty;
       case 'description':
-        return _validatePublishDescription(_descriptionController.text) != null;
+        return validatePublishDescription(_descriptionController.text) != null;
       case 'city':
         return _validateCanonicalCity(_locationController.text) != null;
       case 'phone':
-        return !_isValidPhoneFR(_phoneController.text);
+        return !isValidPhoneFR(_phoneController.text);
       case 'delay':
         return (_missionDelay ?? '').trim().isEmpty;
       case 'budget':
         if (_budgetType == 'À négocier') return false;
-        final budget = _parseBudget(_budgetController.text);
+        final budget = parseBudget(_budgetController.text);
         return budget == null || budget <= 0;
       default:
         return false;
@@ -2837,22 +2835,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   List<String> _missingPublishFieldLabels() {
     return _requiredPublishFieldOrder
         .where(_isPublishFieldInvalid)
-        .map(_publishFieldLabel)
+        .map(publishFieldLabel)
         .toList(growable: false);
   }
 
   Future<void> _scrollToDescription() async {
     final shouldShowHintFirst =
         _publishAiFlowStep == PublishOfferAiFlowStep.textSelected ||
-            _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
+        _publishAiFlowStep == PublishOfferAiFlowStep.textAnalyzing;
     BuildContext? hintCtx = _publishAiFlowHintKey.currentContext;
     if (shouldShowHintFirst && hintCtx == null) {
       await WidgetsBinding.instance.endOfFrame;
       hintCtx = _publishAiFlowHintKey.currentContext;
     }
     final descriptionCtx = _descriptionFieldKey.currentContext;
-    final targetCtx =
-        shouldShowHintFirst && hintCtx != null ? hintCtx : descriptionCtx;
+    final targetCtx = shouldShowHintFirst && hintCtx != null
+        ? hintCtx
+        : descriptionCtx;
     if (targetCtx == null) return;
 
     await Scrollable.ensureVisible(
@@ -2931,12 +2930,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
       duration: const Duration(milliseconds: 420),
       builder: (context, value, animatedChild) {
-        final dx =
-            isShaking ? math.sin(value * math.pi * 6) * (1 - value) * 12 : 0.0;
-        return Transform.translate(
-          offset: Offset(dx, 0),
-          child: animatedChild,
-        );
+        final dx = isShaking
+            ? math.sin(value * math.pi * 6) * (1 - value) * 12
+            : 0.0;
+        return Transform.translate(offset: Offset(dx, 0), child: animatedChild);
       },
       child: AnimatedContainer(
         key: _publishFieldKeyFor(fieldId),
@@ -3132,9 +3129,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       logRuntimeAction(
         area: 'publish',
         action: 'blocked-validation',
-        details: <String, Object?>{
-          'category': _category ?? '',
-        },
+        details: <String, Object?>{'category': _category ?? ''},
       );
       setState(() => _showDarkOverlay = true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -3145,10 +3140,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) {
-      logRuntimeAction(
-        area: 'publish',
-        action: 'blocked-auth',
-      );
+      logRuntimeAction(area: 'publish', action: 'blocked-auth');
       return;
     }
 
@@ -3193,9 +3185,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       unawaited(_refreshAdminAudioRuntimeAccess());
     }
     _resetPublishAiTrace(
-        kIsWeb ? 'micro web classique' : 'micro mobile classique');
+      kIsWeb ? 'micro web classique' : 'micro mobile classique',
+    );
     _appendPublishAiTrace(
-        'start_mic', 'Demande de démarrage du micro classique');
+      'start_mic',
+      'Demande de démarrage du micro classique',
+    );
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webMic' : 'mobileMic',
@@ -3239,21 +3234,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           st,
           reason: 'Web mic start failed',
           fatal: false,
-          keys: {
-            'component': 'Main',
-            'flow': 'webMic',
-            'step': 'start',
-          },
+          keys: {'component': 'Main', 'flow': 'webMic', 'step': 'start'},
         );
         if (!mounted) return;
         _appendPublishAiTrace(
           'start_mic',
-          _formatMicroIaRuntimeError(e),
+          formatMicroIaRuntimeError(e),
           level: PublishAiTraceLevel.error,
         );
         showErrorSnackBar(
           context,
-          'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}',
+          'Micro web indisponible: ${formatMicroIaRuntimeError(e)}',
         );
       }
       return;
@@ -3269,8 +3260,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (secureContext == null) return;
 
       if (await _recorder.hasPermission()) {
-        final filePath =
-            await createTempAudioPath(prefix: 'presto', extension: 'm4a');
+        final filePath = await createTempAudioPath(
+          prefix: 'presto',
+          extension: 'm4a',
+        );
         await _recorder.start(
           RecordConfig(
             encoder: AudioEncoder.aacLc,
@@ -3309,13 +3302,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _recordingPath = null;
       _appendPublishAiTrace(
         'start_mic',
-        _formatMicroIaRuntimeError(e),
+        formatMicroIaRuntimeError(e),
         level: PublishAiTraceLevel.error,
       );
       if (mounted) {
         showErrorSnackBar(
           context,
-          'Micro indisponible: ${_formatMicroIaRuntimeError(e)}',
+          'Micro indisponible: ${formatMicroIaRuntimeError(e)}',
         );
       }
       return;
@@ -3413,7 +3406,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (audioUpload.usedClientSideWavConversion &&
             audioUpload.bytes.length < 30000) {
           throw Exception(
-              'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
+            'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).',
+          );
         }
 
         final audioResult = await _transcribePublishAudio(
@@ -3441,25 +3435,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           st,
           reason: 'Web mic stop/process failed',
           fatal: false,
-          keys: {
-            'component': 'Main',
-            'flow': 'webMic',
-            'step': 'stop',
-          },
+          keys: {'component': 'Main', 'flow': 'webMic', 'step': 'stop'},
         );
         if (!mounted) return;
         _appendPublishAiTrace(
           'stop_mic',
-          _formatMicroIaRuntimeError(e),
+          formatMicroIaRuntimeError(e),
           level: PublishAiTraceLevel.error,
         );
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showErrorSnackBar(
-            context,
-            _formatMicroIaRuntimeError(e),
-          );
+          showErrorSnackBar(context, formatMicroIaRuntimeError(e));
         }
         _restorePublishAiFlowAfterError(fromVoice: true);
       } finally {
@@ -3487,7 +3474,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _recordingPath = null;
       _appendPublishAiTrace(
         'mobile_audio',
-        _formatMicroIaRuntimeError(e),
+        formatMicroIaRuntimeError(e),
         level: PublishAiTraceLevel.error,
       );
     }
@@ -3507,17 +3494,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       } catch (e) {
         _appendPublishAiTrace(
           'stop_mic',
-          _formatMicroIaRuntimeError(e),
+          formatMicroIaRuntimeError(e),
           level: PublishAiTraceLevel.error,
         );
         if (!mounted) return;
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showErrorSnackBar(
-            context,
-            _formatMicroIaRuntimeError(e),
-          );
+          showErrorSnackBar(context, formatMicroIaRuntimeError(e));
         }
         _restorePublishAiFlowAfterError(fromVoice: true);
       } finally {
@@ -3667,7 +3651,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _applyKeywordCategoryPairFromText(input);
         _markLocationPostalPrefilledByAiIfChanged(beforeSnapshot);
 
-        final didChange = beforeSnapshot['title'] != _titleController.text ||
+        final didChange =
+            beforeSnapshot['title'] != _titleController.text ||
             beforeSnapshot['description'] != _descriptionController.text ||
             beforeSnapshot['location'] != _locationController.text ||
             beforeSnapshot['postal'] != _postalCodeController.text ||
@@ -3697,7 +3682,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _restorePublishAiFlowAfterError(fromVoice: false);
       showSuccessSnackBar(
         context,
-        "Erreur lors de l'analyse : ${_formatMicroIaRuntimeError(e)}",
+        "Erreur lors de l'analyse : ${formatMicroIaRuntimeError(e)}",
       );
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
@@ -3779,7 +3764,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final hasLocationValue = _locationController.text.trim().isNotEmpty ||
+    final hasLocationValue =
+        _locationController.text.trim().isNotEmpty ||
         _postalCodeController.text.trim().isNotEmpty;
 
     if (hasLocationValue) {
@@ -3794,7 +3780,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    final hasValue = _locationController.text.trim().isNotEmpty ||
+    final hasValue =
+        _locationController.text.trim().isNotEmpty ||
         _postalCodeController.text.trim().isNotEmpty;
 
     if (!hasValue) {
@@ -3898,7 +3885,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       _selectedDeptCode = city.dept;
       _selectedRegionCode = city.region;
-      _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
+      _selectedPhoneCountryCode = countryCodeForDept(city.dept);
       if (markAsUserEdited) {
         _locationEditedByUser = true;
         _postalCodeEditedByUser = true;
@@ -3909,7 +3896,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
   }
 
-  String _countryCodeForDept(String dept) {
+  String countryCodeForDept(String dept) {
     if (dept.startsWith('971')) return '+590'; // Guadeloupe
     if (dept.startsWith('972')) return '+596'; // Martinique
     if (dept.startsWith('973')) return '+594'; // Guyane
@@ -3921,8 +3908,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // --- GESTION DES PHOTOS ---
 
-  Future<void> _showPhotoPopup(
-      {required XFile file, required String label}) async {
+  Future<void> _showPhotoPopup({
+    required XFile file,
+    required String label,
+  }) async {
     final bytes = await file.readAsBytes();
     if (!mounted) return;
     final overlayTheme = context.prestoOverlayTheme;
@@ -3969,8 +3958,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   shape: const CircleBorder(),
                   child: IconButton(
                     tooltip: 'Fermer',
-                    icon:
-                        const Icon(Icons.close_rounded, color: Colors.black87),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.black87,
+                    ),
                     onPressed: () => Navigator.of(ctx).pop(),
                   ),
                 ),
@@ -3979,8 +3970,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 left: 12,
                 bottom: 12,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
@@ -4129,7 +4122,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!result.isConfident || result.match == null) return;
 
       final match = result.match!;
-      final resolvedCategory = _resolvePublishCategoryLabel(match.categorie);
+      final resolvedCategory = resolvePublishCategoryLabel(match.categorie);
       if (resolvedCategory == null) return;
 
       final availableSubs =
@@ -4172,7 +4165,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
   }
 
-  String _storageExtFromPhoto(XFile photo) {
+  String storageExtFromPhoto(XFile photo) {
     final mime = (photo.mimeType ?? '').toLowerCase().trim();
     if (mime == 'image/webp') return 'webp';
     if (mime == 'image/png') return 'png';
@@ -4187,11 +4180,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return 'jpg';
   }
 
-  String _storageContentTypeFromPhoto(XFile photo) {
+  String storageContentTypeFromPhoto(XFile photo) {
     final mime = (photo.mimeType ?? '').toLowerCase().trim();
     if (mime.startsWith('image/')) return mime;
 
-    final ext = _storageExtFromPhoto(photo);
+    final ext = storageExtFromPhoto(photo);
     switch (ext) {
       case 'webp':
         return 'image/webp';
@@ -4244,7 +4237,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (mounted) {
         showErrorSnackBar(
           context,
-          'Erreur lors de la publication : ${_formatPublishError(e)}',
+          'Erreur lors de la publication : ${formatPublishError(e)}',
         );
         setState(() => _isSubmitting = false);
       }
@@ -4310,9 +4303,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final budgetValue = _budgetType == 'À négocier'
         ? 0.0
-        : (_parseBudget(_budgetController.text) ?? 0.0);
-    final publishService =
-        _marketplacePublishService ??= MarketplacePublishService();
+        : (parseBudget(_budgetController.text) ?? 0.0);
+    final publishService = _marketplacePublishService ??=
+        MarketplacePublishService();
 
     // UX « instantané » : on lance l'envoi (upload photos + création annonce)
     // en arrière-plan, puis on affiche immédiatement le popup « en attente de
@@ -4323,7 +4316,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       category:
-          _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
+          resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
       city: _locationController.text.trim(),
       postalCode: _postalCodeController.text.trim(),
       phone:
@@ -4353,9 +4346,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!mounted) return;
     await showModerationPendingDialog(context);
     appNavigatorKey.currentState?.pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const HomePage(initialIndex: 1),
-      ),
+      MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 1)),
     );
   }
 
@@ -4414,7 +4405,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (ctx != null && ScaffoldMessenger.maybeOf(ctx) != null) {
         showErrorSnackBar(
           ctx,
-          'Échec de la publication : ${_formatPublishError(e)}',
+          'Échec de la publication : ${formatPublishError(e)}',
         );
       }
     }
@@ -4432,11 +4423,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF13C8FF),
-              Color(0xFF0078FF),
-              Color(0xFF004BE8),
-            ],
+            colors: [Color(0xFF13C8FF), Color(0xFF0078FF), Color(0xFF004BE8)],
           ),
           borderRadius: BorderRadius.circular(24),
           boxShadow: const [
@@ -4610,7 +4597,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         fieldId: 'description',
                         child: _withAiPendingOverlay(
                           showPending: _showAiPendingForController(
-                              _descriptionController),
+                            _descriptionController,
+                          ),
                           alignment: Alignment.topRight,
                           padding: const EdgeInsets.only(top: 14, right: 12),
                           child: Column(
@@ -4620,13 +4608,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 controller: _descriptionController,
                                 focusNode: _descriptionFocusNode,
                                 readOnly: _descriptionTapToEditPrimed,
-                                showCursor:
-                                    _descriptionTapToEditPrimed ? true : null,
+                                showCursor: _descriptionTapToEditPrimed
+                                    ? true
+                                    : null,
                                 textAlignVertical: TextAlignVertical.top,
                                 onTap: _unlockDescriptionEditing,
                                 decoration: InputDecoration(
-                                  label:
-                                      _requiredLabel('Description détaillée'),
+                                  label: _requiredLabel(
+                                    'Description détaillée',
+                                  ),
                                   alignLabelWithHint: true,
                                   filled: true,
                                   fillColor: Colors.white,
@@ -4650,7 +4640,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 ),
                                 minLines: 4,
                                 maxLines: 8,
-                                validator: _validatePublishDescription,
+                                validator: validatePublishDescription,
                               ),
                               const SizedBox(height: 8),
                               AiWritingButton(
@@ -4676,8 +4666,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           _withPublishFieldHighlight(
                             fieldId: 'title',
                             child: _withAiPendingOverlay(
-                              showPending:
-                                  _showAiPendingForController(_titleController),
+                              showPending: _showAiPendingForController(
+                                _titleController,
+                              ),
                               child: TextFormField(
                                 controller: _titleController,
                                 decoration: InputDecoration(
@@ -4685,7 +4676,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                   border: const OutlineInputBorder(),
                                   hintText: 'Ex : Monter un meuble IKEA',
                                 ),
-                                validator: _validatePublishTitle,
+                                validator: validatePublishTitle,
                               ),
                             ),
                           ),
@@ -4697,17 +4688,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             subcategories: _category == null
                                 ? const <String>[]
                                 : (kCategorySubcategories[_category] ??
-                                    const <String>[]),
+                                      const <String>[]),
                             selectedCategory: _category,
                             selectedSubcategory: _selectedSubCategory,
                             categoryDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                              fieldId: 'category',
-                              child: _withAiPendingOverlay(
-                                showPending: _showAiPendingForCategory,
-                                child: child,
-                              ),
-                            ),
+                                  fieldId: 'category',
+                                  child: _withAiPendingOverlay(
+                                    showPending: _showAiPendingForCategory,
+                                    child: child,
+                                  ),
+                                ),
                             onCategoryChanged: (value) {
                               setState(() {
                                 _categoryEditedByUser = true;
@@ -4742,14 +4733,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             cityLabel: _requiredLabel('Ville'),
                             cityDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                              fieldId: 'city',
-                              child: _withAiPendingOverlay(
-                                showPending: _showAiPendingForController(
-                                  _locationController,
+                                  fieldId: 'city',
+                                  child: _withAiPendingOverlay(
+                                    showPending: _showAiPendingForController(
+                                      _locationController,
+                                    ),
+                                    child: child,
+                                  ),
                                 ),
-                                child: child,
-                              ),
-                            ),
                             postalDecorator: (child) => _withAiPendingOverlay(
                               showPending: _showAiPendingForController(
                                 _postalCodeController,
@@ -4760,8 +4751,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               setState(() {
                                 _selectedDeptCode = city.dept;
                                 _selectedRegionCode = null;
-                                _selectedPhoneCountryCode =
-                                    _countryCodeForDept(city.dept);
+                                _selectedPhoneCountryCode = countryCodeForDept(
+                                  city.dept,
+                                );
                                 _locationEditedByUser = true;
                                 _postalCodeEditedByUser = true;
                               });
@@ -4783,9 +4775,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             initialCountryCode: _selectedPhoneCountryCode,
                             phoneDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                              fieldId: 'phone',
-                              child: child,
-                            ),
+                                  fieldId: 'phone',
+                                  child: child,
+                                ),
                             onCountryCodeChanged: (code) {
                               setState(() {
                                 _selectedPhoneCountryCode = code;
@@ -4793,7 +4785,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             },
                             onPhoneChanged: (_) => _recompute(),
                             validator: (value) {
-                              return _isValidPhoneFR(value ?? '')
+                              return isValidPhoneFR(value ?? '')
                                   ? null
                                   : 'Téléphone invalide';
                             },
@@ -4811,9 +4803,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             selectedDelay: _missionDelay,
                             delayDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                              fieldId: 'delay',
-                              child: child,
-                            ),
+                                  fieldId: 'delay',
+                                  child: child,
+                                ),
                             onDelayChanged: (value) {
                               setState(() {
                                 _delayEditedByUser = true;
@@ -4830,9 +4822,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                 : _requiredLabel('Budget (€)'),
                             budgetDecorator: (child) =>
                                 _withPublishFieldHighlight(
-                              fieldId: 'budget',
-                              child: child,
-                            ),
+                                  fieldId: 'budget',
+                                  child: child,
+                                ),
                             onBudgetTypeChanged: (value) {
                               setState(() {
                                 _budgetEditedByUser = true;
@@ -4842,7 +4834,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             },
                             budgetValidator: (value) {
                               if (_budgetType == 'À négocier') return null;
-                              final budget = _parseBudget(value ?? '');
+                              final budget = parseBudget(value ?? '');
                               if (budget == null) return 'Montant invalide';
                               if (budget <= 0) {
                                 return 'Le montant doit être > 0';
@@ -4869,14 +4861,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
-                              onPressed:
-                                  _isSubmitting ? null : _onPublishPressed,
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : _onPublishPressed,
                               icon: _isSubmitting
                                   ? const SizedBox(
                                       width: 18,
                                       height: 18,
                                       child: CircularProgressIndicator(
-                                          strokeWidth: 2),
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : const Icon(Icons.send),
                               label: Text(
@@ -4889,8 +4883,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                     ? Colors.grey.shade400
                                     : kPrestoOrange,
                                 foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ),
@@ -4907,9 +4902,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       opacity: _showDarkOverlay ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 220),
                       child: const DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Color(0xBB000000),
-                        ),
+                        decoration: BoxDecoration(color: Color(0xBB000000)),
                       ),
                     ),
                   ),
@@ -4984,9 +4977,7 @@ class _ModerationPendingDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Padding(
@@ -4998,10 +4989,7 @@ class _ModerationPendingDialog extends StatelessWidget {
             builder: (context, scale, child) {
               return Transform.scale(
                 scale: scale,
-                child: Opacity(
-                  opacity: scale.clamp(0, 1),
-                  child: child,
-                ),
+                child: Opacity(opacity: scale.clamp(0, 1), child: child),
               );
             },
             child: Column(
@@ -5014,11 +5002,7 @@ class _ModerationPendingDialog extends StatelessWidget {
                     color: Color(0xFF1A73E8),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 36,
-                  ),
+                  child: const Icon(Icons.check, color: Colors.white, size: 36),
                 ),
                 const SizedBox(height: 20),
                 const Text(
@@ -5097,9 +5081,10 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
       duration: const Duration(milliseconds: 900),
       vsync: this,
     );
-    _opacity = Tween<double>(begin: 0.25, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0.25,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     Future<void>.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
