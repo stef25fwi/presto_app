@@ -1,18 +1,21 @@
 name: Temporary export messaging thread
 
 on:
-  push:
-    branches:
-      - coverage/messaging-thread-massive-wave
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   export:
+    if: github.head_ref == 'coverage/messaging-thread-massive-wave'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
       - uses: actions/upload-artifact@v7
         with:
           name: messaging-thread-source-${{ github.run_id }}
