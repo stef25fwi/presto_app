@@ -190,6 +190,23 @@ end_of_record
             coverage_agent.classify("lib/special/flow.dart", (rule,)),
         )
 
+    def test_configured_patterns_exclude_keyword_matches_outside_scope(self) -> None:
+        rule = coverage_agent.CriticalRule(
+            module_id="authentication",
+            label="Authentification",
+            category="authentication",
+            category_rank=1,
+            patterns=("lib/pages/auth/**",),
+            target_percent=100,
+        )
+        self.assertEqual(
+            ("other", len(coverage_agent.PRIORITY_RULES)),
+            coverage_agent.classify(
+                "lib/legacy/authentication_experiment.dart",
+                (rule,),
+            ),
+        )
+
     def test_critical_status_requires_every_lane_to_reach_target(self) -> None:
         rules = (
             coverage_agent.CriticalRule(
