@@ -1,0 +1,20 @@
+name: Temporary export publication source
+
+on:
+  push:
+    branches:
+      - coverage/publication-massive-widget-wave
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-artifact@v7
+        with:
+          name: publish-offer-source-${{ github.run_id }}
+          path: lib/pages/publish_offer_page.dart
+          retention-days: 1
