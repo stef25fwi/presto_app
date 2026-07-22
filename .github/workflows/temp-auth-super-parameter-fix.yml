@@ -1,0 +1,58 @@
+name: Temporary auth analyzer fix
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.head_ref == 'coverage/auth-city-search-wave' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Apply super parameter correction
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          path = Path('test/services/account_social_auth_actions_web_coverage_test.dart')
+          source = path.read_text()
+          old = '''  _WebCredentialPlatform({
+            required super.auth,
+            required UserPlatform? user,
+            bool isNewUser = false,
+          }) : super(
+                 user: user,
+                 additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
+               );
+          '''
+          new = '''  _WebCredentialPlatform({
+            required super.auth,
+            required super.user,
+            bool isNewUser = false,
+          }) : super(
+                 additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
+               );
+          '''
+          if old not in source:
+              raise SystemExit('constructor snippet not found')
+          path.write_text(source.replace(old, new, 1))
+          PY
+
+      - name: Commit and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-auth-super-parameter-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "test(coverage): use super parameter in auth credential fake"
+          git push origin HEAD:${{ github.head_ref }}
