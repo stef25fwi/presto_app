@@ -12,7 +12,6 @@ on:
 permissions:
   actions: read
   contents: read
-  issues: write
 
 jobs:
   watch-production:
@@ -28,7 +27,6 @@ jobs:
             const repo = context.repo.repo;
             const targetSha = 'b4db52a15df5862c091f65c4a0af9c872faf73d8';
             const workflowName = 'Validate and Deploy Firebase';
-            const prNumber = 640;
             const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
             let deploymentRun;
@@ -53,19 +51,8 @@ jobs:
               return;
             }
 
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body: [
-                '🔎 Suivi du déploiement Firebase de production démarré.',
-                '',
-                `- Commit : \`${targetSha}\``,
-                `- Run ID : \`${deploymentRun.id}\``,
-                `- Workflow : [${workflowName}](${deploymentRun.html_url})`,
-                `- État initial : \`${deploymentRun.status}\``,
-              ].join('\n'),
-            });
+            core.info(`DEPLOY_RUN_ID=${deploymentRun.id}`);
+            core.info(`DEPLOY_RUN_URL=${deploymentRun.html_url}`);
 
             for (let attempt = 1; attempt <= 165; attempt += 1) {
               const response = await github.rest.actions.getWorkflowRun({
@@ -84,36 +71,14 @@ jobs:
             const success =
               deploymentRun.status === 'completed' &&
               deploymentRun.conclusion === 'success';
-            const body = success
-              ? [
-                  '✅ Déploiement Firebase de production terminé avec succès.',
-                  '',
-                  `- Commit : \`${targetSha}\``,
-                  `- Run ID : \`${deploymentRun.id}\``,
-                  `- Workflow : [${workflowName}](${deploymentRun.html_url})`,
-                  '- Cible : `presto-app-74abe`',
-                  '- URL contrôlée : `https://ilipresto.web.app`',
-                  '- Les tests de fumée de production sont inclus dans ce workflow.',
-                ].join('\n')
-              : [
-                  '❌ Le déploiement Firebase de production ne s’est pas terminé avec succès.',
-                  '',
-                  `- Commit : \`${targetSha}\``,
-                  `- Run ID : \`${deploymentRun.id}\``,
-                  `- État : \`${deploymentRun.status}\``,
-                  `- Conclusion : \`${deploymentRun.conclusion ?? 'inconnue'}\``,
-                  `- Workflow : [${workflowName}](${deploymentRun.html_url})`,
-                ].join('\n');
-
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body,
-            });
 
             if (!success) {
               core.setFailed(
-                `Déploiement ${deploymentRun.status}/${deploymentRun.conclusion ?? 'inconnu'}.`,
+                `Déploiement ${deploymentRun.status}/${deploymentRun.conclusion ?? 'inconnu'} — ${deploymentRun.html_url}`,
               );
+              return;
             }
+
+            core.info(
+              `Déploiement Firebase réussi pour ${targetSha} — ${deploymentRun.html_url}`,
+            );
