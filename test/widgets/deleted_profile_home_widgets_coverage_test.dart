@@ -63,7 +63,8 @@ void main() {
 
     final avatars = tester.widgetList<CircleAvatar>(find.byType(CircleAvatar));
     expect(avatars.first.radius, 30);
-    final firstIcon = tester.widget<Icon>(find.byIcon(Icons.person_off_rounded).first);
+    final firstIcon =
+        tester.widget<Icon>(find.byIcon(Icons.person_off_rounded).first);
     expect(firstIcon.size, 12);
     expect(find.text(DeletedUserProfile.label), findsNWidgets(2));
 
@@ -113,7 +114,12 @@ void main() {
 
     expect(find.text('Bricolage'), findsOneWidget);
     expect(find.byIcon(Icons.build), findsOneWidget);
-    final transform = tester.widget<Transform>(find.byType(Transform));
+    final transform = tester.widget<Transform>(
+      find.descendant(
+        of: find.byType(HomeCategoryChip),
+        matching: find.byType(Transform),
+      ).first,
+    );
     expect(transform.transform.getMaxScaleOnAxis(), closeTo(1.25, 0.001));
 
     await tester.tap(find.text('Bricolage'));
