@@ -66,4 +66,10 @@ void main() {
     expect(kAppCheckWebRecaptchaProviderLabel, 'enterprise');
     expect(kAppCheckWebRecaptchaSiteKey, isA<String>());
   });
+
+  test('non-web runtime returns empty host and hint', () {
+    expect(currentAppCheckWebHost(), isEmpty);
+    expect(appCheckWebHostHint(), isEmpty);
+    expect(appCheckWebHostClass(), 'unknown');
+  });
 }
