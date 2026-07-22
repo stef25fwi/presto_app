@@ -1,0 +1,632 @@
+name: Temporary auth and city coverage executor
+
+on:
+  push:
+    branches:
+      - coverage/auth-city-search-wave
+
+permissions:
+  contents: write
+
+jobs:
+  implement-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: coverage/auth-city-search-wave
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+
+      - name: Add deterministic coverage seams and tests
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          source_path = Path('lib/services/account_social_auth_actions.dart')
+          source = source_path.read_text()
+
+          class_marker = 'class AccountSocialAuthActions {\n'
+          insertion = '''class AccountSocialAuthActions {
+            static bool? _debugIsWebOverride;
+            static String? _debugBaseHostOverride;
+            static Future<void> Function()? _debugRememberAccountRouteOverride;
+
+            static bool get _isWeb => _debugIsWebOverride ?? kIsWeb;
+            static String get _baseHost => _debugBaseHostOverride ?? Uri.base.host;
+
+            @visibleForTesting
+            static void configureWebEnvironmentForTesting({
+              required bool isWeb,
+              required String baseHost,
+              Future<void> Function()? rememberAccountRoute,
+            }) {
+              _debugIsWebOverride = isWeb;
+              _debugBaseHostOverride = baseHost;
+              _debugRememberAccountRouteOverride = rememberAccountRoute;
+            }
+
+            @visibleForTesting
+            static void resetTestingOverrides() {
+              _debugIsWebOverride = null;
+              _debugBaseHostOverride = null;
+              _debugRememberAccountRouteOverride = null;
+            }
+
+            @visibleForTesting
+            static bool shouldFallbackToRedirectForTesting(Object error) =>
+                _shouldFallbackToRedirect(error);
+
+            @visibleForTesting
+            static String facebookErrorMessageForTesting(Object error) =>
+                _facebookErrorMessage(error);
+
+            @visibleForTesting
+            static String generateNonceForTesting([int length = 32]) =>
+                _generateNonce(length);
+
+            @visibleForTesting
+            static String sha256OfStringForTesting(String input) =>
+                _sha256OfString(input);
+
+            @visibleForTesting
+            static GoogleAuthProvider buildGoogleProviderForTesting() =>
+                _buildGoogleProvider();
+'''
+          if class_marker not in source:
+              raise SystemExit('AccountSocialAuthActions class marker not found')
+          source = source.replace(class_marker, insertion, 1)
+
+          replacements = [
+              ("details: kIsWeb ? 'Mode Web' : 'Mode Mobile',",
+               "details: _isWeb ? 'Mode Web' : 'Mode Mobile',"),
+              ("final bool onGitHubPages = Uri.base.host.endsWith('.github.io');",
+               "final bool onGitHubPages = _baseHost.endsWith('.github.io');"),
+              ("if (kIsWeb ||\n        !(defaultTargetPlatform == TargetPlatform.iOS ||",
+               "if (_isWeb ||\n        !(defaultTargetPlatform == TargetPlatform.iOS ||"),
+          ]
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit(f'Missing source snippet: {old}')
+              source = source.replace(old, new, 1)
+
+          web_branch_count = source.count('if (kIsWeb) {')
+          if web_branch_count != 2:
+              raise SystemExit(f'Expected two web branches, found {web_branch_count}')
+          source = source.replace('if (kIsWeb) {', 'if (_isWeb) {')
+
+          old_remember = '''  static Future<void> _rememberAccountRouteForWebRedirect() async {
+            if (!kIsWeb) return;
+            await PostAuthNavigationIntentService.rememberAccountRoute();
+          }
+'''
+          new_remember = '''  static Future<void> _rememberAccountRouteForWebRedirect() async {
+            if (!_isWeb) return;
+            final override = _debugRememberAccountRouteOverride;
+            if (override != null) {
+              await override();
+              return;
+            }
+            await PostAuthNavigationIntentService.rememberAccountRoute();
+          }
+'''
+          if old_remember not in source:
+              raise SystemExit('Remember route helper not found')
+          source = source.replace(old_remember, new_remember, 1)
+          source_path.write_text(source)
+
+          Path('test/services/account_social_auth_actions_web_coverage_test.dart').write_text(r'''import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/services/account_social_auth_actions.dart';
+import 'package:presto_app/services/google_auth_service.dart';
+
+class _TestMultiFactorPlatform extends MultiFactorPlatform {
+  _TestMultiFactorPlatform(super.auth);
+}
+
+class _WebUserPlatform extends UserPlatform {
+  _WebUserPlatform(FirebaseAuthPlatform auth)
+      : super(
+          auth,
+          _TestMultiFactorPlatform(auth),
+          InternalUserDetails(
+            userInfo: InternalUserInfo(
+              uid: 'web-social-user',
+              email: 'web@ilipresto.fr',
+              displayName: 'Web User',
+              isAnonymous: false,
+              isEmailVerified: true,
+              creationTimestamp: DateTime(2026, 7, 1).millisecondsSinceEpoch,
+              lastSignInTimestamp: DateTime(2026, 7, 22).millisecondsSinceEpoch,
+            ),
+            providerData: const <Map<String, dynamic>?>[],
+          ),
+        );
+
+  @override
+  Future<String?> getIdToken(bool forceRefresh) async {
+    throw FirebaseException(
+      plugin: 'firebase_auth',
+      code: 'permission-denied',
+      message: 'profile bootstrap disabled in deterministic unit tests',
+    );
+  }
+}
+
+class _WebCredentialPlatform extends UserCredentialPlatform {
+  _WebCredentialPlatform({
+    required super.auth,
+    required UserPlatform? user,
+    bool isNewUser = false,
+  }) : super(
+          user: user,
+          additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
+        );
+}
+
+class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
+  _WebSocialAuthPlatform() : super(appInstance: null) {
+    user = _WebUserPlatform(this);
+  }
+
+  late final UserPlatform user;
+  bool exposeCurrentUser = false;
+  bool popupReturnsUser = false;
+  bool popupIsNewUser = false;
+  Object? popupError;
+  Object? redirectError;
+  int popupCalls = 0;
+  int redirectCalls = 0;
+  String? popupProviderId;
+  String? redirectProviderId;
+
+  void reset() {
+    exposeCurrentUser = false;
+    popupReturnsUser = false;
+    popupIsNewUser = false;
+    popupError = null;
+    redirectError = null;
+    popupCalls = 0;
+    redirectCalls = 0;
+    popupProviderId = null;
+    redirectProviderId = null;
+  }
+
+  @override
+  FirebaseAuthPlatform delegateFor({required FirebaseApp app}) => this;
+
+  @override
+  FirebaseAuthPlatform setInitialValues({
+    InternalUserDetails? currentUser,
+    String? languageCode,
+  }) =>
+      this;
+
+  @override
+  UserPlatform? get currentUser => exposeCurrentUser ? user : null;
+
+  @override
+  Stream<UserPlatform?> authStateChanges() =>
+      Stream<UserPlatform?>.value(currentUser);
+
+  @override
+  Stream<UserPlatform?> userChanges() =>
+      Stream<UserPlatform?>.value(currentUser);
+
+  @override
+  Future<UserCredentialPlatform> signInWithPopup(AuthProvider provider) async {
+    popupCalls += 1;
+    popupProviderId = provider.providerId;
+    final failure = popupError;
+    if (failure != null) throw failure;
+    if (popupReturnsUser) exposeCurrentUser = true;
+    return _WebCredentialPlatform(
+      auth: this,
+      user: popupReturnsUser ? user : null,
+      isNewUser: popupIsNewUser,
+    );
+  }
+
+  @override
+  Future<void> signInWithRedirect(AuthProvider provider) async {
+    redirectCalls += 1;
+    redirectProviderId = provider.providerId;
+    final failure = redirectError;
+    if (failure != null) throw failure;
+  }
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late _WebSocialAuthPlatform platform;
+  late FirebaseAuth auth;
+  var rememberedRoutes = 0;
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    try {
+      await Firebase.initializeApp();
+    } on FirebaseException catch (error) {
+      if (error.code != 'duplicate-app') rethrow;
+    }
+    platform = _WebSocialAuthPlatform();
+    FirebaseAuthPlatform.instance = platform;
+    auth = FirebaseAuth.instance;
+  });
+
+  setUp(() {
+    platform.reset();
+    rememberedRoutes = 0;
+    AccountSocialAuthActions.configureWebEnvironmentForTesting(
+      isWeb: true,
+      baseHost: 'app.ilipresto.fr',
+      rememberAccountRoute: () async => rememberedRoutes += 1,
+    );
+  });
+
+  tearDown(AccountSocialAuthActions.resetTestingOverrides);
+
+  Future<void> runAction(
+    WidgetTester tester,
+    Future<void> Function(BuildContext context) action,
+  ) async {
+    final completed = Completer<void>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () async {
+                try {
+                  await action(context);
+                  completed.complete();
+                } catch (error, stackTrace) {
+                  completed.completeError(error, stackTrace);
+                }
+              },
+              child: const Text('Connexion'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Connexion'));
+    for (var i = 0; i < 20 && !completed.isCompleted; i += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await completed.future.timeout(const Duration(seconds: 5));
+    await tester.pump();
+  }
+
+  Future<void> googleAction(BuildContext context) =>
+      AccountSocialAuthActions.signInWithGoogle(
+        context: context,
+        auth: auth,
+        googleAuthService: GoogleAuthService(),
+        trackLogin: ({authMethod, isNewUser = false}) async {},
+      );
+
+  Future<void> facebookAction(BuildContext context) =>
+      AccountSocialAuthActions.signInWithFacebook(
+        context: context,
+        auth: auth,
+        trackLogin: ({authMethod, isNewUser = false}) async {},
+      );
+
+  testWidgets('Google utilise directement redirect sur GitHub Pages',
+      (tester) async {
+    AccountSocialAuthActions.configureWebEnvironmentForTesting(
+      isWeb: true,
+      baseHost: 'stef25fwi.github.io',
+      rememberAccountRoute: () async => rememberedRoutes += 1,
+    );
+
+    await runAction(tester, googleAction);
+
+    expect(platform.popupCalls, 0);
+    expect(platform.redirectCalls, 1);
+    expect(platform.redirectProviderId, 'google.com');
+    expect(rememberedRoutes, 1);
+  });
+
+  testWidgets('Google finalise un popup Web réussi', (tester) async {
+    platform
+      ..popupReturnsUser = true
+      ..popupIsNewUser = true;
+
+    await runAction(tester, googleAction);
+
+    expect(platform.popupCalls, 1);
+    expect(platform.popupProviderId, 'google.com');
+    expect(platform.redirectCalls, 0);
+    expect(find.text('✓ Connecté avec Google'), findsOneWidget);
+  });
+
+  testWidgets('Google ne redirige pas après fermeture volontaire du popup',
+      (tester) async {
+    platform.popupError = FirebaseAuthException(code: 'popup-closed-by-user');
+
+    await runAction(tester, googleAction);
+
+    expect(platform.popupCalls, 1);
+    expect(platform.redirectCalls, 0);
+    expect(find.text('Connexion annulée.'), findsOneWidget);
+  });
+
+  testWidgets('Google bascule vers redirect quand le popup est bloqué',
+      (tester) async {
+    platform.popupError = FirebaseAuthException(code: 'popup-blocked');
+
+    await runAction(tester, googleAction);
+
+    expect(platform.popupCalls, 1);
+    expect(platform.redirectCalls, 1);
+    expect(rememberedRoutes, 1);
+  });
+
+  testWidgets('Google affiche l erreur du redirect de secours', (tester) async {
+    platform
+      ..popupError = FirebaseAuthException(code: 'popup-blocked')
+      ..redirectError = FirebaseAuthException(
+        code: 'network-request-failed',
+        message: 'offline',
+      );
+
+    await runAction(tester, googleAction);
+
+    expect(platform.redirectCalls, 1);
+    expect(find.byType(SnackBar), findsOneWidget);
+  });
+
+  testWidgets('Facebook bascule vers redirect pour un popup bloqué',
+      (tester) async {
+    platform.popupError = FirebaseAuthException(code: 'popup-blocked');
+
+    await runAction(tester, facebookAction);
+
+    expect(platform.popupCalls, 1);
+    expect(platform.popupProviderId, 'facebook.com');
+    expect(platform.redirectCalls, 1);
+    expect(platform.redirectProviderId, 'facebook.com');
+    expect(rememberedRoutes, 1);
+  });
+
+  testWidgets('Facebook affiche une erreur Web sans fallback', (tester) async {
+    platform.popupError = FirebaseAuthException(
+      code: 'network-request-failed',
+    );
+
+    await runAction(tester, facebookAction);
+
+    expect(platform.popupCalls, 1);
+    expect(platform.redirectCalls, 0);
+    expect(find.text('Erreur réseau. Vérifie la connexion internet.'),
+        findsOneWidget);
+  });
+
+  test('helpers de redirection couvrent blocage, COOP et annulation', () {
+    expect(
+      AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
+        FirebaseAuthException(code: 'popup-blocked'),
+      ),
+      isTrue,
+    );
+    expect(
+      AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
+        FirebaseAuthException(
+          code: 'internal-error',
+          message: 'Cross-Origin-Opener-Policy blocked the popup',
+        ),
+      ),
+      isTrue,
+    );
+    expect(
+      AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
+        FirebaseAuthException(code: 'cancelled-popup-request'),
+      ),
+      isFalse,
+    );
+    expect(
+      AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
+        StateError('popup-blocked-by-browser'),
+      ),
+      isTrue,
+    );
+    expect(
+      AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
+        StateError('canceled by user'),
+      ),
+      isFalse,
+    );
+    expect(
+      AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
+        StateError('unrelated provider error'),
+      ),
+      isFalse,
+    );
+  });
+
+  test('helpers Facebook, nonce, SHA-256 et provider sont déterministes', () {
+    expect(
+      AccountSocialAuthActions.facebookErrorMessageForTesting(
+        FirebaseAuthException(code: 'popup-blocked'),
+      ),
+      contains('Pop-up Facebook bloquée'),
+    );
+    expect(
+      AccountSocialAuthActions.facebookErrorMessageForTesting(
+        FirebaseAuthException(code: 'popup-closed-by-user'),
+      ),
+      isEmpty,
+    );
+    expect(
+      AccountSocialAuthActions.facebookErrorMessageForTesting(
+        StateError('boom'),
+      ),
+      'Erreur de connexion Facebook. Reessayez.',
+    );
+
+    final nonce = AccountSocialAuthActions.generateNonceForTesting(64);
+    expect(nonce, hasLength(64));
+    expect(RegExp(r'^[0-9A-Za-z._-]+$').hasMatch(nonce), isTrue);
+    expect(
+      AccountSocialAuthActions.sha256OfStringForTesting('abc'),
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    );
+    expect(
+      AccountSocialAuthActions.buildGoogleProviderForTesting().providerId,
+      'google.com',
+    );
+  });
+}
+''')
+
+          Path('test/services/city_search_coverage_test.dart').write_text(r'''import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/services/city_search.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final search = CitySearch.instance;
+
+  setUpAll(search.ensureLoaded);
+
+  test('CityRecord expose ses adaptateurs historiques', () {
+    final city = CityRecord(
+      name: 'Baie-Mahault',
+      postalCode: '97122',
+      departmentCode: '971',
+      regionCode: '01',
+    );
+
+    expect(city.cp, '97122');
+    expect(city.dept, '971');
+    expect(city.region, '01');
+  });
+
+  test('les recherches vides restent sans résultat', () async {
+    expect(search.search('   '), isEmpty);
+    expect(await search.searchByNamePrefix('  '), isEmpty);
+    expect(await search.searchByPostalPrefix('  '), isEmpty);
+    expect(await search.searchSuggestions('  '), isEmpty);
+    expect(search.searchByPostalCode('  '), isEmpty);
+    expect(search.searchFuzzy('  '), isEmpty);
+    expect(search.pickBestForPostalCode('  '), isNull);
+  });
+
+  test('Melun est disponible par nom, code postal et suggestions', () async {
+    final byName = await search.searchByNamePrefix('mel');
+    final byPostal = await search.searchByPostalPrefix('770');
+    final nameSuggestion = await search.searchSuggestions('mel');
+    final postalSuggestion = await search.searchSuggestions('770');
+
+    expect(byName.any((city) => city.name == 'Melun'), isTrue);
+    expect(byPostal.any((city) => city.postalCode == '77000'), isTrue);
+    expect(nameSuggestion.any((city) => city.name == 'Melun'), isTrue);
+    expect(postalSuggestion.any((city) => city.name == 'Melun'), isTrue);
+  });
+
+  test('la recherche normalise accents, espaces, tirets et apostrophes', () {
+    final melun = search.search('m-e l\'u`n');
+    expect(melun.any((city) => city.name == 'Melun'), isTrue);
+  });
+
+  test('Paris retourne ses arrondissements et respecte la limite', () {
+    final paris = search.search('paris', limit: 3);
+
+    expect(paris, isNotEmpty);
+    expect(paris.length, lessThanOrEqualTo(3));
+    expect(paris.every((city) => city.name.startsWith('Paris')), isTrue);
+  });
+
+  test('le filtre départemental accepte et refuse Melun', () {
+    final accepted = search.search(
+      'melun',
+      allowedDeptCodes: const <String>['77'],
+    );
+    final refused = search.search(
+      'melun',
+      allowedDeptCodes: const <String>['971'],
+    );
+
+    expect(accepted.any((city) => city.name == 'Melun'), isTrue);
+    expect(refused.any((city) => city.name == 'Melun'), isFalse);
+  });
+
+  test('contains complète les résultats après startsWith', () {
+    final results = search.search('elun', limit: 10);
+    expect(results.any((city) => city.name == 'Melun'), isTrue);
+  });
+
+  test('recherche postale, sélection exacte et préfixe sont cohérentes', () {
+    final postal = search.searchByPostalCode('770');
+    final exact = search.pickBestForPostalCode('77000');
+    final prefix = search.pickBestForPostalCode('770');
+
+    expect(postal.any((city) => city.name == 'Melun'), isTrue);
+    expect(exact?.name, 'Melun');
+    expect(exact?.postalCode, '77000');
+    expect(prefix, isNotNull);
+    expect(prefix!.postalCode.startsWith('770'), isTrue);
+    expect(search.pickBestForPostalCode('00000'), isNull);
+  });
+
+  test('la recherche floue classe les correspondances et filtre le CP', () {
+    final exact = search.searchFuzzy('Melun');
+    final typo = search.searchFuzzy('Melunx');
+    final matchingPostal = search.searchFuzzy('Melunx', postalCode: '77000');
+    final wrongPostal = search.searchFuzzy('Melunx', postalCode: '97122');
+
+    expect(exact.first.name, 'Melun');
+    expect(typo.any((city) => city.name == 'Melun'), isTrue);
+    expect(matchingPostal.single.name, 'Melun');
+    expect(wrongPostal, isEmpty);
+  });
+
+  test('les limites des recherches asynchrones sont respectées', () async {
+    expect((await search.searchByNamePrefix('m', limit: 1)), hasLength(1));
+    expect((await search.searchByPostalPrefix('7', limit: 1)), hasLength(1));
+  });
+}
+''')
+          PY
+
+      - name: Format
+        run: dart format lib/services/account_social_auth_actions.dart test/services/account_social_auth_actions_web_coverage_test.dart test/services/city_search_coverage_test.dart
+
+      - name: Dependencies
+        run: flutter pub get
+
+      - name: Targeted auth coverage tests
+        run: flutter test test/services/account_social_auth_actions_web_coverage_test.dart
+
+      - name: Targeted city coverage tests
+        run: flutter test test/services/city_search_coverage_test.dart
+
+      - name: Commit validated implementation and remove executor
+        shell: bash
+        run: |
+          rm .github/workflows/temp-auth-city-coverage-executor.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/services/account_social_auth_actions.dart \
+            test/services/account_social_auth_actions_web_coverage_test.dart \
+            test/services/city_search_coverage_test.dart \
+            .github/workflows/temp-auth-city-coverage-executor.yml
+          git commit -m "test(coverage): cover social auth web and city search edges"
+          git push origin HEAD:coverage/auth-city-search-wave
