@@ -3734,23 +3734,92 @@ class _AnimatedPaymentInfoPillState extends State<_AnimatedPaymentInfoPill>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scale;
+  late final Animation<double> _shake;
   late final Animation<double> _glow;
+  late final Animation<double> _shine;
+  bool _animationsDisabled = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
-    _scale = Tween<double>(
-      begin: 1.0,
-      end: 1.035,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-    _glow = Tween<double>(
-      begin: 0.20,
-      end: 0.34,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+      duration: const Duration(milliseconds: 2200),
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 1.075)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 8,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.075, end: 0.985),
+        weight: 6,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.985, end: 1.045),
+        weight: 6,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.045, end: 1),
+        weight: 10,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1, end: 1.018)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.018, end: 1)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 35,
+      ),
+    ]).animate(_controller);
+    _shake = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -1.7), weight: 4),
+      TweenSequenceItem(tween: Tween(begin: -1.7, end: 1.7), weight: 4),
+      TweenSequenceItem(tween: Tween(begin: 1.7, end: -1.2), weight: 4),
+      TweenSequenceItem(tween: Tween(begin: -1.2, end: 1.2), weight: 4),
+      TweenSequenceItem(tween: Tween(begin: 1.2, end: 0), weight: 6),
+      TweenSequenceItem(tween: ConstantTween<double>(0), weight: 78),
+    ]).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+    _glow = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.28, end: 0.66), weight: 15),
+      TweenSequenceItem(tween: Tween(begin: 0.66, end: 0.36), weight: 15),
+      TweenSequenceItem(tween: Tween(begin: 0.36, end: 0.48), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 0.48, end: 0.28), weight: 35),
+    ]).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+    _shine = Tween<double>(begin: -2.4, end: 2.4).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0, 0.62, curve: Curves.easeInOutCubic),
+      ),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final animationsDisabled =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (animationsDisabled == _animationsDisabled &&
+        (_controller.isAnimating || animationsDisabled)) {
+      return;
+    }
+    _animationsDisabled = animationsDisabled;
+    if (_animationsDisabled) {
+      _controller
+        ..stop()
+        ..value = 0;
+    } else {
+      _controller.repeat();
+    }
   }
 
   @override
@@ -3761,49 +3830,96 @@ class _AnimatedPaymentInfoPillState extends State<_AnimatedPaymentInfoPill>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scale.value,
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1A73E8), Color(0xFF1565D8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(
-                      0xFF1A73E8,
-                    ).withValues(alpha: _glow.value),
-                    blurRadius: 12,
-                    spreadRadius: 0.5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(999),
-                onTap: widget.onTap,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                  child: SizedBox(
-                    width: 44,
-                    child: Center(
-                      child: Text(
-                        'Infos',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Semantics(
+            button: true,
+            label: 'Informations sur le paiement',
+            child: Transform.translate(
+              offset: Offset(_shake.value, 0),
+              child: Transform.scale(
+                scale: _scale.value,
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1A73E8), Color(0xFF0D5FD1)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        width: 0.8,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1A73E8)
+                              .withValues(alpha: _glow.value),
+                          blurRadius: 12 + (_glow.value * 8),
+                          spreadRadius: 0.5 + (_glow.value * 0.8),
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: widget.onTap,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 5,
+                              ),
+                              child: SizedBox(
+                                width: 44,
+                                child: Center(
+                                  child: Text(
+                                    'Infos',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment(
+                                        _shine.value - 1.2,
+                                        -0.3,
+                                      ),
+                                      end: Alignment(
+                                        _shine.value + 1.2,
+                                        0.3,
+                                      ),
+                                      colors: const [
+                                        Colors.transparent,
+                                        Color(0x66FFFFFF),
+                                        Colors.transparent,
+                                      ],
+                                      stops: const [0.35, 0.5, 0.65],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -3811,9 +3927,9 @@ class _AnimatedPaymentInfoPillState extends State<_AnimatedPaymentInfoPill>
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
