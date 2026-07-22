@@ -89,4 +89,8 @@ main_replacement = """void main() {
 if main_marker not in test_source:
     raise SystemExit('messaging helper test main marker not found')
 test_source = test_source.replace(main_marker, main_replacement, 1)
+test_source = test_source.replace(
+    "state.shouldHideAttachmentText('Photo : Photo', const [])",
+    "state.shouldHideAttachmentText(\n        'Photo : Photo', const <MessageAttachment>[])"
+)
 test_path.write_text(test_source)
