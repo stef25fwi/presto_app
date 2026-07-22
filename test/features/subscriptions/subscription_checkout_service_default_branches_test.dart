@@ -79,20 +79,27 @@ void main() {
       await Firebase.initializeApp();
     }
 
-    const functionsChannel = MethodChannel('plugins.flutter.io/firebase_functions');
-    final calls = <MethodCall>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(functionsChannel, (call) async {
-      calls.add(call);
-      return <String, dynamic>{
-        'data': <String, dynamic>{
-          'url': 'https://checkout.stripe.com/c/pay/default-functions',
-        },
-      };
-    });
+    const functionsChannel = BasicMessageChannel<Object?>(
+      'dev.flutter.pigeon.cloud_functions_platform_interface.'
+      'CloudFunctionsHostApi.call',
+      StandardMessageCodec(),
+    );
+    final calls = <Object?>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockDecodedMessageHandler<Object?>(
+      functionsChannel,
+      (message) async {
+        calls.add(message);
+        return <Object?>[
+          <String, Object?>{
+            'url': 'https://checkout.stripe.com/c/pay/default-functions',
+          },
+        ];
+      },
+    );
     addTearDown(() {
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(functionsChannel, null);
+      messenger.setMockDecodedMessageHandler<Object?>(functionsChannel, null);
     });
 
     Uri? openedUri;
@@ -107,7 +114,15 @@ void main() {
     await tester.pumpWidget(_host(service));
     await _runAction(tester);
 
-    expect(calls, isNotEmpty);
+    expect(calls, hasLength(1));
+    final envelope = calls.single! as List<Object?>;
+    final arguments = envelope.single! as Map<Object?, Object?>;
+    expect(arguments['functionName'], 'createSubscriptionCheckoutSession');
+    expect(arguments['region'], 'europe-west1');
+    expect(
+      arguments['parameters'],
+      containsPair('plan', 'ilipresto_plus'),
+    );
     expect(openedUri?.host, 'checkout.stripe.com');
     expect(find.text('Impossible de lancer Stripe pour le moment.'), findsNothing);
   });
