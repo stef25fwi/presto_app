@@ -1,4 +1,4 @@
-name: Coverage 80% Autopilot
+name: Coverage critical paths autopilot
 
 on:
   workflow_dispatch:
@@ -20,6 +20,7 @@ on:
       - "integration_test/**"
       - "pubspec.yaml"
       - "pubspec.lock"
+      - "quality/critical-coverage.json"
       - "tools/coverage/**"
       - ".github/workflows/coverage-agent.yml"
   workflow_run:
@@ -29,7 +30,7 @@ on:
     - cron: "17 * * * *"
 
 concurrency:
-  group: coverage-80-autopilot
+  group: coverage-critical-autopilot
   cancel-in-progress: false
 
 permissions:
@@ -73,7 +74,7 @@ jobs:
           done
 
   measure:
-    name: Measure main and prepare the next profitable phase
+    name: Measure main and prepare the five critical lanes
     needs: watchdog
     if: >-
       github.event_name == 'push' ||
@@ -122,7 +123,7 @@ jobs:
         if: steps.dedupe.outputs.run == 'true'
         run: flutter test --coverage
 
-      - name: Select the highest-yield priority target
+      - name: Select one exact target per critical journey
         if: steps.dedupe.outputs.run == 'true'
         id: target
         env:
@@ -134,18 +135,27 @@ jobs:
           mkdir -p quality_reports/coverage-agent
           python3 tools/coverage/coverage_agent.py \
             --lcov coverage/lcov.info \
+            --config quality/critical-coverage.json \
             --json-output quality_reports/coverage-agent/target.json \
             --markdown-output quality_reports/coverage-agent/issue.md \
             --global-target "$target"
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           from pathlib import Path
-          data = json.loads(Path("quality_reports/coverage-agent/target.json").read_text())
+
+          data = json.loads(
+              Path("quality_reports/coverage-agent/target.json").read_text()
+          )
           print(f"target_reached={str(data['global']['target_reached']).lower()}")
+          print(
+              "critical_target_reached="
+              f"{str(data['critical_target_reached']).lower()}"
+          )
           print(f"global_percent={data['global']['percent']}")
           print(f"category={data['target']['category']}")
           print(f"path={data['target']['path']}")
           print(f"uncovered={data['target']['uncovered']}")
+          print(f"target_count={len(data['targets'])}")
           PY
 
       - name: Detect active execution
@@ -158,7 +168,9 @@ jobs:
           pr="$(gh pr list --state open --json number,url,headRefName --jq '[.[] | select(.headRefName | startswith("coverage/"))] | .[0] // {}')"
           mission="$(gh issue list --state open --label coverage-agent --limit 100 --json number,url,updatedAt --jq '[.[] | select(.number != 553)] | .[0] // {}')"
           python3 - "$pr" "$mission" <<'PY' >> "$GITHUB_OUTPUT"
-          import json, sys
+          import json
+          import sys
+
           pr = json.loads(sys.argv[1])
           mission = json.loads(sys.argv[2])
           print(f"pr_exists={str(bool(pr)).lower()}")
@@ -167,38 +179,40 @@ jobs:
           print(f"mission_url={mission.get('url', '')}")
           PY
 
-      - name: Create one executable coverage mission
-        if: steps.dedupe.outputs.run == 'true' && steps.target.outputs.target_reached != 'true' && steps.active.outputs.pr_exists != 'true' && steps.active.outputs.mission_exists != 'true'
+      - name: Create one executable five-lane coverage mission
+        if: >-
+          steps.dedupe.outputs.run == 'true' &&
+          (steps.target.outputs.target_reached != 'true' ||
+          steps.target.outputs.critical_target_reached != 'true') &&
+          steps.active.outputs.pr_exists != 'true' &&
+          steps.active.outputs.mission_exists != 'true'
         id: mission
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET_PATH: ${{ steps.target.outputs.path }}
-          TARGET_CATEGORY: ${{ steps.target.outputs.category }}
-          GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
-          UNCOVERED: ${{ steps.target.outputs.uncovered }}
+          AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE }}
+          TARGET_COUNT: ${{ steps.target.outputs.target_count }}
         run: |
           set -euo pipefail
-          branch="coverage/${TARGET_CATEGORY}-$(date -u +%Y%m%d-%H%M%S)"
-          body="$(cat <<EOF
-          ## Phase LCOV prête à exécuter
+          branch="coverage/critical-paths-$(date -u +%Y%m%d-%H%M%S)"
+          cp quality_reports/coverage-agent/issue.md /tmp/coverage-mission.md
+          cat >> /tmp/coverage-mission.md <<EOF
 
-          - Baseline réelle sur main : **${GLOBAL_PERCENT}%**
-          - Domaine prioritaire : **${TARGET_CATEGORY}**
-          - Cible rentable : \`${TARGET_PATH}\`
-          - Lignes actuellement non couvertes : **${UNCOVERED}**
-          - Branche réservée : \`${branch}\`
-
-          ### Boucle d'exécution obligatoire
-          1. Créer la branche réservée depuis main.
-          2. Ajouter des tests comportementaux déterministes sur la cible.
-          3. Pendant le développement, exécuter seulement les tests ciblés et \`flutter analyze lib test\`.
-          4. Avant la PR, exécuter \`dart format\`, \`flutter analyze --fatal-infos\` et \`flutter test --coverage\`.
-          5. Ouvrir une PR \`coverage/*\`, consigner le LCOV avant/après puis fermer cette mission.
+          ### Branche réservée
+          - \`${branch}\`
 
           Cette mission expire automatiquement après deux heures sans branche ou PR afin de ne plus bloquer l'autopilote.
           EOF
-          )"
-          url="$(gh issue create --title "[Coverage execution] ${TARGET_CATEGORY} — ${TARGET_PATH}" --body "$body" --label coverage-agent --assignee stef25fwi)"
+
+          assignee_args=()
+          if [ -n "${AGENT_ASSIGNEE:-}" ]; then
+            assignee_args=(--assignee "$AGENT_ASSIGNEE")
+          fi
+
+          url="$(gh issue create \
+            --title "[Coverage execution] 5 parcours critiques — ${TARGET_COUNT} fichiers vers 100 %" \
+            --body-file /tmp/coverage-mission.md \
+            --label coverage-agent \
+            "${assignee_args[@]}")"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Update coverage dashboard
@@ -209,25 +223,29 @@ jobs:
           GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
           TARGET_CATEGORY: ${{ steps.target.outputs.category }}
           TARGET_PATH: ${{ steps.target.outputs.path }}
+          TARGET_COUNT: ${{ steps.target.outputs.target_count }}
+          CRITICAL_REACHED: ${{ steps.target.outputs.critical_target_reached }}
           ACTIVE_PR_URL: ${{ steps.active.outputs.pr_url }}
           ACTIVE_MISSION_URL: ${{ steps.active.outputs.mission_url }}
           CREATED_MISSION_URL: ${{ steps.mission.outputs.url }}
         run: |
           status="Mesure terminée."
           if [ -n "${CREATED_MISSION_URL:-}" ]; then
-            status="Nouvelle phase exécutable : ${CREATED_MISSION_URL}"
+            status="Nouvelle phase cinq parcours : ${CREATED_MISSION_URL}"
           elif [ -n "${ACTIVE_PR_URL:-}" ]; then
             status="PR de couverture active : ${ACTIVE_PR_URL}"
           elif [ -n "${ACTIVE_MISSION_URL:-}" ]; then
             status="Mission active : ${ACTIVE_MISSION_URL}"
-          elif [ "${{ steps.target.outputs.target_reached }}" = "true" ]; then
-            status="✅ Objectif global atteint."
+          elif [ "${CRITICAL_REACHED}" = "true" ]; then
+            status="✅ Les cinq parcours critiques ont atteint leur cible."
           fi
           gh issue comment 553 --body "### Coverage Autopilot — run $GITHUB_RUN_ID
 
           - Couverture main : **${GLOBAL_PERCENT}%**
-          - Domaine : **${TARGET_CATEGORY}**
-          - Cible : \`${TARGET_PATH}\`
+          - Parcours critiques à 100 % : **${CRITICAL_REACHED}**
+          - Fichiers précis dans la prochaine phase : **${TARGET_COUNT}**
+          - Première priorité : **${TARGET_CATEGORY}**
+          - Première cible : \`${TARGET_PATH}\`
           - Statut : ${status}
 
           <!-- coverage-main-sha:${MAIN_SHA} -->"
