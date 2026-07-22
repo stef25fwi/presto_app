@@ -1,0 +1,2 @@
+Coverage critical paths autopilot manually activated on 2026-07-22.
+Trigger: five critical journeys toward 100% LCOV.
