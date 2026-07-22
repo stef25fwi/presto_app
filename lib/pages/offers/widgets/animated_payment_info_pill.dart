@@ -19,6 +19,7 @@ class _AnimatedPaymentInfoPillState extends State<AnimatedPaymentInfoPill>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _animationsDisabled = false;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -49,6 +50,11 @@ class _AnimatedPaymentInfoPillState extends State<AnimatedPaymentInfoPill>
     }
   }
 
+  void _handleHover(bool isHovered) {
+    if (_isHovered == isHovered) return;
+    setState(() => _isHovered = isHovered);
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -57,26 +63,30 @@ class _AnimatedPaymentInfoPillState extends State<AnimatedPaymentInfoPill>
 
   @override
   Widget build(BuildContext context) {
+    const blueGradient = [Color(0xFF1A73E8), Color(0xFF0D5FD1)];
+    const hoverGradient = [Color(0xFFE8EAEE), Color(0xFFDDE1E7)];
+    const hoverTextColor = Color(0xFF303846);
+
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
           final progress = _controller.value;
-          final wave =
-              (1 - math.cos(progress * math.pi * 2)) / 2;
+          final wave = (1 - math.cos(progress * math.pi * 2)) / 2;
           final burstProgress =
               (progress / 0.24).clamp(0.0, 1.0).toDouble();
           final burst = progress < 0.24
               ? math.sin(math.pi * burstProgress)
               : 0.0;
-          final shake = progress < 0.24
+          final animatedShake = progress < 0.24
               ? math.sin(burstProgress * math.pi * 8) * burst * 1.7
               : 0.0;
-          final scale = 1 + (wave * 0.018) + (burst * 0.055);
-          final glow = 0.28 + (wave * 0.18) + (burst * 0.20);
+          final animatedScale = 1 + (wave * 0.018) + (burst * 0.055);
           final shineProgress =
               (progress / 0.62).clamp(0.0, 1.0).toDouble();
           final shine = -2.4 + (4.8 * shineProgress);
+          final shake = _isHovered ? 0.0 : animatedShake;
+          final scale = _isHovered ? 1.0 : animatedScale;
 
           return Semantics(
             button: true,
@@ -85,61 +95,77 @@ class _AnimatedPaymentInfoPillState extends State<AnimatedPaymentInfoPill>
               offset: Offset(shake, 0),
               child: Transform.scale(
                 scale: scale,
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1A73E8), Color(0xFF0D5FD1)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.22),
-                        width: 0.8,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1A73E8)
-                              .withValues(alpha: glow),
-                          blurRadius: 12 + (glow * 8),
-                          spreadRadius: 0.5 + (glow * 0.8),
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                child: AnimatedContainer(
+                  key: const ValueKey<String>('payment-info-pill-container'),
+                  duration: _animationsDisabled
+                      ? Duration.zero
+                      : const Duration(milliseconds: 160),
+                  curve: Curves.easeOut,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: _isHovered ? hoverGradient : blueGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: _isHovered
+                          ? const Color(0xFFCDD2DA)
+                          : Colors.white.withValues(alpha: 0.22),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(999),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: widget.onTap,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 11,
-                                vertical: 5,
-                              ),
-                              child: SizedBox(
-                                width: 44,
-                                child: Center(
-                                  child: Text(
+                      hoverColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onHover: _handleHover,
+                      onTap: widget.onTap,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 5,
+                            ),
+                            child: SizedBox(
+                              width: 44,
+                              child: Center(
+                                child: AnimatedDefaultTextStyle(
+                                  key: const ValueKey<String>(
+                                    'payment-info-pill-text-style',
+                                  ),
+                                  duration: _animationsDisabled
+                                      ? Duration.zero
+                                      : const Duration(milliseconds: 160),
+                                  curve: Curves.easeOut,
+                                  style: TextStyle(
+                                    color: _isHovered
+                                        ? hoverTextColor
+                                        : Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  child: const Text(
                                     'Infos',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w900,
-                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            Positioned.fill(
-                              child: IgnorePointer(
+                          ),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: AnimatedOpacity(
+                                duration: _animationsDisabled
+                                    ? Duration.zero
+                                    : const Duration(milliseconds: 120),
+                                opacity: _isHovered ? 0 : 1,
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
@@ -156,8 +182,8 @@ class _AnimatedPaymentInfoPillState extends State<AnimatedPaymentInfoPill>
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
