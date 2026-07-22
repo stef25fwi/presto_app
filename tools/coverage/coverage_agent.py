@@ -4,11 +4,16 @@
 The selector never changes thresholds or excludes ordinary production files. It
 ranks targets using expected LCOV gain, domain priority and a small complexity
 proxy so the autopilot prefers files that can move the global percentage fast.
+
+Critical-path rules are loaded from ``quality/critical-coverage.json``. The
+autopilot keeps one profitable file queued for each requested domain until the
+configured per-domain target is reached.
 """
 
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import math
 import re
@@ -24,12 +29,30 @@ PRIORITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("administration", ("admin", "moderation", "dashboard")),
 )
 
+CRITICAL_MODULE_CATEGORY = {
+    "subscriptions_payment": "payments",
+    "authentication": "authentication",
+    "offer_publication": "publication",
+    "messaging": "messaging",
+    "administration": "administration",
+}
+
 EXCLUDED_PATH_PARTS = (
     "/generated/",
     ".g.dart",
     ".freezed.dart",
     "firebase_options.dart",
 )
+
+
+@dataclass(frozen=True)
+class CriticalRule:
+    module_id: str
+    label: str
+    category: str
+    category_rank: int
+    patterns: tuple[str, ...]
+    target_percent: float
 
 
 @dataclass(frozen=True)
@@ -51,11 +74,7 @@ class FileCoverage:
 
     @property
     def profitability(self) -> float:
-        """Expected gain divided by a conservative file-complexity proxy.
-
-        Large uncovered files remain attractive, but extremely large files no
-        longer monopolise the queue merely because their percentage is low.
-        """
+        """Expected gain divided by a conservative file-complexity proxy."""
         return self.uncovered / max(1.0, math.sqrt(self.found))
 
 
@@ -67,7 +86,48 @@ def normalise_path(raw: str) -> str:
     return value.lstrip("./")
 
 
-def classify(path: str) -> tuple[str, int]:
+def priority_rank(category: str) -> int:
+    for rank, (name, _) in enumerate(PRIORITY_RULES):
+        if name == category:
+            return rank
+    return len(PRIORITY_RULES)
+
+
+def load_critical_rules(path: Path | None) -> tuple[CriticalRule, ...]:
+    if path is None or not path.exists():
+        return ()
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    rules: list[CriticalRule] = []
+    for module in payload.get("modules", []):
+        module_id = str(module.get("id", ""))
+        category = CRITICAL_MODULE_CATEGORY.get(module_id)
+        if category is None:
+            continue
+        patterns = tuple(str(item) for item in module.get("patterns", []))
+        if not patterns:
+            continue
+        rules.append(
+            CriticalRule(
+                module_id=module_id,
+                label=str(module.get("label", module_id)),
+                category=category,
+                category_rank=priority_rank(category),
+                patterns=patterns,
+                target_percent=float(module.get("target_percent", 100) or 100),
+            )
+        )
+    return tuple(sorted(rules, key=lambda item: item.category_rank))
+
+
+def classify(
+    path: str,
+    critical_rules: tuple[CriticalRule, ...] = (),
+) -> tuple[str, int]:
+    for rule in critical_rules:
+        if any(fnmatch.fnmatchcase(path, pattern) for pattern in rule.patterns):
+            return rule.category, rule.category_rank
+
     lowered = path.lower()
     for rank, (category, needles) in enumerate(PRIORITY_RULES):
         if any(needle in lowered for needle in needles):
@@ -75,7 +135,10 @@ def classify(path: str) -> tuple[str, int]:
     return "other", len(PRIORITY_RULES)
 
 
-def parse_lcov(path: Path) -> list[FileCoverage]:
+def parse_lcov(
+    path: Path,
+    critical_rules: tuple[CriticalRule, ...] = (),
+) -> list[FileCoverage]:
     records: list[FileCoverage] = []
     current: str | None = None
     line_hits: dict[int, int] = {}
@@ -96,7 +159,7 @@ def parse_lcov(path: Path) -> list[FileCoverage]:
             uncovered = sorted(
                 line for line, count in line_hits.items() if count == 0
             )
-            category, rank = classify(normalised)
+            category, rank = classify(normalised, critical_rules)
             records.append(
                 FileCoverage(
                     normalised,
@@ -157,26 +220,83 @@ def choose_target(records: list[FileCoverage]) -> FileCoverage:
     return min(candidates, key=target_sort_key)
 
 
-def choose_targets_by_category(records: list[FileCoverage]) -> list[FileCoverage]:
+def category_target_map(
+    critical_rules: tuple[CriticalRule, ...],
+) -> dict[str, float]:
+    return {rule.category: rule.target_percent for rule in critical_rules}
+
+
+def choose_targets_by_category(
+    records: list[FileCoverage],
+    targets: dict[str, float] | None = None,
+) -> list[FileCoverage]:
     selected: list[FileCoverage] = []
+    category_targets = targets or {}
     for category, _ in PRIORITY_RULES:
+        target_percent = category_targets.get(category, 100.0)
         candidates = [
             record
             for record in records
-            if record.category == category and record.uncovered > 0
+            if record.category == category
+            and record.uncovered > 0
+            and record.percent < target_percent
         ]
         if candidates:
             selected.append(min(candidates, key=target_sort_key))
     return selected
 
 
-def target_payload(target: FileCoverage) -> dict[str, object]:
+def build_critical_status(
+    records: list[FileCoverage],
+    critical_rules: tuple[CriticalRule, ...],
+) -> list[dict[str, object]]:
+    statuses: list[dict[str, object]] = []
+    for rule in critical_rules:
+        scoped = [record for record in records if record.category == rule.category]
+        found = sum(record.found for record in scoped)
+        hit = sum(record.hit for record in scoped)
+        percent = 0.0 if found == 0 else hit * 100.0 / found
+        statuses.append(
+            {
+                "module_id": rule.module_id,
+                "label": rule.label,
+                "category": rule.category,
+                "target_percent": rule.target_percent,
+                "found": found,
+                "hit": hit,
+                "percent": round(percent, 2),
+                "tracked_files": len(scoped),
+                "target_reached": bool(scoped)
+                and percent + 1e-9 >= rule.target_percent,
+            }
+        )
+    return statuses
+
+
+def rule_for_category(
+    category: str,
+    critical_rules: tuple[CriticalRule, ...],
+) -> CriticalRule | None:
+    return next(
+        (rule for rule in critical_rules if rule.category == category),
+        None,
+    )
+
+
+def target_payload(
+    target: FileCoverage,
+    critical_rules: tuple[CriticalRule, ...] = (),
+) -> dict[str, object]:
+    rule = rule_for_category(target.category, critical_rules)
     return {
         **asdict(target),
         "percent": round(target.percent, 2),
         "uncovered": target.uncovered,
         "profitability": round(target.profitability, 2),
         "uncovered_ranges": compact_ranges(target.uncovered_lines),
+        "module_id": rule.module_id if rule else target.category,
+        "module_label": rule.label if rule else target.category,
+        "target_percent": rule.target_percent if rule else 100.0,
     }
 
 
@@ -186,32 +306,72 @@ def issue_body(
     total_hit: int,
     total_found: int,
     global_target: float,
-    target: FileCoverage,
+    targets: list[dict[str, object]],
+    critical_status: list[dict[str, object]],
 ) -> str:
-    return f"""## Mission de couverture automatique
+    lines = [
+        "## Mission de couverture automatique — parcours critiques",
+        "",
+        "### Mesure réelle",
+        f"- Couverture globale LCOV : **{global_percent:.2f} %** "
+        f"({total_hit}/{total_found})",
+        f"- Objectif global : **{global_target:.2f} %**",
+        "- Objectif des cinq parcours critiques : **100 %**",
+        "",
+        "### État des parcours critiques",
+        "",
+        "| Parcours | Couverture LCOV | Cible | Fichiers suivis |",
+        "|---|---:|---:|---:|",
+    ]
+    for status in critical_status:
+        lines.append(
+            f"| {status['label']} | {status['percent']} % | "
+            f"{status['target_percent']} % | {status['tracked_files']} |"
+        )
 
-### Mesure réelle
-- Couverture globale LCOV : **{global_percent:.2f} %** ({total_hit}/{total_found})
-- Objectif global : **{global_target:.2f} %**
-- Domaine prioritaire : **{target.category}**
-- Fichier sélectionné : `{target.path}`
-- Couverture du fichier : **{target.percent:.2f} %** ({target.hit}/{target.found})
-- Lignes non couvertes : **{target.uncovered}**
-- Score de rendement estimé : **{target.profitability:.2f}**
-- Plages non couvertes : `{compact_ranges(target.uncovered_lines)}`
+    lines += ["", "### Fichiers précis à traiter dans cette phase", ""]
+    if not targets:
+        lines.append(
+            "- Aucun fichier découvert sous les motifs critiques alors qu'une cible "
+            "reste incomplète : corriger d'abord l'instrumentation LCOV."
+        )
+    else:
+        for index, target in enumerate(targets, start=1):
+            lines += [
+                f"{index}. **{target['module_label']}**",
+                f"   - fichier : `{target['path']}`",
+                f"   - couverture actuelle : **{target['percent']} %** "
+                f"({target['hit']}/{target['found']})",
+                f"   - objectif du fichier : **{target['target_percent']} %**",
+                f"   - lignes non couvertes : **{target['uncovered']}**",
+                f"   - plages : `{target['uncovered_ranges']}`",
+            ]
 
-### Travail demandé
-1. Ajouter des tests comportementaux déterministes sur cette cible.
-2. Utiliser les tests ciblés et `flutter analyze lib test` pendant le développement.
-3. Avant la PR, exécuter `dart format`, `flutter analyze --fatal-infos` et `flutter test --coverage`.
-4. Fournir dans la PR la couverture avant/après, globale et pour ce fichier.
-
-### Garde-fous
-- Aucun abaissement de seuil ou exclusion LCOV.
-- Aucun `skip`, test vide, faux succès ou attente arbitraire.
-- Une seule branche et une seule PR `coverage/*` active.
-- La couverture globale ne doit pas régresser.
-"""
+    lines += [
+        "",
+        "### Boucle d'exécution obligatoire",
+        "1. Traiter les fichiers ci-dessus dans l'ordre Paiement, "
+        "Authentification, Publication, Messagerie, Administration.",
+        "2. Ajouter uniquement des tests comportementaux déterministes.",
+        "3. Pendant le développement, exécuter les tests ciblés et "
+        "`flutter analyze lib test`.",
+        "4. Continuer sur le même fichier jusqu'à **100 % LCOV réel**, puis passer "
+        "au fichier suivant.",
+        "5. Avant la PR, exécuter `dart format`, "
+        "`flutter analyze --fatal-infos` et `flutter test --coverage`.",
+        "6. Fournir dans la PR la couverture avant/après, globale, par parcours "
+        "et par fichier.",
+        "",
+        "### Garde-fous",
+        "- Aucun abaissement de seuil ou exclusion LCOV.",
+        "- Aucun `skip`, test vide, faux succès ou attente arbitraire.",
+        "- Une seule branche et une seule PR `coverage/*` active.",
+        "- La couverture globale et celle de chaque parcours ne doivent pas régresser.",
+        "- La mission n'est terminée que lorsque chaque fichier listé atteint 100 % "
+        "ou qu'une ligne techniquement non instrumentable est démontrée dans la PR.",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def main() -> None:
@@ -219,10 +379,16 @@ def main() -> None:
     parser.add_argument("--lcov", type=Path, required=True)
     parser.add_argument("--json-output", type=Path, required=True)
     parser.add_argument("--markdown-output", type=Path, required=True)
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("quality/critical-coverage.json"),
+    )
     parser.add_argument("--global-target", type=float, default=80.0)
     args = parser.parse_args()
 
-    records = parse_lcov(args.lcov)
+    critical_rules = load_critical_rules(args.config)
+    records = parse_lcov(args.lcov, critical_rules)
     if not records:
         raise SystemExit("LCOV contains no eligible lib/ records.")
 
@@ -230,7 +396,17 @@ def main() -> None:
     total_hit = sum(item.hit for item in records)
     global_percent = 100.0 if total_found == 0 else total_hit * 100.0 / total_found
     primary_target = choose_target(records)
-    lane_targets = choose_targets_by_category(records)
+    lane_targets = choose_targets_by_category(
+        records,
+        category_target_map(critical_rules),
+    )
+    critical_status = build_critical_status(records, critical_rules)
+    critical_target_reached = bool(critical_status) and all(
+        bool(status["target_reached"]) for status in critical_status
+    )
+    target_payloads = [
+        target_payload(target, critical_rules) for target in lane_targets
+    ]
 
     payload = {
         "global": {
@@ -240,21 +416,27 @@ def main() -> None:
             "target": args.global_target,
             "target_reached": global_percent >= args.global_target,
         },
-        "target": target_payload(primary_target),
-        "targets": [target_payload(target) for target in lane_targets],
+        "critical_target_reached": critical_target_reached,
+        "critical_modules": critical_status,
+        "target": target_payload(primary_target, critical_rules),
+        "targets": target_payloads,
         "priorities": [name for name, _ in PRIORITY_RULES],
     }
 
     args.json_output.parent.mkdir(parents=True, exist_ok=True)
     args.markdown_output.parent.mkdir(parents=True, exist_ok=True)
-    args.json_output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    args.json_output.write_text(
+        json.dumps(payload, indent=2) + "\n",
+        encoding="utf-8",
+    )
     args.markdown_output.write_text(
         issue_body(
             global_percent=global_percent,
             total_hit=total_hit,
             total_found=total_found,
             global_target=args.global_target,
-            target=primary_target,
+            targets=target_payloads,
+            critical_status=critical_status,
         ),
         encoding="utf-8",
     )
