@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 path = Path('lib/pages/messages/conversation_thread_page.dart')
@@ -34,8 +35,10 @@ renames = {
 }
 
 for old, new in renames.items():
-    if old not in source:
+    pattern = rf'(?<![A-Za-z0-9_]){re.escape(old)}(?![A-Za-z0-9_])'
+    updated, count = re.subn(pattern, new, source)
+    if count == 0:
         raise SystemExit(f'missing messaging state helper: {old}')
-    source = source.replace(old, new)
+    source = updated
 
 path.write_text(source)
