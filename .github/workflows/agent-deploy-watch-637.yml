@@ -54,6 +54,20 @@ jobs:
             }
 
             core.info(`Run de production détecté : ${deploymentRun.html_url}`);
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issueNumber,
+              body: [
+                '🔎 Suivi du déploiement Firebase de production démarré.',
+                '',
+                `- Commit : \`${targetSha}\``,
+                `- Run ID : \`${deploymentRun.id}\``,
+                `- Workflow : [${workflowName}](${deploymentRun.html_url})`,
+                `- État initial : \`${deploymentRun.status}\``,
+              ].join('\n'),
+            });
+
             for (let attempt = 1; attempt <= 165; attempt += 1) {
               const response = await github.rest.actions.getWorkflowRun({
                 owner,
@@ -76,6 +90,7 @@ jobs:
                   '✅ Déploiement Firebase de production terminé avec succès.',
                   '',
                   `- Commit : \`${targetSha}\``,
+                  `- Run ID : \`${deploymentRun.id}\``,
                   `- Workflow : [${workflowName}](${deploymentRun.html_url})`,
                   '- Cible : `presto-app-74abe`',
                   '- URL contrôlée par le workflow : `https://ilipresto.web.app`',
@@ -85,6 +100,7 @@ jobs:
                   '❌ Le déploiement Firebase de production ne s’est pas terminé avec succès.',
                   '',
                   `- Commit : \`${targetSha}\``,
+                  `- Run ID : \`${deploymentRun.id}\``,
                   `- État : \`${deploymentRun.status}\``,
                   `- Conclusion : \`${deploymentRun.conclusion ?? 'inconnue'}\``,
                   `- Workflow : [${workflowName}](${deploymentRun.html_url})`,
