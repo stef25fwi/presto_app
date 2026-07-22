@@ -128,6 +128,9 @@ def classify(
         if any(fnmatch.fnmatchcase(path, pattern) for pattern in rule.patterns):
             return rule.category, rule.category_rank
 
+    if critical_rules:
+        return "other", len(PRIORITY_RULES)
+
     lowered = path.lower()
     for rank, (category, needles) in enumerate(PRIORITY_RULES):
         if any(needle in lowered for needle in needles):
