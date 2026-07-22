@@ -14,7 +14,7 @@
       ],
       "minimum_percent": 3.0,
       "minimum_tracked_files_percent": 94.0,
-      "target_percent": 85
+      "target_percent": 100
     },
     {
       "id": "subscriptions_payment",
@@ -28,7 +28,7 @@
       ],
       "minimum_percent": 14.0,
       "minimum_tracked_files_percent": 90.0,
-      "target_percent": 90
+      "target_percent": 100
     },
     {
       "id": "offer_publication",
@@ -43,7 +43,7 @@
       ],
       "minimum_percent": 23.4,
       "minimum_tracked_files_percent": 81.0,
-      "target_percent": 85
+      "target_percent": 100
     },
     {
       "id": "messaging",
@@ -55,7 +55,7 @@
       ],
       "minimum_percent": 0.8,
       "minimum_tracked_files_percent": 80.0,
-      "target_percent": 85
+      "target_percent": 100
     },
     {
       "id": "administration",
@@ -68,7 +68,7 @@
       ],
       "minimum_percent": 4.0,
       "minimum_tracked_files_percent": 94.5,
-      "target_percent": 85
+      "target_percent": 100
     },
     {
       "id": "entrepreneur_journey",
