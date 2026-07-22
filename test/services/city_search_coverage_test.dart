@@ -31,17 +31,20 @@ void main() {
     expect(search.pickBestForPostalCode('  '), isNull);
   });
 
-  test('les recherches asynchrones respectent leur contrat de limite', () async {
-    final byName = await search.searchByNamePrefix('mel');
-    final byPostal = await search.searchByPostalPrefix('770');
-    final nameSuggestion = await search.searchSuggestions('mel');
-    final postalSuggestion = await search.searchSuggestions('770');
+  test(
+    'les recherches asynchrones respectent leur contrat de limite',
+    () async {
+      final byName = await search.searchByNamePrefix('mel');
+      final byPostal = await search.searchByPostalPrefix('770');
+      final nameSuggestion = await search.searchSuggestions('mel');
+      final postalSuggestion = await search.searchSuggestions('770');
 
-    expect(byName.length, lessThanOrEqualTo(20));
-    expect(byPostal.length, lessThanOrEqualTo(20));
-    expect(nameSuggestion.length, lessThanOrEqualTo(20));
-    expect(postalSuggestion.length, lessThanOrEqualTo(20));
-  });
+      expect(byName.length, lessThanOrEqualTo(20));
+      expect(byPostal.length, lessThanOrEqualTo(20));
+      expect(nameSuggestion.length, lessThanOrEqualTo(20));
+      expect(postalSuggestion.length, lessThanOrEqualTo(20));
+    },
+  );
 
   test('la recherche normalise espaces, tirets et apostrophes', () {
     final melun = search.search("m-e l'un");
@@ -102,7 +105,9 @@ void main() {
 
   test('les limites explicites sont respectées', () async {
     expect(await search.searchByNamePrefix('m', limit: 1), hasLength(1));
-    expect((await search.searchByPostalPrefix('7', limit: 1)).length,
-        lessThanOrEqualTo(1));
+    expect(
+      (await search.searchByPostalPrefix('7', limit: 1)).length,
+      lessThanOrEqualTo(1),
+    );
   });
 }

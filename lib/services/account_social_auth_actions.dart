@@ -16,12 +16,54 @@ import '../services/post_auth_navigation_intent_service.dart';
 import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 
-typedef AccountTrackLoginCallback = Future<void> Function({
-  String? authMethod,
-  bool isNewUser,
-});
+typedef AccountTrackLoginCallback =
+    Future<void> Function({String? authMethod, bool isNewUser});
 
 class AccountSocialAuthActions {
+  static bool? _debugIsWebOverride;
+  static String? _debugBaseHostOverride;
+  static Future<void> Function()? _debugRememberAccountRouteOverride;
+
+  static bool get _isWeb => _debugIsWebOverride ?? kIsWeb;
+  static String get _baseHost => _debugBaseHostOverride ?? Uri.base.host;
+
+  @visibleForTesting
+  static void configureWebEnvironmentForTesting({
+    required bool isWeb,
+    required String baseHost,
+    Future<void> Function()? rememberAccountRoute,
+  }) {
+    _debugIsWebOverride = isWeb;
+    _debugBaseHostOverride = baseHost;
+    _debugRememberAccountRouteOverride = rememberAccountRoute;
+  }
+
+  @visibleForTesting
+  static void resetTestingOverrides() {
+    _debugIsWebOverride = null;
+    _debugBaseHostOverride = null;
+    _debugRememberAccountRouteOverride = null;
+  }
+
+  @visibleForTesting
+  static bool shouldFallbackToRedirectForTesting(Object error) =>
+      _shouldFallbackToRedirect(error);
+
+  @visibleForTesting
+  static String facebookErrorMessageForTesting(Object error) =>
+      _facebookErrorMessage(error);
+
+  @visibleForTesting
+  static String generateNonceForTesting([int length = 32]) =>
+      _generateNonce(length);
+
+  @visibleForTesting
+  static String sha256OfStringForTesting(String input) =>
+      _sha256OfString(input);
+
+  @visibleForTesting
+  static GoogleAuthProvider buildGoogleProviderForTesting() =>
+      _buildGoogleProvider();
   static Future<void> signInWithGoogle({
     required BuildContext context,
     required FirebaseAuth auth,
@@ -32,16 +74,16 @@ class AccountSocialAuthActions {
       bool isNewUser = false;
       googleAuthService.logAttempt(
         'signInWithGoogle',
-        details: kIsWeb ? 'Mode Web' : 'Mode Mobile',
+        details: _isWeb ? 'Mode Web' : 'Mode Mobile',
       );
 
-      if (kIsWeb) {
+      if (_isWeb) {
         final googleProvider = _buildGoogleProvider();
 
         // GitHub Pages sert avec Cross-Origin-Opener-Policy: same-origin ce
         // qui empêche le popup de communiquer avec l'opener → internal-error
         // systématique. On passe directement en redirect flow.
-        final bool onGitHubPages = Uri.base.host.endsWith('.github.io');
+        final bool onGitHubPages = _baseHost.endsWith('.github.io');
         if (onGitHubPages) {
           googleAuthService.logFallback(
             'Popup',
@@ -217,16 +259,14 @@ class AccountSocialAuthActions {
     required AccountTrackLoginCallback trackLogin,
   }) async {
     final provider = FacebookAuthProvider()
-      ..setCustomParameters(<String, String>{
-        'display': 'popup',
-      })
+      ..setCustomParameters(<String, String>{'display': 'popup'})
       ..addScope('email')
       ..addScope('public_profile');
 
     try {
       bool isNewUser = false;
 
-      if (kIsWeb) {
+      if (_isWeb) {
         try {
           final popupResult = await auth.signInWithPopup(provider);
           isNewUser = popupResult.additionalUserInfo?.isNewUser ?? false;
@@ -271,7 +311,7 @@ class AccountSocialAuthActions {
     required FirebaseAuth auth,
     required AccountTrackLoginCallback trackLogin,
   }) async {
-    if (kIsWeb ||
+    if (_isWeb ||
         !(defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS)) {
       if (!context.mounted) return;
@@ -316,10 +356,11 @@ class AccountSocialAuthActions {
 
       final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
       if (userCredential.additionalUserInfo?.isNewUser == true) {
-        final fullName = appleCredential.givenName != null ||
+        final fullName =
+            appleCredential.givenName != null ||
                 appleCredential.familyName != null
             ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
-                .trim()
+                  .trim()
             : null;
 
         if (fullName != null && fullName.isNotEmpty) {
@@ -465,7 +506,8 @@ class AccountSocialAuthActions {
     } catch (bootstrapError) {
       bootstrapFailure = bootstrapError;
       debugPrint(
-          '[$providerLabel Sign-In] Auth bootstrap error: $bootstrapError');
+        '[$providerLabel Sign-In] Auth bootstrap error: $bootstrapError',
+      );
     }
 
     try {
@@ -486,9 +528,11 @@ class AccountSocialAuthActions {
 
   static bool _shouldFallbackToRedirect(Object error) {
     final message = error.toString().toLowerCase();
-    final hasCoopSignal = message.contains('cross-origin-opener-policy') ||
+    final hasCoopSignal =
+        message.contains('cross-origin-opener-policy') ||
         message.contains('cross-origin');
-    final hasPopupBlockedSignal = message.contains('popup-blocked') ||
+    final hasPopupBlockedSignal =
+        message.contains('popup-blocked') ||
         message.contains('popup blocked') ||
         message.contains('popup-blocked-by-browser');
 
@@ -563,14 +607,17 @@ class AccountSocialAuthActions {
     final provider = GoogleAuthProvider();
     provider.addScope('email');
     provider.addScope('profile');
-    provider.setCustomParameters(<String, String>{
-      'prompt': 'select_account',
-    });
+    provider.setCustomParameters(<String, String>{'prompt': 'select_account'});
     return provider;
   }
 
   static Future<void> _rememberAccountRouteForWebRedirect() async {
-    if (!kIsWeb) return;
+    if (!_isWeb) return;
+    final override = _debugRememberAccountRouteOverride;
+    if (override != null) {
+      await override();
+      return;
+    }
     await PostAuthNavigationIntentService.rememberAccountRoute();
   }
 }

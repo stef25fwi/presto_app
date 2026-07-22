@@ -15,22 +15,22 @@ class _TestMultiFactorPlatform extends MultiFactorPlatform {
 
 class _WebUserPlatform extends UserPlatform {
   _WebUserPlatform(FirebaseAuthPlatform auth)
-      : super(
-          auth,
-          _TestMultiFactorPlatform(auth),
-          InternalUserDetails(
-            userInfo: InternalUserInfo(
-              uid: 'web-social-user',
-              email: 'web@ilipresto.fr',
-              displayName: 'Web User',
-              isAnonymous: false,
-              isEmailVerified: true,
-              creationTimestamp: DateTime(2026, 7, 1).millisecondsSinceEpoch,
-              lastSignInTimestamp: DateTime(2026, 7, 22).millisecondsSinceEpoch,
-            ),
-            providerData: const <Map<String, dynamic>?>[],
+    : super(
+        auth,
+        _TestMultiFactorPlatform(auth),
+        InternalUserDetails(
+          userInfo: InternalUserInfo(
+            uid: 'web-social-user',
+            email: 'web@ilipresto.fr',
+            displayName: 'Web User',
+            isAnonymous: false,
+            isEmailVerified: true,
+            creationTimestamp: DateTime(2026, 7, 1).millisecondsSinceEpoch,
+            lastSignInTimestamp: DateTime(2026, 7, 22).millisecondsSinceEpoch,
           ),
-        );
+          providerData: const <Map<String, dynamic>?>[],
+        ),
+      );
 
   @override
   Future<String?> getIdToken(bool forceRefresh) async {
@@ -48,9 +48,9 @@ class _WebCredentialPlatform extends UserCredentialPlatform {
     required UserPlatform? user,
     bool isNewUser = false,
   }) : super(
-          user: user,
-          additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
-        );
+         user: user,
+         additionalUserInfo: AdditionalUserInfo(isNewUser: isNewUser),
+       );
 }
 
 class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
@@ -88,8 +88,7 @@ class _WebSocialAuthPlatform extends FirebaseAuthPlatform {
   FirebaseAuthPlatform setInitialValues({
     InternalUserDetails? currentUser,
     String? languageCode,
-  }) =>
-      this;
+  }) => this;
 
   @override
   UserPlatform? get currentUser => exposeCurrentUser ? user : null;
@@ -203,8 +202,9 @@ void main() {
         trackLogin: ({authMethod, isNewUser = false}) async {},
       );
 
-  testWidgets('Google utilise directement redirect sur GitHub Pages',
-      (tester) async {
+  testWidgets('Google utilise directement redirect sur GitHub Pages', (
+    tester,
+  ) async {
     AccountSocialAuthActions.configureWebEnvironmentForTesting(
       isWeb: true,
       baseHost: 'stef25fwi.github.io',
@@ -232,8 +232,9 @@ void main() {
     expect(find.text('✓ Connecté avec Google'), findsOneWidget);
   });
 
-  testWidgets('Google ne redirige pas après fermeture volontaire du popup',
-      (tester) async {
+  testWidgets('Google ne redirige pas après fermeture volontaire du popup', (
+    tester,
+  ) async {
     platform.popupError = FirebaseAuthException(code: 'popup-closed-by-user');
 
     await runAction(tester, googleAction);
@@ -243,8 +244,9 @@ void main() {
     expect(find.text('Connexion annulée.'), findsOneWidget);
   });
 
-  testWidgets('Google bascule vers redirect quand le popup est bloqué',
-      (tester) async {
+  testWidgets('Google bascule vers redirect quand le popup est bloqué', (
+    tester,
+  ) async {
     platform.popupError = FirebaseAuthException(code: 'popup-blocked');
 
     await runAction(tester, googleAction);
@@ -268,8 +270,9 @@ void main() {
     expect(find.byType(SnackBar), findsOneWidget);
   });
 
-  testWidgets('Facebook bascule vers redirect pour un popup bloqué',
-      (tester) async {
+  testWidgets('Facebook bascule vers redirect pour un popup bloqué', (
+    tester,
+  ) async {
     platform.popupError = FirebaseAuthException(code: 'popup-blocked');
 
     await runAction(tester, facebookAction);
@@ -282,9 +285,7 @@ void main() {
   });
 
   testWidgets('Facebook affiche une erreur Web sans fallback', (tester) async {
-    platform.popupError = FirebaseAuthException(
-      code: 'network-request-failed',
-    );
+    platform.popupError = FirebaseAuthException(code: 'network-request-failed');
 
     await runAction(tester, facebookAction);
 
