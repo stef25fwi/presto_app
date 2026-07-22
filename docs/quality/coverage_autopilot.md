@@ -1,56 +1,77 @@
 # Coverage Autopilot
 
-`Coverage Autopilot` mesure la couverture Flutter réelle, sélectionne une cible prioritaire et crée une seule tâche de couverture active à la fois.
+`Coverage Autopilot` mesure la couverture Flutter réelle et entretient une file
+unique de travail sur les cinq parcours critiques.
 
-## Priorités
+## Périmètres traités
 
-1. paiements et Stripe ;
+Les fichiers sont définis précisément dans
+`quality/critical-coverage.json` :
+
+1. abonnements et paiement ;
 2. authentification ;
 3. publication d'annonces ;
 4. messagerie ;
-5. reste du code de production.
+5. administration et modération.
 
-À priorité égale, le fichier ayant le plus faible pourcentage de couverture est sélectionné.
+La cible de ces cinq périmètres est **100 % LCOV réel**. Les seuils
+`minimum_percent` restent des garde-fous de non-régression ; ils ne remplacent
+pas l'objectif final.
+
+À chaque mesure, l'agent sélectionne un fichier rentable encore incomplet dans
+chaque périmètre. Une même mission peut donc contenir jusqu'à cinq fichiers,
+toujours dans l'ordre ci-dessus. Lorsqu'un fichier atteint 100 %, le cycle
+suivant choisit le fichier incomplet suivant du même parcours.
 
 ## Déclenchement
 
 Le workflow `.github/workflows/coverage-agent.yml` s'exécute :
 
-- toutes les 15 minutes ;
-- après une modification de `main` touchant le code ou les tests ;
+- chaque heure ;
+- après une modification de `main` touchant le code, les tests ou la
+  configuration de couverture ;
+- après une validation de pull request réussie ;
 - manuellement depuis GitHub Actions.
 
-GitHub n'exécute les planifications que lorsque le workflow est présent sur la branche par défaut. Le cycle horaire commencera donc après fusion de la PR d'installation.
+Une mesure complète est évitée lorsque `main` n'a pas changé, sauf lancement
+manuel avec `force_measure=true`.
 
-## Objectif
+## Objectif global
 
-La valeur par défaut est `80 %` de couverture globale LCOV. Pour la modifier sans changer le code, créer la variable de dépôt :
+La valeur par défaut reste `80 %` de couverture globale LCOV. La mission
+continue toutefois si cet objectif global est atteint mais qu'au moins un des
+cinq parcours critiques reste sous 100 %.
 
-- nom : `COVERAGE_GLOBAL_TARGET` ;
-- valeur initiale conseillée : `25`, puis `40`, `60` et `80` progressivement.
-
-Un lancement manuel peut également fournir un objectif temporaire.
+Pour modifier l'objectif global sans changer le code, créer la variable de
+dépôt `COVERAGE_GLOBAL_TARGET`.
 
 ## Agent de codage
 
-Le workflow crée une issue structurée avec la mesure LCOV, le fichier cible, les lignes non couvertes et les garde-fous.
+Le workflow crée une issue structurée avec :
 
-Pour assigner automatiquement cette issue à un agent disponible dans le dépôt, créer la variable :
+- la couverture globale ;
+- la couverture de chaque parcours critique ;
+- un fichier exact par parcours ;
+- les lignes non couvertes ;
+- une branche `coverage/critical-paths-*` réservée ;
+- les commandes de validation et les garde-fous.
 
-- nom : `COVERAGE_AGENT_ASSIGNEE` ;
-- valeur : identifiant GitHub exact de l'agent ou du compte chargé des tests.
-
-Si la variable est absente, la tâche est créée sans assignation. Le système de mesure et de sélection continue de fonctionner normalement.
+Pour assigner automatiquement la mission, définir la variable de dépôt
+`COVERAGE_AGENT_ASSIGNEE` avec l'identifiant GitHub exact du compte ou de
+l'agent de codage disponible. Sans cette variable, la mission reste ouverte et
+prête à être prise en charge, sans assignation erronée.
 
 ## Garde-fous
 
-- une seule issue `coverage-agent` ouverte à la fois ;
-- aucune baisse de seuil ;
-- aucune exclusion LCOV ajoutée par l'agent ;
-- aucun `skip` ou test vide ;
+- une seule issue `coverage-agent` et une seule PR `coverage/*` actives ;
+- aucun abaissement de seuil ;
+- aucune exclusion LCOV artificielle ;
+- aucun `skip`, test vide ou faux succès ;
 - aucun push automatique direct sur `main` ;
-- conservation de l'artefact `lcov.info` pendant 30 jours ;
-- nouveau cycle après fermeture de la tâche précédente et nouvelle exécution du workflow.
+- validation ciblée pendant le développement, puis
+  `dart format`, `flutter analyze --fatal-infos` et
+  `flutter test --coverage` avant la PR ;
+- aucune régression globale ou par parcours.
 
 ## Validation locale du sélecteur
 
@@ -60,10 +81,11 @@ python3 -m unittest tools/coverage/test_coverage_agent.py
 
 ## Cycle attendu
 
-1. mesure de `flutter test --coverage` ;
-2. sélection déterministe de la prochaine cible ;
-3. création d'une issue de travail ;
-4. production d'une PR par l'agent assigné ;
-5. validation CI et fusion ;
-6. fermeture de l'issue ;
-7. sélection de la cible suivante au prochain cycle.
+1. mesurer `flutter test --coverage` sur `main` ;
+2. calculer l'état des cinq parcours ;
+3. sélectionner jusqu'à cinq fichiers précis ;
+4. créer une mission unique ;
+5. produire une seule PR de tests ;
+6. vérifier la couverture avant/après ;
+7. fusionner la PR verte ;
+8. recommencer jusqu'à 100 % sur les cinq parcours et au moins 80 % global.

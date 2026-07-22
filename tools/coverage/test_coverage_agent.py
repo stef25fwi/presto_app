@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -82,10 +83,10 @@ end_of_record
         self.assertEqual(
             [
                 "payments",
+                "authentication",
                 "publication",
                 "messaging",
                 "administration",
-                "authentication",
             ],
             [target.category for target in selected],
         )
@@ -117,12 +118,134 @@ end_of_record
             selected[0].path,
         )
 
+    def test_loads_five_critical_modules_at_100_percent(self) -> None:
+        payload = {
+            "modules": [
+                {
+                    "id": "authentication",
+                    "label": "Authentification",
+                    "patterns": ["lib/pages/auth/**"],
+                    "target_percent": 100,
+                },
+                {
+                    "id": "subscriptions_payment",
+                    "label": "Abonnements et paiement",
+                    "patterns": ["lib/features/subscriptions/**"],
+                    "target_percent": 100,
+                },
+                {
+                    "id": "offer_publication",
+                    "label": "Publication d'annonces",
+                    "patterns": ["lib/pages/publish_offer_page.dart"],
+                    "target_percent": 100,
+                },
+                {
+                    "id": "messaging",
+                    "label": "Messagerie",
+                    "patterns": ["lib/pages/messages/**"],
+                    "target_percent": 100,
+                },
+                {
+                    "id": "administration",
+                    "label": "Administration",
+                    "patterns": ["lib/pages/admin/**"],
+                    "target_percent": 100,
+                },
+                {
+                    "id": "entrepreneur_journey",
+                    "label": "Parcours entrepreneur",
+                    "patterns": ["lib/pages/toolbox_*.dart"],
+                    "target_percent": 85,
+                },
+            ]
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "critical.json"
+            config.write_text(json.dumps(payload), encoding="utf-8")
+            rules = coverage_agent.load_critical_rules(config)
+
+        self.assertEqual(
+            [
+                "payments",
+                "authentication",
+                "publication",
+                "messaging",
+                "administration",
+            ],
+            [rule.category for rule in rules],
+        )
+        self.assertTrue(all(rule.target_percent == 100 for rule in rules))
+
+    def test_exact_patterns_drive_classification(self) -> None:
+        rule = coverage_agent.CriticalRule(
+            module_id="offer_publication",
+            label="Publication",
+            category="publication",
+            category_rank=2,
+            patterns=("lib/special/flow.dart",),
+            target_percent=100,
+        )
+        self.assertEqual(
+            ("publication", 2),
+            coverage_agent.classify("lib/special/flow.dart", (rule,)),
+        )
+
+    def test_configured_patterns_exclude_keyword_matches_outside_scope(self) -> None:
+        rule = coverage_agent.CriticalRule(
+            module_id="authentication",
+            label="Authentification",
+            category="authentication",
+            category_rank=1,
+            patterns=("lib/pages/auth/**",),
+            target_percent=100,
+        )
+        self.assertEqual(
+            ("other", len(coverage_agent.PRIORITY_RULES)),
+            coverage_agent.classify(
+                "lib/legacy/authentication_experiment.dart",
+                (rule,),
+            ),
+        )
+
+    def test_critical_status_requires_every_lane_to_reach_target(self) -> None:
+        rules = (
+            coverage_agent.CriticalRule(
+                "subscriptions_payment",
+                "Paiement",
+                "payments",
+                0,
+                ("lib/payment.dart",),
+                100,
+            ),
+            coverage_agent.CriticalRule(
+                "authentication",
+                "Authentification",
+                "authentication",
+                1,
+                ("lib/auth.dart",),
+                100,
+            ),
+        )
+        records = [
+            coverage_agent.FileCoverage(
+                "lib/payment.dart", 2, 2, [], "payments", 0
+            ),
+            coverage_agent.FileCoverage(
+                "lib/auth.dart", 2, 1, [2], "authentication", 1
+            ),
+        ]
+
+        status = coverage_agent.build_critical_status(records, rules)
+
+        self.assertTrue(status[0]["target_reached"])
+        self.assertFalse(status[1]["target_reached"])
+
     def test_classifies_administration_files(self) -> None:
         category, rank = coverage_agent.classify(
             "lib/pages/admin/widgets/moderation_dashboard.dart"
         )
         self.assertEqual("administration", category)
-        self.assertEqual(3, rank)
+        self.assertEqual(4, rank)
 
     def test_excludes_generated_files(self) -> None:
         fixture = """TN:
