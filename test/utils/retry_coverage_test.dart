@@ -23,7 +23,7 @@ void main() {
       () async {
         attempts += 1;
         if (attempts < 3) {
-          throw const TimeoutException('temporaire');
+          throw TimeoutException('temporaire');
         }
         return 'ok';
       },
@@ -64,7 +64,7 @@ void main() {
       retry<void>(
         () async {
           attempts += 1;
-          throw const TimeoutException('toujours indisponible');
+          throw TimeoutException('toujours indisponible');
         },
         maxAttempts: 3,
         initialDelay: Duration.zero,
@@ -80,7 +80,7 @@ void main() {
 
   test('classification des erreurs réseau reste dépendance-free', () {
     expect(
-      isRetryableTimeoutOrNetwork(const TimeoutException('timeout')),
+      isRetryableTimeoutOrNetwork(TimeoutException('timeout')),
       isTrue,
     );
     expect(isRetryableTimeoutOrNetwork(Exception('autre')), isFalse);
