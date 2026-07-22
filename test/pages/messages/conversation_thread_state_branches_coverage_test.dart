@@ -14,49 +14,47 @@ class _StateWaveMultiFactorPlatform extends MultiFactorPlatform {
 
 class _StateWaveTokenResult extends IdTokenResult {
   _StateWaveTokenResult()
-      : super(
-          InternalIdTokenResult(
-            token: 'messaging-state-token',
-            claims: const <String?, Object?>{'admin': true},
-            authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
-            signInProvider: 'password',
-          ),
-        );
+    : super(
+        InternalIdTokenResult(
+          token: 'messaging-state-token',
+          claims: const <String?, Object?>{'admin': true},
+          authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+          issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+          expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
+          signInProvider: 'password',
+        ),
+      );
 }
 
 class _StateWaveUserPlatform extends UserPlatform {
   _StateWaveUserPlatform(FirebaseAuthPlatform auth)
-      : super(
-          auth,
-          _StateWaveMultiFactorPlatform(auth),
-          InternalUserDetails(
-            userInfo: InternalUserInfo(
-              uid: 'thread-user',
-              email: 'thread-user@ilipresto.fr',
-              displayName: 'Utilisateur conversation',
-              isAnonymous: false,
-              isEmailVerified: true,
-              creationTimestamp:
-                  DateTime(2026, 1, 1).millisecondsSinceEpoch,
-              lastSignInTimestamp:
-                  DateTime(2026, 7, 22).millisecondsSinceEpoch,
-            ),
-            providerData: const <Map<String, dynamic>?>[
-              <String, dynamic>{
-                'providerId': 'password',
-                'uid': 'thread-user',
-                'email': 'thread-user@ilipresto.fr',
-                'displayName': 'Utilisateur conversation',
-                'phoneNumber': null,
-                'photoURL': null,
-                'isAnonymous': false,
-                'isEmailVerified': true,
-              },
-            ],
+    : super(
+        auth,
+        _StateWaveMultiFactorPlatform(auth),
+        InternalUserDetails(
+          userInfo: InternalUserInfo(
+            uid: 'thread-user',
+            email: 'thread-user@ilipresto.fr',
+            displayName: 'Utilisateur conversation',
+            isAnonymous: false,
+            isEmailVerified: true,
+            creationTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+            lastSignInTimestamp: DateTime(2026, 7, 22).millisecondsSinceEpoch,
           ),
-        );
+          providerData: const <Map<String, dynamic>?>[
+            <String, dynamic>{
+              'providerId': 'password',
+              'uid': 'thread-user',
+              'email': 'thread-user@ilipresto.fr',
+              'displayName': 'Utilisateur conversation',
+              'phoneNumber': null,
+              'photoURL': null,
+              'isAnonymous': false,
+              'isEmailVerified': true,
+            },
+          ],
+        ),
+      );
 
   @override
   Future<void> reload() async {}
@@ -82,8 +80,7 @@ class _StateWaveAuthPlatform extends FirebaseAuthPlatform {
   FirebaseAuthPlatform setInitialValues({
     InternalUserDetails? currentUser,
     String? languageCode,
-  }) =>
-      this;
+  }) => this;
 
   @override
   UserPlatform? get currentUser => user;
@@ -160,8 +157,9 @@ void main() {
     authPlatform.user = null;
   });
 
-  testWidgets('traduit les erreurs du flux et couvre l en-tête du fil',
-      (tester) async {
+  testWidgets('traduit les erreurs du flux et couvre l en-tête du fil', (
+    tester,
+  ) async {
     final dynamic state = await _pumpThread(tester);
 
     state.threadParticipants = <String>['thread-user', 'other-user'];
@@ -217,9 +215,7 @@ void main() {
     expect(state.headerSubtitle, 'en ligne');
     expect(state.isRecentlySeen(null), isTrue);
     expect(
-      state.isRecentlySeen(
-        DateTime.now().subtract(const Duration(minutes: 2)),
-      ),
+      state.isRecentlySeen(DateTime.now().subtract(const Duration(minutes: 2))),
       isTrue,
     );
     expect(
@@ -229,8 +225,9 @@ void main() {
       isFalse,
     );
 
-    state.otherLastSeenAt =
-        DateTime.now().subtract(const Duration(minutes: 10));
+    state.otherLastSeenAt = DateTime.now().subtract(
+      const Duration(minutes: 10),
+    );
     expect(state.headerSubtitle, startsWith('vu '));
     state.otherPresenceStatus = '';
     state.otherLastSeenAt = null;
@@ -239,8 +236,9 @@ void main() {
     await _disposeThread(tester);
   });
 
-  testWidgets('calcule les reçus de lecture et applique le brouillon initial',
-      (tester) async {
+  testWidgets('calcule les reçus de lecture et applique le brouillon initial', (
+    tester,
+  ) async {
     final dynamic state = await _pumpThread(
       tester,
       initialDraftText: 'Bonjour depuis la fiche annonce',
@@ -355,7 +353,10 @@ void main() {
 
     configure(blocked: false);
     await tester.pump();
-    expect(find.text('Cette conversation est actuellement bloquee.'), findsNothing);
+    expect(
+      find.text('Cette conversation est actuellement bloquee.'),
+      findsNothing,
+    );
     expect(
       find.text(
         'Conversation archivee pour vous. Un nouveau message la restaurera automatiquement.',
@@ -366,8 +367,9 @@ void main() {
     await _disposeThread(tester);
   });
 
-  testWidgets('masque le rappel sécurité et affiche la saisie distante',
-      (tester) async {
+  testWidgets('masque le rappel sécurité et affiche la saisie distante', (
+    tester,
+  ) async {
     final dynamic state = await _pumpThread(tester);
 
     const safetyText =
@@ -399,9 +401,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Column(children: <Widget>[todayChip, emptyChip]),
-        ),
+        home: Scaffold(body: Column(children: <Widget>[todayChip, emptyChip])),
       ),
     );
     expect(find.text('Aujourd’hui'), findsOneWidget);
