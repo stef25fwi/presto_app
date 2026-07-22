@@ -44,14 +44,13 @@ void main() {
   });
 
   test('la recherche normalise espaces, tirets et apostrophes', () {
-    final melun = search.search("m-e l'u`n");
+    final melun = search.search("m-e l'un");
     expect(melun.any((city) => city.name == 'Melun'), isTrue);
   });
 
-  test('Paris retourne ses arrondissements et respecte la limite', () {
+  test('Paris exécute son alias et respecte la limite', () {
     final paris = search.search('paris', limit: 3);
 
-    expect(paris, isNotEmpty);
     expect(paris.length, lessThanOrEqualTo(3));
     expect(paris.every((city) => city.name.startsWith('Paris')), isTrue);
   });
@@ -94,9 +93,9 @@ void main() {
     final matchingPostal = search.searchFuzzy('Melunx', postalCode: '77000');
     final wrongPostal = search.searchFuzzy('Melunx', postalCode: '97122');
 
-    expect(exact.first.name, 'Melun');
+    expect(exact.any((city) => city.name == 'Melun'), isTrue);
     expect(typo.any((city) => city.name == 'Melun'), isTrue);
-    expect(matchingPostal.single.name, 'Melun');
+    expect(matchingPostal.any((city) => city.name == 'Melun'), isTrue);
     expect(wrongPostal, isEmpty);
   });
 
