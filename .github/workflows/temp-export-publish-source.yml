@@ -40,8 +40,6 @@ jobs:
         run: flutter pub get
 
       - name: Targeted publication helper tests
-        id: targeted
-        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -56,11 +54,9 @@ jobs:
           retention-days: 2
 
       - name: Targeted analyzer
-        if: ${{ steps.targeted.outcome == 'success' }}
         run: flutter analyze lib/pages/publish_offer_page.dart test/pages/publish_offer_pure_helpers_massive_coverage_test.dart
 
       - name: Commit validated implementation and clean executor
-        if: ${{ steps.targeted.outcome == 'success' }}
         shell: bash
         run: |
           rm -f .github/workflows/temp-export-publish-source.yml
@@ -71,7 +67,3 @@ jobs:
           git add -A
           git commit -m "test(coverage): cover publication parsing and validation helpers"
           git push origin HEAD:${{ github.head_ref }}
-
-      - name: Enforce targeted result
-        if: ${{ steps.targeted.outcome != 'success' }}
-        run: exit 1
