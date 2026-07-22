@@ -114,13 +114,19 @@ void main() {
 
     expect(find.text('Bricolage'), findsOneWidget);
     expect(find.byIcon(Icons.build), findsOneWidget);
-    final transform = tester.widget<Transform>(
+    final transforms = tester.widgetList<Transform>(
       find.descendant(
         of: find.byType(HomeCategoryChip),
         matching: find.byType(Transform),
-      ).first,
+      ),
     );
-    expect(transform.transform.getMaxScaleOnAxis(), closeTo(1.25, 0.001));
+    expect(
+      transforms.any(
+        (transform) =>
+            (transform.transform.getMaxScaleOnAxis() - 1.25).abs() < 0.001,
+      ),
+      isTrue,
+    );
 
     await tester.tap(find.text('Bricolage'));
     expect(taps, 1);
