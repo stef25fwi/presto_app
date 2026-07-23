@@ -149,6 +149,7 @@ void main() {
     for (var frame = 0; frame < 8 && user.tokenResultCalls == 0; frame += 1) {
       await tester.pump(const Duration(milliseconds: 100));
     }
+    expect(find.byType(ConversationsListPage), findsOneWidget);
     expect(find.text('Journal messagerie'), findsOneWidget);
     expect(user.tokenResultCalls, greaterThan(0));
     return user;
