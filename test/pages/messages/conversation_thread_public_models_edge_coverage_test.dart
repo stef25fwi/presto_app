@@ -45,4 +45,23 @@ void main() {
     expect(normalized.visibility, 'hidden');
     expect(normalized.shouldHideContent, isTrue);
   });
+
+  test('couvre les fallbacks publics de modération et de pièce jointe', () {
+    final hiddenApproved = MessageModeration.fromMap(
+      <String, dynamic>{'status': 'approved', 'visibility': 'hidden'},
+    );
+    expect(hiddenApproved.shouldHideContent, isFalse);
+    expect(hiddenApproved.placeholderText, 'Message modéré');
+
+    final attachment = MessageAttachment.fromMap(<String, dynamic>{
+      'type': 'document',
+      'name': 'preuve.txt',
+      'url': 'https://cdn/preuve.txt',
+      'thumbnailUrl': 'https://cdn/preuve-thumb.webp',
+      'sizeBytes': 'invalide',
+    });
+    expect(attachment, isNotNull);
+    expect(attachment!.thumbnailUrl, 'https://cdn/preuve-thumb.webp');
+    expect(attachment.sizeBytes, 0);
+  });
 }
