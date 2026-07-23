@@ -1,5 +1,5 @@
 name: Apply messaging UI fix
-# retrigger 2026-07-23T12:05Z
+# retrigger refreshed branch 2026-07-23
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: fix/messages-audio-input-debug-header
+          ref: fix/messages-audio-input-debug-header-v2
           fetch-depth: 0
 
       - uses: subosito/flutter-action@v2
@@ -236,7 +236,7 @@ class _VoiceNotePlayer extends StatefulWidget {
             flutter test test/pages/messages/conversation_thread_page_shell_test.dart
           fi
 
-      - name: Commit to PR branch
+      - name: Commit to refreshed branch
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -244,4 +244,4 @@ class _VoiceNotePlayer extends StatefulWidget {
           git add lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
           git diff --cached --quiet && exit 0
           git commit -m "fix(messages): show audio duration and move admin debug to header"
-          git push origin HEAD:fix/messages-audio-input-debug-header
+          git push origin HEAD:fix/messages-audio-input-debug-header-v2
