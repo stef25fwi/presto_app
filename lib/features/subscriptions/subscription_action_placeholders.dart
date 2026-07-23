@@ -13,8 +13,15 @@ typedef SubscriptionCommercialModeResolver = Future<bool> Function();
 SubscriptionCommercialModeResolver? subscriptionCommercialModeResolverOverride;
 
 @visibleForTesting
+SubscriptionCheckoutService? subscriptionCheckoutServiceOverride;
+
+SubscriptionCheckoutService get _resolvedCheckoutService =>
+    subscriptionCheckoutServiceOverride ?? _checkoutService;
+
+@visibleForTesting
 void resetSubscriptionActionOverrides() {
   subscriptionCommercialModeResolverOverride = null;
+  subscriptionCheckoutServiceOverride = null;
 }
 
 Future<bool> _isCommercialMode() async {
@@ -46,7 +53,7 @@ Future<void> startSubscriptionCheckout(
 }) async {
   final parsedPlan = subscriptionPlanFromKey(plan);
   if (parsedPlan == SubscriptionPlan.free) {
-    await _checkoutService.handleAction(
+    await _resolvedCheckoutService.handleAction(
       context,
       SubscriptionActionRequest(
         action: SubscriptionActionType.checkout,
@@ -61,7 +68,7 @@ Future<void> startSubscriptionCheckout(
     if (context.mounted) _showFreeBetaMessage(context);
     return;
   }
-  await _checkoutService.handleAction(
+  await _resolvedCheckoutService.handleAction(
     context,
     SubscriptionActionRequest(
       action: SubscriptionActionType.checkout,
@@ -93,7 +100,7 @@ Future<void> openSubscriptionManagement(
     if (context.mounted) _showFreeBetaMessage(context);
     return;
   }
-  await _checkoutService.handleAction(
+  await _resolvedCheckoutService.handleAction(
     context,
     SubscriptionActionRequest(
       action: SubscriptionActionType.manage,
@@ -109,7 +116,7 @@ Future<void> notifySubscriptionLaunch(
   bool stripeEnabled = false,
   String source = 'subscription_ui',
 }) async {
-  await _checkoutService.handleAction(
+  await _resolvedCheckoutService.handleAction(
     context,
     SubscriptionActionRequest(
       action: SubscriptionActionType.notify,
