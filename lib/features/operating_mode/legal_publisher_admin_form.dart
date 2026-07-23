@@ -126,6 +126,8 @@ class _LegalPublisherAdminFormState extends State<LegalPublisherAdminForm> {
     setState(() => _saving = true);
     try {
       await widget.onSave(profile);
+    } catch (_) {
+      // Le parent affiche le message d’erreur adapté. Le formulaire reste ouvert.
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -150,6 +152,7 @@ class _LegalPublisherAdminFormState extends State<LegalPublisherAdminForm> {
         validator: validator,
         maxLines: maxLines,
         autovalidateMode: AutovalidateMode.onUserInteraction,
+        onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
