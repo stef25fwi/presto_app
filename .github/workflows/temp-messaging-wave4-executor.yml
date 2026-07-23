@@ -1,0 +1,46 @@
+name: Temporary messaging wave 4 executor
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  implement-and-test:
+    if: github.head_ref == 'coverage/messaging-thread-interactions-wave-4' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.6
+          channel: stable
+          cache: true
+      - name: Apply messaging interaction tests
+        run: python3 tools/temp_messaging_wave4_patch.py
+      - name: Format changed test
+        run: dart format test/pages/messages/conversation_thread_page_interactions_test.dart
+      - name: Dependencies
+        run: flutter pub get
+      - name: Targeted messaging interaction tests
+        run: flutter test --reporter expanded test/pages/messages/conversation_thread_page_interactions_test.dart
+      - name: Targeted analyzer
+        run: flutter analyze test/pages/messages/conversation_thread_page_interactions_test.dart
+      - name: Commit validated wave and clean temporary files
+        shell: bash
+        run: |
+          rm -f .github/workflows/temp-export-messaging-wave-4.yml
+          rm -f .github/workflows/temp-messaging-wave4-executor.yml
+          rm -f tools/temp_messaging_wave4_patch.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "test(coverage): cover messaging interaction states"
+          git push origin HEAD:${{ github.head_ref }}
