@@ -1,7 +1,21 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/features/operating_mode/app_operating_mode.dart';
 import 'package:presto_app/features/subscriptions/subscription_config_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_models.dart';
+
+const completePublisher = <String, dynamic>{
+  'publisherName': 'Exploitant Test',
+  'postalAddress': '1 rue de Test',
+  'phone': '0590000000',
+  'email': 'contact@ilipresto.fr',
+  'publicationDirector': 'Exploitant Test',
+  'companyName': 'ILIPRESTO',
+  'legalForm': 'SASU',
+  'siren': '123456789',
+  'hostingProvider': 'Google Ireland Limited',
+  'hostingAddress': 'Dublin, Irlande',
+};
 
 void main() {
   late FakeFirebaseFirestore firestore;
@@ -26,96 +40,88 @@ void main() {
     expect(config.freeAccessMode, isTrue);
   });
 
-  test('ensureDefaultConfigExists crée une seule configuration', () async {
+  test('ensureDefaultConfigExists crée une configuration bêta sûre', () async {
     await service.ensureDefaultConfigExists(updatedBy: 'admin-1');
     final snapshot =
         await firestore.collection('app_config').doc('subscriptions').get();
     expect(snapshot.exists, isTrue);
+    expect(snapshot.data()!['operatingMode'], 'free_beta');
+    expect(snapshot.data()!['stripeEnabled'], isFalse);
+    expect(snapshot.data()!['freeAccessMode'], isTrue);
     expect(snapshot.data()!['updatedBy'], 'admin-1');
-
-    await firestore.collection('app_config').doc('subscriptions').update({
-      'stripeEnabled': true,
-    });
-    await service.ensureDefaultConfigExists(updatedBy: 'admin-2');
-    final preserved =
-        await firestore.collection('app_config').doc('subscriptions').get();
-    expect(preserved.data()!['stripeEnabled'], isTrue);
-    expect(preserved.data()!['updatedBy'], 'admin-1');
   });
 
-  test('watchConfig ensureExists initialise puis émet la configuration',
+  test('la bêta neutralise une ancienne configuration Stripe incohérente',
       () async {
-    final stream = service.watchConfig(ensureExists: true);
-    final config = await stream.firstWhere(
-      (value) => value.subscriptionsPrepared,
-    );
-    expect(config.subscriptionSectionEnabled, isFalse);
-
-    await Future<void>.delayed(Duration.zero);
-    final snapshot =
-        await firestore.collection('app_config').doc('subscriptions').get();
-    expect(snapshot.exists, isTrue);
-  });
-
-  test('getConfig et watchConfig lisent une configuration existante', () async {
     await firestore.collection('app_config').doc('subscriptions').set({
-      'subscriptionSectionEnabled': false,
+      'operatingMode': 'free_beta',
+      'subscriptionSectionEnabled': true,
       'subscriptionsPrepared': true,
       'stripeEnabled': true,
       'freeAccessMode': false,
-      'updatedBy': 'admin',
+      'updatedBy': 'legacy-admin',
     });
 
     final fetched = await service.getConfig();
     final watched = await service.watchConfig().first;
     expect(fetched.subscriptionSectionEnabled, isFalse);
-    expect(fetched.stripeEnabled, isTrue);
-    expect(fetched.freeAccessMode, isFalse);
-    expect(watched.updatedBy, 'admin');
+    expect(fetched.stripeEnabled, isFalse);
+    expect(fetched.freeAccessMode, isTrue);
+    expect(watched.updatedBy, 'legacy-admin');
   });
 
-  test('updateSectionVisibility conserve les autres paramètres', () async {
-    await service.ensureDefaultConfigExists();
-    await service.updateSectionVisibility(false, updatedBy: 'visibility-admin');
+  test('une configuration commerciale conserve les champs payants', () async {
+    await firestore.collection('app_config').doc('subscriptions').set({
+      'operatingMode': 'commercial',
+      'subscriptionSectionEnabled': true,
+      'subscriptionsPrepared': true,
+      'stripeEnabled': true,
+      'freeAccessMode': false,
+      'updatedBy': 'commercial-admin',
+    });
 
     final config = await service.getConfig();
-    expect(config.subscriptionSectionEnabled, isFalse);
-    expect(config.subscriptionsPrepared, isTrue);
-    expect(config.stripeEnabled, isFalse);
-    expect(config.freeAccessMode, isTrue);
-    expect(config.updatedBy, 'visibility-admin');
-  });
-
-  test('updateStripeEnabled conserve les autres paramètres', () async {
-    await service.ensureDefaultConfigExists();
-    await service.updateStripeEnabled(true, updatedBy: 'stripe-admin');
-
-    final config = await service.getConfig();
-    expect(config.subscriptionSectionEnabled, isFalse);
+    expect(config.subscriptionSectionEnabled, isTrue);
     expect(config.stripeEnabled, isTrue);
-    expect(config.freeAccessMode, isTrue);
-    expect(config.updatedBy, 'stripe-admin');
-  });
-
-  test('updateFreeAccessMode conserve les autres paramètres', () async {
-    await service.ensureDefaultConfigExists();
-    await service.updateFreeAccessMode(false, updatedBy: 'access-admin');
-
-    final config = await service.getConfig();
-    expect(config.subscriptionSectionEnabled, isFalse);
-    expect(config.stripeEnabled, isFalse);
     expect(config.freeAccessMode, isFalse);
-    expect(config.updatedBy, 'access-admin');
   });
 
-  test('les mises à jour partent aussi de la configuration par défaut', () async {
-    await service.updateStripeEnabled(true);
-    await service.updateSectionVisibility(false);
-    await service.updateFreeAccessMode(false);
+  test('Stripe ne peut pas être activé isolément pendant la bêta', () async {
+    await service.ensureDefaultConfigExists();
+    expect(
+      () => service.updateStripeEnabled(true),
+      throwsStateError,
+    );
+  });
 
+  test('updateFreeAccessMode true conserve la bêta gratuite', () async {
+    final modeService = AppOperatingModeService(firestore: firestore);
+    await modeService.ensureDefaults();
+    await modeService.updatePublisherProfile(
+      LegalPublisherProfile.fromMap(completePublisher),
+    );
+
+    await service.updateFreeAccessMode(true, updatedBy: 'access-admin');
     final config = await service.getConfig();
-    expect(config.stripeEnabled, isTrue);
     expect(config.subscriptionSectionEnabled, isFalse);
+    expect(config.stripeEnabled, isFalse);
+    expect(config.freeAccessMode, isTrue);
+  });
+
+  test('la bascule commerciale passe par le profil juridique complet', () async {
+    final modeService = AppOperatingModeService(firestore: firestore);
+    await modeService.ensureDefaults();
+    await modeService.updatePublisherProfile(
+      LegalPublisherProfile.fromMap(completePublisher),
+    );
+
+    await service.updateOperatingMode(
+      AppOperatingMode.commercial,
+      updatedBy: 'commercial-admin',
+    );
+    final config = await service.getConfig();
+    expect(config.subscriptionSectionEnabled, isTrue);
+    expect(config.stripeEnabled, isTrue);
     expect(config.freeAccessMode, isFalse);
   });
 }
