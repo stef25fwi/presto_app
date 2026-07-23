@@ -55,6 +55,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          gh label create coverage-worker --repo "$GITHUB_REPOSITORY" \
+            --color 5319E7 --description "Coverage Factory parallel worker" --force
           active_prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 \
             --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/w"))] | length')"
           active_issues="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
