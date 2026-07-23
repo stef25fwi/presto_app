@@ -18,9 +18,7 @@ class AuthGuardIdentity {
 
 typedef AuthGuardIdentityReader = AuthGuardIdentity? Function();
 
-class AuthGuard {
-  const AuthGuard._();
-
+abstract final class AuthGuard {
   static Future<bool> requireVerifiedEmail(
     BuildContext context, {
     AuthGuardIdentityReader? identityReader,
