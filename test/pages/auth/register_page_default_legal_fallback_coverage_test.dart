@@ -1,8 +1,10 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/features/operating_mode/app_operating_mode.dart';
 import 'package:presto_app/pages/auth/register_page.dart';
 
 class _ThrowingCurrentUserAuthPlatform extends FirebaseAuthPlatform {
@@ -70,6 +72,9 @@ void main() {
             registrationCalls += 1;
           },
           successPageBuilder: (_) => const Scaffold(body: Text('succès')),
+          operatingModeService: AppOperatingModeService(
+            firestore: FakeFirebaseFirestore(),
+          ),
         ),
       ),
     );
@@ -82,7 +87,12 @@ void main() {
     await tester.tap(find.byType(Checkbox));
     await tester.pump();
     await tester.tap(find.text('Créer mon compte'));
-    await tester.pumpAndSettle();
+
+    for (var frame = 0;
+        frame < 20 && find.text('succès').evaluate().isEmpty;
+        frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     expect(registrationCalls, 1);
     expect(platform.currentUserReads, greaterThan(0));
