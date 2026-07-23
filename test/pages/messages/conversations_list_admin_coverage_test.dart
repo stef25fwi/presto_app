@@ -123,6 +123,16 @@ void main() {
     await authPlatform.controller.close();
   });
 
+  Future<void> drainNativeAppCheckRetries(WidgetTester tester) async {
+    // Le préflight non bloquant utilise sur VM deux tentatives de 12 secondes,
+    // séparées par un backoff de 1 seconde. L'horloge Flutter est virtuelle :
+    // ces pumps n'ajoutent aucune attente murale à la CI.
+    await tester.pump(const Duration(seconds: 12));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 12));
+    await tester.pump();
+  }
+
   Future<void> exerciseClaimsAfterUnmount(
     WidgetTester tester, {
     required Map<String?, Object?> claims,
@@ -150,7 +160,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     user.tokenResult.complete(_AdminListTokenResult(claims));
     await tester.pump();
-    await tester.pump(const Duration(seconds: 5));
+    await drainNativeAppCheckRetries(tester);
 
     expect(tester.takeException(), isNull);
   }
