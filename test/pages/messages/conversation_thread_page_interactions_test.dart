@@ -13,49 +13,47 @@ class _InteractionMultiFactorPlatform extends MultiFactorPlatform {
 
 class _InteractionTokenResult extends IdTokenResult {
   _InteractionTokenResult()
-      : super(
-          InternalIdTokenResult(
-            token: 'interaction-token',
-            claims: const <String?, Object?>{'admin': true},
-            authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
-            signInProvider: 'password',
-          ),
-        );
+    : super(
+        InternalIdTokenResult(
+          token: 'interaction-token',
+          claims: const <String?, Object?>{'admin': true},
+          authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+          issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+          expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
+          signInProvider: 'password',
+        ),
+      );
 }
 
 class _InteractionUserPlatform extends UserPlatform {
   _InteractionUserPlatform(FirebaseAuthPlatform auth)
-      : super(
-          auth,
-          _InteractionMultiFactorPlatform(auth),
-          InternalUserDetails(
-            userInfo: InternalUserInfo(
-              uid: 'thread-user',
-              email: 'thread-user@ilipresto.fr',
-              displayName: 'Utilisateur conversation',
-              isAnonymous: false,
-              isEmailVerified: true,
-              creationTimestamp:
-                  DateTime(2026, 1, 1).millisecondsSinceEpoch,
-              lastSignInTimestamp:
-                  DateTime(2026, 7, 19).millisecondsSinceEpoch,
-            ),
-            providerData: const <Map<String, dynamic>?>[
-              <String, dynamic>{
-                'providerId': 'password',
-                'uid': 'thread-user',
-                'email': 'thread-user@ilipresto.fr',
-                'displayName': 'Utilisateur conversation',
-                'phoneNumber': null,
-                'photoURL': null,
-                'isAnonymous': false,
-                'isEmailVerified': true,
-              },
-            ],
+    : super(
+        auth,
+        _InteractionMultiFactorPlatform(auth),
+        InternalUserDetails(
+          userInfo: InternalUserInfo(
+            uid: 'thread-user',
+            email: 'thread-user@ilipresto.fr',
+            displayName: 'Utilisateur conversation',
+            isAnonymous: false,
+            isEmailVerified: true,
+            creationTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+            lastSignInTimestamp: DateTime(2026, 7, 19).millisecondsSinceEpoch,
           ),
-        );
+          providerData: const <Map<String, dynamic>?>[
+            <String, dynamic>{
+              'providerId': 'password',
+              'uid': 'thread-user',
+              'email': 'thread-user@ilipresto.fr',
+              'displayName': 'Utilisateur conversation',
+              'phoneNumber': null,
+              'photoURL': null,
+              'isAnonymous': false,
+              'isEmailVerified': true,
+            },
+          ],
+        ),
+      );
 
   @override
   Future<void> reload() async {}
@@ -81,8 +79,7 @@ class _InteractionAuthPlatform extends FirebaseAuthPlatform {
   FirebaseAuthPlatform setInitialValues({
     InternalUserDetails? currentUser,
     String? languageCode,
-  }) =>
-      this;
+  }) => this;
 
   @override
   UserPlatform? get currentUser => user;
@@ -135,22 +132,27 @@ void main() {
     authPlatform.user = null;
   });
 
-  Future<void> pumpThread(WidgetTester tester) async {
+  Future<void> pumpThread(
+    WidgetTester tester, {
+    String? initialDraftText,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(430, 932));
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: ConversationThreadPage(
           conversationId: 'conversation-interactions',
           offerTitle: 'Peinture salon',
           currentUserId: 'thread-user',
+          initialDraftText: initialDraftText,
         ),
       ),
     );
     await _pumpUntilReady(tester);
   }
 
-  testWidgets('conserve le brouillon saisi pendant les mises à jour',
-      (tester) async {
+  testWidgets('conserve le brouillon saisi pendant les mises à jour', (
+    tester,
+  ) async {
     await pumpThread(tester);
 
     await tester.enterText(
@@ -170,6 +172,99 @@ void main() {
       tester.widget<TextField>(find.byType(TextField)).controller?.text,
       'Bonjour, cette offre est-elle disponible ?',
     );
+
+    await _disposeAfterBootstrap(tester);
+  });
+
+  testWidgets('applique le brouillon initial selon les branches du contrat', (
+    tester,
+  ) async {
+    await pumpThread(tester, initialDraftText: '  Brouillon proposé  ');
+    final dynamic state = tester.state(find.byType(ConversationThreadPage));
+
+    state.messageController.clear();
+    state.didApplyInitialDraft = false;
+    state.applyInitialDraftIfNeeded(false);
+    await tester.pump();
+    expect(state.messageController.text, 'Brouillon proposé');
+    expect(state.didApplyInitialDraft, isTrue);
+
+    state.messageController.text = 'Texte existant';
+    state.didApplyInitialDraft = false;
+    state.applyInitialDraftIfNeeded(false);
+    expect(state.messageController.text, 'Texte existant');
+    expect(state.didApplyInitialDraft, isTrue);
+
+    state.didApplyInitialDraft = false;
+    state.applyInitialDraftIfNeeded(true);
+    expect(state.didApplyInitialDraft, isFalse);
+
+    await _disposeAfterBootstrap(tester);
+  });
+
+  testWidgets('couvre les bannières et variantes du menu conversation', (
+    tester,
+  ) async {
+    await pumpThread(tester);
+    final dynamic state = tester.state(find.byType(ConversationThreadPage));
+
+    state.setState(() {
+      state.conversationBlocked = true;
+      state.blockedForCurrentUser = true;
+      state.blockedByAnotherParticipant = false;
+      state.adminViewerState = false;
+      state.archivedForCurrentUser = false;
+    });
+    await tester.pump();
+    expect(
+      find.text(
+        'Vous avez bloque cette conversation. Debloquez-la pour reprendre les echanges.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pump();
+    expect(find.text('Debloquer'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Debloquer'))).pop();
+    await tester.pump();
+
+    state.setState(() {
+      state.blockedForCurrentUser = false;
+      state.blockedByAnotherParticipant = true;
+      state.adminViewerState = true;
+    });
+    await tester.pump();
+    expect(
+      find.text(
+        'Cette conversation a ete bloquee par un participant. Un admin peut la debloquer.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pump();
+    expect(find.text('Debloquer en admin'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Debloquer en admin'))).pop();
+    await tester.pump();
+
+    state.setState(() {
+      state.conversationBlocked = false;
+      state.blockedByAnotherParticipant = false;
+      state.adminViewerState = false;
+      state.archivedForCurrentUser = true;
+    });
+    await tester.pump();
+    expect(
+      find.text(
+        'Conversation archivee pour vous. Un nouveau message la restaurera automatiquement.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pump();
+    expect(find.text('Restaurer'), findsOneWidget);
+    expect(find.text('Bloquer'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Restaurer'))).pop();
+    await tester.pump();
 
     await _disposeAfterBootstrap(tester);
   });
