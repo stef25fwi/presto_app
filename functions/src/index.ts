@@ -84,6 +84,7 @@ export {
 } from "./modules/marketplace/scheduled/listings";
 export { purgeOrphanedStorageFiles, purgeAbandonedListingDrafts } from "./modules/marketplace/scheduled/storage_cleanup";
 export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
+export { getPublicLegalConfig } from "./modules/legal/public_legal_config";
 export {
   enqueueMarketingOnboardingEmails,
   enqueueNearbyNewListingsEmails,
