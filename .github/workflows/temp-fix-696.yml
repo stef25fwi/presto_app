@@ -6,12 +6,20 @@ on:
       - coverage/w1-messaging-next-20260723
     paths:
       - .github/workflows/temp-fix-696.yml
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+    paths:
+      - .github/workflows/temp-fix-696.yml
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.event_name == 'push' || github.head_ref == 'coverage/w1-messaging-next-20260723'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
