@@ -6,6 +6,7 @@ on:
       - 'lib/**/*.dart'
       - 'quality/flutter_architecture_size_budget.json'
       - 'tools/quality/check_flutter_architecture_size.py'
+      - 'tools/quality/test_check_flutter_architecture_size.py'
       - '.github/workflows/flutter-architecture-size.yml'
   workflow_dispatch:
 
@@ -19,5 +20,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Test architecture size guardrail
+        run: python3 tools/quality/test_check_flutter_architecture_size.py
       - name: Check Flutter screen and widget size budgets
         run: python3 tools/quality/check_flutter_architecture_size.py --changed-only --base-ref "$GITHUB_BASE_REF" --enforce

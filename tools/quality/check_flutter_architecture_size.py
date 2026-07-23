@@ -34,11 +34,14 @@ def _read_config(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _line_count(path: Path) -> int:
-    text = path.read_text(encoding="utf-8", errors="ignore")
+def _text_line_count(text: str) -> int:
     if not text:
         return 0
     return text.count("\n") + (0 if text.endswith("\n") else 1)
+
+
+def _line_count(path: Path) -> int:
+    return _text_line_count(path.read_text(encoding="utf-8", errors="ignore"))
 
 
 def _is_ignored(path: str, ignored_prefixes: Iterable[str]) -> bool:
@@ -64,15 +67,18 @@ def _classify(path: str, content: str) -> tuple[str, int] | None:
     return None
 
 
+def _resolved_base_ref(base_ref: str | None) -> str | None:
+    return base_ref or os.environ.get("GITHUB_BASE_REF")
+
+
 def _changed_files(root: Path, base_ref: str | None) -> set[str]:
-    if not base_ref:
-        base_ref = os.environ.get("GITHUB_BASE_REF")
-    if not base_ref:
+    resolved_base = _resolved_base_ref(base_ref)
+    if not resolved_base:
         return set()
 
     candidates = [
-        f"origin/{base_ref}...HEAD",
-        f"{base_ref}...HEAD",
+        f"origin/{resolved_base}...HEAD",
+        f"{resolved_base}...HEAD",
         "HEAD~1...HEAD",
     ]
     for refspec in candidates:
@@ -85,11 +91,46 @@ def _changed_files(root: Path, base_ref: str | None) -> set[str]:
             )
         except (OSError, subprocess.CalledProcessError):
             continue
-        return {line.strip().replace("\\", "/") for line in out.splitlines() if line.strip()}
+        return {
+            line.strip().replace("\\", "/")
+            for line in out.splitlines()
+            if line.strip()
+        }
     return set()
 
 
-def scan(root: Path, config: dict, *, changed_only: bool = False, base_ref: str | None = None) -> list[Finding]:
+def _base_file_line_count(
+    root: Path,
+    path: str,
+    base_ref: str | None,
+) -> int | None:
+    """Return the file size on the base branch, or None for a new/unreadable file."""
+
+    resolved_base = _resolved_base_ref(base_ref)
+    if not resolved_base:
+        return None
+
+    for ref in (f"origin/{resolved_base}", resolved_base):
+        try:
+            content = subprocess.check_output(
+                ["git", "show", f"{ref}:{path}"],
+                cwd=root,
+                stderr=subprocess.DEVNULL,
+                text=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        return _text_line_count(content)
+    return None
+
+
+def scan(
+    root: Path,
+    config: dict,
+    *,
+    changed_only: bool = False,
+    base_ref: str | None = None,
+) -> list[Finding]:
     budgets = config.get("budgets", {})
     screen_limit = int(budgets.get("screen_max_lines", 500))
     widget_limit = int(budgets.get("widget_max_lines", 250))
@@ -138,6 +179,25 @@ def scan(root: Path, config: dict, *, changed_only: bool = False, base_ref: str 
                 )
             )
             continue
+
+        # A pre-existing oversized file is legacy debt even if it was omitted from
+        # the hand-maintained baseline. Compare it with the base branch instead of
+        # either blocking every safe edit or silently raising a configured limit.
+        if changed_only and rel in changed:
+            base_lines = _base_file_line_count(root, rel, base_ref)
+            if base_lines is not None and base_lines > limit:
+                if lines <= base_lines:
+                    continue
+                findings.append(
+                    Finding(
+                        path=rel,
+                        lines=lines,
+                        limit=base_lines,
+                        kind=kind,
+                        reason="legacy file grew above its base-branch size",
+                    )
+                )
+                continue
 
         findings.append(
             Finding(
