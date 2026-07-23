@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-class SocialAuthPolicy {
-  const SocialAuthPolicy._();
-
+abstract final class SocialAuthPolicy {
   static bool shouldFallbackToRedirect(Object error) {
     final message = error.toString().toLowerCase();
     final hasCoopSignal = message.contains('cross-origin-opener-policy') ||
