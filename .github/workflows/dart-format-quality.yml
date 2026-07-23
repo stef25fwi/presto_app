@@ -42,3 +42,243 @@ jobs:
             lib/features/auth/services/auth_service.dart
             test/features/auth/services/email_auth_service_test.dart
           retention-days: 2
+
+  apply-messaging-ui-fix:
+    if: github.head_ref == 'fix/messages-audio-input-debug-header-v2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/messages-audio-input-debug-header-v2
+          fetch-depth: 0
+
+      - name: Apply messaging UI changes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          thread_path = Path('lib/pages/messages/conversation_thread_page.dart')
+          text = thread_path.read_text()
+
+          replacements = [
+              (
+                  """                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(""",
+                  """                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(""",
+                  'TextField borders',
+              ),
+              (
+                  "return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url));",
+                  """return buildDeleteOverlay(
+        _VoiceNotePlayer(
+          source: attachment.url,
+          fallbackDuration: voiceNoteDurationFromName(attachment.name),
+        ),
+      );""",
+                  'voice note attachment',
+              ),
+              (
+                  """class _VoiceNotePlayer extends StatefulWidget {
+  final String source;
+  final bool isLocalFile;
+
+  const _VoiceNotePlayer({required this.source, this.isLocalFile = false});""",
+                  """Duration voiceNoteDurationFromName(String name) {
+  final match = RegExp(r'_(\\d+)s(?:\\.|$)').firstMatch(name.trim());
+  final seconds = match == null ? null : int.tryParse(match.group(1) ?? '');
+  return seconds == null || seconds <= 0
+      ? Duration.zero
+      : Duration(seconds: seconds);
+}
+
+class _VoiceNotePlayer extends StatefulWidget {
+  final String source;
+  final bool isLocalFile;
+  final Duration fallbackDuration;
+
+  const _VoiceNotePlayer({
+    required this.source,
+    this.isLocalFile = false,
+    this.fallbackDuration = Duration.zero,
+  });""",
+                  'voice note widget',
+              ),
+              (
+                  """    super.initState();
+    _player = AudioPlayer();""",
+                  """    super.initState();
+    _total = widget.fallbackDuration;
+    _player = AudioPlayer();""",
+                  'voice note init',
+              ),
+              (
+                  """    if (oldWidget.source != widget.source ||
+        oldWidget.isLocalFile != widget.isLocalFile) {""",
+                  """    if (oldWidget.source != widget.source ||
+        oldWidget.isLocalFile != widget.isLocalFile ||
+        oldWidget.fallbackDuration != widget.fallbackDuration) {""",
+                  'voice note update',
+              ),
+              (
+                  """      _position = Duration.zero;
+      _total = Duration.zero;
+      _isLoading = false;""",
+                  """      _position = Duration.zero;
+      _total = widget.fallbackDuration;
+      _isLoading = false;""",
+                  'voice note reset',
+              ),
+          ]
+          for old, new, label in replacements:
+              if new in text:
+                  continue
+              if old not in text:
+                  raise SystemExit(f'{label} anchor not found')
+              text = text.replace(old, new, 1)
+          thread_path.write_text(text)
+
+          debug_path = Path('lib/widgets/admin_web_debug_panel.dart')
+          debug = debug_path.read_text()
+
+          old = """            Positioned(
+              right: isSmallScreen ? 8 : 12,
+              bottom: isSmallScreen ? 8 : 12,
+              left: isSmallScreen ? 8 : null,
+              child: SafeArea("""
+          new = """            Positioned(
+              right: isSmallScreen ? 8 : 12,
+              top: isSmallScreen ? 8 : 12,
+              child: SafeArea("""
+          if new not in debug:
+              if old not in debug:
+                  raise SystemExit('debug position anchor not found')
+              debug = debug.replace(old, new, 1)
+
+          old = """                    children: [
+                      if (_isExpanded)
+                        _buildExpandedPanel(context, adminState, isSmallScreen),
+                      const SizedBox(height: 8),
+                      FilledButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _isExpanded = !_isExpanded;
+                          });
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF111827),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 10 : 14,
+                            vertical: isSmallScreen ? 10 : 12,
+                          ),
+                        ),
+                        icon: Icon(
+                          _isExpanded
+                              ? Icons.bug_report_outlined
+                              : Icons.monitor_heart_outlined,
+                          size: isSmallScreen ? 18 : 20,
+                        ),
+                        label: Text(
+                          _isExpanded
+                              ? 'Masquer debug admin'
+                              : 'Debug admin web',
+                          style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
+                        ),
+                      ),
+                    ],"""
+          new = """                    children: [
+                      if (isSmallScreen)
+                        IconButton.filled(
+                          tooltip: _isExpanded
+                              ? 'Masquer le diagnostic admin'
+                              : 'Ouvrir le diagnostic admin',
+                          onPressed: () {
+                            setState(() {
+                              _isExpanded = !_isExpanded;
+                            });
+                          },
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF111827),
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: Icon(
+                            _isExpanded
+                                ? Icons.close_rounded
+                                : Icons.monitor_heart_outlined,
+                            size: 20,
+                          ),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _isExpanded = !_isExpanded;
+                            });
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF111827),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                          ),
+                          icon: Icon(
+                            _isExpanded
+                                ? Icons.bug_report_outlined
+                                : Icons.monitor_heart_outlined,
+                            size: 20,
+                          ),
+                          label: Text(
+                            _isExpanded
+                                ? 'Masquer debug admin'
+                                : 'Debug admin web',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      if (_isExpanded) ...[
+                        const SizedBox(height: 8),
+                        _buildExpandedPanel(context, adminState, isSmallScreen),
+                      ],
+                    ],"""
+          if new not in debug:
+              if old not in debug:
+                  raise SystemExit('debug button anchor not found')
+              debug = debug.replace(old, new, 1)
+          debug_path.write_text(debug)
+          PY
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Format targeted files
+        run: |
+          dart format \
+            lib/pages/messages/conversation_thread_page.dart \
+            lib/widgets/admin_web_debug_panel.dart
+
+      - name: Commit messaging UI changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/pages/messages/conversation_thread_page.dart \
+            lib/widgets/admin_web_debug_panel.dart
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(messages): show audio duration and move admin debug to header"
+          git push origin HEAD:fix/messages-audio-input-debug-header-v2
