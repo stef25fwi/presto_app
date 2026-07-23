@@ -73,8 +73,10 @@ class AdminMessagingAnalyticsSnapshot {
       return null;
     }
 
-    final sourceValue = data['source'];
-    final source = sourceValue == null ? 'scheduled' : sourceValue.toString();
+    String readSource() {
+      final value = data['source'];
+      return value == null ? 'scheduled' : value.toString();
+    }
 
     return AdminMessagingAnalyticsSnapshot(
       totalConversations: readInt('totalConversations'),
@@ -96,7 +98,7 @@ class AdminMessagingAnalyticsSnapshot {
       pushDeliveredCount: readInt('pushDeliveredCount'),
       pushFailedCount: readInt('pushFailedCount'),
       generatedAt: readDate(data['generatedAt']),
-      source: source,
+      source: readSource(),
       windowHours: data['windowHours'] is num
           ? (data['windowHours'] as num).toInt()
           : int.tryParse('${data['windowHours'] ?? ''}'),
