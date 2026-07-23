@@ -1,2 +1,3 @@
 Coverage critical paths autopilot manually activated on 2026-07-22.
 Trigger: five critical journeys toward 100% LCOV.
+Refill requested on 2026-07-23 after authentication merge.
