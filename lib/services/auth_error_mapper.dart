@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-class AuthErrorMapper {
-  const AuthErrorMapper._();
-
+abstract final class AuthErrorMapper {
   static String message(Object error) {
     if (error is FirebaseAuthException) {
       switch (error.code) {
