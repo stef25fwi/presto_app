@@ -124,8 +124,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     setState(() => _loading = true);
 
     try {
-      final resendVerificationEmail = widget.resendVerificationEmail ??
-          AuthService.instance.resendVerificationEmail;
+      final resendVerificationEmail = widget.resendVerificationEmail ?? AuthService.instance.resendVerificationEmail;
       await resendVerificationEmail();
 
       if (!mounted) return;
