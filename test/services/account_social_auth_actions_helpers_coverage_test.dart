@@ -31,7 +31,7 @@ void main() {
   test('classe les erreurs nécessitant un redirect', () {
     expect(
       AccountSocialAuthActions.shouldFallbackToRedirectForTesting(
-        StateError('popup_closed_by_browser'),
+        StateError('popup-blocked-by-browser'),
       ),
       isTrue,
     );
