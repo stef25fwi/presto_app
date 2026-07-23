@@ -1,6 +1,4 @@
-class PublishOfferFormPolicy {
-  const PublishOfferFormPolicy._();
-
+abstract final class PublishOfferFormPolicy {
   static PublishOfferFormReadiness evaluate(PublishOfferFormInput input) {
     final issues = <PublishOfferValidationIssue>[];
 
