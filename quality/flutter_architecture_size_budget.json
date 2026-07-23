@@ -46,6 +46,12 @@
       "module": "messagerie",
       "next_split": "extraire entête, flux messages, pièces jointes, audio et modération"
     },
+    "lib/widgets/admin_web_debug_panel.dart": {
+      "current_lines": 648,
+      "target_lines": 250,
+      "module": "administration_debug",
+      "next_split": "extraire panneau détaillé, sections diagnostic et actions de copie"
+    },
     "lib/features/subscriptions/subscription_widgets_base.dart": {
       "current_lines": 1148,
       "target_lines": 500,
