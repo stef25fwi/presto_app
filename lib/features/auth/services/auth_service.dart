@@ -9,6 +9,7 @@ typedef EmailPasswordResetAction = Future<void> Function(String email);
 typedef EmailVerificationAction = Future<void> Function();
 typedef EmailVerificationSyncAction = Future<bool> Function();
 typedef AuthenticatedUserCheck = bool Function();
+typedef AuthUserProfileServiceFactory = AuthUserProfileService Function();
 typedef EnsureSignedInUserProfileAction = Future<void> Function({
   required User user,
   required String authMethod,
@@ -24,36 +25,56 @@ class EmailAuthService {
   EmailAuthService({
     FirebaseAuth? auth,
     AuthUserProfileService? profileService,
+    AuthUserProfileServiceFactory? profileServiceFactory,
     EmailPasswordResetAction? backendPasswordReset,
     EmailPasswordResetAction? nativePasswordReset,
+    EmailPasswordResetAction? defaultBackendPasswordReset,
     EmailVerificationAction? requestEmailVerification,
+    EmailVerificationAction? defaultRequestEmailVerification,
     EmailVerificationSyncAction? syncEmailVerification,
+    EmailVerificationSyncAction? defaultSyncEmailVerification,
     AuthenticatedUserCheck? hasCurrentUser,
     EnsureSignedInUserProfileAction? ensureSignedInUserProfile,
+    EnsureSignedInUserProfileAction? defaultEnsureSignedInUserProfile,
     EnsureEmailUserProfileAction? ensureEmailUserProfile,
   })  : _auth = auth,
         _profileService = profileService,
+        _profileServiceFactory =
+            profileServiceFactory ?? AuthUserProfileService.new,
         _backendPasswordReset = backendPasswordReset,
         _nativePasswordReset = nativePasswordReset,
+        _defaultBackendPasswordReset = defaultBackendPasswordReset ??
+            EmailActionService.requestPasswordResetEmail,
         _requestEmailVerification = requestEmailVerification,
+        _defaultRequestEmailVerification = defaultRequestEmailVerification ??
+            EmailActionService.requestEmailVerificationEmail,
         _syncEmailVerification = syncEmailVerification,
+        _defaultSyncEmailVerification = defaultSyncEmailVerification ??
+            EmailActionService.syncCurrentUserEmailVerificationState,
         _hasCurrentUser = hasCurrentUser,
         _ensureSignedInUserProfile = ensureSignedInUserProfile,
+        _defaultEnsureSignedInUserProfile = defaultEnsureSignedInUserProfile ??
+            UserProfileBootstrapService.ensureUserDocument,
         _ensureEmailUserProfile = ensureEmailUserProfile;
 
   final FirebaseAuth? _auth;
   final AuthUserProfileService? _profileService;
+  final AuthUserProfileServiceFactory _profileServiceFactory;
   final EmailPasswordResetAction? _backendPasswordReset;
   final EmailPasswordResetAction? _nativePasswordReset;
+  final EmailPasswordResetAction _defaultBackendPasswordReset;
   final EmailVerificationAction? _requestEmailVerification;
+  final EmailVerificationAction _defaultRequestEmailVerification;
   final EmailVerificationSyncAction? _syncEmailVerification;
+  final EmailVerificationSyncAction _defaultSyncEmailVerification;
   final AuthenticatedUserCheck? _hasCurrentUser;
   final EnsureSignedInUserProfileAction? _ensureSignedInUserProfile;
+  final EnsureSignedInUserProfileAction _defaultEnsureSignedInUserProfile;
   final EnsureEmailUserProfileAction? _ensureEmailUserProfile;
 
   FirebaseAuth get _resolvedAuth => _auth ?? FirebaseAuth.instance;
   AuthUserProfileService get _resolvedProfileService =>
-      _profileService ?? AuthUserProfileService();
+      _profileService ?? _profileServiceFactory();
 
   Future<User> signIn({
     required String email,
@@ -80,7 +101,7 @@ class EmailAuthService {
         isNewUserHint: false,
       );
     } else {
-      await UserProfileBootstrapService.ensureUserDocument(
+      await _defaultEnsureSignedInUserProfile(
         user: user,
         authMethod: 'email',
         isNewUserHint: false,
@@ -150,7 +171,7 @@ class EmailAuthService {
       if (backendReset != null) {
         await backendReset(normalizedEmail);
       } else {
-        await EmailActionService.requestPasswordResetEmail(normalizedEmail);
+        await _defaultBackendPasswordReset(normalizedEmail);
       }
     } catch (_) {
       final nativeReset = _nativePasswordReset;
@@ -177,12 +198,12 @@ class EmailAuthService {
   Future<bool> syncCurrentUserEmailVerificationState() {
     final sync = _syncEmailVerification;
     if (sync != null) return sync();
-    return EmailActionService.syncCurrentUserEmailVerificationState();
+    return _defaultSyncEmailVerification();
   }
 
   Future<void> _runEmailVerificationRequest() {
     final request = _requestEmailVerification;
     if (request != null) return request();
-    return EmailActionService.requestEmailVerificationEmail();
+    return _defaultRequestEmailVerification();
   }
 }
