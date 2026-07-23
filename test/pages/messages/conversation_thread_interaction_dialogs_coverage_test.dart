@@ -183,8 +183,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Découvrir ilipresto+'), findsOneWidget);
-    final laterButton = tester.widget<TextButton>(
-      find.widgetWithText(TextButton, 'Plus tard'),
+    final laterButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Plus tard'),
     );
     laterButton.onPressed!.call();
     await tester.pump(const Duration(milliseconds: 500));
