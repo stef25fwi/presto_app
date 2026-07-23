@@ -1,5 +1,5 @@
 import { onCall } from "firebase-functions/v2/https";
-import { PROJECT_REGION } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 
 type UnknownMap = Record<string, unknown>;
@@ -90,7 +90,7 @@ export function sanitizePublicLegalConfig(value: unknown): UnknownMap {
 
 export const getPublicLegalConfig = onCall({
   region: PROJECT_REGION,
-  enforceAppCheck: false,
+  enforceAppCheck: ENFORCE_APP_CHECK,
   timeoutSeconds: 10,
   memory: "256MiB",
   maxInstances: 20,
