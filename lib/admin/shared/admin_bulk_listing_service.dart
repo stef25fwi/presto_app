@@ -109,10 +109,12 @@ int? _readInt(Object? value) {
 class AdminBulkListingService {
   AdminBulkListingService({
     AdminBulkListingCaller? caller,
+    FirebaseFunctions? functions,
     AdminBulkDeletionPolicy policy = const AdminBulkDeletionPolicy(
       maxBatchSize: 50,
     ),
-  })  : _caller = caller ?? _callFirebase,
+  })  : _caller = caller ??
+            ((payload) => _callFirebase(payload, functions: functions)),
         _policy = policy;
 
   static const int maxListingIds = 50;
@@ -157,10 +159,13 @@ class AdminBulkListingService {
     return AdminBulkListingDeleteSummary.fromData(data);
   }
 
-  static Future<Object?> _callFirebase(Map<String, Object?> payload) async {
+  static Future<Object?> _callFirebase(
+    Map<String, Object?> payload, {
+    FirebaseFunctions? functions,
+  }) async {
     final HttpsCallableResult<dynamic> result =
         await callPrestoFunction<dynamic>(
-      functions: prestoFirebaseFunctions,
+      functions: functions ?? prestoFirebaseFunctions,
       name: 'adminBulkDeleteListings',
       timeout: const Duration(minutes: 5),
       parameters: payload,
