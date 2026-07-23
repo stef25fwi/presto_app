@@ -1,39 +1,4 @@
-from pathlib import Path
-
-source_path = Path('lib/pages/messages/conversation_thread_page.dart')
-source = source_path.read_text()
-replacements = {
-    'enum _VoiceNotePreviewAction': 'enum VoiceNotePreviewAction',
-    'class _PendingVoiceNote': 'class PendingVoiceNote',
-    'const _PendingVoiceNote({': 'const PendingVoiceNote({',
-    'class _VoiceNotePreviewSheet': 'class VoiceNotePreviewSheet',
-    'final _PendingVoiceNote preview;': 'final PendingVoiceNote preview;',
-    'const _VoiceNotePreviewSheet({': 'const VoiceNotePreviewSheet({',
-}
-for old, new in replacements.items():
-    if old not in source:
-        raise SystemExit(f'missing source marker: {old}')
-    source = source.replace(old, new)
-source = source.replace('_PendingVoiceNote', 'PendingVoiceNote')
-source = source.replace('_VoiceNotePreviewSheet', 'VoiceNotePreviewSheet')
-source = source.replace('_VoiceNotePreviewAction', 'VoiceNotePreviewAction')
-constructor_marker = "const VoiceNotePreviewSheet({\n    required this.preview,"
-if constructor_marker not in source:
-    raise SystemExit('missing VoiceNotePreviewSheet constructor marker')
-source = source.replace(
-    constructor_marker,
-    "const VoiceNotePreviewSheet({\n    super.key,\n    required this.preview,",
-    1,
-)
-source = source.replace(
-    'final VoidCallback onSend;\n\n  const VoiceNotePreviewSheet({',
-    'final VoidCallback onSend;\n  const VoiceNotePreviewSheet({',
-    1,
-)
-source_path.write_text(source)
-
-test_path = Path('test/pages/messages/conversation_thread_voice_preview_coverage_test.dart')
-test_path.write_text("""import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -176,4 +141,3 @@ void main() {
 }
 
 void _noop() {}
-""")
