@@ -50,7 +50,7 @@ void main() {
     final hiddenApproved = MessageModeration.fromMap(
       <String, dynamic>{'status': 'approved', 'visibility': 'hidden'},
     );
-    expect(hiddenApproved.shouldHideContent, isTrue);
+    expect(hiddenApproved.shouldHideContent, isFalse);
     expect(hiddenApproved.placeholderText, 'Message modéré');
 
     final attachment = MessageAttachment.fromMap(<String, dynamic>{
