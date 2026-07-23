@@ -29,11 +29,21 @@ class SubscriptionSection extends StatelessWidget {
     this.operatingModeService,
   });
 
+  Stream<AppOperatingModeState> _modeStream() {
+    try {
+      return (operatingModeService ?? AppOperatingModeService())
+          .watchState(ensureExists: true);
+    } catch (_) {
+      return Stream<AppOperatingModeState>.value(
+        AppOperatingModeState.defaults(),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final modeService = operatingModeService ?? AppOperatingModeService();
     return StreamBuilder<AppOperatingModeState>(
-      stream: modeService.watchState(ensureExists: true),
+      stream: _modeStream(),
       builder: (context, snapshot) {
         final state = snapshot.data ?? AppOperatingModeState.defaults();
         if (!state.mode.isCommercial) {
@@ -54,14 +64,19 @@ class SubscriptionSection extends StatelessWidget {
 
 class AdminSubscriptionTile extends StatelessWidget {
   final SubscriptionConfigService? service;
+  final AppOperatingModeService? operatingModeService;
 
-  const AdminSubscriptionTile({super.key, this.service});
+  const AdminSubscriptionTile({
+    super.key,
+    this.service,
+    this.operatingModeService,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const OperatingModeAdminTile(),
+        OperatingModeAdminTile(service: operatingModeService),
         const SizedBox(height: 14),
         _AdminVideoMakerTile(
           onTap: () {
