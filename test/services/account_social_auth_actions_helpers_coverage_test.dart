@@ -16,7 +16,7 @@ void main() {
   test('calcule le SHA-256 attendu', () {
     expect(
       AccountSocialAuthActions.sha256OfStringForTesting('ilipresto'),
-      'c370bf4c36d8dcd2b188d9029c861e55d27651d5ff5a936f577214fb1f0ae188',
+      '5b455fa48e0867e6bc98cae59b2ca64318589562aea7211e5ead2c1516809469',
     );
   });
 
