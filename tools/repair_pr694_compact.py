@@ -1,10 +1,24 @@
-# Déclencheur déterministe de compaction PR #694.
+# Déclencheur déterministe final de la réparation PR #694.
 from pathlib import Path
 
 TARGET = Path('lib/pages/messages/conversations_list_page.dart')
-TEMP_EXECUTOR = Path('.github/workflows/temp-compact-696.yml')
+TEMP_EXECUTORS = (
+    Path('.github/workflows/temp-fix-696.yml'),
+    Path('.github/workflows/temp-compact-696.yml'),
+)
 
-OLD = '''    WidgetsBinding.instance.addPostFrameCallback((_) {
+DIRECT = '''    final maxLines = _diagPanelVisible ? 40 : 12;
+    setState(() {
+      _adminConversationLoadLogs.insert(0, line);
+      if (_adminConversationLoadLogs.length > maxLines) {
+        _adminConversationLoadLogs.removeRange(
+          maxLines,
+          _adminConversationLoadLogs.length,
+        );
+      }
+    });'''
+
+EXPANDED = '''    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_diagPanelVisible) return;
       final maxLines = _diagPanelVisible ? 40 : 12;
       setState(() {
@@ -18,7 +32,7 @@ OLD = '''    WidgetsBinding.instance.addPostFrameCallback((_) {
       });
     });'''
 
-NEW = '''    WidgetsBinding.instance.addPostFrameCallback((_) {
+COMPACT = '''    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_diagPanelVisible) return;
       setState(() {
         final logs = _adminConversationLoadLogs;
@@ -28,9 +42,14 @@ NEW = '''    WidgetsBinding.instance.addPostFrameCallback((_) {
     });'''
 
 text = TARGET.read_text(encoding='utf-8')
-if NEW not in text:
-    if OLD not in text:
-        raise SystemExit('Expected expanded post-frame block not found')
-    TARGET.write_text(text.replace(OLD, NEW, 1), encoding='utf-8')
+if COMPACT not in text:
+    if EXPANDED in text:
+        text = text.replace(EXPANDED, COMPACT, 1)
+    elif DIRECT in text:
+        text = text.replace(DIRECT, COMPACT, 1)
+    else:
+        raise SystemExit('Expected admin log mutation block not found')
+    TARGET.write_text(text, encoding='utf-8')
 
-TEMP_EXECUTOR.unlink(missing_ok=True)
+for executor in TEMP_EXECUTORS:
+    executor.unlink(missing_ok=True)
