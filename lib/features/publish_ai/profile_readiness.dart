@@ -171,10 +171,7 @@ class ProfileReadinessChecker {
   Future<User?> _prepareProfileAccess(User user) {
     final override = _accessPreparer;
     if (override != null) {
-      return override(
-        user: user,
-        forceRefreshAppCheckToken: true,
-      );
+      return override(user: user, forceRefreshAppCheckToken: true);
     }
     return UserProfileBootstrapService.prepareProfileFirestoreAccess(
       user: user,
