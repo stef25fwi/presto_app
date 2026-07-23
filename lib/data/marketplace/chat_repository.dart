@@ -80,11 +80,8 @@ class ChatRepository {
 
   Future<String> _obtainVerificationToken(
     MarketplaceHumanVerificationAction action,
-  ) {
-    final provider = _verificationTokenProvider;
-    if (provider != null) return provider(action);
-    return _verification.obtainToken(action);
-  }
+  ) =>
+      (_verificationTokenProvider ?? _verification.obtainToken)(action);
 
   Future<Object?> _call({
     required String name,
