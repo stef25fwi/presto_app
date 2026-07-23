@@ -40,7 +40,7 @@ void main() {
     );
 
     expect(preview.duration, const Duration(minutes: 2, seconds: 7));
-    expect(preview.bytes, Uint8List.fromList(const <int>[1, 2, 3]));
+    expect(preview.bytes, orderedEquals(const <int>[1, 2, 3]));
     expect(preview.filePath, '/tmp/note.m4a');
     expect(preview.previewSource, 'https://cdn.ilipresto.fr/note.m4a');
     expect(preview.previewIsLocalFile, isFalse);
