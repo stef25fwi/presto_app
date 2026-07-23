@@ -6,10 +6,12 @@ Ilipresto démarre en **bêta gratuite**. Aucun abonnement, paiement, renouvelle
 
 ## Source de vérité
 
-Deux documents Firestore sont utilisés :
+Deux documents Firestore privés sont utilisés :
 
 - `app_config/legal` : mode d’exploitation, versions juridiques, date d’entrée en vigueur et identité de l’éditeur ;
 - `app_config/subscriptions` : miroir opérationnel utilisé par l’interface et les fonctions de paiement.
+
+Les visiteurs non connectés ne lisent pas directement ces documents. La Cloud Function en lecture seule `getPublicLegalConfig` lit `app_config/legal` avec l’Admin SDK, retire tout champ interne et retourne uniquement les informations destinées aux mentions légales.
 
 Le mode canonique est :
 
@@ -21,20 +23,48 @@ Les anciens champs restent présents pour compatibilité, mais ils sont neutrali
 ## Mise en service initiale
 
 1. Ouvrir l’espace d’administration.
-2. Ouvrir **Mode d’exploitation Ilipresto**.
+2. Ouvrir **Mode d’exploitation et identité juridique**.
 3. Laisser **Activer la version payante** désactivé.
-4. Ouvrir **Configurer l’identité juridique**.
+4. Remplir le formulaire affiché directement dans la carte d’administration.
 5. Renseigner les champs obligatoires de la bêta :
    - nom réel de l’éditeur ;
    - adresse postale juridiquement utilisable ;
    - téléphone ;
-   - e-mail ;
-   - directeur de publication ;
-   - hébergeur et adresse de l’hébergeur.
-6. Vérifier que le statut affiche **Profil juridique complet**.
-7. Contrôler les onglets Mentions légales, Confidentialité et CGU depuis un parcours non connecté.
+   - e-mail de contact ;
+   - directeur de publication.
+6. Vérifier ou ajuster, dans la section **Hébergement**, l’hébergeur et son adresse.
+7. Vérifier que le statut affiche **Profil juridique complet**.
+8. Contrôler les onglets Mentions légales, Confidentialité et CGU depuis un parcours non connecté.
 
 Aucune identité n’est inventée par l’application. Tant que les champs obligatoires ne sont pas renseignés, la page juridique affiche un avertissement et le mode commercial reste verrouillé.
+
+## Fonctionnement du formulaire administrateur
+
+Le formulaire intégré permet de modifier :
+
+- le nom réel de l’éditeur ;
+- l’adresse juridiquement utilisable ;
+- le téléphone ;
+- l’adresse e-mail de contact ;
+- le directeur de publication ;
+- les informations de société préparant le futur passage au payant ;
+- les informations de l’hébergeur.
+
+Les contrôles empêchent l’enregistrement d’une adresse e-mail ou d’un téléphone manifestement invalide. Le statut de complétude se met à jour pendant la saisie.
+
+Après enregistrement, `app_config/legal` est mis à jour. La page juridique publique récupère ensuite les valeurs à travers `getPublicLegalConfig`. Aucun nouveau build de l’application n’est nécessaire pour modifier le contenu ; la Cloud Function doit simplement avoir été déployée avec cette version.
+
+## Exposition publique sécurisée
+
+`getPublicLegalConfig` est accessible sans connexion afin que les mentions légales soient consultables avant l’inscription. La réponse est filtrée et limitée aux champs suivants :
+
+- mode d’exploitation et versions juridiques ;
+- date d’entrée en vigueur ;
+- identité et coordonnées légales de l’éditeur ;
+- informations de société lorsqu’elles existent ;
+- hébergeur et adresse d’hébergement.
+
+La fonction ne retourne notamment aucun identifiant administrateur, rôle, jeton, secret, historique interne ou donnée de paiement. L’écriture reste réservée à l’administration via les règles Firestore existantes.
 
 ## Garanties du mode `free_beta`
 
@@ -51,7 +81,7 @@ Aucune identité n’est inventée par l’application. Tant que les champs obli
 
 ## Activation future de la version payante
 
-Avant d’utiliser le toggle, compléter dans le profil juridique :
+Avant d’utiliser le toggle, compléter dans la section **Informations de société** :
 
 - dénomination sociale ;
 - forme juridique ;
@@ -109,7 +139,7 @@ Une évolution substantielle peut utiliser `requiresReacceptance` pour déclench
 
 ## Configuration de secours au build
 
-Les mentions légales peuvent disposer de valeurs embarquées avec les `dart-define` suivants :
+Les mentions légales peuvent conserver des valeurs embarquées avec les `dart-define` suivants :
 
 ```text
 LEGAL_PUBLISHER_NAME
@@ -125,11 +155,14 @@ LEGAL_COMPANY_CAPITAL
 LEGAL_COMPANY_VAT
 ```
 
-Ces valeurs servent de secours. La configuration Firestore gérée depuis l’administration reste prioritaire pour les utilisateurs autorisés à la lire.
+Ces valeurs sont uniquement un secours si la configuration distante est momentanément indisponible. Après le premier enregistrement dans l’administration et le déploiement de `getPublicLegalConfig`, les valeurs de `app_config/legal` sont prioritaires pour tous les visiteurs, y compris non connectés.
 
 ## Validation avant fusion et déploiement
 
-- `flutter analyze`
+- `flutter analyze` ;
+- test du formulaire administrateur et de ses validations ;
+- test du chargement public sans accès Firestore client ;
+- test du filtrage serveur des champs publics ;
 - tests ciblés du mode d’exploitation ;
 - tests de la configuration abonnement ;
 - tests de la page d’inscription ;
@@ -146,7 +179,7 @@ Ces valeurs servent de secours. La configuration Firestore gérée depuis l’ad
 Le déploiement de cette évolution doit inclure :
 
 - Flutter Web / Hosting ;
-- Cloud Functions pour le garde Checkout ;
+- Cloud Functions, notamment `getPublicLegalConfig` et le garde Checkout ;
 - configuration Firestore initialisée depuis l’administration.
 
 Ne pas activer le mode commercial en production tant que la structure juridique, les informations de société, les tarifs et les conditions commerciales ne sont pas validés.
