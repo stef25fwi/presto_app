@@ -187,8 +187,7 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
             widget.child,
             Positioned(
               right: isSmallScreen ? 8 : 12,
-              bottom: isSmallScreen ? 8 : 12,
-              left: isSmallScreen ? 8 : null,
+              top: isSmallScreen ? 8 : 12,
               child: SafeArea(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: panelWidth),
@@ -196,36 +195,16 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_isExpanded)
-                        _buildExpandedPanel(context, adminState, isSmallScreen),
-                      const SizedBox(height: 8),
-                      FilledButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _isExpanded = !_isExpanded;
-                          });
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF111827),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isSmallScreen ? 10 : 14,
-                            vertical: isSmallScreen ? 10 : 12,
-                          ),
-                        ),
-                        icon: Icon(
-                          _isExpanded
-                              ? Icons.bug_report_outlined
-                              : Icons.monitor_heart_outlined,
-                          size: isSmallScreen ? 18 : 20,
-                        ),
-                        label: Text(
-                          _isExpanded
-                              ? 'Masquer debug admin'
-                              : 'Debug admin web',
-                          style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
-                        ),
+                      IconButton.filled(
+                        tooltip: _isExpanded ? 'Masquer le diagnostic admin' : 'Ouvrir le diagnostic admin',
+                        onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                        style: IconButton.styleFrom(backgroundColor: const Color(0xFF111827), foregroundColor: Colors.white),
+                        icon: Icon(_isExpanded ? Icons.close_rounded : Icons.monitor_heart_outlined, size: 20),
                       ),
+                      if (_isExpanded) ...[
+                        const SizedBox(height: 8),
+                        _buildExpandedPanel(context, adminState, isSmallScreen),
+                      ],
                     ],
                   ),
                 ),
