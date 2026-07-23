@@ -82,7 +82,7 @@ void main() {
     expect(find.text('Annuler'), findsOneWidget);
     expect(find.text('Refaire'), findsOneWidget);
     expect(find.text('Envoyer'), findsOneWidget);
-    expect(find.text('00:00 / 00:00'), findsOneWidget);
+    expect(find.text('00:00'), findsOneWidget);
 
     await tester.tap(find.text('Annuler'));
     await tester.tap(find.text('Refaire'));
