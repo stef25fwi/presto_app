@@ -1,17 +1,16 @@
 import 'dart:async';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 
 import '../../config/env/openai_config.dart';
+import '../../models/ai/listing_ai_request.dart';
 import '../../services/ai/listing_audio_ai_service.dart';
 import '../../utils/recording_path_web.dart'
     if (dart.library.io) '../../utils/recording_path_io.dart';
 import '../micro_ia/micro_ia_service.dart';
-// The web recorder uses package:web (browser-only). Default to the stub so
-// the file still compiles on Android/iOS; the real implementation is loaded
-// only when dart.library.js_interop is available (web build).
 import '../micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.js_interop) '../micro_ia/web_audio_recorder.dart';
 import 'profile_readiness.dart';
@@ -19,11 +18,6 @@ import 'publish_ai_state.dart';
 
 /// Orchestrates the publish-AI flow: profile gate → microphone recording →
 /// Storage upload → server STT + draft generation → result event.
-///
-/// The pipeline is **stateful** but **single-use per session**: the consumer
-/// can call [arm], [stop] and [cancel] freely; internal mutable state is
-/// reset on every fresh [arm] call. Errors are emitted as
-/// [PublishAiFailure] events on the stream, never thrown.
 class PublishAiPipeline {
   PublishAiPipeline({
     ProfileReadinessChecker? readiness,
@@ -43,27 +37,16 @@ class PublishAiPipeline {
   final StreamController<PublishAiState> _events =
       StreamController<PublishAiState>.broadcast();
 
-  /// Public event stream. Emits the latest pipeline state. Late subscribers
-  /// only see events emitted after they subscribe (broadcast semantics).
   Stream<PublishAiState> get events => _events.stream;
 
   bool _isRecording = false;
   String? _mobileRecordingPath;
   String? _activeUid;
 
-  /// Convenience hint for the UI: is recording active right now? The
-  /// authoritative state is the latest [events] payload, but mirrors of the
-  /// flag are practical for synchronous build() decisions.
   bool get isRecording => _isRecording;
 
-  /// Start the flow: verify profile readiness, request microphone, begin
-  /// recording. Emits [PublishAiProfileNotReady] / [PublishAiMicUnavailable]
-  /// / [PublishAiRecording] / [PublishAiFailure] on the stream.
   Future<void> arm() async {
-    if (_isRecording) {
-      // Defensive: never double-arm.
-      return;
-    }
+    if (_isRecording) return;
 
     _emit(const PublishAiPreparing());
 
@@ -116,12 +99,9 @@ class PublishAiPipeline {
     _emit(const PublishAiRecording());
   }
 
-  /// Stop recording, upload, transcribe and emit the resulting draft. On
-  /// any failure the pipeline emits a [PublishAiFailure] and resets.
   Future<void> stop() async {
-    if (!_isRecording) {
-      return;
-    }
+    if (!_isRecording) return;
+
     _isRecording = false;
     final uid = _activeUid;
     if (uid == null) {
@@ -150,8 +130,7 @@ class PublishAiPipeline {
         if (upload.usedClientSideWavConversion && upload.bytes.length < 30000) {
           throw const PublishAiPipelineException(
             code: 'audio_too_short',
-            message:
-                "L'enregistrement est trop court. Réessaie plus longtemps.",
+            message: "L'enregistrement est trop court. Réessaie plus longtemps.",
           );
         }
         audioBytes = upload.bytes;
@@ -182,10 +161,7 @@ class PublishAiPipeline {
         contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
       }
     } on PublishAiPipelineException catch (error) {
-      _emit(PublishAiFailure(
-        code: error.code,
-        message: error.message,
-      ));
+      _emit(PublishAiFailure(code: error.code, message: error.message));
       return;
     } catch (error) {
       _emit(PublishAiFailure(
@@ -196,7 +172,6 @@ class PublishAiPipeline {
       return;
     }
 
-    // Upload then call backend.
     String storagePath;
     try {
       storagePath = await _audioService.uploadAudioBytes(
@@ -208,8 +183,7 @@ class PublishAiPipeline {
     } catch (error) {
       _emit(PublishAiFailure(
         code: 'upload_failed',
-        message: "Impossible d'envoyer l'audio au serveur. Vérifie ta "
-            'connexion et réessaie.',
+        message: "Impossible d'envoyer l'audio au serveur. Vérifie ta connexion et réessaie.",
         cause: error,
       ));
       return;
@@ -224,27 +198,21 @@ class PublishAiPipeline {
         generateDraft: true,
         debugLabel: 'publish_ai_pipeline',
       );
-      final transcript = (response['text'] ?? '').toString().trim();
-      if (transcript.isEmpty) {
-        _emit(const PublishAiFailure(
-          code: 'transcript_empty',
-          message: 'Aucun texte reconnu. Parle un peu plus fort et réessaie.',
-        ));
-        return;
-      }
-      final draftRaw = response['draft'];
-      final draft =
-          draftRaw is Map ? Map<String, dynamic>.from(draftRaw) : null;
-      final modeUsed = (response['modeUsed'] ?? '').toString();
-      _emit(PublishAiResult(
-        transcript: transcript,
-        draft: draft,
-        modeUsed: modeUsed,
-      ));
+      _emitCombinedResponse(response);
     } on MicroIaClientAuthException catch (error) {
       _emit(PublishAiFailure(
         code: error.code,
         message: error.message,
+        cause: error,
+      ));
+    } on FirebaseFunctionsException catch (error) {
+      if (_mustUseOpenAiFallback(error)) {
+        final recovered = await _recoverWithOpenAi(storagePath, error);
+        if (recovered) return;
+      }
+      _emit(PublishAiFailure(
+        code: error.code,
+        message: _friendlyCallableError(error),
         cause: error,
       ));
     } catch (error) {
@@ -256,8 +224,77 @@ class PublishAiPipeline {
     }
   }
 
-  /// Cancel an in-flight session and clean up resources. Safe to call when
-  /// already idle.
+  void _emitCombinedResponse(Map<String, dynamic> response) {
+    final transcript = (response['text'] ?? '').toString().trim();
+    if (transcript.isEmpty) {
+      _emit(const PublishAiFailure(
+        code: 'transcript_empty',
+        message: 'Aucun texte reconnu. Parle un peu plus fort et réessaie.',
+      ));
+      return;
+    }
+    final draftRaw = response['draft'];
+    final draft = draftRaw is Map ? Map<String, dynamic>.from(draftRaw) : null;
+    final modeUsed = (response['modeUsed'] ?? '').toString();
+    _emit(PublishAiResult(
+      transcript: transcript,
+      draft: draft,
+      modeUsed: modeUsed,
+    ));
+  }
+
+  bool _mustUseOpenAiFallback(FirebaseFunctionsException error) {
+    return error.code == 'internal' ||
+        error.code == 'unavailable' ||
+        error.code == 'deadline-exceeded';
+  }
+
+  Future<bool> _recoverWithOpenAi(
+    String storagePath,
+    FirebaseFunctionsException originalError,
+  ) async {
+    debugPrint(
+      '[PublishAiPipeline] combined callable failed (${originalError.code}); '
+      'falling back to openAiExtractListingFieldsFromAudio.',
+    );
+    try {
+      final result = await _audioService.extractListingFieldsFromUploadedAudio(
+        storagePath: storagePath,
+        request: const ListingAiRequest(
+          input: '',
+          languageCode: OpenAiConfig.defaultLanguageCode,
+        ),
+      );
+      final transcript = result.transcriptText;
+      if (transcript.isEmpty) return false;
+      _emit(PublishAiResult(
+        transcript: transcript,
+        draft: result.toDraftPayload(),
+        modeUsed: 'WHISPER_FALLBACK',
+      ));
+      return true;
+    } catch (fallbackError, stackTrace) {
+      debugPrint(
+        '[PublishAiPipeline] OpenAI audio fallback failed: $fallbackError',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+      return false;
+    }
+  }
+
+  String _friendlyCallableError(FirebaseFunctionsException error) {
+    switch (error.code) {
+      case 'resource-exhausted':
+        return 'Trop de demandes successives. Attends un instant puis réessaie.';
+      case 'failed-precondition':
+        return error.message ?? 'Audio non exploitable. Enregistre un nouvel audio.';
+      case 'unauthenticated':
+        return "Session expirée. Reconnecte-toi puis réessaie.";
+      default:
+        return 'La transcription a échoué. Réessaie dans un instant.';
+    }
+  }
+
   Future<void> cancel() async {
     if (!_isRecording) return;
     _isRecording = false;
@@ -267,14 +304,11 @@ class PublishAiPipeline {
       } else {
         await _recorder.stop();
       }
-    } catch (_) {
-      // Best effort — never throw from cancel().
-    }
+    } catch (_) {}
     _mobileRecordingPath = null;
     _emit(const PublishAiIdle());
   }
 
-  /// Release stream resources (called by [State.dispose]).
   Future<void> dispose() async {
     await cancel();
     await _events.close();
@@ -291,13 +325,12 @@ class PublishAiPipeline {
   }
 }
 
-/// Internal exception used to short-circuit the pipeline with a typed
-/// payload. Never escapes the pipeline.
 class PublishAiPipelineException implements Exception {
   const PublishAiPipelineException({
     required this.code,
     required this.message,
   });
+
   final String code;
   final String message;
 }
