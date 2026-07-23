@@ -34,8 +34,7 @@ void main() {
     final user = _User(
       'register-default',
       email: 'pro@ilipresto.fr',
-      name: 'Ancien profil',
-    );
+    )..name = 'Ancien profil';
     final auth = _Auth(registerUser: user, currentUserValue: user);
     var factoryCalls = 0;
     var bootstrapCalls = 0;
@@ -177,7 +176,7 @@ class _Credential implements UserCredential {
 }
 
 class _User implements User {
-  _User(this.id, {this.email, this.name});
+  _User(this.id, {this.email});
 
   final String id;
   @override
