@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ MODULE_PATH = Path(__file__).with_name('check_flutter_architecture_size.py')
 SPEC = importlib.util.spec_from_file_location('architecture_size', MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 architecture_size = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = architecture_size
 SPEC.loader.exec_module(architecture_size)
 
 
