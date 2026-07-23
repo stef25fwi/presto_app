@@ -68,7 +68,7 @@ class ProcessedConversationPhoto {
 }
 
 class ConversationService {
-  static final FirebaseFunctions _functions = prestoFirebaseFunctions;
+  static FirebaseFunctions _functions = prestoFirebaseFunctions;
   static ConversationFunctionCaller _caller = _callFirebaseFunction;
 
   static Future<Map<String, dynamic>> _callFirebaseFunction({
@@ -90,6 +90,12 @@ class ConversationService {
   @visibleForTesting
   static void setFunctionCallerForTesting(ConversationFunctionCaller? caller) {
     _caller = caller ?? _callFirebaseFunction;
+  }
+
+  @visibleForTesting
+  static void setFirebaseFunctionsForTesting(FirebaseFunctions? functions) {
+    _functions = functions ?? prestoFirebaseFunctions;
+    _caller = _callFirebaseFunction;
   }
 
   static Future<String> ensureConversation({
