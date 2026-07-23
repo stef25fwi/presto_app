@@ -14,6 +14,8 @@ void main() {
     );
 
     expect(admin['collection'], FirestoreCollections.conversations);
+    expect(admin['orderBy'], 'updatedAt');
+    expect(admin['descending'], isTrue);
     expect(admin['participantField'], isNull);
     expect(admin['participantValue'], isNull);
     expect(admin['limit'], 50);
