@@ -73,6 +73,8 @@ void main() {
     );
 
     expect(registered, same(user));
+    expect(user.name, 'Profil test');
+    expect(user.reloadCalls, 1);
     expect(factoryCalls, 1);
     expect(bootstrapCalls, 1);
     expect(writtenData?['displayName'], 'Profil test');
