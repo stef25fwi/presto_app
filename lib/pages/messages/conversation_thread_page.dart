@@ -80,7 +80,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
   final SubscriptionConfigService _subscriptionConfigService =
       SubscriptionConfigService();
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<OptimisticMessage> _optimisticMessages = <OptimisticMessage>[];
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
@@ -100,12 +100,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _hasAttemptedOlderPagination = false;
   bool _isLoadingMoreMessages = false;
   bool _hasMoreMessages = true;
-  List<String> _participants = const [];
+  List<String> threadParticipants = const [];
   Map<String, String> _participantNames = const {};
-  Map<String, dynamic> _lastReadAt = const {};
+  Map<String, dynamic> threadLastReadAt = const {};
   bool _metaLoaded = false;
-  bool _didApplyInitialDraft = false;
-  bool _showSafetyReminder = true;
+  bool didApplyInitialDraft = false;
+  bool showSafetyReminder = true;
   bool _isOfferCardExpanded = true;
   bool _showEmojiStrip = false;
   static const List<String> _defaultQuickEmojis = [
@@ -119,29 +119,29 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   List<String> _quickEmojis = _defaultQuickEmojis;
   Map<String, int> _emojiUsageCounts = const {};
   bool _didLoadEmojiUsage = false;
-  bool _isOtherTyping = false;
+  bool otherIsTyping = false;
   bool _showNewMessagesButton = false;
   bool _isUploadingAttachment = false;
   final Set<String> _deletingMessageIds = {};
   bool _canLookupOtherParticipantProfile = false;
   bool _isPreparingMessageStream = true;
-  bool _isAdminViewer = false;
+  bool adminViewerState = false;
   String? _newestLiveMessageId;
-  bool _isBlocked = false;
-  bool _isBlockedForCurrentUser = false;
-  bool _isBlockedByAnotherParticipant = false;
-  bool _isArchivedForCurrentUser = false;
+  bool conversationBlocked = false;
+  bool blockedForCurrentUser = false;
+  bool blockedByAnotherParticipant = false;
+  bool archivedForCurrentUser = false;
   bool _isDeletedForCurrentUser = false;
   bool _hasHandledConversationRemoval = false;
   int _messageStreamRetryCount = 0;
   String _offerId = '';
-  String _conversationOfferTitle = '';
+  String conversationOfferTitle = '';
   String _otherParticipantId = '';
-  String _otherParticipantName = '';
+  String otherParticipantNameState = '';
   String _otherParticipantPhotoSource = '';
   String _otherParticipantPhotoUrl = '';
-  String _otherPresenceStatus = '';
-  DateTime? _otherLastSeenAt;
+  String otherPresenceStatus = '';
+  DateTime? otherLastSeenAt;
   bool _isRecording = false;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
@@ -342,7 +342,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         'widget.currentUserId=${widget.currentUserId} '
         'conversationId=${widget.conversationId} '
         'path=${firestorePath ?? 'conversations/${widget.conversationId}'} '
-        'participants=${participants ?? _participants} '
+        'participants=${participants ?? threadParticipants} '
         'error=$error';
     if (error != null) {
       AdminWebDebugStore.instance.recordError(
@@ -388,9 +388,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return '';
   }
 
-  String _messageStreamErrorMessage(Object? error) {
+  String messageStreamErrorMessage(Object? error) {
     final code = messagingErrorCode(error);
-    final isCurrentUserParticipant = _participants.contains(
+    final isCurrentUserParticipant = threadParticipants.contains(
       widget.currentUserId,
     );
     switch (code) {
@@ -527,7 +527,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     });
     super.initState();
     _loadMostUsedEmojis();
-    _controller.addListener(_handleDraftChanged);
+    messageController.addListener(_handleDraftChanged);
     unawaited(_warmMessagingAccess());
     unawaited(_resolveParticipantProfileLookupAccess());
   }
@@ -544,14 +544,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _voiceRecorder?.dispose();
     }
     unawaited(_publishTyping(false));
-    _controller.removeListener(_handleDraftChanged);
-    _controller.dispose();
+    messageController.removeListener(_handleDraftChanged);
+    messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _handleDraftChanged() {
-    final nextHasDraftText = _controller.text.trim().isNotEmpty;
+    final nextHasDraftText = messageController.text.trim().isNotEmpty;
     if (nextHasDraftText == _hasDraftText) return;
     setState(() {
       _hasDraftText = nextHasDraftText;
@@ -638,7 +638,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final isAdminViewer = accessState.effectiveIsAdmin || canLookup;
       if (!mounted) return;
       if (_canLookupOtherParticipantProfile == canLookup &&
-          _isAdminViewer == isAdminViewer) {
+          adminViewerState == isAdminViewer) {
         if (canLookup && _otherParticipantId.trim().isNotEmpty) {
           _bindPresenceListener(_otherParticipantId);
         }
@@ -646,10 +646,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       }
       setState(() {
         _canLookupOtherParticipantProfile = canLookup;
-        _isAdminViewer = isAdminViewer;
+        adminViewerState = isAdminViewer;
         if (!canLookup) {
-          _otherPresenceStatus = '';
-          _otherLastSeenAt = null;
+          otherPresenceStatus = '';
+          otherLastSeenAt = null;
           _otherParticipantPhotoSource = '';
           _otherParticipantPhotoUrl = '';
         }
@@ -672,7 +672,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return const _ConversationPatternBackground();
   }
 
-  Widget _buildThreadDateChip(DateTime? date) {
+  Widget buildThreadDateChip(DateTime? date) {
     final label = formatThreadDateLabel(date);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -703,37 +703,37 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         left.day == right.day;
   }
 
-  String _conversationInitial() {
-    final raw = _headerDisplayName.trim();
+  String conversationInitial() {
+    final raw = headerDisplayName.trim();
     if (raw.isEmpty) return '?';
     return raw.characters.first.toUpperCase();
   }
 
-  String get _headerOfferTitle {
-    final normalized = _conversationOfferTitle.trim().isNotEmpty
-        ? _conversationOfferTitle.trim()
+  String get headerOfferTitle {
+    final normalized = conversationOfferTitle.trim().isNotEmpty
+        ? conversationOfferTitle.trim()
         : widget.offerTitle.trim();
     return normalized.isEmpty ? 'Annonce' : normalized;
   }
 
-  String get _headerDisplayName {
-    final normalized = _otherParticipantName.trim();
-    return normalized.isEmpty ? _headerOfferTitle : normalized;
+  String get headerDisplayName {
+    final normalized = otherParticipantNameState.trim();
+    return normalized.isEmpty ? headerOfferTitle : normalized;
   }
 
-  String get _headerSubtitle {
-    if (_isOtherTyping) return '$_headerDisplayName écrit…';
-    final status = _otherPresenceStatus.trim().toLowerCase();
-    if (status == 'online' && _isRecentlySeen(_otherLastSeenAt)) {
+  String get headerSubtitle {
+    if (otherIsTyping) return '$headerDisplayName écrit…';
+    final status = otherPresenceStatus.trim().toLowerCase();
+    if (status == 'online' && isRecentlySeen(otherLastSeenAt)) {
       return 'en ligne';
     }
-    if (_otherLastSeenAt != null) {
-      return 'vu ${formatPresenceSeenAt(_otherLastSeenAt!)}';
+    if (otherLastSeenAt != null) {
+      return 'vu ${formatPresenceSeenAt(otherLastSeenAt!)}';
     }
-    return _headerOfferTitle;
+    return headerOfferTitle;
   }
 
-  bool _isRecentlySeen(DateTime? value) {
+  bool isRecentlySeen(DateTime? value) {
     if (value == null) return true;
     return DateTime.now().difference(value.toLocal()) <
         const Duration(minutes: 4);
@@ -867,11 +867,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             : '';
         if (!mounted) return;
         setState(() {
-          _otherPresenceStatus = (data['status'] ?? '')
+          otherPresenceStatus = (data['status'] ?? '')
               .toString()
               .trim()
               .toLowerCase();
-          _otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
+          otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
           if (!needsStorageResolution) {
             _otherParticipantPhotoSource = networkPhotoUrl;
             _otherParticipantPhotoUrl = networkPhotoUrl;
@@ -1001,7 +1001,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 : null,
             child: _otherParticipantPhotoUrl.isEmpty
                 ? Text(
-                    _conversationInitial(),
+                    conversationInitial(),
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
@@ -1016,14 +1016,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _headerDisplayName,
+                  headerDisplayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: kPrestoAppBarTitleStyle,
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  _metaLoaded ? _headerSubtitle : 'Chargement...',
+                  _metaLoaded ? headerSubtitle : 'Chargement...',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -1051,7 +1051,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               snapshot.data ??
               OfferPreview(
                 id: normalizedOfferId,
-                title: _headerOfferTitle,
+                title: headerOfferTitle,
                 priceLabel: '',
                 imageUrl: '',
               );
@@ -1110,7 +1110,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     children: [
                       Text(
                         preview.title.isEmpty
-                            ? _headerOfferTitle
+                            ? headerOfferTitle
                             : preview.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1269,37 +1269,37 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         );
         if (mounted) {
           setState(() {
-            _participants = participants;
+            threadParticipants = participants;
             _participantNames = participantNames;
             _otherParticipantId = otherParticipantId;
-            _otherParticipantName = otherParticipantName;
+            otherParticipantNameState = otherParticipantName;
             if (participantChanged) {
               _otherParticipantPhotoSource = '';
               _otherParticipantPhotoUrl = '';
             }
             _offerId = offerId;
-            _conversationOfferTitle = offerTitle;
-            _isOtherTyping = isOtherTyping;
+            conversationOfferTitle = offerTitle;
+            otherIsTyping = isOtherTyping;
             final lastReadAt = conversationValue(data, const [
               'lastReadAt',
               'last_read_at',
             ]);
-            _lastReadAt = lastReadAt is Map<String, dynamic>
+            threadLastReadAt = lastReadAt is Map<String, dynamic>
                 ? lastReadAt
                 : lastReadAt is Map
                 ? Map<String, dynamic>.from(lastReadAt)
                 : const {};
             _metaLoaded = true;
-            _isBlocked = isConversationBlocked(data);
-            _isBlockedForCurrentUser = isConversationBlockedForUser(
+            conversationBlocked = isConversationBlocked(data);
+            blockedForCurrentUser = isConversationBlockedForUser(
               data,
               widget.currentUserId,
             );
-            _isBlockedByAnotherParticipant = isConversationBlockedByOtherUser(
+            blockedByAnotherParticipant = isConversationBlockedByOtherUser(
               data,
               widget.currentUserId,
             );
-            _isArchivedForCurrentUser = isConversationArchivedForUser(
+            archivedForCurrentUser = isConversationArchivedForUser(
               data,
               widget.currentUserId,
             );
@@ -1333,14 +1333,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     Navigator.of(context).maybePop();
   }
 
-  String? _readReceiptLabel(DateTime? sentAt) {
+  String? readReceiptLabel(DateTime? sentAt) {
     if (sentAt == null) return null;
-    final otherParticipantId = _participants.firstWhere(
+    final otherParticipantId = threadParticipants.firstWhere(
       (participantId) => participantId != widget.currentUserId,
       orElse: () => '',
     );
     if (otherParticipantId.isEmpty) return null;
-    final raw = _lastReadAt[otherParticipantId];
+    final raw = threadLastReadAt[otherParticipantId];
     final readAt = parseFirestoreDateTime(raw);
     if (readAt == null || readAt.isBefore(sentAt)) return null;
     return 'Vu';
@@ -1479,8 +1479,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       MaterialPageRoute<void>(
         builder: (_) => ConversationThreadPage(
           conversationId: normalizedConversationId,
-          offerTitle: _conversationOfferTitle.isNotEmpty
-              ? _conversationOfferTitle
+          offerTitle: conversationOfferTitle.isNotEmpty
+              ? conversationOfferTitle
               : widget.offerTitle,
           currentUserId: widget.currentUserId,
         ),
@@ -1489,10 +1489,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _sendMessage() async {
-    final rawDraft = _controller.text;
+    final rawDraft = messageController.text;
     final text = rawDraft.trim();
     if (text.isEmpty || _isSending) return;
-    if (_isBlocked) {
+    if (conversationBlocked) {
       showErrorSnackBar(
         context,
         'L envoi est indisponible tant que cette conversation est bloquee.',
@@ -1516,15 +1516,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _hasDraftText = false;
       _optimisticMessages.insert(0, optimisticMessage);
     });
-    _controller.clear();
+    messageController.clear();
     _scheduleTypingUpdate(false);
     _scrollToLatestMessage(force: true);
     try {
       final ready = await _ensureMessagingAccess(interactive: true);
       if (!ready) {
         _markOptimisticMessageFailed(optimisticMessage.id);
-        if (_controller.text.trim().isEmpty) {
-          _controller.value = TextEditingValue(
+        if (messageController.text.trim().isEmpty) {
+          messageController.value = TextEditingValue(
             text: rawDraft,
             selection: TextSelection.collapsed(offset: rawDraft.length),
           );
@@ -1547,8 +1547,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       if (!mounted) return;
       _markOptimisticMessageFailed(optimisticMessage.id);
-      if (_controller.text.trim().isEmpty) {
-        _controller.value = TextEditingValue(
+      if (messageController.text.trim().isEmpty) {
+        messageController.value = TextEditingValue(
           text: rawDraft,
           selection: TextSelection.collapsed(offset: rawDraft.length),
         );
@@ -1627,7 +1627,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _retryOptimisticMessage(OptimisticMessage message) async {
-    if (_isSending || _isBlocked) return;
+    if (_isSending || conversationBlocked) return;
     setState(() {
       _isSending = true;
       final index = _optimisticMessages.indexWhere(
@@ -1710,9 +1710,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           );
           if (!mounted) return;
           setState(() {
-            _isBlocked = false;
-            _isBlockedForCurrentUser = false;
-            _isBlockedByAnotherParticipant = false;
+            conversationBlocked = false;
+            blockedForCurrentUser = false;
+            blockedByAnotherParticipant = false;
           });
           showSuccessSnackBar(context, 'Conversation debloquee par admin.');
           return;
@@ -1773,24 +1773,24 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Widget _buildStateBanner() {
-    if (_isBlocked) {
+  Widget buildStateBanner() {
+    if (conversationBlocked) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
         child: _ConversationBanner(
           icon: Icons.block_rounded,
           color: const Color(0xFFFF0000),
-          message: _isBlockedForCurrentUser
+          message: blockedForCurrentUser
               ? 'Vous avez bloque cette conversation. Debloquez-la pour reprendre les echanges.'
-              : _isBlockedByAnotherParticipant
-              ? _isAdminViewer
+              : blockedByAnotherParticipant
+              ? adminViewerState
                     ? 'Cette conversation a ete bloquee par un participant. Un admin peut la debloquer.'
                     : 'Cette conversation a ete bloquee par l autre participant.'
               : 'Cette conversation est actuellement bloquee.',
         ),
       );
     }
-    if (_isArchivedForCurrentUser) {
+    if (archivedForCurrentUser) {
       return const Padding(
         padding: EdgeInsets.fromLTRB(12, 10, 12, 0),
         child: _ConversationBanner(
@@ -1804,25 +1804,25 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return const SizedBox.shrink();
   }
 
-  void _applyInitialDraftIfNeeded(bool hasMessages) {
-    if (_didApplyInitialDraft || hasMessages) return;
+  void applyInitialDraftIfNeeded(bool hasMessages) {
+    if (didApplyInitialDraft || hasMessages) return;
     final initialDraft = widget.initialDraftText?.trim() ?? '';
-    if (initialDraft.isEmpty || _controller.text.trim().isNotEmpty) {
-      _didApplyInitialDraft = true;
+    if (initialDraft.isEmpty || messageController.text.trim().isNotEmpty) {
+      didApplyInitialDraft = true;
       return;
     }
-    _didApplyInitialDraft = true;
+    didApplyInitialDraft = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _controller.value = TextEditingValue(
+      messageController.value = TextEditingValue(
         text: initialDraft,
         selection: TextSelection.collapsed(offset: initialDraft.length),
       );
     });
   }
 
-  Widget _buildSafetyReminderBanner() {
-    if (!_showSafetyReminder) return const SizedBox.shrink();
+  Widget buildSafetyReminderBanner() {
+    if (!showSafetyReminder) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
       child: Container(
@@ -1853,7 +1853,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             IconButton(
               tooltip: 'Masquer',
               visualDensity: VisualDensity.compact,
-              onPressed: () => setState(() => _showSafetyReminder = false),
+              onPressed: () => setState(() => showSafetyReminder = false),
               icon: const Icon(
                 Icons.close_rounded,
                 size: 18,
@@ -1866,8 +1866,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildTypingIndicator() {
-    if (!_isOtherTyping) return const SizedBox.shrink();
+  Widget buildTypingIndicator() {
+    if (!otherIsTyping) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 6, 18, 0),
       child: Align(
@@ -1880,7 +1880,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: Text(
-            '$_headerDisplayName écrit…',
+            '$headerDisplayName écrit…',
             style: kPrestoMetaTextStyle.copyWith(
               color: kWhatsappGreen,
               fontWeight: FontWeight.w800,
@@ -2003,7 +2003,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildEmojiStrip() {
-    if (!_showEmojiStrip || _isBlocked) return const SizedBox.shrink();
+    if (!_showEmojiStrip || conversationBlocked) return const SizedBox.shrink();
 
     final emojis = _quickEmojis.take(6).toList(growable: false);
     return Padding(
@@ -2121,12 +2121,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   void _insertEmoji(String emoji) {
     unawaited(_recordEmojiUsage(emoji));
-    final selection = _controller.selection;
-    final text = _controller.text;
+    final selection = messageController.selection;
+    final text = messageController.text;
     final start = selection.start >= 0 ? selection.start : text.length;
     final end = selection.end >= 0 ? selection.end : text.length;
     final next = text.replaceRange(start, end, emoji);
-    _controller.value = TextEditingValue(
+    messageController.value = TextEditingValue(
       text: next,
       selection: TextSelection.collapsed(offset: start + emoji.length),
     );
@@ -2342,7 +2342,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     required String mimeType,
   }) async {
     if (_isUploadingAttachment || _isSending) return;
-    if (_isBlocked) {
+    if (conversationBlocked) {
       showErrorSnackBar(
         context,
         'L envoi est indisponible tant que cette conversation est bloquee.',
@@ -2406,7 +2406,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) return;
 
-    final draftText = _controller.text.trim();
+    final draftText = messageController.text.trim();
     final text = draftText.isEmpty
         ? attachmentMessageText(attachment)
         : draftText;
@@ -2422,7 +2422,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     setState(() {
       _isSending = true;
       if (draftText.isNotEmpty) {
-        _controller.clear();
+        messageController.clear();
         _hasDraftText = false;
       }
       _optimisticMessages.insert(0, optimisticMessage);
@@ -3273,7 +3273,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           : null,
       child: _otherParticipantPhotoUrl.isEmpty
           ? Text(
-              _conversationInitial(),
+              conversationInitial(),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
             )
           : null,
@@ -3549,24 +3549,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             onSelected: _handleConversationAction,
             itemBuilder: (context) => [
               PopupMenuItem<_ConversationThreadAction>(
-                value: _isArchivedForCurrentUser
+                value: archivedForCurrentUser
                     ? _ConversationThreadAction.unarchive
                     : _ConversationThreadAction.archive,
-                child: Text(
-                  _isArchivedForCurrentUser ? 'Restaurer' : 'Archiver',
-                ),
+                child: Text(archivedForCurrentUser ? 'Restaurer' : 'Archiver'),
               ),
-              if (_isBlockedForCurrentUser)
+              if (blockedForCurrentUser)
                 const PopupMenuItem<_ConversationThreadAction>(
                   value: _ConversationThreadAction.unblock,
                   child: Text('Debloquer'),
                 )
-              else if (_isBlockedByAnotherParticipant && _isAdminViewer)
+              else if (blockedByAnotherParticipant && adminViewerState)
                 const PopupMenuItem<_ConversationThreadAction>(
                   value: _ConversationThreadAction.adminUnblock,
                   child: Text('Debloquer en admin'),
                 )
-              else if (_isBlockedByAnotherParticipant)
+              else if (blockedByAnotherParticipant)
                 const PopupMenuItem<_ConversationThreadAction>(
                   enabled: false,
                   child: Text('Bloquee par l autre utilisateur'),
@@ -3590,9 +3588,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           Column(
             children: [
               _buildOfferContextBanner(),
-              _buildStateBanner(),
-              _buildSafetyReminderBanner(),
-              _buildTypingIndicator(),
+              buildStateBanner(),
+              buildSafetyReminderBanner(),
+              buildTypingIndicator(),
               Expanded(
                 child: _isPreparingMessageStream || _messageStream == null
                     ? _buildMessagesAccessGate()
@@ -3623,7 +3621,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 snapshot.error,
                               );
                             }
-                            final message = _messageStreamErrorMessage(
+                            final message = messageStreamErrorMessage(
                               snapshot.error,
                             );
                             return Center(
@@ -3654,7 +3652,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
                           final liveDocs = snapshot.data?.docs ?? const [];
                           _handleLiveMessageDocs(liveDocs);
-                          _applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
+                          applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
                           final docs = _mergeMessageDocs(liveDocs);
                           final visibleItemCount =
                               docs.length + _optimisticMessages.length;
@@ -3819,7 +3817,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     final isMine =
                                         senderId == widget.currentUserId;
                                     final readReceipt = isMine
-                                        ? _readReceiptLabel(sentAt)
+                                        ? readReceiptLabel(sentAt)
                                         : null;
                                     final messageDocId = docs[docIndex].id;
                                     final attachments =
@@ -3990,7 +3988,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     return Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        _buildThreadDateChip(sentAt),
+                                        buildThreadDateChip(sentAt),
                                         messageBubble,
                                       ],
                                     );
@@ -4061,7 +4059,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               height: 44,
                               child: Material(
                                 color:
-                                    (_isBlocked ||
+                                    (conversationBlocked ||
                                         _isUploadingAttachment ||
                                         _isSending)
                                     ? const Color(0xFFF3F4F6)
@@ -4076,7 +4074,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 child: InkWell(
                                   customBorder: const CircleBorder(),
                                   onTap:
-                                      (_isBlocked ||
+                                      (conversationBlocked ||
                                           _isUploadingAttachment ||
                                           _isSending)
                                       ? null
@@ -4085,7 +4083,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     child: Icon(
                                       Icons.attach_file_rounded,
                                       color:
-                                          (_isBlocked ||
+                                          (conversationBlocked ||
                                               _isUploadingAttachment ||
                                               _isSending)
                                           ? const Color(0xFF94A3B8)
@@ -4115,19 +4113,19 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 ],
                               ),
                               child: TextField(
-                                controller: _controller,
+                                controller: messageController,
                                 textInputAction: TextInputAction.send,
-                                enabled: !_isBlocked,
+                                enabled: !conversationBlocked,
                                 minLines: 1,
                                 maxLines: 4,
                                 onSubmitted: (_) => _sendMessage(),
                                 decoration: InputDecoration(
-                                  hintText: _isBlocked
+                                  hintText: conversationBlocked
                                       ? 'Envoi indisponible : conversation bloquee'
                                       : 'Votre message...',
                                   prefixIcon: IconButton(
                                     tooltip: 'Emoji',
-                                    onPressed: _isBlocked
+                                    onPressed: conversationBlocked
                                         ? null
                                         : () => setState(
                                             () => _showEmojiStrip =
@@ -4157,7 +4155,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               onPressed:
                                   (_isSending ||
                                       _isUploadingAttachment ||
-                                      _isBlocked)
+                                      conversationBlocked)
                                   ? null
                                   : _hasDraftText
                                   ? _sendMessage
