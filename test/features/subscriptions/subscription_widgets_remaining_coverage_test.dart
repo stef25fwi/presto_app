@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/features/operating_mode/app_operating_mode.dart';
 import 'package:presto_app/features/subscriptions/subscription_config_service.dart';
-import 'package:presto_app/features/subscriptions/subscription_credits_card.dart';
 import 'package:presto_app/features/subscriptions/subscription_widgets.dart';
 
 class _NoSubscriptionUserAuthPlatform extends FirebaseAuthPlatform {
