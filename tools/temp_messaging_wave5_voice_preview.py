@@ -14,9 +14,9 @@ for old, new in replacements.items():
     if old not in source:
         raise SystemExit(f'missing source marker: {old}')
     source = source.replace(old, new)
-source = source.replace('_PendingVoiceNote(', 'PendingVoiceNote(')
-source = source.replace('_VoiceNotePreviewSheet(', 'VoiceNotePreviewSheet(')
-source = source.replace('_VoiceNotePreviewAction.', 'VoiceNotePreviewAction.')
+source = source.replace('_PendingVoiceNote', 'PendingVoiceNote')
+source = source.replace('_VoiceNotePreviewSheet', 'VoiceNotePreviewSheet')
+source = source.replace('_VoiceNotePreviewAction', 'VoiceNotePreviewAction')
 source_path.write_text(source)
 
 test_path = Path('test/pages/messages/conversation_thread_voice_preview_coverage_test.dart')
