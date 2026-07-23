@@ -52,7 +52,7 @@ Future<void> prefetchSubscriptionCheckout(
   bool stripeEnabled = false,
   String source = 'subscription_prefetch',
 }) async {
-  if (!stripeEnabled || !await _isCommercialMode()) return;
+  if (!stripeEnabled) return;
   await _checkoutService.prefetchCheckout(
     subscriptionPlanFromKey(plan),
     source: source,
