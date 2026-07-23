@@ -44,16 +44,21 @@ jobs:
           set -o pipefail
           flutter test --reporter expanded test/pages/messages/conversation_thread_actions_and_bubbles_coverage_test.dart 2>&1 | tee messaging-actions-test.log
 
-      - name: Upload messaging action diagnostic
+      - name: Targeted analyzer
+        shell: bash
+        run: |
+          set -o pipefail
+          flutter analyze lib/pages/messages/conversation_thread_page.dart test/pages/messages/conversation_thread_actions_and_bubbles_coverage_test.dart 2>&1 | tee messaging-actions-analyze.log
+
+      - name: Upload messaging action diagnostics
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: messaging-actions-diagnostic-${{ github.run_id }}
-          path: messaging-actions-test.log
+          path: |
+            messaging-actions-test.log
+            messaging-actions-analyze.log
           retention-days: 2
-
-      - name: Targeted analyzer
-        run: flutter analyze lib/pages/messages/conversation_thread_page.dart test/pages/messages/conversation_thread_actions_and_bubbles_coverage_test.dart
 
       - name: Commit validated implementation and clean executor
         shell: bash
@@ -61,6 +66,7 @@ jobs:
           rm -f .github/workflows/temp-export-messaging-actions-wave.yml
           rm -f tools/temp_messaging_actions_wave_patch.py
           rm -f messaging-actions-test.log
+          rm -f messaging-actions-analyze.log
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
