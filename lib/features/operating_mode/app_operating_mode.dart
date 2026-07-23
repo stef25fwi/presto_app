@@ -57,8 +57,7 @@ class LegalPublisherProfile {
   });
 
   const LegalPublisherProfile.defaults()
-      : publisherName =
-            const String.fromEnvironment('LEGAL_PUBLISHER_NAME'),
+      : publisherName = const String.fromEnvironment('LEGAL_PUBLISHER_NAME'),
         postalAddress =
             const String.fromEnvironment('LEGAL_PUBLISHER_ADDRESS'),
         phone = const String.fromEnvironment('LEGAL_PUBLISHER_PHONE'),
@@ -230,9 +229,40 @@ class AppOperatingModeService {
   DocumentReference<Map<String, dynamic>> get _subscriptionsRef =>
       _firestore.collection('app_config').doc('subscriptions');
 
+  DocumentReference<Map<String, dynamic>> get _publicLegalRef =>
+      _firestore.collection('public_config').doc('legal');
+
+  Map<String, dynamic> _publicPayload({
+    required AppOperatingMode mode,
+    required LegalPublisherProfile publisher,
+    required String legalVersion,
+    required String cguVersion,
+    required String privacyVersion,
+    required Object effectiveDate,
+    required bool requiresReacceptance,
+    required Object updatedAt,
+  }) {
+    return <String, dynamic>{
+      'operatingMode': mode.firestoreValue,
+      'legalVersion': legalVersion,
+      'cguVersion': cguVersion,
+      'privacyVersion': privacyVersion,
+      'effectiveDate': effectiveDate,
+      'requiresReacceptance': requiresReacceptance,
+      'publisher': publisher.toMap(),
+      'updatedAt': updatedAt,
+    };
+  }
+
   Stream<AppOperatingModeState> watchState({bool ensureExists = false}) {
     if (ensureExists) unawaited(ensureDefaults());
     return _legalRef.snapshots().map(
+          (snapshot) => AppOperatingModeState.fromMap(snapshot.data()),
+        );
+  }
+
+  Stream<AppOperatingModeState> watchPublicState() {
+    return _publicLegalRef.snapshots().map(
           (snapshot) => AppOperatingModeState.fromMap(snapshot.data()),
         );
   }
@@ -242,45 +272,108 @@ class AppOperatingModeService {
     return AppOperatingModeState.fromMap(snapshot.data());
   }
 
-  Future<void> ensureDefaults({String? updatedBy}) async {
-    final legal = await _legalRef.get();
-    if (legal.exists) return;
+  Future<AppOperatingModeState> getPublicState() async {
+    final snapshot = await _publicLegalRef.get();
+    return AppOperatingModeState.fromMap(snapshot.data());
+  }
 
+  Future<void> ensureDefaults({String? updatedBy}) async {
+    final results = await Future.wait([
+      _legalRef.get(),
+      _subscriptionsRef.get(),
+      _publicLegalRef.get(),
+    ]);
+    final legal = results[0];
+    final subscriptions = results[1];
+    final publicLegal = results[2];
     final defaults = AppOperatingModeState.defaults();
+    final state = legal.exists
+        ? AppOperatingModeState.fromMap(legal.data())
+        : defaults;
+    final now = FieldValue.serverTimestamp();
     final batch = _firestore.batch();
-    batch.set(_legalRef, <String, dynamic>{
-      'operatingMode': AppOperatingMode.freeBeta.firestoreValue,
-      'legalVersion': defaults.legalVersion,
-      'cguVersion': defaults.cguVersion,
-      'privacyVersion': defaults.privacyVersion,
-      'effectiveDate': Timestamp.fromDate(defaults.effectiveDate),
-      'requiresReacceptance': false,
-      'publisher': defaults.publisher.toMap(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      if ((updatedBy ?? '').trim().isNotEmpty) 'updatedBy': updatedBy!.trim(),
-    }, SetOptions(merge: true));
-    batch.set(_subscriptionsRef, <String, dynamic>{
-      'operatingMode': AppOperatingMode.freeBeta.firestoreValue,
-      'subscriptionSectionEnabled': false,
-      'subscriptionsPrepared': true,
-      'stripeEnabled': false,
-      'freeAccessMode': true,
-      'legalDocumentVersion': defaults.legalVersion,
-      'updatedAt': FieldValue.serverTimestamp(),
-      if ((updatedBy ?? '').trim().isNotEmpty) 'updatedBy': updatedBy!.trim(),
-    }, SetOptions(merge: true));
-    await batch.commit();
+    var hasWrites = false;
+
+    if (!legal.exists) {
+      batch.set(_legalRef, <String, dynamic>{
+        'operatingMode': defaults.mode.firestoreValue,
+        'legalVersion': defaults.legalVersion,
+        'cguVersion': defaults.cguVersion,
+        'privacyVersion': defaults.privacyVersion,
+        'effectiveDate': Timestamp.fromDate(defaults.effectiveDate),
+        'requiresReacceptance': false,
+        'publisher': defaults.publisher.toMap(),
+        'updatedAt': now,
+        if ((updatedBy ?? '').trim().isNotEmpty)
+          'updatedBy': updatedBy!.trim(),
+      }, SetOptions(merge: true));
+      hasWrites = true;
+    }
+
+    if (!subscriptions.exists) {
+      batch.set(_subscriptionsRef, <String, dynamic>{
+        'operatingMode': state.mode.firestoreValue,
+        'subscriptionSectionEnabled': state.mode.isCommercial,
+        'subscriptionsPrepared': true,
+        'stripeEnabled': state.mode.isCommercial,
+        'freeAccessMode': !state.mode.isCommercial,
+        'legalDocumentVersion': state.legalVersion,
+        'updatedAt': now,
+        if ((updatedBy ?? '').trim().isNotEmpty)
+          'updatedBy': updatedBy!.trim(),
+      }, SetOptions(merge: true));
+      hasWrites = true;
+    }
+
+    if (!publicLegal.exists) {
+      batch.set(
+        _publicLegalRef,
+        _publicPayload(
+          mode: state.mode,
+          publisher: state.publisher,
+          legalVersion: state.legalVersion,
+          cguVersion: state.cguVersion,
+          privacyVersion: state.privacyVersion,
+          effectiveDate: Timestamp.fromDate(state.effectiveDate),
+          requiresReacceptance: state.requiresReacceptance,
+          updatedAt: now,
+        ),
+        SetOptions(merge: true),
+      );
+      hasWrites = true;
+    }
+
+    if (hasWrites) await batch.commit();
   }
 
   Future<void> updatePublisherProfile(
     LegalPublisherProfile profile, {
     String? updatedBy,
   }) async {
-    await _legalRef.set(<String, dynamic>{
+    final current = await getState();
+    final now = FieldValue.serverTimestamp();
+    final batch = _firestore.batch();
+    batch.set(_legalRef, <String, dynamic>{
       'publisher': profile.toMap(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      if ((updatedBy ?? '').trim().isNotEmpty) 'updatedBy': updatedBy!.trim(),
+      'updatedAt': now,
+      if ((updatedBy ?? '').trim().isNotEmpty)
+        'updatedBy': updatedBy!.trim(),
     }, SetOptions(merge: true));
+    batch.set(
+      _publicLegalRef,
+      _publicPayload(
+        mode: current.mode,
+        publisher: profile,
+        legalVersion: current.legalVersion,
+        cguVersion: current.cguVersion,
+        privacyVersion: current.privacyVersion,
+        effectiveDate: Timestamp.fromDate(current.effectiveDate),
+        requiresReacceptance: current.requiresReacceptance,
+        updatedAt: now,
+      ),
+      SetOptions(merge: true),
+    );
+    await batch.commit();
   }
 
   Future<void> setMode(
@@ -315,7 +408,8 @@ class AppOperatingModeService {
       'effectiveDate': now,
       'requiresReacceptance': current.mode != mode,
       'updatedAt': now,
-      if ((updatedBy ?? '').trim().isNotEmpty) 'updatedBy': updatedBy!.trim(),
+      if ((updatedBy ?? '').trim().isNotEmpty)
+        'updatedBy': updatedBy!.trim(),
     }, SetOptions(merge: true));
 
     batch.set(_subscriptionsRef, <String, dynamic>{
@@ -326,8 +420,24 @@ class AppOperatingModeService {
       'freeAccessMode': !mode.isCommercial,
       'legalDocumentVersion': legalVersion,
       'updatedAt': now,
-      if ((updatedBy ?? '').trim().isNotEmpty) 'updatedBy': updatedBy!.trim(),
+      if ((updatedBy ?? '').trim().isNotEmpty)
+        'updatedBy': updatedBy!.trim(),
     }, SetOptions(merge: true));
+
+    batch.set(
+      _publicLegalRef,
+      _publicPayload(
+        mode: mode,
+        publisher: current.publisher,
+        legalVersion: legalVersion,
+        cguVersion: cguVersion,
+        privacyVersion: privacyVersion,
+        effectiveDate: now,
+        requiresReacceptance: current.mode != mode,
+        updatedAt: now,
+      ),
+      SetOptions(merge: true),
+    );
 
     final historyRef = _firestore.collection('legal_mode_history').doc();
     batch.set(historyRef, <String, dynamic>{
@@ -335,7 +445,8 @@ class AppOperatingModeService {
       'to': mode.firestoreValue,
       'legalVersion': legalVersion,
       'changedAt': now,
-      if ((updatedBy ?? '').trim().isNotEmpty) 'changedBy': updatedBy!.trim(),
+      if ((updatedBy ?? '').trim().isNotEmpty)
+        'changedBy': updatedBy!.trim(),
     });
     await batch.commit();
   }
