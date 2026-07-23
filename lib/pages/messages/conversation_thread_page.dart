@@ -4936,7 +4936,7 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
       setState(() => _position = p);
     });
     _durationSub = _player.onDurationChanged.listen((d) {
-      if (!mounted) return;
+      if (!mounted || d <= Duration.zero) return;
       setState(() => _total = d);
     });
     _completeSub = _player.onPlayerComplete.listen((_) {
