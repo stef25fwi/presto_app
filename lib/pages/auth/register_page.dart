@@ -73,22 +73,30 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _recordAcceptance() async {
-    final service = AppOperatingModeService();
-    AppOperatingModeState state;
-    try {
-      state = await service.getState();
-    } catch (_) {
-      state = AppOperatingModeState.defaults();
-    }
-
     final injected = widget.recordLegalAcceptance;
     if (injected != null) {
-      await injected(state);
+      await injected(AppOperatingModeState.defaults());
       return;
     }
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || uid.isEmpty) return;
+    AppOperatingModeState state = AppOperatingModeState.defaults();
+    AppOperatingModeService? service;
+    try {
+      service = AppOperatingModeService();
+      state = await service.getState();
+    } catch (_) {
+      // La création du compte ne doit pas échouer si la configuration juridique
+      // distante est momentanément indisponible. La version bêta embarquée reste
+      // la référence de secours et la preuve est écrite dès que Firebase répond.
+    }
+
+    String? uid;
+    try {
+      uid = FirebaseAuth.instance.currentUser?.uid;
+    } catch (_) {
+      uid = null;
+    }
+    if (uid == null || uid.isEmpty || service == null) return;
     await service.recordAcceptance(userId: uid, state: state);
   }
 
