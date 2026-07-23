@@ -40,8 +40,8 @@ for old, new in renames.items():
 constructor_updates = {
     'const AttachmentActionTile({\n': 'const AttachmentActionTile({\n    super.key,\n',
     'const ConversationBanner({\n': 'const ConversationBanner({\n    super.key,\n',
-    'const ConversationPatternBackground();':
-        'const ConversationPatternBackground({super.key});',
+    'class ConversationPatternBackground extends StatelessWidget {\n  const ConversationPatternBackground();':
+        'class ConversationPatternBackground extends StatelessWidget {\n  const ConversationPatternBackground({super.key});',
     'const VoiceRecordingSheet({required this.onCancel, required this.onSend});':
         'const VoiceRecordingSheet({super.key, required this.onCancel, required this.onSend});',
 }
