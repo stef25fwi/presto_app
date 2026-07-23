@@ -31,7 +31,11 @@ void main() {
   });
 
   test('register construit le service profil par défaut injecté', () async {
-    final user = _User('register-default', email: 'pro@ilipresto.fr');
+    final user = _User(
+      'register-default',
+      email: 'pro@ilipresto.fr',
+      name: 'Ancien profil',
+    );
     final auth = _Auth(registerUser: user, currentUserValue: user);
     var factoryCalls = 0;
     var bootstrapCalls = 0;
