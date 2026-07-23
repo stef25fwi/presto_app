@@ -72,7 +72,7 @@ void main() {
             registrationCalls += 1;
           },
           successPageBuilder: (_) => const Scaffold(body: Text('succès')),
-          operatingModeService: AppOperatingModeService(
+          operatingModeServiceFactory: () => AppOperatingModeService(
             firestore: FakeFirebaseFirestore(),
           ),
         ),
