@@ -1,0 +1,32 @@
+name: Audio duration stability applier
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix/audio-duration-stability'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/audio-duration-stability
+          fetch-depth: 0
+
+      - name: Apply stable audio duration correction
+        run: python3 tools/fix_audio_duration_stability.py
+
+      - name: Commit correction
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/messages/conversation_thread_page.dart
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(messages): keep total audio duration visible"
+          git push origin HEAD:fix/audio-duration-stability
