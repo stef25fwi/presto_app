@@ -175,15 +175,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.${three(now.millisecond)}';
     final line = '[$stamp] $message';
 
-    final maxLines = _diagPanelVisible ? 40 : 12;
-    setState(() {
-      _adminConversationLoadLogs.insert(0, line);
-      if (_adminConversationLoadLogs.length > maxLines) {
-        _adminConversationLoadLogs.removeRange(
-          maxLines,
-          _adminConversationLoadLogs.length,
-        );
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_diagPanelVisible) return;
+      setState(() {
+        final logs = _adminConversationLoadLogs;
+        logs.insert(0, line);
+        if (logs.length > 40) logs.removeRange(40, logs.length);
+      });
     });
   }
 
