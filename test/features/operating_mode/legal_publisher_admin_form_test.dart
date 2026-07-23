@@ -46,9 +46,11 @@ void main() {
       'Stéphane Sahai',
     );
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('save_legal_publisher')),
-    );
+    final saveButton =
+        find.byKey(const ValueKey<String>('save_legal_publisher'));
+    await tester.ensureVisible(saveButton);
+    await tester.pumpAndSettle();
+    await tester.tap(saveButton);
     await tester.pump();
 
     expect(find.text('Adresse e-mail invalide'), findsOneWidget);
@@ -58,9 +60,9 @@ void main() {
       find.byKey(const ValueKey<String>('legal_email')),
       'contact@example.fr',
     );
-    await tester.tap(
-      find.byKey(const ValueKey<String>('save_legal_publisher')),
-    );
+    await tester.ensureVisible(saveButton);
+    await tester.pumpAndSettle();
+    await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
     expect(saved, isNotNull);
