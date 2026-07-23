@@ -107,7 +107,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool didApplyInitialDraft = false;
   bool showSafetyReminder = true;
   bool _isOfferCardExpanded = true;
-  bool _showEmojiStrip = false;
+  bool showEmojiStripState = false;
   static const List<String> _defaultQuickEmojis = [
     '👍',
     '🙏',
@@ -116,7 +116,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     '🔥',
     '💬',
   ];
-  List<String> _quickEmojis = _defaultQuickEmojis;
+  List<String> quickEmojisState = _defaultQuickEmojis;
   Map<String, int> _emojiUsageCounts = const {};
   bool _didLoadEmojiUsage = false;
   bool otherIsTyping = false;
@@ -160,7 +160,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       if (decision == null) return true;
       if (!mounted) return false;
-      await _showAttachmentSubscriptionGate(decision);
+      await showAttachmentSubscriptionGate(decision);
       return false;
     } catch (error) {
       debugPrint('[ConversationThread] subscription gate skipped: $error');
@@ -168,7 +168,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Future<_ConversationAttachmentGateDecision?> _resolveAttachmentGateDecision({
+  Future<ConversationAttachmentGateDecision?> _resolveAttachmentGateDecision({
     required String uid,
     required String attachmentType,
   }) async {
@@ -186,7 +186,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       freeAccessMode: config.freeAccessMode,
     );
     if (attachmentType == 'document' && !entitlements.canSendDocuments) {
-      return _ConversationAttachmentGateDecision(
+      return ConversationAttachmentGateDecision(
         title: 'Fichiers réservés à ilipresto+',
         message:
             'Les documents et autres fichiers sont prévus pour ilipresto+. En gratuit, vous gardez les messages texte, 1 photo et 1 note audio par conversation.',
@@ -200,7 +200,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         attachmentType: 'image',
       );
       if (sentPhotos >= entitlements.maxPhotosPerConversation) {
-        return _ConversationAttachmentGateDecision(
+        return ConversationAttachmentGateDecision(
           title: 'Quota photo atteint',
           message:
               'L’offre gratuite est préparée pour 1 photo par conversation. Passez à ilipresto+ pour envoyer davantage de pièces jointes.',
@@ -215,7 +215,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         attachmentType: 'audio',
       );
       if (sentAudios >= entitlements.maxAudioPerConversation) {
-        return _ConversationAttachmentGateDecision(
+        return ConversationAttachmentGateDecision(
           title: 'Quota audio atteint',
           message:
               'L’offre gratuite est préparée pour 1 note audio par conversation. Passez à ilipresto+ pour aller plus loin.',
@@ -251,8 +251,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return count;
   }
 
-  Future<void> _showAttachmentSubscriptionGate(
-    _ConversationAttachmentGateDecision decision,
+  Future<void> showAttachmentSubscriptionGate(
+    ConversationAttachmentGateDecision decision,
   ) async {
     final overlayTheme = context.prestoOverlayTheme;
     final wantsPlan = await showModalBottomSheet<bool>(
@@ -1899,7 +1899,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) {
       if (mounted) {
-        setState(() => _quickEmojis = _defaultQuickEmojis);
+        setState(() => quickEmojisState = _defaultQuickEmojis);
       }
       return;
     }
@@ -1945,14 +1945,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (!mounted) return;
       setState(() {
         _emojiUsageCounts = usage;
-        _quickEmojis = uniqueTop6.isEmpty ? _defaultQuickEmojis : uniqueTop6;
+        quickEmojisState = uniqueTop6.isEmpty
+            ? _defaultQuickEmojis
+            : uniqueTop6;
       });
     } catch (error) {
       debugPrint(
         '[ConversationThread] Chargement emojis fréquents ignoré: $error',
       );
       if (!mounted) return;
-      setState(() => _quickEmojis = _defaultQuickEmojis);
+      setState(() => quickEmojisState = _defaultQuickEmojis);
     }
   }
 
@@ -1975,7 +1977,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (mounted) {
       setState(() {
         _emojiUsageCounts = nextUsage;
-        _quickEmojis = nextQuickEmojis.isEmpty
+        quickEmojisState = nextQuickEmojis.isEmpty
             ? _defaultQuickEmojis
             : [...nextQuickEmojis, ..._defaultQuickEmojis].fold<List<String>>(
                 <String>[],
@@ -2004,10 +2006,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Widget _buildEmojiStrip() {
-    if (!_showEmojiStrip || conversationBlocked) return const SizedBox.shrink();
+  Widget buildEmojiStrip() {
+    if (!showEmojiStripState || conversationBlocked) {
+      return const SizedBox.shrink();
+    }
 
-    final emojis = _quickEmojis.take(6).toList(growable: false);
+    final emojis = quickEmojisState.take(6).toList(growable: false);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
       child: Align(
@@ -2836,14 +2840,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Future<void> _openAttachment(MessageAttachment attachment) async {
+  Future<void> openAttachment(MessageAttachment attachment) async {
     if (attachment.type == 'image') {
       return;
     }
-    await _showAttachmentActionsSheet(attachment);
+    await showAttachmentActionsSheet(attachment);
   }
 
-  Future<void> _showAttachmentActionsSheet(MessageAttachment attachment) async {
+  Future<void> showAttachmentActionsSheet(MessageAttachment attachment) async {
     final overlayTheme = context.prestoOverlayTheme;
     await showModalBottomSheet<void>(
       context: context,
@@ -3217,7 +3221,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => unawaited(_openAttachment(attachment)),
+                onTap: () => unawaited(openAttachment(attachment)),
                 customBorder: const CircleBorder(),
                 child: Icon(
                   Icons.attach_file_rounded,
@@ -4027,7 +4031,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildEmojiStrip(),
+                      buildEmojiStrip(),
                       _buildMessagingSubscriptionBadge(),
                       if (_isUploadingAttachment) ...[
                         Row(
@@ -4127,11 +4131,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     onPressed: conversationBlocked
                                         ? null
                                         : () => setState(
-                                            () => _showEmojiStrip =
-                                                !_showEmojiStrip,
+                                            () => showEmojiStripState =
+                                                !showEmojiStripState,
                                           ),
                                     icon: Icon(
-                                      _showEmojiStrip
+                                      showEmojiStripState
                                           ? Icons.keyboard_rounded
                                           : Icons.emoji_emotions_outlined,
                                       color: const Color(0xFF6B7280),
@@ -4755,13 +4759,13 @@ class VoiceRecordingSheetState extends State<VoiceRecordingSheet>
 
 enum _VoiceNotePreviewAction { cancel, rerecord, send }
 
-class _ConversationAttachmentGateDecision {
+class ConversationAttachmentGateDecision {
   final String title;
   final String message;
   final String source;
   final bool stripeEnabled;
 
-  const _ConversationAttachmentGateDecision({
+  const ConversationAttachmentGateDecision({
     required this.title,
     required this.message,
     required this.source,
