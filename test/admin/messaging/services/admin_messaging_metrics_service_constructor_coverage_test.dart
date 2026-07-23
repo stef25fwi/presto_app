@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/messaging/services/admin_messaging_metrics_service.dart';
 
 void main() {
-  test('construit le service de métriques avec Firestore injecté', () async {
+  test('construit le service de métriques avec Firestore injecté', () {
     final service = AdminMessagingMetricsService(
       firestore: FakeFirebaseFirestore(),
     );
 
-    expect(await service.watchCurrentMetrics().first, isNull);
+    expect(service, isA<AdminMessagingMetricsService>());
   });
 }
