@@ -7,7 +7,19 @@ import 'subscription_models.dart';
 const SubscriptionCheckoutService _checkoutService =
     SubscriptionCheckoutService();
 
+typedef SubscriptionCommercialModeResolver = Future<bool> Function();
+
+@visibleForTesting
+SubscriptionCommercialModeResolver? subscriptionCommercialModeResolverOverride;
+
+@visibleForTesting
+void resetSubscriptionActionOverrides() {
+  subscriptionCommercialModeResolverOverride = null;
+}
+
 Future<bool> _isCommercialMode() async {
+  final override = subscriptionCommercialModeResolverOverride;
+  if (override != null) return override();
   try {
     return (await AppOperatingModeService().getState()).mode.isCommercial;
   } catch (_) {
@@ -32,6 +44,19 @@ Future<void> startSubscriptionCheckout(
   bool stripeEnabled = false,
   String source = 'subscription_ui',
 }) async {
+  final parsedPlan = subscriptionPlanFromKey(plan);
+  if (parsedPlan == SubscriptionPlan.free) {
+    await _checkoutService.handleAction(
+      context,
+      SubscriptionActionRequest(
+        action: SubscriptionActionType.checkout,
+        plan: parsedPlan,
+        source: source,
+        stripeEnabled: false,
+      ),
+    );
+    return;
+  }
   if (!stripeEnabled || !await _isCommercialMode()) {
     if (context.mounted) _showFreeBetaMessage(context);
     return;
@@ -40,7 +65,7 @@ Future<void> startSubscriptionCheckout(
     context,
     SubscriptionActionRequest(
       action: SubscriptionActionType.checkout,
-      plan: subscriptionPlanFromKey(plan),
+      plan: parsedPlan,
       source: source,
       stripeEnabled: true,
     ),
@@ -84,10 +109,6 @@ Future<void> notifySubscriptionLaunch(
   bool stripeEnabled = false,
   String source = 'subscription_ui',
 }) async {
-  if (!await _isCommercialMode()) {
-    if (context.mounted) _showFreeBetaMessage(context);
-    return;
-  }
   await _checkoutService.handleAction(
     context,
     SubscriptionActionRequest(
