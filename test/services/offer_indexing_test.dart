@@ -18,6 +18,11 @@ void main() {
       expect(canonicalizeOfferCategory('jardin'), 'Jardinage');
       expect(canonicalizeOfferCategory('catégorie inconnue'), 'catégorie inconnue');
     });
+
+    test('privilégie une catégorie dont le libellé contient la saisie', () {
+      expect(canonicalizeOfferCategory('peint'), 'Peinture');
+      expect(canonicalizeOfferCategory('cours & soutien scolaire'), 'Cours & soutien');
+    });
   });
 
   group('resolveOfferCategoryId', () {

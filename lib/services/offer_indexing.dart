@@ -114,15 +114,8 @@ String? resolveOfferCategoryId(String? input) {
   }
 
   final directMatch = _offerCategoryIdsByLabel[canonical];
-  if (directMatch != null && directMatch.isNotEmpty) {
+  if (directMatch != null) {
     return directMatch;
-  }
-
-  final normalizedCanonical = normalizeOfferText(canonical);
-  for (final entry in _offerCategoryIdsByLabel.entries) {
-    if (normalizeOfferText(entry.key) == normalizedCanonical) {
-      return entry.value;
-    }
   }
 
   return offerSlugify(canonical);
@@ -162,8 +155,7 @@ Map<String, dynamic> buildOfferIndexFields({
   final canonicalCategory = canonicalizeOfferCategory(category) ?? 'Autre';
   final safeCity = (city ?? '').trim();
   final safePostalCode = (postalCode ?? '').trim();
-  final categoryId = resolveOfferCategoryId(canonicalCategory) ??
-      offerSlugify(canonicalCategory);
+  final categoryId = resolveOfferCategoryId(canonicalCategory)!;
   final cityId = safeCity.isNotEmpty && safePostalCode.length >= 3
       ? '${safePostalCode}_${offerSlugify(safeCity)}'
       : null;
