@@ -47,7 +47,6 @@ class _FakeCallableResult<T> implements HttpsCallableResult<T> {
 
 void main() {
   tearDown(() {
-    ConversationService.setFirebaseFunctionsForTesting(null);
     ConversationService.setFunctionCallerForTesting(null);
   });
 
