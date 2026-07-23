@@ -1,16 +1,12 @@
-name: Coverage critical paths autopilot
+name: Coverage Factory 5x2
 
 on:
   workflow_dispatch:
     inputs:
-      global_target:
-        description: Global LCOV target percentage
-        required: false
-        default: "80"
       force_measure:
         description: Force a complete LCOV measurement
         required: false
-        default: false
+        default: true
         type: boolean
   push:
     branches: [main]
@@ -18,8 +14,6 @@ on:
       - "lib/**"
       - "test/**"
       - "integration_test/**"
-      - "pubspec.yaml"
-      - "pubspec.lock"
       - "quality/critical-coverage.json"
       - "tools/coverage/**"
       - ".github/workflows/coverage-agent.yml"
@@ -30,7 +24,7 @@ on:
     - cron: "17 * * * *"
 
 concurrency:
-  group: coverage-critical-autopilot
+  group: coverage-factory-5x2
   cancel-in-progress: false
 
 permissions:
@@ -41,48 +35,13 @@ permissions:
   checks: read
 
 jobs:
-  watchdog:
-    name: Remove stale coverage locks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Close orphaned missions
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          active_pr_count="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/"))] | length')"
-          if [ "$active_pr_count" != "0" ]; then
-            echo "A coverage PR is active; no mission is stale."
-            exit 0
-          fi
-
-          now="$(date -u +%s)"
-          gh issue list --repo "$GITHUB_REPOSITORY" --state open --label coverage-agent --limit 100 \
-            --json number,updatedAt,title \
-            --jq '.[] | [.number, .updatedAt, .title] | @tsv' |
-          while IFS=$'\t' read -r number updated_at title; do
-            [ -n "$number" ] || continue
-            [ "$number" = "553" ] && continue
-            updated_epoch="$(date -u -d "$updated_at" +%s)"
-            age=$((now - updated_epoch))
-            if [ "$age" -ge 7200 ]; then
-              gh issue comment --repo "$GITHUB_REPOSITORY" "$number" --body \
-                "Mission fermée automatiquement : aucune branche ou PR de couverture n'a été créée dans les deux heures. Le verrou est libéré pour permettre une nouvelle phase."
-              gh issue close --repo "$GITHUB_REPOSITORY" "$number" --reason "not planned"
-              echo "Closed stale mission #$number — $title"
-            fi
-          done
-
-  measure:
-    name: Measure main and prepare the five critical lanes
-    needs: watchdog
+  plan:
+    name: Measure LCOV and fill two worker lanes
     if: >-
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 120
-
     steps:
       - name: Checkout main
         uses: actions/checkout@v5
@@ -90,21 +49,42 @@ jobs:
           ref: main
           fetch-depth: 1
 
-      - name: Skip duplicate measurement for unchanged main
+      - name: Detect available worker slots
+        id: slots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          active_prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 100 \
+            --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/w"))] | length')"
+          active_issues="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label coverage-worker --limit 100 --json number --jq 'length')"
+          occupied=$((active_prs + active_issues))
+          [ "$occupied" -gt 2 ] && occupied=2
+          available=$((2 - occupied))
+          echo "active_prs=$active_prs" >> "$GITHUB_OUTPUT"
+          echo "active_issues=$active_issues" >> "$GITHUB_OUTPUT"
+          echo "available=$available" >> "$GITHUB_OUTPUT"
+          echo "Worker slots available: $available"
+
+      - name: Skip unchanged main when no slot exists
         id: dedupe
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_MEASURE: ${{ inputs.force_measure }}
+          AVAILABLE: ${{ steps.slots.outputs.available }}
         run: |
           set -euo pipefail
           main_sha="$(git rev-parse HEAD)"
-          previous_sha="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" --comments --json comments --jq '[.comments[].body | capture("<!-- coverage-main-sha:(?<sha>[0-9a-f]{40}) -->")?.sha] | map(select(. != null)) | last // ""')"
-          if [ "${FORCE_MEASURE:-false}" != "true" ] && [ "$main_sha" = "$previous_sha" ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "Main is unchanged; full LCOV measurement skipped."
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
+          previous_sha="$(gh issue view 553 --repo "$GITHUB_REPOSITORY" --comments \
+            --json comments --jq '[.comments[].body | capture("<!-- coverage-factory-main-sha:(?<sha>[0-9a-f]{40}) -->")?.sha] | map(select(. != null)) | last // ""')"
+          run=true
+          if [ "$AVAILABLE" = "0" ]; then
+            run=false
+          elif [ "${FORCE_MEASURE:-false}" != "true" ] && [ "$main_sha" = "$previous_sha" ]; then
+            run=false
           fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
           echo "main_sha=$main_sha" >> "$GITHUB_OUTPUT"
 
       - name: Set up Flutter 3.44.6
@@ -119,145 +99,139 @@ jobs:
         if: steps.dedupe.outputs.run == 'true'
         run: flutter pub get
 
-      - name: Measure the real main baseline
+      - name: Measure real main LCOV
         if: steps.dedupe.outputs.run == 'true'
         run: flutter test --coverage
 
-      - name: Select one exact target per critical journey
+      - name: Select five critical targets
         if: steps.dedupe.outputs.run == 'true'
-        id: target
-        env:
-          INPUT_TARGET: ${{ inputs.global_target }}
-          REPOSITORY_TARGET: ${{ vars.COVERAGE_GLOBAL_TARGET }}
         run: |
-          set -euo pipefail
-          target="${INPUT_TARGET:-${REPOSITORY_TARGET:-80}}"
-          mkdir -p quality_reports/coverage-agent
+          mkdir -p quality_reports/coverage-factory
           python3 tools/coverage/coverage_agent.py \
             --lcov coverage/lcov.info \
             --config quality/critical-coverage.json \
-            --json-output quality_reports/coverage-agent/target.json \
-            --markdown-output quality_reports/coverage-agent/issue.md \
-            --global-target "$target"
+            --json-output quality_reports/coverage-factory/targets.json \
+            --markdown-output quality_reports/coverage-factory/targets.md \
+            --global-target "${{ vars.COVERAGE_GLOBAL_TARGET || '80' }}"
+
+      - name: Build two independent worker missions
+        if: steps.dedupe.outputs.run == 'true'
+        id: factory
+        env:
+          AVAILABLE: ${{ steps.slots.outputs.available }}
+        run: |
+          python3 tools/coverage/coverage_factory.py \
+            --input quality_reports/coverage-factory/targets.json \
+            --output quality_reports/coverage-factory/workers.json \
+            --markdown quality_reports/coverage-factory/workers.md \
+            --limit "$AVAILABLE"
           python3 - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           from pathlib import Path
-
-          data = json.loads(
-              Path("quality_reports/coverage-agent/target.json").read_text()
-          )
-          print(f"target_reached={str(data['global']['target_reached']).lower()}")
-          print(
-              "critical_target_reached="
-              f"{str(data['critical_target_reached']).lower()}"
-          )
-          print(f"global_percent={data['global']['percent']}")
-          print(f"category={data['target']['category']}")
-          print(f"path={data['target']['path']}")
-          print(f"uncovered={data['target']['uncovered']}")
-          print(f"target_count={len(data['targets'])}")
+          data = json.loads(Path('quality_reports/coverage-factory/workers.json').read_text())
+          print(f"count={len(data['workers'])}")
+          print(f"global_percent={data.get('global', {}).get('percent', 0)}")
           PY
 
-      - name: Detect active execution
-        if: steps.dedupe.outputs.run == 'true'
-        id: active
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          pr="$(gh pr list --state open --json number,url,headRefName --jq '[.[] | select(.headRefName | startswith("coverage/"))] | .[0] // {}')"
-          mission="$(gh issue list --state open --label coverage-agent --limit 100 --json number,url,updatedAt --jq '[.[] | select(.number != 553)] | .[0] // {}')"
-          python3 - "$pr" "$mission" <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          import sys
-
-          pr = json.loads(sys.argv[1])
-          mission = json.loads(sys.argv[2])
-          print(f"pr_exists={str(bool(pr)).lower()}")
-          print(f"pr_url={pr.get('url', '')}")
-          print(f"mission_exists={str(bool(mission)).lower()}")
-          print(f"mission_url={mission.get('url', '')}")
-          PY
-
-      - name: Create one executable five-lane coverage mission
-        if: >-
-          steps.dedupe.outputs.run == 'true' &&
-          (steps.target.outputs.target_reached != 'true' ||
-          steps.target.outputs.critical_target_reached != 'true') &&
-          steps.active.outputs.pr_exists != 'true' &&
-          steps.active.outputs.mission_exists != 'true'
-        id: mission
+      - name: Create worker missions
+        if: steps.dedupe.outputs.run == 'true' && steps.factory.outputs.count != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           AGENT_ASSIGNEE: ${{ vars.COVERAGE_AGENT_ASSIGNEE }}
-          TARGET_COUNT: ${{ steps.target.outputs.target_count }}
         run: |
           set -euo pipefail
-          branch="coverage/critical-paths-$(date -u +%Y%m%d-%H%M%S)"
-          cp quality_reports/coverage-agent/issue.md /tmp/coverage-mission.md
-          cat >> /tmp/coverage-mission.md <<EOF
+          python3 - <<'PY' > /tmp/workers.tsv
+          import json
+          from pathlib import Path
+          data = json.loads(Path('quality_reports/coverage-factory/workers.json').read_text())
+          for worker in data['workers']:
+              print('\t'.join([
+                  str(worker['worker']),
+                  str(worker['category']),
+                  str(worker['module_label']),
+                  str(worker['path']),
+                  str(worker['current_percent']),
+                  str(worker['uncovered']),
+                  str(worker['uncovered_ranges']),
+                  str(worker['branch_prefix']),
+              ]))
+          PY
 
-          ### Branche réservée
-          - \`${branch}\`
+          while IFS=$'\t' read -r worker category label path percent uncovered ranges prefix; do
+            [ -n "$worker" ] || continue
+            existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+              --label coverage-worker --search "worker-$worker $path" --json number --jq 'length')"
+            [ "$existing" != "0" ] && continue
+            branch="${prefix}-$(date -u +%Y%m%d-%H%M%S)"
+            body="$(cat <<EOF
+          ## Worker $worker — Coverage Factory 5×2
 
-          Cette mission expire automatiquement après deux heures sans branche ou PR afin de ne plus bloquer l'autopilote.
+          - Parcours : **$label**
+          - Fichier de production : \`$path\`
+          - Couverture actuelle : **$percent %**
+          - Objectif fichier : **100 % LCOV réel**
+          - Lignes non couvertes : **$uncovered**
+          - Plages : \`$ranges\`
+          - Branche réservée : \`$branch\`
+
+          ### Passe 1 — rendement rapide
+          Couvrir les chemins publics, validations, retours anticipés, succès, erreurs, valeurs nulles et états vides jusqu’à environ 90–95 %.
+
+          ### Passe 2 — fermeture à 100 %
+          Relire le LCOV ciblé et ajouter uniquement les scénarios correspondant aux lignes encore à zéro.
+
+          ### Boucle rapide obligatoire
+          1. \`dart format <test-file>\`
+          2. \`flutter test <test-file>\`
+          3. \`flutter analyze $path <test-file>\`
+
+          ### Validation finale avant PR
+          1. \`dart format --set-exit-if-changed lib test\`
+          2. \`flutter analyze --fatal-infos\`
+          3. \`flutter test --coverage\`
+          4. \`python3 tools/quality/check_critical_coverage.py --enforce\`
+
+          ### Garde-fous
+          - tests comportementaux déterministes uniquement ;
+          - aucun skip, test vide, délai arbitraire ou exclusion LCOV ;
+          - aucune baisse de seuil ;
+          - une PR par worker ; fusion séquentielle ;
+          - consigner le LCOV avant/après du fichier et du parcours.
+
+          <!-- coverage-worker:$worker -->
           EOF
+          )"
+            args=()
+            [ -n "${AGENT_ASSIGNEE:-}" ] && args=(--assignee "$AGENT_ASSIGNEE")
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "[Coverage worker-$worker] $category — $path vers 100 %" \
+              --body "$body" --label coverage-agent --label coverage-worker "${args[@]}"
+          done < /tmp/workers.tsv
 
-          assignee_args=()
-          if [ -n "${AGENT_ASSIGNEE:-}" ]; then
-            assignee_args=(--assignee "$AGENT_ASSIGNEE")
-          fi
-
-          url="$(gh issue create \
-            --title "[Coverage execution] 5 parcours critiques — ${TARGET_COUNT} fichiers vers 100 %" \
-            --body-file /tmp/coverage-mission.md \
-            --label coverage-agent \
-            "${assignee_args[@]}")"
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-
-      - name: Update coverage dashboard
+      - name: Update central dashboard
         if: steps.dedupe.outputs.run == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           MAIN_SHA: ${{ steps.dedupe.outputs.main_sha }}
-          GLOBAL_PERCENT: ${{ steps.target.outputs.global_percent }}
-          TARGET_CATEGORY: ${{ steps.target.outputs.category }}
-          TARGET_PATH: ${{ steps.target.outputs.path }}
-          TARGET_COUNT: ${{ steps.target.outputs.target_count }}
-          CRITICAL_REACHED: ${{ steps.target.outputs.critical_target_reached }}
-          ACTIVE_PR_URL: ${{ steps.active.outputs.pr_url }}
-          ACTIVE_MISSION_URL: ${{ steps.active.outputs.mission_url }}
-          CREATED_MISSION_URL: ${{ steps.mission.outputs.url }}
+          COUNT: ${{ steps.factory.outputs.count }}
+          GLOBAL_PERCENT: ${{ steps.factory.outputs.global_percent }}
         run: |
-          status="Mesure terminée."
-          if [ -n "${CREATED_MISSION_URL:-}" ]; then
-            status="Nouvelle phase cinq parcours : ${CREATED_MISSION_URL}"
-          elif [ -n "${ACTIVE_PR_URL:-}" ]; then
-            status="PR de couverture active : ${ACTIVE_PR_URL}"
-          elif [ -n "${ACTIVE_MISSION_URL:-}" ]; then
-            status="Mission active : ${ACTIVE_MISSION_URL}"
-          elif [ "${CRITICAL_REACHED}" = "true" ]; then
-            status="✅ Les cinq parcours critiques ont atteint leur cible."
-          fi
-          gh issue comment 553 --body "### Coverage Autopilot — run $GITHUB_RUN_ID
+          gh issue comment 553 --repo "$GITHUB_REPOSITORY" --body "### Coverage Factory 5×2 — run $GITHUB_RUN_ID
 
-          - Couverture main : **${GLOBAL_PERCENT}%**
-          - Parcours critiques à 100 % : **${CRITICAL_REACHED}**
-          - Fichiers précis dans la prochaine phase : **${TARGET_COUNT}**
-          - Première priorité : **${TARGET_CATEGORY}**
-          - Première cible : \`${TARGET_PATH}\`
-          - Statut : ${status}
+          - Couverture globale : **${GLOBAL_PERCENT}%**
+          - Nouveaux workers préparés : **${COUNT}**
+          - Capacité maximale : **2 branches indépendantes**
+          - Validation : ciblée pendant l’écriture, complète avant fusion
 
-          <!-- coverage-main-sha:${MAIN_SHA} -->"
+          <!-- coverage-factory-main-sha:${MAIN_SHA} -->"
 
-      - name: Upload LCOV evidence
+      - name: Upload factory evidence
         if: always() && steps.dedupe.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-autopilot-${{ github.run_id }}
+          name: coverage-factory-${{ github.run_id }}
           path: |
             coverage/lcov.info
-            quality_reports/coverage-agent/target.json
-            quality_reports/coverage-agent/issue.md
+            quality_reports/coverage-factory/
           if-no-files-found: ignore
           retention-days: 14
