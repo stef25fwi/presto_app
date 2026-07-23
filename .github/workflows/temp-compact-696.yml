@@ -1,3 +1,4 @@
+# Réarmement sans dépendance Flutter.
 name: Temporary compact fix 696
 
 on:
@@ -57,7 +58,6 @@ jobs:
           target.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
 
-          dart format lib/pages/messages/conversations_list_page.dart
           git config user.name "coverage-fix-bot"
           git config user.email "coverage-fix-bot@users.noreply.github.com"
           git add lib/pages/messages/conversations_list_page.dart
