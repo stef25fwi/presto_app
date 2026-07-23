@@ -2702,7 +2702,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           return;
         }
         await _showVoiceNotePreviewSheet(
-          _PendingVoiceNote(
+          PendingVoiceNote(
             duration: duration,
             bytes: audioUpload.bytes,
             previewSource: previewSource,
@@ -2735,7 +2735,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return;
     }
     await _showVoiceNotePreviewSheet(
-      _PendingVoiceNote(
+      PendingVoiceNote(
         duration: duration,
         filePath: path,
         previewSource: path,
@@ -2746,8 +2746,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Future<void> _showVoiceNotePreviewSheet(_PendingVoiceNote preview) async {
-    final action = await showModalBottomSheet<_VoiceNotePreviewAction>(
+  Future<void> _showVoiceNotePreviewSheet(PendingVoiceNote preview) async {
+    final action = await showModalBottomSheet<VoiceNotePreviewAction>(
       context: context,
       isDismissible: false,
       enableDrag: false,
@@ -2755,34 +2755,34 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _VoiceNotePreviewSheet(
+      builder: (ctx) => VoiceNotePreviewSheet(
         preview: preview,
-        onCancel: () => Navigator.of(ctx).pop(_VoiceNotePreviewAction.cancel),
+        onCancel: () => Navigator.of(ctx).pop(VoiceNotePreviewAction.cancel),
         onRerecord: () =>
-            Navigator.of(ctx).pop(_VoiceNotePreviewAction.rerecord),
-        onSend: () => Navigator.of(ctx).pop(_VoiceNotePreviewAction.send),
+            Navigator.of(ctx).pop(VoiceNotePreviewAction.rerecord),
+        onSend: () => Navigator.of(ctx).pop(VoiceNotePreviewAction.send),
       ),
     );
 
     switch (action) {
-      case _VoiceNotePreviewAction.send:
+      case VoiceNotePreviewAction.send:
         await _sendPreparedVoiceNote(preview);
         await _disposePendingVoiceNote(preview);
         return;
-      case _VoiceNotePreviewAction.rerecord:
+      case VoiceNotePreviewAction.rerecord:
         await _disposePendingVoiceNote(preview);
         if (mounted) {
           await _showVoiceRecordingSheet();
         }
         return;
-      case _VoiceNotePreviewAction.cancel:
+      case VoiceNotePreviewAction.cancel:
       case null:
         await _disposePendingVoiceNote(preview);
         return;
     }
   }
 
-  Future<void> _sendPreparedVoiceNote(_PendingVoiceNote preview) async {
+  Future<void> _sendPreparedVoiceNote(PendingVoiceNote preview) async {
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
       if (mounted) {
@@ -2829,7 +2829,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _disposePendingVoiceNote(
-    _PendingVoiceNote preview, {
+    PendingVoiceNote preview, {
     bool keepFilePath = false,
   }) async {
     if (preview.usesGeneratedPreviewSource) {
@@ -4757,7 +4757,7 @@ class VoiceRecordingSheetState extends State<VoiceRecordingSheet>
   }
 }
 
-enum _VoiceNotePreviewAction { cancel, rerecord, send }
+enum VoiceNotePreviewAction { cancel, rerecord, send }
 
 class ConversationAttachmentGateDecision {
   final String title;
@@ -4773,7 +4773,7 @@ class ConversationAttachmentGateDecision {
   });
 }
 
-class _PendingVoiceNote {
+class PendingVoiceNote {
   final Duration duration;
   final Uint8List? bytes;
   final String? filePath;
@@ -4783,7 +4783,7 @@ class _PendingVoiceNote {
   final String extension;
   final bool usesGeneratedPreviewSource;
 
-  const _PendingVoiceNote({
+  const PendingVoiceNote({
     required this.duration,
     this.bytes,
     this.filePath,
@@ -4795,13 +4795,13 @@ class _PendingVoiceNote {
   });
 }
 
-class _VoiceNotePreviewSheet extends StatelessWidget {
-  final _PendingVoiceNote preview;
+class VoiceNotePreviewSheet extends StatelessWidget {
+  final PendingVoiceNote preview;
   final VoidCallback onCancel;
   final VoidCallback onRerecord;
   final VoidCallback onSend;
-
-  const _VoiceNotePreviewSheet({
+  const VoiceNotePreviewSheet({
+    super.key,
     required this.preview,
     required this.onCancel,
     required this.onRerecord,
