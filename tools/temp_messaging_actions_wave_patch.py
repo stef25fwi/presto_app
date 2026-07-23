@@ -38,3 +38,29 @@ for old, new in renames.items():
     source = updated
 
 path.write_text(source)
+
+test_path = Path(
+    'test/pages/messages/conversation_thread_actions_and_bubbles_coverage_test.dart'
+)
+test_source = test_path.read_text()
+old_assignment = """state.setState(() {
+      state.optimisticMessages = <OptimisticMessage>[sending, second];
+    });"""
+new_assignment = """state.setState(() {
+      state.optimisticMessages
+        ..clear()
+        ..addAll(<OptimisticMessage>[sending, second]);
+    });"""
+if old_assignment not in test_source:
+    raise SystemExit('optimistic message fixture assignment not found')
+test_source = test_source.replace(old_assignment, new_assignment, 1)
+
+old_avatar_expectation = "expect(find.text('A'), findsOneWidget);"
+if old_avatar_expectation not in test_source:
+    raise SystemExit('avatar expectation not found')
+test_source = test_source.replace(
+    old_avatar_expectation,
+    "expect(find.text('A'), findsWidgets);",
+    1,
+)
+test_path.write_text(test_source)
