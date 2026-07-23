@@ -1,3 +1,4 @@
+# Déclencheur déterministe de compaction PR #694.
 from pathlib import Path
 
 TARGET = Path('lib/pages/messages/conversations_list_page.dart')
