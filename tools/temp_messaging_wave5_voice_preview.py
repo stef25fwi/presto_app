@@ -26,6 +26,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/pages/messages/conversation_thread_page.dart';
 
+const _preview = PendingVoiceNote(
+  duration: Duration(minutes: 1, seconds: 5),
+  previewSource: '',
+  previewIsLocalFile: false,
+  mimeType: 'audio/webm',
+  extension: 'webm',
+);
+
+Future<void> _pumpPreview(
+  WidgetTester tester, {
+  required VoidCallback onCancel,
+  required VoidCallback onRerecord,
+  required VoidCallback onSend,
+}) async {
+  await tester.binding.setSurfaceSize(const Size(430, 932));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: VoiceNotePreviewSheet(
+          preview: _preview,
+          onCancel: onCancel,
+          onRerecord: onRerecord,
+          onSend: onSend,
+        ),
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
 void main() {
   test('conserve toutes les métadonnées de la note vocale préparée', () {
     final preview = PendingVoiceNote(
@@ -49,33 +79,13 @@ void main() {
     expect(preview.usesGeneratedPreviewSource, isTrue);
   });
 
-  testWidgets('rend la prévisualisation et déclenche ses trois actions', (
-    tester,
-  ) async {
-    var cancelCalls = 0;
-    var rerecordCalls = 0;
-    var sendCalls = 0;
-
-    await tester.binding.setSurfaceSize(const Size(430, 932));
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: VoiceNotePreviewSheet(
-            preview: const PendingVoiceNote(
-              duration: Duration(minutes: 1, seconds: 5),
-              previewSource: '',
-              previewIsLocalFile: false,
-              mimeType: 'audio/webm',
-              extension: 'webm',
-            ),
-            onCancel: () => cancelCalls += 1,
-            onRerecord: () => rerecordCalls += 1,
-            onSend: () => sendCalls += 1,
-          ),
-        ),
-      ),
+  testWidgets('rend la prévisualisation vocale et sa durée', (tester) async {
+    await _pumpPreview(
+      tester,
+      onCancel: _noop,
+      onRerecord: _noop,
+      onSend: _noop,
     );
-    await tester.pump();
 
     expect(find.text('Relire la note vocale'), findsOneWidget);
     expect(find.text('Durée 01:05'), findsOneWidget);
@@ -83,15 +93,45 @@ void main() {
     expect(find.text('Refaire'), findsOneWidget);
     expect(find.text('Envoyer'), findsOneWidget);
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
+  });
 
+  testWidgets('déclenche Annuler', (tester) async {
+    var calls = 0;
+    await _pumpPreview(
+      tester,
+      onCancel: () => calls += 1,
+      onRerecord: _noop,
+      onSend: _noop,
+    );
     await tester.tap(find.text('Annuler'));
+    await tester.pump();
+    expect(calls, 1);
+  });
+
+  testWidgets('déclenche Refaire', (tester) async {
+    var calls = 0;
+    await _pumpPreview(
+      tester,
+      onCancel: _noop,
+      onRerecord: () => calls += 1,
+      onSend: _noop,
+    );
     await tester.tap(find.text('Refaire'));
+    await tester.pump();
+    expect(calls, 1);
+  });
+
+  testWidgets('déclenche Envoyer', (tester) async {
+    var calls = 0;
+    await _pumpPreview(
+      tester,
+      onCancel: _noop,
+      onRerecord: _noop,
+      onSend: () => calls += 1,
+    );
     await tester.tap(find.text('Envoyer'));
     await tester.pump();
-
-    expect(cancelCalls, 1);
-    expect(rerecordCalls, 1);
-    expect(sendCalls, 1);
+    expect(calls, 1);
   });
 
   testWidgets('rend une source locale sans casser le lecteur', (tester) async {
