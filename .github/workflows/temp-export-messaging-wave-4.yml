@@ -12,7 +12,7 @@ jobs:
   implement-and-test:
     if: github.head_ref == 'coverage/messaging-thread-interactions-wave-4' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          flutter test --reporter expanded test/pages/messages/conversation_thread_interaction_dialogs_coverage_test.dart 2>&1 | tee messaging-wave4-test.log
+          timeout 120s flutter test --reporter expanded test/pages/messages/conversation_thread_interaction_dialogs_coverage_test.dart 2>&1 | tee messaging-wave4-test.log
 
       - name: Targeted analyzer
         shell: bash
