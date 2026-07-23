@@ -156,7 +156,9 @@ void main() {
 
   testWidgets('couvre la barre emoji et les feuilles de pièces jointes',
       (tester) async {
+    debugPrint('WAVE4 bootstrap-start');
     final dynamic state = await _pumpThread(tester);
+    debugPrint('WAVE4 bootstrap-ready');
 
     state.quickEmojisState = <String>['🔥', '👍', '😊', '🙏', '👌', '💬'];
     state.showEmojiStripState = true;
@@ -165,6 +167,7 @@ void main() {
     state.conversationBlocked = true;
     expect(state.buildEmojiStrip(), isA<SizedBox>());
     state.conversationBlocked = false;
+    debugPrint('WAVE4 emoji-done');
 
     final Future<void> gateFuture = state.showAttachmentSubscriptionGate(
       const ConversationAttachmentGateDecision(
@@ -183,6 +186,7 @@ void main() {
     await tester.tap(find.text('Plus tard'));
     await tester.pump(const Duration(milliseconds: 500));
     await gateFuture;
+    debugPrint('WAVE4 subscription-gate-done');
 
     const document = MessageAttachment(
       type: 'document',
@@ -193,7 +197,8 @@ void main() {
       sizeBytes: 1200,
     );
 
-    final Future<void> actionsFuture = state.showAttachmentActionsSheet(document);
+    final Future<void> actionsFuture =
+        state.showAttachmentActionsSheet(document);
     await _pumpUntil(tester, find.text('Pièce jointe'));
     expect(find.text('devis.pdf'), findsOneWidget);
     expect(find.text('Ouvrir'), findsOneWidget);
@@ -201,6 +206,7 @@ void main() {
     Navigator.of(tester.element(find.text('Pièce jointe'))).pop();
     await tester.pump(const Duration(milliseconds: 500));
     await actionsFuture;
+    debugPrint('WAVE4 attachment-sheet-done');
 
     await state.openAttachment(
       const MessageAttachment(
@@ -212,7 +218,9 @@ void main() {
         sizeBytes: 200,
       ),
     );
+    debugPrint('WAVE4 image-branch-done');
 
     await _disposeThread(tester);
+    debugPrint('WAVE4 dispose-done');
   });
 }
