@@ -81,8 +81,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   final SubscriptionConfigService _subscriptionConfigService =
       SubscriptionConfigService();
   final TextEditingController messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final List<OptimisticMessage> _optimisticMessages = <OptimisticMessage>[];
+  final ScrollController threadScrollController = ScrollController();
+  final List<OptimisticMessage> optimisticMessages = <OptimisticMessage>[];
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
   _conversationSubscription;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
@@ -94,7 +94,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<OfferPreview?>? _offerPreviewFuture;
   String? _offerPreviewFutureId;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _messageStream;
-  bool _isSending = false;
+  bool sendingMessageState = false;
   bool _hasDraftText = false;
   bool _isMarkingRead = false;
   bool _hasAttemptedOlderPagination = false;
@@ -120,11 +120,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Map<String, int> _emojiUsageCounts = const {};
   bool _didLoadEmojiUsage = false;
   bool otherIsTyping = false;
-  bool _showNewMessagesButton = false;
+  bool showNewMessagesButton = false;
   bool _isUploadingAttachment = false;
-  final Set<String> _deletingMessageIds = {};
+  final Set<String> deletingMessageIds = {};
   bool _canLookupOtherParticipantProfile = false;
-  bool _isPreparingMessageStream = true;
+  bool preparingMessageStream = true;
   bool adminViewerState = false;
   String? _newestLiveMessageId;
   bool conversationBlocked = false;
@@ -136,10 +136,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   int _messageStreamRetryCount = 0;
   String _offerId = '';
   String conversationOfferTitle = '';
-  String _otherParticipantId = '';
+  String otherParticipantIdState = '';
   String otherParticipantNameState = '';
   String _otherParticipantPhotoSource = '';
-  String _otherParticipantPhotoUrl = '';
+  String otherParticipantPhotoUrl = '';
   String otherPresenceStatus = '';
   DateTime? otherLastSeenAt;
   bool _isRecording = false;
@@ -492,7 +492,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
       if (!ready || !mounted) return;
       setState(() {
-        _isPreparingMessageStream = false;
+        preparingMessageStream = false;
         _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
       });
     }());
@@ -546,7 +546,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     unawaited(_publishTyping(false));
     messageController.removeListener(_handleDraftChanged);
     messageController.dispose();
-    _scrollController.dispose();
+    threadScrollController.dispose();
     super.dispose();
   }
 
@@ -592,7 +592,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _warmMessagingAccess() async {
     if (mounted) {
       setState(() {
-        _isPreparingMessageStream = true;
+        preparingMessageStream = true;
       });
     }
     var accessAttempt = 0;
@@ -614,7 +614,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (!mounted) return;
     if (!ready) {
       setState(() {
-        _isPreparingMessageStream = false;
+        preparingMessageStream = false;
         _messageStream = null;
       });
       return;
@@ -622,7 +622,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _bindConversationListener();
     setState(() {
       _messageStreamRetryCount = 0;
-      _isPreparingMessageStream = false;
+      preparingMessageStream = false;
       _messageStream = _buildLiveStream(anchorDoc: _paginationAnchorDoc);
     });
   }
@@ -639,8 +639,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (!mounted) return;
       if (_canLookupOtherParticipantProfile == canLookup &&
           adminViewerState == isAdminViewer) {
-        if (canLookup && _otherParticipantId.trim().isNotEmpty) {
-          _bindPresenceListener(_otherParticipantId);
+        if (canLookup && otherParticipantIdState.trim().isNotEmpty) {
+          _bindPresenceListener(otherParticipantIdState);
         }
         return;
       }
@@ -651,11 +651,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           otherPresenceStatus = '';
           otherLastSeenAt = null;
           _otherParticipantPhotoSource = '';
-          _otherParticipantPhotoUrl = '';
+          otherParticipantPhotoUrl = '';
         }
       });
-      if (canLookup && _otherParticipantId.trim().isNotEmpty) {
-        _bindPresenceListener(_otherParticipantId);
+      if (canLookup && otherParticipantIdState.trim().isNotEmpty) {
+        _bindPresenceListener(otherParticipantIdState);
       } else {
         await _presenceSubscription?.cancel();
         _presenceSubscription = null;
@@ -669,7 +669,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildWatermark() {
-    return const _ConversationPatternBackground();
+    return const ConversationPatternBackground();
   }
 
   Widget buildThreadDateChip(DateTime? date) {
@@ -811,7 +811,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (mounted) {
       setState(() {
         _otherParticipantPhotoSource = source;
-        _otherParticipantPhotoUrl = '';
+        otherParticipantPhotoUrl = '';
       });
     }
     try {
@@ -824,12 +824,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final normalizedUrl = downloadUrl.trim();
       if (!mounted ||
           normalizedUrl.isEmpty ||
-          _otherParticipantId != participantId ||
+          otherParticipantIdState != participantId ||
           _otherParticipantPhotoSource != source) {
         return;
       }
       setState(() {
-        _otherParticipantPhotoUrl = normalizedUrl;
+        otherParticipantPhotoUrl = normalizedUrl;
       });
     } catch (error) {
       debugPrint(
@@ -846,7 +846,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _presenceSubscription = null;
       return;
     }
-    if (participantId.trim().isEmpty || participantId == _otherParticipantId) {
+    if (participantId.trim().isEmpty ||
+        participantId == otherParticipantIdState) {
       return;
     }
     _presenceSubscription?.cancel();
@@ -874,7 +875,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           otherLastSeenAt = parseFirestoreDateTime(data['lastSeenAt']);
           if (!needsStorageResolution) {
             _otherParticipantPhotoSource = networkPhotoUrl;
-            _otherParticipantPhotoUrl = networkPhotoUrl;
+            otherParticipantPhotoUrl = networkPhotoUrl;
           }
         });
         if (needsStorageResolution) {
@@ -964,7 +965,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _openOtherParticipantProfile() async {
-    final uid = _otherParticipantId.trim();
+    final uid = otherParticipantIdState.trim();
     if (uid.isEmpty) return;
     final doc = await FirebaseFirestore.instance
         .collection('users')
@@ -987,19 +988,19 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             radius: 18,
             backgroundColor: Colors.white.withValues(alpha: 0.18),
             foregroundColor: Colors.white,
-            foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
-                ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
+            foregroundImage: otherParticipantPhotoUrl.isNotEmpty
+                ? profileAvatarImageProvider(otherParticipantPhotoUrl)
                 : null,
-            onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
+            onForegroundImageError: otherParticipantPhotoUrl.isNotEmpty
                 ? (error, stackTrace) {
                     debugPrint(
                       '[ConversationThread] header avatar load failed '
-                      'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+                      'participantId=$otherParticipantIdState url=$otherParticipantPhotoUrl '
                       'error=$error',
                     );
                   }
                 : null,
-            child: _otherParticipantPhotoUrl.isEmpty
+            child: otherParticipantPhotoUrl.isEmpty
                 ? Text(
                     conversationInitial(),
                     style: const TextStyle(
@@ -1262,7 +1263,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             : unreadMap is Map
             ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
             : 0;
-        final participantChanged = otherParticipantId != _otherParticipantId;
+        final participantChanged =
+            otherParticipantId != otherParticipantIdState;
         final isDeletedForCurrentUser = isConversationDeletedForUser(
           data,
           widget.currentUserId,
@@ -1271,11 +1273,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           setState(() {
             threadParticipants = participants;
             _participantNames = participantNames;
-            _otherParticipantId = otherParticipantId;
+            otherParticipantIdState = otherParticipantId;
             otherParticipantNameState = otherParticipantName;
             if (participantChanged) {
               _otherParticipantPhotoSource = '';
-              _otherParticipantPhotoUrl = '';
+              otherParticipantPhotoUrl = '';
             }
             _offerId = offerId;
             conversationOfferTitle = offerTitle;
@@ -1491,7 +1493,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Future<void> _sendMessage() async {
     final rawDraft = messageController.text;
     final text = rawDraft.trim();
-    if (text.isEmpty || _isSending) return;
+    if (text.isEmpty || sendingMessageState) return;
     if (conversationBlocked) {
       showErrorSnackBar(
         context,
@@ -1512,17 +1514,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       status: OptimisticMessageStatus.sending,
     );
     setState(() {
-      _isSending = true;
+      sendingMessageState = true;
       _hasDraftText = false;
-      _optimisticMessages.insert(0, optimisticMessage);
+      optimisticMessages.insert(0, optimisticMessage);
     });
     messageController.clear();
     _scheduleTypingUpdate(false);
-    _scrollToLatestMessage(force: true);
+    scrollToLatestMessage(force: true);
     try {
       final ready = await _ensureMessagingAccess(interactive: true);
       if (!ready) {
-        _markOptimisticMessageFailed(optimisticMessage.id);
+        markOptimisticMessageFailed(optimisticMessage.id);
         if (messageController.text.trim().isEmpty) {
           messageController.value = TextEditingValue(
             text: rawDraft,
@@ -1535,10 +1537,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (resolvedConversationId == widget.conversationId) {
         unawaited(_markAsRead());
       }
-      _removeOptimisticMessage(optimisticMessage.id);
+      removeOptimisticMessage(optimisticMessage.id);
       await _switchToConversationIfNeeded(resolvedConversationId);
       if (!mounted) return;
-      _scrollToLatestMessage(force: true);
+      scrollToLatestMessage(force: true);
     } catch (error) {
       _debugMessagingAccess(
         'send-message-failed',
@@ -1546,7 +1548,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         firestorePath: 'conversations/${widget.conversationId}',
       );
       if (!mounted) return;
-      _markOptimisticMessageFailed(optimisticMessage.id);
+      markOptimisticMessageFailed(optimisticMessage.id);
       if (messageController.text.trim().isEmpty) {
         messageController.value = TextEditingValue(
           text: rawDraft,
@@ -1557,28 +1559,28 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     } finally {
       if (mounted) {
         setState(() {
-          _isSending = false;
+          sendingMessageState = false;
         });
       }
     }
   }
 
-  bool _isNearLatestMessage() {
-    if (!_scrollController.hasClients) return true;
-    return _scrollController.offset <= 96;
+  bool isNearLatestMessage() {
+    if (!threadScrollController.hasClients) return true;
+    return threadScrollController.offset <= 96;
   }
 
-  void _scrollToLatestMessage({bool force = false}) {
+  void scrollToLatestMessage({bool force = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      if (!force && !_isNearLatestMessage()) return;
-      _scrollController.animateTo(
+      if (!threadScrollController.hasClients) return;
+      if (!force && !isNearLatestMessage()) return;
+      threadScrollController.animateTo(
         0,
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
       );
-      if (mounted && _showNewMessagesButton) {
-        setState(() => _showNewMessagesButton = false);
+      if (mounted && showNewMessagesButton) {
+        setState(() => showNewMessagesButton = false);
       }
     });
   }
@@ -1596,45 +1598,45 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     _newestLiveMessageId = newestDoc.id;
     final data = newestDoc.data();
     final senderId = ((data['senderId'] ?? data['sender_id']) ?? '').toString();
-    if (senderId == widget.currentUserId || _isNearLatestMessage()) {
-      _scrollToLatestMessage();
+    if (senderId == widget.currentUserId || isNearLatestMessage()) {
+      scrollToLatestMessage();
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      setState(() => _showNewMessagesButton = true);
+      setState(() => showNewMessagesButton = true);
     });
   }
 
-  void _removeOptimisticMessage(String id) {
+  void removeOptimisticMessage(String id) {
     if (!mounted) return;
     setState(() {
-      _optimisticMessages.removeWhere((message) => message.id == id);
+      optimisticMessages.removeWhere((message) => message.id == id);
     });
   }
 
-  void _markOptimisticMessageFailed(String id) {
+  void markOptimisticMessageFailed(String id) {
     if (!mounted) return;
     setState(() {
-      final index = _optimisticMessages.indexWhere(
+      final index = optimisticMessages.indexWhere(
         (message) => message.id == id,
       );
       if (index < 0) return;
-      _optimisticMessages[index] = _optimisticMessages[index].copyWith(
+      optimisticMessages[index] = optimisticMessages[index].copyWith(
         status: OptimisticMessageStatus.failed,
       );
     });
   }
 
   Future<void> _retryOptimisticMessage(OptimisticMessage message) async {
-    if (_isSending || conversationBlocked) return;
+    if (sendingMessageState || conversationBlocked) return;
     setState(() {
-      _isSending = true;
-      final index = _optimisticMessages.indexWhere(
+      sendingMessageState = true;
+      final index = optimisticMessages.indexWhere(
         (item) => item.id == message.id,
       );
       if (index >= 0) {
-        _optimisticMessages[index] = message.copyWith(
+        optimisticMessages[index] = message.copyWith(
           status: OptimisticMessageStatus.sending,
         );
       }
@@ -1642,7 +1644,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     try {
       final ready = await _ensureMessagingAccess(interactive: true);
       if (!ready) {
-        _markOptimisticMessageFailed(message.id);
+        markOptimisticMessageFailed(message.id);
         return;
       }
       await _sendMessageCf(
@@ -1652,17 +1654,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             .toList(),
       );
       unawaited(_markAsRead());
-      _removeOptimisticMessage(message.id);
-      _scrollToLatestMessage(force: true);
+      removeOptimisticMessage(message.id);
+      scrollToLatestMessage(force: true);
     } catch (error) {
       debugPrint('[ConversationThread] retry send error: $error');
-      _markOptimisticMessageFailed(message.id);
+      markOptimisticMessageFailed(message.id);
       if (!mounted) return;
       showErrorSnackBar(context, 'Le message n’a pas pu être renvoyé.');
     } finally {
       if (mounted) {
         setState(() {
-          _isSending = false;
+          sendingMessageState = false;
         });
       }
     }
@@ -1777,7 +1779,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (conversationBlocked) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-        child: _ConversationBanner(
+        child: ConversationBanner(
           icon: Icons.block_rounded,
           color: const Color(0xFFFF0000),
           message: blockedForCurrentUser
@@ -1793,7 +1795,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (archivedForCurrentUser) {
       return const Padding(
         padding: EdgeInsets.fromLTRB(12, 10, 12, 0),
-        child: _ConversationBanner(
+        child: ConversationBanner(
           icon: Icons.archive_outlined,
           color: Color(0xFF6B7280),
           message:
@@ -2341,7 +2343,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     required Uint8List bytes,
     required String mimeType,
   }) async {
-    if (_isUploadingAttachment || _isSending) return;
+    if (_isUploadingAttachment || sendingMessageState) return;
     if (conversationBlocked) {
       showErrorSnackBar(
         context,
@@ -2420,14 +2422,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
 
     setState(() {
-      _isSending = true;
+      sendingMessageState = true;
       if (draftText.isNotEmpty) {
         messageController.clear();
         _hasDraftText = false;
       }
-      _optimisticMessages.insert(0, optimisticMessage);
+      optimisticMessages.insert(0, optimisticMessage);
     });
-    _scrollToLatestMessage(force: true);
+    scrollToLatestMessage(force: true);
 
     try {
       final resolvedConversationId = await ConversationService.sendMessage(
@@ -2438,13 +2440,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (resolvedConversationId == widget.conversationId) {
         unawaited(_markAsRead());
       }
-      _removeOptimisticMessage(optimisticMessage.id);
+      removeOptimisticMessage(optimisticMessage.id);
       await _switchToConversationIfNeeded(resolvedConversationId);
       if (!mounted) return;
-      _scrollToLatestMessage(force: true);
+      scrollToLatestMessage(force: true);
     } catch (error) {
       debugPrint('[ConversationThread] send attachment error: $error');
-      _markOptimisticMessageFailed(optimisticMessage.id);
+      markOptimisticMessageFailed(optimisticMessage.id);
       if (!mounted) return;
       showErrorSnackBar(
         context,
@@ -2452,7 +2454,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
     } finally {
       if (mounted) {
-        setState(() => _isSending = false);
+        setState(() => sendingMessageState = false);
       }
     }
   }
@@ -2542,7 +2544,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        builder: (ctx) => _VoiceRecordingSheet(
+        builder: (ctx) => VoiceRecordingSheet(
           onCancel: () {
             Navigator.of(ctx).pop();
             unawaited(_cancelVoiceRecording());
@@ -2613,7 +2615,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _VoiceRecordingSheet(
+      builder: (ctx) => VoiceRecordingSheet(
         onCancel: () {
           Navigator.of(ctx).pop();
           unawaited(_cancelVoiceRecording());
@@ -2892,7 +2894,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _AttachmentActionTile(
+                AttachmentActionTile(
                   icon: Icons.open_in_new_rounded,
                   title: 'Ouvrir',
                   subtitle: kIsWeb
@@ -2901,7 +2903,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   onTap: handleOpen,
                 ),
                 const SizedBox(height: 8),
-                _AttachmentActionTile(
+                AttachmentActionTile(
                   icon: Icons.share_rounded,
                   title: 'Partager',
                   subtitle: kIsWeb
@@ -3017,8 +3019,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _deleteMessageById(String messageDocId) async {
-    if (_deletingMessageIds.contains(messageDocId)) return;
-    setState(() => _deletingMessageIds.add(messageDocId));
+    if (deletingMessageIds.contains(messageDocId)) return;
+    setState(() => deletingMessageIds.add(messageDocId));
     try {
       await ConversationService.deleteMessage(
         conversationId: widget.conversationId,
@@ -3026,15 +3028,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
     } catch (error) {
       if (!mounted) return;
-      setState(() => _deletingMessageIds.remove(messageDocId));
+      setState(() => deletingMessageIds.remove(messageDocId));
       showErrorSnackBar(context, 'Suppression impossible : $error');
       return;
     }
     if (!mounted) return;
-    setState(() => _deletingMessageIds.remove(messageDocId));
+    setState(() => deletingMessageIds.remove(messageDocId));
   }
 
-  Widget _buildAttachmentPreview(
+  Widget buildAttachmentPreview(
     MessageAttachment attachment, {
     bool canDelete = false,
     bool isDeleting = false,
@@ -3230,7 +3232,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildAttachmentPreviews(
+  Widget buildAttachmentPreviews(
     List<MessageAttachment> attachments, {
     String? messageDocId,
     bool canDelete = false,
@@ -3242,7 +3244,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final attachment in attachments) ...[
-          _buildAttachmentPreview(
+          buildAttachmentPreview(
             attachment,
             canDelete: canDelete,
             isDeleting: isDeleting,
@@ -3254,24 +3256,24 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildOtherParticipantMessageAvatar() {
+  Widget buildOtherParticipantMessageAvatar() {
     return CircleAvatar(
       radius: 14,
       backgroundColor: const Color(0xFFEAF2FF),
       foregroundColor: kPrestoBlue,
-      foregroundImage: _otherParticipantPhotoUrl.isNotEmpty
-          ? profileAvatarImageProvider(_otherParticipantPhotoUrl)
+      foregroundImage: otherParticipantPhotoUrl.isNotEmpty
+          ? profileAvatarImageProvider(otherParticipantPhotoUrl)
           : null,
-      onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty
+      onForegroundImageError: otherParticipantPhotoUrl.isNotEmpty
           ? (error, stackTrace) {
               debugPrint(
                 '[ConversationThread] bubble avatar load failed '
-                'participantId=$_otherParticipantId url=$_otherParticipantPhotoUrl '
+                'participantId=$otherParticipantIdState url=$otherParticipantPhotoUrl '
                 'error=$error',
               );
             }
           : null,
-      child: _otherParticipantPhotoUrl.isEmpty
+      child: otherParticipantPhotoUrl.isEmpty
           ? Text(
               conversationInitial(),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
@@ -3280,7 +3282,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildMessageBubble({
+  Widget buildMessageBubble({
     required String text,
     required bool isMine,
     required String senderName,
@@ -3312,7 +3314,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         sentAt != null &&
         DateTime.now().difference(sentAt).inSeconds <= 180;
     final isDeletingMessage =
-        messageDocId != null && _deletingMessageIds.contains(messageDocId);
+        messageDocId != null && deletingMessageIds.contains(messageDocId);
 
     final bubbleContent = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: isMine ? 320 : 288),
@@ -3413,7 +3415,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 ],
               )
             else ...[
-              _buildAttachmentPreviews(
+              buildAttachmentPreviews(
                 attachments,
                 messageDocId: messageDocId,
                 canDelete: canDeleteAttachments,
@@ -3481,7 +3483,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _buildOtherParticipantMessageAvatar(),
+                  buildOtherParticipantMessageAvatar(),
                   const SizedBox(width: 4),
                   Flexible(child: bubbleContent),
                 ],
@@ -3490,8 +3492,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildMessagesAccessGate() {
-    final isPreparing = _isPreparingMessageStream;
+  Widget buildMessagesAccessGate() {
+    final isPreparing = preparingMessageStream;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -3592,8 +3594,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               buildSafetyReminderBanner(),
               buildTypingIndicator(),
               Expanded(
-                child: _isPreparingMessageStream || _messageStream == null
-                    ? _buildMessagesAccessGate()
+                child: preparingMessageStream || _messageStream == null
+                    ? buildMessagesAccessGate()
                     : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                         stream: _messageStream!,
                         builder: (context, snapshot) {
@@ -3655,7 +3657,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                           applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
                           final docs = _mergeMessageDocs(liveDocs);
                           final visibleItemCount =
-                              docs.length + _optimisticMessages.length;
+                              docs.length + optimisticMessages.length;
                           final canLoadMore =
                               docs.isNotEmpty &&
                               (_hasAttemptedOlderPagination
@@ -3682,21 +3684,20 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             children: [
                               NotificationListener<ScrollNotification>(
                                 onNotification: (_) {
-                                  if (_showNewMessagesButton &&
-                                      _isNearLatestMessage()) {
+                                  if (showNewMessagesButton &&
+                                      isNearLatestMessage()) {
                                     WidgetsBinding.instance
                                         .addPostFrameCallback((_) {
                                           if (!mounted) return;
                                           setState(
-                                            () =>
-                                                _showNewMessagesButton = false,
+                                            () => showNewMessagesButton = false,
                                           );
                                         });
                                   }
                                   return false;
                                 },
                                 child: ListView.builder(
-                                  controller: _scrollController,
+                                  controller: threadScrollController,
                                   reverse: true,
                                   padding: const EdgeInsets.fromLTRB(
                                     6,
@@ -3750,10 +3751,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       );
                                     }
 
-                                    if (index < _optimisticMessages.length) {
+                                    if (index < optimisticMessages.length) {
                                       final optimisticMessage =
-                                          _optimisticMessages[index];
-                                      return _buildMessageBubble(
+                                          optimisticMessages[index];
+                                      return buildMessageBubble(
                                         text: optimisticMessage.text,
                                         isMine: true,
                                         senderName:
@@ -3780,7 +3781,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     }
 
                                     final docIndex =
-                                        index - _optimisticMessages.length;
+                                        index - optimisticMessages.length;
                                     final data = docs[docIndex].data();
                                     final text =
                                         ((data['text'] ?? data['body']) ?? '')
@@ -3829,10 +3830,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                           data['moderation'],
                                         );
                                     final isDeleted = data['deletedAt'] != null;
-                                    final isDeletingMessage =
-                                        _deletingMessageIds.contains(
-                                          messageDocId,
-                                        );
+                                    final isDeletingMessage = deletingMessageIds
+                                        .contains(messageDocId);
                                     final showAsDeleted =
                                         isDeleted || isDeletingMessage;
                                     final showAsModerated =
@@ -3865,7 +3864,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                         olderSenderId.isNotEmpty &&
                                         !showDateChip;
 
-                                    final messageBubble = _buildMessageBubble(
+                                    final messageBubble = buildMessageBubble(
                                       text: text,
                                       isMine: isMine,
                                       senderName: senderName,
@@ -3945,7 +3944,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                                 return;
                                               }
                                               setState(
-                                                () => _deletingMessageIds.add(
+                                                () => deletingMessageIds.add(
                                                   messageDocId,
                                                 ),
                                               );
@@ -3966,7 +3965,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                               } catch (error) {
                                                 if (!mounted) return;
                                                 setState(
-                                                  () => _deletingMessageIds
+                                                  () => deletingMessageIds
                                                       .remove(messageDocId),
                                                 );
                                                 scaffoldMessenger.showSnackBar(
@@ -3995,13 +3994,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   },
                                 ),
                               ),
-                              if (_showNewMessagesButton)
+                              if (showNewMessagesButton)
                                 Positioned(
                                   right: 18,
                                   bottom: 18,
                                   child: FilledButton.icon(
                                     onPressed: () =>
-                                        _scrollToLatestMessage(force: true),
+                                        scrollToLatestMessage(force: true),
                                     style: FilledButton.styleFrom(
                                       backgroundColor: kPrestoBlue,
                                       foregroundColor: Colors.white,
@@ -4061,7 +4060,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 color:
                                     (conversationBlocked ||
                                         _isUploadingAttachment ||
-                                        _isSending)
+                                        sendingMessageState)
                                     ? const Color(0xFFF3F4F6)
                                     : Colors.white,
                                 shape: const CircleBorder(
@@ -4076,7 +4075,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   onTap:
                                       (conversationBlocked ||
                                           _isUploadingAttachment ||
-                                          _isSending)
+                                          sendingMessageState)
                                       ? null
                                       : _showAttachmentSheet,
                                   child: Center(
@@ -4085,7 +4084,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       color:
                                           (conversationBlocked ||
                                               _isUploadingAttachment ||
-                                              _isSending)
+                                              sendingMessageState)
                                           ? const Color(0xFF94A3B8)
                                           : const Color(0xFF6B7280),
                                       size: 22,
@@ -4153,7 +4152,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             height: 44,
                             child: FilledButton(
                               onPressed:
-                                  (_isSending ||
+                                  (sendingMessageState ||
                                       _isUploadingAttachment ||
                                       conversationBlocked)
                                   ? null
@@ -4175,7 +4174,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 fixedSize: const Size(44, 44),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: (_isSending || _isUploadingAttachment)
+                              child:
+                                  (sendingMessageState ||
+                                      _isUploadingAttachment)
                                   ? const SizedBox(
                                       width: 18,
                                       height: 18,
@@ -4349,13 +4350,14 @@ class MessageAttachment {
   }
 }
 
-class _AttachmentActionTile extends StatelessWidget {
+class AttachmentActionTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
-  const _AttachmentActionTile({
+  const AttachmentActionTile({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -4524,12 +4526,13 @@ enum _ConversationThreadAction {
   delete,
 }
 
-class _ConversationBanner extends StatelessWidget {
+class ConversationBanner extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String message;
 
-  const _ConversationBanner({
+  const ConversationBanner({
+    super.key,
     required this.icon,
     required this.color,
     required this.message,
@@ -4564,8 +4567,8 @@ class _ConversationBanner extends StatelessWidget {
   }
 }
 
-class _ConversationPatternBackground extends StatelessWidget {
-  const _ConversationPatternBackground();
+class ConversationPatternBackground extends StatelessWidget {
+  const ConversationPatternBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -4573,7 +4576,7 @@ class _ConversationPatternBackground extends StatelessWidget {
       children: [
         IgnorePointer(
           child: CustomPaint(
-            painter: _ConversationPatternPainter(),
+            painter: ConversationPatternPainter(),
             size: Size.infinite,
           ),
         ),
@@ -4610,7 +4613,7 @@ class _ConversationPatternBackground extends StatelessWidget {
   }
 }
 
-class _ConversationPatternPainter extends CustomPainter {
+class ConversationPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
@@ -4633,17 +4636,21 @@ class _ConversationPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _VoiceRecordingSheet extends StatefulWidget {
+class VoiceRecordingSheet extends StatefulWidget {
   final VoidCallback onCancel;
   final VoidCallback onSend;
 
-  const _VoiceRecordingSheet({required this.onCancel, required this.onSend});
+  const VoiceRecordingSheet({
+    super.key,
+    required this.onCancel,
+    required this.onSend,
+  });
 
   @override
-  State<_VoiceRecordingSheet> createState() => _VoiceRecordingSheetState();
+  State<VoiceRecordingSheet> createState() => VoiceRecordingSheetState();
 }
 
-class _VoiceRecordingSheetState extends State<_VoiceRecordingSheet>
+class VoiceRecordingSheetState extends State<VoiceRecordingSheet>
     with SingleTickerProviderStateMixin {
   Timer? _displayTimer;
   Duration _elapsed = Duration.zero;
