@@ -33,7 +33,21 @@ jobs:
       - name: Dependencies
         run: flutter pub get
       - name: Targeted voice preview tests
-        run: flutter test test/pages/messages/conversation_thread_voice_preview_coverage_test.dart
+        id: targeted_tests
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          flutter test test/pages/messages/conversation_thread_voice_preview_coverage_test.dart 2>&1 | tee /tmp/voice-preview-test.log
+      - name: Upload targeted diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: voice-preview-targeted-${{ github.run_id }}
+          path: /tmp/voice-preview-test.log
+          retention-days: 1
+      - name: Enforce targeted test result
+        if: steps.targeted_tests.outcome != 'success'
+        run: exit 1
       - name: Targeted analyzer
         run: flutter analyze lib/pages/messages/conversation_thread_page.dart test/pages/messages/conversation_thread_voice_preview_coverage_test.dart
       - name: Commit validated wave and clean temporary files
