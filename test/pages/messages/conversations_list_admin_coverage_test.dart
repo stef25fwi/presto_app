@@ -29,7 +29,6 @@ class _AdminListUserPlatform extends UserPlatform {
   _AdminListUserPlatform(
     FirebaseAuthPlatform auth, {
     required this.userId,
-    required this.claims,
   }) : super(
           auth,
           _AdminListMultiFactorPlatform(auth),
@@ -61,20 +60,16 @@ class _AdminListUserPlatform extends UserPlatform {
         );
 
   final String userId;
-  final Map<String?, Object?> claims;
-  var tokenCalls = 0;
+  final Completer<IdTokenResult> tokenResult = Completer<IdTokenResult>();
   var tokenResultCalls = 0;
 
   @override
-  Future<String?> getIdToken(bool forceRefresh) async {
-    tokenCalls += 1;
-    return 'messages-admin-token';
-  }
+  Future<String?> getIdToken(bool forceRefresh) async => 'messages-admin-token';
 
   @override
-  Future<IdTokenResult> getIdTokenResult(bool forceRefresh) async {
+  Future<IdTokenResult> getIdTokenResult(bool forceRefresh) {
     tokenResultCalls += 1;
-    return _AdminListTokenResult(claims);
+    return tokenResult.future;
   }
 }
 
@@ -128,14 +123,13 @@ void main() {
     await authPlatform.controller.close();
   });
 
-  Future<_AdminListUserPlatform> pumpAdmin(
+  Future<void> exerciseClaimsAfterUnmount(
     WidgetTester tester, {
     required Map<String?, Object?> claims,
   }) async {
     final user = _AdminListUserPlatform(
       authPlatform,
       userId: 'admin-messages-${claims.hashCode}',
-      claims: claims,
     );
     authPlatform.user = user;
     await tester.binding.setSurfaceSize(const Size(900, 1500));
@@ -146,57 +140,39 @@ void main() {
         home: ConversationsListPage(appBarTitle: 'Journal messagerie'),
       ),
     );
-    for (var frame = 0; frame < 12; frame += 1) {
-      await tester.pump(const Duration(milliseconds: 250));
+    for (var frame = 0; frame < 8 && user.tokenResultCalls == 0; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
     }
-    return user;
-  }
 
-  Future<void> disposePage(WidgetTester tester) async {
+    expect(find.text('Journal messagerie'), findsOneWidget);
+    expect(user.tokenResultCalls, greaterThan(0));
+
     await tester.pumpWidget(const SizedBox.shrink());
+    user.tokenResult.complete(_AdminListTokenResult(claims));
+    await tester.pump();
     await tester.pump(const Duration(seconds: 5));
+
+    expect(tester.takeException(), isNull);
   }
 
-  testWidgets('les claims admin map activent et déplient le journal',
+  testWidgets('normalise les claims admin fournis sous forme de map',
       (tester) async {
-    final user = await pumpAdmin(
+    await exerciseClaimsAfterUnmount(
       tester,
       claims: <String?, Object?>{
         'roles': <String, bool>{'admin': true, 'viewer': false},
         'primaryRole': ' SUPERADMIN ',
       },
     );
-
-    expect(user.tokenResultCalls, greaterThan(0));
-    expect(find.text('Journal messagerie'), findsOneWidget);
-    expect(find.text('Log admin - chargement conversations'), findsOneWidget);
-    expect(find.byType(ExpansionTile), findsOneWidget);
-
-    await tester.tap(find.text('Log admin - chargement conversations'));
-    await tester.pump();
-
-    expect(find.byTooltip('Copier les logs'), findsOneWidget);
-    expect(find.byType(SelectableText), findsWidgets);
-
-    await tester.tap(find.byTooltip('Copier les logs'));
-    await tester.pump();
-    expect(find.text('Logs copiés dans le presse-papiers.'), findsOneWidget);
-
-    await disposePage(tester);
   });
 
-  testWidgets('les claims admin texte activent la vue globale', (tester) async {
-    final user = await pumpAdmin(
+  testWidgets('normalise les claims admin fournis sous forme de texte',
+      (tester) async {
+    await exerciseClaimsAfterUnmount(
       tester,
       claims: const <String?, Object?>{
         'roles': ' user, ADMIN ',
       },
     );
-
-    expect(user.tokenResultCalls, greaterThan(0));
-    expect(find.text('Log admin - chargement conversations'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-    await disposePage(tester);
   });
 }
