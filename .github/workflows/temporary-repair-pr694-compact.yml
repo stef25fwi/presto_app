@@ -25,7 +25,7 @@ jobs:
           ref: coverage/w1-messaging-next-20260723
           fetch-depth: 0
 
-      - name: Apply compact repair and restore budgets
+      - name: Apply atomic repair and restore budgets
         shell: bash
         run: |
           set -euo pipefail
@@ -39,7 +39,6 @@ jobs:
           python3 /tmp/repair_pr694_compact.py
           git show origin/main:quality/flutter_architecture_size_budget.json \
             > quality/flutter_architecture_size_budget.json
-          dart format lib/pages/messages/conversations_list_page.dart
 
           git diff --check
           if git diff --quiet; then
@@ -50,5 +49,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m 'refactor(messages): keep admin log fix within legacy budget'
+          git commit -m 'fix(messages): defer admin log UI mutation safely'
           git push origin HEAD:coverage/w1-messaging-next-20260723
