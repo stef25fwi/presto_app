@@ -1,4 +1,4 @@
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 import {
   ENFORCE_APP_CHECK,
   PROJECT_REGION,
@@ -17,6 +17,10 @@ export const guardedCreateSubscriptionCheckoutSession = onCall({
   concurrency: 80,
   memory: "256MiB",
 }, async (request) => {
-  await assertCommercialBillingEnabled();
+  const userId = request.auth?.uid;
+  if (!userId) {
+    throw new HttpsError("unauthenticated", "Connexion requise pour s’abonner");
+  }
+  await assertCommercialBillingEnabled(userId);
   return checkoutHandler.run(request);
 });
