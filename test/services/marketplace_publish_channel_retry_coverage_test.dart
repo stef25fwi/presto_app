@@ -37,10 +37,13 @@ class _RetryNullAuthPlatform extends FirebaseAuthPlatform {
 }
 
 class _RetryListingRepository extends ListingRepository {
-  _RetryListingRepository({this.createChannelFailures = 0})
-      : super(firestore: FakeFirebaseFirestore());
+  _RetryListingRepository({
+    this.createChannelFailures = 0,
+    this.createPermissionFailures = 0,
+  }) : super(firestore: FakeFirebaseFirestore());
 
   final int createChannelFailures;
+  final int createPermissionFailures;
   var createCalls = 0;
   var submitCalls = 0;
   String? submittedRecaptchaToken;
@@ -48,6 +51,13 @@ class _RetryListingRepository extends ListingRepository {
   @override
   Future<String> createDraft(MarketplaceListingDraft draft) async {
     createCalls += 1;
+    if (createCalls <= createPermissionFailures) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'permission-denied',
+        message: 'App Check token refresh required.',
+      );
+    }
     if (createChannelFailures < 0 || createCalls <= createChannelFailures) {
       throw PlatformException(
         code: 'channel-error',
@@ -190,6 +200,22 @@ void main() {
 
     expect(listings.createCalls, 2);
     expect(listings.submitCalls, 0);
+  });
+
+  test('réessaie après permission-denied puis termine la publication', () async {
+    final listings = _RetryListingRepository(createPermissionFailures: 1);
+
+    final result = await publish(
+      service(
+        listings: listings,
+        verification: const _StaticVerification('permission-token'),
+      ),
+    );
+
+    expect(listings.createCalls, 2);
+    expect(listings.submitCalls, 1);
+    expect(listings.submittedRecaptchaToken, 'permission-token');
+    expect(result.listingId, 'retry-listing');
   });
 
   test('publie sans reCAPTCHA après les retries du canal client', () async {
