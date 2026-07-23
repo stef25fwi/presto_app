@@ -110,7 +110,7 @@ Future<void> _pumpUntil(
 }
 
 Future<dynamic> _pumpThread(WidgetTester tester) async {
-  await tester.binding.setSurfaceSize(const Size(430, 1600));
+  await tester.binding.setSurfaceSize(const Size(430, 932));
   await tester.pumpWidget(
     const MaterialApp(
       home: ConversationThreadPage(
@@ -183,7 +183,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Découvrir ilipresto+'), findsOneWidget);
-    await tester.tap(find.text('Plus tard'));
+    final laterButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Plus tard'),
+    );
+    laterButton.onPressed!.call();
     await tester.pump(const Duration(milliseconds: 500));
     await gateFuture;
     debugPrint('WAVE4 subscription-gate-done');
