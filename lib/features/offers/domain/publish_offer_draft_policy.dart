@@ -1,6 +1,4 @@
-class PublishOfferDraftPolicy {
-  const PublishOfferDraftPolicy._();
-
+abstract final class PublishOfferDraftPolicy {
   static String? normalizeDraftMissionDelay(String? rawUrgency) {
     final urgency = (rawUrgency ?? '').trim().toLowerCase();
     switch (urgency) {
@@ -34,19 +32,22 @@ class PublishOfferDraftPolicy {
 
   static bool transcriptMentionsUrgency(String transcript) {
     final lower = transcript.toLowerCase();
-    return lower.contains('urgent') ||
-        lower.contains('urgence') ||
-        lower.contains("aujourd'hui") ||
-        lower.contains('aujourd hui') ||
-        lower.contains('demain') ||
-        lower.contains('ce soir') ||
-        lower.contains('48h') ||
-        lower.contains('cette semaine') ||
-        lower.contains('rapidement') ||
-        lower.contains('dès que possible') ||
-        lower.contains('des que possible') ||
-        lower.contains('immédiat') ||
-        lower.contains('immediat');
+    const urgencyMarkers = <String>[
+      'urgent',
+      'urgence',
+      "aujourd'hui",
+      'aujourd hui',
+      'demain',
+      'ce soir',
+      '48h',
+      'cette semaine',
+      'rapidement',
+      'dès que possible',
+      'des que possible',
+      'immédiat',
+      'immediat',
+    ];
+    return urgencyMarkers.any(lower.contains);
   }
 
   static String? extractMissionDelayFromTranscript(String transcript) {
