@@ -1,4 +1,5 @@
 name: Apply messaging UI fix
+# retrigger 2026-07-23T12:05Z
 
 on:
   push:
