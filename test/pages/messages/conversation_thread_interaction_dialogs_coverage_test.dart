@@ -184,6 +184,7 @@ void main() {
     laterButton.onPressed!.call();
     await tester.pump(const Duration(milliseconds: 500));
     await gateFuture;
+    expect(find.text('Fichiers réservés à ilipresto+'), findsNothing);
 
     const document = MessageAttachment(
       type: 'document',
