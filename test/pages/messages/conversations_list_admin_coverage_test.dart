@@ -133,18 +133,14 @@ void main() {
     await tester.pump();
   }
 
-  Future<void> exerciseClaimsAfterUnmount(
+  Future<_AdminListUserPlatform> pumpAdminPage(
     WidgetTester tester, {
-    required Map<String?, Object?> claims,
+    required String userId,
   }) async {
-    final user = _AdminListUserPlatform(
-      authPlatform,
-      userId: 'admin-messages-${claims.hashCode}',
-    );
+    final user = _AdminListUserPlatform(authPlatform, userId: userId);
     authPlatform.user = user;
     await tester.binding.setSurfaceSize(const Size(900, 1500));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-
     await tester.pumpWidget(
       const MaterialApp(
         home: ConversationsListPage(appBarTitle: 'Journal messagerie'),
@@ -153,15 +149,23 @@ void main() {
     for (var frame = 0; frame < 8 && user.tokenResultCalls == 0; frame += 1) {
       await tester.pump(const Duration(milliseconds: 100));
     }
-
     expect(find.text('Journal messagerie'), findsOneWidget);
     expect(user.tokenResultCalls, greaterThan(0));
+    return user;
+  }
 
+  Future<void> exerciseClaimsAfterUnmount(
+    WidgetTester tester, {
+    required Map<String?, Object?> claims,
+  }) async {
+    final user = await pumpAdminPage(
+      tester,
+      userId: 'admin-messages-${claims.hashCode}',
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     user.tokenResult.complete(_AdminListTokenResult(claims));
     await tester.pump();
     await drainNativeAppCheckRetries(tester);
-
     expect(tester.takeException(), isNull);
   }
 
@@ -184,5 +188,34 @@ void main() {
         'roles': ' user, ADMIN ',
       },
     );
+  });
+
+  testWidgets('reporte les mutations du journal admin après le build',
+      (tester) async {
+    final user = await pumpAdminPage(
+      tester,
+      userId: 'admin-messages-build-regression',
+    );
+    user.tokenResult.complete(
+      _AdminListTokenResult(
+        const <String?, Object?>{
+          'roles': <String, bool>{'admin': true},
+          'primaryRole': 'admin',
+        },
+      ),
+    );
+
+    for (var frame = 0; frame < 12; frame += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'aucun setState ne doit être appelé pendant le build',
+      );
+    }
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await drainNativeAppCheckRetries(tester);
+    expect(tester.takeException(), isNull);
   });
 }
