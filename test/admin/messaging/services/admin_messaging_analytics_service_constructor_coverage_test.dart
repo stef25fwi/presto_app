@@ -34,4 +34,15 @@ void main() {
     expect(snapshot.generatedAt, isNotNull);
     expect(snapshot.source, 'derived');
   });
+
+  test('utilise scheduled lorsque la source persistée est absente', () {
+    final snapshot = AdminMessagingAnalyticsSnapshot.fromMap(
+      const <String, dynamic>{},
+    );
+
+    expect(snapshot.source, 'scheduled');
+    expect(snapshot.totalConversations, 0);
+    expect(snapshot.windowHours, isNull);
+    expect(snapshot.sampledNotifications, isNull);
+  });
 }
