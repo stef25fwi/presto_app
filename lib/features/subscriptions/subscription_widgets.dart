@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../pages/admin_videomaker_page.dart';
 import '../operating_mode/app_operating_mode.dart';
+import '../operating_mode/legal_acceptance_gate.dart';
 import '../operating_mode/operating_mode_admin_tile.dart';
 import 'subscription_config_service.dart';
 import 'subscription_credits_card.dart';
@@ -15,18 +17,20 @@ export 'subscription_credits_card.dart';
 /// Bloc abonnement du tableau de bord.
 ///
 /// En bêta gratuite, aucun prix, crédit payant ni appel Stripe n'est présenté.
-/// La vue commerciale historique reste inchangée et n'est remontée que lorsque
-/// le mode global a été activé par l'administration.
+/// En mode commercial, les offres restent masquées tant que l'utilisateur n'a
+/// pas accepté les versions juridiques actives.
 class SubscriptionSection extends StatelessWidget {
   final String userId;
   final SubscriptionConfigService? service;
   final AppOperatingModeService? operatingModeService;
+  final FirebaseFirestore? firestore;
 
   const SubscriptionSection({
     super.key,
     required this.userId,
     this.service,
     this.operatingModeService,
+    this.firestore,
   });
 
   Stream<AppOperatingModeState> _modeStream() {
@@ -49,15 +53,39 @@ class SubscriptionSection extends StatelessWidget {
         if (!state.mode.isCommercial) {
           return const _FreeBetaAccessCard();
         }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            base.SubscriptionSection(userId: userId, service: service),
-            const SizedBox(height: 10),
-            SubscriptionCreditsCard(userId: userId),
-          ],
+        return LegalAcceptanceGate(
+          userId: userId,
+          state: state,
+          firestore: firestore,
+          service: operatingModeService,
+          acceptedChild: _CommercialSubscriptionContent(
+            userId: userId,
+            service: service,
+          ),
         );
       },
+    );
+  }
+}
+
+class _CommercialSubscriptionContent extends StatelessWidget {
+  final String userId;
+  final SubscriptionConfigService? service;
+
+  const _CommercialSubscriptionContent({
+    required this.userId,
+    this.service,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        base.SubscriptionSection(userId: userId, service: service),
+        const SizedBox(height: 10),
+        SubscriptionCreditsCard(userId: userId),
+      ],
     );
   }
 }
