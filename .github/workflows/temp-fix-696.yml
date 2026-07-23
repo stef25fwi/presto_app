@@ -1,0 +1,83 @@
+name: Temporary fix 696
+
+on:
+  push:
+    branches:
+      - coverage/w1-messaging-next-20260723
+    paths:
+      - .github/workflows/temp-fix-696.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: coverage/w1-messaging-next-20260723
+          fetch-depth: 0
+
+      - name: Apply targeted fix and remove executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          target = Path('lib/pages/messages/conversations_list_page.dart')
+          old = '''    if (!_diagPanelVisible || !mounted) return;
+
+    final now = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+    String three(int v) => v.toString().padLeft(3, '0');
+    final stamp =
+        '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.${three(now.millisecond)}';
+    final line = '[$stamp] $message';
+
+    final maxLines = _diagPanelVisible ? 40 : 12;
+    setState(() {
+      _adminConversationLoadLogs.insert(0, line);
+      if (_adminConversationLoadLogs.length > maxLines) {
+        _adminConversationLoadLogs.removeRange(
+          maxLines,
+          _adminConversationLoadLogs.length,
+        );
+      }
+    });'''
+          new = '''    if (!_diagPanelVisible || !mounted) return;
+
+    final now = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+    String three(int v) => v.toString().padLeft(3, '0');
+    final stamp =
+        '${two(now.hour)}:${two(now.minute)}:${two(now.second)}.${three(now.millisecond)}';
+    final line = '[$stamp] $message';
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_diagPanelVisible) return;
+      final maxLines = _diagPanelVisible ? 40 : 12;
+      setState(() {
+        _adminConversationLoadLogs.insert(0, line);
+        if (_adminConversationLoadLogs.length > maxLines) {
+          _adminConversationLoadLogs.removeRange(
+            maxLines,
+            _adminConversationLoadLogs.length,
+          );
+        }
+      });
+    });'''
+
+          text = target.read_text(encoding='utf-8')
+          if old not in text:
+              raise SystemExit('Expected _appendAdminConversationLog block not found')
+          target.write_text(text.replace(old, new, 1), encoding='utf-8')
+          Path('.github/workflows/temp-fix-696.yml').unlink()
+          PY
+
+          git config user.name "coverage-fix-bot"
+          git config user.email "coverage-fix-bot@users.noreply.github.com"
+          git add lib/pages/messages/conversations_list_page.dart .github/workflows/temp-fix-696.yml
+          git commit -m "fix(messages): defer admin log UI mutation"
+          git push origin HEAD:coverage/w1-messaging-next-20260723
