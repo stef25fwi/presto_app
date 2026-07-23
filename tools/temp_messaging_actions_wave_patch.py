@@ -37,6 +37,19 @@ for old, new in renames.items():
         raise SystemExit(f'missing messaging action helper: {old}')
     source = updated
 
+constructor_updates = {
+    'const AttachmentActionTile({\n': 'const AttachmentActionTile({\n    super.key,\n',
+    'const ConversationBanner({\n': 'const ConversationBanner({\n    super.key,\n',
+    'const ConversationPatternBackground();':
+        'const ConversationPatternBackground({super.key});',
+    'const VoiceRecordingSheet({required this.onCancel, required this.onSend});':
+        'const VoiceRecordingSheet({super.key, required this.onCancel, required this.onSend});',
+}
+for old, new in constructor_updates.items():
+    if old not in source:
+        raise SystemExit(f'missing public widget constructor: {old}')
+    source = source.replace(old, new, 1)
+
 path.write_text(source)
 
 test_path = Path(
