@@ -1,0 +1,54 @@
+name: Apply admin domain tiles codemod
+
+on:
+  push:
+    branches:
+      - agent/admin-domain-clickable-tiles
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/admin-domain-clickable-tiles
+          fetch-depth: 2
+
+      - name: Setup Flutter 3.44.6
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Apply responsive clickable tiles
+        run: python3 tools/apply_admin_domain_tiles.py
+
+      - name: Format Dart
+        run: dart format lib/pages/admin_space_page.dart
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze admin page
+        run: flutter analyze --fatal-infos lib/pages/admin_space_page.dart
+
+      - name: Check patch
+        run: git diff --check
+
+      - name: Commit generated implementation
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/admin-domain-tiles-codemod.yml tools/apply_admin_domain_tiles.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/admin_space_page.dart
+          git commit -m "feat(admin): display metric domains as clickable tiles"
+          git push origin HEAD:agent/admin-domain-clickable-tiles
