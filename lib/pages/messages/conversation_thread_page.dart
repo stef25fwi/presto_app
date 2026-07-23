@@ -3202,7 +3202,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
 
     if (attachment.type == 'audio') {
-      return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url, fallbackDuration: voiceNoteDurationFromName(attachment.name)));
+      return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url, fallbackDuration: Duration(seconds: int.tryParse(RegExp(r'_(\d+)s(?:\.|$)').firstMatch(attachment.name)?.group(1) ?? '') ?? 0)));
     }
 
     return buildDeleteOverlay(
@@ -4895,20 +4895,14 @@ class VoiceNotePreviewSheet extends StatelessWidget {
   }
 }
 
-Duration voiceNoteDurationFromName(String name) {
-  final match = RegExp(r'_(\d+)s(?:\.|$)').firstMatch(name.trim());
-  return Duration(seconds: int.tryParse(match?.group(1) ?? '') ?? 0);
-}
 class _VoiceNotePlayer extends StatefulWidget {
   final String source;
   final bool isLocalFile;
   final Duration fallbackDuration;
   const _VoiceNotePlayer({required this.source, this.isLocalFile = false, this.fallbackDuration = Duration.zero});
-
   @override
   State<_VoiceNotePlayer> createState() => _VoiceNotePlayerState();
 }
-
 class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
   late final AudioPlayer _player;
   StreamSubscription<PlayerState>? _stateSub;
