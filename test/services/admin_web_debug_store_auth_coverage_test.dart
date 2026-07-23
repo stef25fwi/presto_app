@@ -34,10 +34,10 @@ void main() {
     expect(store.currentUserEmail, 'admin@ilipresto.fr');
     expect(store.lastAuthAt, isNotNull);
     expect(store.events.length, eventCountAfterSignIn);
-    expect(store.events.last.area, 'auth');
-    expect(store.events.last.message, 'signed-in');
+    expect(store.events.first.area, 'auth');
+    expect(store.events.first.message, 'signed-in');
     expect(
-      store.events.last.detail,
+      store.events.first.detail,
       'admin-debug-user admin@ilipresto.fr',
     );
 
@@ -46,8 +46,8 @@ void main() {
     expect(store.currentUserId, isNull);
     expect(store.currentUserEmail, isNull);
     expect(store.lastAuthAt, isNotNull);
-    expect(store.events.last.area, 'auth');
-    expect(store.events.last.message, 'signed-out');
-    expect(store.events.last.detail, isNull);
+    expect(store.events.first.area, 'auth');
+    expect(store.events.first.message, 'signed-out');
+    expect(store.events.first.detail, isNull);
   });
 }
