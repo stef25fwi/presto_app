@@ -17,12 +17,14 @@ Future<void> _pumpPreview(
   required VoidCallback onCancel,
   required VoidCallback onRerecord,
   required VoidCallback onSend,
+  Key? key,
 }) async {
   await tester.binding.setSurfaceSize(const Size(430, 932));
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
         body: VoiceNotePreviewSheet(
+          key: key,
           preview: _preview,
           onCancel: onCancel,
           onRerecord: onRerecord,
@@ -57,14 +59,19 @@ void main() {
     expect(preview.usesGeneratedPreviewSource, isTrue);
   });
 
-  testWidgets('rend la prévisualisation vocale et sa durée', (tester) async {
+  testWidgets('rend la prévisualisation vocale, sa durée et sa key', (
+    tester,
+  ) async {
+    const previewKey = ValueKey<String>('voice-preview-sheet');
     await _pumpPreview(
       tester,
+      key: previewKey,
       onCancel: _noop,
       onRerecord: _noop,
       onSend: _noop,
     );
 
+    expect(find.byKey(previewKey), findsOneWidget);
     expect(find.text('Relire la note vocale'), findsOneWidget);
     expect(find.text('Durée 01:05'), findsOneWidget);
     expect(find.text('Annuler'), findsOneWidget);
