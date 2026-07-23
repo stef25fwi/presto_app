@@ -165,6 +165,7 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox.shrink());
     user.tokenResult.complete(_AdminListTokenResult(claims));
+    expect(user.tokenResult.isCompleted, isTrue);
     await tester.pump();
     await drainNativeAppCheckRetries(tester);
     expect(tester.takeException(), isNull);
@@ -220,6 +221,7 @@ void main() {
         },
       ),
     );
+    expect(user.tokenResult.isCompleted, isTrue);
 
     for (var frame = 0; frame < 12; frame += 1) {
       await tester.pump(const Duration(milliseconds: 100));
