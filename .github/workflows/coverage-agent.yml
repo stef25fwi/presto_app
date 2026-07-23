@@ -61,11 +61,15 @@ jobs:
             --json headRefName --jq '[.[] | select(.headRefName | startswith("coverage/w"))] | length')"
           active_issues="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --label coverage-worker --limit 100 --json number --jq 'length')"
-          occupied=$((active_prs + active_issues))
+          # A worker normally has both an issue and a PR. Count the larger set,
+          # not their sum, otherwise one worker incorrectly consumes two slots.
+          occupied="$active_prs"
+          [ "$active_issues" -gt "$occupied" ] && occupied="$active_issues"
           [ "$occupied" -gt 2 ] && occupied=2
           available=$((2 - occupied))
           echo "active_prs=$active_prs" >> "$GITHUB_OUTPUT"
           echo "active_issues=$active_issues" >> "$GITHUB_OUTPUT"
+          echo "occupied=$occupied" >> "$GITHUB_OUTPUT"
           echo "available=$available" >> "$GITHUB_OUTPUT"
           echo "Worker slots available: $available"
 
