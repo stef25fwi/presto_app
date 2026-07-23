@@ -54,6 +54,31 @@ void main() {
     expect(subscriptions.data()!['freeAccessMode'], isTrue);
   });
 
+  test('la configuration publique est chargeable sans Firestore client',
+      () async {
+    final service = AppOperatingModeService(
+      firestore: FakeFirebaseFirestore(),
+      publicStateLoader: () async => <String, dynamic>{
+        'operatingMode': 'free_beta',
+        'legalVersion': 'beta-free-v2',
+        'cguVersion': 'cgu-beta-free-v2',
+        'privacyVersion': 'privacy-beta-free-v2',
+        'effectiveDate': '2026-07-23T00:00:00.000Z',
+        'requiresReacceptance': false,
+        'publisher': completeProfile().toMap(),
+      },
+    );
+
+    final state = await service.getPublicState();
+
+    expect(state.mode, AppOperatingMode.freeBeta);
+    expect(state.legalVersion, 'beta-free-v2');
+    expect(state.publisher.publisherName, 'Exploitant Test');
+    expect(state.publisher.phone, '0590000000');
+    expect(state.publisher.email, 'contact@ilipresto.fr');
+    expect(state.isPublicReady, isTrue);
+  });
+
   test('le mode commercial est bloqué sans identité juridique complète',
       () async {
     final service = AppOperatingModeService(
