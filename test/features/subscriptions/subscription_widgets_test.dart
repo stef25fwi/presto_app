@@ -4,8 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:presto_app/features/subscriptions/subscription_config_service.dart';
-import 'package:presto_app/features/subscriptions/subscription_models.dart';
+import 'package:presto_app/features/operating_mode/app_operating_mode.dart';
 import 'package:presto_app/features/subscriptions/subscription_widgets.dart';
 import 'package:presto_app/pages/admin_videomaker_page.dart';
 
@@ -27,24 +26,6 @@ class _NoUserAuthPlatform extends FirebaseAuthPlatform {
 
   @override
   Stream<UserPlatform?> userChanges() => Stream<UserPlatform?>.value(null);
-}
-
-class _FakeSubscriptionConfigService extends SubscriptionConfigService {
-  _FakeSubscriptionConfigService() : super(firestore: FakeFirebaseFirestore());
-
-  var ensureCalls = 0;
-
-  @override
-  Stream<SubscriptionAppConfig> watchConfig({bool ensureExists = false}) {
-    return Stream<SubscriptionAppConfig>.value(
-      const SubscriptionAppConfig.defaults(),
-    );
-  }
-
-  @override
-  Future<void> ensureDefaultConfigExists({String? updatedBy}) async {
-    ensureCalls += 1;
-  }
 }
 
 class _RecordingNavigatorObserver extends NavigatorObserver {
@@ -83,14 +64,22 @@ void _consumeKnownListTileDiagnostic(WidgetTester tester) {
   }
 }
 
+Future<AppOperatingModeService> _freeBetaService() async {
+  final service = AppOperatingModeService(
+    firestore: FakeFirebaseFirestore(),
+  );
+  await service.ensureDefaults(updatedBy: 'test-admin');
+  return service;
+}
+
 Future<void> _pumpAdminTile(
   WidgetTester tester,
-  _FakeSubscriptionConfigService service, {
+  AppOperatingModeService modeService, {
   List<NavigatorObserver> observers = const <NavigatorObserver>[],
 }) async {
   await tester.pumpWidget(
     _app(
-      AdminSubscriptionTile(service: service),
+      AdminSubscriptionTile(operatingModeService: modeService),
       observers: observers,
     ),
   );
@@ -108,24 +97,40 @@ void main() {
   });
 
   setUp(() {
-    final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
-    view.physicalSize = const Size(1200, 2400);
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
+    view.physicalSize = const Size(1200, 3600);
     view.devicePixelRatio = 1;
   });
 
   tearDown(() {
-    final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
     view.resetPhysicalSize();
     view.resetDevicePixelRatio();
   });
 
-  testWidgets('affiche les contrôles abonnement et la tuile Videomaker',
+  testWidgets('affiche le mode bêta, le formulaire juridique et Videomaker',
       (tester) async {
-    final service = _FakeSubscriptionConfigService();
+    final modeService = await _freeBetaService();
 
-    await _pumpAdminTile(tester, service);
+    await _pumpAdminTile(tester, modeService);
 
-    expect(find.text('Abonnements'), findsOneWidget);
+    expect(
+      find.text('Mode d’exploitation et identité juridique'),
+      findsOneWidget,
+    );
+    expect(find.text('Activer la version payante'), findsOneWidget);
+    expect(find.text('Bêta gratuite'), findsOneWidget);
+    expect(find.text('Nom réel de l’éditeur *'), findsOneWidget);
+    expect(find.text('Adresse juridiquement utilisable *'), findsOneWidget);
+    expect(find.text('Téléphone *'), findsOneWidget);
+    expect(find.text('Adresse de contact *'), findsOneWidget);
+    expect(find.text('Directeur de publication *'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('save_legal_publisher')),
+      findsOneWidget,
+    );
     expect(find.text('Videomaker'), findsOneWidget);
     expect(
       find.text('Créer des vidéos VEO depuis un prompt et une image.'),
@@ -133,26 +138,48 @@ void main() {
     );
     expect(find.byIcon(Icons.movie_creation_outlined), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
-    expect(service.ensureCalls, greaterThanOrEqualTo(1));
   });
 
   testWidgets('ouvre la page Videomaker au toucher', (tester) async {
-    final service = _FakeSubscriptionConfigService();
+    final modeService = await _freeBetaService();
     final observer = _RecordingNavigatorObserver();
 
     await _pumpAdminTile(
       tester,
-      service,
+      modeService,
       observers: <NavigatorObserver>[observer],
     );
 
     expect(observer.pushedRoutes, hasLength(1));
-
     await tester.tap(find.text('Videomaker'));
-
     expect(observer.pushedRoutes, hasLength(2));
+
     final route = observer.pushedRoutes.last as MaterialPageRoute<void>;
     final page = route.builder(tester.element(find.text('Videomaker')));
     expect(page, isA<AdminVideoMakerPage>());
+  });
+
+  testWidgets('la bêta masque les prix, offres et crédits payants',
+      (tester) async {
+    final modeService = await _freeBetaService();
+
+    await tester.pumpWidget(
+      _app(
+        SubscriptionSection(
+          userId: 'user-free-beta',
+          operatingModeService: modeService,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Accès bêta gratuit'), findsOneWidget);
+    expect(
+      find.textContaining('Aucun abonnement, paiement ou commission'),
+      findsOneWidget,
+    );
+    expect(find.text('Mon abonnement iliprestō'), findsNothing);
+    expect(find.textContaining('€/mois'), findsNothing);
+    expect(find.text('Mes crédits'), findsNothing);
   });
 }

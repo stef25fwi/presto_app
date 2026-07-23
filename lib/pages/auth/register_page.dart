@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../features/operating_mode/app_operating_mode.dart';
 import '../../pages/legal_info_page.dart';
 import '../../services/auth_error_mapper.dart';
 import '../../services/auth_service.dart';
@@ -15,16 +17,22 @@ typedef RegisterWithEmailCallback = Future<void> Function({
   required String pseudo,
 });
 
+typedef RecordLegalAcceptanceCallback = Future<void> Function(
+  AppOperatingModeState state,
+);
+
 class RegisterPage extends StatefulWidget {
   const RegisterPage({
     super.key,
     this.registerWithEmail,
+    this.recordLegalAcceptance,
     this.successPageBuilder,
   });
 
   static const routeName = '/register';
 
   final RegisterWithEmailCallback? registerWithEmail;
+  final RecordLegalAcceptanceCallback? recordLegalAcceptance;
   final WidgetBuilder? successPageBuilder;
 
   @override
@@ -47,12 +55,12 @@ class _RegisterPageState extends State<RegisterPage> {
       _firstName,
       _lastName,
     ].where((value) => value.trim().isNotEmpty).toList();
-
     return parts.join(' ').trim();
   }
 
   bool _loading = false;
   bool _hidePassword = true;
+  bool _legalAccepted = false;
 
   @override
   void dispose() {
@@ -64,7 +72,45 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  Future<void> _recordAcceptance() async {
+    final injected = widget.recordLegalAcceptance;
+    if (injected != null) {
+      await injected(AppOperatingModeState.defaults());
+      return;
+    }
+
+    AppOperatingModeState state = AppOperatingModeState.defaults();
+    AppOperatingModeService? service;
+    try {
+      service = AppOperatingModeService();
+      state = await service.getState();
+    } catch (_) {
+      // La création du compte ne doit pas échouer si la configuration juridique
+      // distante est momentanément indisponible. La version bêta embarquée reste
+      // la référence de secours et la preuve est écrite dès que Firebase répond.
+    }
+
+    String? uid;
+    try {
+      uid = FirebaseAuth.instance.currentUser?.uid;
+    } catch (_) {
+      uid = null;
+    }
+    if (uid == null || uid.isEmpty || service == null) return;
+    await service.recordAcceptance(userId: uid, state: state);
+  }
+
   Future<void> _register() async {
+    if (!_legalAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Veuillez accepter les CGU et la politique de confidentialité.',
+          ),
+        ),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
@@ -100,6 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
         );
       }
 
+      await _recordAcceptance();
       if (!mounted) return;
 
       final successPageBuilder = widget.successPageBuilder;
@@ -143,6 +190,14 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
+  void _openLegal(int tab) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => LegalInfoPage(initialTab: tab),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const orange = Color(0xFFFF6600);
@@ -164,7 +219,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       child: Text(
                         'Bienvenue sur Prestō',
                         style: TextStyle(
-                            fontSize: 26, fontWeight: FontWeight.w800),
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -174,7 +231,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFFF6600),
+                          color: orange,
                         ),
                       ),
                     ),
@@ -194,13 +251,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.badge_outlined),
                             ),
-                            validator: (value) {
-                              final trimmed = value?.trim() ?? '';
-                              if (trimmed.isEmpty) {
-                                return 'Nom obligatoire';
-                              }
-                              return null;
-                            },
+                            validator: (value) =>
+                                (value?.trim().isEmpty ?? true)
+                                    ? 'Nom obligatoire'
+                                    : null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -216,13 +270,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.person_outline_rounded),
                             ),
-                            validator: (value) {
-                              final trimmed = value?.trim() ?? '';
-                              if (trimmed.isEmpty) {
-                                return 'Prénom obligatoire';
-                              }
-                              return null;
-                            },
+                            validator: (value) =>
+                                (value?.trim().isEmpty ?? true)
+                                    ? 'Prénom obligatoire'
+                                    : null,
                           ),
                         ),
                       ],
@@ -258,58 +309,63 @@ class _RegisterPageState extends State<RegisterPage> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_hidePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () =>
-                              setState(() => _hidePassword = !_hidePassword),
+                          icon: Icon(
+                            _hidePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () => setState(
+                            () => _hidePassword = !_hidePassword,
+                          ),
                         ),
                       ),
                       validator: _passwordValidator,
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _legalAccepted,
+                      onChanged: _loading
+                          ? null
+                          : (value) => setState(
+                                () => _legalAccepted = value == true,
+                              ),
+                      title: Wrap(
+                        children: [
+                          const Text('J’accepte les '),
+                          _LegalLink(
+                            label: 'CGU',
+                            onTap: () => _openLegal(2),
+                          ),
+                          const Text(' et la '),
+                          _LegalLink(
+                            label: 'politique de confidentialité',
+                            onTap: () => _openLegal(1),
+                          ),
+                          const Text('.'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        style:
-                            ElevatedButton.styleFrom(backgroundColor: orange),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: orange,
+                        ),
                         onPressed: _loading ? null : _register,
                         child: _loading
                             ? const CircularProgressIndicator()
                             : const Text('Créer mon compte'),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    const Center(
-                      child: Text(
-                        'En vous connectant, vous acceptez nos CGU et notre politique de confidentialité.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B6B6B),
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 18),
                     Center(
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const LegalInfoPage(initialTab: 2),
-                          ),
-                        ),
-                        child: const Text(
-                          'Mentions légales',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFFFF6600),
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                            decorationColor: Color(0xFFFF6600),
-                          ),
-                        ),
+                      child: TextButton(
+                        onPressed: () => _openLegal(0),
+                        child: const Text('Mentions légales'),
                       ),
                     ),
                   ],
@@ -317,6 +373,28 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _LegalLink({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFFF6600),
+          fontWeight: FontWeight.w700,
+          decoration: TextDecoration.underline,
         ),
       ),
     );

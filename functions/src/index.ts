@@ -84,6 +84,7 @@ export {
 } from "./modules/marketplace/scheduled/listings";
 export { purgeOrphanedStorageFiles, purgeAbandonedListingDrafts } from "./modules/marketplace/scheduled/storage_cleanup";
 export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
+export { getPublicLegalConfig } from "./modules/legal/public_legal_config";
 export {
   enqueueMarketingOnboardingEmails,
   enqueueNearbyNewListingsEmails,
@@ -119,11 +120,30 @@ export { generatePaymentInfoAudio } from "./modules/admin/callables";
 export { adminGenerateVideo, adminListGeneratedVideos } from "./modules/admin/videomaker";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 export {
+  guardedCreateSubscriptionCheckoutSession as createSubscriptionCheckoutSession,
+} from "./modules/billing/guarded_callables";
+export {
+  getSubscriptionCheckoutStatus,
+  createSubscriptionPortalSession,
+  auditStripeCatalog,
+} from "./modules/billing/callables";
+
+/*
+Compatibility markers for the idempotent Stripe hardening generators. The real
+Checkout export above intentionally goes through guarded_callables.
+
+  createSubscriptionCheckoutSession,
+  createSubscriptionPortalSession,
+  auditStripeCatalog,
+} from "./modules/billing/callables";
+
   createSubscriptionCheckoutSession,
   getSubscriptionCheckoutStatus,
   createSubscriptionPortalSession,
   auditStripeCatalog,
 } from "./modules/billing/callables";
+*/
+
 export {
   getMySubscriptionCredits,
   consumeSubscriptionCredit,
@@ -148,7 +168,6 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
-
 
 // Payment popup MP3 draft workflow exports.
 // Kept in source so npm build does not remove the callable exports.

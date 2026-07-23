@@ -1,6 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../pages/admin_videomaker_page.dart';
+import '../operating_mode/app_operating_mode.dart';
+import '../operating_mode/legal_acceptance_gate.dart';
+import '../operating_mode/operating_mode_admin_tile.dart';
+import 'admin_video_maker_tile.dart';
 import 'subscription_config_service.dart';
 import 'subscription_credits_card.dart';
 import 'subscription_widgets_base.dart' as base;
@@ -12,15 +17,63 @@ export 'subscription_credits_card.dart';
 
 /// Bloc abonnement du tableau de bord.
 ///
-/// Le composant historique reste la source de vérité pour l'offre active ; la
-/// carte « Mes crédits » est ajoutée juste en dessous afin que l'utilisateur
-/// voie immédiatement ses cinq capacités principales.
+/// En bêta gratuite, aucun prix, crédit payant ni appel Stripe n'est présenté.
+/// En mode commercial, les offres restent masquées tant que l'utilisateur n'a
+/// pas accepté les versions juridiques actives.
 class SubscriptionSection extends StatelessWidget {
   final String userId;
   final SubscriptionConfigService? service;
+  final AppOperatingModeService? operatingModeService;
+  final FirebaseFirestore? firestore;
 
   const SubscriptionSection({
     super.key,
+    required this.userId,
+    this.service,
+    this.operatingModeService,
+    this.firestore,
+  });
+
+  Stream<AppOperatingModeState> _modeStream() {
+    try {
+      return (operatingModeService ?? AppOperatingModeService())
+          .watchState(ensureExists: true);
+    } catch (_) {
+      return Stream<AppOperatingModeState>.value(
+        AppOperatingModeState.defaults(),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<AppOperatingModeState>(
+      stream: _modeStream(),
+      builder: (context, snapshot) {
+        final state = snapshot.data ?? AppOperatingModeState.defaults();
+        if (!state.mode.isCommercial) {
+          return const _FreeBetaAccessCard();
+        }
+        return LegalAcceptanceGate(
+          userId: userId,
+          state: state,
+          firestore: firestore,
+          service: operatingModeService,
+          acceptedChild: _CommercialSubscriptionContent(
+            userId: userId,
+            service: service,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CommercialSubscriptionContent extends StatelessWidget {
+  final String userId;
+  final SubscriptionConfigService? service;
+
+  const _CommercialSubscriptionContent({
     required this.userId,
     this.service,
   });
@@ -40,16 +93,21 @@ class SubscriptionSection extends StatelessWidget {
 
 class AdminSubscriptionTile extends StatelessWidget {
   final SubscriptionConfigService? service;
+  final AppOperatingModeService? operatingModeService;
 
-  const AdminSubscriptionTile({super.key, this.service});
+  const AdminSubscriptionTile({
+    super.key,
+    this.service,
+    this.operatingModeService,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        base.AdminSubscriptionTile(service: service),
+        OperatingModeAdminTile(service: operatingModeService),
         const SizedBox(height: 14),
-        _AdminVideoMakerTile(
+        AdminVideoMakerTile(
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -63,85 +121,61 @@ class AdminSubscriptionTile extends StatelessWidget {
   }
 }
 
-class _AdminVideoMakerTile extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _AdminVideoMakerTile({required this.onTap});
+class _FreeBetaAccessCard extends StatelessWidget {
+  const _FreeBetaAccessCard();
 
   @override
   Widget build(BuildContext context) {
-    const accent = Color(0xFFFF6600);
-    const text = Color(0xFF111827);
-    const muted = Color(0xFF6B7280);
-    const border = Color(0xFFE5E7EB);
-
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: border),
-          ),
-          child: const Row(
-            children: [
-              _VideoMakerIcon(),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Videomaker',
-                      style: TextStyle(
-                        color: text,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Créer des vidéos VEO depuis un prompt et une image.',
-                      style: TextStyle(
-                        color: muted,
-                        fontSize: 13,
-                        height: 1.35,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: accent),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VideoMakerIcon extends StatelessWidget {
-  const _VideoMakerIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    const accent = Color(0xFFFF6600);
-    return DecoratedBox(
+    const green = Color(0xFF138A46);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: const SizedBox(
-        width: 48,
-        height: 48,
-        child: Icon(Icons.movie_creation_outlined, color: accent),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: Color(0xFFEAF7EF),
+              shape: BoxShape.circle,
+            ),
+            child: SizedBox(
+              width: 46,
+              height: 46,
+              child: Icon(Icons.science_outlined, color: green),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Accès bêta gratuit',
+                  style: TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Ilipresto est actuellement proposé gratuitement. Aucun abonnement, paiement ou commission n’est prélevé par la plateforme.',
+                  style: TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 13,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

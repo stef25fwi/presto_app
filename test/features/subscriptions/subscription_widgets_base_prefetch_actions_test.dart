@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/features/subscriptions/subscription_action_placeholders.dart';
 import 'package:presto_app/features/subscriptions/subscription_checkout_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_config_service.dart';
 import 'package:presto_app/features/subscriptions/subscription_models.dart';
@@ -52,6 +53,7 @@ void main() {
 
   setUp(() {
     SubscriptionCheckoutService.resetForTesting();
+    subscriptionCommercialModeResolverOverride = () async => true;
     final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
     view.physicalSize = const Size(1200, 3200);
     view.devicePixelRatio = 1;
@@ -59,6 +61,7 @@ void main() {
 
   tearDown(() {
     SubscriptionCheckoutService.resetForTesting();
+    resetSubscriptionActionOverrides();
     final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
     view.resetPhysicalSize();
     view.resetDevicePixelRatio();
