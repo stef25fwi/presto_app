@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:presto_app/features/operating_mode/app_operating_mode.dart';
 import 'package:presto_app/pages/auth/register_page.dart';
 import 'package:presto_app/pages/legal_info_page.dart';
 
@@ -27,12 +28,18 @@ void main() {
     return find.descendant(of: decorator, matching: find.byType(EditableText));
   }
 
+  Future<void> acceptLegal(WidgetTester tester) async {
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+  }
+
   Future<void> fillBase(WidgetTester tester) async {
     await tester.enterText(field('Nom *'), 'Durand');
     await tester.enterText(field('Prénom *'), 'Lina');
     await tester.enterText(field('Pseudo'), 'Lina');
     await tester.enterText(field('Email'), 'lina@example.com');
     await tester.enterText(field('Mot de passe'), 'Password1');
+    await acceptLegal(tester);
   }
 
   testWidgets('affiche le formulaire particulier complet', (tester) async {
@@ -45,11 +52,26 @@ void main() {
     expect(field('Pseudo'), findsOneWidget);
     expect(field('Email'), findsOneWidget);
     expect(field('Mot de passe'), findsOneWidget);
+    expect(find.byType(Checkbox), findsOneWidget);
     expect(find.text('Créer mon compte'), findsOneWidget);
   });
 
-  testWidgets('affiche toutes les erreurs du formulaire vide', (tester) async {
+  testWidgets('bloque la création sans acceptation juridique', (tester) async {
     await pumpRegister(tester);
+    await tester.tap(find.text('Créer mon compte'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'Veuillez accepter les CGU et la politique de confidentialité.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('affiche toutes les erreurs après acceptation', (tester) async {
+    await pumpRegister(tester);
+    await acceptLegal(tester);
     await tester.tap(find.text('Créer mon compte'));
     await tester.pump();
 
@@ -114,10 +136,11 @@ void main() {
     expect(find.byIcon(Icons.visibility_off), findsOneWidget);
   });
 
-  testWidgets('soumet les données normalisées puis ouvre la vérification',
+  testWidgets('soumet, enregistre la version juridique puis navigue',
       (tester) async {
     final submission = Completer<void>();
     final captured = <String, String>{};
+    AppOperatingModeState? acceptedState;
 
     await pumpRegister(
       tester,
@@ -142,6 +165,9 @@ void main() {
           });
           await submission.future;
         },
+        recordLegalAcceptance: (state) async {
+          acceptedState = state;
+        },
         successPageBuilder: (_) => const Scaffold(
           body: Text('Vérification test'),
         ),
@@ -153,6 +179,7 @@ void main() {
     await tester.enterText(field('Pseudo'), '  Lina D  ');
     await tester.enterText(field('Email'), '  lina@example.com  ');
     await tester.enterText(field('Mot de passe'), 'Password1');
+    await acceptLegal(tester);
     await tester.tap(find.text('Créer mon compte'));
     await tester.pump();
 
@@ -166,12 +193,12 @@ void main() {
       'pseudo': 'Lina D',
     });
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
-        isNull);
 
     submission.complete();
     await tester.pumpAndSettle();
 
+    expect(acceptedState?.mode, AppOperatingMode.freeBeta);
+    expect(acceptedState?.cguVersion, 'cgu-beta-free-v1');
     expect(find.text('Vérification test'), findsOneWidget);
     expect(find.byType(RegisterPage), findsNothing);
   });
@@ -205,20 +232,9 @@ void main() {
     );
     expect(find.byType(RegisterPage), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
-        isNotNull);
   });
 
-  testWidgets('ouvre les mentions légales sur les CGU', (tester) async {
-    final originalOnError = FlutterError.onError;
-    FlutterError.onError = (details) {
-      final message = details.exceptionAsString();
-      if (!message.contains('ListTile background color or ink splashes')) {
-        originalOnError?.call(details);
-      }
-    };
-    addTearDown(() => FlutterError.onError = originalOnError);
-
+  testWidgets('ouvre les mentions légales sur le bon onglet', (tester) async {
     await pumpRegister(tester);
     await tester.tap(find.text('Mentions légales'));
     await tester.pumpAndSettle();
@@ -226,7 +242,7 @@ void main() {
     expect(find.byType(LegalInfoPage), findsOneWidget);
     expect(
       tester.widget<LegalInfoPage>(find.byType(LegalInfoPage)).initialTab,
-      2,
+      0,
     );
   });
 }
