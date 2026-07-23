@@ -99,7 +99,7 @@ void main() {
   setUp(() {
     final view =
         TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
-    view.physicalSize = const Size(1200, 2400);
+    view.physicalSize = const Size(1200, 3600);
     view.devicePixelRatio = 1;
   });
 
@@ -110,15 +110,27 @@ void main() {
     view.resetDevicePixelRatio();
   });
 
-  testWidgets('affiche le mode bêta global et la tuile Videomaker',
+  testWidgets('affiche le mode bêta, le formulaire juridique et Videomaker',
       (tester) async {
     final modeService = await _freeBetaService();
 
     await _pumpAdminTile(tester, modeService);
 
-    expect(find.text('Mode d’exploitation Ilipresto'), findsOneWidget);
+    expect(
+      find.text('Mode d’exploitation et identité juridique'),
+      findsOneWidget,
+    );
     expect(find.text('Activer la version payante'), findsOneWidget);
     expect(find.text('Bêta gratuite'), findsOneWidget);
+    expect(find.text('Nom réel de l’éditeur *'), findsOneWidget);
+    expect(find.text('Adresse juridiquement utilisable *'), findsOneWidget);
+    expect(find.text('Téléphone *'), findsOneWidget);
+    expect(find.text('Adresse de contact *'), findsOneWidget);
+    expect(find.text('Directeur de publication *'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('save_legal_publisher')),
+      findsOneWidget,
+    );
     expect(find.text('Videomaker'), findsOneWidget);
     expect(
       find.text('Créer des vidéos VEO depuis un prompt et une image.'),
