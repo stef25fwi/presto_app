@@ -13,49 +13,47 @@ class _Wave4MultiFactorPlatform extends MultiFactorPlatform {
 
 class _Wave4TokenResult extends IdTokenResult {
   _Wave4TokenResult()
-      : super(
-          InternalIdTokenResult(
-            token: 'messaging-wave-4-token',
-            claims: const <String?, Object?>{'admin': true},
-            authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
-            expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
-            signInProvider: 'password',
-          ),
-        );
+    : super(
+        InternalIdTokenResult(
+          token: 'messaging-wave-4-token',
+          claims: const <String?, Object?>{'admin': true},
+          authTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+          issuedAtTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+          expirationTimestamp: DateTime(2027, 1, 1).millisecondsSinceEpoch,
+          signInProvider: 'password',
+        ),
+      );
 }
 
 class _Wave4UserPlatform extends UserPlatform {
   _Wave4UserPlatform(FirebaseAuthPlatform auth)
-      : super(
-          auth,
-          _Wave4MultiFactorPlatform(auth),
-          InternalUserDetails(
-            userInfo: InternalUserInfo(
-              uid: 'thread-user',
-              email: 'thread-user@ilipresto.fr',
-              displayName: 'Utilisateur conversation',
-              isAnonymous: false,
-              isEmailVerified: true,
-              creationTimestamp:
-                  DateTime(2026, 1, 1).millisecondsSinceEpoch,
-              lastSignInTimestamp:
-                  DateTime(2026, 7, 23).millisecondsSinceEpoch,
-            ),
-            providerData: const <Map<String, dynamic>?>[
-              <String, dynamic>{
-                'providerId': 'password',
-                'uid': 'thread-user',
-                'email': 'thread-user@ilipresto.fr',
-                'displayName': 'Utilisateur conversation',
-                'phoneNumber': null,
-                'photoURL': null,
-                'isAnonymous': false,
-                'isEmailVerified': true,
-              },
-            ],
+    : super(
+        auth,
+        _Wave4MultiFactorPlatform(auth),
+        InternalUserDetails(
+          userInfo: InternalUserInfo(
+            uid: 'thread-user',
+            email: 'thread-user@ilipresto.fr',
+            displayName: 'Utilisateur conversation',
+            isAnonymous: false,
+            isEmailVerified: true,
+            creationTimestamp: DateTime(2026, 1, 1).millisecondsSinceEpoch,
+            lastSignInTimestamp: DateTime(2026, 7, 23).millisecondsSinceEpoch,
           ),
-        );
+          providerData: const <Map<String, dynamic>?>[
+            <String, dynamic>{
+              'providerId': 'password',
+              'uid': 'thread-user',
+              'email': 'thread-user@ilipresto.fr',
+              'displayName': 'Utilisateur conversation',
+              'phoneNumber': null,
+              'photoURL': null,
+              'isAnonymous': false,
+              'isEmailVerified': true,
+            },
+          ],
+        ),
+      );
 
   @override
   Future<void> reload() async {}
@@ -81,8 +79,7 @@ class _Wave4AuthPlatform extends FirebaseAuthPlatform {
   FirebaseAuthPlatform setInitialValues({
     InternalUserDetails? currentUser,
     String? languageCode,
-  }) =>
-      this;
+  }) => this;
 
   @override
   UserPlatform? get currentUser => user;
@@ -154,8 +151,9 @@ void main() {
     authPlatform.user = null;
   });
 
-  testWidgets('couvre la barre emoji et les feuilles de pièces jointes',
-      (tester) async {
+  testWidgets('couvre la barre emoji et les feuilles de pièces jointes', (
+    tester,
+  ) async {
     debugPrint('WAVE4 bootstrap-start');
     final dynamic state = await _pumpThread(tester);
     debugPrint('WAVE4 bootstrap-ready');
@@ -200,8 +198,9 @@ void main() {
       sizeBytes: 1200,
     );
 
-    final Future<void> actionsFuture =
-        state.showAttachmentActionsSheet(document);
+    final Future<void> actionsFuture = state.showAttachmentActionsSheet(
+      document,
+    );
     await _pumpUntil(tester, find.text('Pièce jointe'));
     expect(find.text('devis.pdf'), findsOneWidget);
     expect(find.text('Ouvrir'), findsOneWidget);
