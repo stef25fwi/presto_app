@@ -30,7 +30,9 @@ class AuthUserProfileService {
     FirebaseFirestore? firestore,
     AuthProfileTimestampFactory? timestampFactory,
     AuthProfileBootstrapAction? bootstrapUserProfile,
+    AuthProfileBootstrapAction? defaultBootstrapUserProfile,
     AuthProfileAccessPreparationAction? prepareProfileAccess,
+    AuthProfileAccessPreparationAction? defaultPrepareProfileAccess,
     AuthUserDocumentWriter? writeUserDocument,
     AuthBusinessProfileExistsReader? businessProfileExists,
     AuthBusinessProfileWriter? writeBusinessProfile,
@@ -38,7 +40,11 @@ class AuthUserProfileService {
         _timestampFactory =
             timestampFactory ?? (() => FieldValue.serverTimestamp()),
         _bootstrapUserProfile = bootstrapUserProfile,
+        _defaultBootstrapUserProfile = defaultBootstrapUserProfile ??
+            UserProfileBootstrapService.ensureUserDocument,
         _prepareProfileAccess = prepareProfileAccess,
+        _defaultPrepareProfileAccess = defaultPrepareProfileAccess ??
+            UserProfileBootstrapService.prepareProfileFirestoreAccess,
         _writeUserDocument = writeUserDocument,
         _businessProfileExists = businessProfileExists,
         _writeBusinessProfile = writeBusinessProfile;
@@ -46,7 +52,9 @@ class AuthUserProfileService {
   final FirebaseFirestore? _firestore;
   final AuthProfileTimestampFactory _timestampFactory;
   final AuthProfileBootstrapAction? _bootstrapUserProfile;
+  final AuthProfileBootstrapAction _defaultBootstrapUserProfile;
   final AuthProfileAccessPreparationAction? _prepareProfileAccess;
+  final AuthProfileAccessPreparationAction _defaultPrepareProfileAccess;
   final AuthUserDocumentWriter? _writeUserDocument;
   final AuthBusinessProfileExistsReader? _businessProfileExists;
   final AuthBusinessProfileWriter? _writeBusinessProfile;
@@ -68,7 +76,7 @@ class AuthUserProfileService {
         forceRefresh: true,
       );
     } else {
-      await UserProfileBootstrapService.ensureUserDocument(
+      await _defaultBootstrapUserProfile(
         user: user,
         authMethod: 'email',
         isNewUserHint: true,
@@ -131,7 +139,7 @@ class AuthUserProfileService {
         forceRefreshAppCheckToken: true,
       );
     } else {
-      await UserProfileBootstrapService.prepareProfileFirestoreAccess(
+      await _defaultPrepareProfileAccess(
         user: user,
         forceRefreshToken: true,
         forceRefreshAppCheckToken: true,
