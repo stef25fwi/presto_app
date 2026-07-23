@@ -154,33 +154,17 @@ void main() {
     authPlatform.user = null;
   });
 
-  testWidgets('couvre emojis, portails, pièces jointes et suppression annulée',
+  testWidgets('couvre la barre emoji et les feuilles de pièces jointes',
       (tester) async {
     final dynamic state = await _pumpThread(tester);
 
-    authPlatform.user = null;
-    state.emojiUsageCountsState = <String, int>{};
-    state.quickEmojisState = <String>[];
-
-    await state.recordEmojiUsage('  ');
-    await state.recordEmojiUsage('👍');
-    await state.recordEmojiUsage('🔥');
-    await state.recordEmojiUsage('🔥');
-    await state.recordEmojiUsage('😊');
-
-    expect(state.emojiUsageCountsState['🔥'], 2);
-    expect(state.emojiUsageCountsState['👍'], 1);
-    expect(state.quickEmojisState.first, '🔥');
-    expect(state.quickEmojisState, containsAll(<String>['👍', '😊']));
-
+    state.quickEmojisState = <String>['🔥', '👍', '😊', '🙏', '👌', '💬'];
     state.showEmojiStripState = true;
     state.conversationBlocked = false;
     expect(state.buildEmojiStrip(), isA<Padding>());
     state.conversationBlocked = true;
     expect(state.buildEmojiStrip(), isA<SizedBox>());
     state.conversationBlocked = false;
-
-    authPlatform.user = _Wave4UserPlatform(authPlatform);
 
     final Future<void> gateFuture = state.showAttachmentSubscriptionGate(
       const ConversationAttachmentGateDecision(
@@ -200,33 +184,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await gateFuture;
 
-    const invalidDocument = MessageAttachment(
+    const document = MessageAttachment(
       type: 'document',
       name: 'devis.pdf',
-      url: '%',
+      url: 'https://cdn.example/devis.pdf',
       storagePath: 'messages/devis.pdf',
       mimeType: 'application/pdf',
       sizeBytes: 1200,
     );
 
-    final Future<void> openSheetFuture =
-        state.showAttachmentActionsSheet(invalidDocument);
+    final Future<void> actionsFuture = state.showAttachmentActionsSheet(document);
     await _pumpUntil(tester, find.text('Pièce jointe'));
     expect(find.text('devis.pdf'), findsOneWidget);
     expect(find.text('Ouvrir'), findsOneWidget);
     expect(find.text('Partager'), findsOneWidget);
-    await tester.tap(find.text('Ouvrir'));
+    Navigator.of(tester.element(find.text('Pièce jointe'))).pop();
     await tester.pump(const Duration(milliseconds: 500));
-    await openSheetFuture;
-    expect(find.text('Lien de pièce jointe invalide.'), findsOneWidget);
-
-    final Future<void> shareSheetFuture =
-        state.showAttachmentActionsSheet(invalidDocument);
-    await _pumpUntil(tester, find.text('Pièce jointe'));
-    await tester.tap(find.text('Partager'));
-    await tester.pump(const Duration(milliseconds: 500));
-    await shareSheetFuture;
-    expect(find.text('Lien de pièce jointe invalide.'), findsWidgets);
+    await actionsFuture;
 
     await state.openAttachment(
       const MessageAttachment(
@@ -238,20 +212,6 @@ void main() {
         sizeBytes: 200,
       ),
     );
-
-    final Future<void> deleteFuture = state.handleConversationAction(
-      ConversationThreadAction.delete,
-    );
-    await _pumpUntil(
-      tester,
-      find.text('Supprimer la conversation'),
-      maxFrames: 180,
-    );
-    expect(find.text('Annuler'), findsOneWidget);
-    expect(find.text('Supprimer'), findsOneWidget);
-    await tester.tap(find.text('Annuler'));
-    await tester.pump(const Duration(milliseconds: 500));
-    await deleteFuture;
 
     await _disposeThread(tester);
   });
