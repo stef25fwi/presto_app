@@ -1,6 +1,4 @@
-class AuthValidators {
-  AuthValidators._();
-
+abstract final class AuthValidators {
   static final RegExp _emailPattern = RegExp(
     r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
   );
