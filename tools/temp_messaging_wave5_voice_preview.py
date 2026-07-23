@@ -25,6 +25,11 @@ source = source.replace(
     "const VoiceNotePreviewSheet({\n    super.key,\n    required this.preview,",
     1,
 )
+source = source.replace(
+    'final VoidCallback onSend;\n\n  const VoiceNotePreviewSheet({',
+    'final VoidCallback onSend;\n  const VoiceNotePreviewSheet({',
+    1,
+)
 source_path.write_text(source)
 
 test_path = Path('test/pages/messages/conversation_thread_voice_preview_coverage_test.dart')
