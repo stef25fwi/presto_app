@@ -175,6 +175,14 @@ void main() {
       );
       expect(
         policy.messageForFirebaseFailure(
+          code: '  INVALID-ARGUMENT  ',
+          message: 'Période annuelle inconnue.',
+          fallback: 'fallback',
+        ),
+        'Période annuelle inconnue.',
+      );
+      expect(
+        policy.messageForFirebaseFailure(
           code: 'internal',
           fallback: 'fallback',
         ),
