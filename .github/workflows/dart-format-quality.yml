@@ -44,7 +44,7 @@ jobs:
           retention-days: 2
 
   apply-messaging-ui-fix:
-    if: github.head_ref == 'fix/messages-audio-input-debug-header-v2'
+    if: startsWith(github.head_ref, 'fix/messages-audio-input-debug-header')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: fix/messages-audio-input-debug-header-v2
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Apply messaging UI changes
@@ -281,4 +281,4 @@ class _VoiceNotePlayer extends StatefulWidget {
             lib/widgets/admin_web_debug_panel.dart
           git diff --cached --quiet && exit 0
           git commit -m "fix(messages): show audio duration and move admin debug to header"
-          git push origin HEAD:fix/messages-audio-input-debug-header-v2
+          git push origin HEAD:${{ github.head_ref }}
