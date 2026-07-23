@@ -6,8 +6,6 @@ import 'package:presto_app/features/subscriptions/subscription_models.dart';
 
 class _FakeCheckoutService extends SubscriptionCheckoutService {
   final List<SubscriptionActionRequest> requests = <SubscriptionActionRequest>[];
-  final List<(SubscriptionPlan, String)> prefetches =
-      <(SubscriptionPlan, String)>[];
 
   @override
   Future<void> handleAction(
@@ -15,14 +13,6 @@ class _FakeCheckoutService extends SubscriptionCheckoutService {
     SubscriptionActionRequest request,
   ) async {
     requests.add(request);
-  }
-
-  @override
-  Future<void> prefetchCheckout(
-    SubscriptionPlan plan, {
-    String source = 'subscription_prefetch',
-  }) async {
-    prefetches.add((plan, source));
   }
 }
 
@@ -37,16 +27,13 @@ void main() {
 
   tearDown(resetSubscriptionActionOverrides);
 
-  Widget actionButton(
-    Future<void> Function(BuildContext context) action, {
-    String label = 'Action',
-  }) {
+  Widget actionButton(Future<void> Function(BuildContext context) action) {
     return MaterialApp(
       home: Scaffold(
         body: Builder(
           builder: (context) => ElevatedButton(
             onPressed: () => action(context),
-            child: Text(label),
+            child: const Text('Action'),
           ),
         ),
       ),
@@ -154,21 +141,6 @@ void main() {
         'Ilipresto est actuellement en bêta gratuite. Aucun abonnement ou paiement n’est actif.',
       ),
       findsOneWidget,
-    );
-  });
-
-  test('prefetch activé transmet le plan et la source', () async {
-    await prefetchSubscriptionCheckout(
-      'ilipro',
-      stripeEnabled: true,
-      source: 'coverage-prefetch',
-    );
-
-    expect(
-      checkout.prefetches,
-      <(SubscriptionPlan, String)>[
-        (SubscriptionPlan.ilipro, 'coverage-prefetch'),
-      ],
     );
   });
 }
