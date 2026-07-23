@@ -195,55 +195,12 @@ class _AdminWebDebugPanelState extends State<AdminWebDebugPanel> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (isSmallScreen)
-                        IconButton.filled(
-                          tooltip: _isExpanded
-                              ? 'Masquer le diagnostic admin'
-                              : 'Ouvrir le diagnostic admin',
-                          onPressed: () {
-                            setState(() {
-                              _isExpanded = !_isExpanded;
-                            });
-                          },
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFF111827),
-                            foregroundColor: Colors.white,
-                          ),
-                          icon: Icon(
-                            _isExpanded
-                                ? Icons.close_rounded
-                                : Icons.monitor_heart_outlined,
-                            size: 20,
-                          ),
-                        )
-                      else
-                        FilledButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _isExpanded = !_isExpanded;
-                            });
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF111827),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                          ),
-                          icon: Icon(
-                            _isExpanded
-                                ? Icons.bug_report_outlined
-                                : Icons.monitor_heart_outlined,
-                            size: 20,
-                          ),
-                          label: Text(
-                            _isExpanded
-                                ? 'Masquer debug admin'
-                                : 'Debug admin web',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ),
+                      IconButton.filled(
+                        tooltip: _isExpanded ? 'Masquer le diagnostic admin' : 'Ouvrir le diagnostic admin',
+                        onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                        style: IconButton.styleFrom(backgroundColor: const Color(0xFF111827), foregroundColor: Colors.white),
+                        icon: Icon(_isExpanded ? Icons.close_rounded : Icons.monitor_heart_outlined, size: 20),
+                      ),
                       if (_isExpanded) ...[
                         const SizedBox(height: 8),
                         _buildExpandedPanel(context, adminState, isSmallScreen),

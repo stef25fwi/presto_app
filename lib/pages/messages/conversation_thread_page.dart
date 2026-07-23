@@ -3202,12 +3202,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
 
     if (attachment.type == 'audio') {
-      return buildDeleteOverlay(
-        _VoiceNotePlayer(
-          source: attachment.url,
-          fallbackDuration: voiceNoteDurationFromName(attachment.name),
-        ),
-      );
+      return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url, fallbackDuration: voiceNoteDurationFromName(attachment.name)));
     }
 
     return buildDeleteOverlay(
@@ -4147,11 +4142,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     ),
                                   ),
                                   border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  disabledBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  focusedErrorBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, disabledBorder: InputBorder.none, errorBorder: InputBorder.none, focusedErrorBorder: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 10,
                                     vertical: 13,
@@ -4906,22 +4897,13 @@ class VoiceNotePreviewSheet extends StatelessWidget {
 
 Duration voiceNoteDurationFromName(String name) {
   final match = RegExp(r'_(\d+)s(?:\.|$)').firstMatch(name.trim());
-  final seconds = match == null ? null : int.tryParse(match.group(1) ?? '');
-  return seconds == null || seconds <= 0
-      ? Duration.zero
-      : Duration(seconds: seconds);
+  return Duration(seconds: int.tryParse(match?.group(1) ?? '') ?? 0);
 }
-
 class _VoiceNotePlayer extends StatefulWidget {
   final String source;
   final bool isLocalFile;
   final Duration fallbackDuration;
-
-  const _VoiceNotePlayer({
-    required this.source,
-    this.isLocalFile = false,
-    this.fallbackDuration = Duration.zero,
-  });
+  const _VoiceNotePlayer({required this.source, this.isLocalFile = false, this.fallbackDuration = Duration.zero});
 
   @override
   State<_VoiceNotePlayer> createState() => _VoiceNotePlayerState();
@@ -4976,9 +4958,7 @@ class _VoiceNotePlayerState extends State<_VoiceNotePlayer> {
   @override
   void didUpdateWidget(covariant _VoiceNotePlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.source != widget.source ||
-        oldWidget.isLocalFile != widget.isLocalFile ||
-        oldWidget.fallbackDuration != widget.fallbackDuration) {
+    if (oldWidget.source != widget.source || oldWidget.isLocalFile != widget.isLocalFile || oldWidget.fallbackDuration != widget.fallbackDuration) {
       unawaited(_resetForNewUrl());
     }
   }
