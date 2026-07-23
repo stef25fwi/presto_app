@@ -14,9 +14,26 @@ class _FakeCreditService extends SubscriptionCreditService {
   Future<SubscriptionCreditSnapshot> getSnapshot() async => snapshot;
 }
 
+class _ThrowingCreditService extends SubscriptionCreditService {
+  @override
+  Future<SubscriptionCreditSnapshot> getSnapshot() async {
+    throw StateError('snapshot unavailable');
+  }
+}
+
 class _EntitlementsService extends JourneyEntitlementsService {
   _EntitlementsService(this.entitlements, SubscriptionCreditSnapshot snapshot)
       : super(creditService: _FakeCreditService(snapshot));
+
+  final JourneyEntitlements entitlements;
+
+  @override
+  Future<JourneyEntitlements> resolveEntitlements() async => entitlements;
+}
+
+class _ThrowingEntitlementsService extends JourneyEntitlementsService {
+  _ThrowingEntitlementsService(this.entitlements)
+      : super(creditService: _ThrowingCreditService());
 
   final JourneyEntitlements entitlements;
 
@@ -137,6 +154,21 @@ void main() {
       );
       expect(await service.getLocalSavesUsedThisMonth(), 3);
       expect(await service.getPdfExportsUsedThisMonth(), 2);
+    });
+
+    test('retombe à zéro quand le snapshot serveur échoue', () async {
+      final service = _ThrowingEntitlementsService(
+        getJourneyEntitlementsForPlan(SubscriptionPlan.iliprestoPlus),
+      );
+
+      expect(await service.getLocalSavesUsedThisMonth(), 0);
+      expect(await service.getPdfExportsUsedThisMonth(), 0);
+      final saveDecision = await service.evaluateLocalSave();
+      final pdfDecision = await service.evaluatePdfExport();
+      expect(saveDecision.allowed, isTrue);
+      expect(saveDecision.usedThisMonth, 0);
+      expect(pdfDecision.allowed, isTrue);
+      expect(pdfDecision.usedThisMonth, 0);
     });
 
     test('autorise la bibliothèque tant qu une place reste disponible', () async {
