@@ -63,4 +63,15 @@ test_source = test_source.replace(
     "expect(find.text('A'), findsWidgets);",
     1,
 )
+
+unmounted_preview_block = """    await tester.tap(find.byKey(const ValueKey<String>('image-preview')));
+    await tester.pump();
+    expect(find.text('iliprestō'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pump();
+    expect(find.text('iliprestō'), findsNothing);
+"""
+if unmounted_preview_block not in test_source:
+    raise SystemExit('unmounted image preview interaction not found')
+test_source = test_source.replace(unmounted_preview_block, '', 1)
 test_path.write_text(test_source)
