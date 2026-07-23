@@ -1,0 +1,245 @@
+name: Apply messaging UI fix
+
+on:
+  push:
+    branches:
+      - fix/messages-audio-input-debug-header
+    paths:
+      - .github/workflows/apply-messaging-ui-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/messages-audio-input-debug-header
+          fetch-depth: 0
+
+      - name: Patch messaging UI
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          thread_path = Path('lib/pages/messages/conversation_thread_page.dart')
+          text = thread_path.read_text()
+
+          old = """                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric("""
+          new = """                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric("""
+          if old not in text:
+              raise SystemExit('TextField border anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = "return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url));"
+          new = """return buildDeleteOverlay(
+        _VoiceNotePlayer(
+          source: attachment.url,
+          fallbackDuration: _voiceNoteDurationFromName(attachment.name),
+        ),
+      );"""
+          if old not in text:
+              raise SystemExit('Voice note attachment anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = """class _VoiceNotePlayer extends StatefulWidget {
+  final String source;
+  final bool isLocalFile;
+
+  const _VoiceNotePlayer({required this.source, this.isLocalFile = false});"""
+          new = """Duration _voiceNoteDurationFromName(String name) {
+  final match = RegExp(r'_(\\d+)s(?:\\.|$)').firstMatch(name.trim());
+  final seconds = match == null ? null : int.tryParse(match.group(1) ?? '');
+  return seconds == null || seconds <= 0
+      ? Duration.zero
+      : Duration(seconds: seconds);
+}
+
+class _VoiceNotePlayer extends StatefulWidget {
+  final String source;
+  final bool isLocalFile;
+  final Duration fallbackDuration;
+
+  const _VoiceNotePlayer({
+    required this.source,
+    this.isLocalFile = false,
+    this.fallbackDuration = Duration.zero,
+  });"""
+          if old not in text:
+              raise SystemExit('Voice note class anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = """    super.initState();
+    _player = AudioPlayer();"""
+          new = """    super.initState();
+    _total = widget.fallbackDuration;
+    _player = AudioPlayer();"""
+          if old not in text:
+              raise SystemExit('Voice note initState anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = """    if (oldWidget.source != widget.source ||
+        oldWidget.isLocalFile != widget.isLocalFile) {"""
+          new = """    if (oldWidget.source != widget.source ||
+        oldWidget.isLocalFile != widget.isLocalFile ||
+        oldWidget.fallbackDuration != widget.fallbackDuration) {"""
+          if old not in text:
+              raise SystemExit('Voice note didUpdateWidget anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = """      _position = Duration.zero;
+      _total = Duration.zero;
+      _isLoading = false;"""
+          new = """      _position = Duration.zero;
+      _total = widget.fallbackDuration;
+      _isLoading = false;"""
+          if old not in text:
+              raise SystemExit('Voice note reset anchor not found')
+          text = text.replace(old, new, 1)
+
+          thread_path.write_text(text)
+
+          debug_path = Path('lib/widgets/admin_web_debug_panel.dart')
+          debug = debug_path.read_text()
+
+          old = """            Positioned(
+              right: isSmallScreen ? 8 : 12,
+              bottom: isSmallScreen ? 8 : 12,
+              left: isSmallScreen ? 8 : null,
+              child: SafeArea("""
+          new = """            Positioned(
+              right: isSmallScreen ? 8 : 12,
+              top: isSmallScreen ? 8 : 12,
+              child: SafeArea("""
+          if old not in debug:
+              raise SystemExit('Debug panel position anchor not found')
+          debug = debug.replace(old, new, 1)
+
+          old = """                    children: [
+                      if (_isExpanded)
+                        _buildExpandedPanel(context, adminState, isSmallScreen),
+                      const SizedBox(height: 8),
+                      FilledButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _isExpanded = !_isExpanded;
+                          });
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF111827),
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSmallScreen ? 10 : 14,
+                            vertical: isSmallScreen ? 10 : 12,
+                          ),
+                        ),
+                        icon: Icon(
+                          _isExpanded
+                              ? Icons.bug_report_outlined
+                              : Icons.monitor_heart_outlined,
+                          size: isSmallScreen ? 18 : 20,
+                        ),
+                        label: Text(
+                          _isExpanded
+                              ? 'Masquer debug admin'
+                              : 'Debug admin web',
+                          style: TextStyle(fontSize: isSmallScreen ? 11 : 13),
+                        ),
+                      ),
+                    ],"""
+          new = """                    children: [
+                      if (isSmallScreen)
+                        IconButton.filled(
+                          tooltip: _isExpanded
+                              ? 'Masquer le diagnostic admin'
+                              : 'Ouvrir le diagnostic admin',
+                          onPressed: () {
+                            setState(() {
+                              _isExpanded = !_isExpanded;
+                            });
+                          },
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF111827),
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: Icon(
+                            _isExpanded
+                                ? Icons.close_rounded
+                                : Icons.monitor_heart_outlined,
+                            size: 20,
+                          ),
+                        )
+                      else
+                        FilledButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _isExpanded = !_isExpanded;
+                            });
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF111827),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                          ),
+                          icon: Icon(
+                            _isExpanded
+                                ? Icons.bug_report_outlined
+                                : Icons.monitor_heart_outlined,
+                            size: 20,
+                          ),
+                          label: Text(
+                            _isExpanded
+                                ? 'Masquer debug admin'
+                                : 'Debug admin web',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      if (_isExpanded) ...[
+                        const SizedBox(height: 8),
+                        _buildExpandedPanel(context, adminState, isSmallScreen),
+                      ],
+                    ],"""
+          if old not in debug:
+              raise SystemExit('Debug button block anchor not found')
+          debug = debug.replace(old, new, 1)
+          debug_path.write_text(debug)
+          PY
+
+      - name: Format
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Validate targeted files
+        shell: bash
+        run: |
+          dart format lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
+          flutter pub get
+          flutter analyze lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
+          if [ -f test/pages/messages/conversation_thread_page_shell_test.dart ]; then
+            flutter test test/pages/messages/conversation_thread_page_shell_test.dart
+          fi
+
+      - name: Commit fix and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/apply-messaging-ui-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart .github/workflows/apply-messaging-ui-fix.yml
+          git commit -m "fix(messages): show audio duration and move admin debug to header"
+          git push origin HEAD:fix/messages-audio-input-debug-header
