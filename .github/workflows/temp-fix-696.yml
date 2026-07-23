@@ -19,7 +19,7 @@ jobs:
           ref: coverage/w1-messaging-next-20260723
           fetch-depth: 0
 
-      - name: Apply targeted fix and remove executor
+      - name: Apply targeted fix
         shell: bash
         run: |
           set -euo pipefail
@@ -70,14 +70,16 @@ jobs:
     });'''
 
           text = target.read_text(encoding='utf-8')
+          if new in text:
+              raise SystemExit(0)
           if old not in text:
               raise SystemExit('Expected _appendAdminConversationLog block not found')
           target.write_text(text.replace(old, new, 1), encoding='utf-8')
-          Path('.github/workflows/temp-fix-696.yml').unlink()
           PY
 
           git config user.name "coverage-fix-bot"
           git config user.email "coverage-fix-bot@users.noreply.github.com"
-          git add lib/pages/messages/conversations_list_page.dart .github/workflows/temp-fix-696.yml
+          git add lib/pages/messages/conversations_list_page.dart
+          git diff --cached --quiet && exit 0
           git commit -m "fix(messages): defer admin log UI mutation"
           git push origin HEAD:coverage/w1-messaging-next-20260723
