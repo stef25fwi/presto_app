@@ -119,7 +119,9 @@ export { generatePaymentInfoAudio } from "./modules/admin/callables";
 export { adminGenerateVideo, adminListGeneratedVideos } from "./modules/admin/videomaker";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 export {
-  createSubscriptionCheckoutSession,
+  guardedCreateSubscriptionCheckoutSession as createSubscriptionCheckoutSession,
+} from "./modules/billing/guarded_callables";
+export {
   getSubscriptionCheckoutStatus,
   createSubscriptionPortalSession,
   auditStripeCatalog,
