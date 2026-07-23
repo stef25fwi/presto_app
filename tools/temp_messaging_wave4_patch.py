@@ -21,4 +21,15 @@ for old, new in renames.items():
         raise SystemExit(f'missing messaging wave 4 identifier: {old}')
     source = updated
 
+compact_guard = (
+    '    if (!showEmojiStripState || conversationBlocked) '
+    'return const SizedBox.shrink();'
+)
+expanded_guard = """    if (!showEmojiStripState || conversationBlocked) {
+      return const SizedBox.shrink();
+    }"""
+if compact_guard not in source:
+    raise SystemExit('messaging emoji strip compact guard not found')
+source = source.replace(compact_guard, expanded_guard, 1)
+
 path.write_text(source)
