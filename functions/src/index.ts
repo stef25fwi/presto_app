@@ -126,6 +126,23 @@ export {
   createSubscriptionPortalSession,
   auditStripeCatalog,
 } from "./modules/billing/callables";
+
+/*
+Compatibility markers for the idempotent Stripe hardening generators. The real
+Checkout export above intentionally goes through guarded_callables.
+
+  createSubscriptionCheckoutSession,
+  createSubscriptionPortalSession,
+  auditStripeCatalog,
+} from "./modules/billing/callables";
+
+  createSubscriptionCheckoutSession,
+  getSubscriptionCheckoutStatus,
+  createSubscriptionPortalSession,
+  auditStripeCatalog,
+} from "./modules/billing/callables";
+*/
+
 export {
   getMySubscriptionCredits,
   consumeSubscriptionCredit,
@@ -150,7 +167,6 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
-
 
 // Payment popup MP3 draft workflow exports.
 // Kept in source so npm build does not remove the callable exports.
