@@ -20,10 +20,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: '3.44.6'
           cache: true
 
-      - name: Patch, validate and commit
+      - name: Patch messaging UI
         shell: bash
         run: |
           python3 - <<'PY'
@@ -32,36 +32,36 @@ jobs:
           thread_path = Path('lib/pages/messages/conversation_thread_page.dart')
           text = thread_path.read_text()
 
-          old = """                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric("""
-          new = """                                  border: InputBorder.none,
+          replacements = [
+              (
+                  """                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(""",
+                  """                                  border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
                                   disabledBorder: InputBorder.none,
                                   errorBorder: InputBorder.none,
                                   focusedErrorBorder: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric("""
-          if old not in text:
-              raise SystemExit('TextField border anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = "return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url));"
-          new = """return buildDeleteOverlay(
+                                  contentPadding: const EdgeInsets.symmetric(""",
+                  'TextField borders',
+              ),
+              (
+                  "return buildDeleteOverlay(_VoiceNotePlayer(source: attachment.url));",
+                  """return buildDeleteOverlay(
         _VoiceNotePlayer(
           source: attachment.url,
           fallbackDuration: _voiceNoteDurationFromName(attachment.name),
         ),
-      );"""
-          if old not in text:
-              raise SystemExit('Voice note attachment anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = """class _VoiceNotePlayer extends StatefulWidget {
+      );""",
+                  'voice note attachment',
+              ),
+              (
+                  """class _VoiceNotePlayer extends StatefulWidget {
   final String source;
   final bool isLocalFile;
 
-  const _VoiceNotePlayer({required this.source, this.isLocalFile = false});"""
-          new = """Duration _voiceNoteDurationFromName(String name) {
+  const _VoiceNotePlayer({required this.source, this.isLocalFile = false});""",
+                  """Duration _voiceNoteDurationFromName(String name) {
   final match = RegExp(r'_(\\d+)s(?:\\.|$)').firstMatch(name.trim());
   final seconds = match == null ? null : int.tryParse(match.group(1) ?? '');
   return seconds == null || seconds <= 0
@@ -78,38 +78,41 @@ class _VoiceNotePlayer extends StatefulWidget {
     required this.source,
     this.isLocalFile = false,
     this.fallbackDuration = Duration.zero,
-  });"""
-          if old not in text:
-              raise SystemExit('Voice note class anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = """    super.initState();
-    _player = AudioPlayer();"""
-          new = """    super.initState();
+  });""",
+                  'voice note widget',
+              ),
+              (
+                  """    super.initState();
+    _player = AudioPlayer();""",
+                  """    super.initState();
     _total = widget.fallbackDuration;
-    _player = AudioPlayer();"""
-          if old not in text:
-              raise SystemExit('Voice note initState anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = """    if (oldWidget.source != widget.source ||
-        oldWidget.isLocalFile != widget.isLocalFile) {"""
-          new = """    if (oldWidget.source != widget.source ||
+    _player = AudioPlayer();""",
+                  'voice note init',
+              ),
+              (
+                  """    if (oldWidget.source != widget.source ||
+        oldWidget.isLocalFile != widget.isLocalFile) {""",
+                  """    if (oldWidget.source != widget.source ||
         oldWidget.isLocalFile != widget.isLocalFile ||
-        oldWidget.fallbackDuration != widget.fallbackDuration) {"""
-          if old not in text:
-              raise SystemExit('Voice note update anchor not found')
-          text = text.replace(old, new, 1)
-
-          old = """      _position = Duration.zero;
+        oldWidget.fallbackDuration != widget.fallbackDuration) {""",
+                  'voice note update',
+              ),
+              (
+                  """      _position = Duration.zero;
       _total = Duration.zero;
-      _isLoading = false;"""
-          new = """      _position = Duration.zero;
+      _isLoading = false;""",
+                  """      _position = Duration.zero;
       _total = widget.fallbackDuration;
-      _isLoading = false;"""
-          if old not in text:
-              raise SystemExit('Voice note reset anchor not found')
-          text = text.replace(old, new, 1)
+      _isLoading = false;""",
+                  'voice note reset',
+              ),
+          ]
+          for old, new, label in replacements:
+              if new in text:
+                  continue
+              if old not in text:
+                  raise SystemExit(f'{label} anchor not found')
+              text = text.replace(old, new, 1)
           thread_path.write_text(text)
 
           debug_path = Path('lib/widgets/admin_web_debug_panel.dart')
@@ -123,9 +126,10 @@ class _VoiceNotePlayer extends StatefulWidget {
               right: isSmallScreen ? 8 : 12,
               top: isSmallScreen ? 8 : 12,
               child: SafeArea("""
-          if old not in debug:
-              raise SystemExit('Debug position anchor not found')
-          debug = debug.replace(old, new, 1)
+          if new not in debug:
+              if old not in debug:
+                  raise SystemExit('debug position anchor not found')
+              debug = debug.replace(old, new, 1)
 
           old = """                    children: [
                       if (_isExpanded)
@@ -214,12 +218,16 @@ class _VoiceNotePlayer extends StatefulWidget {
                         _buildExpandedPanel(context, adminState, isSmallScreen),
                       ],
                     ],"""
-          if old not in debug:
-              raise SystemExit('Debug button anchor not found')
-          debug = debug.replace(old, new, 1)
+          if new not in debug:
+              if old not in debug:
+                  raise SystemExit('debug button anchor not found')
+              debug = debug.replace(old, new, 1)
           debug_path.write_text(debug)
           PY
 
+      - name: Validate
+        shell: bash
+        run: |
           dart format lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
           flutter pub get
           flutter analyze lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
@@ -227,8 +235,12 @@ class _VoiceNotePlayer extends StatefulWidget {
             flutter test test/pages/messages/conversation_thread_page_shell_test.dart
           fi
 
+      - name: Commit to PR branch
+        shell: bash
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
+          git diff --cached --quiet && exit 0
           git commit -m "fix(messages): show audio duration and move admin debug to header"
           git push origin HEAD:fix/messages-audio-input-debug-header
