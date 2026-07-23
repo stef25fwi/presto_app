@@ -27,6 +27,7 @@ class RegisterPage extends StatefulWidget {
     this.registerWithEmail,
     this.recordLegalAcceptance,
     this.successPageBuilder,
+    this.operatingModeService,
   });
 
   static const routeName = '/register';
@@ -34,6 +35,7 @@ class RegisterPage extends StatefulWidget {
   final RegisterWithEmailCallback? registerWithEmail;
   final RecordLegalAcceptanceCallback? recordLegalAcceptance;
   final WidgetBuilder? successPageBuilder;
+  final AppOperatingModeService? operatingModeService;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -80,9 +82,9 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     AppOperatingModeState state = AppOperatingModeState.defaults();
-    AppOperatingModeService? service;
+    AppOperatingModeService? service = widget.operatingModeService;
     try {
-      service = AppOperatingModeService();
+      service ??= AppOperatingModeService();
       state = await service.getState();
     } catch (_) {
       // La création du compte ne doit pas échouer si la configuration juridique
