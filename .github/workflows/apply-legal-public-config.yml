@@ -1,0 +1,312 @@
+name: Apply legal public config patch
+
+on:
+  push:
+    branches:
+      - agent/free-beta-operating-mode
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/free-beta-operating-mode
+          fetch-depth: 0
+
+      - name: Apply idempotent legal public configuration patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, before, after, label):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if after in text:
+                  return
+              count = text.count(before)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one occurrence, found {count}')
+              p.write_text(text.replace(before, after), encoding='utf-8')
+
+          replace_once(
+              'lib/features/operating_mode/app_operating_mode.dart',
+              """  Stream<AppOperatingModeState> watchState({bool ensureExists = false}) {
+              if (ensureExists) unawaited(ensureDefaults());
+              return _legalRef.snapshots().map(
+                    (snapshot) => AppOperatingModeState.fromMap(snapshot.data()),
+                  );
+            }
+          """,
+              """  Stream<AppOperatingModeState> watchState({bool ensureExists = false}) {
+              if (ensureExists) {
+                unawaited(ensureDefaults().catchError((Object _) {}));
+              }
+              return _publicLegalRef.snapshots().map(
+                    (snapshot) => AppOperatingModeState.fromMap(snapshot.data()),
+                  );
+            }
+          """,
+              'public legal state stream',
+          )
+
+          rules_functions = """    function isValidPublicLegalPublisher(data) {
+              return data is map
+                && data.keys().hasOnly([
+                  'publisherName', 'postalAddress', 'phone', 'email',
+                  'publicationDirector', 'companyName', 'legalForm', 'siren',
+                  'rcs', 'shareCapital', 'vatNumber', 'hostingProvider',
+                  'hostingAddress'
+                ])
+                && data.keys().hasAll([
+                  'publisherName', 'postalAddress', 'phone', 'email',
+                  'publicationDirector', 'companyName', 'legalForm', 'siren',
+                  'rcs', 'shareCapital', 'vatNumber', 'hostingProvider',
+                  'hostingAddress'
+                ])
+                && data.publisherName is string && data.publisherName.size() <= 160
+                && data.postalAddress is string && data.postalAddress.size() <= 500
+                && data.phone is string && data.phone.size() <= 40
+                && data.email is string && data.email.size() <= 254
+                && data.publicationDirector is string && data.publicationDirector.size() <= 160
+                && data.companyName is string && data.companyName.size() <= 200
+                && data.legalForm is string && data.legalForm.size() <= 80
+                && data.siren is string && data.siren.size() <= 20
+                && data.rcs is string && data.rcs.size() <= 120
+                && data.shareCapital is string && data.shareCapital.size() <= 80
+                && data.vatNumber is string && data.vatNumber.size() <= 40
+                && data.hostingProvider is string && data.hostingProvider.size() <= 200
+                && data.hostingAddress is string && data.hostingAddress.size() <= 500;
+            }
+
+            function isValidPublicLegalConfig(data) {
+              return data.keys().hasOnly([
+                  'operatingMode', 'legalVersion', 'cguVersion',
+                  'privacyVersion', 'effectiveDate', 'requiresReacceptance',
+                  'publisher', 'updatedAt'
+                ])
+                && data.keys().hasAll([
+                  'operatingMode', 'legalVersion', 'cguVersion',
+                  'privacyVersion', 'effectiveDate', 'requiresReacceptance',
+                  'publisher', 'updatedAt'
+                ])
+                && data.operatingMode in ['free_beta', 'commercial']
+                && data.legalVersion is string && data.legalVersion.size() <= 80
+                && data.cguVersion is string && data.cguVersion.size() <= 80
+                && data.privacyVersion is string && data.privacyVersion.size() <= 80
+                && data.effectiveDate is timestamp
+                && data.requiresReacceptance is bool
+                && data.updatedAt is timestamp
+                && isValidPublicLegalPublisher(data.publisher);
+            }
+
+          """
+          replace_once(
+              'firestore.rules',
+              '    function isValidHeroSlide(data) {\n',
+              rules_functions + '    function isValidHeroSlide(data) {\n',
+              'public legal rules validators',
+          )
+
+          public_rule = """    // Mentions légales publiques : lecture anonyme, écriture admin validée.
+              match /public_config/legal {
+                allow read: if true;
+                allow create, update: if isMarketplaceAdmin()
+                  && isValidPublicLegalConfig(request.resource.data);
+                allow delete: if false;
+              }
+
+          """
+          replace_once(
+              'firestore.rules',
+              """    // Audio public du popup paiement : lecture utilisateur, écriture uniquement backend Admin SDK.
+              match /public_config/payment_info_audio {
+          """,
+              public_rule + """    // Audio public du popup paiement : lecture utilisateur, écriture uniquement backend Admin SDK.
+              match /public_config/payment_info_audio {
+          """,
+              'public legal rules match',
+          )
+
+          legal_seed = """      setDoc(doc(db, 'public_config', 'legal'), {
+                operatingMode: 'free_beta',
+                legalVersion: 'beta-free-v1',
+                cguVersion: 'cgu-beta-free-v1',
+                privacyVersion: 'privacy-beta-free-v1',
+                effectiveDate: new Date('2026-07-23T00:00:00Z'),
+                requiresReacceptance: false,
+                publisher: {
+                  publisherName: 'Exploitant Test',
+                  postalAddress: '1 rue de Test, 97122 Baie-Mahault',
+                  phone: '0590000000',
+                  email: 'contact@example.fr',
+                  publicationDirector: 'Exploitant Test',
+                  companyName: '',
+                  legalForm: '',
+                  siren: '',
+                  rcs: '',
+                  shareCapital: '',
+                  vatNumber: '',
+                  hostingProvider: 'Google Ireland Limited (Firebase Hosting)',
+                  hostingAddress: 'Gordon House, Dublin 4, Irlande',
+                },
+                updatedAt: new Date('2026-07-23T00:00:00Z'),
+              }),
+          """
+          replace_once(
+              'functions/scripts/test_canonical_marketplace_rules.mjs',
+              """      setDoc(doc(db, 'notifications', 'notif_1'), {
+          """,
+              legal_seed + """      setDoc(doc(db, 'notifications', 'notif_1'), {
+          """,
+              'public legal rules seed',
+          )
+          replace_once(
+              'functions/scripts/test_canonical_marketplace_rules.mjs',
+              """    const premiumUserDb = testEnv.authenticatedContext('premium_user').firestore();
+          """,
+              """    const premiumUserDb = testEnv.authenticatedContext('premium_user').firestore();
+              const adminDb = testEnv.authenticatedContext('admin_1', {
+                roles: ['admin'],
+              }).firestore();
+          """,
+              'admin legal rules context',
+          )
+          replace_once(
+              'functions/scripts/test_canonical_marketplace_rules.mjs',
+              """    await assertFails(setDoc(doc(anonDb, 'users', 'anon_user'), { displayName: 'Anon' }));
+          """,
+              """    await assertFails(setDoc(doc(anonDb, 'users', 'anon_user'), { displayName: 'Anon' }));
+
+              await assertSucceeds(getDoc(doc(anonDb, 'public_config', 'legal')));
+              await assertFails(updateDoc(doc(userDb, 'public_config', 'legal'), {
+                legalVersion: 'version-frauduleuse',
+              }));
+              await assertSucceeds(updateDoc(doc(adminDb, 'public_config', 'legal'), {
+                legalVersion: 'beta-free-v1-admin',
+                updatedAt: new Date('2026-07-23T01:00:00Z'),
+              }));
+          """,
+              'public legal rules assertions',
+          )
+
+          replace_once(
+              'test/features/operating_mode/app_operating_mode_test.dart',
+              """    final subscriptions =
+                await firestore.collection('app_config').doc('subscriptions').get();
+
+              expect(legal.data()!['operatingMode'], 'free_beta');
+          """,
+              """    final subscriptions =
+                await firestore.collection('app_config').doc('subscriptions').get();
+              final publicLegal =
+                await firestore.collection('public_config').doc('legal').get();
+
+              expect(legal.data()!['operatingMode'], 'free_beta');
+          """,
+              'default public legal test read',
+          )
+          replace_once(
+              'test/features/operating_mode/app_operating_mode_test.dart',
+              """    expect(subscriptions.data()!['freeAccessMode'], isTrue);
+              });
+
+              test('le mode commercial est bloqué sans identité juridique complète',
+          """,
+              """    expect(subscriptions.data()!['freeAccessMode'], isTrue);
+              expect(publicLegal.exists, isTrue);
+              expect(publicLegal.data()!['operatingMode'], 'free_beta');
+              });
+
+              test('la mise à jour du profil alimente les mentions publiques', () async {
+                final firestore = FakeFirebaseFirestore();
+                final service = AppOperatingModeService(firestore: firestore);
+                await service.ensureDefaults();
+
+                await service.updatePublisherProfile(completeProfile());
+
+                final publicState = await service.getPublicState();
+                expect(publicState.publisher.publisherName, 'Exploitant Test');
+                expect(publicState.publisher.phone, '0590000000');
+                expect(publicState.publisher.email, 'contact@ilipresto.fr');
+              });
+
+              test('le mode commercial est bloqué sans identité juridique complète',
+          """,
+              'public publisher sync test',
+          )
+          replace_once(
+              'test/features/operating_mode/app_operating_mode_test.dart',
+              """    final history = await firestore.collection('legal_mode_history').get();
+
+              expect(legal.data()!['operatingMode'], 'commercial');
+          """,
+              """    final history = await firestore.collection('legal_mode_history').get();
+              final publicLegal =
+                await firestore.collection('public_config').doc('legal').get();
+
+              expect(legal.data()!['operatingMode'], 'commercial');
+          """,
+              'commercial public legal test read',
+          )
+          replace_once(
+              'test/features/operating_mode/app_operating_mode_test.dart',
+              """    expect(history.docs, hasLength(1));
+              });
+          """,
+              """    expect(history.docs, hasLength(1));
+              expect(publicLegal.data()!['operatingMode'], 'commercial');
+              expect(publicLegal.data()!['legalVersion'], 'commercial-v1');
+              });
+          """,
+              'commercial public legal assertions',
+          )
+
+          replace_once(
+              'docs/production/FREE_BETA_OPERATING_MODE.md',
+              """Deux documents Firestore sont utilisés :
+
+              - `app_config/legal` : mode d’exploitation, versions juridiques, date d’entrée en vigueur et identité de l’éditeur ;
+              - `app_config/subscriptions` : miroir opérationnel utilisé par l’interface et les fonctions de paiement.
+          """,
+              """Trois documents Firestore sont utilisés :
+
+              - `app_config/legal` : source privée administrateur du mode, des versions juridiques et de l’identité de l’éditeur ;
+              - `app_config/subscriptions` : miroir opérationnel utilisé par l’interface et les fonctions de paiement ;
+              - `public_config/legal` : copie publique strictement limitée aux mentions légales, lisible sans connexion.
+          """,
+              'documentation public legal source',
+          )
+          replace_once(
+              'docs/production/FREE_BETA_OPERATING_MODE.md',
+              """4. Ouvrir **Configurer l’identité juridique**.
+              5. Renseigner les champs obligatoires de la bêta :
+          """,
+              """4. Remplir le formulaire **Identité de l’éditeur** affiché directement dans la carte.
+              5. Renseigner les champs obligatoires de la bêta :
+          """,
+              'documentation admin form',
+          )
+          replace_once(
+              'docs/production/FREE_BETA_OPERATING_MODE.md',
+              """Ces valeurs servent de secours. La configuration Firestore gérée depuis l’administration reste prioritaire pour les utilisateurs autorisés à la lire.
+          """,
+              """Ces valeurs servent uniquement de secours avant l’initialisation Firestore. Après le premier enregistrement dans l’administration, `public_config/legal` devient la source prioritaire pour tous les visiteurs, connectés ou non. Une modification du formulaire est visible sans nouveau build ni redéploiement de l’application.
+          """,
+              'documentation anonymous visibility',
+          )
+          PY
+
+          rm -f .github/workflows/apply-legal-public-config.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add firestore.rules functions/scripts/test_canonical_marketplace_rules.mjs \
+            lib/features/operating_mode/app_operating_mode.dart \
+            test/features/operating_mode/app_operating_mode_test.dart \
+            docs/production/FREE_BETA_OPERATING_MODE.md \
+            .github/workflows/apply-legal-public-config.yml
+          git commit -m "feat(legal): publier les mentions pour les visiteurs anonymes"
+          git push origin HEAD:agent/free-beta-operating-mode
