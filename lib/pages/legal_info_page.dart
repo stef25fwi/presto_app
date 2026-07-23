@@ -28,13 +28,21 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
 
   late int _tab;
 
-  AppOperatingModeService get _service =>
-      widget.operatingModeService ?? AppOperatingModeService();
-
   @override
   void initState() {
     super.initState();
-    _tab = widget.initialTab.clamp(0, 2);
+    _tab = widget.initialTab.clamp(0, 2).toInt();
+  }
+
+  Stream<AppOperatingModeState> _stateStream() {
+    try {
+      return (widget.operatingModeService ?? AppOperatingModeService())
+          .watchState(ensureExists: true);
+    } catch (_) {
+      return Stream<AppOperatingModeState>.value(
+        AppOperatingModeState.defaults(),
+      );
+    }
   }
 
   List<LegalDocumentSection> _sections(AppOperatingModeState state) {
@@ -60,7 +68,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         title: const Text('iliprestō', style: kPrestoAppBarTitleStyle),
       ),
       body: StreamBuilder<AppOperatingModeState>(
-        stream: _service.watchState(ensureExists: true),
+        stream: _stateStream(),
         builder: (context, snapshot) {
           final state = snapshot.data ?? AppOperatingModeState.defaults();
           final sections = _sections(state);
