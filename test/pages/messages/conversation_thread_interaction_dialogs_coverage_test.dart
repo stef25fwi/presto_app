@@ -110,7 +110,7 @@ Future<void> _pumpUntil(
 }
 
 Future<dynamic> _pumpThread(WidgetTester tester) async {
-  await tester.binding.setSurfaceSize(const Size(430, 932));
+  await tester.binding.setSurfaceSize(const Size(430, 1600));
   await tester.pumpWidget(
     const MaterialApp(
       home: ConversationThreadPage(
