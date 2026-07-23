@@ -28,6 +28,14 @@ class _ReadinessUserPlatform extends UserPlatform {
           providerData: const <Map<String, dynamic>?>[],
         ),
       );
+
+  @override
+  Future<String?> getIdToken(bool forceRefresh) async {
+    throw FirebaseAuthException(
+      code: 'network-request-failed',
+      message: 'token refresh unavailable in deterministic test',
+    );
+  }
 }
 
 class _ReadinessAuthPlatform extends FirebaseAuthPlatform {
@@ -103,5 +111,19 @@ void main() {
     expect(result.isReady, isTrue);
     expect(result.gate, isNull);
     expect(result.user?.uid, 'publication-profile-user');
+  });
+
+  test('utilise le préparateur de profil de production par défaut', () async {
+    final checker = ProfileReadinessChecker(
+      auth: auth,
+      firestore: FakeFirebaseFirestore(),
+    );
+
+    final result = await checker.check();
+
+    expect(result.isReady, isFalse);
+    expect(result.gate, ProfileReadinessGate.readFailed);
+    expect(result.user?.uid, 'publication-profile-user');
+    expect(result.errorDetail, contains('network-request-failed'));
   });
 }
