@@ -10,7 +10,7 @@ void main() {
     ).readAsStringSync();
 
     const guardedCallback =
-        'onForegroundImageError: _otherParticipantPhotoUrl.isNotEmpty';
+        'onForegroundImageError: otherParticipantPhotoUrl.isNotEmpty';
 
     expect(guardedCallback.allMatches(source), hasLength(2));
     expect(
