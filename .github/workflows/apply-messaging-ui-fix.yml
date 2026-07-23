@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: fix/messages-audio-input-debug-header
           fetch-depth: 0
 
       - uses: subosito/flutter-action@v2
@@ -227,9 +227,8 @@ class _VoiceNotePlayer extends StatefulWidget {
             flutter test test/pages/messages/conversation_thread_page_shell_test.dart
           fi
 
-          rm .github/workflows/apply-messaging-ui-fix.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart .github/workflows/apply-messaging-ui-fix.yml
+          git add lib/pages/messages/conversation_thread_page.dart lib/widgets/admin_web_debug_panel.dart
           git commit -m "fix(messages): show audio duration and move admin debug to header"
-          git push origin HEAD:main
+          git push origin HEAD:fix/messages-audio-input-debug-header
