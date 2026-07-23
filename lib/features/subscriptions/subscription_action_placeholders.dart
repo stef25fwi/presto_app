@@ -85,7 +85,7 @@ Future<void> prefetchSubscriptionCheckout(
   String source = 'subscription_prefetch',
 }) async {
   if (!stripeEnabled) return;
-  await _resolvedCheckoutService.prefetchCheckout(
+  await _checkoutService.prefetchCheckout(
     subscriptionPlanFromKey(plan),
     source: source,
   );
