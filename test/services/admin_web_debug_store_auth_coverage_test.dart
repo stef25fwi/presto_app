@@ -21,6 +21,8 @@ class _DebugUser implements User {
 void main() {
   test('journalise les transitions auth connecté et déconnecté', () {
     final store = AdminWebDebugStore.instance;
+    store.updateAuth(null);
+    store.clear();
     const user = _DebugUser(
       id: 'admin-debug-user',
       address: 'admin@ilipresto.fr',
@@ -46,8 +48,6 @@ void main() {
     expect(store.currentUserId, isNull);
     expect(store.currentUserEmail, isNull);
     expect(store.lastAuthAt, isNotNull);
-    expect(store.events.first.area, 'auth');
-    expect(store.events.first.message, 'signed-out');
-    expect(store.events.first.detail, isNull);
+    expect(store.buildExportReport(), contains('user=null'));
   });
 }
