@@ -1,0 +1,23 @@
+name: Temporary export messaging wave 4
+
+on:
+  push:
+    branches:
+      - coverage/messaging-thread-interactions-wave-4
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/upload-artifact@v7
+        with:
+          name: messaging-wave-4-source-${{ github.run_id }}
+          path: |
+            lib/pages/messages/conversation_thread_page.dart
+            test/pages/messages/
+          retention-days: 1
