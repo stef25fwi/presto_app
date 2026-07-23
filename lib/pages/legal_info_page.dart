@@ -37,7 +37,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
   Stream<AppOperatingModeState> _stateStream() {
     try {
       return (widget.operatingModeService ?? AppOperatingModeService())
-          .watchState(ensureExists: true);
+          .watchPublicState();
     } catch (_) {
       return Stream<AppOperatingModeState>.value(
         AppOperatingModeState.defaults(),
