@@ -1,8 +1,24 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/messaging/services/admin_messaging_metrics_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
+
+  test('construit le service avec Firestore de production par défaut', () {
+    expect(
+      AdminMessagingMetricsService(),
+      isA<AdminMessagingMetricsService>(),
+    );
+  });
+
   test('retourne null quand le document de métriques est absent', () async {
     final firestore = FakeFirebaseFirestore();
     final service = AdminMessagingMetricsService(firestore: firestore);
