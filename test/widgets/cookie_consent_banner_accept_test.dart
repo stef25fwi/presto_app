@@ -19,6 +19,7 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Cookies et traceurs'), findsOneWidget);
     expect(find.text('Accepter'), findsOneWidget);
