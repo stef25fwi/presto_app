@@ -92,3 +92,16 @@ jobs:
             --region=europe-west1 \
             --service=microiaprocessaudio \
             --limit=10 || echo "(revisions list failed)"
+
+          echo ""
+          echo "═══ gcloud secrets versions list OPENAI_API_KEY ═══"
+          gcloud secrets versions list OPENAI_API_KEY \
+            --project=presto-app-74abe \
+            --limit=15 || echo "(secrets versions list failed)"
+
+          echo ""
+          echo "═══ gcloud run revisions describe (latest, full) ═══"
+          gcloud run revisions describe microiaprocessaudio-00257-jar \
+            --project=presto-app-74abe \
+            --region=europe-west1 \
+            --format=yaml || echo "(revision describe failed)"
