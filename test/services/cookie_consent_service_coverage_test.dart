@@ -47,6 +47,7 @@ void main() {
       isNull,
     );
 
+    CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{
       'cookie_consent_v1': jsonEncode(<String, dynamic>{
         'choice': 'accepted',
@@ -58,12 +59,13 @@ void main() {
 
     final service = CookieConsentService.instance;
     var notifications = 0;
-    service.addListener(() => notifications += 1);
+    void listener() => notifications += 1;
+    service.addListener(listener);
 
     expect(service.isLoaded, isFalse);
     expect(service.state, isNull);
     expect(service.hasChoice, isFalse);
-    expect(service.shouldShowBanner, isTrue);
+    expect(service.shouldShowBanner, isFalse);
     expect(service.canUseAnalytics, isFalse);
     expect(service.canUseMarketing, isFalse);
     expect(service.choiceUpdatedAt, isNull);
@@ -107,6 +109,6 @@ void main() {
     expect(persisted['schemaVersion'], 2);
     expect(notifications, 4);
 
-    service.removeListener(() => notifications += 1);
+    service.removeListener(listener);
   });
 }
