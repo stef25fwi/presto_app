@@ -19,6 +19,7 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Refuser'), findsOneWidget);
 
