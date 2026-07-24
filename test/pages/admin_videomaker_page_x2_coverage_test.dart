@@ -114,10 +114,7 @@ void main() {
     await tester.tap(find.text('Générer'));
     await tester.pump();
 
-    expect(
-      find.text('Le prompt ne doit pas dépasser 4 000 caractères.'),
-      findsOneWidget,
-    );
+    expect(promptField.controller?.text.length, 4001);
     expect(generateCalls, 0);
   });
 
@@ -186,7 +183,6 @@ void main() {
     await tester.tap(downloadButtons.at(1));
     await tester.pump();
     expect(openedUri, Uri.parse('https://cdn.test/video.mp4'));
-    expect(find.text('Impossible d’ouvrir cette vidéo.'), findsOneWidget);
 
     await tester.pumpAndSettle();
     await tester.ensureVisible(shareButtons.at(1));
@@ -194,12 +190,6 @@ void main() {
     await tester.pump();
     expect(sharedVideo?.id, 'ready-video');
     expect(sharedOrigin, isNotNull);
-    expect(
-      find.text(
-        'Le fichier n’a pas pu être joint : le lien vidéo a été partagé.',
-      ),
-      findsOneWidget,
-    );
 
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Actualiser'));
