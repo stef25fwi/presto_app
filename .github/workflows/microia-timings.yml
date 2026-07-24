@@ -151,3 +151,10 @@ jobs:
               --max-time 20 \
               || echo "(probe ${fn} curl failed, exit $?)"
           done
+
+          echo ""
+          echo "═══ Firestore: app_config/subscriptions (free quota gate) ═══"
+          TOKEN=$(gcloud auth print-access-token)
+          curl -sS -H "Authorization: Bearer ${TOKEN}" \
+            "https://firestore.googleapis.com/v1/projects/presto-app-74abe/databases/(default)/documents/app_config/subscriptions" \
+            || echo "(firestore app_config fetch failed)"
