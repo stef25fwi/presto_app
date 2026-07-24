@@ -12,6 +12,7 @@ void main() {
   ) async {
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    await CookieConsentService.instance.load();
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -27,7 +28,10 @@ void main() {
     await tester.tap(find.widgetWithText(OutlinedButton, 'Refuser'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Cookies et traceurs'), findsNothing);
+    expect(
+      find.text('Nous utilisons des cookies pour améliorer votre expérience'),
+      findsNothing,
+    );
     final state = CookieConsentService.instance.state;
     expect(state, isNotNull);
     expect(state!.choice, CookieConsentChoice.refused);
