@@ -37,6 +37,7 @@ exports.preVerifySiret = void 0;
 const admin = __importStar(require("firebase-admin"));
 const https = __importStar(require("https"));
 const https_1 = require("firebase-functions/v2/https");
+const env_1 = require("../../config/env");
 if (admin.apps.length === 0) {
     admin.initializeApp();
 }
@@ -177,7 +178,7 @@ function assertEstablishmentActive(company, establishment) {
 exports.preVerifySiret = (0, https_1.onCall)({
     region: REGION,
     cors: true,
-    enforceAppCheck: true,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
 }, async (request) => {
     const siret = cleanSiret(request.data?.siret);
     if (!isValidSiretFormat(siret)) {

@@ -39,6 +39,7 @@ const logger = __importStar(require("firebase-functions/logger"));
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https = __importStar(require("https"));
+const env_1 = require("../../config/env");
 if (!(0, app_1.getApps)().length) {
     (0, app_1.initializeApp)();
 }
@@ -46,7 +47,7 @@ const REGION = "europe-west1";
 const API_HOST = "recherche-entreprises.api.gouv.fr";
 exports.verifySiret = (0, https_1.onCall)({
     region: REGION,
-    enforceAppCheck: true,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
     cors: true,
 }, async (request) => {
     if (!request.auth) {

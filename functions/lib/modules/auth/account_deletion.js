@@ -130,7 +130,7 @@ async function deleteUserStorage(uid) {
 }
 exports.requestAccountDeletion = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
-    enforceAppCheck: true,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
     secrets: [env_1.STRIPE_SECRET_KEY],
     timeoutSeconds: 120,
     memory: "512MiB",
