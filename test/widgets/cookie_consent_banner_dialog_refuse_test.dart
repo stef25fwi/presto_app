@@ -8,6 +8,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('le dialogue peut être annulé puis tout refuser', (tester) async {
+    CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     await tester.pumpWidget(
