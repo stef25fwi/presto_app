@@ -131,7 +131,7 @@ async function startVeoGeneration(args: {
 }): Promise<string> {
   const instance: JsonRecord = { prompt: args.prompt };
   if (args.referenceImages.length === 1) {
-    instance.image = inlineImage(args.referenceImages[0]);
+    instance.image = inlineImage(args.referenceImages[0]!);
   } else if (args.referenceImages.length > 1) {
     instance.referenceImages = args.referenceImages.map((image) => ({
       image: inlineImage(image),
