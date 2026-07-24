@@ -1,9 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/admin/listings/admin_listings_repository.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
+
+  test('construit le repository avec Firestore de production par défaut', () {
+    expect(
+      FirestoreAdminListingsRepository(),
+      isA<FirestoreAdminListingsRepository>(),
+    );
+  });
+
   test('pagine, filtre les annonces supprimées et reprend après le curseur',
       () async {
     final firestore = FakeFirebaseFirestore();
