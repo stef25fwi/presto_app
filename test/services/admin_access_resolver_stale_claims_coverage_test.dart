@@ -115,12 +115,15 @@ class _StaleFunctions implements FirebaseFunctions {
 
 class _StaleCallable implements HttpsCallable {
   var calls = 0;
+  Object? error;
   final List<dynamic> receivedParameters = <dynamic>[];
 
   @override
   Future<HttpsCallableResult<T>> call<T>([dynamic parameters]) async {
     calls += 1;
     receivedParameters.add(parameters);
+    final currentError = error;
+    if (currentError != null) throw currentError;
     return _StaleCallableResult<T>(
       <String, dynamic>{
         'isAdmin': false,
@@ -163,15 +166,17 @@ void main() {
       ..tokenResultRequests.clear();
   });
 
-  test('rafraîchit les claims et marque un refus serveur persistant', () async {
-    final functions = _StaleFunctions();
-    final resolver = AdminAccessResolver(
+  AdminAccessResolver resolverFor(_StaleFunctions functions) {
+    return AdminAccessResolver(
       auth: FirebaseAuth.instance,
       firestore: FakeFirebaseFirestore(),
       functions: functions,
     );
+  }
 
-    final state = await resolver.resolveAdminAccess();
+  test('rafraîchit les claims et marque un refus serveur persistant', () async {
+    final functions = _StaleFunctions();
+    final state = await resolverFor(functions).resolveAdminAccess();
 
     expect(functions.requestedName, 'getMyAdminAccessStatus');
     expect(functions.requestedOptions?.timeout, const Duration(seconds: 15));
@@ -197,5 +202,40 @@ void main() {
       state.debugSteps.any((step) => step.contains('stale-claims persists')),
       isTrue,
     );
+  });
+
+  test('expose une erreur Functions indisponible sans retry HTTP', () async {
+    final functions = _StaleFunctions()
+      ..callable.error = FirebaseFunctionsException(
+        code: 'unavailable',
+        message: 'service admin indisponible',
+      );
+
+    final state = await resolverFor(functions).resolveAdminAccess();
+
+    expect(functions.callable.calls, 1);
+    expect(state.serverCheckAttempted, isTrue);
+    expect(state.serverCheckSucceeded, isFalse);
+    expect(state.serverIsAdmin, isNull);
+    expect(state.serverErrorCode, 'unavailable');
+    expect(state.serverErrorMessage, isNotEmpty);
+    expect(state.effectiveIsAdmin, isTrue);
+    expect(state.sourceOfTruth, 'token');
+  });
+
+  test('normalise une erreur callable inconnue', () async {
+    final functions = _StaleFunctions()
+      ..callable.error = StateError('réponse serveur illisible');
+
+    final state = await resolverFor(functions).resolveAdminAccess();
+
+    expect(functions.callable.calls, 1);
+    expect(state.serverCheckAttempted, isTrue);
+    expect(state.serverCheckSucceeded, isFalse);
+    expect(state.serverIsAdmin, isNull);
+    expect(state.serverErrorCode, 'unknown');
+    expect(state.serverErrorMessage, contains('réponse serveur illisible'));
+    expect(state.effectiveIsAdmin, isTrue);
+    expect(state.sourceOfTruth, 'token');
   });
 }
