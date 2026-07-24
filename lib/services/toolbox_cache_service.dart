@@ -18,8 +18,14 @@ import 'cache_monitoring_service.dart';
 ///     - createdAt: timestamp
 
 class ToolboxCacheService {
-  final _db = FirebaseFirestore.instance;
-  final _monitoring = CacheMonitoringService();
+  ToolboxCacheService({
+    FirebaseFirestore? firestore,
+    CacheMonitoringService? monitoring,
+  })  : _db = firestore ?? FirebaseFirestore.instance,
+        _monitoring = monitoring ?? CacheMonitoringService();
+
+  final FirebaseFirestore _db;
+  final CacheMonitoringService _monitoring;
 
   /// Génère une clé stable pour les critères saisis librement.
   String _normalizeCriteriaPart(String value) {
