@@ -16,8 +16,15 @@ void main() {
       status: 'ready',
       model: 'veo-3.1-generate-preview',
       aspectRatio: '16:9',
+      durationSeconds: '8',
+      resolution: '720p',
+      referenceImageCount: 1,
+      referenceImageNames: const <String>['depart.png'],
       publicUrl: 'https://example.test/video.mp4',
+      fileName: 'video.mp4',
+      sizeBytes: 2048,
       createdAt: DateTime.utc(2026, 7, 17),
+      generatedAt: DateTime.utc(2026, 7, 17),
       errorMessage: null,
     );
   }
@@ -26,7 +33,7 @@ void main() {
     WidgetTester tester, {
     required Future<List<GeneratedVideo>> Function() loader,
     required Future<void> Function(Map<String, Object?>) generator,
-    Future<VideoMakerSelectedImage?> Function()? picker,
+    VideoMakerImagePicker? picker,
   }) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1;
@@ -71,7 +78,7 @@ void main() {
         loads++;
         return loads == 1 ? const <GeneratedVideo>[] : <GeneratedVideo>[video()];
       },
-      picker: () async => image,
+      picker: () async => <VideoMakerSelectedImage>[image],
       generator: (value) async => parameters.add(value),
     );
 
