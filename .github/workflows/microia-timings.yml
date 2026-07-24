@@ -19,6 +19,10 @@ on:
         description: "Filtre Cloud Logging (par défaut: TIMINGS)"
         required: false
         default: '"[microIaProcessAudio] TIMINGS"'
+      describe:
+        description: "Décrire le déploiement Cloud Functions/Run (true/false)"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -65,3 +69,26 @@ jobs:
             --limit="${LIMIT}" \
             --order=desc \
             --format=json
+
+      - name: Describe microIaProcessAudio deployment
+        if: ${{ inputs.describe == 'true' }}
+        run: |
+          echo "═══ gcloud functions describe (gen2) ═══"
+          gcloud functions describe microIaProcessAudio \
+            --project=presto-app-74abe \
+            --region=europe-west1 \
+            --gen2 || echo "(functions describe failed)"
+
+          echo ""
+          echo "═══ gcloud run services describe ═══"
+          gcloud run services describe microiaprocessaudio \
+            --project=presto-app-74abe \
+            --region=europe-west1 || echo "(run services describe failed)"
+
+          echo ""
+          echo "═══ gcloud run revisions list ═══"
+          gcloud run revisions list \
+            --project=presto-app-74abe \
+            --region=europe-west1 \
+            --service=microiaprocessaudio \
+            --limit=10 || echo "(revisions list failed)"
