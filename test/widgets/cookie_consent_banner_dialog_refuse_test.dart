@@ -8,7 +8,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('le dialogue peut être annulé puis tout refuser', (tester) async {
+    CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    await CookieConsentService.instance.load();
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -17,21 +19,30 @@ void main() {
         ),
       ),
     );
-
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Personnaliser'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, 'Annuler'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Cookies et traceurs'), findsOneWidget);
+    await tester.tap(find.text('Gérer mes choix'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Fermer'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Nous utilisons des cookies pour améliorer votre expérience'),
+      findsOneWidget,
+    );
     expect(CookieConsentService.instance.state, isNull);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Personnaliser'));
+    await tester.tap(find.text('Gérer mes choix'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, 'Tout refuser'));
+    final refuseAllButton = find.widgetWithText(OutlinedButton, 'Tout refuser');
+    await tester.ensureVisible(refuseAllButton);
+    await tester.tap(refuseAllButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Cookies et traceurs'), findsNothing);
+    expect(
+      find.text('Nous utilisons des cookies pour améliorer votre expérience'),
+      findsNothing,
+    );
     final state = CookieConsentService.instance.state;
     expect(state, isNotNull);
     expect(state!.choice, CookieConsentChoice.refused);

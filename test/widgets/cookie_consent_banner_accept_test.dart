@@ -10,7 +10,9 @@ void main() {
   testWidgets('accepter masque la bannière et autorise tous les traceurs', (
     tester,
   ) async {
+    CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    await CookieConsentService.instance.load();
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -19,14 +21,23 @@ void main() {
         ),
       ),
     );
-
-    expect(find.text('Cookies et traceurs'), findsOneWidget);
-    expect(find.text('Accepter'), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(FilledButton, 'Accepter'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Cookies et traceurs'), findsNothing);
+    expect(
+      find.text('Nous utilisons des cookies pour améliorer votre expérience'),
+      findsOneWidget,
+    );
+    expect(find.text('Accepter'), findsOneWidget);
+
+    final acceptButton = find.widgetWithText(FilledButton, 'Accepter');
+    await tester.ensureVisible(acceptButton);
+    await tester.tap(acceptButton);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Nous utilisons des cookies pour améliorer votre expérience'),
+      findsNothing,
+    );
     final state = CookieConsentService.instance.state;
     expect(state, isNotNull);
     expect(state!.choice, CookieConsentChoice.accepted);

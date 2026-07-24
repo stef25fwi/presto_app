@@ -92,6 +92,12 @@ class CookieConsentService extends ChangeNotifier {
   bool get canUseMarketing => _state?.marketingAllowed ?? false;
   DateTime? get choiceUpdatedAt => _state?.updatedAt;
 
+  @visibleForTesting
+  void resetForTesting() {
+    _state = null;
+    _loaded = false;
+  }
+
   Future<void> load() async {
     if (_loaded) return;
 
