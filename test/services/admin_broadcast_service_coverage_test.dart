@@ -1,4 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:presto_app/services/admin_broadcast_service.dart';
 
@@ -61,6 +63,18 @@ class _FakeCallableResult<T> implements HttpsCallableResult<T> {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    setupFirebaseCoreMocks();
+    await Firebase.initializeApp();
+  });
+
+  test('construit le service avec la région Firebase de production par défaut',
+      () {
+    expect(AdminBroadcastService(), isA<AdminBroadcastService>());
+  });
+
   test('BroadcastResult convertit les nombres et neutralise les valeurs invalides',
       () {
     final result = BroadcastResult.fromMap(<String, dynamic>{
