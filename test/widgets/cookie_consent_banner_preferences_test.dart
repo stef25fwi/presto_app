@@ -10,8 +10,12 @@ void main() {
   testWidgets('personnaliser enregistre séparément analytics et marketing', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await CookieConsentService.instance.load();
@@ -33,19 +37,21 @@ void main() {
     expect(find.text('Marketing'), findsOneWidget);
 
     final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(4));
-    expect(tester.widget<Switch>(switches.at(1)).value, isFalse);
-    expect(tester.widget<Switch>(switches.at(3)).value, isFalse);
+    expect(switches, findsNWidgets(3));
+    expect(tester.widget<Switch>(switches.at(0)).value, isFalse);
+    expect(tester.widget<Switch>(switches.at(2)).value, isFalse);
 
-    await tester.tap(switches.at(1));
+    await tester.tap(switches.at(0));
     await tester.pump();
-    await tester.tap(switches.at(3));
+    await tester.tap(switches.at(2));
     await tester.pump();
 
-    expect(tester.widget<Switch>(switches.at(1)).value, isTrue);
-    expect(tester.widget<Switch>(switches.at(3)).value, isTrue);
+    expect(tester.widget<Switch>(switches.at(0)).value, isTrue);
+    expect(tester.widget<Switch>(switches.at(2)).value, isTrue);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Enregistrer'));
+    final saveButton = find.widgetWithText(FilledButton, 'Enregistrer');
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Gérer mes préférences'), findsNothing);
