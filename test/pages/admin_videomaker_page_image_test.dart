@@ -9,7 +9,7 @@ import 'package:presto_app/pages/admin_videomaker_page.dart';
 void main() {
   Future<void> pumpPage(
     WidgetTester tester,
-    Future<VideoMakerSelectedImage?> Function() picker,
+    VideoMakerImagePicker picker,
   ) async {
     tester.view.physicalSize = const Size(1000, 2400);
     tester.view.devicePixelRatio = 1;
@@ -40,11 +40,13 @@ void main() {
   testWidgets('refuse une image vide', (tester) async {
     await pumpPage(
       tester,
-      () async => VideoMakerSelectedImage(
-        bytes: Uint8List(0),
-        name: 'vide.png',
-        mimeType: 'image/png',
-      ),
+      () async => <VideoMakerSelectedImage>[
+        VideoMakerSelectedImage(
+          bytes: Uint8List(0),
+          name: 'vide.png',
+          mimeType: 'image/png',
+        ),
+      ],
     );
 
     await tester.tap(pickButton());
@@ -57,11 +59,13 @@ void main() {
   testWidgets('refuse un format d’image non pris en charge', (tester) async {
     await pumpPage(
       tester,
-      () async => VideoMakerSelectedImage(
-        bytes: Uint8List.fromList(<int>[1]),
-        name: 'animation.gif',
-        mimeType: 'image/gif',
-      ),
+      () async => <VideoMakerSelectedImage>[
+        VideoMakerSelectedImage(
+          bytes: Uint8List.fromList(<int>[1]),
+          name: 'animation.gif',
+          mimeType: 'image/gif',
+        ),
+      ],
     );
 
     await tester.tap(pickButton());

@@ -47,11 +47,13 @@ void main() {
         loadCalls += 1;
         return const <GeneratedVideo>[];
       },
-      pickImage: () async => VideoMakerSelectedImage(
-        bytes: imageBytes,
-        name: 'source.png',
-        mimeType: 'image/png',
-      ),
+      pickImage: () async => <VideoMakerSelectedImage>[
+        VideoMakerSelectedImage(
+          bytes: imageBytes,
+          name: 'source.png',
+          mimeType: 'image/png',
+        ),
+      ],
       generateVideo: (parameters) async {
         generatedParameters = Map<String, Object?>.from(parameters);
       },
@@ -131,8 +133,15 @@ void main() {
         status: 'ready',
         model: 'veo-3.1-generate-preview',
         aspectRatio: '9:16',
+        durationSeconds: '8',
+        resolution: '720p',
+        referenceImageCount: 0,
+        referenceImageNames: <String>[],
         publicUrl: '',
+        fileName: null,
+        sizeBytes: null,
         createdAt: null,
+        generatedAt: null,
         errorMessage: null,
       ),
       const GeneratedVideo(
@@ -141,8 +150,15 @@ void main() {
         status: 'ready',
         model: 'veo-3.1-generate-preview',
         aspectRatio: '16:9',
+        durationSeconds: '8',
+        resolution: '720p',
+        referenceImageCount: 0,
+        referenceImageNames: <String>[],
         publicUrl: 'https://cdn.test/video.mp4',
+        fileName: 'video.mp4',
+        sizeBytes: 4096,
         createdAt: null,
+        generatedAt: null,
         errorMessage: null,
       ),
     ];
