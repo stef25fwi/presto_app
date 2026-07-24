@@ -107,43 +107,19 @@ class ToolboxHubPage extends StatelessWidget {
         bottom: true,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            const contentPadding = EdgeInsets.fromLTRB(6, 10, 6, 18);
-            const cardSpacing = 12.0;
-            const minPhoneTileHeight = 292.0;
-            final availableHeight = constraints.maxHeight -
-                contentPadding.top -
-                contentPadding.bottom;
-            final equalTileHeight = (availableHeight - cardSpacing) / 2;
+            final contentPadding = isPhone
+                ? const EdgeInsets.fromLTRB(6, 10, 6, 18)
+                : const EdgeInsets.fromLTRB(6, 12, 6, 28);
+            final cardSpacing = isPhone ? 12.0 : 22.0;
 
-            if (isPhone) {
-              if (equalTileHeight >= minPhoneTileHeight) {
-                return Padding(
-                  padding: contentPadding,
-                  child: Column(
-                    children: [
-                      SizedBox(height: equalTileHeight, child: firstCard),
-                      const SizedBox(height: cardSpacing),
-                      SizedBox(height: equalTileHeight, child: secondCard),
-                    ],
-                  ),
-                );
-              }
-
-              return ListView(
-                padding: contentPadding,
-                children: [
-                  firstCard,
-                  const SizedBox(height: cardSpacing),
-                  secondCard,
-                ],
-              );
-            }
-
+            // Les cartes conservent toujours leur hauteur intrinsèque. Une
+            // hauteur forcée pouvait devenir insuffisante sur tablette ou avec
+            // un facteur de texte élevé et faisait sortir le bouton de la carte.
             return ListView(
-              padding: const EdgeInsets.fromLTRB(6, 12, 6, 28),
+              padding: contentPadding,
               children: [
                 firstCard,
-                const SizedBox(height: 22),
+                SizedBox(height: cardSpacing),
                 secondCard,
               ],
             );
