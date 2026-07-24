@@ -1,8 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 
 import 'video_maker_models.dart';
+import 'video_maker_page_operations.dart';
 
 const videoMakerOrange = Color(0xFFFF6600);
 const videoMakerBlue = Color(0xFF1A73E8);
@@ -17,12 +16,11 @@ class VideoMakerGeneratorCard extends StatelessWidget {
   final bool hideApiKey;
   final bool generating;
   final String aspectRatio;
-  final Uint8List? imageBytes;
-  final String? imageName;
+  final List<VideoMakerSelectedImage> images;
   final VoidCallback onToggleApiKey;
   final ValueChanged<String> onAspectRatioChanged;
-  final VoidCallback? onPickImage;
-  final VoidCallback? onRemoveImage;
+  final VoidCallback? onPickImages;
+  final ValueChanged<int>? onRemoveImage;
   final VoidCallback? onGenerate;
 
   const VideoMakerGeneratorCard({
@@ -32,11 +30,10 @@ class VideoMakerGeneratorCard extends StatelessWidget {
     required this.hideApiKey,
     required this.generating,
     required this.aspectRatio,
-    required this.imageBytes,
-    required this.imageName,
+    required this.images,
     required this.onToggleApiKey,
     required this.onAspectRatioChanged,
-    required this.onPickImage,
+    required this.onPickImages,
     required this.onRemoveImage,
     required this.onGenerate,
   });
@@ -59,7 +56,7 @@ class VideoMakerGeneratorCard extends StatelessWidget {
               ),
             ),
             subtitle: Text(
-              'VEO 3.1 par défaut • 8 secondes • 720p • audio natif',
+              'VEO 3.1 • jusqu’à 3 images de référence • 8 secondes • audio natif',
               style: TextStyle(
                 color: videoMakerMuted,
                 height: 1.35,
@@ -76,8 +73,7 @@ class VideoMakerGeneratorCard extends StatelessWidget {
             decoration: InputDecoration(
               labelText: 'Clé API Gemini / VEO',
               hintText: 'Optionnelle si VEO_API_KEY est configurée',
-              helperText: 'Utilisée une seule fois, jamais enregistrée, '
-                  'puis effacée.',
+              helperText: 'Utilisée uniquement pour cet appel, jamais enregistrée.',
               helperMaxLines: 2,
               prefixIcon: const Icon(Icons.key_rounded),
               suffixIcon: IconButton(
@@ -101,8 +97,7 @@ class VideoMakerGeneratorCard extends StatelessWidget {
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
               labelText: 'Prompt vidéo',
-              hintText: 'Décrivez la scène, les mouvements, la caméra, '
-                  'la lumière, le style et le son…',
+              hintText: 'Décrivez la scène, les mouvements, la caméra, la lumière, le style et le son…',
               alignLabelWithHint: true,
               border: OutlineInputBorder(),
             ),
@@ -124,15 +119,12 @@ class VideoMakerGeneratorCard extends StatelessWidget {
             selected: {aspectRatio},
             onSelectionChanged: generating
                 ? null
-                : (selection) {
-                    onAspectRatioChanged(selection.first);
-                  },
+                : (selection) => onAspectRatioChanged(selection.first),
           ),
           const SizedBox(height: 14),
-          _ImageField(
-            bytes: imageBytes,
-            fileName: imageName,
-            onPick: onPickImage,
+          _MultiImageField(
+            images: images,
+            onPick: onPickImages,
             onRemove: onRemoveImage,
           ),
           const SizedBox(height: 16),
@@ -154,7 +146,7 @@ class VideoMakerGeneratorCard extends StatelessWidget {
                     )
                   : const Icon(Icons.movie_filter_rounded),
               label: Text(
-                generating ? 'Génération VEO en cours…' : 'Générer',
+                generating ? 'Génération VEO en cours…' : 'Générer et enregistrer',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
@@ -165,8 +157,7 @@ class VideoMakerGeneratorCard extends StatelessWidget {
           if (generating) ...[
             const SizedBox(height: 10),
             const Text(
-              'La création peut durer plusieurs minutes. '
-              'Gardez cette page ouverte jusqu’à la confirmation.',
+              'La création peut durer plusieurs minutes. Le résultat sera automatiquement enregistré dans la bibliothèque.',
               style: TextStyle(
                 color: videoMakerMuted,
                 height: 1.35,
@@ -185,6 +176,7 @@ class VideoMakerLibrary extends StatelessWidget {
   final bool loading;
   final ValueChanged<GeneratedVideo> onDownload;
   final ValueChanged<GeneratedVideo> onShare;
+  final ValueChanged<GeneratedVideo> onDelete;
 
   const VideoMakerLibrary({
     super.key,
@@ -192,6 +184,7 @@ class VideoMakerLibrary extends StatelessWidget {
     required this.loading,
     required this.onDownload,
     required this.onShare,
+    required this.onDelete,
   });
 
   @override
@@ -212,6 +205,7 @@ class VideoMakerLibrary extends StatelessWidget {
                 video: video,
                 onDownload: () => onDownload(video),
                 onShare: () => onShare(video),
+                onDelete: () => onDelete(video),
               ),
             ),
       ],
@@ -259,90 +253,115 @@ class _VideoMakerIcon extends StatelessWidget {
   }
 }
 
-class _ImageField extends StatelessWidget {
-  final Uint8List? bytes;
-  final String? fileName;
+class _MultiImageField extends StatelessWidget {
+  final List<VideoMakerSelectedImage> images;
   final VoidCallback? onPick;
-  final VoidCallback? onRemove;
+  final ValueChanged<int>? onRemove;
 
-  const _ImageField({
-    required this.bytes,
-    required this.fileName,
+  const _MultiImageField({
+    required this.images,
     required this.onPick,
     required this.onRemove,
   });
 
   @override
   Widget build(BuildContext context) {
-    final imageBytes = bytes;
-    if (imageBytes == null) {
-      return OutlinedButton.icon(
-        onPressed: onPick,
-        icon: const Icon(Icons.add_photo_alternate_outlined),
-        label: const Text('Ajouter une image de départ (facultatif)'),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Images de référence',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+            Text(
+              '${images.length}/$maxVideoMakerReferenceImages',
+              style: const TextStyle(
+                color: videoMakerMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: videoMakerBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: videoMakerBorder),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.memory(
-              imageBytes,
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                return const SizedBox.square(
-                  dimension: 72,
-                  child: Icon(Icons.image_outlined),
+        const SizedBox(height: 4),
+        const Text(
+          'Ajoutez jusqu’à 3 images d’une personne, d’un produit ou d’éléments à conserver dans la vidéo.',
+          style: TextStyle(color: videoMakerMuted, height: 1.35),
+        ),
+        const SizedBox(height: 10),
+        if (images.isNotEmpty)
+          SizedBox(
+            height: 112,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: images.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) {
+                final image = images[index];
+                return SizedBox(
+                  width: 102,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.memory(
+                            image.bytes,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const ColoredBox(
+                              color: videoMakerBackground,
+                              child: Icon(Icons.image_not_supported_outlined),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: IconButton.filledTonal(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Retirer ${image.name}',
+                          onPressed: onRemove == null ? null : () => onRemove!(index),
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                        ),
+                      ),
+                      Positioned(
+                        left: 5,
+                        right: 5,
+                        bottom: 5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.62),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: Text(
+                            image.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Image de départ',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  fileName ?? 'Image sélectionnée',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: videoMakerMuted),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  formatVideoMakerBytes(imageBytes.length),
-                  style: const TextStyle(
-                    color: videoMakerMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+        if (images.isNotEmpty) const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: images.length >= maxVideoMakerReferenceImages ? null : onPick,
+          icon: const Icon(Icons.add_photo_alternate_outlined),
+          label: Text(
+            images.isEmpty ? 'Choisir plusieurs images' : 'Ajouter d’autres images',
           ),
-          IconButton(
-            tooltip: 'Retirer l’image',
-            onPressed: onRemove,
-            icon: const Icon(Icons.close_rounded),
-          ),
-        ],
-      ),
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+        ),
+      ],
     );
   }
 }
@@ -362,7 +381,7 @@ class _LibraryHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Vidéos générées',
+                'Bibliothèque vidéo',
                 style: TextStyle(
                   color: videoMakerText,
                   fontSize: 21,
@@ -370,7 +389,7 @@ class _LibraryHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                'Téléchargez ou partagez vos créations.',
+                'Toutes les créations sont conservées dans Firebase Storage.',
                 style: TextStyle(color: videoMakerMuted),
               ),
             ],
@@ -392,16 +411,26 @@ class _VideoCard extends StatelessWidget {
   final GeneratedVideo video;
   final VoidCallback onDownload;
   final VoidCallback onShare;
+  final VoidCallback onDelete;
 
   const _VideoCard({
     required this.video,
     required this.onDownload,
     required this.onShare,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final ready = video.status == 'ready' && video.publicUrl != null;
+    final details = <String>[
+      video.aspectRatio,
+      '${video.durationSeconds}s',
+      video.resolution,
+      if (video.referenceImageCount > 0)
+        '${video.referenceImageCount} image${video.referenceImageCount > 1 ? 's' : ''}',
+      if (video.sizeBytes != null) formatVideoMakerBytes(video.sizeBytes!),
+    ];
     return VideoMakerPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,9 +451,7 @@ class _VideoCard extends StatelessWidget {
                       : video.status == 'failed'
                           ? Icons.error_outline_rounded
                           : Icons.hourglass_top_rounded,
-                  color: video.status == 'failed'
-                      ? Colors.redAccent
-                      : videoMakerBlue,
+                  color: video.status == 'failed' ? Colors.redAccent : videoMakerBlue,
                   size: 40,
                 ),
               ),
@@ -448,18 +475,31 @@ class _VideoCard extends StatelessWidget {
                   ],
                 ),
               ),
+              IconButton(
+                tooltip: 'Supprimer de la bibliothèque',
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
-            '${video.model} • ${video.aspectRatio} • '
-            '${formatVideoMakerDate(video.createdAt)}',
+            '${details.join(' • ')} • ${formatVideoMakerDate(video.createdAt)}',
             style: const TextStyle(
               color: videoMakerMuted,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
+          if (video.referenceImageNames.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              video.referenceImageNames.join(' • '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: videoMakerMuted, fontSize: 12),
+            ),
+          ],
           if (video.errorMessage != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -478,7 +518,7 @@ class _VideoCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onDownload,
                     icon: const Icon(Icons.download_rounded),
-                    label: const Text('Télécharger'),
+                    label: const Text('Ouvrir'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -519,7 +559,6 @@ class _StatusChip extends StatelessWidget {
       default:
         label = 'En cours';
         color = videoMakerBlue;
-        break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -561,11 +600,7 @@ class _EmptyLibrary extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Column(
           children: [
-            Icon(
-              Icons.video_library_outlined,
-              size: 44,
-              color: videoMakerMuted,
-            ),
+            Icon(Icons.video_library_outlined, size: 44, color: videoMakerMuted),
             SizedBox(height: 10),
             Text(
               'Aucune vidéo générée',
@@ -577,7 +612,7 @@ class _EmptyLibrary extends StatelessWidget {
             ),
             SizedBox(height: 4),
             Text(
-              'Votre première création VEO apparaîtra ici.',
+              'Votre première création VEO apparaîtra ici automatiquement.',
               textAlign: TextAlign.center,
               style: TextStyle(color: videoMakerMuted),
             ),
