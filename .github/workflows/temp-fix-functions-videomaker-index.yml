@@ -1,0 +1,60 @@
+name: Temporary fix Functions Videomaker index
+
+on:
+  push:
+    branches:
+      - fix/functions-videomaker-index-20260724
+    paths:
+      - .github/workflows/temp-fix-functions-videomaker-index.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-fix-functions-videomaker-index
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/functions-videomaker-index-20260724
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Apply targeted TypeScript fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path('functions/src/modules/admin/videomaker.ts')
+          text = source.read_text()
+          old = '    instance.image = inlineImage(args.referenceImages[0]);\n'
+          new = '    instance.image = inlineImage(args.referenceImages[0]!);\n'
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('Videomaker index anchor missing')
+              text = text.replace(old, new, 1)
+          source.write_text(text)
+          PY
+
+          rm -f .github/workflows/temp-fix-functions-videomaker-index.yml
+          npm ci --prefix functions
+          npm run build --prefix functions
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'fix(functions): narrow Videomaker reference image index'
+          git push origin HEAD:fix/functions-videomaker-index-20260724
