@@ -1,7 +1,7 @@
 # Coverage Autopilot
 
-`Coverage Autopilot` mesure la couverture Flutter réelle et entretient une file
-unique de travail sur les cinq parcours critiques.
+`Coverage Autopilot` mesure la couverture Flutter réelle et entretient deux files
+de travail indépendantes sur les cinq parcours critiques.
 
 ## Périmètres traités
 
@@ -19,9 +19,9 @@ La cible de ces cinq périmètres est **100 % LCOV réel**. Les seuils
 pas l'objectif final.
 
 À chaque mesure, l'agent sélectionne un fichier rentable encore incomplet dans
-chaque périmètre. Une même mission peut donc contenir jusqu'à cinq fichiers,
-toujours dans l'ordre ci-dessus. Lorsqu'un fichier atteint 100 %, le cycle
-suivant choisit le fichier incomplet suivant du même parcours.
+chaque périmètre. La factory remplit au maximum deux lanes indépendantes à la
+fois. Lorsqu'un fichier atteint 100 %, le cycle suivant choisit le fichier
+incomplet suivant du même parcours.
 
 ## Déclenchement
 
@@ -47,13 +47,13 @@ dépôt `COVERAGE_GLOBAL_TARGET`.
 
 ## Agent de codage
 
-Le workflow crée une issue structurée avec :
+Le workflow crée jusqu'à deux issues structurées, une par lane disponible, avec :
 
 - la couverture globale ;
 - la couverture de chaque parcours critique ;
-- un fichier exact par parcours ;
+- un fichier exact et indépendant par worker ;
 - les lignes non couvertes ;
-- une branche `coverage/critical-paths-*` réservée ;
+- une branche `coverage/w1-*` ou `coverage/w2-*` réservée ;
 - les commandes de validation et les garde-fous.
 
 Pour assigner automatiquement la mission, définir la variable de dépôt
@@ -63,7 +63,10 @@ prête à être prise en charge, sans assignation erronée.
 
 ## Garde-fous
 
-- une seule issue `coverage-agent` et une seule PR `coverage/*` actives ;
+- deux issues `coverage-worker` et deux PR `coverage/w*` actives au maximum ;
+- les deux workers doivent viser des fichiers indépendants ;
+- les validations peuvent s'exécuter en parallèle, mais les fusions restent
+  séquentielles avec revalidation du second worker sur le nouveau `main` ;
 - aucun abaissement de seuil ;
 - aucune exclusion LCOV artificielle ;
 - aucun `skip`, test vide ou faux succès ;
@@ -83,9 +86,10 @@ python3 -m unittest tools/coverage/test_coverage_agent.py
 
 1. mesurer `flutter test --coverage` sur `main` ;
 2. calculer l'état des cinq parcours ;
-3. sélectionner jusqu'à cinq fichiers précis ;
-4. créer une mission unique ;
-5. produire une seule PR de tests ;
-6. vérifier la couverture avant/après ;
-7. fusionner la PR verte ;
-8. recommencer jusqu'à 100 % sur les cinq parcours et au moins 80 % global.
+3. sélectionner deux fichiers précis et indépendants ;
+4. créer jusqu'à deux missions, une par lane libre ;
+5. produire jusqu'à deux PR de tests ;
+6. vérifier la couverture avant/après de chaque worker ;
+7. fusionner la première PR verte ;
+8. revalider puis fusionner la seconde PR verte ;
+9. recommencer jusqu'à 100 % sur les cinq parcours et au moins 80 % global.
