@@ -3,19 +3,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminListGeneratedVideos = exports.adminGenerateVideo = void 0;
+exports.adminDeleteGeneratedVideo = exports.adminListGeneratedVideos = exports.adminGenerateVideo = void 0;
 const node_crypto_1 = require("node:crypto");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
+const firebase_functions_1 = require("firebase-functions");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
 const env_1 = require("../../config/env");
-// Defined locally rather than in config/env.ts: see the comment there for
-// why (defining it at the shared env.ts level would register the secret
-// globally on every deploy, even while this module is unused/excluded).
-const VEO_API_KEY = (0, params_1.defineSecret)("VEO_API_KEY");
 const firestore_1 = require("../../core/firestore");
 const roles_1 = require("../marketplace/services/roles");
 const videomaker_utils_1 = require("./videomaker_utils");
+const VEO_API_KEY = (0, params_1.defineSecret)("VEO_API_KEY");
 const VEO_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const VIDEO_JOBS_COLLECTION = "_admin_video_maker_jobs";
 const VIDEO_STORAGE_ROOT = "admin/videomaker/videos";
@@ -36,11 +34,9 @@ function asRecord(value) {
 }
 function requireAdmin(request) {
     const token = request.auth?.token;
-    if (!token) {
+    if (!token)
         throw new https_1.HttpsError("unauthenticated", "Authentication required");
-    }
-    const roles = (0, roles_1.extractRolesFromAuthToken)(token);
-    (0, roles_1.requireAnyRole)(roles, ["admin", "superadmin"], "Admin access required");
+    (0, roles_1.requireAnyRole)((0, roles_1.extractRolesFromAuthToken)(token), ["admin", "superadmin"], "Admin access required");
 }
 function messageFromUnknown(error) {
     if (error instanceof Error && error.message.trim()) {
@@ -55,9 +51,8 @@ function mapGenerationError(error) {
         return new https_1.HttpsError("invalid-argument", error.message);
     }
     if (error instanceof VeoHttpError) {
-        if (error.status === 400) {
+        if (error.status === 400)
             return new https_1.HttpsError("invalid-argument", error.message);
-        }
         if (error.status === 401 || error.status === 403) {
             return new https_1.HttpsError("failed-precondition", "La clé API ne permet pas d’utiliser VEO. Vérifiez l’API Gemini, la facturation et les restrictions de clé.");
         }
@@ -93,15 +88,24 @@ async function readJsonResponse(response) {
     }
     return parsed;
 }
+function inlineImage(image) {
+    return {
+        inlineData: {
+            mimeType: image.mimeType,
+            data: image.base64,
+        },
+    };
+}
 async function startVeoGeneration(args) {
     const instance = { prompt: args.prompt };
-    if (args.referenceImage) {
-        instance.image = {
-            inlineData: {
-                mimeType: args.referenceImage.mimeType,
-                data: args.referenceImage.base64,
-            },
-        };
+    if (args.referenceImages.length === 1) {
+        instance.image = inlineImage(args.referenceImages[0]);
+    }
+    else if (args.referenceImages.length > 1) {
+        instance.referenceImages = args.referenceImages.map((image) => ({
+            image: inlineImage(image),
+            referenceType: "asset",
+        }));
     }
     const response = await fetch(`${VEO_API_BASE_URL}/models/${encodeURIComponent(args.model)}:predictLongRunning`, {
         method: "POST",
@@ -113,17 +117,17 @@ async function startVeoGeneration(args) {
             instances: [instance],
             parameters: {
                 aspectRatio: args.aspectRatio,
-                durationSeconds: args.durationSeconds,
+                durationSeconds: args.referenceImages.length > 1 ? "8" : args.durationSeconds,
                 resolution: args.resolution,
                 numberOfVideos: 1,
+                ...(args.referenceImages.length > 1 ? { personGeneration: "allow_adult" } : {}),
             },
         }),
     });
     const operation = await readJsonResponse(response);
     const operationName = typeof operation.name === "string" ? operation.name.trim() : "";
-    if (!operationName) {
+    if (!operationName)
         throw new Error("VEO_OPERATION_NAME_MISSING");
-    }
     return operationName;
 }
 function extractVideoUri(operation) {
@@ -132,16 +136,14 @@ function extractVideoUri(operation) {
     const samples = Array.isArray(generateVideoResponse.generatedSamples)
         ? generateVideoResponse.generatedSamples
         : [];
-    const firstSample = asRecord(samples[0]);
-    const sampleVideo = asRecord(firstSample.video);
+    const sampleVideo = asRecord(asRecord(samples[0]).video);
     if (typeof sampleVideo.uri === "string" && sampleVideo.uri.trim()) {
         return sampleVideo.uri.trim();
     }
     const generatedVideos = Array.isArray(response.generatedVideos)
         ? response.generatedVideos
         : [];
-    const firstGenerated = asRecord(generatedVideos[0]);
-    const generatedVideo = asRecord(firstGenerated.video);
+    const generatedVideo = asRecord(asRecord(generatedVideos[0]).video);
     if (typeof generatedVideo.uri === "string" && generatedVideo.uri.trim()) {
         return generatedVideo.uri.trim();
     }
@@ -149,9 +151,8 @@ function extractVideoUri(operation) {
 }
 async function waitForVeoVideo(apiKey, operationName) {
     for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-        if (attempt > 0) {
+        if (attempt > 0)
             await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-        }
         const response = await fetch(`${VEO_API_BASE_URL}/${operationName}`, {
             headers: { "x-goog-api-key": apiKey },
         });
@@ -160,10 +161,9 @@ async function waitForVeoVideo(apiKey, operationName) {
             continue;
         const operationError = asRecord(operation.error);
         if (Object.keys(operationError).length > 0) {
-            const message = typeof operationError.message === "string"
+            throw new Error(typeof operationError.message === "string"
                 ? operationError.message
-                : "VEO a refusé la génération.";
-            throw new Error(message);
+                : "VEO a refusé la génération.");
         }
         return extractVideoUri(operation);
     }
@@ -178,9 +178,8 @@ async function downloadVeoVideo(apiKey, videoUri) {
         throw new VeoHttpError(response.status, "Impossible de télécharger la vidéo générée.");
     }
     const bytes = Buffer.from(await response.arrayBuffer());
-    if (bytes.length === 0) {
+    if (bytes.length === 0)
         throw new Error("VEO_VIDEO_EMPTY");
-    }
     return bytes;
 }
 function firebaseDownloadUrl(bucketName, storagePath, token) {
@@ -188,12 +187,38 @@ function firebaseDownloadUrl(bucketName, storagePath, token) {
         `${encodeURIComponent(storagePath)}?alt=media&token=${encodeURIComponent(token)}`;
 }
 function timestampToIso(value) {
-    if (value instanceof firebase_admin_1.default.firestore.Timestamp) {
+    if (value instanceof firebase_admin_1.default.firestore.Timestamp)
         return value.toDate().toISOString();
-    }
     if (value instanceof Date)
         return value.toISOString();
     return null;
+}
+function serializeVideo(document) {
+    const data = document.data();
+    const imageNames = Array.isArray(data.referenceImageNames)
+        ? data.referenceImageNames.filter((name) => typeof name === "string")
+        : [];
+    return {
+        id: document.id,
+        prompt: typeof data.prompt === "string" ? data.prompt : "",
+        status: typeof data.status === "string" ? data.status : "processing",
+        model: typeof data.model === "string" ? data.model : videomaker_utils_1.DEFAULT_VEO_MODEL,
+        aspectRatio: typeof data.aspectRatio === "string" ? data.aspectRatio : "9:16",
+        durationSeconds: typeof data.durationSeconds === "string" ? data.durationSeconds : "8",
+        resolution: typeof data.resolution === "string" ? data.resolution : "720p",
+        hasReferenceImage: data.hasReferenceImage === true,
+        referenceImageCount: typeof data.referenceImageCount === "number"
+            ? data.referenceImageCount
+            : data.hasReferenceImage === true ? 1 : 0,
+        referenceImageNames: imageNames,
+        publicUrl: typeof data.publicUrl === "string" ? data.publicUrl : null,
+        storagePath: typeof data.storagePath === "string" ? data.storagePath : null,
+        fileName: typeof data.fileName === "string" ? data.fileName : null,
+        sizeBytes: typeof data.sizeBytes === "number" ? data.sizeBytes : null,
+        errorMessage: typeof data.errorMessage === "string" ? data.errorMessage : null,
+        createdAt: timestampToIso(data.createdAt),
+        generatedAt: timestampToIso(data.generatedAt),
+    };
 }
 exports.adminGenerateVideo = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
@@ -209,21 +234,22 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
     let aspectRatio;
     let durationSeconds;
     let resolution;
-    let referenceImage;
+    let referenceImages;
     try {
         prompt = (0, videomaker_utils_1.normalizeVideoPrompt)(input.prompt);
         apiKey = (0, videomaker_utils_1.normalizeApiKey)(input.apiKey, VEO_API_KEY.value());
         aspectRatio = (0, videomaker_utils_1.normalizeAspectRatio)(input.aspectRatio);
         durationSeconds = (0, videomaker_utils_1.normalizeDuration)(input.durationSeconds);
         resolution = (0, videomaker_utils_1.normalizeResolution)(input.resolution);
-        referenceImage = (0, videomaker_utils_1.normalizeReferenceImage)(input.imageBase64, input.imageMimeType);
+        referenceImages = (0, videomaker_utils_1.normalizeReferenceImages)(input.referenceImages, input.imageBase64, input.imageMimeType);
+        if (referenceImages.length > 1)
+            durationSeconds = "8";
     }
     catch (error) {
         throw mapGenerationError(error);
     }
     const model = videomaker_utils_1.DEFAULT_VEO_MODEL;
-    const db = (0, firestore_1.getDb)();
-    const jobRef = db.collection(VIDEO_JOBS_COLLECTION).doc();
+    const jobRef = (0, firestore_1.getDb)().collection(VIDEO_JOBS_COLLECTION).doc();
     const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
     await jobRef.set({
         status: "processing",
@@ -232,8 +258,10 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
         aspectRatio,
         durationSeconds,
         resolution,
-        hasReferenceImage: referenceImage != null,
-        referenceImageBytes: referenceImage?.byteLength ?? 0,
+        hasReferenceImage: referenceImages.length > 0,
+        referenceImageCount: referenceImages.length,
+        referenceImageNames: referenceImages.map((image) => image.name).filter(Boolean),
+        referenceImageBytes: referenceImages.reduce((sum, image) => sum + image.byteLength, 0),
         createdBy: request.auth?.uid ?? "unknown",
         createdAt: now,
         updatedAt: now,
@@ -247,7 +275,7 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
             aspectRatio,
             durationSeconds,
             resolution,
-            referenceImage,
+            referenceImages,
         });
         await jobRef.update({
             operationName,
@@ -258,8 +286,7 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
         const bucket = firebase_admin_1.default.storage().bucket();
         const storagePath = `${VIDEO_STORAGE_ROOT}/${jobRef.id}.mp4`;
         const downloadToken = (0, node_crypto_1.randomUUID)();
-        const file = bucket.file(storagePath);
-        await file.save(videoBytes, {
+        await bucket.file(storagePath).save(videoBytes, {
             resumable: false,
             metadata: {
                 contentType: "video/mp4",
@@ -283,17 +310,16 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             errorMessage: firebase_admin_1.default.firestore.FieldValue.delete(),
         });
-        return {
-            id: jobRef.id,
-            status: "ready",
-            publicUrl,
-            fileName,
-            model,
-            aspectRatio,
-        };
+        return { id: jobRef.id, status: "ready", publicUrl, fileName, model, aspectRatio };
     }
     catch (error) {
         const mappedError = mapGenerationError(error);
+        firebase_functions_1.logger.error("adminGenerateVideo failed", {
+            uid: request.auth?.uid ?? null,
+            jobId: jobRef.id,
+            referenceImageCount: referenceImages.length,
+            error: messageFromUnknown(error),
+        });
         await jobRef.update({
             status: "failed",
             errorMessage: mappedError.message,
@@ -313,33 +339,71 @@ exports.adminListGeneratedVideos = (0, https_1.onCall)({
     const input = asRecord(request.data);
     const requestedLimit = Number(input.limit ?? 50);
     const limit = Number.isFinite(requestedLimit)
-        ? Math.min(50, Math.max(1, Math.trunc(requestedLimit)))
+        ? Math.min(100, Math.max(1, Math.trunc(requestedLimit)))
         : 50;
-    const snapshot = await (0, firestore_1.getDb)()
-        .collection(VIDEO_JOBS_COLLECTION)
-        .orderBy("createdAt", "desc")
-        .limit(limit)
-        .get();
-    return {
-        videos: snapshot.docs.map((document) => {
-            const data = document.data();
-            return {
-                id: document.id,
-                prompt: typeof data.prompt === "string" ? data.prompt : "",
-                status: typeof data.status === "string" ? data.status : "processing",
-                model: typeof data.model === "string" ? data.model : videomaker_utils_1.DEFAULT_VEO_MODEL,
-                aspectRatio: typeof data.aspectRatio === "string" ? data.aspectRatio : "9:16",
-                durationSeconds: typeof data.durationSeconds === "string" ? data.durationSeconds : "8",
-                resolution: typeof data.resolution === "string" ? data.resolution : "720p",
-                hasReferenceImage: data.hasReferenceImage === true,
-                publicUrl: typeof data.publicUrl === "string" ? data.publicUrl : null,
-                fileName: typeof data.fileName === "string" ? data.fileName : null,
-                sizeBytes: typeof data.sizeBytes === "number" ? data.sizeBytes : null,
-                errorMessage: typeof data.errorMessage === "string" ? data.errorMessage : null,
-                createdAt: timestampToIso(data.createdAt),
-                generatedAt: timestampToIso(data.generatedAt),
-            };
-        }),
-    };
+    try {
+        let snapshot;
+        try {
+            snapshot = await (0, firestore_1.getDb)()
+                .collection(VIDEO_JOBS_COLLECTION)
+                .orderBy("createdAt", "desc")
+                .limit(limit)
+                .get();
+        }
+        catch (orderedError) {
+            firebase_functions_1.logger.warn("adminListGeneratedVideos ordered query fallback", {
+                error: messageFromUnknown(orderedError),
+            });
+            snapshot = await (0, firestore_1.getDb)().collection(VIDEO_JOBS_COLLECTION).limit(limit).get();
+        }
+        const videos = snapshot.docs.map(serializeVideo).sort((left, right) => {
+            return String(right.createdAt ?? "").localeCompare(String(left.createdAt ?? ""));
+        });
+        return { videos };
+    }
+    catch (error) {
+        firebase_functions_1.logger.error("adminListGeneratedVideos failed", {
+            uid: request.auth?.uid ?? null,
+            limit,
+            error: messageFromUnknown(error),
+        });
+        throw new https_1.HttpsError("unavailable", "Impossible de charger la bibliothèque de vidéos pour le moment.");
+    }
+});
+exports.adminDeleteGeneratedVideo = (0, https_1.onCall)({
+    region: env_1.PROJECT_REGION,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
+    timeoutSeconds: 45,
+    memory: "256MiB",
+}, async (request) => {
+    requireAdmin(request);
+    const id = typeof asRecord(request.data).id === "string"
+        ? String(asRecord(request.data).id).trim()
+        : "";
+    if (!id || !/^[A-Za-z0-9_-]{6,128}$/.test(id)) {
+        throw new https_1.HttpsError("invalid-argument", "Identifiant vidéo invalide.");
+    }
+    const ref = (0, firestore_1.getDb)().collection(VIDEO_JOBS_COLLECTION).doc(id);
+    const snapshot = await ref.get();
+    if (!snapshot.exists)
+        throw new https_1.HttpsError("not-found", "Vidéo introuvable.");
+    const data = snapshot.data() ?? {};
+    const storagePath = typeof data.storagePath === "string" ? data.storagePath : "";
+    try {
+        if (storagePath) {
+            await firebase_admin_1.default.storage().bucket().file(storagePath).delete({ ignoreNotFound: true });
+        }
+        await ref.delete();
+        return { id, deleted: true };
+    }
+    catch (error) {
+        firebase_functions_1.logger.error("adminDeleteGeneratedVideo failed", {
+            uid: request.auth?.uid ?? null,
+            id,
+            storagePath,
+            error: messageFromUnknown(error),
+        });
+        throw new https_1.HttpsError("internal", "Impossible de supprimer cette vidéo.");
+    }
 });
 //# sourceMappingURL=videomaker.js.map
