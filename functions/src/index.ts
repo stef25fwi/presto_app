@@ -95,6 +95,10 @@ export { sendReferralInviteEmail } from "./modules/marketing/callables";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";
 
 export { onConversationSubMessageCreated } from "./modules/messaging/triggers";
+export {
+  onAgentAuthorizationRequested,
+  onAgentAuthorizationDecision,
+} from "./modules/agents/authorization_messaging";
 export { enqueueUnreadMessageReminders, syncMessagingAnalytics } from "./modules/messaging/scheduled";
 export {
   ensureOfferConversation,
