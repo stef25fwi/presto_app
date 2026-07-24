@@ -15,6 +15,14 @@ on:
         description: "Nombre max d'entrées"
         required: false
         default: "20"
+      query:
+        description: "Filtre Cloud Logging (par défaut: TIMINGS)"
+        required: false
+        default: '"[microIaProcessAudio] TIMINGS"'
+      describe:
+        description: "Décrire le déploiement Cloud Functions/Run (true/false)"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -37,14 +45,15 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v3
 
-      - name: Read TIMINGS logs
+      - name: Read logs
         env:
           HOURS: ${{ inputs.hours }}
           LIMIT: ${{ inputs.limit }}
+          QUERY: ${{ inputs.query }}
         run: |
-          echo "═══ [microIaProcessAudio] TIMINGS (dernières ${HOURS}h, max ${LIMIT}) ═══"
+          echo "═══ ${QUERY} (dernières ${HOURS}h, max ${LIMIT}) ═══"
           gcloud logging read \
-            '"[microIaProcessAudio] TIMINGS"' \
+            "${QUERY}" \
             --project=presto-app-74abe \
             --freshness="${HOURS}h" \
             --limit="${LIMIT}" \
@@ -54,9 +63,70 @@ jobs:
           echo ""
           echo "═══ Entrées brutes JSON (pour les champs structurés) ═══"
           gcloud logging read \
-            '"[microIaProcessAudio] TIMINGS"' \
+            "${QUERY}" \
             --project=presto-app-74abe \
             --freshness="${HOURS}h" \
             --limit="${LIMIT}" \
             --order=desc \
             --format=json
+
+      - name: Describe microIaProcessAudio deployment
+        if: ${{ inputs.describe == 'true' }}
+        run: |
+          echo "═══ gcloud functions describe (gen2) ═══"
+          gcloud functions describe microIaProcessAudio \
+            --project=presto-app-74abe \
+            --region=europe-west1 \
+            --gen2 || echo "(functions describe failed)"
+
+          echo ""
+          echo "═══ gcloud run services describe ═══"
+          gcloud run services describe microiaprocessaudio \
+            --project=presto-app-74abe \
+            --region=europe-west1 || echo "(run services describe failed)"
+
+          echo ""
+          echo "═══ gcloud run revisions list ═══"
+          gcloud run revisions list \
+            --project=presto-app-74abe \
+            --region=europe-west1 \
+            --service=microiaprocessaudio \
+            --limit=10 || echo "(revisions list failed)"
+
+          echo ""
+          echo "═══ gcloud secrets versions list OPENAI_API_KEY ═══"
+          gcloud secrets versions list OPENAI_API_KEY \
+            --project=presto-app-74abe \
+            --limit=15 || echo "(secrets versions list failed)"
+
+          echo ""
+          echo "═══ gcloud run revisions describe (latest, full) ═══"
+          gcloud run revisions describe microiaprocessaudio-00257-jar \
+            --project=presto-app-74abe \
+            --region=europe-west1 \
+            --format=yaml || echo "(revision describe failed)"
+
+          echo ""
+          echo "═══ Firebase App Check enforcement per API service ═══"
+          TOKEN=$(gcloud auth print-access-token)
+          curl -sS -H "Authorization: Bearer ${TOKEN}" \
+            "https://firebaseappcheck.googleapis.com/v1/projects/presto-app-74abe/services" \
+            || echo "(app check services fetch failed)"
+
+          echo ""
+          echo "═══ Direct HTTP probe of the callable URL (no auth, expect a callable-shaped 4xx) ═══"
+          curl -sS -i -X POST \
+            "https://europe-west1-presto-app-74abe.cloudfunctions.net/microIaProcessAudio" \
+            -H "Content-Type: application/json" \
+            -d '{"data":{}}' \
+            --max-time 20 \
+            || echo "(direct probe curl failed, exit $?)"
+
+          echo ""
+          echo "═══ Direct HTTP probe of the raw Cloud Run URL ═══"
+          curl -sS -i -X POST \
+            "https://microiaprocessaudio-151421230024.europe-west1.run.app/" \
+            -H "Content-Type: application/json" \
+            -d '{"data":{}}' \
+            --max-time 20 \
+            || echo "(raw run.app probe curl failed, exit $?)"
