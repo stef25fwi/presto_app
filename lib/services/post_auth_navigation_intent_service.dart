@@ -1,9 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PostAuthNavigationIntentService {
-  PostAuthNavigationIntentService._();
-
+abstract final class PostAuthNavigationIntentService {
   static const String accountRoute = '/account';
 
   static const String _routeKey = 'post_auth_navigation_route';
