@@ -10,8 +10,12 @@ void main() {
   testWidgets('accepter masque la bannière et autorise tous les traceurs', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await CookieConsentService.instance.load();
@@ -31,7 +35,9 @@ void main() {
     );
     expect(find.text('Accepter'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Accepter'));
+    final acceptButton = find.widgetWithText(FilledButton, 'Accepter');
+    await tester.ensureVisible(acceptButton);
+    await tester.tap(acceptButton);
     await tester.pumpAndSettle();
 
     expect(
