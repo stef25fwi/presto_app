@@ -105,3 +105,10 @@ jobs:
             --project=presto-app-74abe \
             --region=europe-west1 \
             --format=yaml || echo "(revision describe failed)"
+
+          echo ""
+          echo "═══ Firebase App Check enforcement per API service ═══"
+          TOKEN=$(gcloud auth print-access-token)
+          curl -sS -H "Authorization: Bearer ${TOKEN}" \
+            "https://firebaseappcheck.googleapis.com/v1/projects/presto-app-74abe/services" \
+            || echo "(app check services fetch failed)"
