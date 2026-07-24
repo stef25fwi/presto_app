@@ -12,8 +12,15 @@ void main() {
         'status': 'completed',
         'model': 'veo-test',
         'aspectRatio': '16:9',
+        'durationSeconds': '6',
+        'resolution': '1080p',
+        'referenceImageCount': 2,
+        'referenceImageNames': <String>['avant.png', 'après.png'],
         'publicUrl': ' https://example.com/video.mp4 ',
+        'fileName': ' video.mp4 ',
+        'sizeBytes': '2048',
         'createdAt': '2026-07-15T10:30:00Z',
+        'generatedAt': '2026-07-15T10:31:00Z',
         'errorMessage': '   ',
       });
 
@@ -22,8 +29,15 @@ void main() {
       expect(video.status, 'completed');
       expect(video.model, 'veo-test');
       expect(video.aspectRatio, '16:9');
+      expect(video.durationSeconds, '6');
+      expect(video.resolution, '1080p');
+      expect(video.referenceImageCount, 2);
+      expect(video.referenceImageNames, <String>['avant.png', 'après.png']);
       expect(video.publicUrl, 'https://example.com/video.mp4');
+      expect(video.fileName, 'video.mp4');
+      expect(video.sizeBytes, 2048);
       expect(video.createdAt, DateTime.parse('2026-07-15T10:30:00Z'));
+      expect(video.generatedAt, DateTime.parse('2026-07-15T10:31:00Z'));
       expect(video.errorMessage, isNull);
     });
 
@@ -35,8 +49,15 @@ void main() {
       expect(video.status, 'processing');
       expect(video.model, 'veo-3.1-generate-preview');
       expect(video.aspectRatio, '9:16');
+      expect(video.durationSeconds, '8');
+      expect(video.resolution, '720p');
+      expect(video.referenceImageCount, 0);
+      expect(video.referenceImageNames, isEmpty);
       expect(video.publicUrl, isNull);
+      expect(video.fileName, isNull);
+      expect(video.sizeBytes, isNull);
       expect(video.createdAt, isNull);
+      expect(video.generatedAt, isNull);
       expect(video.errorMessage, isNull);
     });
   });
@@ -93,7 +114,7 @@ void main() {
         messageFor('invalid-argument', message: '  Prompt invalide  '),
         'Prompt invalide',
       );
-      expect(messageFor('invalid-argument'), contains('prompt ou l’image'));
+      expect(messageFor('invalid-argument'), contains('prompt ou les images'));
       expect(
         messageFor('failed-precondition', message: 'Clé absente'),
         'Clé absente',
@@ -104,7 +125,10 @@ void main() {
     });
 
     test('utilise le message distant ou le repli générique', () {
-      expect(messageFor('unknown', message: '  Erreur distante  '), 'Erreur distante');
+      expect(
+        messageFor('unknown', message: '  Erreur distante  '),
+        'Erreur distante',
+      );
       expect(messageFor('unknown'), 'La génération VEO a échoué.');
     });
   });
