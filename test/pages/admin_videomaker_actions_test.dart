@@ -15,8 +15,15 @@ void main() {
       status: 'ready',
       model: 'veo-3.1-generate-preview',
       aspectRatio: '16:9',
+      durationSeconds: '8',
+      resolution: '720p',
+      referenceImageCount: 0,
+      referenceImageNames: const <String>[],
       publicUrl: 'https://example.test/video.mp4',
+      fileName: 'video.mp4',
+      sizeBytes: 1024,
       createdAt: DateTime.utc(2026, 7, 17),
+      generatedAt: DateTime.utc(2026, 7, 17),
       errorMessage: null,
     );
   }
@@ -38,7 +45,7 @@ void main() {
     required Future<List<GeneratedVideo>> Function() loadVideos,
     Future<bool> Function(Uri uri)? openVideo,
     Future<bool> Function(GeneratedVideo video, Rect? origin)? shareVideo,
-    Future<VideoMakerSelectedImage?> Function()? pickImage,
+    VideoMakerImagePicker? pickImage,
     Finder? expected,
   }) async {
     tester.view.physicalSize = const Size(1000, 2400);
@@ -157,7 +164,7 @@ void main() {
       loadVideos: () async => const <GeneratedVideo>[],
       pickImage: () async {
         pickerCalled = true;
-        return null;
+        return const <VideoMakerSelectedImage>[];
       },
       expected: find.text('Aucune vidéo générée'),
     );
@@ -173,11 +180,13 @@ void main() {
     await pumpPage(
       tester,
       loadVideos: () async => const <GeneratedVideo>[],
-      pickImage: () async => VideoMakerSelectedImage(
-        bytes: Uint8List(5 * 1024 * 1024 + 1),
-        name: 'trop-lourde.png',
-        mimeType: 'image/png',
-      ),
+      pickImage: () async => <VideoMakerSelectedImage>[
+        VideoMakerSelectedImage(
+          bytes: Uint8List(5 * 1024 * 1024 + 1),
+          name: 'trop-lourde.png',
+          mimeType: 'image/png',
+        ),
+      ],
       expected: find.text('Aucune vidéo générée'),
     );
 
