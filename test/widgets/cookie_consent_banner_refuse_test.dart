@@ -10,6 +10,7 @@ void main() {
   testWidgets('refuser masque la bannière et bloque les traceurs optionnels', (
     tester,
   ) async {
+    CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     await tester.pumpWidget(
