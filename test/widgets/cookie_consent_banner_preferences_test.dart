@@ -12,6 +12,7 @@ void main() {
   ) async {
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    await CookieConsentService.instance.load();
 
     await tester.pumpWidget(
       const MaterialApp(
@@ -22,31 +23,34 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Personnaliser'));
+    await tester.tap(find.text('Gérer mes choix'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Personnaliser les traceurs'), findsOneWidget);
-    expect(find.text('Analytics'), findsOneWidget);
-    expect(find.text('Marketing / publicité'), findsOneWidget);
+    expect(find.text('Gérer mes préférences'), findsOneWidget);
+    expect(find.text('Performance'), findsOneWidget);
+    expect(find.text('Marketing'), findsOneWidget);
 
     final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(2));
-    expect(tester.widget<Switch>(switches.at(0)).value, isFalse);
+    expect(switches, findsNWidgets(4));
     expect(tester.widget<Switch>(switches.at(1)).value, isFalse);
+    expect(tester.widget<Switch>(switches.at(3)).value, isFalse);
 
-    await tester.tap(switches.at(0));
-    await tester.pump();
     await tester.tap(switches.at(1));
     await tester.pump();
+    await tester.tap(switches.at(3));
+    await tester.pump();
 
-    expect(tester.widget<Switch>(switches.at(0)).value, isTrue);
     expect(tester.widget<Switch>(switches.at(1)).value, isTrue);
+    expect(tester.widget<Switch>(switches.at(3)).value, isTrue);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Enregistrer'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Personnaliser les traceurs'), findsNothing);
-    expect(find.text('Cookies et traceurs'), findsNothing);
+    expect(find.text('Gérer mes préférences'), findsNothing);
+    expect(
+      find.text('Nous utilisons des cookies pour améliorer votre expérience'),
+      findsNothing,
+    );
     final state = CookieConsentService.instance.state;
     expect(state, isNotNull);
     expect(state!.choice, CookieConsentChoice.customized);
