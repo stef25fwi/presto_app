@@ -40,6 +40,17 @@ void main() {
     );
   }
 
+  test('exécute directement le résolveur commercial injecté', () async {
+    var calls = 0;
+    subscriptionCommercialModeResolverOverride = () async {
+      calls += 1;
+      return true;
+    };
+
+    expect(await resolveSubscriptionCommercialModeForTesting(), isTrue);
+    expect(calls, 1);
+  });
+
   testWidgets('checkout payant passe au service en mode commercial', (
     tester,
   ) async {
