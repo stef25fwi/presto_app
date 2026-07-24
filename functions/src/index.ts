@@ -121,13 +121,11 @@ export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/suppor
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
 export { moderateNewOffer } from "./modules/moderation/moderate_new_offer";
 export { generatePaymentInfoAudio } from "./modules/admin/callables";
-// adminGenerateVideo/adminListGeneratedVideos temporarily excluded from
-// deploy: adminGenerateVideo requires the VEO_API_KEY secret, which does
-// not exist yet in Secret Manager. `firebase deploy` prompts interactively
-// to create it, which hangs (and fails after retries) in non-interactive
-// CI. Re-enable once VEO_API_KEY has been provisioned with a real value
-// via `firebase functions:secrets:set VEO_API_KEY`.
-// export { adminGenerateVideo, adminListGeneratedVideos } from "./modules/admin/videomaker";
+export {
+  adminGenerateVideo,
+  adminListGeneratedVideos,
+  adminDeleteGeneratedVideo,
+} from "./modules/admin/videomaker";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 export {
   guardedCreateSubscriptionCheckoutSession as createSubscriptionCheckoutSession,
@@ -179,8 +177,6 @@ export { purgeOldEmailWebhooks, purgeOldEmailLogs, syncEmailAnalytics } from "./
 export { verifySiret } from "./modules/pro/verifySiret";
 export { preVerifySiret } from "./modules/pro/preVerifySiret";
 
-// Payment popup MP3 draft workflow exports.
-// Kept in source so npm build does not remove the callable exports.
 const paymentInfoAudioDraftWorkflowExports = require("../payment_info_audio_pipeline");
 
 export const generatePaymentInfoAudioDraft =
