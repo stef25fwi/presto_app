@@ -10,12 +10,8 @@ void main() {
   testWidgets('refuser masque la bannière et bloque les traceurs optionnels', (
     tester,
   ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
-    addTearDown(() {
-      tester.view.resetDevicePixelRatio();
-      tester.view.resetPhysicalSize();
-    });
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await CookieConsentService.instance.load();
