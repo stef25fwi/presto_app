@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:image_picker/image_picker.dart';
 
 const maxVideoMakerImageBytes = 5 * 1024 * 1024;
+const maxVideoMakerReferenceImages = 3;
 
 class GeneratedVideo {
   final String id;
@@ -9,8 +10,15 @@ class GeneratedVideo {
   final String status;
   final String model;
   final String aspectRatio;
+  final String durationSeconds;
+  final String resolution;
+  final int referenceImageCount;
+  final List<String> referenceImageNames;
   final String? publicUrl;
+  final String? fileName;
+  final int? sizeBytes;
   final DateTime? createdAt;
+  final DateTime? generatedAt;
   final String? errorMessage;
 
   const GeneratedVideo({
@@ -19,21 +27,41 @@ class GeneratedVideo {
     required this.status,
     required this.model,
     required this.aspectRatio,
+    required this.durationSeconds,
+    required this.resolution,
+    required this.referenceImageCount,
+    required this.referenceImageNames,
     required this.publicUrl,
+    required this.fileName,
+    required this.sizeBytes,
     required this.createdAt,
+    required this.generatedAt,
     required this.errorMessage,
   });
 
   factory GeneratedVideo.fromObject(Object? value) {
     final map = stringMap(value);
+    final rawNames = map['referenceImageNames'];
     return GeneratedVideo(
       id: (map['id'] ?? '').toString(),
       prompt: (map['prompt'] ?? 'Sans prompt').toString(),
       status: (map['status'] ?? 'processing').toString(),
       model: (map['model'] ?? 'veo-3.1-generate-preview').toString(),
       aspectRatio: (map['aspectRatio'] ?? '9:16').toString(),
+      durationSeconds: (map['durationSeconds'] ?? '8').toString(),
+      resolution: (map['resolution'] ?? '720p').toString(),
+      referenceImageCount: int.tryParse(
+            (map['referenceImageCount'] ?? 0).toString(),
+          ) ??
+          0,
+      referenceImageNames: rawNames is List
+          ? rawNames.map((value) => value.toString()).toList(growable: false)
+          : const <String>[],
       publicUrl: _nullableString(map['publicUrl']),
+      fileName: _nullableString(map['fileName']),
+      sizeBytes: int.tryParse((map['sizeBytes'] ?? '').toString()),
       createdAt: DateTime.tryParse((map['createdAt'] ?? '').toString()),
+      generatedAt: DateTime.tryParse((map['generatedAt'] ?? '').toString()),
       errorMessage: _nullableString(map['errorMessage']),
     );
   }
@@ -76,9 +104,7 @@ String formatVideoMakerDate(DateTime? date) {
 String formatVideoMakerBytes(int bytes) {
   if (bytes < 1024) return '$bytes o';
   final kilobytes = bytes / 1024;
-  if (kilobytes < 1024) {
-    return '${kilobytes.toStringAsFixed(1)} Ko';
-  }
+  if (kilobytes < 1024) return '${kilobytes.toStringAsFixed(1)} Ko';
   return '${(kilobytes / 1024).toStringAsFixed(1)} Mo';
 }
 
@@ -91,7 +117,7 @@ String friendlyVideoMakerFunctionError(FirebaseFunctionsException error) {
     case 'permission-denied':
       return 'Cette fonction est réservée aux administrateurs.';
     case 'invalid-argument':
-      return message ?? 'Le prompt ou l’image est invalide.';
+      return message ?? 'Le prompt ou les images sont invalides.';
     case 'failed-precondition':
       return message ?? 'Configurez une clé API Gemini compatible avec VEO.';
     case 'deadline-exceeded':
@@ -99,6 +125,8 @@ String friendlyVideoMakerFunctionError(FirebaseFunctionsException error) {
           'Actualisez la bibliothèque dans quelques instants.';
     case 'resource-exhausted':
       return 'Quota VEO atteint. Vérifiez la facturation et les limites.';
+    case 'unavailable':
+      return message ?? 'Le service vidéo est temporairement indisponible.';
     default:
       return message ?? 'La génération VEO a échoué.';
   }

@@ -25,28 +25,41 @@ typedef VideoMakerVideosLoader = Future<List<GeneratedVideo>> Function();
 typedef VideoMakerGenerator = Future<void> Function(
   Map<String, Object?> parameters,
 );
-typedef VideoMakerImagePicker = Future<VideoMakerSelectedImage?> Function();
+typedef VideoMakerImagePicker = Future<List<VideoMakerSelectedImage>> Function();
 typedef VideoMakerVideoOpener = Future<bool> Function(Uri uri);
 typedef VideoMakerVideoSharer = Future<bool> Function(
   GeneratedVideo video,
   Rect? shareOrigin,
 );
+typedef VideoMakerVideoDeleter = Future<void> Function(String id);
+
+Future<List<VideoMakerSelectedImage>> pickVideoMakerImagesFromGallery(
+  ImagePicker picker,
+) async {
+  final images = await picker.pickMultiImage(
+    imageQuality: 92,
+    maxWidth: 2048,
+    maxHeight: 2048,
+    limit: maxVideoMakerReferenceImages,
+  );
+  final selected = <VideoMakerSelectedImage>[];
+  for (final image in images.take(maxVideoMakerReferenceImages)) {
+    selected.add(
+      VideoMakerSelectedImage(
+        bytes: await image.readAsBytes(),
+        name: image.name,
+        mimeType: imageMimeTypeFor(image),
+      ),
+    );
+  }
+  return selected;
+}
 
 Future<VideoMakerSelectedImage?> pickVideoMakerImageFromGallery(
   ImagePicker picker,
 ) async {
-  final image = await picker.pickImage(
-    source: ImageSource.gallery,
-    imageQuality: 92,
-    maxWidth: 2048,
-    maxHeight: 2048,
-  );
-  if (image == null) return null;
-  return VideoMakerSelectedImage(
-    bytes: await image.readAsBytes(),
-    name: image.name,
-    mimeType: imageMimeTypeFor(image),
-  );
+  final images = await pickVideoMakerImagesFromGallery(picker);
+  return images.isEmpty ? null : images.first;
 }
 
 Future<void> generateVideoWithFunctions(
@@ -67,12 +80,22 @@ Future<List<GeneratedVideo>> loadVideosWithFunctions() async {
     name: 'adminListGeneratedVideos',
     timeout: const Duration(seconds: 45),
     area: 'admin-videomaker',
-    parameters: const <String, Object?>{'limit': 50},
+    parameters: const <String, Object?>{'limit': 100},
   );
   final rawVideos = stringMap(result.data)['videos'];
   return rawVideos is List
       ? rawVideos.map(GeneratedVideo.fromObject).toList(growable: false)
       : const <GeneratedVideo>[];
+}
+
+Future<void> deleteVideoWithFunctions(String id) async {
+  await callPrestoFunction<dynamic>(
+    functions: prestoFirebaseFunctions,
+    name: 'adminDeleteGeneratedVideo',
+    timeout: const Duration(seconds: 45),
+    area: 'admin-videomaker',
+    parameters: <String, Object?>{'id': id},
+  );
 }
 
 Future<bool> openGeneratedVideo(Uri uri) {
@@ -99,7 +122,7 @@ Future<bool> shareGeneratedVideo(
         XFile.fromData(
           response.bodyBytes,
           mimeType: 'video/mp4',
-          name: 'veo-${video.id}.mp4',
+          name: video.fileName ?? 'veo-${video.id}.mp4',
         ),
       ],
       text: 'Vidéo iliprestō créée avec VEO',

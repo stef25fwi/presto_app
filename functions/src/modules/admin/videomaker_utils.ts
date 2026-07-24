@@ -4,6 +4,7 @@ export const DEFAULT_VIDEO_DURATION = "8";
 export const DEFAULT_VIDEO_RESOLUTION = "720p";
 export const MAX_VIDEO_PROMPT_LENGTH = 4000;
 export const MAX_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_REFERENCE_IMAGES = 3;
 
 const SUPPORTED_ASPECT_RATIOS = new Set(["9:16", "16:9"]);
 const SUPPORTED_DURATIONS = new Set(["4", "6", "8"]);
@@ -67,38 +68,73 @@ export type ReferenceImageInput = {
   base64: string;
   mimeType: string;
   byteLength: number;
+  name: string | null;
 };
+
+function normalizeOneReferenceImage(value: unknown, index: number): ReferenceImageInput {
+  const record = value != null && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const base64 = typeof record.base64 === "string" ? record.base64.trim() : "";
+  const mimeType = typeof record.mimeType === "string"
+    ? record.mimeType.trim().toLowerCase()
+    : "";
+  const name = typeof record.name === "string" && record.name.trim()
+    ? record.name.trim().slice(0, 180)
+    : null;
+
+  if (!base64 || !mimeType) {
+    throw new VideoMakerValidationError(
+      `L’image de référence ${index + 1} et son type MIME doivent être fournis ensemble.`,
+    );
+  }
+  if (!SUPPORTED_IMAGE_MIME_TYPES.has(mimeType)) {
+    throw new VideoMakerValidationError(
+      `Format de l’image ${index + 1} non pris en charge. Utilisez JPG, PNG, WEBP, HEIC ou HEIF.`,
+    );
+  }
+  const bytes = Buffer.from(base64, "base64");
+  if (bytes.length === 0) {
+    throw new VideoMakerValidationError(`L’image de référence ${index + 1} est vide.`);
+  }
+  if (bytes.length > MAX_REFERENCE_IMAGE_BYTES) {
+    throw new VideoMakerValidationError(
+      `L’image de référence ${index + 1} doit peser moins de 5 Mo.`,
+    );
+  }
+  return { base64, mimeType, byteLength: bytes.length, name };
+}
+
+export function normalizeReferenceImages(
+  imagesValue: unknown,
+  legacyBase64Value?: unknown,
+  legacyMimeTypeValue?: unknown,
+): ReferenceImageInput[] {
+  let values: unknown[] = [];
+  if (Array.isArray(imagesValue)) {
+    values = imagesValue;
+  } else {
+    const legacyBase64 = typeof legacyBase64Value === "string" ? legacyBase64Value.trim() : "";
+    const legacyMimeType = typeof legacyMimeTypeValue === "string"
+      ? legacyMimeTypeValue.trim()
+      : "";
+    if (legacyBase64 || legacyMimeType) {
+      values = [{ base64: legacyBase64, mimeType: legacyMimeType }];
+    }
+  }
+  if (values.length > MAX_REFERENCE_IMAGES) {
+    throw new VideoMakerValidationError(
+      `Vous pouvez ajouter au maximum ${MAX_REFERENCE_IMAGES} images de référence.`,
+    );
+  }
+  return values.map(normalizeOneReferenceImage);
+}
 
 export function normalizeReferenceImage(
   base64Value: unknown,
   mimeTypeValue: unknown,
 ): ReferenceImageInput | null {
-  const base64 = typeof base64Value === "string" ? base64Value.trim() : "";
-  const mimeType = typeof mimeTypeValue === "string"
-    ? mimeTypeValue.trim().toLowerCase()
-    : "";
-
-  if (!base64 && !mimeType) return null;
-  if (!base64 || !mimeType) {
-    throw new VideoMakerValidationError(
-      "L’image et son type MIME doivent être fournis ensemble.",
-    );
-  }
-  if (!SUPPORTED_IMAGE_MIME_TYPES.has(mimeType)) {
-    throw new VideoMakerValidationError(
-      "Format d’image non pris en charge. Utilisez JPG, PNG, WEBP, HEIC ou HEIF.",
-    );
-  }
-
-  const bytes = Buffer.from(base64, "base64");
-  if (bytes.length === 0) {
-    throw new VideoMakerValidationError("L’image de référence est vide.");
-  }
-  if (bytes.length > MAX_REFERENCE_IMAGE_BYTES) {
-    throw new VideoMakerValidationError("L’image de référence doit peser moins de 5 Mo.");
-  }
-
-  return { base64, mimeType, byteLength: bytes.length };
+  return normalizeReferenceImages(undefined, base64Value, mimeTypeValue)[0] ?? null;
 }
 
 export function normalizeApiKey(value: unknown, fallback: string): string {
