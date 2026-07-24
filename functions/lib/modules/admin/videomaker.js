@@ -7,7 +7,12 @@ exports.adminListGeneratedVideos = exports.adminGenerateVideo = void 0;
 const node_crypto_1 = require("node:crypto");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
+const params_1 = require("firebase-functions/params");
 const env_1 = require("../../config/env");
+// Defined locally rather than in config/env.ts: see the comment there for
+// why (defining it at the shared env.ts level would register the secret
+// globally on every deploy, even while this module is unused/excluded).
+const VEO_API_KEY = (0, params_1.defineSecret)("VEO_API_KEY");
 const firestore_1 = require("../../core/firestore");
 const roles_1 = require("../marketplace/services/roles");
 const videomaker_utils_1 = require("./videomaker_utils");
@@ -193,7 +198,7 @@ function timestampToIso(value) {
 exports.adminGenerateVideo = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
     enforceAppCheck: env_1.ENFORCE_APP_CHECK,
-    secrets: [env_1.VEO_API_KEY],
+    secrets: [VEO_API_KEY],
     timeoutSeconds: 540,
     memory: "1GiB",
 }, async (request) => {
@@ -207,7 +212,7 @@ exports.adminGenerateVideo = (0, https_1.onCall)({
     let referenceImage;
     try {
         prompt = (0, videomaker_utils_1.normalizeVideoPrompt)(input.prompt);
-        apiKey = (0, videomaker_utils_1.normalizeApiKey)(input.apiKey, env_1.VEO_API_KEY.value());
+        apiKey = (0, videomaker_utils_1.normalizeApiKey)(input.apiKey, VEO_API_KEY.value());
         aspectRatio = (0, videomaker_utils_1.normalizeAspectRatio)(input.aspectRatio);
         durationSeconds = (0, videomaker_utils_1.normalizeDuration)(input.durationSeconds);
         resolution = (0, videomaker_utils_1.normalizeResolution)(input.resolution);

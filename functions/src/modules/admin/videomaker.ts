@@ -2,8 +2,14 @@ import { randomUUID } from "node:crypto";
 
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { defineSecret } from "firebase-functions/params";
 
-import { ENFORCE_APP_CHECK, PROJECT_REGION, VEO_API_KEY } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
+
+// Defined locally rather than in config/env.ts: see the comment there for
+// why (defining it at the shared env.ts level would register the secret
+// globally on every deploy, even while this module is unused/excluded).
+const VEO_API_KEY = defineSecret("VEO_API_KEY");
 import { getDb } from "../../core/firestore";
 import { extractRolesFromAuthToken, requireAnyRole } from "../marketplace/services/roles";
 import {

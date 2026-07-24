@@ -3,7 +3,15 @@ import { defineSecret } from "firebase-functions/params";
 import { resolveAppCheckEnforcement } from "./app_check_policy";
 
 export const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
-export const VEO_API_KEY = defineSecret("VEO_API_KEY");
+// VEO_API_KEY intentionally NOT defined here: defineSecret() registers the
+// secret in firebase-functions' global params registry the moment this
+// module loads, which happens on every deploy (env.ts is imported by
+// index.ts). Since VEO_API_KEY doesn't exist yet in Secret Manager, that
+// registration makes `firebase deploy` prompt interactively to create it,
+// which hangs non-interactive CI — regardless of whether adminGenerateVideo
+// (the only consumer, currently excluded from the build) is reachable.
+// Defined locally in videomaker.ts instead, so it's only registered once
+// that module is actually re-enabled and required.
 export const EMAIL_PROVIDER_API_KEY = defineSecret("EMAIL_PROVIDER_API_KEY");
 export const EMAIL_PROVIDER_WEBHOOK_SECRET = defineSecret("EMAIL_PROVIDER_WEBHOOK_SECRET");
 export const BREVO_API_KEY = defineSecret("BREVO_API_KEY");
