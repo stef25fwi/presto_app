@@ -43,7 +43,7 @@ function sanitizeData(value) {
 }
 exports.reportClientMonitoringEvent = (0, https_1.onCall)({
     region: env_1.PROJECT_REGION,
-    enforceAppCheck: true,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
     timeoutSeconds: 15,
     memory: "256MiB",
     maxInstances: 20,
