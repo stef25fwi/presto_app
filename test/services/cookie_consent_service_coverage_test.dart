@@ -22,6 +22,7 @@ void main() {
       'analyticsAllowed': true,
       'marketingAllowed': false,
       'updatedAt': timestamp.toIso8601String(),
+      'schemaVersion': 2,
     });
     expect(CookieConsentState.fromJson(null), isNull);
     expect(
@@ -99,10 +100,11 @@ void main() {
     expect(service.state?.updatedAt?.isUtc, isTrue);
 
     final prefs = await SharedPreferences.getInstance();
-    final persisted = jsonDecode(prefs.getString('cookie_consent_v1')!);
+    final persisted = jsonDecode(prefs.getString('cookie_consent_v2')!);
     expect(persisted['choice'], 'customized');
     expect(persisted['analyticsAllowed'], isTrue);
     expect(persisted['marketingAllowed'], isFalse);
+    expect(persisted['schemaVersion'], 2);
     expect(notifications, 4);
 
     service.removeListener(() => notifications += 1);
