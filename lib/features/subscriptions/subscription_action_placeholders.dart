@@ -35,6 +35,10 @@ Future<bool> _isCommercialMode() async {
   }
 }
 
+@visibleForTesting
+Future<bool> resolveSubscriptionCommercialModeForTesting() =>
+    _isCommercialMode();
+
 void _showFreeBetaMessage(BuildContext context) {
   ScaffoldMessenger.maybeOf(context)?.showSnackBar(
     const SnackBar(
