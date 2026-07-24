@@ -10,6 +10,7 @@ void main() {
   testWidgets('personnaliser enregistre séparément analytics et marketing', (
     tester,
   ) async {
+    CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     await tester.pumpWidget(
