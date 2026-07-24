@@ -35,4 +35,17 @@ void main() {
     expect(record.createdAt, isNull);
     expect(record.isActiveForStatistics, isFalse);
   });
+
+  test('convertit directement un DateTime local en UTC', () {
+    final source = DateTime(2026, 7, 24, 8, 30);
+    final record = AdminListingRecord.fromData(
+      id: 'listing-datetime',
+      data: <String, dynamic>{
+        'title': 'Annonce datée',
+        'createdAt': source,
+      },
+    );
+
+    expect(record.createdAt, source.toUtc());
+  });
 }
