@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +16,7 @@ class AdminVideoMakerPage extends StatefulWidget {
   final VideoMakerImagePicker? pickImage;
   final VideoMakerVideoOpener? openVideo;
   final VideoMakerVideoSharer? shareVideo;
+  final VideoMakerVideoDeleter? deleteVideo;
 
   const AdminVideoMakerPage({
     super.key,
@@ -25,6 +25,7 @@ class AdminVideoMakerPage extends StatefulWidget {
     this.pickImage,
     this.openVideo,
     this.shareVideo,
+    this.deleteVideo,
   });
 
   @override
@@ -36,11 +37,10 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
   final _promptController = TextEditingController();
   final _imagePicker = ImagePicker();
   final Set<String> _sharingVideoIds = <String>{};
+  final Set<String> _deletingVideoIds = <String>{};
 
   List<GeneratedVideo> _videos = const [];
-  Uint8List? _imageBytes;
-  String? _imageName;
-  String? _imageMimeType;
+  final List<VideoMakerSelectedImage> _images = <VideoMakerSelectedImage>[];
   String _aspectRatio = '9:16';
   bool _hideApiKey = true;
   bool _generating = false;
@@ -59,47 +59,54 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _pickImages() async {
     try {
-      final image = await (widget.pickImage?.call() ??
-          pickVideoMakerImageFromGallery(_imagePicker));
-      if (image == null) return;
+      final selected = await (widget.pickImage?.call() ??
+          pickVideoMakerImagesFromGallery(_imagePicker));
+      if (selected.isEmpty) return;
 
-      final bytes = image.bytes;
-      if (bytes.isEmpty || bytes.length > maxVideoMakerImageBytes) {
+      final available = maxVideoMakerReferenceImages - _images.length;
+      if (available <= 0) {
         throw const FormatException(
-          'L’image doit être valide et peser moins de 5 Mo.',
+          'Vous pouvez ajouter au maximum 3 images de référence.',
         );
       }
-      final mimeType = image.mimeType;
-      if (!supportedVideoMakerImageMimeTypes.contains(mimeType)) {
-        throw const FormatException(
-          'Utilisez une image JPG, PNG, WEBP, HEIC ou HEIF.',
-        );
+
+      final accepted = <VideoMakerSelectedImage>[];
+      for (final image in selected.take(available)) {
+        if (image.bytes.isEmpty || image.bytes.length > maxVideoMakerImageBytes) {
+          throw FormatException(
+            '${image.name} doit être valide et peser moins de 5 Mo.',
+          );
+        }
+        if (!supportedVideoMakerImageMimeTypes.contains(image.mimeType)) {
+          throw FormatException(
+            '${image.name} : utilisez JPG, PNG, WEBP, HEIC ou HEIF.',
+          );
+        }
+        accepted.add(image);
       }
+
       if (!mounted) return;
-      setState(() {
-        _imageBytes = bytes;
-        _imageName = image.name;
-        _imageMimeType = mimeType;
-      });
-    } on FormatException catch (error) {
-      if (mounted) {
-        showErrorSnackBar(context, error.message);
+      setState(() => _images.addAll(accepted));
+      if (selected.length > available) {
+        showPrestoSnackBar(
+          context,
+          'Seules les $available premières images ont été ajoutées.',
+        );
       }
+    } on FormatException catch (error) {
+      if (mounted) showErrorSnackBar(context, error.message);
     } catch (_) {
       if (mounted) {
-        showErrorSnackBar(context, 'Impossible de sélectionner cette image.');
+        showErrorSnackBar(context, 'Impossible de sélectionner ces images.');
       }
     }
   }
 
-  void _removeImage() {
-    setState(() {
-      _imageBytes = null;
-      _imageName = null;
-      _imageMimeType = null;
-    });
+  void _removeImage(int index) {
+    if (index < 0 || index >= _images.length) return;
+    setState(() => _images.removeAt(index));
   }
 
   Future<void> _generateVideo() async {
@@ -120,7 +127,6 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     setState(() => _generating = true);
     try {
       final apiKey = _apiKeyController.text.trim();
-      final imageBytes = _imageBytes;
       final parameters = <String, Object?>{
         'prompt': prompt,
         'model': 'veo-3.1-generate-preview',
@@ -128,23 +134,29 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
         'durationSeconds': '8',
         'resolution': '720p',
         if (apiKey.isNotEmpty) 'apiKey': apiKey,
-        if (imageBytes != null) 'imageBase64': base64Encode(imageBytes),
-        if (_imageMimeType != null) 'imageMimeType': _imageMimeType,
+        if (_images.isNotEmpty)
+          'referenceImages': _images
+              .map(
+                (image) => <String, Object?>{
+                  'base64': base64Encode(image.bytes),
+                  'mimeType': image.mimeType,
+                  'name': image.name,
+                },
+              )
+              .toList(growable: false),
       };
       await (widget.generateVideo?.call(parameters) ??
           generateVideoWithFunctions(parameters));
       if (!mounted) return;
       showSuccessSnackBar(
         context,
-        'Vidéo VEO générée et ajoutée à la bibliothèque.',
+        'Vidéo VEO générée et enregistrée dans la bibliothèque.',
       );
+      setState(() => _images.clear());
       await _loadVideos(showFailure: false);
     } on FirebaseFunctionsException catch (error) {
       if (mounted) {
-        showErrorSnackBar(
-          context,
-          friendlyVideoMakerFunctionError(error),
-        );
+        showErrorSnackBar(context, friendlyVideoMakerFunctionError(error));
       }
     } catch (_) {
       if (mounted) {
@@ -155,9 +167,7 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
       }
     } finally {
       _apiKeyController.clear();
-      if (mounted) {
-        setState(() => _generating = false);
-      }
+      if (mounted) setState(() => _generating = false);
     }
   }
 
@@ -165,10 +175,11 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     if (_loading) return;
     setState(() => _loading = true);
     try {
-      final videos = await (widget.loadVideos?.call() ??
-          loadVideosWithFunctions());
-      if (mounted) {
-        setState(() => _videos = videos);
+      final videos = await (widget.loadVideos?.call() ?? loadVideosWithFunctions());
+      if (mounted) setState(() => _videos = videos);
+    } on FirebaseFunctionsException catch (error) {
+      if (mounted && showFailure) {
+        showErrorSnackBar(context, friendlyVideoMakerFunctionError(error));
       }
     } catch (_) {
       if (mounted && showFailure) {
@@ -178,9 +189,7 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -222,6 +231,51 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
     }
   }
 
+  Future<void> _deleteVideo(GeneratedVideo video) async {
+    if (_deletingVideoIds.contains(video.id)) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Supprimer cette vidéo ?'),
+        content: const Text(
+          'La vidéo sera supprimée de la bibliothèque, de Firestore et de Firebase Storage. Cette action est définitive.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    _deletingVideoIds.add(video.id);
+    try {
+      await (widget.deleteVideo?.call(video.id) ??
+          deleteVideoWithFunctions(video.id));
+      if (!mounted) return;
+      setState(() {
+        _videos = _videos.where((item) => item.id != video.id).toList();
+      });
+      showSuccessSnackBar(context, 'Vidéo supprimée de la bibliothèque.');
+    } on FirebaseFunctionsException catch (error) {
+      if (mounted) {
+        showErrorSnackBar(context, friendlyVideoMakerFunctionError(error));
+      }
+    } catch (_) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Impossible de supprimer cette vidéo.');
+      }
+    } finally {
+      _deletingVideoIds.remove(video.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,7 +291,7 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Actualiser',
+            tooltip: 'Actualiser la bibliothèque',
             onPressed: _loading ? null : () => _loadVideos(),
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -261,15 +315,14 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
                       hideApiKey: _hideApiKey,
                       generating: _generating,
                       aspectRatio: _aspectRatio,
-                      imageBytes: _imageBytes,
-                      imageName: _imageName,
+                      images: List.unmodifiable(_images),
                       onToggleApiKey: () {
                         setState(() => _hideApiKey = !_hideApiKey);
                       },
                       onAspectRatioChanged: (value) {
                         setState(() => _aspectRatio = value);
                       },
-                      onPickImage: _generating ? null : _pickImage,
+                      onPickImages: _generating ? null : _pickImages,
                       onRemoveImage: _generating ? null : _removeImage,
                       onGenerate: _generating ? null : _generateVideo,
                     ),
@@ -279,6 +332,7 @@ class _AdminVideoMakerPageState extends State<AdminVideoMakerPage> {
                       loading: _loading,
                       onDownload: _downloadVideo,
                       onShare: _shareVideo,
+                      onDelete: _deleteVideo,
                     ),
                   ],
                 ),
