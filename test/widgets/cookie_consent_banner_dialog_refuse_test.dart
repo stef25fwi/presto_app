@@ -17,6 +17,7 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(OutlinedButton, 'Personnaliser'));
     await tester.pumpAndSettle();
