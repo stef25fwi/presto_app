@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logAdminAction = exports.applyUserRoleClaims = exports.sendChatMessage = exports.createChatThreadFromListing = exports.toggleFavorite = exports.replyToReview = exports.reportReview = exports.getUserTrustScore = exports.submitVerifiedReview = exports.getEligibleRespondersForReview = exports.reportListing = exports.classifyServicePhoto = exports.processOfferPhoto = exports.closeOfferWithReason = exports.deleteListing = exports.getListingContactPhone = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = exports.enqueueFourHourExpiryPushNotifications = exports.enqueueFirstListingNotPublishedReminders = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestLoginOtpEmail = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.adminSetMicroIaConfig = exports.adminGetMicroIaConfig = exports.microIaProcessAudio = exports.getUserPresenceStatus = exports.adminGetUserStats = exports.getMyAdminAccessStatus = exports.adminGetAccessStatus = exports.openAiExtractListingFieldsFromAudio = exports.openAiTranscribeListingAudio = exports.openAiExtractListingFields = exports.generateOfferDraft = exports.placesDetails = exports.placesAutocomplete = exports.syncMyEmailVerification = exports.requestAccountDeletion = exports.onUserRolesChanged = exports.onAuthUserCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
-exports.handleStripeWebhook = exports.auditStripeCatalog = exports.createSubscriptionPortalSession = exports.getSubscriptionCheckoutStatus = exports.createSubscriptionCheckoutSession = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.generatePaymentInfoAudio = exports.moderateNewOffer = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.reportClientMonitoringEvent = exports.onNotificationUpdated = exports.onNotificationCreated = exports.sendSelfTestNotification = exports.broadcastTestNotification = exports.unregisterPushToken = exports.registerPushToken = exports.processConversationAttachmentPhoto = exports.deleteConversationMessage = exports.deleteConversation = exports.adminUnblockConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.syncMessagingAnalytics = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.sendReferralInviteEmail = exports.enqueueReactivation30DaysEmails = exports.enqueueProfileIncompleteReminderEmails = exports.enqueueNearbyNewListingsEmails = exports.enqueueMarketingOnboardingEmails = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.purgeAbandonedListingDrafts = exports.purgeOrphanedStorageFiles = exports.publishApprovedListings = exports.expireOldListings = exports.notifyListingRejected = exports.notifyListingApproved = exports.reviewListingPhoto = void 0;
-exports.publishPaymentInfoAudioDraft = exports.generatePaymentInfoAudioDraft = exports.preVerifySiret = exports.verifySiret = exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = void 0;
+exports.replyToReviewV2 = exports.reportReviewV2 = exports.getUserTrustScoreV2 = exports.submitMutualVerifiedReview = exports.replyToReview = exports.reportReview = exports.getUserTrustScore = exports.submitVerifiedReview = exports.getEligibleRespondersForReview = exports.reportListing = exports.classifyServicePhoto = exports.processOfferPhoto = exports.adminBulkDeleteListings = exports.closeOfferWithReason = exports.deleteListing = exports.getListingContactPhone = exports.incrementListingView = exports.submitListingDraft = exports.updateListingDraftMedia = exports.createListingDraft = exports.enqueueFourHourExpiryPushNotifications = exports.enqueueFirstListingNotPublishedReminders = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestLoginOtpEmail = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.adminSetMicroIaConfig = exports.adminGetMicroIaConfig = exports.microIaProcessAudio = exports.getUserPresenceStatus = exports.adminGetUserStats = exports.getMyAdminAccessStatus = exports.adminGetAccessStatus = exports.openAiExtractListingFieldsFromAudio = exports.openAiTranscribeListingAudio = exports.openAiExtractListingFields = exports.generateOfferDraft = exports.placesDetails = exports.placesAutocomplete = exports.syncMyEmailVerification = exports.requestAccountDeletion = exports.onUserRolesChanged = exports.onAuthUserCreated = exports.onUserUpdated = exports.onUserCreated = void 0;
+exports.moderateNewOffer = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.reportClientMonitoringEvent = exports.onNotificationUpdated = exports.onNotificationCreated = exports.sendSelfTestNotification = exports.broadcastTestNotification = exports.unregisterPushToken = exports.registerPushToken = exports.processConversationAttachmentPhoto = exports.deleteConversationMessage = exports.deleteConversation = exports.adminUnblockConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.syncMessagingAnalytics = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.sendReferralInviteEmail = exports.enqueueReactivation30DaysEmails = exports.enqueueProfileIncompleteReminderEmails = exports.enqueueNearbyNewListingsEmails = exports.enqueueMarketingOnboardingEmails = exports.getPublicLegalConfig = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.purgeAbandonedListingDrafts = exports.purgeOrphanedStorageFiles = exports.publishApprovedListings = exports.expireOldListings = exports.notifyListingRejected = exports.notifyListingApproved = exports.reviewListingPhoto = exports.logAdminAction = exports.applyUserRoleClaims = exports.sendChatMessage = exports.createChatThreadFromListing = exports.toggleFavorite = exports.adminModerateReviewV2 = exports.publishMaturedReviewsV2 = void 0;
+exports.publishPaymentInfoAudioDraft = exports.generatePaymentInfoAudioDraft = exports.preVerifySiret = exports.verifySiret = exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.handleStripeWebhook = exports.listMyJourneys = exports.deleteMyJourney = exports.saveMyJourney = exports.refundSubscriptionCredit = exports.consumeSubscriptionCredit = exports.getMySubscriptionCredits = exports.auditStripeCatalog = exports.createSubscriptionPortalSession = exports.getSubscriptionCheckoutStatus = exports.createSubscriptionCheckoutSession = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.adminListGeneratedVideos = exports.adminGenerateVideo = exports.generatePaymentInfoAudio = void 0;
 const v2_1 = require("firebase-functions/v2");
 const env_1 = require("./config/env");
 (0, v2_1.setGlobalOptions)({
@@ -56,6 +56,8 @@ Object.defineProperty(exports, "incrementListingView", { enumerable: true, get: 
 Object.defineProperty(exports, "getListingContactPhone", { enumerable: true, get: function () { return listings_1.getListingContactPhone; } });
 Object.defineProperty(exports, "deleteListing", { enumerable: true, get: function () { return listings_1.deleteListing; } });
 Object.defineProperty(exports, "closeOfferWithReason", { enumerable: true, get: function () { return listings_1.closeOfferWithReason; } });
+var admin_bulk_listings_1 = require("./modules/marketplace/callables/admin_bulk_listings");
+Object.defineProperty(exports, "adminBulkDeleteListings", { enumerable: true, get: function () { return admin_bulk_listings_1.adminBulkDeleteListings; } });
 var media_1 = require("./modules/marketplace/callables/media");
 Object.defineProperty(exports, "processOfferPhoto", { enumerable: true, get: function () { return media_1.processOfferPhoto; } });
 var classify_service_photo_1 = require("./modules/marketplace/callables/classify_service_photo");
@@ -68,6 +70,14 @@ Object.defineProperty(exports, "submitVerifiedReview", { enumerable: true, get: 
 Object.defineProperty(exports, "getUserTrustScore", { enumerable: true, get: function () { return reviews_1.getUserTrustScore; } });
 Object.defineProperty(exports, "reportReview", { enumerable: true, get: function () { return reviews_1.reportReview; } });
 Object.defineProperty(exports, "replyToReview", { enumerable: true, get: function () { return reviews_1.replyToReview; } });
+var reviews_v2_1 = require("./modules/marketplace/callables/reviews_v2");
+Object.defineProperty(exports, "submitMutualVerifiedReview", { enumerable: true, get: function () { return reviews_v2_1.submitMutualVerifiedReview; } });
+Object.defineProperty(exports, "getUserTrustScoreV2", { enumerable: true, get: function () { return reviews_v2_1.getUserTrustScoreV2; } });
+Object.defineProperty(exports, "reportReviewV2", { enumerable: true, get: function () { return reviews_v2_1.reportReviewV2; } });
+Object.defineProperty(exports, "replyToReviewV2", { enumerable: true, get: function () { return reviews_v2_1.replyToReviewV2; } });
+Object.defineProperty(exports, "publishMaturedReviewsV2", { enumerable: true, get: function () { return reviews_v2_1.publishMaturedReviewsV2; } });
+var reviews_admin_v2_1 = require("./modules/marketplace/callables/reviews_admin_v2");
+Object.defineProperty(exports, "adminModerateReviewV2", { enumerable: true, get: function () { return reviews_admin_v2_1.adminModerateReviewV2; } });
 var favorites_1 = require("./modules/marketplace/callables/favorites");
 Object.defineProperty(exports, "toggleFavorite", { enumerable: true, get: function () { return favorites_1.toggleFavorite; } });
 var chat_1 = require("./modules/marketplace/callables/chat");
@@ -89,6 +99,8 @@ Object.defineProperty(exports, "purgeAbandonedListingDrafts", { enumerable: true
 var triggers_3 = require("./modules/legal/triggers");
 Object.defineProperty(exports, "onLegalTermsSettingsUpdated", { enumerable: true, get: function () { return triggers_3.onLegalTermsSettingsUpdated; } });
 Object.defineProperty(exports, "onLegalPrivacySettingsUpdated", { enumerable: true, get: function () { return triggers_3.onLegalPrivacySettingsUpdated; } });
+var public_legal_config_1 = require("./modules/legal/public_legal_config");
+Object.defineProperty(exports, "getPublicLegalConfig", { enumerable: true, get: function () { return public_legal_config_1.getPublicLegalConfig; } });
 var scheduled_2 = require("./modules/marketing/scheduled");
 Object.defineProperty(exports, "enqueueMarketingOnboardingEmails", { enumerable: true, get: function () { return scheduled_2.enqueueMarketingOnboardingEmails; } });
 Object.defineProperty(exports, "enqueueNearbyNewListingsEmails", { enumerable: true, get: function () { return scheduled_2.enqueueNearbyNewListingsEmails; } });
@@ -136,14 +148,40 @@ var moderate_new_offer_1 = require("./modules/moderation/moderate_new_offer");
 Object.defineProperty(exports, "moderateNewOffer", { enumerable: true, get: function () { return moderate_new_offer_1.moderateNewOffer; } });
 var callables_6 = require("./modules/admin/callables");
 Object.defineProperty(exports, "generatePaymentInfoAudio", { enumerable: true, get: function () { return callables_6.generatePaymentInfoAudio; } });
+var videomaker_1 = require("./modules/admin/videomaker");
+Object.defineProperty(exports, "adminGenerateVideo", { enumerable: true, get: function () { return videomaker_1.adminGenerateVideo; } });
+Object.defineProperty(exports, "adminListGeneratedVideos", { enumerable: true, get: function () { return videomaker_1.adminListGeneratedVideos; } });
 var triggers_9 = require("./modules/billing/triggers");
 Object.defineProperty(exports, "onSubscriptionUpdated", { enumerable: true, get: function () { return triggers_9.onSubscriptionUpdated; } });
 Object.defineProperty(exports, "onBillingInvoiceUpdated", { enumerable: true, get: function () { return triggers_9.onBillingInvoiceUpdated; } });
+var guarded_callables_1 = require("./modules/billing/guarded_callables");
+Object.defineProperty(exports, "createSubscriptionCheckoutSession", { enumerable: true, get: function () { return guarded_callables_1.guardedCreateSubscriptionCheckoutSession; } });
 var callables_7 = require("./modules/billing/callables");
-Object.defineProperty(exports, "createSubscriptionCheckoutSession", { enumerable: true, get: function () { return callables_7.createSubscriptionCheckoutSession; } });
 Object.defineProperty(exports, "getSubscriptionCheckoutStatus", { enumerable: true, get: function () { return callables_7.getSubscriptionCheckoutStatus; } });
 Object.defineProperty(exports, "createSubscriptionPortalSession", { enumerable: true, get: function () { return callables_7.createSubscriptionPortalSession; } });
 Object.defineProperty(exports, "auditStripeCatalog", { enumerable: true, get: function () { return callables_7.auditStripeCatalog; } });
+/*
+Compatibility markers for the idempotent Stripe hardening generators. The real
+Checkout export above intentionally goes through guarded_callables.
+
+  createSubscriptionCheckoutSession,
+  createSubscriptionPortalSession,
+  auditStripeCatalog,
+} from "./modules/billing/callables";
+
+  createSubscriptionCheckoutSession,
+  getSubscriptionCheckoutStatus,
+  createSubscriptionPortalSession,
+  auditStripeCatalog,
+} from "./modules/billing/callables";
+*/
+var subscription_credits_1 = require("./modules/billing/subscription_credits");
+Object.defineProperty(exports, "getMySubscriptionCredits", { enumerable: true, get: function () { return subscription_credits_1.getMySubscriptionCredits; } });
+Object.defineProperty(exports, "consumeSubscriptionCredit", { enumerable: true, get: function () { return subscription_credits_1.consumeSubscriptionCredit; } });
+Object.defineProperty(exports, "refundSubscriptionCredit", { enumerable: true, get: function () { return subscription_credits_1.refundSubscriptionCredit; } });
+Object.defineProperty(exports, "saveMyJourney", { enumerable: true, get: function () { return subscription_credits_1.saveMyJourney; } });
+Object.defineProperty(exports, "deleteMyJourney", { enumerable: true, get: function () { return subscription_credits_1.deleteMyJourney; } });
+Object.defineProperty(exports, "listMyJourneys", { enumerable: true, get: function () { return subscription_credits_1.listMyJourneys; } });
 var stripe_webhook_1 = require("./modules/billing/stripe_webhook");
 Object.defineProperty(exports, "handleStripeWebhook", { enumerable: true, get: function () { return stripe_webhook_1.handleStripeWebhook; } });
 var triggers_10 = require("./modules/email/queue/triggers");

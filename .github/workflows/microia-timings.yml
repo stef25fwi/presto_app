@@ -130,3 +130,24 @@ jobs:
             -d '{"data":{}}' \
             --max-time 20 \
             || echo "(raw run.app probe curl failed, exit $?)"
+
+          echo ""
+          echo "═══ Deployed gen2 functions (name / state / update) ═══"
+          gcloud functions list \
+            --project=presto-app-74abe \
+            --regions=europe-west1 \
+            --format='table(name.basename(), state, updateTime)' \
+            --limit=200 \
+            || echo "(functions list failed)"
+
+          echo ""
+          echo "═══ Direct probe: consumeSubscriptionCredit + generateOfferDraft ═══"
+          for fn in consumeSubscriptionCredit refundSubscriptionCredit getMySubscriptionCredits generateOfferDraft openAiExtractListingFields; do
+            echo "--- ${fn} ---"
+            curl -sS -o /dev/null -w "http=%{http_code} time=%{time_total}s\n" -X POST \
+              "https://europe-west1-presto-app-74abe.cloudfunctions.net/${fn}" \
+              -H "Content-Type: application/json" \
+              -d '{"data":{}}' \
+              --max-time 20 \
+              || echo "(probe ${fn} curl failed, exit $?)"
+          done
