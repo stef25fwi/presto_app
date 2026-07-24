@@ -8,8 +8,12 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('le dialogue peut être annulé puis tout refuser', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await CookieConsentService.instance.load();
@@ -36,7 +40,9 @@ void main() {
 
     await tester.tap(find.text('Gérer mes choix'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Tout refuser'));
+    final refuseAllButton = find.widgetWithText(OutlinedButton, 'Tout refuser');
+    await tester.ensureVisible(refuseAllButton);
+    await tester.tap(refuseAllButton);
     await tester.pumpAndSettle();
 
     expect(
