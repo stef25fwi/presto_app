@@ -21,6 +21,7 @@ Future<void> _seedListing(
     'price': 45,
     'categoryId': categoryId,
     'cityId': cityId,
+    'cityCategoryKey': '${cityId}_$categoryId',
     'city': 'Baie-Mahault',
     'postalCode': '97122',
     'status': status,
