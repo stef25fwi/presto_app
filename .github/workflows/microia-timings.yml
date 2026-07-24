@@ -112,3 +112,21 @@ jobs:
           curl -sS -H "Authorization: Bearer ${TOKEN}" \
             "https://firebaseappcheck.googleapis.com/v1/projects/presto-app-74abe/services" \
             || echo "(app check services fetch failed)"
+
+          echo ""
+          echo "═══ Direct HTTP probe of the callable URL (no auth, expect a callable-shaped 4xx) ═══"
+          curl -sS -i -X POST \
+            "https://europe-west1-presto-app-74abe.cloudfunctions.net/microIaProcessAudio" \
+            -H "Content-Type: application/json" \
+            -d '{"data":{}}' \
+            --max-time 20 \
+            || echo "(direct probe curl failed, exit $?)"
+
+          echo ""
+          echo "═══ Direct HTTP probe of the raw Cloud Run URL ═══"
+          curl -sS -i -X POST \
+            "https://microiaprocessaudio-151421230024.europe-west1.run.app/" \
+            -H "Content-Type: application/json" \
+            -d '{"data":{}}' \
+            --max-time 20 \
+            || echo "(raw run.app probe curl failed, exit $?)"
