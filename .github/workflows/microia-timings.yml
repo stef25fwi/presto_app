@@ -15,6 +15,10 @@ on:
         description: "Nombre max d'entrées"
         required: false
         default: "20"
+      query:
+        description: "Filtre Cloud Logging (par défaut: TIMINGS)"
+        required: false
+        default: '"[microIaProcessAudio] TIMINGS"'
 
 permissions:
   contents: read
@@ -37,14 +41,15 @@ jobs:
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v3
 
-      - name: Read TIMINGS logs
+      - name: Read logs
         env:
           HOURS: ${{ inputs.hours }}
           LIMIT: ${{ inputs.limit }}
+          QUERY: ${{ inputs.query }}
         run: |
-          echo "═══ [microIaProcessAudio] TIMINGS (dernières ${HOURS}h, max ${LIMIT}) ═══"
+          echo "═══ ${QUERY} (dernières ${HOURS}h, max ${LIMIT}) ═══"
           gcloud logging read \
-            '"[microIaProcessAudio] TIMINGS"' \
+            "${QUERY}" \
             --project=presto-app-74abe \
             --freshness="${HOURS}h" \
             --limit="${LIMIT}" \
@@ -54,7 +59,7 @@ jobs:
           echo ""
           echo "═══ Entrées brutes JSON (pour les champs structurés) ═══"
           gcloud logging read \
-            '"[microIaProcessAudio] TIMINGS"' \
+            "${QUERY}" \
             --project=presto-app-74abe \
             --freshness="${HOURS}h" \
             --limit="${LIMIT}" \
