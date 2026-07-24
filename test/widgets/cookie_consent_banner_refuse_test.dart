@@ -10,8 +10,12 @@ void main() {
   testWidgets('refuser masque la bannière et bloque les traceurs optionnels', (
     tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
     CookieConsentService.instance.resetForTesting();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await CookieConsentService.instance.load();
@@ -27,7 +31,9 @@ void main() {
 
     expect(find.text('Refuser'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Refuser'));
+    final refuseButton = find.widgetWithText(OutlinedButton, 'Refuser');
+    await tester.ensureVisible(refuseButton);
+    await tester.tap(refuseButton);
     await tester.pumpAndSettle();
 
     expect(
