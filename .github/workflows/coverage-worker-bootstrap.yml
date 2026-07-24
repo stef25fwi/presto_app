@@ -1,0 +1,65 @@
+name: Coverage Worker Bootstrap
+
+on:
+  issues:
+    types: [opened, reopened, edited]
+  workflow_dispatch:
+  schedule:
+    - cron: "7,37 * * * *"
+
+concurrency:
+  group: coverage-worker-bootstrap
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  bootstrap:
+    if: github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'coverage-worker')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Create missing reserved worker branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ISSUE: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "issues" ]; then
+            issues="$EVENT_ISSUE"
+          else
+            issues="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+              --label coverage-worker --limit 20 --json number --jq '.[].number')"
+          fi
+
+          main_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+
+          for issue in $issues; do
+            body="$(gh issue view "$issue" --repo "$GITHUB_REPOSITORY" --json body --jq '.body')"
+            branch="$(printf '%s\n' "$body" | sed -n 's/.*Branche réservée[^`]*`\([^`]*\)`.*/\1/p' | head -n1)"
+
+            [ -n "$branch" ] || continue
+            case "$branch" in
+              coverage/w*) ;;
+              *)
+                echo "Ignoring unsafe branch name from issue #$issue: $branch" >&2
+                continue
+                ;;
+            esac
+
+            encoded_branch="${branch//\//%2F}"
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$encoded_branch" >/dev/null 2>&1; then
+              echo "Issue #$issue already has branch $branch"
+              continue
+            fi
+
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f ref="refs/heads/$branch" -f sha="$main_sha" >/dev/null
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body \
+              "Branche worker créée automatiquement : \`$branch\` depuis \`$main_sha\`. Le worker peut maintenant produire le patch et ouvrir sa PR de couverture."
+            echo "Created $branch for issue #$issue"
+          done
