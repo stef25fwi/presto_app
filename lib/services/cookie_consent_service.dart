@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'consent_mode_bridge.dart';
 
 enum CookieConsentChoice {
   unknown,
@@ -25,12 +28,20 @@ class CookieConsentState {
 
   bool get hasChoice => choice != CookieConsentChoice.unknown;
 
+  bool get isExpired {
+    final date = updatedAt;
+    if (date == null) return true;
+    return DateTime.now().toUtc().difference(date.toUtc()) >=
+        CookieConsentService.retentionDuration;
+  }
+
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'choice': choice.name,
       'analyticsAllowed': analyticsAllowed,
       'marketingAllowed': marketingAllowed,
       'updatedAt': updatedAt?.toIso8601String(),
+      'schemaVersion': 2,
     };
   }
 
@@ -50,9 +61,7 @@ class CookieConsentState {
         ? null
         : DateTime.tryParse(updatedAtRaw);
 
-    if (choice == CookieConsentChoice.unknown) {
-      return null;
-    }
+    if (choice == CookieConsentChoice.unknown) return null;
 
     return CookieConsentState(
       choice: choice,
@@ -68,24 +77,19 @@ class CookieConsentService extends ChangeNotifier {
 
   static final CookieConsentService instance = CookieConsentService._();
 
-  static const String _storageKey = 'cookie_consent_v1';
+  static const String _storageKey = 'cookie_consent_v2';
+  static const String _legacyStorageKey = 'cookie_consent_v1';
   static const Duration retentionDuration = Duration(days: 180);
 
   CookieConsentState? _state;
   bool _loaded = false;
 
   bool get isLoaded => _loaded;
-
   CookieConsentState? get state => _state;
-
   bool get hasChoice => _state?.hasChoice ?? false;
-
-  bool get shouldShowBanner => !hasChoice;
-
+  bool get shouldShowBanner => _loaded && !hasChoice;
   bool get canUseAnalytics => _state?.analyticsAllowed ?? false;
-
   bool get canUseMarketing => _state?.marketingAllowed ?? false;
-
   DateTime? get choiceUpdatedAt => _state?.updatedAt;
 
   Future<void> load() async {
@@ -93,19 +97,29 @@ class CookieConsentService extends ChangeNotifier {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_storageKey);
+      final raw = prefs.getString(_storageKey) ??
+          prefs.getString(_legacyStorageKey);
       if (raw != null && raw.isNotEmpty) {
         final decoded = jsonDecode(raw);
-        if (decoded is Map<String, dynamic>) {
-          _state = CookieConsentState.fromJson(decoded);
-        } else if (decoded is Map) {
-          _state = CookieConsentState.fromJson(
-            decoded.map((key, value) => MapEntry(key.toString(), value)),
-          );
+        final map = decoded is Map<String, dynamic>
+            ? decoded
+            : decoded is Map
+                ? decoded.map(
+                    (key, value) => MapEntry(key.toString(), value),
+                  )
+                : null;
+        final restored = CookieConsentState.fromJson(map);
+        if (restored != null && !restored.isExpired) {
+          _state = restored;
+        } else {
+          await prefs.remove(_storageKey);
+          await prefs.remove(_legacyStorageKey);
         }
       }
+      await _applyConsent(_state);
     } catch (error) {
       debugPrint('[Consent] load failed: $error');
+      await _applyConsent(null);
     } finally {
       _loaded = true;
       notifyListeners();
@@ -147,10 +161,34 @@ class CookieConsentService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_storageKey, jsonEncode(_state!.toJson()));
+      await prefs.remove(_legacyStorageKey);
     } catch (error) {
       debugPrint('[Consent] save failed: $error');
     }
 
+    await _applyConsent(_state);
     notifyListeners();
+  }
+
+  Future<void> _applyConsent(CookieConsentState? state) async {
+    final analyticsAllowed = state?.analyticsAllowed ?? false;
+    final marketingAllowed = state?.marketingAllowed ?? false;
+
+    try {
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(
+        analyticsAllowed,
+      );
+    } catch (error) {
+      debugPrint('[Consent] Firebase Analytics update failed: $error');
+    }
+
+    try {
+      await applyGoogleConsentMode(
+        analyticsAllowed: analyticsAllowed,
+        marketingAllowed: marketingAllowed,
+      );
+    } catch (error) {
+      debugPrint('[Consent] Google Consent Mode update failed: $error');
+    }
   }
 }
