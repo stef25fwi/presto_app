@@ -19,8 +19,15 @@ void main() {
       status: status,
       model: 'veo-3.1-generate-preview',
       aspectRatio: '9:16',
+      durationSeconds: '8',
+      resolution: '720p',
+      referenceImageCount: 0,
+      referenceImageNames: const <String>[],
       publicUrl: url,
+      fileName: url == null ? null : '$id.mp4',
+      sizeBytes: url == null ? null : 4096,
       createdAt: DateTime.utc(2026, 7, 17, 8, 30),
+      generatedAt: status == 'ready' ? DateTime.utc(2026, 7, 17, 8, 31) : null,
       errorMessage: error,
     );
   }
@@ -56,7 +63,8 @@ void main() {
     fail('Widget attendu introuvable après traitement asynchrone: $finder');
   }
 
-  Finder refreshButton() => find.widgetWithIcon(IconButton, Icons.refresh_rounded);
+  Finder refreshButton() =>
+      find.widgetWithIcon(IconButton, Icons.refresh_rounded);
 
   testWidgets('affiche le chargement initial et désactive l’actualisation',
       (tester) async {
