@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EMAIL_PROVIDER_SECRETS = exports.ENFORCE_APP_CHECK = exports.IS_PROD = exports.IS_EMULATOR = exports.MARKETPLACE_VIEW_RATE_LIMIT = exports.MARKETPLACE_RECAPTCHA_MIN_SCORE = exports.MARKETPLACE_REPORT_REVIEW_THRESHOLD = exports.MARKETPLACE_AUTO_APPROVE_ENABLED = exports.MARKETPLACE_LISTING_DRAFT_LIMIT = exports.MARKETPLACE_MAX_MEDIA_COUNT = exports.RECAPTCHA_ENTERPRISE_SITE_KEY = exports.GCP_PROJECT_ID = exports.APP_BASE_URL = exports.PROJECT_REGION = exports.EMAIL_FROM = exports.DEFAULT_TIMEZONE = exports.DEFAULT_LOCALE = exports.EMAIL_PROVIDER_NAME = exports.STRIPE_CHECKOUT_SECRETS = exports.STRIPE_PRICE_ILIPRO = exports.STRIPE_PRICE_ILIPRESTO_PLUS = exports.STRIPE_WEBHOOK_SECRET = exports.STRIPE_SECRET_KEY = exports.BREVO_WEBHOOK_SECRET = exports.BREVO_API_KEY = exports.EMAIL_PROVIDER_WEBHOOK_SECRET = exports.EMAIL_PROVIDER_API_KEY = exports.OPENAI_API_KEY = void 0;
+exports.EMAIL_PROVIDER_SECRETS = exports.ENFORCE_APP_CHECK = exports.IS_PROD = exports.IS_EMULATOR = exports.MARKETPLACE_VIEW_RATE_LIMIT = exports.MARKETPLACE_RECAPTCHA_MIN_SCORE = exports.MARKETPLACE_REPORT_REVIEW_THRESHOLD = exports.MARKETPLACE_AUTO_APPROVE_ENABLED = exports.MARKETPLACE_LISTING_DRAFT_LIMIT = exports.MARKETPLACE_MAX_MEDIA_COUNT = exports.RECAPTCHA_ENTERPRISE_SITE_KEY = exports.GCP_PROJECT_ID = exports.APP_BASE_URL = exports.PROJECT_REGION = exports.EMAIL_FROM = exports.DEFAULT_TIMEZONE = exports.DEFAULT_LOCALE = exports.EMAIL_PROVIDER_NAME = exports.STRIPE_CHECKOUT_SECRETS = exports.STRIPE_PRICE_ILIPRO = exports.STRIPE_PRICE_ILIPRESTO_PLUS = exports.STRIPE_WEBHOOK_SECRET = exports.STRIPE_SECRET_KEY = exports.BREVO_WEBHOOK_SECRET = exports.BREVO_API_KEY = exports.EMAIL_PROVIDER_WEBHOOK_SECRET = exports.EMAIL_PROVIDER_API_KEY = exports.VEO_API_KEY = exports.OPENAI_API_KEY = void 0;
 exports.assertProdSecurityConfig = assertProdSecurityConfig;
 const params_1 = require("firebase-functions/params");
+const app_check_policy_1 = require("./app_check_policy");
 exports.OPENAI_API_KEY = (0, params_1.defineSecret)("OPENAI_API_KEY");
+exports.VEO_API_KEY = (0, params_1.defineSecret)("VEO_API_KEY");
 exports.EMAIL_PROVIDER_API_KEY = (0, params_1.defineSecret)("EMAIL_PROVIDER_API_KEY");
 exports.EMAIL_PROVIDER_WEBHOOK_SECRET = (0, params_1.defineSecret)("EMAIL_PROVIDER_WEBHOOK_SECRET");
 exports.BREVO_API_KEY = (0, params_1.defineSecret)("BREVO_API_KEY");
@@ -36,11 +38,12 @@ exports.IS_EMULATOR = process.env.FUNCTIONS_EMULATOR === "true" ||
 exports.IS_PROD = exports.GCP_PROJECT_ID === "presto-app-74abe";
 const rawSafeMode = String(process.env.APPCHECK_SAFE_MODE || "").toLowerCase() === "true";
 const rawEnforce = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase();
-exports.ENFORCE_APP_CHECK = exports.IS_EMULATOR
-    ? false
-    : exports.IS_PROD
-        ? rawEnforce !== "false" && !rawSafeMode
-        : rawEnforce === "true" && !rawSafeMode;
+exports.ENFORCE_APP_CHECK = (0, app_check_policy_1.resolveAppCheckEnforcement)({
+    isEmulator: exports.IS_EMULATOR,
+    isProduction: exports.IS_PROD,
+    enforceValue: rawEnforce,
+    safeModeValue: rawSafeMode,
+});
 function assertProdSecurityConfig() {
     if (exports.IS_PROD && !exports.IS_EMULATOR && !exports.ENFORCE_APP_CHECK) {
         console.error("CRITICAL_APP_CHECK_DISABLED", {

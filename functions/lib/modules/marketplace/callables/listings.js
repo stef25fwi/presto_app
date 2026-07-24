@@ -9,6 +9,7 @@ exports.buildListingDocumentPath = buildListingDocumentPath;
 exports.assertDraftOwnership = assertDraftOwnership;
 exports.assertCategoryAndCityConfigured = assertCategoryAndCityConfigured;
 exports.buildAutoPublishAfterForSubmission = buildAutoPublishAfterForSubmission;
+exports.closeOrDeleteListingForOwner = closeOrDeleteListingForOwner;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../../config/env");

@@ -40,7 +40,7 @@ const CONVERSATION_IMAGE_MAX_EDGE = 960;
 // broken/rotating web reCAPTCHA domain from taking the whole inbox offline.
 const MESSAGING_CALLABLE_OPTIONS = {
     region: env_1.PROJECT_REGION,
-    enforceAppCheck: false,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
 };
 // Chemin chaud de la messagerie : on garde 1 instance au chaud pour éliminer
 // le cold start (sinon le 1er message après inactivité met ~2-5 s à partir).
