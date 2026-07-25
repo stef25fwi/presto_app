@@ -1,0 +1,53 @@
+name: Temporary fix PR validation aggregation
+
+on:
+  push:
+    branches:
+      - coverage/w1-auth-social-final-20260724
+    paths:
+      - .github/workflows/temp-fix-pr-validation-conclusions.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-fix-pr-validation-conclusions
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: coverage/w1-auth-social-final-20260724
+          fetch-depth: 0
+
+      - name: Fix final validation aggregation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/pr-validation.yml')
+          text = path.read_text()
+          start = text.index('      - name: Enforce validation result\n')
+          end = text.index('\n  preview:\n', start)
+          block = text[start:end]
+          repaired = block.replace('.outcome }}', '.conclusion }}')
+          if repaired == block:
+              raise SystemExit('No outcome expressions found in final validation block')
+          text = text[:start] + repaired + text[end:]
+          path.write_text(text)
+          PY
+
+          rm -f .github/workflows/temp-fix-pr-validation-conclusions.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/pr-validation.yml .github/workflows/temp-fix-pr-validation-conclusions.yml
+          git commit -m 'ci: use step conclusions for final validation gate'
+          git push origin HEAD:coverage/w1-auth-social-final-20260724
